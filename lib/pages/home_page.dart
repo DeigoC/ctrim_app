@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+  static const String routeName = '/';
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +23,12 @@ class _HomePageState extends State<HomePage> {
       body: _buildSelectedBody(),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.info)),
-          BottomNavigationBarItem(icon: Icon(Icons.home)),
-          BottomNavigationBarItem(icon: Icon(Icons.settings)),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'CTRIM'),
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
-        onTap: _onNavigationItemTap,
+        onTap: (index) => _onNavigationItemTap(index),
       ),
     );
   }
@@ -40,9 +41,9 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSelectedBody() {
     if (_selectedIndex == 0) {
-      return const InformationHomePage();
-    } else if (_selectedIndex == 1) {
       return const ViewEventsHomePage();
+    } else if (_selectedIndex == 1) {
+      return const InformationHomePage();
     }
     return const SettingsHomePage();
   }

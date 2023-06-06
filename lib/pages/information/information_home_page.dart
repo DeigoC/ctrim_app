@@ -11,7 +11,7 @@ class _InformationHomePageState extends State<InformationHomePage> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      children: const [Text('Settings')],
+      children: const [Text('View Information')],
     );
   }
 }
