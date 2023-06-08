@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/events/program/view_all_programs_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -69,8 +70,10 @@ class MyApp extends StatelessWidget {
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
                     return SettingsView(controller: settingsController);
+
                   case EditBodyPage.routeName:
                     return const EditBodyPage();
+
                   case HomePage.routeName:
                   default:
                     return const HomePage();
