@@ -1,8 +1,8 @@
 import 'package:ctrim_app/models/event_body.dart';
 import 'package:ctrim_app/models/event_role.dart';
-import 'package:ctrim_app/pages/events/edit_body_page.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ViewEventsHomePage extends StatefulWidget {
   const ViewEventsHomePage({super.key});
@@ -49,9 +49,15 @@ class _ViewEventsHomePageState extends State<ViewEventsHomePage> {
         const Text('View Events'),
         ElevatedButton(
           onPressed: () {
-            Navigator.restorablePushNamed(context, EditBodyPage.routeName);
+            context.goNamed('edit_body');
           },
           child: const Text('To Edit Event Body'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            context.goNamed('view_all_programs', extra: _eventContext);
+          },
+          child: const Text('To View All Programs'),
         ),
       ],
     );

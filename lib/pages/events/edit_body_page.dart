@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 
 class EditBodyPage extends StatefulWidget {
   const EditBodyPage({super.key});
-  static const String routeName = '/edit_body';
 
   @override
   State<EditBodyPage> createState() => _EditBodyPageState();

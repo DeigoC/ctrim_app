@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 class ViewAllProgramsPage extends StatefulWidget {
   const ViewAllProgramsPage({super.key, required this.eventContext});
   final EventContext eventContext;
-  static const String routeName = '/view_all_programs';
 
   @override
   State<ViewAllProgramsPage> createState() => _ViewAllProgramsPageState();
@@ -16,19 +15,13 @@ class _ViewAllProgramsPageState extends State<ViewAllProgramsPage> {
 
   @override
   void initState() {
+    widget.eventContext.sortEventsByTime();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     _allRoles = widget.eventContext.allRoles;
-    _allRoles.sort((a, b) {
-      // ? This time sorting could be a problem later, be weary of it
-      if (a.startTime.compareTo(b.startTime) == 0) {
-        return a.priorty.compareTo(b.priorty);
-      }
-      return a.startTime.compareTo(b.startTime);
-    });
 
     return Scaffold(
       appBar: AppBar(

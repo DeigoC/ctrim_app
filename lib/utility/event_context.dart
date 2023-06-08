@@ -18,4 +18,12 @@ class EventContext {
   addRole(EventRole role) => _allRoles.add(role);
   addManyRoles(List<EventRole> roles) => _allRoles.addAll(roles);
   removeRole(String roleId) => _allRoles.removeWhere((element) => element.id.compareTo(roleId) == 0);
+
+  sortEventsByTime() => _allRoles.sort((a, b) {
+        // ? This time sorting could be a problem later, be weary of it
+        if (a.startTime.compareTo(b.startTime) == 0) {
+          return a.priorty.compareTo(b.priorty);
+        }
+        return a.startTime.compareTo(b.startTime);
+      });
 }
