@@ -16,7 +16,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   void initState() {
     _videoController = VideoPlayerController.network(widget.src);
-    _initialiseVideo = _videoController.initialize();
+    _initialiseVideo = _videoController.initialize().then((_) => _videoController.play());
     super.initState();
   }
 
