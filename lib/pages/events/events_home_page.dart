@@ -59,6 +59,12 @@ class _ViewEventsHomePageState extends State<ViewEventsHomePage> {
           },
           child: const Text('To View All Programs'),
         ),
+        ElevatedButton(
+          onPressed: () {
+            context.goNamed('view_gallery', extra: _eventContext);
+          },
+          child: const Text('View Gallery Test'),
+        ),
       ],
     );
   }

@@ -255,10 +255,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_quill
-      sha256: "27724b0a0a3d970addaea85133daf3153d2dbe21a1d4713e373343215ddc9b12"
+      sha256: ed0db073fd8674320590954c1834a33aefef86e71ca6ecf684e6b41b4185de4a
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.2"
+    version: "7.2.4"
   flutter_quill_extensions:
     dependency: "direct main"
     description:
@@ -795,7 +795,7 @@ packages:
     source: hosted
     version: "2.1.4"
   video_player:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: video_player
       sha256: de95f0e9405f29b5582573d4166132e71f83b3158aac14e8ee5767a54f4f1fbd

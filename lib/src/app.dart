@@ -1,5 +1,6 @@
 import 'package:ctrim_app/pages/events/program/view_all_programs_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
+import 'package:ctrim_app/pages/view_gallery_page.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -34,7 +35,14 @@ final GoRouter _router = GoRouter(
           builder: (context, state) {
             return const EditBodyPage();
           },
-        )
+        ),
+        GoRoute(
+          path: 'view_gallery',
+          name: 'view_gallery',
+          builder: (context, state) {
+            return const ViewGalleryPage();
+          },
+        ),
       ],
     ),
   ],
