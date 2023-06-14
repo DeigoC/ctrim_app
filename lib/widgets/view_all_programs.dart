@@ -22,12 +22,21 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-        itemCount: _allRoles.length,
-        itemBuilder: (_, index) {
-          EventRole thisRole = _allRoles[index];
-          return _buildRoleTile(thisRole);
-        });
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+              itemCount: _allRoles.length,
+              itemBuilder: (_, index) {
+                EventRole thisRole = _allRoles[index];
+                return _buildRoleTile(thisRole);
+              }),
+        ),
+        SafeArea(
+            child: ElevatedButton.icon(
+                onPressed: () {}, icon: const Icon(Icons.edit_calendar), label: const Text('Add Program')))
+      ],
+    );
   }
 
   Widget _buildRoleTile(EventRole thisRole) {

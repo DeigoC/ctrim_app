@@ -14,10 +14,14 @@ class EventBodyView extends StatefulWidget {
 
 class _EventBodyViewState extends State<EventBodyView> {
   late final quill.QuillController _controller;
-  bool _hasFinishedInitialFetch = false;
 
   @override
   void initState() {
+    if (widget.eventContext.haveFetchedBody) {
+      _controller = quill.QuillController(
+          document: quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json.replaceAll('\n', '\\n'))),
+          selection: const TextSelection.collapsed(offset: 0));
+    }
     super.initState();
   }
 
@@ -29,7 +33,7 @@ class _EventBodyViewState extends State<EventBodyView> {
 
   @override
   Widget build(BuildContext context) {
-    if (_hasFinishedInitialFetch) {
+    if (widget.eventContext.haveFetchedBody) {
       return _buildBodyWithData();
     }
     return _buildFB();
@@ -41,11 +45,13 @@ class _EventBodyViewState extends State<EventBodyView> {
         builder: (_, snap) {
           if (snap.hasData) {
             widget.eventContext.setJson(snap.data!);
+            widget.eventContext.flagFetchedBody();
+
             _controller = quill.QuillController(
                 document:
                     quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json.replaceAll('\n', '\\n'))),
                 selection: const TextSelection.collapsed(offset: 0));
-            _hasFinishedInitialFetch = true;
+
             return _buildBodyWithData();
           } else if (snap.hasError) {
             return const Center(
