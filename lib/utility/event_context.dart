@@ -26,4 +26,6 @@ class EventContext {
         }
         return a.startTime.compareTo(b.startTime);
       });
+
+  setJson(String json) => _eventBody.setJson(json);
 }

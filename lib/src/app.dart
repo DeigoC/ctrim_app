@@ -1,7 +1,6 @@
-import 'package:ctrim_app/pages/events/program/view_all_programs_page.dart';
+import 'package:ctrim_app/pages/events/program/view_event_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
 import 'package:ctrim_app/pages/view_gallery_page.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -20,16 +19,6 @@ final GoRouter _router = GoRouter(
       },
       routes: <RouteBase>[
         GoRoute(
-          path: 'view_all_programs',
-          name: 'view_all_programs',
-          builder: (BuildContext context, GoRouterState state) {
-            var eventContext = state.extra as EventContext;
-            return ViewAllProgramsPage(
-              eventContext: eventContext,
-            );
-          },
-        ),
-        GoRoute(
           path: 'edit_body',
           name: 'edit_body',
           builder: (context, state) {
@@ -41,6 +30,13 @@ final GoRouter _router = GoRouter(
           name: 'view_gallery',
           builder: (context, state) {
             return const ViewGalleryPage();
+          },
+        ),
+        GoRoute(
+          path: 'view_event',
+          name: 'view_event',
+          builder: (context, state) {
+            return const ViewEventPage();
           },
         ),
       ],

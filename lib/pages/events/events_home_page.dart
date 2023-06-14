@@ -1,6 +1,3 @@
-import 'package:ctrim_app/models/event_body.dart';
-import 'package:ctrim_app/models/event_role.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,33 +9,8 @@ class ViewEventsHomePage extends StatefulWidget {
 }
 
 class _ViewEventsHomePageState extends State<ViewEventsHomePage> {
-  late final EventContext _eventContext;
-
   @override
   void initState() {
-    _eventContext = EventContext(eventBody: EventBody('[{"insert":"Hello, time to start writing!\n"}]'));
-    _eventContext.addManyRoles([
-      EventRole(
-          id: '1',
-          title: 'Role 1',
-          startTime: DateTime.now(),
-          finishTime: DateTime.now().add(const Duration(minutes: 20))),
-      EventRole(
-          id: '2',
-          title: 'Role 2',
-          startTime: DateTime.now(),
-          finishTime: DateTime.now().add(const Duration(minutes: 35))),
-      EventRole(
-          id: '3',
-          title: 'Role 3',
-          startTime: DateTime.now().add(const Duration(hours: 1)),
-          finishTime: DateTime.now().add(const Duration(hours: 1, minutes: 20))),
-      EventRole(
-          id: '4',
-          title: 'Role 4',
-          startTime: DateTime.now().add(const Duration(minutes: 30)),
-          finishTime: DateTime.now().add(const Duration(minutes: 45))),
-    ]);
     super.initState();
   }
 
@@ -55,15 +27,9 @@ class _ViewEventsHomePageState extends State<ViewEventsHomePage> {
         ),
         ElevatedButton(
           onPressed: () {
-            context.goNamed('view_all_programs', extra: _eventContext);
+            context.goNamed('view_event');
           },
-          child: const Text('To View All Programs'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            context.goNamed('view_gallery', extra: _eventContext);
-          },
-          child: const Text('View Gallery Test'),
+          child: const Text('View Post Test'),
         ),
       ],
     );

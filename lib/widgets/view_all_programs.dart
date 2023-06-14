@@ -2,36 +2,26 @@ import 'package:ctrim_app/models/event_role.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 
-class ViewAllProgramsPage extends StatefulWidget {
-  const ViewAllProgramsPage({super.key, required this.eventContext});
+class ViewAllPrograms extends StatefulWidget {
+  const ViewAllPrograms({super.key, required this.eventContext});
   final EventContext eventContext;
 
   @override
-  State<ViewAllProgramsPage> createState() => _ViewAllProgramsPageState();
+  State<ViewAllPrograms> createState() => _ViewAllProgramsPageState();
 }
 
-class _ViewAllProgramsPageState extends State<ViewAllProgramsPage> {
+class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   late List<EventRole> _allRoles;
 
   @override
   void initState() {
     widget.eventContext.sortEventsByTime();
+    _allRoles = widget.eventContext.allRoles;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    _allRoles = widget.eventContext.allRoles;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('View all programs'),
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
     return ListView.builder(
         itemCount: _allRoles.length,
         itemBuilder: (_, index) {
