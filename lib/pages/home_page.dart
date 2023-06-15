@@ -1,6 +1,6 @@
-import 'package:ctrim_app/pages/events/events_home_page.dart';
-import 'package:ctrim_app/pages/information/information_home_page.dart';
-import 'package:ctrim_app/pages/settings/settings_home_page.dart';
+import 'package:ctrim_app/pages/events_home.dart';
+import 'package:ctrim_app/pages/information_home.dart';
+import 'package:ctrim_app/pages/settings_home.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -40,10 +40,10 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSelectedBody() {
     if (_selectedIndex == 0) {
-      return const ViewEventsHomePage();
+      return const ViewEventsHome();
     } else if (_selectedIndex == 1) {
-      return const InformationHomePage();
+      return const InformationHome();
     }
-    return const SettingsHomePage();
+    return const SettingsHome();
   }
 }

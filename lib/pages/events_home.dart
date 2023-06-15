@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class ViewEventsHomePage extends StatefulWidget {
-  const ViewEventsHomePage({super.key});
+class ViewEventsHome extends StatefulWidget {
+  const ViewEventsHome({super.key});
 
   @override
-  State<ViewEventsHomePage> createState() => _ViewEventsHomePageState();
+  State<ViewEventsHome> createState() => _ViewEventsHomeState();
 }
 
-class _ViewEventsHomePageState extends State<ViewEventsHomePage> {
+class _ViewEventsHomeState extends State<ViewEventsHome> {
   @override
   void initState() {
     super.initState();

@@ -20,8 +20,6 @@ class _EditBodyPageState extends State<EditBodyPage> {
   void initState() {
     String sanitisedExample = _exampleJson.replaceAll('\n', '\\n');
     var thisJson = jsonDecode(sanitisedExample);
-    // var myJSON = jsonDecode(r'[{"insert":"hello\n"}]');
-    // var myJSON = jsonDecode(thisJson);
     _controller = quill.QuillController(
         document: quill.Document.fromJson(thisJson), selection: const TextSelection.collapsed(offset: 0));
     super.initState();

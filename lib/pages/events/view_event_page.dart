@@ -1,10 +1,10 @@
-import 'package:ctrim_app/widgets/rich_text_view.dart';
 import 'package:flutter/material.dart';
 
-import '../../../models/event_body.dart';
-import '../../../models/event_role.dart';
-import '../../../utility/event_context.dart';
-import '../../../widgets/view_all_programs.dart';
+import '../../models/event_body.dart';
+import '../../models/event_role.dart';
+import '../../utility/event_context.dart';
+import '../../widgets/posts/rich_text_view.dart';
+import '../../widgets/view_all_programs.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key});

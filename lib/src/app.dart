@@ -1,4 +1,4 @@
-import 'package:ctrim_app/pages/events/program/view_event_page.dart';
+import 'package:ctrim_app/pages/events/view_event_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
 import 'package:ctrim_app/pages/view_gallery_page.dart';
 import 'package:flutter/material.dart';
