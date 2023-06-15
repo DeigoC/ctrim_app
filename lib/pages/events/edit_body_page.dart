@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:path_provider/path_provider.dart';
 
 class EditBodyPage extends StatefulWidget {
-  const EditBodyPage({super.key});
+  const EditBodyPage({super.key, required this.eventContext});
+  final EventContext eventContext;
 
   @override
   State<EditBodyPage> createState() => _EditBodyPageState();

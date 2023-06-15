@@ -1,6 +1,11 @@
+import 'package:ctrim_app/pages/events/add_program_page.dart';
+import 'package:ctrim_app/pages/events/edit_gallery_page.dart';
+import 'package:ctrim_app/pages/events/edit_header_page.dart';
+import 'package:ctrim_app/pages/events/edit_program_page.dart';
 import 'package:ctrim_app/pages/events/view_event_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
 import 'package:ctrim_app/pages/view_gallery_page.dart';
+import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,39 +15,76 @@ import '../pages/events/edit_body_page.dart';
 import 'settings/settings_controller.dart';
 // import 'settings/settings_view.dart';
 
-final GoRouter _router = GoRouter(
-  routes: <RouteBase>[
-    GoRoute(
-      path: '/',
-      builder: (BuildContext context, GoRouterState state) {
-        return const HomePage();
-      },
-      routes: <RouteBase>[
-        GoRoute(
-          path: 'edit_body',
-          name: 'edit_body',
-          builder: (context, state) {
-            return const EditBodyPage();
-          },
-        ),
-        GoRoute(
-          path: 'view_gallery',
-          name: 'view_gallery',
-          builder: (context, state) {
-            return const ViewGalleryPage();
-          },
-        ),
-        GoRoute(
+final GoRouter _router = GoRouter(routes: <RouteBase>[
+  GoRoute(
+    path: '/',
+    builder: (BuildContext context, GoRouterState state) {
+      return const HomePage();
+    },
+    routes: <RouteBase>[
+      GoRoute(
+        path: 'view_gallery',
+        name: 'view_gallery',
+        builder: (context, state) {
+          return const ViewGalleryPage();
+        },
+      ),
+      GoRoute(
           path: 'view_event',
           name: 'view_event',
           builder: (context, state) {
             return const ViewEventPage();
           },
-        ),
-      ],
-    ),
-  ],
-);
+          routes: [
+            GoRoute(
+              path: 'add_program',
+              name: 'add_program',
+              builder: (context, state) {
+                return AddEventProgramPage(
+                  eventContext: state.extra as EventContext,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'edit_program',
+              name: 'edit_program',
+              builder: (context, state) {
+                return EditEventProgramPage(
+                  eventContext: state.extra as EventContext,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'edit_body',
+              name: 'edit_body',
+              builder: (context, state) {
+                return EditBodyPage(
+                  eventContext: state.extra as EventContext,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'edit_gallery',
+              name: 'edit_gallery',
+              builder: (context, state) {
+                return EditGallerlyPage(
+                  eventContext: state.extra as EventContext,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'edit_header_page',
+              name: 'edit_header_page',
+              builder: (context, state) {
+                return EditEventDetailsPage(
+                  eventContext: state.extra as EventContext,
+                );
+              },
+            ),
+          ]),
+    ],
+  )
+]);
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {

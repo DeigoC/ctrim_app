@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/event_body.dart';
 import '../../models/event_role.dart';
@@ -121,16 +122,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             fit: BoxFit.cover,
           ),
         ),
-
-        // for the admin below
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton.icon(
-            onPressed: () => {},
-            icon: const Icon(Icons.photo_album),
-            label: const Text('Edit Gallery'),
-          ),
-        )
       ],
     );
   }
@@ -144,5 +135,66 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     ]);
   }
 
-  _onSettingsClick() {}
+  _onSettingsClick() {
+    showModalBottomSheet(
+        showDragHandle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+        ),
+        context: context,
+        builder: (_) {
+          return SafeArea(
+              child: EventPostSettingsSheet(
+            eventContext: _eventContext,
+          ));
+        });
+  }
+}
+
+class EventPostSettingsSheet extends StatefulWidget {
+  const EventPostSettingsSheet({super.key, required this.eventContext});
+  final EventContext eventContext;
+
+  @override
+  State<EventPostSettingsSheet> createState() => _EventPostSettingsSheetState();
+}
+
+class _EventPostSettingsSheetState extends State<EventPostSettingsSheet> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          ListTile(
+            title: const Text('Edit Body'),
+            leading: const Icon(Icons.edit_note),
+            onTap: () => _openEditBodyPage(),
+          ),
+          ListTile(
+            title: const Text('Edit Gallery'),
+            leading: const Icon(Icons.photo_album),
+            onTap: () => _openEditGalleryPage(),
+          ),
+          ListTile(
+            title: const Text('Edit More Details'),
+            leading: const Icon(Icons.note_alt),
+            onTap: () => _openEditMoreDetailsPage(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // * LOGIC
+  _openEditBodyPage() {
+    context.goNamed('edit_body', extra: widget.eventContext);
+  }
+
+  _openEditGalleryPage() {
+    context.goNamed('edit_gallery', extra: widget.eventContext);
+  }
+
+  _openEditMoreDetailsPage() {
+    context.goNamed('edit_header_page', extra: widget.eventContext);
+  }
 }

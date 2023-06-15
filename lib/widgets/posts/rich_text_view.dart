@@ -65,7 +65,10 @@ class _EventBodyViewState extends State<EventBodyView> {
   }
 
   Widget _buildBodyWithData() {
-    return quill.QuillEditor.basic(controller: _controller, readOnly: true);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: quill.QuillEditor.basic(controller: _controller, readOnly: true),
+    );
   }
 
   // * LOGIC
