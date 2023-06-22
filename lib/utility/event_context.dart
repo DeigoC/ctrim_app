@@ -1,7 +1,7 @@
 import 'dart:collection';
 
-import 'package:ctrim_app/models/event_body.dart';
-import 'package:ctrim_app/models/event_role.dart';
+import '../models/event/event_body.dart';
+import '../models/event/event_program.dart';
 
 class EventContext {
   late List<EventRole> _allRoles;

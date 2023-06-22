@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
-
+import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:path_provider/path_provider.dart';
 
 class EditBodyPage extends StatefulWidget {
   const EditBodyPage({super.key, required this.eventContext});
@@ -69,11 +67,15 @@ class _EditBodyPageState extends State<EditBodyPage> {
   }
 
   _getSizeOfText() async {
-    var path = await getApplicationDocumentsDirectory();
-    var file = File('${path.path}/someTest.txt');
-    _exampleJson = jsonEncode(_controller.document.toDelta().toJson());
-    debugPrint('The example json looks like $_exampleJson');
-    await file.writeAsString(_exampleJson);
-    debugPrint('Size is ${await file.length()}');
+    // var path = await getApplicationDocumentsDirectory();
+    // var file = File('${path.path}/someTest.txt');
+    final rawJson = _controller.document.toDelta().toJson();
+    _exampleJson = jsonEncode(rawJson);
+    debugPrint('The example json encoded looks like $_exampleJson');
+    EventDBManager eventDBManager = EventDBManager('1');
+    eventDBManager.addBody({'body': _exampleJson});
+
+    // await file.writeAsString(_exampleJson);
+    // debugPrint('Size is ${await file.length()}');
   }
 }

@@ -11,6 +11,7 @@ environment:
 
 dependencies:
   # chewie: ^1.5.0
+  cloud_firestore: ^4.8.1
   firebase_core: ^2.13.1
   flutter:
     sdk: flutter

@@ -42,3 +42,9 @@ class EventRole {
   setStartTime(DateTime newTime) => _startTime = newTime;
   setFinishTime(DateTime newTime) => _finishTime = newTime;
 }
+
+class EventProgramDetails {
+  late final int _currentID;
+
+  int get currentID => _currentID;
+}

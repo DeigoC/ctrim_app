@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../models/event_body.dart';
-import '../../models/event_role.dart';
+import '../../models/event/event_body.dart';
+import '../../models/event/event_program.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/rich_text_view.dart';
 import '../../widgets/view_all_programs.dart';
