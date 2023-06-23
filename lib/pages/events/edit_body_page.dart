@@ -73,7 +73,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
     _exampleJson = jsonEncode(rawJson);
     debugPrint('The example json encoded looks like $_exampleJson');
     EventDBManager eventDBManager = EventDBManager('1');
-    eventDBManager.addBody({'body': _exampleJson});
+    eventDBManager.addBody(rawJson);
 
     // await file.writeAsString(_exampleJson);
     // debugPrint('Size is ${await file.length()}');

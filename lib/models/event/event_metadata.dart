@@ -1,17 +1,17 @@
 import 'dart:collection';
 
-class EventMetaData {
+class EventMetadata {
   late final String _authorUID;
   late final List<String> _contributorUIDs;
   late String _lastUID;
 
-  EventMetaData({required String authorUID}) {
+  EventMetadata({required String authorUID}) {
     _authorUID = authorUID;
     _lastUID = authorUID;
     _contributorUIDs = List<String>.empty(growable: true);
   }
 
-  EventMetaData.fromMap(Map<String, dynamic> data)
+  EventMetadata.fromMap(Map<String, dynamic> data)
       : _authorUID = data['AuthorUID'],
         _lastUID = data['LastUID'],
         _contributorUIDs = List.from(data['ContributorUIDs']);
