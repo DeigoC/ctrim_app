@@ -1,6 +1,6 @@
+import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../models/event/event_body.dart';
 import '../../models/event/event_program.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/rich_text_view.dart';
@@ -20,7 +20,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   @override
   void initState() {
     _tabController = TabController(length: 2, vsync: this);
-    _eventContext = EventContext(eventBody: EventBody('[{"insert":"Hello, time to start writing!\n"}]'));
+    _eventContext = EventContext.viewing(eventHead: EventHead(id: '1', media: {}, eventDate: DateTime.now()));
     _eventContext.addManyRoles([
       EventRole(
           id: '1',

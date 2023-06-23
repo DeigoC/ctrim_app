@@ -31,6 +31,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
           },
           child: const Text('View Post Test'),
         ),
+        ElevatedButton(
+          onPressed: () {
+            context.goNamed('add_event');
+          },
+          child: const Text('Add Event Test'),
+        ),
       ],
     );
   }

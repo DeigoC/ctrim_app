@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/events/add_event_page.dart';
 import 'package:ctrim_app/pages/events/add_program_page.dart';
 import 'package:ctrim_app/pages/events/edit_gallery_page.dart';
 import 'package:ctrim_app/pages/events/edit_header_page.dart';
@@ -29,6 +30,7 @@ final GoRouter _router = GoRouter(routes: <RouteBase>[
           return const ViewGalleryPage();
         },
       ),
+      GoRoute(path: 'add_event', name: 'add_event', builder: (context, state) => const AddEventPage()),
       GoRoute(
           path: 'view_event',
           name: 'view_event',

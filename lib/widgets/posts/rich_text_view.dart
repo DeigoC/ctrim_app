@@ -19,7 +19,7 @@ class _EventBodyViewState extends State<EventBodyView> {
   void initState() {
     if (widget.eventContext.haveFetchedBody) {
       _controller = quill.QuillController(
-          document: quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json.replaceAll('\n', '\\n'))),
+          document: quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json!.replaceAll('\n', '\\n'))),
           selection: const TextSelection.collapsed(offset: 0));
     }
     super.initState();
@@ -49,7 +49,7 @@ class _EventBodyViewState extends State<EventBodyView> {
 
             _controller = quill.QuillController(
                 document:
-                    quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json.replaceAll('\n', '\\n'))),
+                    quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json!.replaceAll('\n', '\\n'))),
                 selection: const TextSelection.collapsed(offset: 0));
 
             return _buildBodyWithData();

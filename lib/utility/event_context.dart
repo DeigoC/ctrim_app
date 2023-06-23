@@ -1,17 +1,38 @@
 import 'dart:collection';
 
+import 'package:ctrim_app/models/event/event_head.dart';
+import 'package:ctrim_app/models/event/event_log.dart';
+import 'package:ctrim_app/models/event/event_media.dart';
+import 'package:ctrim_app/models/event/event_metadata.dart';
+
 import '../models/event/event_body.dart';
 import '../models/event/event_program.dart';
 
 class EventContext {
-  late List<EventRole> _allRoles;
-  late EventBody _eventBody;
+  late final EventHead _eventHead;
+  late final EventProgramDetails _eventProgramDetails;
+  late final List<EventRole> _allRoles;
+  late final List<EventLog> _allLogs;
+  late final EventMetadata _eventMetadata;
+
+  final EventBody _eventBody = EventBody();
+  final EventMedia _eventMedia = EventMedia(srcTypes: {});
+
   bool _fetchedBody = false;
 
-  EventContext({required EventBody eventBody}) {
-    _eventBody = eventBody;
-    _allRoles = List.empty(growable: true);
+  // for viewing and editing
+  EventContext.viewing({required EventHead eventHead}) {
+    _eventHead = eventHead;
   }
+
+  // ? hmmm maybe we don't need a context for adding
+
+  // * Head Related
+  // * Body Related
+  // * Program Related
+  // * Supplemental - Metadata Related
+  // * Supplemental - Media Related
+  // * Logs Related
 
   List<EventRole> get allRoles => UnmodifiableListView(_allRoles); // ? Does this work, what is this?
   EventBody get eventBody => _eventBody;
