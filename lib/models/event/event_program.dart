@@ -1,7 +1,8 @@
 import 'dart:collection';
 
 class EventRole {
-  late String _id, _title, _description;
+  late final String _id;
+  late String _title, _description;
   late bool _forGuests;
   late int _priority;
   late DateTime _startTime, _finishTime;
@@ -10,12 +11,12 @@ class EventRole {
   EventRole({
     required String id,
     required String title,
+    required DateTime startTime,
+    required DateTime finishTime,
     String description = '',
     bool forGuests = true,
     int priority = 0,
     List<String>? assignedUID,
-    required DateTime startTime,
-    required DateTime finishTime,
   }) {
     _id = id;
     _title = title;
@@ -36,15 +37,33 @@ class EventRole {
   DateTime get finishTime => _finishTime;
   bool get forGuests => _forGuests;
 
-  addAssignee(String uid) => _assignedUID.add(uid);
+  // Assigned UIDs
+  void addAssignee(String uid) => _assignedUID.add(uid);
   bool removeAssignee(String uid) => _assignedUID.remove(uid);
 
-  setStartTime(DateTime newTime) => _startTime = newTime;
-  setFinishTime(DateTime newTime) => _finishTime = newTime;
+  // Time related
+  void setStartTime(DateTime newTime) => _startTime = newTime;
+  void setFinishTime(DateTime newTime) => _finishTime = newTime;
+
+  // Text stuff
+  void setTitle(String newTitle) => _title = title;
+  void setDescription(String newDescription) => _description = newDescription;
+
+  // Priority and Guest stuff
+  void setPriority(int newPriority) => _priority = newPriority;
+  void setForGuest(bool forGuest) => _forGuests = forGuest;
 }
 
 class EventProgramDetails {
   late final int _currentID;
+  late DateTime _finishTime;
 
-  int get currentID => _currentID;
+  EventProgramDetails({required int currentID, required DateTime finishTime})
+      : _currentID = currentID,
+        _finishTime = finishTime;
+
+  int get getAndIncrementCurrentID => _currentID++; // TODO test this approach
+  DateTime get finishTime => _finishTime;
+
+  void setFinishTime(DateTime newTime) => _finishTime = newTime;
 }

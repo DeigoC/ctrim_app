@@ -18,12 +18,12 @@ class User {
     _isLeader = isLeader;
   }
 
-  setName(String? forname, String? surname) {
+  void setName(String? forname, String? surname) {
     if (forname != null) _forname = forname;
     if (surname != null) _surname = surname;
   }
 
-  setImgSrc(String newImgSrc) => _imgSrc = newImgSrc;
+  void setImgSrc(String newImgSrc) => _imgSrc = newImgSrc;
 
   String get id => _id;
   String get forname => _forname;

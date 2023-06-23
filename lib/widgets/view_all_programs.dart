@@ -73,8 +73,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   // * LOGIC
   _openAddProgramPage() {
-    // TODO this isn't a future, so that means we'll depend on the AppProvider at the highest level to
-    // make changes from one page to another.
     context.goNamed('add_program', extra: widget.eventContext);
   }
 
