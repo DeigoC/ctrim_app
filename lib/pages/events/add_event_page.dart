@@ -1,3 +1,7 @@
+import 'package:ctrim_app/models/event/event_body.dart';
+import 'package:ctrim_app/models/event/event_media.dart';
+import 'package:ctrim_app/models/event/event_program.dart';
+import 'package:ctrim_app/widgets/posts/rich_text_view.dart';
 import 'package:flutter/material.dart';
 
 class AddEventPage extends StatefulWidget {
@@ -8,7 +12,20 @@ class AddEventPage extends StatefulWidget {
 }
 
 class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderStateMixin {
+  // * Required variables
   late final TabController _tabController;
+  final EventBody _eventBody = EventBody();
+  final TextEditingController _tecTitle = TextEditingController(), _tecSubtitle = TextEditingController();
+  String? _location;
+  DateTime? _eventDate;
+  // this can only be created after the user sets the _eventDate, we need to set the finishTime
+  late final EventProgramDetails _programDetails;
+  // the metadata is created at the end when uploading everything
+  // a log is created when uploading as well that higlights the publication of the app.
+
+  // * The optional variables
+  final EventMedia _eventMedia = EventMedia(srcTypes: {});
+  final List<String> _contributorUIDs = List.empty(growable: true);
 
   @override
   void initState() {
@@ -19,6 +36,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   void dispose() {
     _tabController.dispose();
+    _tecTitle.dispose();
+    _tecSubtitle.dispose();
     super.dispose();
   }
 
@@ -75,7 +94,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
-        // we need to transform the below to a slideshow thingy maflob. Clickable as well
         Positioned.fill(
           child: Image.network(
             'https://assets.gocomics.com/uploads/collection_images/collection_image_large_1721649_Garfield_Sandwich_V2_201805291007.jpg',
@@ -87,19 +105,119 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   Widget _buildTabBody() {
-    return TabBarView(controller: _tabController, children: const [
-      Center(
-        child: Text('Header Details + Meta data'),
+    return TabBarView(controller: _tabController, children: [
+      _buildHeaderMetaTabBody(),
+      Column(
+        children: [
+          ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.edit), label: const Text('Edit Body')),
+          const Text('Add the body here')
+        ],
       ),
-      Center(
-        child: Text('Body'),
-      ),
-      Center(
-        child: Text('Program'),
-      ),
-      Center(
-        child: Text('Gallery'),
-      ),
+      _buildProgramTabBody(),
+      _buildMediaTabBody(),
     ]);
+  }
+
+  // TODO put to it's own Widget file
+  Widget _buildHeaderMetaTabBody() {
+    return ListView(
+      children: [
+        TextField(
+          controller: _tecTitle,
+          decoration: const InputDecoration(label: Text('Title'), hintText: 'Make it snappy!'),
+        ),
+        TextField(
+          controller: _tecSubtitle,
+          decoration: const InputDecoration(label: Text('Subtitle'), hintText: 'The synopsis of the post'),
+        ),
+        _buildContributorSection(),
+      ],
+    );
+  }
+
+  Widget _buildContributorSection() {
+    final List<Widget> children = [
+      const Text('Select Users who can edit certain details'),
+      ElevatedButton.icon(
+          onPressed: _onAddContributorClick, icon: const Icon(Icons.person_add), label: const Text('Add Contributor')),
+      const Divider(),
+    ];
+
+    if (_contributorUIDs.isEmpty) {
+      children.add(const Text('No one selected.'));
+    } else {
+      children.addAll(_contributorUIDs
+          .map<Widget>((e) => ListTile(
+                title: Text('UID is $e'),
+              ))
+          .toList());
+    }
+
+    return Column(children: children);
+  }
+
+  // TODO add to it's own Widget file
+  Widget _buildProgramTabBody() {
+    final List<Widget> children = [
+      const Text('Event Date is N/A'),
+      ElevatedButton(onPressed: () {}, child: const Text('Change Date')),
+      SwitchListTile(
+        value: _programDetails.allDay,
+        onChanged: _eventDate == null ? null : (value) => {},
+        title: const Text('All Day'),
+      )
+    ];
+
+    // only add the rest once it's been declared that this is an event via the event date
+    if (_eventDate != null) {
+      // TODO add the rest of the program details + role assignment
+    }
+
+    return ListView(
+      children: children,
+    );
+  }
+
+  // TODO make the following into it's own Widget file
+  Widget _buildMediaTabBody() {
+    List<String> srcs = _eventMedia.srcTypes.keys.toList();
+    return Column(
+      children: [
+        ElevatedButton.icon(
+            onPressed: () {}, icon: const Icon(Icons.add_photo_alternate_rounded), label: const Text('Add Image')),
+        ElevatedButton.icon(
+            onPressed: () {}, icon: const Icon(Icons.add_photo_alternate_rounded), label: const Text('Add Video')),
+        Expanded(
+            child: ListView.builder(
+                itemCount: srcs.length,
+                itemBuilder: (_, index) {
+                  return Text('Image / Video box for the src: ${srcs[index]}');
+                }))
+      ],
+    );
+  }
+
+  // * Logic
+  // the core requirements of a post
+  bool _okToSave() {
+    if (_tecTitle.text.trim().isEmpty || _tecSubtitle.text.trim().isEmpty || _location != null) {
+      return false;
+    }
+
+    if (_eventBody.json!.isEmpty) {
+      return false;
+    }
+
+    return true;
+  }
+
+  void _onAddContributorClick() {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return const Dialog(
+            child: Text('Complete this'),
+          );
+        });
   }
 }

@@ -13,6 +13,7 @@ class EventContext {
   late final EventProgramDetails _eventProgramDetails;
   late final List<EventRole> _allRoles;
   late final List<EventLog> _allLogs;
+  late final EventLog _latestLog;
   late final EventMetadata _eventMetadata;
 
   final EventBody _eventBody = EventBody();
@@ -26,21 +27,21 @@ class EventContext {
   }
 
   // ? hmmm maybe we don't need a context for adding
-
   // * Head Related
+  EventHead get head => _eventHead;
+
   // * Body Related
-  // * Program Related
-  // * Supplemental - Metadata Related
-  // * Supplemental - Media Related
-  // * Logs Related
-
-  List<EventRole> get allRoles => UnmodifiableListView(_allRoles); // ? Does this work, what is this?
-  EventBody get eventBody => _eventBody;
+  EventBody get body => _eventBody;
   bool get haveFetchedBody => _fetchedBody;
+  flagFetchedBody() => _fetchedBody = true;
 
-  addRole(EventRole role) => _allRoles.add(role);
-  addManyRoles(List<EventRole> roles) => _allRoles.addAll(roles);
-  removeRole(String roleId) => _allRoles.removeWhere((element) => element.id.compareTo(roleId) == 0);
+  // * Program Related
+  EventProgramDetails get programDetails => _eventProgramDetails;
+
+  List<EventRole> get allRoles => UnmodifiableListView(_allRoles);
+  void addRole(EventRole newRole) => _allRoles.add(newRole);
+  void addManyRoles(List<EventRole> manyRoles) => _allRoles.addAll(manyRoles);
+  void removeRole(String id) => _allRoles.removeWhere((element) => element.id.compareTo(id) == 0);
 
   sortEventsByTime() => _allRoles.sort((a, b) {
         // ? This time sorting could be a problem later, be weary of it
@@ -50,6 +51,13 @@ class EventContext {
         return a.startTime.compareTo(b.startTime);
       });
 
-  setJson(String json) => _eventBody.setJson(json);
-  flagFetchedBody() => _fetchedBody = true;
+  // * Supplemental - Metadata Related
+  EventMetadata get metadata => _eventMetadata;
+
+  // * Supplemental - Media Related
+  EventMedia get eventMedia => _eventMedia;
+
+  // * Logs Related
+  EventLog get latestLog => _latestLog;
+  List<EventLog> get allLogs => _allLogs;
 }

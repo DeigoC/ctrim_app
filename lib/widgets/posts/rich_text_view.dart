@@ -4,22 +4,22 @@ import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
-class EventBodyView extends StatefulWidget {
-  const EventBodyView({super.key, required this.eventContext});
+class ViewPostBody extends StatefulWidget {
+  const ViewPostBody({super.key, required this.eventContext});
   final EventContext eventContext;
 
   @override
-  State<EventBodyView> createState() => _EventBodyViewState();
+  State<ViewPostBody> createState() => _ViewPostBodyState();
 }
 
-class _EventBodyViewState extends State<EventBodyView> {
+class _ViewPostBodyState extends State<ViewPostBody> {
   late final quill.QuillController _controller;
 
   @override
   void initState() {
     if (widget.eventContext.haveFetchedBody) {
       _controller = quill.QuillController(
-          document: quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json!.replaceAll('\n', '\\n'))),
+          document: quill.Document.fromJson(jsonDecode(widget.eventContext.body.json!.replaceAll('\n', '\\n'))),
           selection: const TextSelection.collapsed(offset: 0));
     }
     super.initState();
@@ -44,12 +44,11 @@ class _EventBodyViewState extends State<EventBodyView> {
         future: _fetchTestBody(),
         builder: (_, snap) {
           if (snap.hasData) {
-            widget.eventContext.setJson(snap.data!);
+            widget.eventContext.body.setJson(snap.data!);
             widget.eventContext.flagFetchedBody();
 
             _controller = quill.QuillController(
-                document:
-                    quill.Document.fromJson(jsonDecode(widget.eventContext.eventBody.json!.replaceAll('\n', '\\n'))),
+                document: quill.Document.fromJson(jsonDecode(widget.eventContext.body.json!.replaceAll('\n', '\\n'))),
                 selection: const TextSelection.collapsed(offset: 0));
 
             return _buildBodyWithData();

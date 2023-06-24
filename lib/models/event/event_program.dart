@@ -81,6 +81,7 @@ class EventRole {
 class EventProgramDetails {
   late final int _currentID;
   late DateTime _finishTime;
+  bool _allDay = false;
 
   EventProgramDetails({required int currentID, required DateTime finishTime})
       : _currentID = currentID,
@@ -96,6 +97,8 @@ class EventProgramDetails {
 
   int get getAndIncrementCurrentID => _currentID++; // TODO test this approach
   DateTime get finishTime => _finishTime;
+  bool get allDay => _allDay;
 
   void setFinishTime(DateTime newTime) => _finishTime = newTime;
+  void toggleAllday() => _allDay = !_allDay;
 }

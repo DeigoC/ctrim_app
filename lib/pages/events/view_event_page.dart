@@ -127,7 +127,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
-      EventBodyView(
+      ViewPostBody(
         eventContext: _eventContext,
       ),
       ViewAllPrograms(eventContext: _eventContext)
