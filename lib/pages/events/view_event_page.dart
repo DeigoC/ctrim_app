@@ -20,7 +20,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   @override
   void initState() {
     _tabController = TabController(length: 2, vsync: this);
-    _eventContext = EventContext.viewing(eventHead: EventHead(id: '1', media: {}, eventDate: DateTime.now()));
+    _eventContext = EventContext.viewing(
+        eventHead: EventHead(
+      id: '1',
+      media: {},
+    ));
     _eventContext.addManyRoles([
       EventRole(
           id: '1',

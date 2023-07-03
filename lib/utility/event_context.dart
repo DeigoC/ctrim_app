@@ -61,7 +61,7 @@ class EventContext {
   EventMetadata get metadata => _eventMetadata;
 
   // * Supplemental - Media Related
-  EventMedia get eventMedia => _eventMedia;
+  EventMedia get media => _eventMedia;
 
   // * Logs Related
   EventLog get latestLog => _latestLog;

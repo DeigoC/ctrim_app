@@ -6,12 +6,12 @@ class EventHead {
   late final String _location, _id;
   late final Map<String, String> _media;
   late String _title, _subtitle;
-  late DateTime _recentDate, _eventDate;
+  late DateTime _recentDate;
+  DateTime? _eventDate;
 
   EventHead({
     required id,
     required Map<String, String> media,
-    required DateTime eventDate,
     String title = '',
     String subtitle = '',
     String location = 'Belfast',
@@ -21,7 +21,6 @@ class EventHead {
     _title = title;
     _subtitle = subtitle;
     _location = location;
-    _eventDate = eventDate;
     _recentDate = DateTime.now();
   }
 
@@ -41,7 +40,7 @@ class EventHead {
       'Location': _location,
       'Media': _media,
       'RecentDate': Timestamp.fromDate(_recentDate),
-      'EventDate': Timestamp.fromDate(_eventDate),
+      'EventDate': _eventDate == null ? null : Timestamp.fromDate(_eventDate!),
     };
   }
 
@@ -50,7 +49,7 @@ class EventHead {
   String get subtitle => _subtitle;
   String get location => _location;
   DateTime get recentDate => _recentDate;
-  DateTime get eventDate => _eventDate;
+  DateTime? get eventDate => _eventDate;
   Map<String, String> get media => UnmodifiableMapView(_media);
 
   void setTitle(String newTitle) => _title = newTitle;
