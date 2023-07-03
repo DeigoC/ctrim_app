@@ -72,7 +72,7 @@ class _ViewPostBodyState extends State<ViewPostBody> {
 
   // * LOGIC
   Future<String> _fetchTestBody() async {
-    const String json = '[{"insert":"Hello, time to start writing!\n"}]';
+    const String json = '[{"insert":"Hello, this is from fetching!\n"}]';
     await Future.delayed(const Duration(seconds: 1));
     return json;
   }

@@ -30,7 +30,12 @@ final GoRouter _router = GoRouter(routes: <RouteBase>[
           return const ViewGalleryPage();
         },
       ),
-      GoRoute(path: 'add_event', name: 'add_event', builder: (context, state) => const AddEventPage()),
+      GoRoute(
+          path: 'add_event',
+          name: 'add_event',
+          builder: (context, state) => AddEventPage(
+                eventContext: EventContext.adding(),
+              )),
       GoRoute(
           path: 'view_event',
           name: 'view_event',

@@ -1,14 +1,14 @@
 import 'dart:collection';
 
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/models/event/event_log.dart';
-import 'package:ctrim_app/models/event/event_media.dart';
-import 'package:ctrim_app/models/event/event_metadata.dart';
-
 import '../models/event/event_body.dart';
+import '../models/event/event_head.dart';
+import '../models/event/event_log.dart';
+import '../models/event/event_media.dart';
+import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
 
 class EventContext {
+  static const String _startingBodyText = '[{"insert":"Hello, time to start writing!\n"}]';
   late final EventHead _eventHead;
   late final EventProgramDetails _eventProgramDetails;
   late final List<EventRole> _allRoles;
@@ -24,6 +24,12 @@ class EventContext {
   // for viewing and editing
   EventContext.viewing({required EventHead eventHead}) {
     _eventHead = eventHead;
+  }
+
+  EventContext.adding() {
+    _eventBody.setJson(_startingBodyText);
+    _fetchedBody = true;
+    _eventProgramDetails = EventProgramDetails(currentID: 1, finishTime: DateTime.now());
   }
 
   // ? hmmm maybe we don't need a context for adding

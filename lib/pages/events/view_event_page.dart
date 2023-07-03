@@ -1,9 +1,9 @@
-import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../models/event/event_head.dart';
 import '../../models/event/event_program.dart';
 import '../../utility/event_context.dart';
-import '../../widgets/posts/rich_text_view.dart';
+import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/view_all_programs.dart';
 
 class ViewEventPage extends StatefulWidget {
