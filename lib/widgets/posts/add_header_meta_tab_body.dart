@@ -4,10 +4,10 @@ class AddEventHeadMeta extends StatefulWidget {
   const AddEventHeadMeta(
       {super.key,
       required this.tecTitle,
-      required this.tecSubTitle,
+      required this.tecSubtitle,
       required this.onRequiredFieldChange,
       required this.contributorUIDs});
-  final TextEditingController tecTitle, tecSubTitle;
+  final TextEditingController tecTitle, tecSubtitle;
   final Function(String) onRequiredFieldChange;
   final List<String> contributorUIDs;
 
@@ -26,7 +26,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           onChanged: widget.onRequiredFieldChange,
         ),
         TextField(
-          controller: widget.tecSubTitle,
+          controller: widget.tecSubtitle,
           onChanged: widget.onRequiredFieldChange,
           decoration: const InputDecoration(label: Text('Subtitle'), hintText: 'The synopsis of the post'),
         ),

@@ -2,7 +2,6 @@ import 'package:ctrim_app/widgets/posts/add_header_meta_tab_body.dart';
 import 'package:ctrim_app/widgets/posts/add_media_tab.dart';
 import 'package:ctrim_app/widgets/posts/add_program_tab.dart';
 import 'package:flutter/material.dart';
-import '../../models/event/event_body.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/add_body_tab.dart';
 
@@ -19,7 +18,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   // * Required variables
   late final TabController _tabController;
-  final EventBody _eventBody = EventBody();
   final TextEditingController _tecTitle = TextEditingController(), _tecSubtitle = TextEditingController();
   // this can only be created after the user sets the _eventDate, we need to set the finishTime
   // the metadata is created at the end when uploading everything
@@ -56,6 +54,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         flexibleSpace: FlexibleSpaceBar(
           background: _buildAppBarBackground(),
         ),
+        actions: [
+          ElevatedButton.icon(
+              onPressed: _canSave ? () {} : null, icon: const Icon(Icons.upload), label: const Text('Save'))
+        ],
       ),
       SliverPadding(
         padding: const EdgeInsets.all(8.0),
@@ -109,7 +111,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     return TabBarView(controller: _tabController, children: [
       AddEventHeadMeta(
           tecTitle: _tecTitle,
-          tecSubTitle: _tecSubtitle,
+          tecSubtitle: _tecSubtitle,
           onRequiredFieldChange: _onRequiredFieldTextChange,
           contributorUIDs: _contributorUIDs),
       AddBodyTab(
@@ -141,10 +143,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return false;
     }
 
-    if (_eventBody.json!.isEmpty) {
+    if (widget.eventContext.body.json != null && widget.eventContext.body.json!.compareTo(_baseBody) == 0) {
       return false;
     }
-
     return true;
   }
+
+  static const String _baseBody = '[{"insert":"Hello, time to start writing!\n"}]';
 }
