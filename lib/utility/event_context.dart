@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
+
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_log.dart';
@@ -8,10 +10,9 @@ import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
 
 class EventContext {
-  static const String _startingBodyText = '[{"insert":"Hello, time to start writing!\n"}]';
   late final EventHead _eventHead;
   late final EventProgramDetails _eventProgramDetails;
-  late final List<EventRole> _allRoles;
+  final List<EventRole> _allRoles = List<EventRole>.empty(growable: true);
   late final List<EventLog> _allLogs;
   late final EventLog _latestLog;
   late final EventMetadata _eventMetadata;
@@ -27,9 +28,9 @@ class EventContext {
   }
 
   EventContext.adding() {
-    _eventBody.setJson(_startingBodyText);
     _fetchedBody = true;
-    _eventProgramDetails = EventProgramDetails(currentID: 1, finishTime: DateTime.now());
+    _eventProgramDetails = EventProgramDetails();
+    _eventMetadata = EventMetadata(authorUID: '1'); // ! remember this
   }
 
   // ? hmmm maybe we don't need a context for adding
@@ -66,4 +67,38 @@ class EventContext {
   // * Logs Related
   EventLog get latestLog => _latestLog;
   List<EventLog> get allLogs => _allLogs;
+
+  Future<void> addNewPost({
+    required String title,
+    required String subtitle,
+    DateTime? eventDate,
+  }) async {
+    final String id = await _getNewID();
+    final EventDBManager dbManager = EventDBManager(id);
+    final EventHeadDBManager headDBManager = EventHeadDBManager();
+
+    // head stuff
+    _eventHead = EventHead(id: id, media: {}); // ! add the key media!
+    _eventHead.setTitle(title);
+    _eventHead.setSubtitle(subtitle);
+    _eventHead.setRecentDate(DateTime.now());
+
+    // metadata
+    _eventMetadata.setLastUID('1'); // ! remember this
+
+    // log, create the new one for creation
+    final EventLog newLog = EventLog(log: 'Initial publish', uid: '1', id: DateTime.now()); // ! change UID
+
+    await headDBManager.saveNewHead(_eventHead);
+    await dbManager.addBody(_eventBody.json);
+    await dbManager.addMedia(_eventMedia);
+    await dbManager.addMetadata(_eventMetadata);
+    await dbManager.addAllRoles(_allRoles);
+    await dbManager.addProgramDetail(_eventProgramDetails);
+    await dbManager.addNewLog(newLog);
+  }
+
+  Future<String> _getNewID() async {
+    return '1';
+  }
 }

@@ -1,8 +1,6 @@
-import 'dart:convert';
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import '../../utility/event_context.dart';
 
 class EditBodyPage extends StatefulWidget {
   const EditBodyPage({super.key, required this.eventContext});
@@ -14,33 +12,43 @@ class EditBodyPage extends StatefulWidget {
 
 class _EditBodyPageState extends State<EditBodyPage> {
   late final quill.QuillController _controller;
-  String _exampleJson = '[{"insert":"Hello, time to start writing!\n"}]';
 
   @override
   void initState() {
-    String sanitisedExample = _exampleJson.replaceAll('\n', '\\n');
-    var thisJson = jsonDecode(sanitisedExample);
+    // String sanitisedExample = _exampleJson.replaceAll('\n', '\\n');
+    // var thisJson = jsonDecode(sanitisedExample);
+    // _controller = quill.QuillController(
+    //     document: quill.Document.fromJson(thisJson), selection: const TextSelection.collapsed(offset: 0));
     _controller = quill.QuillController(
-        document: quill.Document.fromJson(thisJson), selection: const TextSelection.collapsed(offset: 0));
+        document: quill.Document.fromJson(widget.eventContext.body.decodedJson),
+        selection: const TextSelection.collapsed(offset: 0));
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Body'),
-        actions: [
-          IconButton(
-              onPressed: () {
-                // var json = jsonEncode(_controller.document.toDelta().toJson());
-                // debugPrint(json);
-                _getSizeOfText();
-              },
-              icon: const Icon(Icons.save))
-        ],
+    return WillPopScope(
+      onWillPop: () async {
+        widget.eventContext.body.encodeJson(_controller.document.toDelta().toJson());
+        debugPrint(widget.eventContext.body.json);
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Body'),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  // var json = jsonEncode(_controller.document.toDelta().toJson());
+                  // debugPrint(json);
+                  _getSizeOfText();
+                },
+                icon: const Icon(Icons.save))
+          ],
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 
@@ -69,11 +77,11 @@ class _EditBodyPageState extends State<EditBodyPage> {
   _getSizeOfText() async {
     // var path = await getApplicationDocumentsDirectory();
     // var file = File('${path.path}/someTest.txt');
-    final rawJson = _controller.document.toDelta().toJson();
-    _exampleJson = jsonEncode(rawJson);
-    debugPrint('The example json encoded looks like $_exampleJson');
-    EventDBManager eventDBManager = EventDBManager('1');
-    eventDBManager.addBody(rawJson);
+    // final rawJson = _controller.document.toDelta().toJson();
+    // _exampleJson = jsonEncode(rawJson);
+    // debugPrint('The example json encoded looks like $_exampleJson');
+    // EventDBManager eventDBManager = EventDBManager('1');
+    // eventDBManager.addBody(rawJson);
 
     // await file.writeAsString(_exampleJson);
     // debugPrint('Size is ${await file.length()}');

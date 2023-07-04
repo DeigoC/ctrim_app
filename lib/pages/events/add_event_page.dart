@@ -25,6 +25,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   // * The optional variables
   final List<String> _contributorUIDs = List.empty(growable: true);
+  DateTime? _eventDate;
 
   @override
   void initState() {
@@ -56,7 +57,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         ),
         actions: [
           ElevatedButton.icon(
-              onPressed: _canSave ? () {} : null, icon: const Icon(Icons.upload), label: const Text('Save'))
+              onPressed: _canSave ? () => _onSaveClick() : null,
+              icon: const Icon(Icons.upload),
+              label: const Text('Save'))
         ],
       ),
       SliverPadding(
@@ -116,8 +119,12 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
           contributorUIDs: _contributorUIDs),
       AddBodyTab(
         eventContext: widget.eventContext,
+        onRequiredFieldTextChange: _onRequiredFieldTextChange,
       ),
-      AddProgramTab(eventContext: widget.eventContext),
+      AddProgramTab(
+        eventContext: widget.eventContext,
+        eventDate: _eventDate,
+      ),
       AddMediaTabBody(
         eventContext: widget.eventContext,
       ),
@@ -143,10 +150,60 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return false;
     }
 
-    if (widget.eventContext.body.json != null && widget.eventContext.body.json!.compareTo(_baseBody) == 0) {
+    if (widget.eventContext.body.json.compareTo(_baseBody) == 0) {
       return false;
     }
     return true;
+  }
+
+  void _onSaveClick() {
+    _confirmSave().then((confirmed) {
+      if (confirmed) {
+        _showUploadingDialog();
+        _savePost().then((_) {
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        });
+      }
+    });
+  }
+
+  Future<bool> _confirmSave() async {
+    bool result = false;
+    await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+              title: const Text('Save Post'),
+              content: const Text('Are you sure all details are correct?'),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                TextButton(
+                    onPressed: () {
+                      result = true;
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Save')),
+              ],
+            ));
+    return result;
+  }
+
+  Future<void> _savePost() async {
+    await widget.eventContext
+        .addNewPost(title: _tecTitle.text.trim(), subtitle: _tecSubtitle.text.trim(), eventDate: _eventDate);
+  }
+
+  void _showUploadingDialog() {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Dialog(
+              child: ListTile(
+                title: Text('Uploading Post'),
+                subtitle: Text('Please wait...'),
+                trailing: CircularProgressIndicator(),
+              ),
+            ));
   }
 
   static const String _baseBody = '[{"insert":"Hello, time to start writing!\n"}]';

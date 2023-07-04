@@ -80,23 +80,28 @@ class EventRole {
 
 class EventProgramDetails {
   late final int _currentID;
-  late DateTime _finishTime;
+  DateTime? _finishTime;
   bool _allDay = false;
 
-  EventProgramDetails({required int currentID, required DateTime finishTime})
-      : _currentID = currentID,
-        _finishTime = finishTime;
+  EventProgramDetails() {
+    _currentID = 1;
+  }
 
   EventProgramDetails.fromMap(Map<String, dynamic> data)
       : _currentID = data['CurrentID'],
-        _finishTime = (data['FinishTime'] as Timestamp).toDate();
+        _allDay = data['AllDay'],
+        _finishTime = (data['FinishTime'] as Timestamp).toDate(); // this might break
 
   toJson() {
-    return {'CurrentID': _currentID, 'FinishTime': Timestamp.fromDate(_finishTime)};
+    return {
+      'CurrentID': _currentID,
+      'AllDay': _allDay,
+      'FinishTime': _finishTime == null ? null : Timestamp.fromDate(_finishTime!)
+    };
   }
 
   int get getAndIncrementCurrentID => _currentID++; // TODO test this approach
-  DateTime get finishTime => _finishTime;
+  DateTime? get finishTime => _finishTime;
   bool get allDay => _allDay;
 
   void setFinishTime(DateTime newTime) => _finishTime = newTime;

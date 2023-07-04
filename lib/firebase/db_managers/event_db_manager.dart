@@ -9,11 +9,16 @@ import 'package:ctrim_app/models/event/event_program.dart';
 import '../../models/event/event_head.dart';
 
 class EventHeadDBManager {
-  final CollectionReference _ref = FirebaseFirestore.instance.collection('events');
+  static final CollectionReference _ref = FirebaseFirestore.instance.collection('events').withConverter<EventHead>(
+      fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!), toFirestore: (head, _) => head.toJson());
 
   Future<List<EventHead>> fetchEventHeads() async {
     _ref.get();
     return [];
+  }
+
+  Future<void> saveNewHead(final EventHead head) async {
+    await _ref.doc(head.id).set(head);
   }
 }
 
@@ -26,9 +31,8 @@ class EventDBManager {
 
   // * Body related
 
-  Future<void> addBody(final List<dynamic> rawJson) async {
-    final String encodedJson = jsonEncode(rawJson);
-    await _docRef.collection('body').doc('body').set({'body': encodedJson});
+  Future<void> addBody(String json) async {
+    await _docRef.collection('body').doc('body').set({'body': json});
   }
 
   Future<void> updateBody(final List<dynamic> rawJson) async {
