@@ -1,8 +1,7 @@
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../models/event/event_program.dart';
+import '../../models/event/event_program.dart';
+import '../../utility/event_context.dart';
 
 class ViewAllPrograms extends StatefulWidget {
   const ViewAllPrograms({super.key, required this.eventContext});

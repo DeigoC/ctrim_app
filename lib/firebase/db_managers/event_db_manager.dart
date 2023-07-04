@@ -13,8 +13,8 @@ class EventHeadDBManager {
       fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!), toFirestore: (head, _) => head.toJson());
 
   Future<List<EventHead>> fetchEventHeads() async {
-    _ref.get();
-    return [];
+    final collection = await _ref.get();
+    return List<EventHead>.from(collection.docs.map((e) => e.data()));
   }
 
   Future<void> saveNewHead(final EventHead head) async {

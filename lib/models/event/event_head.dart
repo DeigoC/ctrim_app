@@ -31,7 +31,7 @@ class EventHead {
         _location = data['Location'],
         _media = Map.from(data['Media']),
         _recentDate = (data['RecentDate'] as Timestamp).toDate(),
-        _eventDate = (data['EventDate'] as Timestamp).toDate(); // TODO will this break if null?
+        _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
 
   toJson() {
     return {

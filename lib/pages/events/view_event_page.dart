@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 import '../../models/event/event_head.dart';
 import '../../models/event/event_program.dart';
 import '../../utility/event_context.dart';
+import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
-import '../../widgets/view_all_programs.dart';
+import '../../widgets/posts/view_all_programs.dart';
 
 class ViewEventPage extends StatefulWidget {
-  const ViewEventPage({super.key});
+  const ViewEventPage({super.key, required this.eventHead});
+  final EventHead eventHead;
 
   @override
   State<ViewEventPage> createState() => _ViewEventPageState();
@@ -19,12 +21,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   void initState() {
-    _tabController = TabController(length: 2, vsync: this);
-    _eventContext = EventContext.viewing(
-        eventHead: EventHead(
-      id: '1',
-      media: {},
-    ));
+    _tabController = TabController(length: 3, vsync: this);
+    _eventContext = EventContext.viewing(eventHead: widget.eventHead);
     _eventContext.addManyRoles([
       EventRole(
           id: '1',
@@ -80,28 +78,33 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         ),
         actions: [IconButton(onPressed: () => _onSettingsClick(), icon: const Icon(Icons.more_vert))],
       ),
-      SliverPadding(
-        padding: const EdgeInsets.all(8.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate([
-            _buildTitle(),
-            TabBar(
-              labelColor: Colors.black,
-              controller: _tabController,
-              tabs: const [
-                Tab(
-                  icon: Icon(Icons.info_outline),
-                  text: 'About',
-                ),
-                Tab(
-                  icon: Icon(Icons.calendar_today),
-                  text: 'Program',
-                ),
-              ],
-            ),
-          ]),
-        ),
-      )
+      SliverList(
+        delegate: SliverChildListDelegate([
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: _buildTitle(),
+          ),
+          _buildMetadataSection(),
+          TabBar(
+            labelColor: Colors.black,
+            controller: _tabController,
+            tabs: const [
+              Tab(
+                icon: Icon(Icons.info_outline),
+                text: 'About',
+              ),
+              Tab(
+                icon: Icon(Icons.photo_album),
+                text: 'Media',
+              ),
+              Tab(
+                icon: Icon(Icons.calendar_today),
+                text: 'Program',
+              ),
+            ],
+          ),
+        ]),
+      ),
     ];
   }
 
@@ -109,6 +112,16 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return const Text(
       'Here is the title for the post!',
       style: TextStyle(fontSize: 28),
+    );
+  }
+
+  Widget _buildMetadataSection() {
+    return Wrap(
+      children: [
+        TextButton(onPressed: () {}, child: const Text('Name Here • Date here')),
+        TextButton(onPressed: () {}, child: const Text('Parent Post')),
+        TextButton(onPressed: () {}, child: const Text('Children Posts')),
+      ],
     );
   }
 
@@ -134,7 +147,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       ViewPostBody(
         eventContext: _eventContext,
       ),
-      ViewAllPrograms(eventContext: _eventContext)
+      ViewEventMediaTab(
+        eventContext: _eventContext,
+      ),
+      ViewAllPrograms(eventContext: _eventContext),
     ]);
   }
 

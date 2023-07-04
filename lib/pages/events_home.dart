@@ -40,6 +40,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
           },
           child: const Text('Add Event Test'),
         ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewEventsHomeTest()));
+          },
+          child: const Text('Fetch and load Event Head'),
+        ),
       ],
     );
   }
@@ -94,6 +100,9 @@ class ViewEventsHomeTestState extends State<ViewEventsHomeTest> {
           return ListTile(
             title: Text(thisHead.title),
             subtitle: Text(thisHead.subtitle),
+            onTap: () {
+              context.goNamed('view_event', extra: thisHead);
+            },
           );
         });
   }

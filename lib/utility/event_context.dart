@@ -1,7 +1,6 @@
 import 'dart:collection';
 
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-
+import '../firebase/db_managers/event_db_manager.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_log.dart';
