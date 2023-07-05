@@ -1,4 +1,5 @@
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
+import 'package:ctrim_app/models/event/event_program.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,6 +13,8 @@ class ViewEventsHome extends StatefulWidget {
 }
 
 class _ViewEventsHomeState extends State<ViewEventsHome> {
+  late EventProgram _thisProgram;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +48,25 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewEventsHomeTest()));
           },
           child: const Text('Fetch and load Event Head'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            EventSupplementalDBManager dbManager = EventSupplementalDBManager('1');
+            dbManager.fetchProgram().then((program) {
+              _thisProgram = program;
+              debugPrint('Fetch complete!');
+              debugPrint(program.toString());
+            });
+          },
+          child: const Text('Test Program Fetching'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            EventSupplementalDBManager dbManager = EventSupplementalDBManager('1');
+            _thisProgram.roles[0]['detail'] = 'The detail has changed now to be updated';
+            dbManager.updateProgram(_thisProgram);
+          },
+          child: const Text('Test Program Setting and Updatting'),
         ),
       ],
     );

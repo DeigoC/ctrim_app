@@ -13,7 +13,7 @@ class _AddMediaTabBodyState extends State<AddMediaTabBody> {
   @override
   Widget build(BuildContext context) {
     // TODO replace with the order src list!
-    final List<String> srcs = widget.eventContext.media.srcTypes.keys.toList();
+    final List<Map<String, String>> media = widget.eventContext.media.allMedia;
     return Column(
       children: [
         ElevatedButton.icon(
@@ -22,9 +22,10 @@ class _AddMediaTabBodyState extends State<AddMediaTabBody> {
             onPressed: () {}, icon: const Icon(Icons.add_photo_alternate_rounded), label: const Text('Add Video')),
         Expanded(
             child: ListView.builder(
-                itemCount: srcs.length,
+                itemCount: media.length,
                 itemBuilder: (_, index) {
-                  return Text('Image / Video box for the src: ${srcs[index]}');
+                  Map<String, String> thisMediaEntry = media[index];
+                  return Text('Image / Video box for the src: ${thisMediaEntry['src']}');
                 }))
       ],
     );

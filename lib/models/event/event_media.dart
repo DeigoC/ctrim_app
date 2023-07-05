@@ -1,16 +1,22 @@
 import 'dart:collection';
 
 class EventMedia {
-  late final Map<String, String> _srcTypes;
+  // * a media entry will have the following fields
+  // type - string id of the user performing the update
+  // src - the short string explaining the change
+  // title - short string to give it some description (optional)
+  late final List<Map<String, String>> _media;
 
-  EventMedia({required Map<String, String> srcTypes}) : _srcTypes = srcTypes;
-  EventMedia.fromMap(Map<String, dynamic> data) : _srcTypes = Map<String, String>.from(data['SrcTypes']);
+  EventMedia() {
+    _media = List.empty(growable: true);
+  }
+  EventMedia.fromMap(Map<String, dynamic> data) : _media = List<Map<String, String>>.from(data['Media']);
 
   toJson() {
-    return {'SrcTypes': _srcTypes};
+    return {'Media': _media};
   }
 
-  Map<String, String> get srcTypes => UnmodifiableMapView(_srcTypes);
-  void addMediaFile(String src, String type) => _srcTypes[src] = type;
-  void removeMediaFile(String srcToRemove) => _srcTypes.remove(srcToRemove);
+  List<Map<String, String>> get allMedia => UnmodifiableListView(_media);
+  void addMediaFile(Map<String, String> file) => _media.add(file);
+  void removeMediaFile(Map<String, String> file) => _media.remove(file); // test this kind of approach!
 }

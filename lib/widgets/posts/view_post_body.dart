@@ -51,7 +51,7 @@ class ViewPostBody extends StatelessWidget {
 
   // * LOGIC
   Future<List<dynamic>> _fetchTestBody() async {
-    final EventDBManager manager = EventDBManager(eventContext.head.id);
+    final EventSupplementalDBManager manager = EventSupplementalDBManager(eventContext.head.id);
     return manager.fetchBody();
   }
 }

@@ -1,26 +1,23 @@
-import 'dart:collection';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventHead {
   late final String _location, _id;
-  late final Map<String, String> _media;
+  late final List<Map<String, String>> _media;
   late String _title, _subtitle;
   late DateTime _recentDate;
   DateTime? _eventDate;
 
   EventHead({
     required id,
-    required Map<String, String> media,
     String title = '',
     String subtitle = '',
     String location = 'Belfast',
   }) {
     _id = id;
-    _media = media;
     _title = title;
     _subtitle = subtitle;
     _location = location;
+    _media = List<Map<String, String>>.empty(growable: true);
     _recentDate = DateTime.now();
   }
 
@@ -29,7 +26,7 @@ class EventHead {
         _title = data['Title'],
         _subtitle = data['Subtitle'],
         _location = data['Location'],
-        _media = Map.from(data['Media']),
+        _media = List.from(data['Media']),
         _recentDate = (data['RecentDate'] as Timestamp).toDate(),
         _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
 
@@ -50,12 +47,10 @@ class EventHead {
   String get location => _location;
   DateTime get recentDate => _recentDate;
   DateTime? get eventDate => _eventDate;
-  Map<String, String> get media => UnmodifiableMapView(_media);
+  List<Map<String, String>> get media => _media; // unmodifiable?
 
   void setTitle(String newTitle) => _title = newTitle;
   void setSubtitle(String newSubtitle) => _subtitle = newSubtitle;
   void setRecentDate(DateTime recentDate) => _recentDate = recentDate;
   void setEventDate(DateTime newEventDate) => _eventDate = eventDate;
-  void setMediaFile(String src, String type) => _media[src] = type;
-  void removeMediaFile(String src) => _media.remove(src);
 }

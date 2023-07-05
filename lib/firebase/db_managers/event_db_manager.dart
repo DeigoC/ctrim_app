@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctrim_app/models/event/event_log.dart';
 import 'package:ctrim_app/models/event/event_media.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/models/event/event_program.dart';
@@ -22,27 +21,29 @@ class EventHeadDBManager {
   }
 }
 
-class EventDBManager {
-  late final DocumentReference _docRef;
+class EventSupplementalDBManager {
+  late final CollectionReference _colRef;
 
-  EventDBManager(String id) {
-    _docRef = FirebaseFirestore.instance.collection('events').doc(id);
+  EventSupplementalDBManager(String id) {
+    _colRef = FirebaseFirestore.instance.collection('events').doc(id).collection('supplemental');
   }
 
   // * Body related
 
   Future<void> addBody(String json) async {
-    await _docRef.collection('body').doc('body').set({'body': json});
+    await _colRef.doc('body').set({'Body': json});
   }
 
   Future<void> updateBody(final List<dynamic> rawJson) async {
     final String encodedJson = jsonEncode(rawJson);
-    await _docRef.collection('body').doc('body').update({'body': encodedJson});
+    await _colRef.doc('body').update({'Body': encodedJson});
   }
 
+  // TODO test this again
   Future<List<dynamic>> fetchBody() async {
-    final doc = await _docRef.collection('body').doc('body').get();
-    final String encodedBody = doc.data()!['body'];
+    final doc = await _colRef.doc('body').get();
+    final data = doc.data() as Map<String, dynamic>;
+    final String encodedBody = data['Body'];
     final String sanitisedBody = encodedBody.replaceAll('\n', '\\n');
     final List<dynamic> result = jsonDecode(sanitisedBody);
     return result;
@@ -50,96 +51,49 @@ class EventDBManager {
 
   // * Program related - Details
 
-  Future<EventProgramDetails> fetchProgramDetails() async {
-    final doc = await _docRef.collection('program').doc('details').get();
-    return EventProgramDetails.fromMap(doc.data()!);
+  Future<EventProgram> fetchProgram() async {
+    final doc = await _colRef.doc('program').get();
+    return EventProgram.fromMap(doc.data() as Map<String, dynamic>);
   }
 
-  Future<void> addProgramDetail(final EventProgramDetails details) async {
-    await _docRef.collection('program').doc('details').set(details.toJson());
+  Future<void> setProgram(EventProgram program) async {
+    _colRef.doc('program').set(program.toJson());
   }
 
-  Future<void> updatedProgramDetail(EventProgramDetails details) async {
-    await _docRef.collection('program').doc('details').update(details.toJson());
-  }
-
-  // * Program related - Roles
-
-  Future<List<EventRole>> fetchAllRoles() async {
-    final collection = await _docRef.collection('program').get();
-    return collection.docs
-        .where((element) => element.id.compareTo('details') != 0)
-        .map<EventRole>((e) => EventRole.fromMap(e.id, e.data()))
-        .toList();
-  }
-
-  Future<List<EventRole>> fetchAllRolesForGuests() async {
-    final collection = await _docRef.collection('program').where('ForGuests', isEqualTo: true).get();
-    return collection.docs.map<EventRole>((e) => EventRole.fromMap(e.id, e.data())).toList();
-  }
-
-  Future<void> deleteAllRoles(final List<String> deletedRoles) async {
-    for (final String deletedRoleID in deletedRoles) {
-      await _docRef.collection('program').doc(deletedRoleID).delete();
-    }
-  }
-
-  Future<void> addAllRoles(final List<EventRole> newRoles) async {
-    for (final EventRole newRole in newRoles) {
-      await _docRef.collection('program').doc(newRole.id).set(newRole.toJson());
-    }
-  }
-
-  Future<void> updateAllRoles(final List<EventRole> updatedRoles) async {
-    for (final EventRole updatedRole in updatedRoles) {
-      await _docRef.collection('program').doc(updatedRole.id).update(updatedRole.toJson());
-    }
+  Future<void> updateProgram(EventProgram program) async {
+    _colRef.doc('program').update(program.toJson());
   }
 
   // * Supplemental - MetaData
+
   Future<EventMetadata> fetchMetadata() async {
-    final doc = await _docRef.collection('supplemental').doc('metadata').get();
-    return EventMetadata.fromMap(doc.data()!);
+    final doc = await _colRef.doc('metadata').get();
+    return EventMetadata.fromMap(doc.data() as Map<String, dynamic>);
   }
 
   Future<void> addMetadata(final EventMetadata data) async {
-    await _docRef.collection('supplemental').doc('metadata').set(data.toJson());
+    await _colRef.doc('metadata').set(data.toJson());
   }
 
   Future<void> updateMetadata(final EventMetadata data) async {
-    await _docRef.collection('supplemental').doc('metadata').update(data.toJson());
+    await _colRef.doc('metadata').update(data.toJson());
   }
 
   // * Supplemental - Media
+
   Future<EventMedia> fetchMedia() async {
-    final doc = await _docRef.collection('supplemental').doc('media').get();
-    return EventMedia.fromMap(doc.data()!);
+    final doc = await _colRef.doc('media').get();
+    return EventMedia.fromMap(doc.data() as Map<String, dynamic>);
   }
 
   Future<void> addMedia(final EventMedia media) async {
-    await _docRef.collection('supplemental').doc('media').set(media.toJson());
+    await _colRef.doc('media').set(media.toJson());
   }
 
   Future<void> updateMedia(EventMedia media) async {
-    await _docRef.collection('supplemental').doc('media').update(media.toJson());
+    await _colRef.doc('media').update(media.toJson());
   }
 
   // * Logs
-  Future<List<EventLog>> fetchAllLogs() async {
-    // TODO can we only fetch before the most recent one? - figure out how to fetch accordingly
-    final collection = await _docRef.collection('logs').get();
-    return collection.docs
-        .map<EventLog>((e) => EventLog.fromMap(DateTime.fromMillisecondsSinceEpoch(int.parse(e.id)), e.data()))
-        .toList();
-  }
-
-  // to fetch the most recent update
-  Future<EventLog> fetchLog(final DateTime id) async {
-    final doc = await _docRef.collection('logs').doc(id.millisecondsSinceEpoch.toString()).get();
-    return EventLog.fromMap(DateTime.fromMillisecondsSinceEpoch(int.parse(doc.id)), doc.data()!);
-  }
-
-  Future<void> addNewLog(final EventLog newLog) async {
-    await _docRef.collection('logs').doc(newLog.id.millisecondsSinceEpoch.toString()).set(newLog.toJson());
-  }
+  // TODO complete this again please
 }

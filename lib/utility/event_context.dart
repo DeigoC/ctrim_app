@@ -17,7 +17,7 @@ class EventContext {
   late final EventMetadata _eventMetadata;
 
   final EventBody _eventBody = EventBody();
-  final EventMedia _eventMedia = EventMedia(srcTypes: {});
+  final EventMedia _eventMedia = EventMedia();
 
   bool _fetchedBody = false;
 
@@ -73,11 +73,11 @@ class EventContext {
     DateTime? eventDate,
   }) async {
     final String id = await _getNewID();
-    final EventDBManager dbManager = EventDBManager(id);
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(id);
     final EventHeadDBManager headDBManager = EventHeadDBManager();
 
     // head stuff
-    _eventHead = EventHead(id: id, media: {}); // ! add the key media!
+    _eventHead = EventHead(id: id); // ! add the key media!
     _eventHead.setTitle(title);
     _eventHead.setSubtitle(subtitle);
     _eventHead.setRecentDate(DateTime.now());
@@ -86,15 +86,11 @@ class EventContext {
     _eventMetadata.setLastUID('1'); // ! remember this
 
     // log, create the new one for creation
-    final EventLog newLog = EventLog(log: 'Initial publish', uid: '1', id: DateTime.now()); // ! change UID
 
     await headDBManager.saveNewHead(_eventHead);
     await dbManager.addBody(_eventBody.json);
     await dbManager.addMedia(_eventMedia);
     await dbManager.addMetadata(_eventMetadata);
-    await dbManager.addAllRoles(_allRoles);
-    await dbManager.addProgramDetail(_eventProgramDetails);
-    await dbManager.addNewLog(newLog);
   }
 
   Future<String> _getNewID() async {
