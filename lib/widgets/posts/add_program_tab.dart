@@ -17,14 +17,14 @@ class _AddProgramTabState extends State<AddProgramTab> {
       const Text('Event Date is N/A'),
       ElevatedButton(onPressed: () {}, child: const Text('Change Date')),
       SwitchListTile(
-        value: widget.eventContext.programDetails.allDay,
+        value: widget.eventContext.allDay,
         onChanged: widget.eventDate == null ? null : (value) => {},
         title: const Text('All Day'),
       )
     ];
 
     // only add the rest once it's been declared that this is an event via the event date
-    if (widget.eventContext.head.eventDate != null) {
+    if (widget.eventDate != null) {
       // TODO add the rest of the program details + role assignment
     }
 

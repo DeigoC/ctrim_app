@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../models/event/event_head.dart';
-import '../../models/event/event_program.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
+import 'edit_body_page.dart';
+import 'edit_gallery_page.dart';
+import 'edit_program_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -23,28 +24,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   void initState() {
     _tabController = TabController(length: 3, vsync: this);
     _eventContext = EventContext.viewing(eventHead: widget.eventHead);
-    _eventContext.addManyRoles([
-      EventRole(
-          id: '1',
-          title: 'Role 1',
-          startTime: DateTime.now(),
-          finishTime: DateTime.now().add(const Duration(minutes: 20))),
-      EventRole(
-          id: '2',
-          title: 'Role 2',
-          startTime: DateTime.now(),
-          finishTime: DateTime.now().add(const Duration(minutes: 35))),
-      EventRole(
-          id: '3',
-          title: 'Role 3',
-          startTime: DateTime.now().add(const Duration(hours: 1)),
-          finishTime: DateTime.now().add(const Duration(hours: 1, minutes: 20))),
-      EventRole(
-          id: '4',
-          title: 'Role 4',
-          startTime: DateTime.now().add(const Duration(minutes: 30)),
-          finishTime: DateTime.now().add(const Duration(minutes: 45))),
-    ]);
     super.initState();
   }
 
@@ -94,12 +73,12 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                 text: 'About',
               ),
               Tab(
-                icon: Icon(Icons.photo_album),
-                text: 'Media',
-              ),
-              Tab(
                 icon: Icon(Icons.calendar_today),
                 text: 'Program',
+              ),
+              Tab(
+                icon: Icon(Icons.photo_album),
+                text: 'Media',
               ),
             ],
           ),
@@ -147,10 +126,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       ViewPostBody(
         eventContext: _eventContext,
       ),
+      ViewAllPrograms(eventContext: _eventContext),
       ViewEventMediaTab(
         eventContext: _eventContext,
       ),
-      ViewAllPrograms(eventContext: _eventContext),
     ]);
   }
 
@@ -164,6 +143,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         builder: (_) {
           return SafeArea(
               child: EventPostSettingsSheet(
+            onEditUpdate: () {
+              setState(() {});
+            },
             eventContext: _eventContext,
           ));
         });
@@ -171,7 +153,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 }
 
 class EventPostSettingsSheet extends StatefulWidget {
-  const EventPostSettingsSheet({super.key, required this.eventContext});
+  const EventPostSettingsSheet({super.key, required this.eventContext, required this.onEditUpdate});
+  final Function onEditUpdate;
   final EventContext eventContext;
 
   @override
@@ -206,14 +189,29 @@ class _EventPostSettingsSheetState extends State<EventPostSettingsSheet> {
 
   // * LOGIC
   _openEditBodyPage() {
-    context.goNamed('edit_body', extra: widget.eventContext);
+    // context.goNamed('edit_body', extra: widget.eventContext);
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
+        .then((_) {
+      widget.onEditUpdate();
+    });
   }
 
   _openEditGalleryPage() {
-    context.goNamed('edit_gallery', extra: widget.eventContext);
+    // context.goNamed('edit_gallery', extra: widget.eventContext);
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGallerlyPage(eventContext: widget.eventContext)))
+        .then((_) {
+      widget.onEditUpdate();
+    });
   }
 
   _openEditMoreDetailsPage() {
-    context.goNamed('edit_header_page', extra: widget.eventContext);
+    // context.goNamed('edit_header_page', extra: widget.eventContext);
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditEventProgramPage(eventContext: widget.eventContext)))
+        .then((_) {
+      widget.onEditUpdate();
+    });
   }
 }

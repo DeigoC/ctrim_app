@@ -1,6 +1,7 @@
+import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../models/event/event_program.dart';
+import '../../pages/events/add_program_page.dart';
+import '../../pages/events/edit_program_page.dart';
 import '../../utility/event_context.dart';
 
 class ViewAllPrograms extends StatefulWidget {
@@ -12,25 +13,48 @@ class ViewAllPrograms extends StatefulWidget {
 }
 
 class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
-  late List<EventRole> _allRoles;
-
   @override
   void initState() {
-    widget.eventContext.sortEventsByTime();
-    _allRoles = widget.eventContext.allRoles;
+    // TODO sort the program here!
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.eventContext.haveFetchedProgram) {
+      return _buildBodyWithData();
+    }
+    return _buildFB();
+  }
+
+  Widget _buildFB() {
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.head.id);
+    return FutureBuilder(
+        future: dbManager.fetchProgram(),
+        builder: (_, snap) {
+          Widget result = const Center(
+            child: CircularProgressIndicator(),
+          );
+          if (snap.hasData) {
+            widget.eventContext.setProgram(snap.data!);
+            result = _buildBodyWithData();
+          } else if (snap.hasError) {
+            result = const Center(
+              child: Text('Something went wrong! :('),
+            );
+          }
+          return result;
+        });
+  }
+
+  Widget _buildBodyWithData() {
     return Column(
       children: [
         Expanded(
           child: ListView.builder(
-              itemCount: _allRoles.length,
+              itemCount: widget.eventContext.allPrograms.length,
               itemBuilder: (_, index) {
-                EventRole thisRole = _allRoles[index];
-                return _buildRoleTile(thisRole);
+                return _buildRoleTile(widget.eventContext.allPrograms[index]);
               }),
         ),
         SafeArea(
@@ -42,15 +66,15 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     );
   }
 
-  Widget _buildRoleTile(EventRole thisRole) {
+  Widget _buildRoleTile(Map<String, dynamic> programEntry) {
     return ListTile(
-      title: Text(thisRole.title),
-      subtitle: Text(thisRole.startTime.toString()),
-      onTap: () => _buildProgramDialog(thisRole),
+      title: Text(programEntry['detail']),
+      subtitle: Text((programEntry['start'] as DateTime).toString()),
+      onTap: () => _buildProgramDialog(programEntry),
     );
   }
 
-  _buildProgramDialog(EventRole thisRole) {
+  _buildProgramDialog(Map<String, dynamic> programEntry) {
     showDialog(
         context: context,
         builder: (_) {
@@ -60,7 +84,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  Text('TODO ${thisRole.id}'),
+                  const Text('TODO - complete this! '),
+                  Text(programEntry['detail']),
                   ElevatedButton.icon(
                       onPressed: () => _openEditProgramPage(), icon: const Icon(Icons.edit), label: const Text('Edit'))
                 ],
@@ -72,11 +97,18 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   // * LOGIC
   _openAddProgramPage() {
-    context.goNamed('add_program', extra: widget.eventContext);
+    // context.goNamed('add_program', extra: widget.eventContext); // ! Doesn't work
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)));
   }
 
   _openEditProgramPage() {
-    // set the programID to edit to the context we pass
-    context.goNamed('edit_program', extra: widget.eventContext);
+    // context.goNamed('edit_program', extra: widget.eventContext); // ! Doesn't work
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditEventProgramPage(eventContext: widget.eventContext)))
+        .then((_) {
+      setState(() {
+        // rebuild in case of update
+      });
+    });
   }
 }

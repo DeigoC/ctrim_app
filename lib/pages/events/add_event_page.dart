@@ -150,7 +150,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return false;
     }
 
-    if (widget.eventContext.body.json.compareTo(_baseBody) == 0) {
+    if (widget.eventContext.isBodyEmpty) {
       return false;
     }
     return true;
@@ -205,6 +205,4 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               ),
             ));
   }
-
-  static const String _baseBody = '[{"insert":"Hello, time to start writing!\n"}]';
 }

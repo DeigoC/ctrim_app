@@ -40,13 +40,11 @@ class EventSupplementalDBManager {
   }
 
   // TODO test this again
-  Future<List<dynamic>> fetchBody() async {
+  Future<String> fetchBody() async {
     final doc = await _colRef.doc('body').get();
     final data = doc.data() as Map<String, dynamic>;
     final String encodedBody = data['Body'];
-    final String sanitisedBody = encodedBody.replaceAll('\n', '\\n');
-    final List<dynamic> result = jsonDecode(sanitisedBody);
-    return result;
+    return encodedBody;
   }
 
   // * Program related - Details

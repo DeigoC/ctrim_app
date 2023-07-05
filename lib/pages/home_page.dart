@@ -1,6 +1,8 @@
+import 'package:ctrim_app/pages/events/add_event_page.dart';
 import 'package:ctrim_app/pages/events_home.dart';
 import 'package:ctrim_app/pages/information_home.dart';
 import 'package:ctrim_app/pages/settings_home.dart';
+import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,6 +31,12 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _selectedIndex,
         onTap: (index) => _onNavigationItemTap(index),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+                context, MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding())));
+          },
+          label: const Text('Add Post')),
     );
   }
 

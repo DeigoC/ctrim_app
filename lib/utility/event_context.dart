@@ -1,64 +1,72 @@
 import 'dart:collection';
 
+import 'package:ctrim_app/models/event/event_program.dart';
+
 import '../firebase/db_managers/event_db_manager.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
-import '../models/event/event_program.dart';
 
 class EventContext {
-  late final EventHead _eventHead;
-  late final EventProgramDetails _eventProgramDetails;
-  final List<EventRole> _allRoles = List<EventRole>.empty(growable: true);
+  late final EventHead _head;
   late final List<EventLog> _allLogs;
   late final EventLog _latestLog;
-  late final EventMetadata _eventMetadata;
+  late final EventMetadata _metadata;
+  late final EventProgram _program;
 
   final EventBody _eventBody = EventBody();
   final EventMedia _eventMedia = EventMedia();
 
-  bool _fetchedBody = false;
+  bool _fetchedBody = false, _fetchedProgram = false;
 
   // for viewing and editing
   EventContext.viewing({required EventHead eventHead}) {
-    _eventHead = eventHead;
+    _head = eventHead;
   }
 
   EventContext.adding() {
     _fetchedBody = true;
-    _eventProgramDetails = EventProgramDetails();
-    _eventMetadata = EventMetadata(authorUID: '1'); // ! remember this
+    _metadata = EventMetadata(authorUID: '1'); // ! remember this
+    _program = EventProgram();
   }
 
   // ? hmmm maybe we don't need a context for adding
   // * Head Related
-  EventHead get head => _eventHead;
+  EventHead get head => _head;
 
   // * Body Related
-  EventBody get body => _eventBody;
   bool get haveFetchedBody => _fetchedBody;
-  flagFetchedBody() => _fetchedBody = true;
+
+  // ! be weary because trim() could not be applied
+  bool get isBodyEmpty => _eventBody.json.compareTo('[{"insert":"\n"}]') == 0;
+  List<dynamic> get body => _eventBody.decodedJson;
+
+  void setBodyJson(List<dynamic> json) {
+    _eventBody.encodeJson(json);
+  }
+
+  void setFetchedBody(String encodedBody) {
+    _eventBody.setJson(encodedBody);
+    _fetchedBody = true;
+  }
 
   // * Program Related
-  EventProgramDetails get programDetails => _eventProgramDetails;
 
-  List<EventRole> get allRoles => UnmodifiableListView(_allRoles);
-  void addRole(EventRole newRole) => _allRoles.add(newRole);
-  void addManyRoles(List<EventRole> manyRoles) => _allRoles.addAll(manyRoles);
-  void removeRole(String id) => _allRoles.removeWhere((element) => element.id.compareTo(id) == 0);
+  bool get allDay => _program.allDay;
+  bool get haveFetchedProgram => _fetchedProgram;
+  List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 
-  sortEventsByTime() => _allRoles.sort((a, b) {
-        // ? This time sorting could be a problem later, be weary of it
-        if (a.startTime.compareTo(b.startTime) == 0) {
-          return a.priorty.compareTo(b.priorty);
-        }
-        return a.startTime.compareTo(b.startTime);
-      });
+  void setProgram(EventProgram program) {
+    _fetchedProgram = true;
+    _program = program;
+  }
+
+  void addProgram(Map<String, dynamic> programEntry) => _program.addRole(programEntry);
 
   // * Supplemental - Metadata Related
-  EventMetadata get metadata => _eventMetadata;
+  EventMetadata get metadata => _metadata;
 
   // * Supplemental - Media Related
   EventMedia get media => _eventMedia;
@@ -66,6 +74,8 @@ class EventContext {
   // * Logs Related
   EventLog get latestLog => _latestLog;
   List<EventLog> get allLogs => _allLogs;
+
+  // * General logic
 
   Future<void> addNewPost({
     required String title,
@@ -77,20 +87,20 @@ class EventContext {
     final EventHeadDBManager headDBManager = EventHeadDBManager();
 
     // head stuff
-    _eventHead = EventHead(id: id); // ! add the key media!
-    _eventHead.setTitle(title);
-    _eventHead.setSubtitle(subtitle);
-    _eventHead.setRecentDate(DateTime.now());
+    _head = EventHead(id: id); // ! add the key media!
+    _head.setTitle(title);
+    _head.setSubtitle(subtitle);
+    _head.setRecentDate(DateTime.now());
 
     // metadata
-    _eventMetadata.setLastUID('1'); // ! remember this
+    _metadata.setLastUID('1'); // ! remember this
 
     // log, create the new one for creation
 
-    await headDBManager.saveNewHead(_eventHead);
+    await headDBManager.saveNewHead(_head);
     await dbManager.addBody(_eventBody.json);
     await dbManager.addMedia(_eventMedia);
-    await dbManager.addMetadata(_eventMetadata);
+    await dbManager.addMetadata(_metadata);
   }
 
   Future<String> _getNewID() async {

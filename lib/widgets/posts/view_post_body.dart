@@ -10,24 +10,23 @@ class ViewPostBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (eventContext.haveFetchedBody) {
+      debugPrint('Rebuilding body');
       final quill.QuillController controller = quill.QuillController(
-          document: quill.Document.fromJson(eventContext.body.decodedJson),
-          selection: const TextSelection.collapsed(offset: 0));
+          document: quill.Document.fromJson(eventContext.body), selection: const TextSelection.collapsed(offset: 0));
       return _buildBodyWithData(controller);
     }
     return _buildFB();
   }
 
   Widget _buildFB() {
-    return FutureBuilder<List<dynamic>>(
+    return FutureBuilder<String>(
         future: _fetchTestBody(),
         builder: (_, snap) {
           if (snap.hasData) {
-            eventContext.body.encodeJson(snap.data!);
-            eventContext.flagFetchedBody();
+            eventContext.setFetchedBody(snap.data!);
 
             final quill.QuillController controller = quill.QuillController(
-                document: quill.Document.fromJson(eventContext.body.decodedJson),
+                document: quill.Document.fromJson(eventContext.body),
                 selection: const TextSelection.collapsed(offset: 0));
 
             return _buildBodyWithData(controller);
@@ -50,7 +49,7 @@ class ViewPostBody extends StatelessWidget {
   }
 
   // * LOGIC
-  Future<List<dynamic>> _fetchTestBody() async {
+  Future<String> _fetchTestBody() async {
     final EventSupplementalDBManager manager = EventSupplementalDBManager(eventContext.head.id);
     return manager.fetchBody();
   }

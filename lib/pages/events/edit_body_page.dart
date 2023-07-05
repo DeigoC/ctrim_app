@@ -20,7 +20,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
     // _controller = quill.QuillController(
     //     document: quill.Document.fromJson(thisJson), selection: const TextSelection.collapsed(offset: 0));
     _controller = quill.QuillController(
-        document: quill.Document.fromJson(widget.eventContext.body.decodedJson),
+        document: quill.Document.fromJson(widget.eventContext.body),
         selection: const TextSelection.collapsed(offset: 0));
 
     super.initState();
@@ -30,8 +30,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        widget.eventContext.body.encodeJson(_controller.document.toDelta().toJson());
-        debugPrint(widget.eventContext.body.json);
+        widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
         return true;
       },
       child: Scaffold(
@@ -78,7 +77,8 @@ class _EditBodyPageState extends State<EditBodyPage> {
     // var path = await getApplicationDocumentsDirectory();
     // var file = File('${path.path}/someTest.txt');
     // final rawJson = _controller.document.toDelta().toJson();
-    // _exampleJson = jsonEncode(rawJson);
+    // final _exampleJson = jsonEncode(rawJson);
+    // debugPrint(_exampleJson);
     // debugPrint('The example json encoded looks like $_exampleJson');
     // EventDBManager eventDBManager = EventDBManager('1');
     // eventDBManager.addBody(rawJson);
