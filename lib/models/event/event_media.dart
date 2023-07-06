@@ -2,7 +2,7 @@ import 'dart:collection';
 
 class EventMedia {
   // * a media entry will have the following fields
-  // type - string id of the user performing the update
+  // type - string id of the user performing the update (img or vid)
   // src - the short string explaining the change
   // title - short string to give it some description (optional)
   late final List<Map<String, String>> _media;
