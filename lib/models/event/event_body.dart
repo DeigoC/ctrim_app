@@ -6,4 +6,7 @@ class EventBody {
   List<dynamic> get decodedJson => jsonDecode(_json.replaceAll('\n', '\\n'));
   void encodeJson(List<dynamic> json) => _json = jsonEncode(json);
   void setJson(String json) => _json = json;
+  int compareTo(List<dynamic> otherJson) {
+    return jsonEncode(otherJson).compareTo(_json);
+  }
 }

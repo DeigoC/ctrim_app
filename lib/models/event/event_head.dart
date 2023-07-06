@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class EventHead {
   late final String _location, _id;
@@ -47,6 +48,7 @@ class EventHead {
   String get location => _location;
   DateTime get recentDate => _recentDate;
   DateTime? get eventDate => _eventDate;
+  TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
   List<Map<String, String>> get media => _media; // unmodifiable?
 
   void setTitle(String newTitle) => _title = newTitle;

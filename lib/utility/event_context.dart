@@ -20,10 +20,12 @@ class EventContext {
   final EventMedia _eventMedia = EventMedia();
 
   bool _fetchedBody = false, _fetchedProgram = false;
+  bool _canSaveTheEditing = false;
 
   // for viewing and editing
   EventContext.viewing({required EventHead eventHead}) {
     _head = eventHead;
+    _canSaveTheEditing = false;
   }
 
   EventContext.adding() {
@@ -32,7 +34,6 @@ class EventContext {
     _program = EventProgram();
   }
 
-  // ? hmmm maybe we don't need a context for adding
   // * Head Related
   EventHead get head => _head;
 
@@ -52,6 +53,8 @@ class EventContext {
     _fetchedBody = true;
   }
 
+  bool isSameJson(List<dynamic> json) => _eventBody.compareTo(json) == 0;
+
   // * Program Related
 
   bool get allDay => _program.allDay;
@@ -66,12 +69,15 @@ class EventContext {
   void addProgram(Map<String, dynamic> programEntry) => _program.addRole(programEntry);
 
   // * Supplemental - Metadata Related
+
   EventMetadata get metadata => _metadata;
 
   // * Supplemental - Media Related
+
   EventMedia get media => _eventMedia;
 
   // * Logs Related
+
   EventLog get latestLog => _latestLog;
   List<EventLog> get allLogs => _allLogs;
 
@@ -106,4 +112,7 @@ class EventContext {
   Future<String> _getNewID() async {
     return '1';
   }
+
+  void allowSavingOfTheEdit() => _canSaveTheEditing = true;
+  bool get canSaveTheEditing => _canSaveTheEditing;
 }

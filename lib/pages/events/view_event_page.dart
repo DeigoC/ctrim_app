@@ -6,7 +6,6 @@ import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
-import 'edit_program_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -55,7 +54,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         flexibleSpace: FlexibleSpaceBar(
           background: _buildAppBarBackground(),
         ),
-        actions: [IconButton(onPressed: () => _onSettingsClick(), icon: const Icon(Icons.more_vert))],
+        actions: [
+          ElevatedButton.icon(
+              onPressed: _eventContext.canSaveTheEditing ? () {} : null,
+              icon: const Icon(Icons.save),
+              label: const Text('Update')),
+          IconButton(onPressed: () => _onSettingsClick(), icon: const Icon(Icons.more_vert))
+        ],
       ),
       SliverList(
         delegate: SliverChildListDelegate([
@@ -126,7 +131,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       ViewPostBody(
         eventContext: _eventContext,
       ),
-      ViewAllPrograms(eventContext: _eventContext),
+      ViewAllPrograms(
+        eventContext: _eventContext,
+        onProgramChanged: () {
+          // ! I don't like this! But I want a quick and simple way to update the save button
+          setState(() {});
+        },
+      ),
       ViewEventMediaTab(
         eventContext: _eventContext,
       ),
@@ -177,11 +188,6 @@ class _EventPostSettingsSheetState extends State<EventPostSettingsSheet> {
             leading: const Icon(Icons.photo_album),
             onTap: () => _openEditGalleryPage(),
           ),
-          ListTile(
-            title: const Text('Edit More Details'),
-            leading: const Icon(Icons.note_alt),
-            onTap: () => _openEditMoreDetailsPage(),
-          ),
         ],
       ),
     );
@@ -201,15 +207,6 @@ class _EventPostSettingsSheetState extends State<EventPostSettingsSheet> {
     // context.goNamed('edit_gallery', extra: widget.eventContext);
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGallerlyPage(eventContext: widget.eventContext)))
-        .then((_) {
-      widget.onEditUpdate();
-    });
-  }
-
-  _openEditMoreDetailsPage() {
-    // context.goNamed('edit_header_page', extra: widget.eventContext);
-    Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditEventProgramPage(eventContext: widget.eventContext)))
         .then((_) {
       widget.onEditUpdate();
     });

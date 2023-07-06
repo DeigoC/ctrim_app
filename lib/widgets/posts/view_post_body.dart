@@ -10,7 +10,6 @@ class ViewPostBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (eventContext.haveFetchedBody) {
-      debugPrint('Rebuilding body');
       final quill.QuillController controller = quill.QuillController(
           document: quill.Document.fromJson(eventContext.body), selection: const TextSelection.collapsed(offset: 0));
       return _buildBodyWithData(controller);

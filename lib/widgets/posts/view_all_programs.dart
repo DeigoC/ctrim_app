@@ -5,8 +5,9 @@ import '../../pages/events/edit_program_page.dart';
 import '../../utility/event_context.dart';
 
 class ViewAllPrograms extends StatefulWidget {
-  const ViewAllPrograms({super.key, required this.eventContext});
+  const ViewAllPrograms({super.key, required this.eventContext, required this.onProgramChanged});
   final EventContext eventContext;
+  final Function onProgramChanged;
 
   @override
   State<ViewAllPrograms> createState() => _ViewAllProgramsPageState();
@@ -58,10 +59,16 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               }),
         ),
         SafeArea(
+            child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SizedBox(
+            width: double.infinity,
             child: ElevatedButton.icon(
-                onPressed: () => _openAddProgramPage(),
+                onPressed: _openAddProgramPage,
                 icon: const Icon(Icons.edit_calendar),
-                label: const Text('Add Program')))
+                label: const Text('Add Program')),
+          ),
+        ))
       ],
     );
   }
@@ -70,24 +77,24 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     return ListTile(
       title: Text(programEntry['detail']),
       subtitle: Text((programEntry['start'] as DateTime).toString()),
-      onTap: () => _buildProgramDialog(programEntry),
+      onTap: () => _showProgramDialog(programEntry),
     );
   }
 
-  _buildProgramDialog(Map<String, dynamic> programEntry) {
+  void _showProgramDialog(Map<String, dynamic> programEntry) {
     showDialog(
         context: context,
         builder: (_) {
-          // ? Do we need to rebuild this Dialog after an edit's been done?
-          // obv we can use the AppContext Provider but... is that feasible?
           return Dialog(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const Text('TODO - complete this! '),
+                  const Text('TODO - complete this!'),
                   Text(programEntry['detail']),
                   ElevatedButton.icon(
-                      onPressed: () => _openEditProgramPage(), icon: const Icon(Icons.edit), label: const Text('Edit'))
+                      onPressed: () => _openEditProgramPage(programEntry),
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Edit'))
                 ],
               ),
             ),
@@ -96,18 +103,34 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   // * LOGIC
-  _openAddProgramPage() {
+  void _openAddProgramPage() {
     // context.goNamed('add_program', extra: widget.eventContext); // ! Doesn't work
-    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)));
-  }
-
-  _openEditProgramPage() {
-    // context.goNamed('edit_program', extra: widget.eventContext); // ! Doesn't work
-    Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditEventProgramPage(eventContext: widget.eventContext)))
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {
         // rebuild in case of update
+        if (widget.eventContext.canSaveTheEditing) {
+          widget.onProgramChanged();
+        }
+      });
+    });
+  }
+
+  void _openEditProgramPage(Map<String, dynamic> programEntry) {
+    // context.goNamed('edit_program', extra: widget.eventContext); // ! Doesn't work
+    Navigator.of(context).pop();
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => EditEventProgramPage(
+                  eventContext: widget.eventContext,
+                  programEntry: programEntry,
+                ))).then((_) {
+      setState(() {
+        // rebuild in case of update
+        if (widget.eventContext.canSaveTheEditing) {
+          widget.onProgramChanged();
+        }
       });
     });
   }

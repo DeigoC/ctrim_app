@@ -30,7 +30,12 @@ class _EditBodyPageState extends State<EditBodyPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
+        // ! This isn't perfect? Remember that the user can add empty lines
+        if (!widget.eventContext.isSameJson(_controller.document.toDelta().toJson())) {
+          widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
+          widget.eventContext.allowSavingOfTheEdit();
+        }
+
         return true;
       },
       child: Scaffold(

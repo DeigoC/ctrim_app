@@ -3,7 +3,6 @@ import 'package:ctrim_app/pages/events/add_event_page.dart';
 import 'package:ctrim_app/pages/events/add_program_page.dart';
 import 'package:ctrim_app/pages/events/edit_gallery_page.dart';
 import 'package:ctrim_app/pages/events/edit_header_page.dart';
-import 'package:ctrim_app/pages/events/edit_program_page.dart';
 import 'package:ctrim_app/pages/events/view_event_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
 import 'package:ctrim_app/pages/view_gallery_page.dart';
@@ -55,15 +54,15 @@ final GoRouter _router = GoRouter(routes: <RouteBase>[
                 );
               },
             ),
-            GoRoute(
-              path: 'edit_program',
-              name: 'edit_program',
-              builder: (context, state) {
-                return EditEventProgramPage(
-                  eventContext: state.extra as EventContext,
-                );
-              },
-            ),
+            // GoRoute(
+            //   path: 'edit_program',
+            //   name: 'edit_program',
+            //   builder: (context, state) {
+            //     return EditEventProgramPage(
+            //       eventContext: state.extra as EventContext,
+            //     );
+            //   },
+            // ),
             GoRoute(
               path: 'edit_body',
               name: 'edit_body',
