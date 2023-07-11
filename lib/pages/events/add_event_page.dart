@@ -1,7 +1,10 @@
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/posts/add_header_meta_tab_body.dart';
 import 'package:ctrim_app/widgets/posts/add_media_tab.dart';
 import 'package:ctrim_app/widgets/posts/add_program_tab.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../firebase/db_managers/event_db_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/add_body_tab.dart';
 
@@ -57,9 +60,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         ),
         actions: [
           ElevatedButton.icon(
-              onPressed: _canSave ? () => _onSaveClick() : null,
-              icon: const Icon(Icons.upload),
-              label: const Text('Save'))
+            onPressed: _canSave ? _onSaveClick : null,
+            icon: const Icon(Icons.upload),
+            label: const Text('Save'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          )
         ],
       ),
       SliverPadding(
@@ -96,7 +101,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   Widget? _buildAppBarBackground() {
     // * If there are no images, we should just remove the expanded height
-
+    if (widget.eventContext.media.allMedia.isEmpty) {
+      return null;
+    }
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
@@ -150,7 +157,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return false;
     }
 
-    if (widget.eventContext.isBodyEmpty) {
+    if (widget.eventContext.isBodyUntouched) {
       return false;
     }
     return true;
@@ -190,7 +197,19 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   Future<void> _savePost() async {
     await widget.eventContext
-        .addNewPost(title: _tecTitle.text.trim(), subtitle: _tecSubtitle.text.trim(), eventDate: _eventDate);
+        .addNewPost(title: _tecTitle.text.trim(), subtitle: _tecSubtitle.text.trim(), eventDate: _eventDate)
+        .then((newID) => _updateParentMetadata(newID));
+  }
+
+  void _updateParentMetadata(String thisPostID) {
+    final String parentID = widget.eventContext.metadata.parentID!;
+    final metadata = Provider.of<AppContext>(context, listen: false).getMetadata(parentID);
+    // the metadata cannot be null at this stage right? - well, we still have to perform the check regardless
+    if (metadata != null) {
+      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+      metadata.addChildID(thisPostID);
+      dbManager.updateMetadata(metadata);
+    }
   }
 
   void _showUploadingDialog() {

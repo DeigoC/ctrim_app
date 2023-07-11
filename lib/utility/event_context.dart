@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:ctrim_app/firebase/db_managers/id_tracker.dart';
 import 'package:ctrim_app/models/event/event_program.dart';
 
 import '../firebase/db_managers/event_db_manager.dart';
@@ -15,23 +16,27 @@ class EventContext {
   late final EventLog _latestLog;
   late final EventMetadata _metadata;
   late final EventProgram _program;
-
+  late final EventMedia _eventMedia;
   final EventBody _eventBody = EventBody();
-  final EventMedia _eventMedia = EventMedia();
 
-  bool _fetchedBody = false, _fetchedProgram = false;
-  bool _canSaveTheEditing = false;
+  bool _fetchedBody = false,
+      _fetchedProgram = false,
+      _canSaveTheEditing = false,
+      _viewingChild = false,
+      _fetchedMeta = false;
 
   // for viewing and editing
-  EventContext.viewing({required EventHead eventHead}) {
+  EventContext.viewing({required EventHead eventHead, bool? viewingChild}) {
     _head = eventHead;
     _canSaveTheEditing = false;
+    _viewingChild = viewingChild ?? _viewingChild;
   }
 
-  EventContext.adding() {
+  EventContext.adding({String? parentID}) {
     _fetchedBody = true;
-    _metadata = EventMetadata(authorUID: '1'); // ! remember this
+    _metadata = EventMetadata(authorUID: '1', parentID: parentID); // ! remember this
     _program = EventProgram();
+    _eventMedia = EventMedia();
   }
 
   // * Head Related
@@ -41,7 +46,7 @@ class EventContext {
   bool get haveFetchedBody => _fetchedBody;
 
   // ! be weary because trim() could not be applied
-  bool get isBodyEmpty => _eventBody.json.compareTo('[{"insert":"\n"}]') == 0;
+  bool get isBodyUntouched => _eventBody.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
   List<dynamic> get body => _eventBody.decodedJson;
 
   void setBodyJson(List<dynamic> json) {
@@ -61,7 +66,7 @@ class EventContext {
   bool get haveFetchedProgram => _fetchedProgram;
   List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 
-  void setProgram(EventProgram program) {
+  void setFetchedProgram(EventProgram program) {
     _fetchedProgram = true;
     _program = program;
   }
@@ -71,6 +76,13 @@ class EventContext {
   // * Supplemental - Metadata Related
 
   EventMetadata get metadata => _metadata;
+
+  void setFetchedMetadata(EventMetadata data) {
+    if (!_fetchedMeta) {
+      _metadata = data;
+      _fetchedMeta = true;
+    }
+  }
 
   // * Supplemental - Media Related
 
@@ -83,7 +95,7 @@ class EventContext {
 
   // * General logic
 
-  Future<void> addNewPost({
+  Future<String> addNewPost({
     required String title,
     required String subtitle,
     DateTime? eventDate,
@@ -107,12 +119,19 @@ class EventContext {
     await dbManager.addBody(_eventBody.json);
     await dbManager.addMedia(_eventMedia);
     await dbManager.addMetadata(_metadata);
+    return id;
   }
 
   Future<String> _getNewID() async {
-    return '1';
+    final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
+    return await idTrackerDBManager.getAndIncrementEventID();
   }
+
+  String get id => _head.id;
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
   bool get canSaveTheEditing => _canSaveTheEditing;
+  bool get isViewingChild => _viewingChild;
+  void nowViewingChild() => _viewingChild = true;
+  void notViewingChild() => _viewingChild = false;
 }

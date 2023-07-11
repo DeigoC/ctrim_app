@@ -1,6 +1,9 @@
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'firebase/db_managers/event_db_manager.dart';
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
@@ -19,7 +22,10 @@ void main() async {
   // SettingsView.
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  final EventHeadDBManager eventHeadDBManager = EventHeadDBManager(); // should this be here?
+  final heads = await eventHeadDBManager.fetchEventHeads();
 
   // * We will have all the loading logic take place here
-  runApp(MyApp(settingsController: settingsController));
+  runApp(ChangeNotifierProvider(
+      create: (_) => AppContext(heads: heads), child: MyApp(settingsController: settingsController)));
 }

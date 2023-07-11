@@ -1,99 +1,10 @@
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/pages/events/add_event_page.dart';
-import 'package:ctrim_app/pages/events/add_program_page.dart';
-import 'package:ctrim_app/pages/events/edit_gallery_page.dart';
-import 'package:ctrim_app/pages/events/edit_header_page.dart';
-import 'package:ctrim_app/pages/events/view_event_page.dart';
 import 'package:ctrim_app/pages/home_page.dart';
-import 'package:ctrim_app/pages/view_gallery_page.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:go_router/go_router.dart';
 
-import '../pages/events/edit_body_page.dart';
 import 'settings/settings_controller.dart';
 // import 'settings/settings_view.dart';
-
-final GoRouter _router = GoRouter(routes: <RouteBase>[
-  GoRoute(
-    path: '/',
-    builder: (BuildContext context, GoRouterState state) {
-      return const HomePage();
-    },
-    routes: <RouteBase>[
-      GoRoute(
-        path: 'view_gallery',
-        name: 'view_gallery',
-        builder: (context, state) {
-          return const ViewGalleryPage();
-        },
-      ),
-      GoRoute(
-          path: 'add_event',
-          name: 'add_event',
-          builder: (context, state) => AddEventPage(
-                eventContext: EventContext.adding(),
-              )),
-      GoRoute(
-          path: 'view_event',
-          name: 'view_event',
-          builder: (context, state) {
-            return ViewEventPage(
-              eventHead: state.extra as EventHead,
-            );
-          },
-          routes: [
-            GoRoute(
-              path: 'add_program',
-              name: 'add_program',
-              builder: (context, state) {
-                return AddEventProgramPage(
-                  eventContext: state.extra as EventContext,
-                );
-              },
-            ),
-            // GoRoute(
-            //   path: 'edit_program',
-            //   name: 'edit_program',
-            //   builder: (context, state) {
-            //     return EditEventProgramPage(
-            //       eventContext: state.extra as EventContext,
-            //     );
-            //   },
-            // ),
-            GoRoute(
-              path: 'edit_body',
-              name: 'edit_body',
-              builder: (context, state) {
-                return EditBodyPage(
-                  eventContext: state.extra as EventContext,
-                );
-              },
-            ),
-            GoRoute(
-              path: 'edit_gallery',
-              name: 'edit_gallery',
-              builder: (context, state) {
-                return EditGallerlyPage(
-                  eventContext: state.extra as EventContext,
-                );
-              },
-            ),
-            GoRoute(
-              path: 'edit_header_page',
-              name: 'edit_header_page',
-              builder: (context, state) {
-                return EditEventDetailsPage(
-                  eventContext: state.extra as EventContext,
-                );
-              },
-            ),
-          ]),
-    ],
-  )
-]);
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -113,7 +24,7 @@ class MyApp extends StatelessWidget {
     return AnimatedBuilder(
       animation: settingsController,
       builder: (BuildContext context, Widget? child) {
-        return MaterialApp.router(
+        return MaterialApp(
           title: 'CTRIM',
           // Providing a restorationScopeId allows the Navigator built by the
           // MaterialApp to restore the navigation stack when a user leaves and
@@ -147,6 +58,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(),
           darkTheme: ThemeData.dark(),
           themeMode: settingsController.themeMode,
+          home: const HomePage(),
 
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
@@ -168,7 +80,6 @@ class MyApp extends StatelessWidget {
           //     },
           //   );
           // },
-          routerConfig: _router,
         );
       },
     );

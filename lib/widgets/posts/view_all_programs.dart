@@ -37,11 +37,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             child: CircularProgressIndicator(),
           );
           if (snap.hasData) {
-            widget.eventContext.setProgram(snap.data!);
+            widget.eventContext.setFetchedProgram(snap.data!);
             result = _buildBodyWithData();
           } else if (snap.hasError) {
+            // when there's no program, it goes here
             result = const Center(
-              child: Text('Something went wrong! :('),
+              child: Text('No program fetched'),
             );
           }
           return result;
