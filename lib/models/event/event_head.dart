@@ -22,14 +22,23 @@ class EventHead {
     _recentDate = DateTime.now();
   }
 
-  EventHead.fromMap(String id, Map<String, dynamic> data)
-      : _id = id,
-        _title = data['Title'],
-        _subtitle = data['Subtitle'],
-        _location = data['Location'],
-        _media = List.from(data['Media']),
-        _recentDate = (data['RecentDate'] as Timestamp).toDate(),
-        _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
+  EventHead.fromMap(String id, Map<String, dynamic> data) {
+    _id = id;
+    _title = data['Title'];
+    _subtitle = data['Subtitle'];
+    _location = data['Location'];
+    _media = _toMedia(List.from(data['Media']));
+    _recentDate = (data['RecentDate'] as Timestamp).toDate();
+    _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
+  }
+
+  List<Map<String, String>> _toMedia(List<Map<String, dynamic>> data) {
+    final List<Map<String, String>> result = List<Map<String, String>>.empty(growable: true);
+    for (final entry in data) {
+      result.add({'src': entry['src'], 'type': entry['type'], 'title': entry['title']});
+    }
+    return result;
+  }
 
   toJson() {
     return {
