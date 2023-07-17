@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/my_photo_viewer.dart';
-import '../widgets/my_video_player.dart';
+import '../widgets/media/my_photo_viewer.dart';
+import '../widgets/media/my_video_player.dart';
 
 class ViewGalleryPage extends StatefulWidget {
   const ViewGalleryPage({super.key, required this.media, required this.initialIndex, required this.postId});

@@ -21,6 +21,7 @@ class EventContext {
 
   bool _fetchedBody = false,
       _fetchedProgram = false,
+      _fetchedMedia = false,
       _canSaveTheEditing = false,
       _viewingChild = false,
       _fetchedMeta = false;
@@ -87,6 +88,11 @@ class EventContext {
   // * Supplemental - Media Related
 
   EventMedia get media => _eventMedia;
+  bool get fethcedMedia => _fetchedMedia;
+  void setFetchedMedia(EventMedia media) {
+    _eventMedia = media;
+    _fetchedMedia = true;
+  }
 
   // * Logs Related
 

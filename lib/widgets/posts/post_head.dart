@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/event/event_head.dart';
 import '../../pages/events/view_event_page.dart';
 import '../../pages/view_gallery_page.dart';
+import '../media/image_media_slot.dart';
+import '../media/video_media_slot.dart';
 
 class PostHead extends StatelessWidget {
   const PostHead({super.key, required this.thisHead});
@@ -71,38 +73,47 @@ class PostHead extends StatelessWidget {
         const SizedBox(
           width: 2,
         ),
-        Column(
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildMediaSlot(thisHead.media[1], 1, context),
+              const SizedBox(
+                height: 2,
+              ),
+              _buildMediaSlot(thisHead.media[2], 2, context),
+            ],
+          ),
+        )
+      ]);
+    } else if (thisHead.media.length == 4) {
+      children[0] = Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildMediaSlot(thisHead.media[1], 1, context),
+            _buildMediaSlot(thisHead.media[0], 0, context),
             const SizedBox(
               height: 2,
             ),
             _buildMediaSlot(thisHead.media[2], 2, context),
           ],
-        )
-      ]);
-    } else if (thisHead.media.length == 4) {
-      children[0] = Column(
-        children: [
-          _buildMediaSlot(thisHead.media[0], 0, context),
-          const SizedBox(
-            height: 2,
-          ),
-          _buildMediaSlot(thisHead.media[2], 2, context),
-        ],
+        ),
       );
       children.addAll([
         const SizedBox(
           width: 2,
         ),
-        Column(
-          children: [
-            _buildMediaSlot(thisHead.media[1], 1, context),
-            const SizedBox(
-              height: 2,
-            ),
-            _buildMediaSlot(thisHead.media[3], 3, context),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildMediaSlot(thisHead.media[1], 1, context),
+              const SizedBox(
+                height: 2,
+              ),
+              _buildMediaSlot(thisHead.media[3], 3, context),
+            ],
+          ),
         )
       ]);
     }
@@ -123,14 +134,9 @@ class PostHead extends StatelessWidget {
   }
 
   Widget _buildMediaSlot(Map<String, String> entry, int index, BuildContext context) {
-    return Expanded(
-      child: InkWell(
-          onTap: () => _onImageTap(index, context),
-          child: Image.network(
-            entry['src']!,
-            fit: BoxFit.cover,
-          )),
-    );
+    return entry['type']!.compareTo('img') == 0
+        ? Expanded(child: ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, context)))
+        : Expanded(child: VideoMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, context)));
   }
 
   // * Logic
@@ -145,7 +151,7 @@ class PostHead extends StatelessWidget {
                 )));
   }
 
-  void _onImageTap(int index, BuildContext context) {
+  void _onMediaTap(int index, BuildContext context) {
     Navigator.push(
         context,
         MaterialPageRoute(

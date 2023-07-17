@@ -10,10 +10,27 @@ class EventMedia {
   EventMedia() {
     _media = List.empty(growable: true);
   }
-  EventMedia.fromMap(Map<String, dynamic> data) : _media = List<Map<String, String>>.from(data['Media']);
+
+  EventMedia.fromMap(Map<String, dynamic> data) {
+    _media = _toMedia(List<Map<String, dynamic>>.from(data['Media']));
+  }
 
   toJson() {
     return {'Media': _media};
+  }
+
+  List<Map<String, String>> _toMedia(List<Map<String, dynamic>> data) {
+    final List<Map<String, String>> results = List<Map<String, String>>.empty(growable: true);
+
+    for (final entry in data) {
+      results.add({
+        'title': entry['title'],
+        'src': entry['src'],
+        'type': entry['type'],
+      });
+    }
+
+    return results;
   }
 
   List<Map<String, String>> get allMedia => UnmodifiableListView(_media);
