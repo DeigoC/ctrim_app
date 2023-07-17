@@ -12,7 +12,6 @@ class AddMediaTabBody extends StatefulWidget {
 class _AddMediaTabBodyState extends State<AddMediaTabBody> {
   @override
   Widget build(BuildContext context) {
-    // TODO replace with the order src list!
     final List<Map<String, String>> media = widget.eventContext.media.allMedia;
     return Column(
       children: [

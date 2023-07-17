@@ -1,9 +1,14 @@
+import 'package:ctrim_app/firebase/auth_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase/db_managers/event_db_manager.dart';
+import 'models/user.dart';
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
@@ -22,10 +27,33 @@ void main() async {
   // SettingsView.
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // * First up, we log the returning user in
+  final SharedPreferences prefInstance = await SharedPreferences.getInstance();
+  final AuthManager authManager = AuthManager();
+
+  final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
+  String? uAuth;
+  if (email != null && pass != null) {
+    uAuth =
+        await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
+  }
+
+  final UserContactDBManager userContactDBManager = UserContactDBManager();
+  final UserDBManager userDBManager = UserDBManager();
+  late final User? user;
+  if (uAuth != null) {
+    final uContact = await userContactDBManager.fetchUserContactByAuthID(uAuth);
+    user = await userDBManager.fetchUserByID(uContact!.id);
+  }
+
+  // * Then fetch the rest of the important data
   final EventHeadDBManager eventHeadDBManager = EventHeadDBManager(); // should this be here?
   final heads = await eventHeadDBManager.fetchEventHeads();
+  final allUsers = await userDBManager.fetchAllUsers();
 
-  // * We will have all the loading logic take place here
+  // * Create the AppContext and run the app
   runApp(ChangeNotifierProvider(
-      create: (_) => AppContext(heads: heads), child: MyApp(settingsController: settingsController)));
+      create: (_) => AppContext(heads: heads, allUsers: allUsers, prefInstance: prefInstance, user: user),
+      child: MyApp(settingsController: settingsController)));
 }
