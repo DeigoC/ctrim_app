@@ -46,26 +46,23 @@ class AppContext extends ChangeNotifier {
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
   User get currentUser => _currentUser;
-  List<User> get allUsers => _allUsers;
+  List<User> get allUsers => UnmodifiableListView(_allUsers);
+
   void addUserContact(UserContact contact) {
     if (!_allContacts.contains(contact)) {
       _allContacts.add(contact);
     }
   }
 
-  void setUserToGuest() {
-    _currentUser = _guest;
-  }
-
-  void setCurrentUser(String id) {
-    _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
-  }
-
-  void rebuildPlease() {
-    notifyListeners();
-  }
+  void addUser(User u) => _allUsers.add(u);
+  void setUserToGuest() => _currentUser = _guest;
+  void setCurrentUser(String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
 
   // * data related
   void saveEmailPassword(String email, String password) => _dataManager.saveCreds(email, password);
   void clearCreds() => _dataManager.clearCreds();
+  String get deviceToken => _dataManager.token;
+
+  // * other related
+  void rebuildPlease() => notifyListeners();
 }

@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppDataManager {
   static late final SharedPreferences _pref;
-  static const String _isFirstOpen = 'isFirstOpen', _email = 'email', _pass = 'password', _clear = '';
+  static const String _isFirstOpen = 'isFirstOpen', _email = 'email', _pass = 'password', _clear = '', _token = 'token';
 
   AppDataManager({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -21,4 +21,7 @@ class AppDataManager {
 
   bool get isFirstOpen => _pref.getBool(_isFirstOpen) ?? true;
   void nowOpened() => _pref.setBool(_isFirstOpen, true); // activated once user resolves notifications
+
+  String get token => _pref.getString(_token)!;
+  void saveToken(String thisToken) => _pref.setString(_token, thisToken);
 }

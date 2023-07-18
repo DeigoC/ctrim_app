@@ -51,6 +51,7 @@ class User {
   String get surname => _surname;
   String get fullname => '$_forename $_surname';
   String get imgSrc => _imgSrc;
+  String get location => _location;
   bool get isAreaAdmin => _isAreaAdmin;
   bool get isLeader => _isLeader;
 }

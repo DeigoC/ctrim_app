@@ -1,17 +1,16 @@
 class UserContact {
-  late String _authID, _email, _id;
-  late List<String> _deviceTokens;
+  late final String _authID, _email, _id;
+  late final List<String> _deviceTokens;
 
   UserContact({
     required String authID,
     required String id,
     required String email,
-    required List<String> deviceTokens,
   }) {
     _id = id;
     _authID = authID;
-    _deviceTokens = deviceTokens;
     _email = email;
+    _deviceTokens = List<String>.empty(growable: true);
   }
 
   UserContact.fromMap(String id, Map<String, dynamic> data)
