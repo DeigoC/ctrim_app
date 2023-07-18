@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           TextField(
             controller: _tecEmail,
-            decoration: const InputDecoration(label: Text('Email'), hintText: "It's you use for your app store"),
+            decoration: const InputDecoration(label: Text('Email'), hintText: "It's what you use for your app store"),
             onSubmitted: (_) => _fnPassword.requestFocus(),
           ),
           TextField(
@@ -57,6 +57,7 @@ class _LoginPageState extends State<LoginPage> {
     _attemptToLogin().then((id) {
       if (id != null) {
         Provider.of<AppContext>(context, listen: false).setCurrentUser(id);
+        _saveCredsAndToken();
         Navigator.of(context).pop();
         Navigator.of(context).pop();
       }
@@ -68,14 +69,14 @@ class _LoginPageState extends State<LoginPage> {
       final UserContactDBManager userContactDBManager = UserContactDBManager();
       final AuthManager authManager = AuthManager();
       final String authID = await authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
-      final UserContact userContact = await userContactDBManager.fetchUserContact(authID);
+      final UserContact userContact = await userContactDBManager.fetchUserContactByAuthID(authID);
       return userContact.id;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'invalid-email') {
         _showErrorMessage('That email is incorrect');
       } else if (e.code == 'user-disabled') {
         _showErrorMessage('This user has been disabled, please contact an admin');
-      } else if (e.code == 'user-not-found:') {
+      } else if (e.code == 'user-not-found') {
         _showErrorMessage('User with this email has not been found');
       } else if (e.code == 'wrong-password') {
         _showErrorMessage('Wrong password, please try again or reset the password if forgotten');
@@ -84,6 +85,11 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
     return null;
+  }
+
+  void _saveCredsAndToken() {
+    Provider.of<AppContext>(context, listen: false).saveEmailPassword(_tecEmail.text.trim(), _tecPassword.text);
+    // TODO the token should in theory already exist here, all we need to do is fetch it from storage and push it up
   }
 
   void _showErrorMessage(String message) {

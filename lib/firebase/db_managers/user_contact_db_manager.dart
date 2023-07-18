@@ -3,7 +3,7 @@ import 'package:ctrim_app/models/user_contact.dart';
 
 class UserContactDBManager {
   static final CollectionReference _ref = FirebaseFirestore.instance
-      .collection('user_contact')
+      .collection('user_contacts')
       .withConverter<UserContact>(
           fromFirestore: (snap, _) => UserContact.fromMap(snap.id, snap.data()!),
           toFirestore: (record, _) => record.toJson());
@@ -32,9 +32,8 @@ class UserContactDBManager {
     return await _ref.doc(id).get().then((value) => value.data() as UserContact);
   }
 
-  Future<UserContact?> fetchUserContactByAuthID(String authID) async {
+  Future<UserContact> fetchUserContactByAuthID(String authID) async {
     var query = await _ref.where('AuthID', isEqualTo: authID).get();
-    if (query.docs.isEmpty) return null;
     return query.docs.first.data() as UserContact;
   }
 

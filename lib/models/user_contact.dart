@@ -17,13 +17,13 @@ class UserContact {
   UserContact.fromMap(String id, Map<String, dynamic> data)
       : _id = id,
         _authID = data['AuthID'],
-        _deviceTokens = List.from(data['DeviceTokens']),
+        _deviceTokens = List.from(data['Tokens']),
         _email = data['Email'];
 
   toJson() {
     return {
       'AuthID': _authID,
-      'DeviceTokens': _deviceTokens,
+      'Tokens': _deviceTokens,
       'Email': _email,
     };
   }

@@ -32,13 +32,10 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
           );
 
           if (snap.hasData) {
-            if (snap.data != null) {
-              debugPrint('Fetched existing video thumbnail');
-              _thisThumbnail = snap.data;
-              result = _buildThumbnailFromData();
-            } else {
-              result = _buildThumbnailFB();
-            }
+            _thisThumbnail = snap.data;
+            result = _buildExistingThumbnail();
+          } else if (!snap.hasData) {
+            result = _buildThumbnailFB();
           } else if (snap.hasError) {
             debugPrint('Something went wrong with attepmting to fetch the exisitng thumbnail: ${snap.error}');
             result = const Center(
@@ -61,7 +58,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
           if (snap.hasData) {
             _thisThumbnail = File(snap.data!);
             debugPrint(_thisThumbnail!.path);
-            result = _buildThumbnailFromData();
+            result = _buildExistingThumbnail();
           } else if (snap.hasError) {
             result = const Center(
               child: Text('Something went wrong'),
@@ -73,7 +70,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
         });
   }
 
-  Widget _buildThumbnailFromData() {
+  Widget _buildExistingThumbnail() {
     return InkWell(
       onTap: () => widget.onTap(),
       child: Stack(
@@ -102,12 +99,9 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
     if (title != null) {
       path += '/$title.webp';
     }
-    debugPrint('path is $path');
 
     final String? result = await VideoThumbnail.thumbnailFile(
         video: widget.mediaEntry['src']!, thumbnailPath: path, imageFormat: ImageFormat.WEBP);
-
-    debugPrint('The created thumbnail path is $result');
 
     return result;
   }
@@ -115,7 +109,11 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
   Future<File?> _attemptToGetExistingThumbnailFile() async {
     String? title = _attemptToGetImageID();
     if (title != null) {
-      return File('${(await getTemporaryDirectory()).path}/$title.webp');
+      final file = File('${(await getTemporaryDirectory()).path}/$title.webp');
+
+      if (await file.exists()) {
+        return file;
+      }
     }
     return null;
   }
@@ -123,7 +121,9 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
   String? _attemptToGetImageID() {
     RegExpMatch? match = _fileNameReg.firstMatch(widget.mediaEntry['src']!);
     if (match != null) {
-      return match.group(1)!;
+      final group = match.group(1)!;
+      final result = group.replaceAll(r'%', '').replaceAll('?', '').replaceAll('=', '');
+      return result; // for the google drive IDs
     }
     return null;
   }

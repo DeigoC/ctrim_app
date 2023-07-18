@@ -46,7 +46,8 @@ class ViewEventMediaTab extends StatelessWidget {
 
   Widget _buildMediaGrid() {
     return GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
         itemCount: eventContext.media.allMedia.length,
         itemBuilder: (_, index) {
           final Map<String, String> entry = eventContext.media.allMedia[index];

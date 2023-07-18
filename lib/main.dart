@@ -34,17 +34,18 @@ void main() async {
 
   final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
   String? uAuth;
-  if (email != null && pass != null) {
+  if (email != null && email != '' && pass != null && pass != '') {
+    debugPrint('email is $email and pass is $pass');
     uAuth =
         await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
   }
 
   final UserContactDBManager userContactDBManager = UserContactDBManager();
   final UserDBManager userDBManager = UserDBManager();
-  late final User? user;
+  User user = User(id: '0', forname: 'Guest', surname: 'Account');
   if (uAuth != null) {
     final uContact = await userContactDBManager.fetchUserContactByAuthID(uAuth);
-    user = await userDBManager.fetchUserByID(uContact!.id);
+    user = await userDBManager.fetchUserByID(uContact.id);
   }
 
   // * Then fetch the rest of the important data

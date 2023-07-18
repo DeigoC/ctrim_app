@@ -28,11 +28,11 @@ class AppContext extends ChangeNotifier {
     required List<EventHead> heads,
     required List<User> allUsers,
     required SharedPreferences prefInstance,
-    User? user,
+    required User user,
   }) {
-    _eventHeads = eventHeads;
+    _eventHeads = heads;
     _allUsers = allUsers;
-    _currentUser = user ?? _guest;
+    _currentUser = user;
     _dataManager = AppDataManager(preferences: prefInstance);
   }
 
@@ -45,11 +45,27 @@ class AppContext extends ChangeNotifier {
 
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
+  User get currentUser => _currentUser;
   List<User> get allUsers => _allUsers;
-  void addUserContact(UserContact contact) => _allContacts.add(contact);
-  void setUserToGuest() => _currentUser = _guest;
-  void setCurrentUser(String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
+  void addUserContact(UserContact contact) {
+    if (!_allContacts.contains(contact)) {
+      _allContacts.add(contact);
+    }
+  }
+
+  void setUserToGuest() {
+    _currentUser = _guest;
+  }
+
+  void setCurrentUser(String id) {
+    _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
+  }
+
+  void rebuildPlease() {
+    notifyListeners();
+  }
 
   // * data related
   void saveEmailPassword(String email, String password) => _dataManager.saveCreds(email, password);
+  void clearCreds() => _dataManager.clearCreds();
 }

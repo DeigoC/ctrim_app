@@ -10,8 +10,12 @@ class InformationHome extends StatefulWidget {
 class _InformationHomeState extends State<InformationHome> {
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: const [Text('View Information')],
+    return const CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          title: Text('Information'),
+        )
+      ],
     );
   }
 }

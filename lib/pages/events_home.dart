@@ -9,19 +9,16 @@ class ViewEventsHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      return ListView.builder(
-          itemCount: appContext.eventHeads.length,
-          itemBuilder: (_, index) {
-            if (index == 1) {
-              // appContext.eventHeads[index].media.add({
-              //   'title': '',
-              //   'src':
-              //       'https://images.bauerhosting.com/legacy/empire-images/articles/57441cfbbf1bdcf50c7ed54a/garfield_2_08.jpg?q=80&auto=format&w=440&ar=16:9&fit=crop&crop=top',
-              //   'type': 'img'
-              // });
-            }
-            return PostHead(thisHead: appContext.eventHeads[index]);
-          });
+      return CustomScrollView(
+        slivers: [
+          const SliverAppBar(
+            title: Text('Posts'),
+          ),
+          SliverList.builder(
+              itemCount: appContext.eventHeads.length,
+              itemBuilder: (_, index) => PostHead(thisHead: appContext.eventHeads[index]))
+        ],
+      );
     });
   }
 }
