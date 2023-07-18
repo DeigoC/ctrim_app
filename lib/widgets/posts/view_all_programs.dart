@@ -1,4 +1,5 @@
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
+import 'package:ctrim_app/widgets/posts/program_tile.dart';
 import 'package:flutter/material.dart';
 import '../../pages/events/add_program_page.dart';
 import '../../pages/events/edit_program_page.dart';
@@ -16,7 +17,6 @@ class ViewAllPrograms extends StatefulWidget {
 class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   @override
   void initState() {
-    // TODO sort the program here!
     super.initState();
   }
 
@@ -53,15 +53,19 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-              itemCount: widget.eventContext.allPrograms.length,
-              itemBuilder: (_, index) {
-                return _buildRoleTile(widget.eventContext.allPrograms[index]);
-              }),
+          child: ListView.separated(
+            itemCount: widget.eventContext.allPrograms.length,
+            itemBuilder: (_, index) {
+              return _buildRoleTile(widget.eventContext.allPrograms[index]);
+            },
+            separatorBuilder: (BuildContext context, int index) {
+              return const Divider();
+            },
+          ),
         ),
         SafeArea(
             child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -75,10 +79,9 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildRoleTile(Map<String, dynamic> programEntry) {
-    return ListTile(
-      title: Text(programEntry['detail']),
-      subtitle: Text((programEntry['start'] as DateTime).toString()),
-      onTap: () => _showProgramDialog(programEntry),
+    return ProgramTile(
+      programEntry: programEntry,
+      onTap: (_) => _showProgramDialog(_),
     );
   }
 
@@ -105,7 +108,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   // * LOGIC
   void _openAddProgramPage() {
-    // context.goNamed('add_program', extra: widget.eventContext); // ! Doesn't work
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {
@@ -118,7 +120,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   void _openEditProgramPage(Map<String, dynamic> programEntry) {
-    // context.goNamed('edit_program', extra: widget.eventContext); // ! Doesn't work
     Navigator.of(context).pop();
     Navigator.push(
         context,

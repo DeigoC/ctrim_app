@@ -1,5 +1,7 @@
 import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -29,6 +31,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               return ListTile(
                 title: Text(thisUser.fullname),
                 subtitle: Text(thisUser.location),
+                leading: MyUserAvatar(thisUser),
+                onTap: () => DialogManager.showUserProfile(selectedUser: thisUser, context: context),
               );
             }),
       );
@@ -38,9 +42,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   // * Logic
   void _addUserClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterUserPage())).then((value) {
-      setState(() {
-        // ? Is this needed?
-      });
+      // ? Is this needed?
+      setState(() {});
     });
   }
 }

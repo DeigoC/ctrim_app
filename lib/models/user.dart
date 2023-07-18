@@ -50,6 +50,8 @@ class User {
   String get forname => _forename;
   String get surname => _surname;
   String get fullname => '$_forename $_surname';
+  String get initials => _forename[0] + _surname.split('-').map((e) => e[0]).join('');
+  String get shortenedFullName => '$_forename ${_surname.split('-').map((e) => e[0]).join('')}.';
   String get imgSrc => _imgSrc;
   String get location => _location;
   bool get isAreaAdmin => _isAreaAdmin;

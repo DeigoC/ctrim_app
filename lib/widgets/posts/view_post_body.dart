@@ -1,5 +1,9 @@
+import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../utility/event_context.dart';
 
@@ -12,7 +16,7 @@ class ViewPostBody extends StatelessWidget {
     if (eventContext.haveFetchedBody) {
       final quill.QuillController controller = quill.QuillController(
           document: quill.Document.fromJson(eventContext.body), selection: const TextSelection.collapsed(offset: 0));
-      return _buildBodyWithData(controller);
+      return _buildBodyWithData(controller, context);
     }
     return _buildFB();
   }
@@ -28,7 +32,7 @@ class ViewPostBody extends StatelessWidget {
                 document: quill.Document.fromJson(eventContext.body),
                 selection: const TextSelection.collapsed(offset: 0));
 
-            return _buildBodyWithData(controller);
+            return _buildBodyWithData(controller, _);
           } else if (snap.hasError) {
             return const Center(
               child: Text('Something went wrong :('),
@@ -40,10 +44,31 @@ class ViewPostBody extends StatelessWidget {
         });
   }
 
-  Widget _buildBodyWithData(final quill.QuillController controller) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: quill.QuillEditor.basic(controller: controller, readOnly: true),
+  Widget _buildBodyWithData(final quill.QuillController controller, BuildContext context) {
+    final thisUser = Provider.of<AppContext>(context).currentUser; // ! This should be the author
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              const Divider(),
+              ListTile(
+                title: Text(thisUser.fullname),
+                leading: MyUserAvatar(thisUser),
+                subtitle: const Text('Author'),
+                onTap: () => DialogManager.showUserProfile(selectedUser: thisUser, context: context),
+              ),
+              const Divider(),
+            ],
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: quill.QuillEditor.basic(controller: controller, readOnly: true),
+          ),
+        )
+      ],
     );
   }
 
