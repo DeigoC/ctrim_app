@@ -34,7 +34,7 @@ class EventMetadata {
 
   String get lastUID => _lastUID;
   String get authorUID => _authorUID;
-  String? get parentID => _parentID!;
+  String? get parentID => _parentID;
   List<String> get contributorUIDs => UnmodifiableListView(_contributorUIDs);
   List<String> get children => UnmodifiableListView(_childrenIDs);
   bool get hasChildren => _childrenIDs.isNotEmpty;

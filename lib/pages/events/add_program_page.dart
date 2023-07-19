@@ -1,5 +1,10 @@
+import 'package:avatar_stack/avatar_stack.dart';
+import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AddEventProgramPage extends StatefulWidget {
   const AddEventProgramPage({super.key, required this.eventContext});
@@ -10,12 +15,21 @@ class AddEventProgramPage extends StatefulWidget {
 }
 
 class _AddEventProgramPageState extends State<AddEventProgramPage> {
-  bool _canSave = false, _forGuests = true;
-  final TextEditingController _tecDetail = TextEditingController();
+  late final AppContext _appContext;
+  final TextEditingController _tecTitle = TextEditingController(), _tecDetail = TextEditingController();
+  final List<String> _selectedUsers = List.empty(growable: true);
   DateTime? _start, _end;
+  bool _canSave = false, _forGuests = true;
+
+  @override
+  void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
+    super.initState();
+  }
 
   @override
   void dispose() {
+    _tecTitle.dispose();
     _tecDetail.dispose();
     super.dispose();
   }
@@ -34,27 +48,68 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     return ListView(
       padding: const EdgeInsets.all(8),
       children: [
-        const Text('User selection (hard coded to 1)'),
-        ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
         ListTile(
           title: Text(_start == null ? 'TBD' : _start.toString()),
-          subtitle: const Text('Start Time'),
+          subtitle: const Text('Start Time*'),
           leading: const Icon(Icons.punch_clock),
+          trailing: _start == null
+              ? const Icon(
+                  Icons.warning_amber,
+                  color: Colors.amber,
+                )
+              : null,
           onTap: _onStartTimeTap,
         ),
         ListTile(
           title: Text(_end == null ? 'TBD' : _end.toString()),
-          subtitle: const Text('Finish Time'),
+          subtitle: const Text('Finish Time*'),
           leading: const Icon(Icons.punch_clock),
-          onTap: _onEndTimeTap,
+          trailing: _end == null
+              ? const Icon(
+                  Icons.warning_amber,
+                  color: Colors.amber,
+                )
+              : null,
+          onTap: _start == null ? null : _onEndTimeTap,
+        ),
+        TextField(
+          controller: _tecTitle,
+          maxLength: 48,
+          decoration: InputDecoration(
+              label: const Text('Title*'),
+              hintText: 'What is this?',
+              suffixIcon: _tecTitle.text.trim().isEmpty
+                  ? const Icon(
+                      Icons.warning_amber,
+                      color: Colors.amber,
+                    )
+                  : null),
+          onChanged: _onRequirementsChange,
         ),
         TextField(
           controller: _tecDetail,
           maxLines: null,
-          maxLength: 90,
-          decoration: const InputDecoration(label: Text('Description'), hintText: 'What are they doing?'),
-          onChanged: _onRequirementsChange,
+          maxLength: 128,
+          decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
         ),
+        const Divider(),
+        const SizedBox(
+          height: 16,
+        ),
+        const Text(
+          'Assigned Members To Program',
+          style: TextStyle(fontSize: 16),
+        ),
+        ElevatedButton.icon(
+            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
+        const SizedBox(
+          height: 16,
+        ),
+        InkWell(onTap: _onViewAssignedMembersTap, child: AvatarStack(height: 50, avatars: _getSelectedUsersAvatar())),
+        const SizedBox(
+          height: 16,
+        ),
+        const Divider(),
         SwitchListTile(
           value: _forGuests,
           onChanged: _onForGuestsChange,
@@ -70,13 +125,125 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         const SizedBox(
           height: 16,
         ),
+        const Divider(),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Save'))
       ],
     );
   }
 
+  List<ImageProvider> _getSelectedUsersAvatar() {
+    if (_selectedUsers.isEmpty) {
+      return List.empty();
+    }
+
+    final List<ImageProvider> result = List<ImageProvider>.empty(growable: true);
+
+    for (final uid in _selectedUsers) {
+      final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
+      if (thisU.imgSrc.isNotEmpty) {
+        result.add(NetworkImage(thisU.imgSrc));
+      } else {
+        result.add(const AssetImage('assets/images/Generic-Profile.jpg'));
+      }
+    }
+
+    return result;
+  }
+
   // * Logic
+  void _onSelectMembersTap() {
+    final List<User> availableUsers =
+        _appContext.allUsers.where((element) => !_selectedUsers.contains(element.id)).toList();
+    showDialog(
+        context: context,
+        builder: (_) {
+          return Dialog(
+            child: SizedBox(
+              height: MediaQuery.of(_).size.height * 0.6,
+              child: Column(
+                children: [
+                  const ListTile(
+                    title: Text('Select User For Role'),
+                    leading: Icon(Icons.people),
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: ListView.builder(
+                        itemCount: availableUsers.length,
+                        itemBuilder: (_, index) {
+                          final thisUser = availableUsers[index];
+                          return ListTile(
+                            title: Text(thisUser.fullname),
+                            subtitle: Text(thisUser.location),
+                            leading: MyUserAvatar(thisUser),
+                            onTap: () {
+                              setState(() {
+                                _selectedUsers.add(thisUser.id);
+                                Navigator.of(context).pop();
+                              });
+                            },
+                          );
+                        }),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
+  void _onViewAssignedMembersTap() {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return Dialog(
+            child: SizedBox(
+              height: MediaQuery.of(_).size.height * 0.5,
+              child: ListView.builder(
+                  itemCount: _selectedUsers.length,
+                  itemBuilder: (_, index) {
+                    final thisUser =
+                        _appContext.allUsers.firstWhere((element) => element.id.compareTo(_selectedUsers[index]) == 0);
+                    return ListTile(
+                      title: Text(thisUser.fullname),
+                      subtitle: Text(thisUser.location),
+                      leading: MyUserAvatar(thisUser),
+                      trailing: IconButton(
+                          onPressed: () => _onRemoveUserFromRole(thisUser.id), icon: const Icon(Icons.remove_circle)),
+                    );
+                  }),
+            ),
+          );
+        });
+  }
+
+  void _onRemoveUserFromRole(String uid) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            title: const Text('Remove From Role'),
+            content: const Text('Are you sure you want to continue'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedUsers.removeWhere((element) => element.compareTo(uid) == 0);
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    });
+                  },
+                  child: const Text('Yes'))
+            ],
+          );
+        });
+  }
+
   void _onForGuestsChange(bool newState) {
     setState(() {
       _forGuests = newState;
@@ -84,11 +251,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   }
 
   void _onRequirementsChange(String _) {
-    if (_tecDetail.text.trim().isEmpty || _start == null || _end == null && _canSave) {
+    if (_tecTitle.text.trim().isEmpty || _start == null || _end == null && _canSave) {
       setState(() {
         _canSave = false;
       });
-    } else if (_tecDetail.text.trim().isNotEmpty && _start != null && _end != null && !_canSave) {
+    } else if (_tecTitle.text.trim().isNotEmpty && _start != null && _end != null && !_canSave) {
       setState(() {
         _canSave = true;
       });
@@ -100,12 +267,20 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
             context: context,
             initialTime: widget.eventContext.head.startTimeOfEvent,
             helpText: 'When does the role start?')
-        .then((selectedStartTime) {
+        .then((selectedStartTime) async {
       if (selectedStartTime != null) {
         setState(() {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
+        await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => AlertDialog(
+                  title: const Text('Finish Time'),
+                  content: const Text('Now please select when this program is expected to complete'),
+                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Ok'))],
+                ));
         _onEndTimeTap();
       }
     });
@@ -152,12 +327,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
 
   void _addProgramRoleToEventContext() {
     widget.eventContext.addProgram({
-      'uids': ['1'], // ! Change this!
-      'detail': _tecDetail.text.trim(),
+      'uids': _selectedUsers,
+      'detail': _tecTitle.text.trim(),
+      'title': _tecTitle.text.trim(),
       'start': _start!,
       'end': _end!,
       'for_guests': _forGuests,
-      'priority': 1, // ! And this
+      'priority': 1,
     });
   }
 }

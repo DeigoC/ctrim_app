@@ -15,8 +15,21 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  late final TabController _informationTabController;
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    _informationTabController = TabController(length: 3, vsync: this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _informationTabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +53,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSelectedBody(AppContext appContext) {
     if (_selectedIndex == 0) {
-      return const ViewEventsHome();
+      return ViewEventsHome();
     } else if (_selectedIndex == 1) {
-      return const InformationHome();
+      return InformationHome(
+        tabController: _informationTabController,
+      );
     }
     return PersonalHome(
       appContext: appContext,

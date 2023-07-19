@@ -21,7 +21,6 @@ class PostHead extends StatelessWidget {
       const SizedBox(
         height: 8,
       ),
-      const Divider(),
     ];
 
     if (thisHead.media.isNotEmpty) {

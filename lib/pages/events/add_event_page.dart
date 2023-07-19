@@ -202,13 +202,15 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   void _updateParentMetadata(String thisPostID) {
-    final String parentID = widget.eventContext.metadata.parentID!;
-    final metadata = Provider.of<AppContext>(context, listen: false).getMetadata(parentID);
-    // the metadata cannot be null at this stage right? - well, we still have to perform the check regardless
-    if (metadata != null) {
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-      metadata.addChildID(thisPostID);
-      dbManager.updateMetadata(metadata);
+    if (widget.eventContext.metadata.parentID != null) {
+      final String parentID = widget.eventContext.metadata.parentID!;
+      final metadata = Provider.of<AppContext>(context, listen: false).getMetadata(parentID);
+      // the metadata cannot be null at this stage right? - well, we still have to perform the check regardless
+      if (metadata != null) {
+        final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+        metadata.addChildID(thisPostID);
+        dbManager.updateMetadata(metadata);
+      }
     }
   }
 

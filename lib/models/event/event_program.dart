@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class EventProgram {
   // * a role is made of 6 fields
   // uids - list of users assigned by their IDs
-  // detail - short description of the role
+  // title - short title of the role
+  // detail (optional) - more text to describe the role
   // start - datetime/timestamp of starting time
   // end - datetime/timestamp of finishing time
   // for_guests - bool to signigfy whether to show to guests or not
@@ -30,6 +31,7 @@ class EventProgram {
       _roles.add({
         'uids': List<String>.from(entry['uids']),
         'detail': entry['detail'],
+        'title': entry['title'],
         'start': (entry['start'] as Timestamp).toDate(),
         'end': (entry['end'] as Timestamp).toDate(),
         'for_guests': entry['for_guests'],
@@ -52,6 +54,7 @@ class EventProgram {
       result.add({
         'uids': entry['uids'],
         'detail': entry['detail'],
+        'title': entry['title'],
         'start': Timestamp.fromDate(entry['start']),
         'end': Timestamp.fromDate(entry['end']),
         'for_guests': entry['for_guests'],

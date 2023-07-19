@@ -1,7 +1,7 @@
 import 'package:ctrim_app/pages/events/edit_body_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../utility/event_context.dart';
-import 'view_post_body.dart';
 
 class AddBodyTab extends StatefulWidget {
   const AddBodyTab({super.key, required this.eventContext, required this.onRequiredFieldTextChange});
@@ -15,6 +15,10 @@ class AddBodyTab extends StatefulWidget {
 class _AddBodyTabState extends State<AddBodyTab> {
   @override
   Widget build(BuildContext context) {
+    final quill.QuillController controller = quill.QuillController(
+        document: quill.Document.fromJson(widget.eventContext.body),
+        selection: const TextSelection.collapsed(offset: 0));
+
     return Column(
       children: [
         ElevatedButton.icon(
@@ -22,16 +26,20 @@ class _AddBodyTabState extends State<AddBodyTab> {
               Navigator.push(
                       context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
                   .then((value) {
+                // rebuild for new body
                 setState(() {
-                  // rebuild for new body
                   widget.onRequiredFieldTextChange('');
                 });
               });
             },
             icon: const Icon(Icons.edit),
             label: const Text('Edit Body')),
-        ViewPostBody(eventContext: widget.eventContext),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: quill.QuillEditor.basic(controller: controller, readOnly: true),
+        ),
       ],
     );
   }
+  //🙏
 }
