@@ -1,5 +1,6 @@
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
+import '../../utility/dialog_manager.dart';
 
 class EditEventProgramPage extends StatefulWidget {
   const EditEventProgramPage({super.key, required this.eventContext, required this.programEntry});
@@ -11,9 +12,13 @@ class EditEventProgramPage extends StatefulWidget {
 }
 
 class _EditEventProgramPageState extends State<EditEventProgramPage> {
-  bool _forGuests = true;
-  late final TextEditingController _tecDetail;
+  // static final DateFormat _timeFormat = DateFormat('HH:mm');
+  late final TextEditingController _tecDetail, _tecTitle;
+  // late final AppContext _appContext;
+  late final List<String> _selectedUsers;
+
   late DateTime _start, _end;
+  bool _canSave = false, _forGuests = true, _isSaved = false;
 
   @override
   void initState() {
@@ -21,12 +26,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     _start = widget.programEntry['start'] as DateTime;
     _end = widget.programEntry['end'] as DateTime;
     _tecDetail = TextEditingController(text: widget.programEntry['detail']);
+    _tecTitle = TextEditingController(text: widget.programEntry['title']);
+    _selectedUsers = List<String>.from(widget.programEntry['uids']);
     // ! Remember priority and UIDs
     super.initState();
   }
 
   @override
   void dispose() {
+    _tecTitle.dispose();
     _tecDetail.dispose();
     super.dispose();
   }
@@ -34,18 +42,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        // i just realised a potential issue, technically a user can edit the program to be different
-        // then manually revert the changes back after which the 'save' button would still be enabled :(
-        // this user can perform a false update and has the ability to post a log and update all who are
-        // following the post...
-        if (_hasAnythingChanged()) {
-          _saveAllChanges();
-          widget.eventContext.allowSavingOfTheEdit();
-          debugPrint('Something has changed with the programs');
-        }
-        return true;
-      },
+      onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Edit Program'),
@@ -74,11 +71,20 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           onTap: _onEndTimeTap,
         ),
         TextField(
+          controller: _tecTitle,
+          maxLength: 48,
+          decoration: const InputDecoration(
+            label: Text('Title*'),
+            hintText: 'What is this?',
+          ),
+          onChanged: (_) => _hasAnythingChanged(),
+        ),
+        TextField(
           controller: _tecDetail,
           maxLines: null,
-          maxLength: 90,
-          decoration: const InputDecoration(label: Text('Description'), hintText: 'What are they doing?'),
-          onChanged: (value) {},
+          maxLength: 128,
+          decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
+          onChanged: (_) => _hasAnythingChanged(),
         ),
         SwitchListTile(
           value: _forGuests,
@@ -95,6 +101,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(
           height: 16,
         ),
+        ElevatedButton.icon(
+            onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Update')),
       ],
     );
   }
@@ -104,12 +112,25 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     setState(() {
       _forGuests = newState;
     });
+    _hasAnythingChanged();
   }
 
-  bool _hasAnythingChanged() {
-    return _start.compareTo(widget.programEntry['start'] as DateTime) != 0 ||
-        _end.compareTo(widget.programEntry['end'] as DateTime) != 0 ||
-        _tecDetail.text.trim().compareTo(widget.programEntry['detail']) != 0;
+  void _hasAnythingChanged() {
+    if (_canSave &&
+        (_start.compareTo(widget.programEntry['start'] as DateTime) == 0 &&
+            _end.compareTo(widget.programEntry['end'] as DateTime) == 0 &&
+            _tecDetail.text.trim().compareTo(widget.programEntry['detail']) == 0 &&
+            (_tecTitle.text.trim().compareTo(widget.programEntry['title']) == 0 && _tecTitle.text.trim().isNotEmpty)) &&
+        _forGuests != widget.programEntry['for_guests'] &&
+        _selectedUsers.toString().compareTo(widget.programEntry['uids']) == 0) {
+      setState(() {
+        _canSave = false;
+      });
+    } else if (!_canSave) {
+      setState(() {
+        _canSave = true;
+      });
+    }
   }
 
   void _onStartTimeTap() {
@@ -123,6 +144,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
+        _hasAnythingChanged();
         _onEndTimeTap();
       }
     });
@@ -140,8 +162,32 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedEndTime.hour, selectedEndTime.minute);
         });
+        _hasAnythingChanged();
       }
     });
+  }
+
+  void _onSaveClick() {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            title: const Text('Save Program Details'),
+            content: const Text('Are you sure the details are correct?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () {
+                    _saveAllChanges();
+                    widget.eventContext.allowSavingOfTheEdit();
+                    _isSaved = true;
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Save')),
+            ],
+          );
+        });
   }
 
   void _saveAllChanges() {

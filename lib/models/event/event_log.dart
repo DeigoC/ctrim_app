@@ -1,10 +1,12 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventLog {
   // * a log will have the following fields
   // uid - string id of the user performing the update
   // log - the short string explaining the change
-  // ts - timestamp of when it took place
+  // ts - timestamp (DateTime) of when it took place - this becomes the recentDate as well!
   late final List<Map<String, dynamic>> _logs;
 
   EventLog() {
@@ -34,4 +36,7 @@ class EventLog {
 
     return result;
   }
+
+  List<Map<String, dynamic>> get logs => UnmodifiableListView(_logs);
+  void addLog(Map<String, dynamic> log) => _logs.add(log);
 }

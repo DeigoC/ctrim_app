@@ -53,16 +53,37 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     return Column(
       children: [
         Expanded(
-          child: ListView.separated(
-            itemCount: widget.eventContext.allPrograms.length,
-            itemBuilder: (_, index) {
-              return _buildRoleTile(widget.eventContext.allPrograms[index]);
-            },
-            separatorBuilder: (BuildContext context, int index) {
-              return const Divider();
-            },
-          ),
-        ),
+            child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  ListTile(
+                    title: const Text('Event takes place on <Date>'),
+                    subtitle: const Text('Event Starts from X, and finishes at Y'),
+                    leading: const Icon(Icons.calendar_month),
+                    onTap: () {},
+                  ),
+                  const Divider(
+                    thickness: 1,
+                  )
+                ],
+              ),
+            ),
+            SliverList.separated(
+              itemCount: widget.eventContext.allPrograms.length,
+              itemBuilder: (_, index) {
+                return ProgramTile(
+                  programEntry: widget.eventContext.allPrograms[index],
+                  onTap: (_) => _showProgramDialog(_),
+                );
+              },
+              separatorBuilder: (BuildContext context, int index) {
+                return const Divider();
+              },
+            )
+          ],
+        )),
         SafeArea(
             child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -75,13 +96,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           ),
         ))
       ],
-    );
-  }
-
-  Widget _buildRoleTile(Map<String, dynamic> programEntry) {
-    return ProgramTile(
-      programEntry: programEntry,
-      onTap: (_) => _showProgramDialog(_),
     );
   }
 

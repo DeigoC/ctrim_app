@@ -6,11 +6,13 @@ import 'package:ctrim_app/pages/events/view_event_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class PostMetadataSection extends StatelessWidget {
   const PostMetadataSection({super.key, required this.eventContext});
   final EventContext eventContext;
+  static final DateFormat _recentDateFormat = DateFormat('d MMM, HH:mm');
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +53,17 @@ class PostMetadataSection extends StatelessWidget {
   }
 
   Widget _buildWithData(BuildContext context) {
+    final String recentDateStr = _recentDateFormat.format(eventContext.head.recentDate);
+    final String recentU = Provider.of<AppContext>(context, listen: false)
+        .allUsers
+        .firstWhere((e) => e.id.compareTo(eventContext.metadata.lastUID) == 0)
+        .forname;
+
     final List<Widget> children = [
-      TextButton(onPressed: () {}, child: const Text('Name Here • Date here')),
+      TextButton(onPressed: _onMetaTap, child: Text('$recentU • $recentDateStr')),
     ];
+
+    // TODO move the Parent-Child stuff to a new Post Tab
     if (eventContext.metadata.hasParent) {
       children.add(TextButton(
           onPressed: () {
@@ -73,6 +83,8 @@ class PostMetadataSection extends StatelessWidget {
   }
 
   // * Logic
+
+  void _onMetaTap() {}
 
   void _onViewParentPostClick(BuildContext context) {
     if (eventContext.isViewingChild) {

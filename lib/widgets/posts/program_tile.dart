@@ -1,7 +1,9 @@
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:avatar_stack/positions.dart';
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class ProgramTile extends StatelessWidget {
   const ProgramTile({super.key, required this.onTap, required this.programEntry});
@@ -25,31 +27,32 @@ class ProgramTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       leading: Text(_getTimeLeadingText()),
-      // subtitle: Text(
-      //   _getAssineeNames(),
-      //   maxLines: 2,
-      // ),
       onTap: () => onTap(programEntry),
-      trailing: SizedBox(
-        width: 90,
-        child: AvatarStack(settings: settings, avatars: const [
-          NetworkImage(
-              'https://static.wikia.nocookie.net/garfield/images/9/9f/GarfieldCharacter.jpg/revision/latest?cb=20180421131132'),
-          NetworkImage(
-              'https://static.wikia.nocookie.net/garfield/images/9/9f/GarfieldCharacter.jpg/revision/latest?cb=20180421131132'),
-          NetworkImage(
-              'https://static.wikia.nocookie.net/garfield/images/9/9f/GarfieldCharacter.jpg/revision/latest?cb=20180421131132'),
-        ]),
-      ),
+      trailing: _buildTileTrailing(context),
     );
+  }
+
+  Widget? _buildTileTrailing(BuildContext context) {
+    final List<String> assignees = List<String>.from(programEntry['uids']);
+    if (assignees.isEmpty) return null;
+
+    final List<ImageProvider> avatars = List<ImageProvider>.empty(growable: true);
+    final allUsers = Provider.of<AppContext>(context, listen: false).allUsers;
+
+    for (final uid in assignees) {
+      final thisU = allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
+      if (thisU.imgSrc.isNotEmpty) {
+        avatars.add(NetworkImage(thisU.imgSrc));
+      } else {
+        avatars.add(const AssetImage('assets/images/Generic-Profile.jpg'));
+      }
+    }
+
+    return AvatarStack(width: 90, avatars: avatars);
   }
 
   // * Logic
   String _getTimeLeadingText() {
     return '${_timeFormat.format(programEntry['start'])}\n${_timeFormat.format(programEntry['end'])}';
-  }
-
-  String _getAssineeNames() {
-    return 'Diego C., Claudette C., and Dana C.';
   }
 }

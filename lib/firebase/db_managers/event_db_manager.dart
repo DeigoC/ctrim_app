@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ctrim_app/models/event/event_log.dart';
 import 'package:ctrim_app/models/event/event_media.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/models/event/event_program.dart';
@@ -93,5 +94,16 @@ class EventSupplementalDBManager {
   }
 
   // * Logs
-  // TODO complete this again please
+  Future<EventLog> fetchLog() async {
+    final doc = await _colRef.doc('logs').get();
+    return EventLog.fromMap(doc.data() as Map<String, dynamic>);
+  }
+
+  Future<void> updateLog(final EventLog log) async {
+    await _colRef.doc('logs').update(log.toJson());
+  }
+
+  Future<void> addLog(final EventLog log) async {
+    await _colRef.doc('logs').set(log.toJson());
+  }
 }

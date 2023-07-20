@@ -1,9 +1,11 @@
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class AddEventProgramPage extends StatefulWidget {
@@ -15,11 +17,14 @@ class AddEventProgramPage extends StatefulWidget {
 }
 
 class _AddEventProgramPageState extends State<AddEventProgramPage> {
+  static final DateFormat _timeFormat = DateFormat('HH:mm');
   late final AppContext _appContext;
+
   final TextEditingController _tecTitle = TextEditingController(), _tecDetail = TextEditingController();
   final List<String> _selectedUsers = List.empty(growable: true);
+
   DateTime? _start, _end;
-  bool _canSave = false, _forGuests = true;
+  bool _canSave = false, _forGuests = true, _isSaved = false;
 
   @override
   void initState() {
@@ -36,11 +41,14 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Program'),
+    return WillPopScope(
+      onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add Program'),
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 
@@ -49,7 +57,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
       padding: const EdgeInsets.all(8),
       children: [
         ListTile(
-          title: Text(_start == null ? 'TBD' : _start.toString()),
+          title: _getTimeText(_start),
           subtitle: const Text('Start Time*'),
           leading: const Icon(Icons.punch_clock),
           trailing: _start == null
@@ -57,11 +65,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   Icons.warning_amber,
                   color: Colors.amber,
                 )
-              : null,
+              : const Icon(
+                  Icons.edit,
+                ),
           onTap: _onStartTimeTap,
         ),
         ListTile(
-          title: Text(_end == null ? 'TBD' : _end.toString()),
+          title: _getTimeText(_end),
           subtitle: const Text('Finish Time*'),
           leading: const Icon(Icons.punch_clock),
           trailing: _end == null
@@ -69,7 +79,9 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   Icons.warning_amber,
                   color: Colors.amber,
                 )
-              : null,
+              : const Icon(
+                  Icons.edit,
+                ),
           onTap: _start == null ? null : _onEndTimeTap,
         ),
         TextField(
@@ -92,7 +104,9 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           maxLength: 128,
           decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
         ),
-        const Divider(),
+        const Divider(
+          thickness: 1,
+        ),
         const SizedBox(
           height: 16,
         ),
@@ -105,11 +119,15 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         const SizedBox(
           height: 16,
         ),
-        InkWell(onTap: _onViewAssignedMembersTap, child: AvatarStack(height: 50, avatars: _getSelectedUsersAvatar())),
+        InkWell(
+            onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
+            child: AvatarStack(height: 50, avatars: _getSelectedUsersAvatar())),
         const SizedBox(
           height: 16,
         ),
-        const Divider(),
+        const Divider(
+          thickness: 1,
+        ),
         SwitchListTile(
           value: _forGuests,
           onChanged: _onForGuestsChange,
@@ -127,7 +145,10 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         ),
         const Divider(),
         ElevatedButton.icon(
-            onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Save'))
+            onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Save')),
+        const SizedBox(
+          height: 32,
+        ),
       ],
     );
   }
@@ -138,7 +159,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     }
 
     final List<ImageProvider> result = List<ImageProvider>.empty(growable: true);
-
     for (final uid in _selectedUsers) {
       final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
       if (thisU.imgSrc.isNotEmpty) {
@@ -151,7 +171,12 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     return result;
   }
 
+  Widget _getTimeText(DateTime? time) {
+    return Text(time == null ? 'TBD' : _timeFormat.format(time));
+  }
+
   // * Logic
+
   void _onSelectMembersTap() {
     final List<User> availableUsers =
         _appContext.allUsers.where((element) => !_selectedUsers.contains(element.id)).toList();
@@ -292,7 +317,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
       initialTime: TimeOfDay.fromDateTime(_start!.add(const Duration(hours: 1))),
       helpText: 'When does the role finish?',
     ).then((selectedEndTime) {
-      if (selectedEndTime != null) {
+      if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
         // TODO check end isn't set before the start!
         setState(() {
           _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
@@ -316,6 +341,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   onPressed: () {
                     _addProgramRoleToEventContext();
                     widget.eventContext.allowSavingOfTheEdit();
+                    _isSaved = true;
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
                   },
@@ -323,6 +349,18 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
             ],
           );
         });
+  }
+
+  bool _isEndTimeValid(TimeOfDay end) {
+    if (end.hour.compareTo(_start!.hour) > 0 ||
+        (end.hour.compareTo(_start!.hour) == 0 && end.minute.compareTo(_start!.minute) > 0)) {
+      return true;
+    }
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Invalid Finish Time',
+        content: 'Please set it after the Start Time which is currently at ${_timeFormat.format(_start!)}');
+    return false;
   }
 
   void _addProgramRoleToEventContext() {

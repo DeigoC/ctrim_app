@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../widgets/user_avatar.dart';
 
+// used to show as much of the repeating dialogs throughout the entire app
 class DialogManager {
   static void showUserProfile({required User selectedUser, required BuildContext context}) {
     Widget buildVerticalUserViewer(final User selectedUser) {
@@ -106,5 +107,43 @@ class DialogManager {
             );
           });
         });
+  }
+
+  static Future<bool> discardChanges({required BuildContext context}) async {
+    bool result = false;
+    await showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            title: const Text('Leave Page'),
+            content: const Text('Are you sure you want to discard all changes?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () {
+                    result = true;
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Yes')),
+            ],
+          );
+        });
+
+    return result;
+  }
+
+  static Future<void> showAlertDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    String closeText = 'Ok',
+  }) async {
+    await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+              title: Text(title),
+              content: Text(content),
+              actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(closeText))],
+            ));
   }
 }

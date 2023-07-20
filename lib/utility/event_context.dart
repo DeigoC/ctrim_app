@@ -12,8 +12,7 @@ import '../models/event/event_metadata.dart';
 
 class EventContext {
   late final EventHead _head;
-  late final List<EventLog> _allLogs;
-  late final EventLog _latestLog;
+  late final EventLog _log;
   late final EventMetadata _metadata;
   late final EventProgram _program;
   late final EventMedia _eventMedia;
@@ -24,6 +23,7 @@ class EventContext {
       _fetchedMedia = false,
       _canSaveTheEditing = false,
       _viewingChild = false,
+      _fetchedLogs = false,
       _fetchedMeta = false;
 
   // for viewing and editing
@@ -95,9 +95,13 @@ class EventContext {
   }
 
   // * Logs Related
+  EventLog get log => _log;
+  bool get fetchedLogs => _fetchedLogs;
 
-  EventLog get latestLog => _latestLog;
-  List<EventLog> get allLogs => _allLogs;
+  void setFetchedLogs(EventLog log) {
+    _log = log;
+    _fetchedLogs = true;
+  }
 
   // * General logic
 
