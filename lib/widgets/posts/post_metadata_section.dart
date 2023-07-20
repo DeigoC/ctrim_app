@@ -3,6 +3,7 @@ import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/pages/events/view_children_posts_page.dart';
 import 'package:ctrim_app/pages/events/view_event_page.dart';
+import 'package:ctrim_app/pages/events/view_meta_logs_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
@@ -60,7 +61,7 @@ class PostMetadataSection extends StatelessWidget {
         .forname;
 
     final List<Widget> children = [
-      TextButton(onPressed: _onMetaTap, child: Text('$recentU • $recentDateStr')),
+      TextButton(onPressed: () => _onMetaTap(context), child: Text('$recentU • $recentDateStr')),
     ];
 
     // TODO move the Parent-Child stuff to a new Post Tab
@@ -84,7 +85,9 @@ class PostMetadataSection extends StatelessWidget {
 
   // * Logic
 
-  void _onMetaTap() {}
+  void _onMetaTap(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: eventContext)));
+  }
 
   void _onViewParentPostClick(BuildContext context) {
     if (eventContext.isViewingChild) {

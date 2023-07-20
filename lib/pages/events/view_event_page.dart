@@ -43,9 +43,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildBody(),
-    );
+    return Scaffold(body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -60,9 +58,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return [
       SliverAppBar(
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
-        flexibleSpace: FlexibleSpaceBar(
-          background: _buildAppBarBackground(),
-        ),
+        flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
           ElevatedButton.icon(
               onPressed: _eventContext.canSaveTheEditing ? () {} : null,
@@ -73,38 +69,20 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       ),
       SliverList(
         delegate: SliverChildListDelegate([
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: _buildTitle(),
-          ),
+          Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
           PostMetadataSection(eventContext: _eventContext),
           TabBar(
             labelColor: Colors.black,
             controller: _tabController,
             tabs: _buildProgram
                 ? const [
-                    Tab(
-                      icon: Icon(Icons.info_outline),
-                      text: 'About',
-                    ),
-                    Tab(
-                      icon: Icon(Icons.calendar_today),
-                      text: 'Program',
-                    ),
-                    Tab(
-                      icon: Icon(Icons.photo_album),
-                      text: 'Media',
-                    ),
+                    Tab(icon: Icon(Icons.info_outline), text: 'About'),
+                    Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
+                    Tab(icon: Icon(Icons.photo_album), text: 'Media'),
                   ]
                 : const [
-                    Tab(
-                      icon: Icon(Icons.info_outline),
-                      text: 'About',
-                    ),
-                    Tab(
-                      icon: Icon(Icons.photo_album),
-                      text: 'Media',
-                    ),
+                    Tab(icon: Icon(Icons.info_outline), text: 'About'),
+                    Tab(icon: Icon(Icons.photo_album), text: 'Media')
                   ],
           ),
         ]),

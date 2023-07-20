@@ -57,31 +57,17 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
       padding: const EdgeInsets.all(8),
       children: [
         ListTile(
-          title: _getTimeText(_start),
+          title: Text(_start == null ? 'TBD' : _timeFormat.format(_start!)),
           subtitle: const Text('Start Time*'),
           leading: const Icon(Icons.punch_clock),
-          trailing: _start == null
-              ? const Icon(
-                  Icons.warning_amber,
-                  color: Colors.amber,
-                )
-              : const Icon(
-                  Icons.edit,
-                ),
+          trailing: _start == null ? const Icon(Icons.warning_amber, color: Colors.amber) : const Icon(Icons.edit),
           onTap: _onStartTimeTap,
         ),
         ListTile(
-          title: _getTimeText(_end),
+          title: Text(_end == null ? 'TBD' : _timeFormat.format(_end!)),
           subtitle: const Text('Finish Time*'),
           leading: const Icon(Icons.punch_clock),
-          trailing: _end == null
-              ? const Icon(
-                  Icons.warning_amber,
-                  color: Colors.amber,
-                )
-              : const Icon(
-                  Icons.edit,
-                ),
+          trailing: _end == null ? const Icon(Icons.warning_amber, color: Colors.amber) : const Icon(Icons.edit),
           onTap: _start == null ? null : _onEndTimeTap,
         ),
         TextField(
@@ -90,12 +76,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           decoration: InputDecoration(
               label: const Text('Title*'),
               hintText: 'What is this?',
-              suffixIcon: _tecTitle.text.trim().isEmpty
-                  ? const Icon(
-                      Icons.warning_amber,
-                      color: Colors.amber,
-                    )
-                  : null),
+              suffixIcon: _tecTitle.text.trim().isEmpty ? const Icon(Icons.warning_amber, color: Colors.amber) : null),
           onChanged: _onRequirementsChange,
         ),
         TextField(
@@ -104,30 +85,17 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           maxLength: 128,
           decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
         ),
-        const Divider(
-          thickness: 1,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        const Text(
-          'Assigned Members To Program',
-          style: TextStyle(fontSize: 16),
-        ),
+        const Divider(thickness: 1),
+        const SizedBox(height: 16),
+        const Text('Assigned Members To Program', style: TextStyle(fontSize: 16)),
         ElevatedButton.icon(
             onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
         InkWell(
             onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
             child: AvatarStack(height: 50, avatars: _getSelectedUsersAvatar())),
-        const SizedBox(
-          height: 16,
-        ),
-        const Divider(
-          thickness: 1,
-        ),
+        const SizedBox(height: 16),
+        const Divider(thickness: 1),
         SwitchListTile(
           value: _forGuests,
           onChanged: _onForGuestsChange,
@@ -140,15 +108,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           trailing: const Icon(Icons.edit),
           onTap: () {},
         ),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
         const Divider(),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Save')),
-        const SizedBox(
-          height: 32,
-        ),
+        const SizedBox(height: 32),
       ],
     );
   }
@@ -169,10 +133,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     }
 
     return result;
-  }
-
-  Widget _getTimeText(DateTime? time) {
-    return Text(time == null ? 'TBD' : _timeFormat.format(time));
   }
 
   // * Logic
@@ -298,14 +258,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
-        await showDialog(
+        await DialogManager.showAlertDialog(
             context: context,
-            barrierDismissible: false,
-            builder: (_) => AlertDialog(
-                  title: const Text('Finish Time'),
-                  content: const Text('Now please select when this program is expected to complete'),
-                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Ok'))],
-                ));
+            title: 'Finish Time',
+            content: 'Now please select when this program is expected to complete',
+            barrierDismissible: false);
         _onEndTimeTap();
       }
     });
@@ -318,7 +275,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
       helpText: 'When does the role finish?',
     ).then((selectedEndTime) {
       if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
-        // TODO check end isn't set before the start!
         setState(() {
           _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedEndTime.hour, selectedEndTime.minute);

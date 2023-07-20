@@ -137,9 +137,11 @@ class DialogManager {
     required String title,
     required String content,
     String closeText = 'Ok',
+    bool barrierDismissible = true,
   }) async {
     await showDialog(
         context: context,
+        barrierDismissible: barrierDismissible,
         builder: (_) => AlertDialog(
               title: Text(title),
               content: Text(content),
