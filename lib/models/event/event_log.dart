@@ -7,11 +7,7 @@ class EventLog {
   // uid - string id of the user performing the update
   // log - the short string explaining the change
   // ts - timestamp (DateTime) of when it took place - this becomes the recentDate as well!
-  late final List<Map<String, dynamic>> _logs;
-
-  EventLog() {
-    _logs = List<Map<String, dynamic>>.empty(growable: true);
-  }
+  final List<Map<String, dynamic>> _logs = List<Map<String, dynamic>>.empty(growable: true);
 
   EventLog.fromMap(Map<String, dynamic> data) {
     final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(data['Logs']);
@@ -19,7 +15,7 @@ class EventLog {
       _logs.add({
         'uid': entry['uid'],
         'log': entry['log'],
-        'ts': (entry['end'] as Timestamp).toDate(),
+        'ts': (entry['ts'] as Timestamp).toDate(),
       });
     }
   }

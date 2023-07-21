@@ -59,14 +59,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               child: Column(
                 children: [
                   ListTile(
-                    title: const Text('Event takes place on <Date>'),
+                    title: _buildTimeTitle(),
                     subtitle: const Text('Event Starts from X, and finishes at Y'),
                     leading: const Icon(Icons.calendar_month),
                     onTap: () {},
                   ),
-                  const Divider(
-                    thickness: 1,
-                  )
+                  const Divider(thickness: 1)
                 ],
               ),
             ),
@@ -97,6 +95,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         ))
       ],
     );
+  }
+
+  Widget _buildTimeTitle() {
+    if (widget.eventContext.head.eventDate == null) {
+      return const Text('No Date Set');
+    }
+    return const Text('Finish this');
+    // final DateFormat eventStartFormat = DateFormat('EEE, MMM d, yyyy');
   }
 
   void _showProgramDialog(Map<String, dynamic> programEntry) {

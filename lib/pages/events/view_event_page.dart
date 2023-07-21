@@ -6,6 +6,7 @@ import '../../utility/event_context.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
+import '../../widgets/posts/view_related_posts_tab.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 
@@ -21,17 +22,15 @@ class ViewEventPage extends StatefulWidget {
 class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final EventContext _eventContext;
-  bool _buildProgram = false;
 
   @override
   void initState() {
     // ? This tab issue thing with Program will depend on:
     // - if eventDate in Head is null then don't build it unless it's a leader
     // - viewing it (we can't make sure it's the author viewing it without the meta)
-    _tabController = TabController(length: 3, vsync: this); // we will fix it to 3 for now
+    _tabController = TabController(length: 4, vsync: this);
     _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
-    _buildProgram = widget.eventHead.eventDate != null;
-    _buildProgram = true; // ! remember to delete this
+
     super.initState();
   }
 
@@ -68,67 +67,43 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         ],
       ),
       SliverList(
-        delegate: SliverChildListDelegate([
-          Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
-          PostMetadataSection(eventContext: _eventContext),
-          TabBar(
-            labelColor: Colors.black,
-            controller: _tabController,
-            tabs: _buildProgram
-                ? const [
-                    Tab(icon: Icon(Icons.info_outline), text: 'About'),
-                    Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
-                    Tab(icon: Icon(Icons.photo_album), text: 'Media'),
-                  ]
-                : const [
-                    Tab(icon: Icon(Icons.info_outline), text: 'About'),
-                    Tab(icon: Icon(Icons.photo_album), text: 'Media')
-                  ],
-          ),
-        ]),
-      ),
+          delegate: SliverChildListDelegate([
+        Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
+        PostMetadataSection(eventContext: _eventContext),
+        TabBar(labelColor: Colors.black, controller: _tabController, tabs: const [
+          Tab(icon: Icon(Icons.info_outline), text: 'About'),
+          Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
+          Tab(icon: Icon(Icons.photo_album), text: 'Media'),
+          Tab(icon: Icon(Icons.library_books), text: 'Related')
+        ])
+      ])),
     ];
   }
 
   Widget _buildTitle() {
-    return Text(
-      widget.eventHead.title,
-      style: const TextStyle(fontSize: 28),
-    );
+    return Text(widget.eventHead.title, style: const TextStyle(fontSize: 28));
   }
 
   Widget? _buildAppBarBackground() {
     // * If there are no images, we should just remove the expanded height
-
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        // we need to transform the below to a slideshow thingy maflob. Clickable as well
-        Positioned.fill(
-          child: Image.network(
-            'https://assets.gocomics.com/uploads/collection_images/collection_image_large_1721649_Garfield_Sandwich_V2_201805291007.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
-      ],
-    );
+    final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
+    if (keyGraphicSrc != null) {
+      return Image.network(keyGraphicSrc, fit: BoxFit.cover);
+    }
+    return null;
   }
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
-      ViewPostBody(
-        eventContext: _eventContext,
-      ),
+      ViewPostBody(eventContext: _eventContext),
       ViewAllPrograms(
-        eventContext: _eventContext,
-        onProgramChanged: () {
-          // ! I don't like this! But I want a quick and simple way to update the save button
-          setState(() {});
-        },
-      ),
-      ViewEventMediaTab(
-        eventContext: _eventContext,
-      ),
+          eventContext: _eventContext,
+          onProgramChanged: () {
+            // ! I don't like this! But I want a quick and simple way to update the save button
+            setState(() {});
+          }),
+      ViewEventMediaTab(eventContext: _eventContext),
+      ViewRelatedPostsTab(eventContext: _eventContext)
     ]);
   }
 
@@ -142,9 +117,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         builder: (_) {
           return SafeArea(
               child: EventPostSettingsSheet(
-            onEditUpdate: () {
-              setState(() {});
-            },
+            onEditUpdate: () => setState(() {}),
             eventContext: _eventContext,
           ));
         });
@@ -166,21 +139,10 @@ class _EventPostSettingsSheetState extends State<EventPostSettingsSheet> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          ListTile(title: const Text('Edit Body'), leading: const Icon(Icons.edit_note), onTap: _openEditBodyPage),
           ListTile(
-            title: const Text('Edit Body'),
-            leading: const Icon(Icons.edit_note),
-            onTap: _openEditBodyPage,
-          ),
-          ListTile(
-            title: const Text('Edit Gallery'),
-            leading: const Icon(Icons.photo_album),
-            onTap: _openEditGalleryPage,
-          ),
-          ListTile(
-            title: const Text('Create Post'),
-            leading: const Icon(Icons.note_add),
-            onTap: _openAddChildPost,
-          )
+              title: const Text('Edit Gallery'), leading: const Icon(Icons.photo_album), onTap: _openEditGalleryPage),
+          ListTile(title: const Text('Create Post'), leading: const Icon(Icons.note_add), onTap: _openAddChildPost)
         ],
       ),
     );

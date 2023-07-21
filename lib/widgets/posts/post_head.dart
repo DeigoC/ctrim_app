@@ -6,21 +6,18 @@ import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
 
 class PostHead extends StatelessWidget {
-  const PostHead({super.key, required this.thisHead});
+  const PostHead({super.key, required this.thisHead, this.viewingChild = false, this.childToParent = false});
   final EventHead thisHead;
+  final bool viewingChild, childToParent;
   static const double _titleFontSize = 24, _subtitleFontSize = 16;
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> children = [
       _buildTitle(),
-      const SizedBox(
-        height: 8,
-      ),
+      const SizedBox(height: 8),
       _buildSubtitle(),
-      const SizedBox(
-        height: 8,
-      ),
+      const SizedBox(height: 8)
     ];
 
     if (thisHead.media.isNotEmpty) {
@@ -28,108 +25,63 @@ class PostHead extends StatelessWidget {
     }
 
     return InkWell(
-      onTap: () => _onHeadTap(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      ),
-    );
+        onTap: () => _onHeadTap(context),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));
   }
 
   Widget _buildTitle() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(
-        thisHead.title,
-        style: const TextStyle(fontSize: _titleFontSize),
-      ),
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text(thisHead.title, style: const TextStyle(fontSize: _titleFontSize)));
   }
 
   Widget _buildSubtitle() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(thisHead.subtitle,
-          style: const TextStyle(
-            fontSize: _subtitleFontSize,
-          )),
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text(thisHead.subtitle, style: const TextStyle(fontSize: _subtitleFontSize)));
   }
 
   Widget _buildMediaSection(BuildContext context) {
     final List<Widget> children = [_buildMediaSlot(thisHead.media.first, 0, context)];
 
     if (thisHead.media.length == 2) {
-      children.addAll([
-        const SizedBox(
-          width: 2,
-        ),
-        _buildMediaSlot(thisHead.media[1], 1, context)
-      ]);
+      children.addAll([const SizedBox(width: 2), _buildMediaSlot(thisHead.media[1], 1, context)]);
     } else if (thisHead.media.length == 3) {
       children.addAll([
-        const SizedBox(
-          width: 2,
-        ),
+        const SizedBox(width: 2),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildMediaSlot(thisHead.media[1], 1, context),
-              const SizedBox(
-                height: 2,
-              ),
-              _buildMediaSlot(thisHead.media[2], 2, context),
-            ],
-          ),
-        )
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          _buildMediaSlot(thisHead.media[1], 1, context),
+          const SizedBox(height: 2),
+          _buildMediaSlot(thisHead.media[2], 2, context),
+        ]))
       ]);
     } else if (thisHead.media.length == 4) {
       children[0] = Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildMediaSlot(thisHead.media[0], 0, context),
-            const SizedBox(
-              height: 2,
-            ),
-            _buildMediaSlot(thisHead.media[2], 2, context),
-          ],
-        ),
-      );
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _buildMediaSlot(thisHead.media[0], 0, context),
+        const SizedBox(height: 2),
+        _buildMediaSlot(thisHead.media[2], 2, context),
+      ]));
       children.addAll([
-        const SizedBox(
-          width: 2,
-        ),
+        const SizedBox(width: 2),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildMediaSlot(thisHead.media[1], 1, context),
-              const SizedBox(
-                height: 2,
-              ),
-              _buildMediaSlot(thisHead.media[3], 3, context),
-            ],
-          ),
-        )
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          _buildMediaSlot(thisHead.media[1], 1, context),
+          const SizedBox(height: 2),
+          _buildMediaSlot(thisHead.media[3], 3, context),
+        ]))
       ]);
     }
 
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          ),
-        ),
-      ),
-    );
+        padding: const EdgeInsets.all(8.0),
+        child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: children))));
   }
 
   Widget _buildMediaSlot(Map<String, String> entry, int index, BuildContext context) {
@@ -141,13 +93,17 @@ class PostHead extends StatelessWidget {
   // * Logic
 
   void _onHeadTap(BuildContext context) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ViewEventPage(
-                  eventHead: thisHead,
-                  viewingChild: false,
-                )));
+    if (childToParent) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ViewEventPage(
+                    eventHead: thisHead,
+                    viewingChild: viewingChild,
+                  )));
+    }
   }
 
   void _onMediaTap(int index, BuildContext context) {

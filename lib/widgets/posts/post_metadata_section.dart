@@ -1,14 +1,12 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/models/event/event_metadata.dart';
-import 'package:ctrim_app/pages/events/view_children_posts_page.dart';
-import 'package:ctrim_app/pages/events/view_event_page.dart';
-import 'package:ctrim_app/pages/events/view_meta_logs_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../models/event/event_metadata.dart';
+import '../../pages/events/view_meta_logs_page.dart';
+import '../../utility/app_context.dart';
+import '../../utility/event_context.dart';
 
 class PostMetadataSection extends StatelessWidget {
   const PostMetadataSection({super.key, required this.eventContext});
@@ -59,64 +57,18 @@ class PostMetadataSection extends StatelessWidget {
         .allUsers
         .firstWhere((e) => e.id.compareTo(eventContext.metadata.lastUID) == 0)
         .forname;
-
-    final List<Widget> children = [
-      TextButton(onPressed: () => _onMetaTap(context), child: Text('$recentU • $recentDateStr')),
-    ];
-
-    // TODO move the Parent-Child stuff to a new Post Tab
-    if (eventContext.metadata.hasParent) {
-      children.add(TextButton(
-          onPressed: () {
-            _onViewParentPostClick(context);
-          },
-          child: const Text('Parent Post')));
-    }
-    if (eventContext.metadata.hasChildren) {
-      children.add(TextButton(
-          onPressed: () {
-            _onViewChildrenClick(context);
-          },
-          child: const Text('Children Posts')));
-    }
-
-    return Wrap(children: children);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // const Divider(),
+        TextButton(onPressed: () => _onMetaTap(context), child: Text('Last Edit by $recentU. $recentDateStr')),
+        const Divider(),
+      ],
+    );
   }
 
   // * Logic
-
   void _onMetaTap(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: eventContext)));
-  }
-
-  void _onViewParentPostClick(BuildContext context) {
-    if (eventContext.isViewingChild) {
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-    } else {
-      // open the view event page for the parent post - there's a chance we may need to fetch the head
-      final EventHead? parent = _getParent(context);
-      if (parent == null) {
-        debugPrint('need to fetch parent post');
-      } else {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: parent, viewingChild: false)));
-      }
-    }
-  }
-
-  void _onViewChildrenClick(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewChildrenPosts(eventContext: eventContext)));
-  }
-
-  EventHead? _getParent(BuildContext context) {
-    if (Provider.of<AppContext>(context, listen: false)
-        .eventHeads
-        .any((element) => element.id.compareTo(eventContext.metadata.parentID!) == 0)) {
-      return Provider.of<AppContext>(context, listen: false)
-          .eventHeads
-          .firstWhere((element) => element.id.compareTo(eventContext.metadata.parentID!) == 0);
-    }
-    return null;
   }
 }

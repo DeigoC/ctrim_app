@@ -1,6 +1,7 @@
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -27,12 +28,12 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   @override
   void initState() {
     _forGuests = widget.programEntry['for_guests'];
-    _start = widget.programEntry['start'] as DateTime;
-    _end = widget.programEntry['end'] as DateTime;
+    _start = widget.programEntry['start'];
+    _end = widget.programEntry['end'];
     _tecDetail = TextEditingController(text: widget.programEntry['detail']);
     _tecTitle = TextEditingController(text: widget.programEntry['title']);
     _selectedUsers = List<String>.from(widget.programEntry['uids']);
-    // ! Remember priority and UIDs
+    _appContext = Provider.of<AppContext>(context, listen: false);
     super.initState();
   }
 
@@ -61,37 +62,34 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
       padding: const EdgeInsets.all(8),
       children: [
         ListTile(
-          title: Text(_timeFormat.format(_start)),
-          subtitle: const Text('Start Time'),
-          leading: const Icon(Icons.punch_clock),
-          onTap: _onStartTimeTap,
-        ),
+            title: Text(_timeFormat.format(_start)),
+            subtitle: const Text('Start Time'),
+            leading: const Icon(Icons.punch_clock),
+            onTap: _onStartTimeTap),
         ListTile(
-          title: Text(_timeFormat.format(_end)),
-          subtitle: const Text('Finish Time'),
-          leading: const Icon(Icons.punch_clock),
-          onTap: _onEndTimeTap,
-        ),
+            title: Text(_timeFormat.format(_end)),
+            subtitle: const Text('Finish Time'),
+            leading: const Icon(Icons.punch_clock),
+            onTap: _onEndTimeTap),
         TextField(
-          controller: _tecTitle,
-          maxLength: 48,
-          decoration: const InputDecoration(
-            label: Text('Title*'),
-            hintText: 'What is this?',
-          ),
-          onChanged: (_) => _hasAnythingChanged(),
-        ),
+            controller: _tecTitle,
+            maxLength: 48,
+            decoration: const InputDecoration(
+              label: Text('Title*'),
+              hintText: 'What is this?',
+            ),
+            onChanged: (_) => _hasAnythingChanged()),
         TextField(
-          controller: _tecDetail,
-          maxLines: null,
-          maxLength: 128,
-          decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
-          onChanged: (_) => _hasAnythingChanged(),
-        ),
+            controller: _tecDetail,
+            maxLines: null,
+            maxLength: 128,
+            decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
+            onChanged: (_) => _hasAnythingChanged()),
         const Divider(thickness: 1),
         const SizedBox(height: 16),
-        const Text('User selection (hard coded to 1)'),
-        ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
+        const Text('Assigned Members To Program'),
+        ElevatedButton.icon(
+            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
         const SizedBox(height: 16),
         InkWell(
             onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
@@ -99,17 +97,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(height: 16),
         const Divider(thickness: 1),
         SwitchListTile(
-          value: _forGuests,
-          onChanged: _onForGuestsChange,
-          title: const Text('For Guests'),
-          subtitle: const Text('Is this something guests should see?'),
-        ),
+            value: _forGuests,
+            onChanged: _onForGuestsChange,
+            title: const Text('For Guests'),
+            subtitle: const Text('Is this something guests should see?')),
         ListTile(
-          title: const Text('Priority: 1'),
-          subtitle: const Text('Should this be viewed higher than others of the same start time?'),
-          trailing: const Icon(Icons.edit),
-          onTap: () {},
-        ),
+            title: const Text('Priority: 1'),
+            subtitle: const Text('Should this be viewed higher than others of the same start time?'),
+            trailing: const Icon(Icons.edit),
+            onTap: () {}),
         const SizedBox(height: 16),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Update')),
@@ -145,12 +141,11 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   void _hasAnythingChanged() {
     if (_canSave &&
-        (_start.compareTo(widget.programEntry['start'] as DateTime) == 0 &&
-            _end.compareTo(widget.programEntry['end'] as DateTime) == 0 &&
+        (_areTimesTheSame() &&
             _tecDetail.text.trim().compareTo(widget.programEntry['detail']) == 0 &&
-            (_tecTitle.text.trim().compareTo(widget.programEntry['title']) == 0 && _tecTitle.text.trim().isNotEmpty)) &&
-        _forGuests != widget.programEntry['for_guests'] &&
-        _selectedUsers.toString().compareTo(widget.programEntry['uids']) == 0) {
+            (_tecTitle.text.trim().compareTo(widget.programEntry['title']) == 0 || _tecTitle.text.trim().isEmpty)) &&
+        _forGuests == widget.programEntry['for_guests'] &&
+        _selectedUsers.toString().compareTo((widget.programEntry['uids'] as List<String>).toString()) == 0) {
       setState(() {
         _canSave = false;
       });
@@ -161,11 +156,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     }
   }
 
+  bool _areTimesTheSame() {
+    return (_start.hour.compareTo((widget.programEntry['start'] as DateTime).hour) == 0 &&
+        _start.minute.compareTo((widget.programEntry['start'] as DateTime).minute) == 0 &&
+        _end.hour.compareTo((widget.programEntry['end'] as DateTime).hour) == 0 &&
+        _end.minute.compareTo((widget.programEntry['end'] as DateTime).minute) == 0);
+  }
+
   void _onStartTimeTap() {
-    showTimePicker(
-            context: context,
-            initialTime: widget.eventContext.head.startTimeOfEvent,
-            helpText: 'When does the role start?')
+    showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_start), helpText: 'When does the role start?')
         .then((selectedStartTime) async {
       if (selectedStartTime != null) {
         setState(() {
@@ -186,7 +185,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   void _onEndTimeTap() {
     showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_start.add(const Duration(hours: 1))),
+      initialTime: TimeOfDay.fromDateTime(_end),
       helpText: 'When does the role finish?',
     ).then((selectedEndTime) {
       if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
@@ -236,6 +235,47 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         });
   }
 
+  void _onSelectMembersTap() {
+    final availableUsers = _appContext.allUsers.where((element) => !_selectedUsers.contains(element.id)).toList();
+    showDialog(
+        context: context,
+        builder: (_) {
+          return Dialog(
+            child: SizedBox(
+              height: MediaQuery.of(_).size.height * 0.6,
+              child: Column(
+                children: [
+                  const ListTile(
+                    title: Text('Select User For Role'),
+                    leading: Icon(Icons.people),
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: ListView.builder(
+                        itemCount: availableUsers.length,
+                        itemBuilder: (_, index) {
+                          final thisUser = availableUsers[index];
+                          return ListTile(
+                            title: Text(thisUser.fullname),
+                            subtitle: Text(thisUser.location),
+                            leading: MyUserAvatar(thisUser),
+                            onTap: () {
+                              setState(() {
+                                _selectedUsers.add(thisUser.id);
+                                Navigator.of(context).pop();
+                              });
+                              _hasAnythingChanged();
+                            },
+                          );
+                        }),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
   void _onRemoveUserFromRole(String uid) {
     showDialog(
         context: context,
@@ -252,6 +292,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                   onPressed: () {
                     setState(() {
                       _selectedUsers.removeWhere((element) => element.compareTo(uid) == 0);
+                      _hasAnythingChanged();
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();
                     });

@@ -60,6 +60,15 @@ class EventHead {
   TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
   List<Map<String, String>> get media => _media; // unmodifiable?
 
+  String? getKeyGraphic() {
+    for (final entry in media) {
+      if (entry['type']!.compareTo('img') == 0) {
+        return entry['src'];
+      }
+    }
+    return null;
+  }
+
   void setTitle(String newTitle) => _title = newTitle;
   void setSubtitle(String newSubtitle) => _subtitle = newSubtitle;
   void setRecentDate(DateTime recentDate) => _recentDate = recentDate;
