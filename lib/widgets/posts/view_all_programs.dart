@@ -63,38 +63,40 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildBodyWithEventDate() {
-    return Column(
-      children: [
-        Expanded(
-            child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildEventDateSelector()),
-            SliverList.separated(
-              itemCount: widget.eventContext.allPrograms.length,
-              itemBuilder: (_, index) {
-                return ProgramTile(
-                  programEntry: widget.eventContext.allPrograms[index],
-                  onTap: (_) => _showProgramDialog(_),
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) {
-                return const Divider();
-              },
-            )
-          ],
-        )),
-        SafeArea(
-            child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-                onPressed: _openAddProgramPage,
-                icon: const Icon(Icons.edit_calendar),
-                label: const Text('Add Program')),
-          ),
-        ))
-      ],
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: [
+          Expanded(
+              child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(child: _buildEventDateSelector()),
+              SliverList.separated(
+                itemCount: widget.eventContext.allPrograms.length,
+                itemBuilder: (_, index) {
+                  return ProgramTile(
+                    programEntry: widget.eventContext.allPrograms[index],
+                    onTap: (_) => _showProgramDialog(_),
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  return const Divider();
+                },
+              )
+            ],
+          )),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                  onPressed: _openAddProgramPage,
+                  icon: const Icon(Icons.edit_calendar),
+                  label: const Text('Add Program')),
+            ),
+          )
+        ],
+      ),
     );
   }
 
@@ -115,7 +117,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
         const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: ElevatedButton.icon(
               onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
         ),

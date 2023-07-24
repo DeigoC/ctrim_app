@@ -9,8 +9,9 @@ import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 
 class PostMetadataSection extends StatelessWidget {
-  const PostMetadataSection({super.key, required this.eventContext});
+  const PostMetadataSection({super.key, required this.eventContext, required this.update});
   final EventContext eventContext;
+  final Function update;
   static final DateFormat _recentDateFormat = DateFormat('d MMM, HH:mm');
 
   @override
@@ -40,6 +41,9 @@ class PostMetadataSection extends StatelessWidget {
             eventContext.setFetchedMetadata(snap.data!);
             Provider.of<AppContext>(_, listen: false).addMetadata(eventContext.id, snap.data!);
             result = _buildWithData(_);
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              update();
+            });
           } else if (snap.hasError) {
             debugPrint('Error with fetching metadata: ${snap.error}');
             result = const Center(

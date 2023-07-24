@@ -1,15 +1,15 @@
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 
-class EditGallerlyPage extends StatefulWidget {
-  const EditGallerlyPage({super.key, required this.eventContext});
+class EditGalleryPage extends StatefulWidget {
+  const EditGalleryPage({super.key, required this.eventContext});
   final EventContext eventContext;
 
   @override
-  State<EditGallerlyPage> createState() => _EditGallerlyPageState();
+  State<EditGalleryPage> createState() => _EditGalleryPageState();
 }
 
-class _EditGallerlyPageState extends State<EditGallerlyPage> {
+class _EditGalleryPageState extends State<EditGalleryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

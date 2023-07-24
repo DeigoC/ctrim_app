@@ -85,6 +85,8 @@ class EventContext {
     }
   }
 
+  bool get fetchedMetadata => _fetchedMeta;
+
   // * Supplemental - Media Related
 
   EventMedia get media => _eventMedia;
@@ -138,6 +140,10 @@ class EventContext {
   }
 
   String get id => _head.id;
+
+  bool isUserAdminOfPost(String currentUID) {
+    return _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
+  }
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
   bool get canSaveTheEditing => _canSaveTheEditing;

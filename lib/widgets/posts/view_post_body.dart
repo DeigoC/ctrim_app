@@ -1,11 +1,13 @@
+import 'package:ctrim_app/pages/events/edit_body_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../utility/event_context.dart';
 
 class ViewPostBody extends StatelessWidget {
-  const ViewPostBody({super.key, required this.eventContext});
+  const ViewPostBody({super.key, required this.eventContext, required this.updateBody});
   final EventContext eventContext;
+  final Function updateBody;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +43,26 @@ class ViewPostBody extends StatelessWidget {
   }
 
   Widget _buildBodyWithData(final quill.QuillController controller, BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: quill.QuillEditor.basic(controller: controller, readOnly: true),
+    return SafeArea(
+      top: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: quill.QuillEditor.basic(controller: controller, readOnly: true),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: ElevatedButton.icon(
+                onPressed: () => _onEditBodyClick(context),
+                icon: const Icon(Icons.edit),
+                label: const Text('Edit Text')),
+          )
+        ],
+      ),
     );
   }
 
@@ -51,5 +70,11 @@ class ViewPostBody extends StatelessWidget {
   Future<String> _fetchTestBody() async {
     final EventSupplementalDBManager manager = EventSupplementalDBManager(eventContext.head.id);
     return manager.fetchBody();
+  }
+
+  void _onEditBodyClick(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: eventContext))).then((_) {
+      updateBody();
+    });
   }
 }

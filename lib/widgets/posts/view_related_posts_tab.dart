@@ -23,10 +23,22 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   @override
   Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Expanded(child: _buildBody()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: ElevatedButton.icon(
+              onPressed: _onCreatePost, icon: const Icon(Icons.post_add), label: const Text('Create Related Post')),
+        )
+      ]),
+    );
+  }
+
+  Widget _buildBody() {
     if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) {
-      return CustomScrollView(
-        slivers: _buildScrollChildren(),
-      );
+      return CustomScrollView(slivers: _buildScrollChildren());
     }
     return const Center(child: Text('No related posts'));
   }
@@ -52,14 +64,14 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return SliverToBoxAdapter(
       child: Column(
         children: [
-          const Text('Parent Post'),
+          // const Text('Parent Post'),
           // kinda wacky logic here
           // so if we came from the parent post looking at a child post and see this post
           // clicking this parent should pop the page back to the parent as opposed to pushing
           // another page, hence the 'childToParent' field
-          PostHead(thisHead: thisParent, childToParent: widget.eventContext.isViewingChild),
-          const SizedBox(height: 16),
-          const Divider()
+          PostHead(thisHead: thisParent, childToParent: widget.eventContext.isViewingChild)
+          // const SizedBox(height: 16),
+          // const Divider()
         ],
       ),
     );
@@ -69,17 +81,17 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     final childrenHeads =
         _appContext.eventHeads.where((head) => widget.eventContext.metadata.children.contains(head.id)).toList();
     return [
-      const SliverToBoxAdapter(
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Divider(),
-          Padding(
-              padding: EdgeInsets.only(left: 8.0),
-              child: Text('Children Posts', style: TextStyle(fontSize: 16, decoration: TextDecoration.underline))),
-          Divider(),
-        ],
-      )),
+      // const SliverToBoxAdapter(
+      //     child: Column(
+      //   crossAxisAlignment: CrossAxisAlignment.center,
+      //   children: [
+      //     Divider(),
+      //     Padding(
+      //         padding: EdgeInsets.only(left: 8.0),
+      //         child: Text('Children Posts', style: TextStyle(fontSize: 16, decoration: TextDecoration.underline))),
+      //     Divider(),
+      //   ],
+      // )),
       SliverList.separated(
           itemCount: childrenHeads.length,
           itemBuilder: (_, index) => PostHead(
@@ -89,4 +101,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
           separatorBuilder: (_, index) => const Divider())
     ];
   }
+
+  // * Logic
+
+  void _onCreatePost() {}
 }
