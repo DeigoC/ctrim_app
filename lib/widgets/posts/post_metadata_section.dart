@@ -61,7 +61,7 @@ class PostMetadataSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // const Divider(),
-        TextButton(onPressed: () => _onMetaTap(context), child: Text('Last Edit by $recentU. $recentDateStr')),
+        TextButton(onPressed: () => _onMetaTap(context), child: Text('Updated $recentDateStr by $recentU')),
         const Divider(),
       ],
     );

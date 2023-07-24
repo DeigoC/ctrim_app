@@ -17,7 +17,7 @@ class _AddProgramTabState extends State<AddProgramTab> {
       const Text('Event Date is N/A'),
       ElevatedButton(onPressed: () {}, child: const Text('Change Date')),
       SwitchListTile(
-        value: widget.eventContext.allDay,
+        value: widget.eventContext.program.allDay,
         onChanged: widget.eventDate == null ? null : (value) => {},
         title: const Text('All Day'),
       )

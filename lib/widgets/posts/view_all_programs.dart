@@ -1,6 +1,8 @@
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
+import 'package:ctrim_app/pages/events/edit_event_date_location_page.dart';
 import 'package:ctrim_app/widgets/posts/program_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../pages/events/add_program_page.dart';
 import '../../pages/events/edit_program_page.dart';
 import '../../utility/event_context.dart';
@@ -15,6 +17,10 @@ class ViewAllPrograms extends StatefulWidget {
 }
 
 class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
+  static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy, HH:mm');
+  static final DateFormat _startFormatAllDay = DateFormat('EEEE d MMM yyyy');
+  static final DateFormat _endFormat = DateFormat('HH:mm');
+
   @override
   void initState() {
     super.initState();
@@ -50,24 +56,19 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildBodyWithData() {
+    if (widget.eventContext.head.eventDate != null) {
+      return _buildBodyWithEventDate();
+    }
+    return SingleChildScrollView(child: _buildEventDateSelector());
+  }
+
+  Widget _buildBodyWithEventDate() {
     return Column(
       children: [
         Expanded(
             child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  ListTile(
-                    title: _buildTimeTitle(),
-                    subtitle: const Text('Event Starts from X, and finishes at Y'),
-                    leading: const Icon(Icons.calendar_month),
-                    onTap: () {},
-                  ),
-                  const Divider(thickness: 1)
-                ],
-              ),
-            ),
+            SliverToBoxAdapter(child: _buildEventDateSelector()),
             SliverList.separated(
               itemCount: widget.eventContext.allPrograms.length,
               itemBuilder: (_, index) {
@@ -97,12 +98,32 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     );
   }
 
-  Widget _buildTimeTitle() {
-    if (widget.eventContext.head.eventDate == null) {
-      return const Text('No Date Set');
+  Widget _buildEventDateSelector() {
+    String dateStr = "No Date Selected";
+    if (widget.eventContext.head.eventDate != null) {
+      if (widget.eventContext.program.allDay) {
+        dateStr = "${_startFormatAllDay.format(widget.eventContext.head.eventDate!)} (All Day)";
+      } else {
+        dateStr =
+            "${_startFormat.format(widget.eventContext.head.eventDate!)} to ${_endFormat.format(widget.eventContext.program.finishTime!)}";
+      }
     }
-    return const Text('Finish this');
-    // final DateFormat eventStartFormat = DateFormat('EEE, MMM d, yyyy');
+
+    return InkWell(
+      onTap: _onEditPostProgram,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
+        const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ElevatedButton.icon(
+              onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
+        ),
+        const Divider(
+          thickness: 1,
+        ),
+      ]),
+    );
   }
 
   void _showProgramDialog(Map<String, dynamic> programEntry) {
@@ -150,6 +171,20 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                 ))).then((_) {
       setState(() {
         // rebuild in case of update
+        if (widget.eventContext.canSaveTheEditing) {
+          widget.onProgramChanged();
+        }
+      });
+    });
+  }
+
+  void _onRemindEventClick() {}
+
+  void _onEditPostProgram() {
+    Navigator.push(
+            context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
+        .then((_) {
+      setState(() {
         if (widget.eventContext.canSaveTheEditing) {
           widget.onProgramChanged();
         }

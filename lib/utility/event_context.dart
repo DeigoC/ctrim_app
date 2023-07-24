@@ -61,9 +61,9 @@ class EventContext {
 
   bool isSameJson(List<dynamic> json) => _eventBody.compareTo(json) == 0;
 
-  // * Program Related
+  // * Program Related (and the Event Date)
 
-  bool get allDay => _program.allDay;
+  EventProgram get program => _program;
   bool get haveFetchedProgram => _fetchedProgram;
   List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 

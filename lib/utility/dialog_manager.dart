@@ -115,30 +115,52 @@ class DialogManager {
         context: context,
         builder: (_) {
           return AlertDialog(
-            title: const Text('Leave Page'),
-            content: const Text('Are you sure you want to discard all changes?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () {
-                    result = true;
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Yes')),
-            ],
-          );
+              title: const Text('Leave Page'),
+              content: const Text('Are you sure you want to discard all changes?'),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                TextButton(
+                    onPressed: () {
+                      result = true;
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Yes'))
+              ]);
         });
 
     return result;
   }
 
-  static Future<void> showAlertDialog({
-    required BuildContext context,
-    required String title,
-    required String content,
-    String closeText = 'Ok',
-    bool barrierDismissible = true,
-  }) async {
+  static Future<bool> showConfirmationDialog(
+      {required BuildContext context,
+      required String title,
+      required String content,
+      String confirmText = 'Yes',
+      String cancelText = 'Cancel',
+      bool barrierDismissible = true}) async {
+    bool result = false;
+    await showDialog(
+        context: context,
+        barrierDismissible: barrierDismissible,
+        builder: (_) => AlertDialog(title: Text(title), content: Text(content), actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(cancelText)),
+              TextButton(
+                  onPressed: () {
+                    result = true;
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(confirmText))
+            ]));
+
+    return result;
+  }
+
+  static Future<void> showAlertDialog(
+      {required BuildContext context,
+      required String title,
+      required String content,
+      String closeText = 'Ok',
+      bool barrierDismissible = true}) async {
     await showDialog(
         context: context,
         barrierDismissible: barrierDismissible,

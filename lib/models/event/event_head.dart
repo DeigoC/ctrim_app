@@ -72,5 +72,6 @@ class EventHead {
   void setTitle(String newTitle) => _title = newTitle;
   void setSubtitle(String newSubtitle) => _subtitle = newSubtitle;
   void setRecentDate(DateTime recentDate) => _recentDate = recentDate;
-  void setEventDate(DateTime newEventDate) => _eventDate = eventDate;
+  void setEventDate(DateTime? newEventDate) => _eventDate = newEventDate;
+  void removeEventDate() => _eventDate = null;
 }

@@ -1,4 +1,5 @@
 import 'package:avatar_stack/avatar_stack.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -19,11 +20,27 @@ class ViewMetaLogsPage extends StatefulWidget {
 }
 
 class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
+  late final AppContext _appContext;
+  late final List<String> _originalContribtors;
+
+  @override
+  void initState() {
+    _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs);
+    _appContext = Provider.of<AppContext>(context, listen: false);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Logs')),
-      body: widget.eventContext.fetchedLogs ? _buildWithData(context) : _buildFB(),
+    return WillPopScope(
+      onWillPop: () async {
+        _checkForChangesToContributors();
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Logs')),
+        body: widget.eventContext.fetchedLogs ? _buildWithData(context) : _buildFB(),
+      ),
     );
   }
 
@@ -53,12 +70,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   // this will show both metadata and logs
   Widget _buildWithData(BuildContext context) {
     // TODO remember the optimisation of fetching (and storing) the key users on demand!
-    final allUsers = Provider.of<AppContext>(context).allUsers;
-    final mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
+    final List<User> allUsers = _appContext.allUsers;
+    final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
     final List<User> selectedUsers =
         allUsers.where((element) => widget.eventContext.metadata.contributorUIDs.contains(element.id)).toList();
-
-    // final List<ImageProvider> contributors = _getContributors(selectedUsers);
 
     return CustomScrollView(
       slivers: [
@@ -67,13 +82,12 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ListTile(
-                  title: Text(mainAdmin.fullname),
-                  subtitle: const Text('Main Admin'),
-                  leading: MyUserAvatar(mainAdmin)),
+                  title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
               ListTile(
                   title: const Text('Assigned Contributors'),
                   subtitle: const Text('Able to modify aspects of the post'),
-                  trailing: IconButton(onPressed: () {}, icon: const Icon(Icons.person_add_alt_1))),
+                  trailing:
+                      IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))),
               _buildContributors(selectedUsers),
               const SizedBox(height: 16),
               const Divider(thickness: 1),
@@ -110,7 +124,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
       }
     }
 
-    return InkWell(onTap: () => _showContributors(selectedUsers), child: AvatarStack(height: 90, avatars: avatars));
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child:
+            InkWell(onTap: () => _showContributors(selectedUsers), child: AvatarStack(height: 50, avatars: avatars)));
   }
 
   // * Logic
@@ -121,14 +138,100 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           return Dialog(
               child: SizedBox(
                   height: MediaQuery.of(context).size.height * 0.6,
-                  child: ListView.builder(itemBuilder: (_, index) {
-                    final thisU = selectedUsers[index];
-                    return ListTile(
-                      title: Text(thisU.fullname),
-                      leading: MyUserAvatar(thisU),
-                      subtitle: Text(thisU.location),
-                    );
-                  })));
+                  child: ListView.builder(
+                      itemCount: selectedUsers.length,
+                      itemBuilder: (_, index) {
+                        final thisU = selectedUsers[index];
+                        return ListTile(
+                          title: Text(thisU.fullname),
+                          leading: MyUserAvatar(thisU),
+                          subtitle: Text(thisU.location),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.remove),
+                            onPressed: () => _onRemoveContributorClick(thisU),
+                          ),
+                        );
+                      })));
         });
+  }
+
+  void _onRemoveContributorClick(final User thisU) {
+    DialogManager.showConfirmationDialog(
+            context: context, title: 'Remove Contributor', content: 'Are you sure you want to continue?')
+        .then((confirm) {
+      if (confirm) {
+        _removeContributor(thisU);
+      }
+      Navigator.of(context).pop();
+    });
+  }
+
+  void _removeContributor(final User removed) {
+    setState(() {
+      widget.eventContext.metadata.removeContributorUID(removed.id);
+      widget.eventContext.allowSavingOfTheEdit();
+    });
+  }
+
+  void _viewPotentialContributorsTap() {
+    final List<User> potentialUsers =
+        _appContext.allUsers.where((e) => !widget.eventContext.metadata.contributorUIDs.contains(e.id)).toList();
+    potentialUsers.removeWhere((element) => element.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
+
+    showDialog(
+        context: context,
+        builder: (_) {
+          return Dialog(
+              child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: ListView.builder(
+                      itemCount: potentialUsers.length,
+                      itemBuilder: (_, index) {
+                        final User thisU = potentialUsers[index];
+                        return ListTile(
+                            title: Text(thisU.fullname),
+                            subtitle: Text(thisU.location),
+                            leading: MyUserAvatar(thisU),
+                            onTap: () => _onAddContributorTap(thisU));
+                      })));
+        });
+  }
+
+  void _onAddContributorTap(final User newContributor) {
+    DialogManager.showConfirmationDialog(
+            context: context,
+            title: 'Add Contributor',
+            content: 'Are you sure you want to add ${newContributor.forname} as a contributor?')
+        .then((confirm) {
+      if (confirm) {
+        _addContributor(newContributor);
+      }
+      Navigator.of(context).pop();
+    });
+  }
+
+  void _addContributor(final User newContributor) {
+    setState(() {
+      widget.eventContext.metadata.addContributorUID(newContributor.id);
+      widget.eventContext.allowSavingOfTheEdit();
+    });
+  }
+
+  void _checkForChangesToContributors() {
+    bool haveContributorsChange = false;
+    if (_originalContribtors.length != widget.eventContext.metadata.contributorUIDs.length) {
+      haveContributorsChange = true;
+    } else {
+      for (final newContributorID in widget.eventContext.metadata.contributorUIDs) {
+        if (!_originalContribtors.contains(newContributorID)) {
+          haveContributorsChange = true;
+          break;
+        }
+      }
+    }
+
+    if (haveContributorsChange) {
+      widget.eventContext.allowSavingOfTheEdit();
+    }
   }
 }

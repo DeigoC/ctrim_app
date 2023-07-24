@@ -67,6 +67,10 @@ class EventProgram {
 
   List<Map<String, dynamic>> get roles => _roles; // unmodifiable?
   bool get allDay => _allDay;
+  DateTime? get finishTime => _finishTime;
+
+  void setAllDay(bool state) => _allDay = state;
+  void setFinishTime(DateTime? finish) => _finishTime = finish;
 
   @override
   String toString() {
