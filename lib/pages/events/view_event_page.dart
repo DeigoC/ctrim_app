@@ -86,7 +86,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
         PostMetadataSection(
           eventContext: _eventContext,
-          update: _update,
+          update: _updateWholePostBody,
         ),
         TabBar(labelColor: Colors.black, controller: _tabController, tabs: const [
           Tab(icon: Icon(Icons.info_outline), text: 'About'),
@@ -113,14 +113,14 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
-      ViewPostBody(eventContext: _eventContext, updateBody: _update),
-      ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _update),
-      ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _update),
+      ViewPostBody(eventContext: _eventContext, updateBody: _updateWholePostBody),
+      ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody),
+      ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _updateWholePostBody),
       ViewRelatedPostsTab(eventContext: _eventContext)
     ]);
   }
 
-  void _update() => setState(() {});
+  void _updateWholePostBody() => setState(() {});
 
   Widget _buildAppBarAction() {
     String uid = Provider.of<AppContext>(context, listen: false).currentUser.id;
@@ -133,7 +133,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                     : const MaterialStatePropertyAll<Color>(Colors.grey),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)))),
-            onPressed: _eventContext.canSaveTheEditing ? () {} : null,
+            onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
             icon: const Icon(Icons.save),
             label: const Text('Update'));
       } else {
@@ -149,6 +149,84 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditHeadDetailsPage(eventContext: _eventContext)))
         .then((_) {
       setState(() {});
+    });
+  }
+
+  void _updateClick() {}
+}
+
+class EventLogDialog extends StatefulWidget {
+  const EventLogDialog({super.key, required this.eventContext, required this.updatePage});
+  final EventContext eventContext;
+  final Function() updatePage;
+
+  @override
+  State<EventLogDialog> createState() => _EventLogDialogState();
+}
+
+class _EventLogDialogState extends State<EventLogDialog> {
+  final TextEditingController _tecLog = TextEditingController();
+  bool _canSave = false;
+
+  @override
+  void dispose() {
+    _tecLog.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Please describe the update',
+            style: TextStyle(fontSize: 16),
+          ),
+          TextField(
+            controller: _tecLog,
+            decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Log')),
+            maxLength: 128,
+            maxLines: null,
+            onChanged: _onTextChange,
+          ),
+          ElevatedButton.icon(
+              onPressed: _canSave ? _saveClick : null,
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Update'))
+        ],
+      ),
+    );
+  }
+
+  // * Logic
+
+  void _onTextChange(String newString) {
+    if (_canSave && newString.trim().isEmpty) {
+      setState(() {
+        _canSave = false;
+      });
+    } else if (!_canSave) {
+      setState(() {
+        _canSave = true;
+      });
+    }
+  }
+
+  void _saveClick() {
+    DialogManager.showConfirmationDialog(
+            context: context,
+            title: 'Last Chance',
+            content: 'The log will be sent to all who have bookmarked this post',
+            confirmText: 'I understand, Save!',
+            cancelText: 'Wait')
+        .then((confirmation) {
+      if (confirmation) {
+        // TOOD test from here
+        widget.eventContext
+            .updatePost(log: _tecLog.text.trim(), uid: Provider.of<AppContext>(context, listen: false).currentUser.id);
+      }
     });
   }
 }

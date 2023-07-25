@@ -196,8 +196,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   Future<void> _savePost() async {
+    final String uid = Provider.of<AppContext>(context, listen: false).currentUser.id;
     await widget.eventContext
-        .addNewPost(title: _tecTitle.text.trim(), subtitle: _tecSubtitle.text.trim(), eventDate: _eventDate)
+        .addNewPost(title: _tecTitle.text.trim(), subtitle: _tecSubtitle.text.trim(), eventDate: _eventDate, uid: uid)
         .then((newID) => _updateParentMetadata(newID));
   }
 

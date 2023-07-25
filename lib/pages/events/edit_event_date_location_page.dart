@@ -13,14 +13,22 @@ class EditEventDateLocationPage extends StatefulWidget {
 class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy, HH:mm');
   static final DateFormat _endFormat = DateFormat('HH:mm');
+  late final DateTime? _originalStart, _originalEnd;
+  late final bool _originalAllDay;
+
   DateTime? _start, _end;
   bool _isAllDay = false, _online = false;
 
   @override
   void initState() {
-    _start = widget.eventContext.head.eventDate;
-    _end = widget.eventContext.program.finishTime;
-    _isAllDay = widget.eventContext.program.allDay;
+    _originalStart = widget.eventContext.head.eventDate;
+    _originalEnd = widget.eventContext.program.finishTime;
+    _originalAllDay = widget.eventContext.program.allDay;
+
+    _start = _originalStart;
+    _end = _originalEnd;
+    _isAllDay = _originalAllDay;
+
     super.initState();
   }
 
@@ -33,11 +41,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        widget.eventContext.head.setEventDate(_start);
-        widget.eventContext.program.setFinishTime(_end);
-        widget.eventContext.program.setAllDay(_isAllDay);
-        // TODO remember to verify this part
-        widget.eventContext.allowSavingOfTheEdit();
+        _checkToUpdate();
         return true;
       },
       child: Scaffold(
@@ -166,5 +170,14 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     setState(() {
       _start = null;
     });
+  }
+
+  void _checkToUpdate() {
+    if (_start != _originalStart || _end != _originalEnd || _isAllDay != _originalAllDay) {
+      widget.eventContext.head.setEventDate(_start);
+      widget.eventContext.program.setFinishTime(_end);
+      widget.eventContext.program.setAllDay(_isAllDay);
+      widget.eventContext.allowSavingOfTheEdit();
+    }
   }
 }

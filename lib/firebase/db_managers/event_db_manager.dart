@@ -20,6 +20,10 @@ class EventHeadDBManager {
   Future<void> saveNewHead(final EventHead head) async {
     await _ref.doc(head.id).set(head);
   }
+
+  Future<void> updateHead(final EventHead head) async {
+    await _ref.doc(head.id).update(head.toJson());
+  }
 }
 
 class EventSupplementalDBManager {
@@ -40,7 +44,6 @@ class EventSupplementalDBManager {
     await _colRef.doc('body').update({'Body': encodedJson});
   }
 
-  // TODO test this again
   Future<String> fetchBody() async {
     final doc = await _colRef.doc('body').get();
     final data = doc.data() as Map<String, dynamic>;

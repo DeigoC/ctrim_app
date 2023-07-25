@@ -7,6 +7,11 @@ class EventLog {
   // uid - string id of the user performing the update
   // log - the short string explaining the change
   // ts - timestamp (DateTime) of when it took place - this becomes the recentDate as well!
+
+  EventLog(Map<String, dynamic> fistLog) {
+    _logs.add(fistLog);
+  }
+
   final List<Map<String, dynamic>> _logs = List<Map<String, dynamic>>.empty(growable: true);
 
   EventLog.fromMap(Map<String, dynamic> data) {

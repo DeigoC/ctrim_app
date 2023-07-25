@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctrim_app/firebase/db_managers/id_tracker.dart';
 import 'package:ctrim_app/models/event/event_program.dart';
 
@@ -15,8 +16,8 @@ class EventContext {
   late final EventLog _log;
   late final EventMetadata _metadata;
   late final EventProgram _program;
-  late final EventMedia _eventMedia;
-  final EventBody _eventBody = EventBody();
+  late final EventMedia _media;
+  final EventBody _body = EventBody();
 
   bool _fetchedBody = false,
       _fetchedProgram = false,
@@ -37,7 +38,7 @@ class EventContext {
     _fetchedBody = true;
     _metadata = EventMetadata(authorUID: '1', parentID: parentID); // ! remember this
     _program = EventProgram();
-    _eventMedia = EventMedia();
+    _media = EventMedia();
   }
 
   // * Head Related
@@ -47,19 +48,19 @@ class EventContext {
   bool get haveFetchedBody => _fetchedBody;
 
   // ! be weary because trim() could not be applied
-  bool get isBodyUntouched => _eventBody.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
-  List<dynamic> get body => _eventBody.decodedJson;
+  bool get isBodyUntouched => _body.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
+  List<dynamic> get body => _body.decodedJson;
 
   void setBodyJson(List<dynamic> json) {
-    _eventBody.encodeJson(json);
+    _body.encodeJson(json);
   }
 
   void setFetchedBody(String encodedBody) {
-    _eventBody.setJson(encodedBody);
+    _body.setJson(encodedBody);
     _fetchedBody = true;
   }
 
-  bool isSameJson(List<dynamic> json) => _eventBody.compareTo(json) == 0;
+  bool isSameJson(List<dynamic> json) => _body.compareTo(json) == 0;
 
   // * Program Related (and the Event Date)
 
@@ -89,10 +90,10 @@ class EventContext {
 
   // * Supplemental - Media Related
 
-  EventMedia get media => _eventMedia;
+  EventMedia get media => _media;
   bool get fethcedMedia => _fetchedMedia;
   void setFetchedMedia(EventMedia media) {
-    _eventMedia = media;
+    _media = media;
     _fetchedMedia = true;
   }
 
@@ -110,28 +111,47 @@ class EventContext {
   Future<String> addNewPost({
     required String title,
     required String subtitle,
+    required String uid,
     DateTime? eventDate,
   }) async {
     final String id = await _getNewID();
     final EventSupplementalDBManager dbManager = EventSupplementalDBManager(id);
     final EventHeadDBManager headDBManager = EventHeadDBManager();
+    final DateTime now = DateTime.now();
 
     // head stuff
     _head = EventHead(id: id); // ! add the key media!
     _head.setTitle(title);
     _head.setSubtitle(subtitle);
-    _head.setRecentDate(DateTime.now());
+    _head.setRecentDate(now);
 
     // metadata
-    _metadata.setLastUID('1'); // ! remember this
+    _metadata.setLastUID(uid);
 
     // log, create the new one for creation
+    _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': Timestamp.fromDate(now)});
 
     await headDBManager.saveNewHead(_head);
-    await dbManager.addBody(_eventBody.json);
-    await dbManager.addMedia(_eventMedia);
-    await dbManager.addMetadata(_metadata);
+    dbManager.addBody(_body.json);
+    dbManager.addMedia(_media);
+    dbManager.addMetadata(_metadata);
+    dbManager.addLog(_log);
     return id;
+  }
+
+  Future<void> updatePost({required String log, required String uid}) async {
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(id);
+    final EventHeadDBManager headDBManager = EventHeadDBManager();
+    final DateTime now = DateTime.now();
+
+    head.setRecentDate(now);
+    _log.addLog({'log': log, 'uid': uid, 'ts': Timestamp.fromDate(now)});
+
+    await headDBManager.updateHead(_head);
+    dbManager.updateBody(_body.decodedJson);
+    dbManager.updateMedia(_media);
+    dbManager.updateMetadata(_metadata);
+    dbManager.updateLog(_log);
   }
 
   Future<String> _getNewID() async {
