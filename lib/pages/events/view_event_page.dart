@@ -1,4 +1,6 @@
+import 'package:ctrim_app/pages/events/edit_title_subtitle_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/event/event_head.dart';
@@ -8,8 +10,6 @@ import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
-import 'add_event_page.dart';
-import 'edit_body_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead, required this.viewingChild});
@@ -23,12 +23,18 @@ class ViewEventPage extends StatefulWidget {
 class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final EventContext _eventContext;
+  late final List<Map<String, String>> _originalHeadMedia;
+  late final String _originalTitle, _originalSubtitle;
 
   @override
   void initState() {
     // ? This tab issue thing with Program will depend on:
     // - if eventDate in Head is null then don't build it unless it's a leader
     // - viewing it (we can't make sure it's the author viewing it without the meta)
+    _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
+    _originalTitle = widget.eventHead.title;
+    _originalSubtitle = widget.eventHead.subtitle;
+
     _tabController = TabController(length: 4, vsync: this);
     _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
 
@@ -43,7 +49,18 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody());
+    return WillPopScope(
+        onWillPop: _eventContext.canSaveTheEditing
+            ? () => DialogManager.discardChanges(context: context).then((confirmation) {
+                  if (confirmation) {
+                    widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
+                    widget.eventHead.setTitle(_originalTitle);
+                    widget.eventHead.setSubtitle(_originalSubtitle);
+                  }
+                  return confirmation;
+                })
+            : () async => true,
+        child: Scaffold(body: _buildBody()));
   }
 
   Widget _buildBody() {
@@ -82,7 +99,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildTitle() {
-    return Text(widget.eventHead.title, style: const TextStyle(fontSize: 28));
+    return InkWell(onTap: _onTitleTap, child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28)));
   }
 
   Widget? _buildAppBarBackground() {
@@ -111,7 +128,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       if (_eventContext.isUserAdminOfPost(uid)) {
         return ElevatedButton.icon(
             style: ButtonStyle(
-                backgroundColor: const MaterialStatePropertyAll<Color>(Colors.green),
+                backgroundColor: _eventContext.canSaveTheEditing
+                    ? const MaterialStatePropertyAll<Color>(Colors.green)
+                    : const MaterialStatePropertyAll<Color>(Colors.grey),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)))),
             onPressed: _eventContext.canSaveTheEditing ? () {} : null,
@@ -124,62 +143,12 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return const Center(child: CircularProgressIndicator());
   }
 
-  void _onSettingsClick() {
-    showModalBottomSheet(
-        showDragHandle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
-        ),
-        context: context,
-        builder: (_) {
-          return SafeArea(
-              child: EventPostSettingsSheet(onEditUpdate: () => setState(() {}), eventContext: _eventContext));
-        });
-  }
-
   void _bookmarkClick() {}
-}
 
-class EventPostSettingsSheet extends StatefulWidget {
-  const EventPostSettingsSheet({super.key, required this.eventContext, required this.onEditUpdate});
-  final Function onEditUpdate;
-  final EventContext eventContext;
-
-  @override
-  State<EventPostSettingsSheet> createState() => _EventPostSettingsSheetState();
-}
-
-class _EventPostSettingsSheetState extends State<EventPostSettingsSheet> {
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          ListTile(title: const Text('Edit Body'), leading: const Icon(Icons.edit_note), onTap: _openEditBodyPage),
-          ListTile(title: const Text('Create Post'), leading: const Icon(Icons.note_add), onTap: _openAddChildPost)
-        ],
-      ),
-    );
-  }
-
-  // * LOGIC
-  void _openEditBodyPage() {
-    // context.goNamed('edit_body', extra: widget.eventContext);
-    Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
+  void _onTitleTap() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditHeadDetailsPage(eventContext: _eventContext)))
         .then((_) {
-      widget.onEditUpdate();
-    });
-  }
-
-  void _openAddChildPost() {
-    Navigator.of(context).pop();
-    Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => AddEventPage(eventContext: EventContext.adding(parentID: widget.eventContext.head.id))))
-        .then((_) {
-      widget.onEditUpdate();
+      setState(() {});
     });
   }
 }

@@ -167,19 +167,4 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       _start = null;
     });
   }
-
-  // void _canWeSave() {
-  //   if (_canSave && (_start == null || _end == null || !_isAllDay)) {
-  //     debugPrint('Disabling Save Button');
-  //     setState(() {
-  //       _canSave = false;
-  //     });
-  //   } else if (_canSave = false) {
-  //     debugPrint('Enabling Save Button');
-  //     setState(() {
-  //       _canSave = true;
-  //     });
-  //   }
-  //   debugPrint('Doing nothing to the Save Button');
-  // }
 }

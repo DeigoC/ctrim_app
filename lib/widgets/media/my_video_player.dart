@@ -33,34 +33,24 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
         builder: (_, snap) {
           if (snap.connectionState == ConnectionState.done) {
             return SingleChildScrollView(
-              child: Column(
-                children: [
-                  AspectRatio(
-                    aspectRatio: _videoController.value.aspectRatio,
-                    child: VideoPlayer(_videoController),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            _videoController.pause();
-                          },
-                          icon: const Icon(Icons.pause)),
-                      IconButton(
-                          onPressed: () {
-                            _videoController.play();
-                          },
-                          icon: const Icon(Icons.play_arrow)),
-                    ],
-                  )
-                ],
-              ),
+              child: Column(children: [
+                AspectRatio(aspectRatio: _videoController.value.aspectRatio, child: VideoPlayer(_videoController)),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  IconButton(
+                      onPressed: () {
+                        _videoController.pause();
+                      },
+                      icon: const Icon(Icons.pause)),
+                  IconButton(
+                      onPressed: () {
+                        _videoController.play();
+                      },
+                      icon: const Icon(Icons.play_arrow))
+                ])
+              ]),
             );
           }
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         });
   }
 }

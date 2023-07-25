@@ -21,6 +21,9 @@ class PostMetadataSection extends StatelessWidget {
         EventMetadata? meta = appContext.getMetadata(eventContext.id);
         if (meta != null) {
           eventContext.setFetchedMetadata(meta);
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            update();
+          });
           return _buildWithData(context);
         }
         return _buildFB();
@@ -39,7 +42,6 @@ class PostMetadataSection extends StatelessWidget {
 
           if (snap.hasData) {
             eventContext.setFetchedMetadata(snap.data!);
-            Provider.of<AppContext>(_, listen: false).addMetadata(eventContext.id, snap.data!);
             result = _buildWithData(_);
             WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
               update();

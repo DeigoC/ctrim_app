@@ -24,10 +24,12 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           controller: widget.tecTitle,
           decoration: const InputDecoration(label: Text('Title'), hintText: 'Make it snappy!'),
           onChanged: widget.onRequiredFieldChange,
+          maxLength: 58,
         ),
         TextField(
           controller: widget.tecSubtitle,
           onChanged: widget.onRequiredFieldChange,
+          maxLength: 128,
           decoration: const InputDecoration(label: Text('Subtitle'), hintText: 'The synopsis of the post'),
         ),
         _buildContributorSection(),

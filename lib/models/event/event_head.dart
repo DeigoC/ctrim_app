@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -58,7 +60,7 @@ class EventHead {
   DateTime get recentDate => _recentDate;
   DateTime? get eventDate => _eventDate;
   TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
-  List<Map<String, String>> get media => _media; // unmodifiable?
+  List<Map<String, String>> get media => UnmodifiableListView(_media);
 
   String? getKeyGraphic() {
     for (final entry in media) {
@@ -69,9 +71,17 @@ class EventHead {
     return null;
   }
 
-  void setTitle(String newTitle) => _title = newTitle;
-  void setSubtitle(String newSubtitle) => _subtitle = newSubtitle;
-  void setRecentDate(DateTime recentDate) => _recentDate = recentDate;
-  void setEventDate(DateTime? newEventDate) => _eventDate = newEventDate;
+  void setTitle(final String newTitle) => _title = newTitle;
+  void setSubtitle(final String newSubtitle) => _subtitle = newSubtitle;
+  void setRecentDate(final DateTime recentDate) => _recentDate = recentDate;
+  void setEventDate(final DateTime? newEventDate) => _eventDate = newEventDate;
   void removeEventDate() => _eventDate = null;
+
+  bool containsMediaItem(String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
+  void addMediaItem(final Map<String, String> thisEntry) => _media.add(thisEntry);
+  void removeMediaItem(final Map<String, String> thisEntry) => _media.remove(thisEntry);
+  void resetMediaWithOriginal(List<Map<String, String>> origianl) {
+    _media.clear();
+    _media.addAll(origianl);
+  }
 }

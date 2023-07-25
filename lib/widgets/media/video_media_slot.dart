@@ -7,7 +7,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 class VideoMediaSlot extends StatefulWidget {
   const VideoMediaSlot({super.key, required this.mediaEntry, required this.onTap});
   final Map<String, String> mediaEntry;
-  final Function onTap;
+  final Function()? onTap;
 
   @override
   State<VideoMediaSlot> createState() => _VideoMediaSlotState();
@@ -72,7 +72,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
   Widget _buildExistingThumbnail() {
     return InkWell(
-      onTap: () => widget.onTap(),
+      onTap: widget.onTap,
       child: Stack(
         alignment: Alignment.center,
         children: [
