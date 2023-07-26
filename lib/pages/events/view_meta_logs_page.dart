@@ -13,7 +13,7 @@ import '../../widgets/user_avatar.dart';
 class ViewMetaLogsPage extends StatefulWidget {
   const ViewMetaLogsPage({super.key, required this.eventContext});
   final EventContext eventContext;
-  static final DateFormat _dateFormat = DateFormat('HH:mm. EEE, d MMM yyyy');
+  static final DateFormat _dateFormat = DateFormat('d MMM yyyy. HH:mm');
 
   @override
   State<ViewMetaLogsPage> createState() => _ViewMetaLogsPageState();
@@ -27,6 +27,9 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   void initState() {
     _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs);
     _appContext = Provider.of<AppContext>(context, listen: false);
+    if (widget.eventContext.fetchedLogs) {
+      widget.eventContext.log.orderLogsBackwards();
+    }
     super.initState();
   }
 
@@ -55,6 +58,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
           if (snap.hasData) {
             widget.eventContext.setFetchedLogs(snap.data!);
+            widget.eventContext.log.orderLogsBackwards();
             result = _buildWithData(_);
           } else if (snap.hasError) {
             debugPrint('Something with fetching logs: ${snap.error}');
@@ -92,7 +96,9 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               const SizedBox(height: 16),
               const Divider(thickness: 1),
               const SizedBox(height: 16),
-              const Padding(padding: EdgeInsets.only(left: 16.0), child: Text('Update Logs')),
+              const Padding(
+                  padding: EdgeInsets.only(left: 16.0, bottom: 16),
+                  child: Text('Update Logs', style: TextStyle(fontSize: 16))),
             ],
           ),
         ),

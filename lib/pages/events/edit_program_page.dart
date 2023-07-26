@@ -327,6 +327,12 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   void _saveAllChanges() {
+    widget.programEntry['uids'] = _selectedUsers;
     widget.programEntry['detail'] = _tecDetail.text.trim();
+    widget.programEntry['title'] = _tecTitle.text.trim();
+    widget.programEntry['start'] = _start;
+    widget.programEntry['end'] = _end;
+    widget.programEntry['for_guests'] = _forGuests;
+    widget.programEntry['priority'] = _end;
   }
 }

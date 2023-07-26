@@ -29,6 +29,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   @override
   Widget build(BuildContext context) {
     if (widget.eventContext.haveFetchedProgram) {
+      widget.eventContext.program.orderProgramsByStartDate();
       return _buildBodyWithData();
     }
     return _buildFB();
@@ -44,6 +45,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           );
           if (snap.hasData) {
             widget.eventContext.setFetchedProgram(snap.data!);
+            widget.eventContext.program.orderProgramsByStartDate();
             result = _buildBodyWithData();
           } else if (snap.hasError) {
             // when there's no program, it goes here

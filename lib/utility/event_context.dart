@@ -1,15 +1,12 @@
 import 'dart:collection';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctrim_app/firebase/db_managers/id_tracker.dart';
-import 'package:ctrim_app/models/event/event_program.dart';
-
 import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
+import '../models/event/event_program.dart';
 
 class EventContext {
   late final EventHead _head;
@@ -129,7 +126,7 @@ class EventContext {
     _metadata.setLastUID(uid);
 
     // log, create the new one for creation
-    _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': Timestamp.fromDate(now)});
+    _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': now});
 
     await headDBManager.saveNewHead(_head);
     dbManager.addBody(_body.json);
@@ -145,13 +142,18 @@ class EventContext {
     final DateTime now = DateTime.now();
 
     head.setRecentDate(now);
-    _log.addLog({'log': log, 'uid': uid, 'ts': Timestamp.fromDate(now)});
+    metadata.setLastUID(uid);
+
+    _log.addLog({'log': log, 'uid': uid, 'ts': now});
 
     await headDBManager.updateHead(_head);
     dbManager.updateBody(_body.decodedJson);
-    dbManager.updateMedia(_media);
     dbManager.updateMetadata(_metadata);
+    dbManager.updateProgram(_program);
     dbManager.updateLog(_log);
+    if (_fetchedMedia) {
+      dbManager.updateMedia(_media);
+    }
   }
 
   Future<String> _getNewID() async {
@@ -167,7 +169,9 @@ class EventContext {
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
   bool get canSaveTheEditing => _canSaveTheEditing;
+  void resetSavingOfTheEdit() => _canSaveTheEditing = false; // This one is to be used after update is complete
+
   bool get isViewingChild => _viewingChild;
-  void nowViewingChild() => _viewingChild = true;
-  void notViewingChild() => _viewingChild = false;
+  void enableViewingChild() => _viewingChild = true;
+  void disableViewingChild() => _viewingChild = false;
 }

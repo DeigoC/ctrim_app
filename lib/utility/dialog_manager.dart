@@ -170,4 +170,15 @@ class DialogManager {
               actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(closeText))],
             ));
   }
+
+  static void showProgressDialog({required BuildContext context, required String title}) {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Dialog(
+            child: ListTile(
+                title: Text(title),
+                subtitle: const Text('Please wait...'),
+                trailing: const CircularProgressIndicator())));
+  }
 }

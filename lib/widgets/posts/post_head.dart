@@ -6,9 +6,15 @@ import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
 
 class PostHead extends StatelessWidget {
-  const PostHead({super.key, required this.thisHead, this.viewingChild = false, this.childToParent = false});
+  const PostHead(
+      {super.key,
+      required this.thisHead,
+      this.viewingChild = false,
+      this.childToParent = false,
+      required this.updatePost});
   final EventHead thisHead;
   final bool viewingChild, childToParent;
+  final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16;
 
   @override
@@ -102,7 +108,7 @@ class PostHead extends StatelessWidget {
               builder: (_) => ViewEventPage(
                     eventHead: thisHead,
                     viewingChild: viewingChild,
-                  )));
+                  ))).then((_) => updatePost());
     }
   }
 

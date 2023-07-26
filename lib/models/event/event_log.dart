@@ -32,12 +32,13 @@ class EventLog {
   List<Map<String, dynamic>> _roleToJson() {
     final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
     for (final entry in _logs) {
-      result.add({'uid': entry['uid'], 'log': entry['log'], 'ts': Timestamp.fromDate(entry['ts'])});
+      result.add({'uid': entry['uid'], 'log': entry['log'], 'ts': Timestamp.fromDate(entry['ts'] as DateTime)});
     }
 
     return result;
   }
 
   List<Map<String, dynamic>> get logs => UnmodifiableListView(_logs);
-  void addLog(Map<String, dynamic> log) => _logs.add(log);
+  void addLog(Map<String, dynamic> log) => _logs.insert(0, log);
+  void orderLogsBackwards() => _logs.sort(((a, b) => (b['ts']! as DateTime).compareTo((a['ts']! as DateTime))));
 }

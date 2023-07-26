@@ -53,7 +53,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Widget _buildSelectedBody(AppContext appContext) {
     if (_selectedIndex == 0) {
-      return ViewEventsHome();
+      return ViewEventsHome(rebuildFunction: () {
+        setState(() {});
+      });
     } else if (_selectedIndex == 1) {
       return InformationHome(
         tabController: _informationTabController,

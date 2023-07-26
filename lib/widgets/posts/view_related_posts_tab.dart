@@ -69,7 +69,12 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
           // so if we came from the parent post looking at a child post and see this post
           // clicking this parent should pop the page back to the parent as opposed to pushing
           // another page, hence the 'childToParent' field
-          PostHead(thisHead: thisParent, childToParent: widget.eventContext.isViewingChild)
+          PostHead(
+              thisHead: thisParent,
+              childToParent: widget.eventContext.isViewingChild,
+              updatePost: () {
+                setState(() {});
+              })
           // const SizedBox(height: 16),
           // const Divider()
         ],
@@ -95,9 +100,11 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
       SliverList.separated(
           itemCount: childrenHeads.length,
           itemBuilder: (_, index) => PostHead(
-                thisHead: childrenHeads[index],
-                viewingChild: true,
-              ),
+              thisHead: childrenHeads[index],
+              viewingChild: true,
+              updatePost: () {
+                setState(() {});
+              }),
           separatorBuilder: (_, index) => const Divider())
     ];
   }

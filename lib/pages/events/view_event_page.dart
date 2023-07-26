@@ -1,15 +1,16 @@
-import 'package:ctrim_app/pages/events/edit_title_subtitle_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
+import 'edit_title_subtitle_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead, required this.viewingChild});
@@ -152,7 +153,15 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     });
   }
 
-  void _updateClick() {}
+  void _updateClick() {
+    showDialog(
+        context: context,
+        builder: (_) => EventLogDialog(
+            eventContext: _eventContext,
+            updatePage: () {
+              setState(() {});
+            }));
+  }
 }
 
 class EventLogDialog extends StatefulWidget {
@@ -176,26 +185,31 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Please describe the update',
-            style: TextStyle(fontSize: 16),
+    return Dialog(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Please describe the update',
+                style: TextStyle(fontSize: 16),
+              ),
+              TextField(
+                controller: _tecLog,
+                decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Log')),
+                maxLength: 128,
+                maxLines: null,
+                onChanged: _onTextChange,
+              ),
+              ElevatedButton.icon(
+                  onPressed: _canSave ? _saveClick : null,
+                  icon: const Icon(Icons.cloud_upload),
+                  label: const Text('Update'))
+            ],
           ),
-          TextField(
-            controller: _tecLog,
-            decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Log')),
-            maxLength: 128,
-            maxLines: null,
-            onChanged: _onTextChange,
-          ),
-          ElevatedButton.icon(
-              onPressed: _canSave ? _saveClick : null,
-              icon: const Icon(Icons.cloud_upload),
-              label: const Text('Update'))
-        ],
+        ),
       ),
     );
   }
@@ -220,13 +234,25 @@ class _EventLogDialogState extends State<EventLogDialog> {
             title: 'Last Chance',
             content: 'The log will be sent to all who have bookmarked this post',
             confirmText: 'I understand, Save!',
-            cancelText: 'Wait')
+            cancelText: 'Wait a sec.')
         .then((confirmation) {
       if (confirmation) {
         // TOOD test from here
-        widget.eventContext
-            .updatePost(log: _tecLog.text.trim(), uid: Provider.of<AppContext>(context, listen: false).currentUser.id);
+        DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
+        _performUpdate(Provider.of<AppContext>(context, listen: false).currentUser.id).then((_) {
+          widget.eventContext.resetSavingOfTheEdit();
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        });
       }
     });
+  }
+
+  Future<void> _performUpdate(String uid) async {
+    if (!widget.eventContext.fetchedLogs) {
+      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.id);
+      widget.eventContext.setFetchedLogs(await dbManager.fetchLog());
+    }
+    await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
   }
 }

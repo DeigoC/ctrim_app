@@ -17,6 +17,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   void initState() {
     _videoController = VideoPlayerController.network(widget.src);
     _initialiseVideo = _videoController.initialize().then((_) => _videoController.play());
+    _videoController.setLooping(true);
     super.initState();
   }
 

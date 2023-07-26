@@ -71,6 +71,8 @@ class EventProgram {
 
   void setAllDay(bool state) => _allDay = state;
   void setFinishTime(DateTime? finish) => _finishTime = finish;
+  void orderProgramsByStartDate() =>
+      _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
 
   @override
   String toString() {

@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import '../utility/app_context.dart';
 
 class ViewEventsHome extends StatelessWidget {
-  const ViewEventsHome({super.key});
+  const ViewEventsHome({super.key, required this.rebuildFunction});
+  final Function() rebuildFunction;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,10 @@ class ViewEventsHome extends StatelessWidget {
           ),
           SliverList.separated(
             itemCount: appContext.eventHeads.length,
-            itemBuilder: (_, index) => PostHead(thisHead: appContext.eventHeads[index]),
+            itemBuilder: (_, index) => PostHead(
+              thisHead: appContext.eventHeads[index],
+              updatePost: () => rebuildFunction(),
+            ),
             separatorBuilder: (BuildContext context, int index) => const Divider(
               thickness: 1,
             ),

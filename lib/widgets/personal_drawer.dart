@@ -42,7 +42,7 @@ class PersonalDrawer extends StatelessWidget {
   void _confirmLogout(BuildContext context, AppContext appContext) async {
     showDialog(
         context: context,
-        builder: (_) {
+        builder: (logcontext) {
           return AlertDialog(
             title: const Text('Sign out'),
             content: const Text('Are you sure you want to continue?'),
@@ -51,8 +51,8 @@ class PersonalDrawer extends StatelessWidget {
               TextButton(
                   onPressed: () {
                     _logout(appContext).then((_) {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
+                      Navigator.of(logcontext).pop();
+                      Navigator.of(logcontext).pop();
                     });
                   },
                   child: const Text('Sign out')),
