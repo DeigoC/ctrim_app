@@ -37,7 +37,7 @@ class AppContext extends ChangeNotifier {
   }
 
   // * meta related
-  void addMetadata(String id, EventMetadata data) => _metaData[id] = data;
+  void setMetadata(String id, EventMetadata data) => _metaData[id] = data;
   EventMetadata? getMetadata(String id) => _metaData[id];
 
   // * event head related

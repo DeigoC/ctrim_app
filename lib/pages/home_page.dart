@@ -70,8 +70,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (_selectedIndex == 0) {
       return FloatingActionButton.extended(
           onPressed: () {
+            final String uid = Provider.of<AppContext>(context).currentUser.id;
             Navigator.push(
-                context, MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding())));
+                context, MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding(uid: uid))));
           },
           label: const Text('Add Post'));
     }

@@ -58,7 +58,7 @@ class EventSupplementalDBManager {
     return EventProgram.fromMap(doc.data() as Map<String, dynamic>);
   }
 
-  Future<void> setProgram(EventProgram program) async {
+  Future<void> addProgram(EventProgram program) async {
     _colRef.doc('program').set(program.toJson());
   }
 

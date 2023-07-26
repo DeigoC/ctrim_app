@@ -23,16 +23,17 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Expanded(child: _buildBody()),
-        Padding(
+    final List<Widget> children = [Expanded(child: _buildBody())];
+
+    if (_appContext.currentUser.isLeader) {
+      children.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: ElevatedButton.icon(
-              onPressed: _onCreatePost, icon: const Icon(Icons.post_add), label: const Text('Create Related Post')),
-        )
-      ]),
+              onPressed: _onCreatePost, icon: const Icon(Icons.post_add), label: const Text('Create Related Post'))));
+    }
+    return SafeArea(
+      top: false,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
 
@@ -64,7 +65,6 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return SliverToBoxAdapter(
       child: Column(
         children: [
-          // const Text('Parent Post'),
           // kinda wacky logic here
           // so if we came from the parent post looking at a child post and see this post
           // clicking this parent should pop the page back to the parent as opposed to pushing
@@ -75,8 +75,6 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
               updatePost: () {
                 setState(() {});
               })
-          // const SizedBox(height: 16),
-          // const Divider()
         ],
       ),
     );
@@ -86,17 +84,6 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     final childrenHeads =
         _appContext.eventHeads.where((head) => widget.eventContext.metadata.children.contains(head.id)).toList();
     return [
-      // const SliverToBoxAdapter(
-      //     child: Column(
-      //   crossAxisAlignment: CrossAxisAlignment.center,
-      //   children: [
-      //     Divider(),
-      //     Padding(
-      //         padding: EdgeInsets.only(left: 8.0),
-      //         child: Text('Children Posts', style: TextStyle(fontSize: 16, decoration: TextDecoration.underline))),
-      //     Divider(),
-      //   ],
-      // )),
       SliverList.separated(
           itemCount: childrenHeads.length,
           itemBuilder: (_, index) => PostHead(

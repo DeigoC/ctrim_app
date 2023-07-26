@@ -25,7 +25,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late final TabController _tabController;
   late final EventContext _eventContext;
   late final List<Map<String, String>> _originalHeadMedia;
-  late final String _originalTitle, _originalSubtitle;
+  late final String _originalTitle, _originalSubtitle, _currentUID;
+  final List<Widget> _appBarTabs = [
+    const Tab(icon: Icon(Icons.info_outline), text: 'About'),
+  ];
+  final List<Widget> _bodyTabs = List.empty(growable: true);
+
+  bool _haveFetchedPost = false;
 
   @override
   void initState() {
@@ -35,16 +41,18 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
-
-    _tabController = TabController(length: 4, vsync: this);
     _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
+
+    _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
     super.initState();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    if (_haveFetchedPost) {
+      _tabController.dispose();
+    }
     super.dispose();
   }
 
@@ -61,10 +69,29 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   return confirmation;
                 })
             : () async => true,
-        child: Scaffold(body: _buildBody()));
+        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildFB()));
   }
 
-  Widget _buildBody() {
+  Widget _buildFB() {
+    return FutureBuilder(
+        future: _fetchEssentialPostData(),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator());
+
+          if (snap.connectionState == ConnectionState.done) {
+            _figureOutTabs();
+            _haveFetchedPost = true;
+            Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+            result = _buildBodyWithData();
+          } else if (snap.hasError) {
+            debugPrint('Something with fetching the post ${snap.error}');
+            result = const Center(child: Text('Something went wrong!'));
+          }
+          return result;
+        });
+  }
+
+  Widget _buildBodyWithData() {
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
           return _buildHeaderSliver();
@@ -73,34 +100,30 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   List<Widget> _buildHeaderSliver() {
+    final List<Widget> metaChildren = [PostMetadataSection(eventContext: _eventContext, update: _updateWholePostBody)];
+    if (!_eventContext.isCurrentUserAuthor(_currentUID) && !_eventContext.isCurrentUserContributor(_currentUID)) {
+      metaChildren.insert(0, IconButton.filled(onPressed: _bookmarkClick, icon: const Icon(Icons.bookmark_border)));
+    }
     return [
       SliverAppBar(
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-        actions: [
-          _buildAppBarAction(),
-          const SizedBox(width: 8),
-        ],
+        actions: _buildAppBarAction(),
       ),
       SliverList(
           delegate: SliverChildListDelegate([
         Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
-        PostMetadataSection(
-          eventContext: _eventContext,
-          update: _updateWholePostBody,
-        ),
-        TabBar(labelColor: Colors.black, controller: _tabController, tabs: const [
-          Tab(icon: Icon(Icons.info_outline), text: 'About'),
-          Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
-          Tab(icon: Icon(Icons.photo_album), text: 'Media'),
-          Tab(icon: Icon(Icons.library_books), text: 'Related')
-        ])
-      ])),
+        Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
+        // const Divider(),
+        TabBar(labelColor: Colors.black, controller: _tabController, tabs: _appBarTabs)
+      ]))
     ];
   }
 
   Widget _buildTitle() {
-    return InkWell(onTap: _onTitleTap, child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28)));
+    return InkWell(
+        onTap: _eventContext.isCurrentUserAuthor(_currentUID) ? _onTitleTap : null,
+        child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28)));
   }
 
   Widget? _buildAppBarBackground() {
@@ -113,21 +136,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildTabBody() {
-    return TabBarView(controller: _tabController, children: [
-      ViewPostBody(eventContext: _eventContext, updateBody: _updateWholePostBody),
-      ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody),
-      ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _updateWholePostBody),
-      ViewRelatedPostsTab(eventContext: _eventContext)
-    ]);
+    return TabBarView(controller: _tabController, children: _bodyTabs);
   }
 
-  void _updateWholePostBody() => setState(() {});
-
-  Widget _buildAppBarAction() {
-    String uid = Provider.of<AppContext>(context, listen: false).currentUser.id;
-    if (_eventContext.fetchedMetadata) {
-      if (_eventContext.isUserAdminOfPost(uid)) {
-        return ElevatedButton.icon(
+  List<Widget> _buildAppBarAction() {
+    if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
+      return [
+        ElevatedButton.icon(
             style: ButtonStyle(
                 backgroundColor: _eventContext.canSaveTheEditing
                     ? const MaterialStatePropertyAll<Color>(Colors.green)
@@ -136,13 +151,55 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)))),
             onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
             icon: const Icon(Icons.save),
-            label: const Text('Update'));
-      } else {
-        return IconButton.filled(onPressed: _bookmarkClick, icon: const Icon(Icons.bookmark_border));
-      }
+            label: const Text('Update')),
+        const SizedBox(width: 8)
+      ];
     }
-    return const Center(child: CircularProgressIndicator());
+    return [];
   }
+
+  // * Logic
+  Future<void> _fetchEssentialPostData() async {
+    // we need to fetch the media, program and metadata to figure out how many tabs to create
+    // for the guest.
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(_eventContext.id);
+    final media = await dbManager.fetchMedia();
+    final meta = await dbManager.fetchMetadata();
+    final program = await dbManager.fetchProgram();
+    _eventContext.setFetchedMedia(media);
+    _eventContext.setFetchedMetadata(meta);
+    _eventContext.setFetchedProgram(program);
+  }
+
+  void _figureOutTabs() {
+    int length = 1;
+    _bodyTabs.add(ViewPostBody(
+      eventContext: _eventContext,
+      updateBody: _updateWholePostBody,
+      currentUID: _currentUID,
+    ));
+
+    if (_eventContext.head.eventDate != null) {
+      _bodyTabs.add(ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody));
+      _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Program'));
+      length++;
+    }
+    if (_eventContext.media.allMedia.isNotEmpty) {
+      _bodyTabs.add(
+          ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _updateWholePostBody, currentUID: _currentUID));
+      _appBarTabs.add(const Tab(icon: Icon(Icons.photo_album), text: 'Media'));
+      length++;
+    }
+    if (_eventContext.metadata.hasChildren || _eventContext.metadata.hasParent) {
+      _bodyTabs.add(ViewRelatedPostsTab(eventContext: _eventContext));
+      _appBarTabs.add(const Tab(icon: Icon(Icons.library_books), text: 'Related'));
+      length++;
+    }
+
+    _tabController = TabController(length: length, vsync: this);
+  }
+
+  void _updateWholePostBody() => setState(() {});
 
   void _bookmarkClick() {}
 
@@ -239,8 +296,10 @@ class _EventLogDialogState extends State<EventLogDialog> {
       if (confirmation) {
         // TOOD test from here
         DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
-        _performUpdate(Provider.of<AppContext>(context, listen: false).currentUser.id).then((_) {
+        final appContext = Provider.of<AppContext>(context, listen: false);
+        _performUpdate(appContext.currentUser.id).then((_) {
           widget.eventContext.resetSavingOfTheEdit();
+          appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
           Navigator.of(context).pop();
           Navigator.of(context).pop();
         });

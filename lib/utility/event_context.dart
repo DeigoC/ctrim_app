@@ -31,9 +31,9 @@ class EventContext {
     _viewingChild = viewingChild ?? _viewingChild;
   }
 
-  EventContext.adding({String? parentID}) {
+  EventContext.adding({required String uid, String? parentID}) {
     _fetchedBody = true;
-    _metadata = EventMetadata(authorUID: '1', parentID: parentID); // ! remember this
+    _metadata = EventMetadata(authorUID: uid, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
   }
@@ -117,7 +117,7 @@ class EventContext {
     final DateTime now = DateTime.now();
 
     // head stuff
-    _head = EventHead(id: id); // ! add the key media!
+    _head = EventHead(id: id); // TODO add the key media!
     _head.setTitle(title);
     _head.setSubtitle(subtitle);
     _head.setRecentDate(now);
@@ -133,6 +133,7 @@ class EventContext {
     dbManager.addMedia(_media);
     dbManager.addMetadata(_metadata);
     dbManager.addLog(_log);
+    dbManager.addProgram(_program);
     return id;
   }
 
@@ -174,4 +175,7 @@ class EventContext {
   bool get isViewingChild => _viewingChild;
   void enableViewingChild() => _viewingChild = true;
   void disableViewingChild() => _viewingChild = false;
+
+  bool isCurrentUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
+  bool isCurrentUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
 }

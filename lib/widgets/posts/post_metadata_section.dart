@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../models/event/event_metadata.dart';
 import '../../pages/events/view_meta_logs_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
@@ -18,14 +17,17 @@ class PostMetadataSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AppContext>(
       builder: (context, appContext, child) {
-        EventMetadata? meta = appContext.getMetadata(eventContext.id);
-        if (meta != null) {
-          eventContext.setFetchedMetadata(meta);
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            update();
-          });
+        if (eventContext.fetchedMetadata) {
           return _buildWithData(context);
         }
+        // EventMetadata? meta = appContext.getMetadata(eventContext.id);
+        // if (meta != null) {
+        //   eventContext.setFetchedMetadata(meta);
+        //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        //     update();
+        //   });
+        //   return _buildWithData(context);
+        // }
         return _buildFB();
       },
     );
@@ -63,14 +65,7 @@ class PostMetadataSection extends StatelessWidget {
         .allUsers
         .firstWhere((e) => e.id.compareTo(eventContext.metadata.lastUID) == 0)
         .forname;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // const Divider(),
-        TextButton(onPressed: () => _onMetaTap(context), child: Text('Updated $recentDateStr by $recentU')),
-        const Divider(),
-      ],
-    );
+    return TextButton(onPressed: () => _onMetaTap(context), child: Text('Updated $recentDateStr by $recentU'));
   }
 
   // * Logic

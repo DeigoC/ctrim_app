@@ -36,15 +36,13 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        _checkForChangesToContributors();
-        return true;
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Logs')),
-        body: widget.eventContext.fetchedLogs ? _buildWithData(context) : _buildFB(),
-      ),
-    );
+        onWillPop: () async {
+          _checkForChangesToContributors();
+          return true;
+        },
+        child: Scaffold(
+            appBar: AppBar(title: const Text('Logs')),
+            body: widget.eventContext.fetchedLogs ? _buildWithData(context) : _buildFB()));
   }
 
   Widget _buildFB() {
@@ -78,30 +76,27 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
     final List<User> selectedUsers =
         allUsers.where((element) => widget.eventContext.metadata.contributorUIDs.contains(element.id)).toList();
+    final bool isAuthor = widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id);
 
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                  title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
-              ListTile(
-                  title: const Text('Assigned Contributors'),
-                  subtitle: const Text('Able to modify aspects of the post'),
-                  trailing:
-                      IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))),
-              _buildContributors(selectedUsers),
-              const SizedBox(height: 16),
-              const Divider(thickness: 1),
-              const SizedBox(height: 16),
-              const Padding(
-                  padding: EdgeInsets.only(left: 16.0, bottom: 16),
-                  child: Text('Update Logs', style: TextStyle(fontSize: 16))),
-            ],
-          ),
-        ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          ListTile(title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
+          ListTile(
+              title: const Text('Assigned Contributors'),
+              subtitle: const Text('Able to modify aspects of the post'),
+              trailing: isAuthor
+                  ? IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))
+                  : null),
+          _buildContributors(selectedUsers),
+          const SizedBox(height: 16),
+          const Divider(thickness: 1),
+          const SizedBox(height: 16),
+          const Padding(
+              padding: EdgeInsets.only(left: 16.0, bottom: 16),
+              child: Text('Update Logs', style: TextStyle(fontSize: 16)))
+        ])),
         SliverList.builder(
             itemCount: widget.eventContext.log.logs.length,
             itemBuilder: (_, index) {
@@ -152,10 +147,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           title: Text(thisU.fullname),
                           leading: MyUserAvatar(thisU),
                           subtitle: Text(thisU.location),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.remove),
-                            onPressed: () => _onRemoveContributorClick(thisU),
-                          ),
+                          trailing: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id)
+                              ? IconButton(
+                                  icon: const Icon(Icons.remove), onPressed: () => _onRemoveContributorClick(thisU))
+                              : null,
                         );
                       })));
         });

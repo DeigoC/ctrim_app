@@ -71,39 +71,41 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildBodyWithEventDate() {
-    return SafeArea(
-      top: false,
-      child: Column(
-        children: [
-          Expanded(
-              child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: _buildEventDateSelector()),
-              SliverList.separated(
-                itemCount: widget.eventContext.allPrograms.length,
-                itemBuilder: (_, index) {
-                  return ProgramTile(
-                    programEntry: widget.eventContext.allPrograms[index],
-                    onTap: (_) => _showProgramDialog(_),
-                  );
-                },
-                separatorBuilder: (BuildContext context, int index) {
-                  return const Divider();
-                },
-              )
-            ],
-          )),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: SizedBox(
+    final List<Widget> children = [
+      Expanded(
+          child: CustomScrollView(slivers: [
+        SliverToBoxAdapter(child: _buildEventDateSelector()),
+        SliverList.separated(
+          itemCount: widget.eventContext.allPrograms.length,
+          itemBuilder: (_, index) {
+            return ProgramTile(
+              programEntry: widget.eventContext.allPrograms[index],
+              onTap: (_) => _showProgramDialog(_),
+            );
+          },
+          separatorBuilder: (BuildContext context, int index) {
+            return const Divider();
+          },
+        )
+      ]))
+    ];
+
+    if (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
+        widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) {
+      children.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                   onPressed: _openAddProgramPage,
                   icon: const Icon(Icons.edit_calendar),
-                  label: const Text('Add Program')),
-            ),
-          )
-        ],
+                  label: const Text('Add Program')))));
+    }
+
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: children,
       ),
     );
   }
@@ -120,7 +122,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     }
 
     return InkWell(
-      onTap: _onEditPostProgram,
+      onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
         const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
@@ -149,7 +151,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text('${_endFormat.format(programEntry['start'])} - ${_endFormat.format(programEntry['end'])}',
-              textAlign: TextAlign.start)),
+              textAlign: TextAlign.start))
     ];
 
     if ((programEntry['detail'] as String).isNotEmpty) {
@@ -164,13 +166,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     if (assignedUsers.isNotEmpty) {
       children.addAll([
         const Divider(),
-        // const Padding(
-        //   padding: EdgeInsets.symmetric(horizontal: 16.0),
-        //   child: Text(
-        //     'Assigned:',
-        //     style: TextStyle(fontSize: 16),
-        //   ),
-        // ),
       ]);
 
       for (final user in assignedUsers) {
@@ -178,24 +173,27 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       }
     }
 
-    children.add(Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ElevatedButton.icon(
-          onPressed: () => _openEditProgramPage(programEntry), icon: const Icon(Icons.edit), label: const Text('Edit')),
-    ));
+    if (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
+        widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) {
+      children.add(Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton.icon(
+              onPressed: () => _openEditProgramPage(programEntry),
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit'))));
+    } else {
+      children.add(const SizedBox(height: 16));
+    }
 
     showDialog(
         context: context,
         builder: (_) {
           return Dialog(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: children,
-              ),
-            ),
-          );
+              child: SingleChildScrollView(
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children)));
         });
   }
 
