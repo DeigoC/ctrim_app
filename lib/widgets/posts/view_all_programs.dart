@@ -1,8 +1,12 @@
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:ctrim_app/pages/events/edit_event_date_location_page.dart';
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/posts/program_tile.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../models/user.dart';
 import '../../pages/events/add_program_page.dart';
 import '../../pages/events/edit_program_page.dart';
 import '../../utility/event_context.dart';
@@ -20,9 +24,11 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy, HH:mm');
   static final DateFormat _startFormatAllDay = DateFormat('EEEE d MMM yyyy');
   static final DateFormat _endFormat = DateFormat('HH:mm');
+  late final AppContext _appContext;
 
   @override
   void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
     super.initState();
   }
 
@@ -130,21 +136,63 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     );
   }
 
-  void _showProgramDialog(Map<String, dynamic> programEntry) {
+  void _showProgramDialog(final Map<String, dynamic> programEntry) {
+    final List<User> assignedUsers =
+        _appContext.allUsers.where((e) => (programEntry["uids"] as List).contains(e.id)).toList();
+
+    final List<Widget> children = [
+      const SizedBox(height: 16),
+      Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(programEntry['title'], style: const TextStyle(fontSize: 21))),
+      const SizedBox(height: 8),
+      Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text('${_endFormat.format(programEntry['start'])} - ${_endFormat.format(programEntry['end'])}',
+              textAlign: TextAlign.start)),
+    ];
+
+    if ((programEntry['detail'] as String).isNotEmpty) {
+      children.addAll([
+        const SizedBox(height: 16),
+        Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(programEntry['detail'], style: const TextStyle(fontSize: 16), textAlign: TextAlign.start))
+      ]);
+    }
+
+    if (assignedUsers.isNotEmpty) {
+      children.addAll([
+        const Divider(),
+        // const Padding(
+        //   padding: EdgeInsets.symmetric(horizontal: 16.0),
+        //   child: Text(
+        //     'Assigned:',
+        //     style: TextStyle(fontSize: 16),
+        //   ),
+        // ),
+      ]);
+
+      for (final user in assignedUsers) {
+        children.add(ListTile(title: Text(user.fullname), leading: MyUserAvatar(user)));
+      }
+    }
+
+    children.add(Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton.icon(
+          onPressed: () => _openEditProgramPage(programEntry), icon: const Icon(Icons.edit), label: const Text('Edit')),
+    ));
+
     showDialog(
         context: context,
         builder: (_) {
           return Dialog(
             child: SingleChildScrollView(
               child: Column(
-                children: [
-                  const Text('TODO - complete this!'),
-                  Text(programEntry['detail']),
-                  ElevatedButton.icon(
-                      onPressed: () => _openEditProgramPage(programEntry),
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'))
-                ],
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: children,
               ),
             ),
           );

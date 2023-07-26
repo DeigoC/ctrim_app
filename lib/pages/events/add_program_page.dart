@@ -322,7 +322,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   void _addProgramRoleToEventContext() {
     widget.eventContext.addProgram({
       'uids': _selectedUsers,
-      'detail': _tecTitle.text.trim(),
+      'detail': _tecDetail.text.trim(),
       'title': _tecTitle.text.trim(),
       'start': _start!,
       'end': _end!,
