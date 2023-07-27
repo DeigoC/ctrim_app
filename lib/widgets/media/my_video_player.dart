@@ -16,7 +16,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   void initState() {
     _videoController = VideoPlayerController.network(widget.src);
-    _initialiseVideo = _videoController.initialize().then((_) => _videoController.play());
+    _initialiseVideo = _videoController.initialize();
     _videoController.setLooping(true);
     super.initState();
   }
@@ -33,6 +33,10 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
         future: _initialiseVideo,
         builder: (_, snap) {
           if (snap.connectionState == ConnectionState.done) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _videoController.play();
+            });
+
             return SingleChildScrollView(
               child: Column(children: [
                 AspectRatio(aspectRatio: _videoController.value.aspectRatio, child: VideoPlayer(_videoController)),

@@ -24,27 +24,30 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: _attemptToGetExistingThumbnailFile(),
-        builder: (_, snap) {
-          Widget result = const Center(
-            child: CircularProgressIndicator(),
-          );
+    return Center(
+      child: InkWell(onTap: widget.onTap, child: const Text('This is a video')),
+    );
+    // return FutureBuilder(
+    //     future: _attemptToGetExistingThumbnailFile(),
+    //     builder: (_, snap) {
+    //       Widget result = const Center(
+    //         child: CircularProgressIndicator(),
+    //       );
 
-          if (snap.hasData) {
-            _thisThumbnail = snap.data;
-            result = _buildExistingThumbnail();
-          } else if (!snap.hasData) {
-            result = _buildThumbnailFB();
-          } else if (snap.hasError) {
-            debugPrint('Something went wrong with attepmting to fetch the exisitng thumbnail: ${snap.error}');
-            result = const Center(
-              child: Text('Something went wrong'),
-            );
-          }
+    //       if (snap.hasData) {
+    //         _thisThumbnail = snap.data;
+    //         result = _buildExistingThumbnail();
+    //       } else if (!snap.hasData) {
+    //         result = _buildThumbnailFB();
+    //       } else if (snap.hasError) {
+    //         debugPrint('Something went wrong with attepmting to fetch the exisitng thumbnail: ${snap.error}');
+    //         result = const Center(
+    //           child: Text('Something went wrong'),
+    //         );
+    //       }
 
-          return result;
-        });
+    //       return result;
+    //     });
   }
 
   Widget _buildThumbnailFB() {
