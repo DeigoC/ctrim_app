@@ -9,6 +9,7 @@ class AppDataManager {
     _pref = preferences;
   }
 
+  // * Cred related
   void saveCreds(String email, String password) {
     _pref.setString(_email, email);
     _pref.setString(_pass, password);
@@ -19,8 +20,9 @@ class AppDataManager {
     _pref.setString(_pass, _clear);
   }
 
+  // * Notification related
   bool get isFirstOpen => _pref.getBool(_isFirstOpen) ?? true;
-  void nowOpened() => _pref.setBool(_isFirstOpen, true); // activated once user resolves notifications
+  void nowOpened() => _pref.setBool(_isFirstOpen, true);
 
   String get token => _pref.getString(_token)!;
   void saveToken(String thisToken) => _pref.setString(_token, thisToken);

@@ -42,3 +42,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# For Function's Python venv that takes over the repo
+/functions/venv

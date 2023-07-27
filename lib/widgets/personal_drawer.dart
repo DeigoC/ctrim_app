@@ -52,7 +52,6 @@ class PersonalDrawer extends StatelessWidget {
                   onPressed: () {
                     _logout(appContext).then((_) {
                       Navigator.of(logcontext).pop();
-                      Navigator.of(logcontext).pop();
                     });
                   },
                   child: const Text('Sign out')),
@@ -68,7 +67,7 @@ class PersonalDrawer extends StatelessWidget {
     // Provider.of<AppContext>(context, listen: false).clearCreds();
     // Provider.of<AppContext>(context, listen: false).setUserToGuest();
 
-    appContext.clearCreds();
+    appContext.dataManager.clearCreds();
     appContext.setUserToGuest();
     appContext.rebuildPlease();
 

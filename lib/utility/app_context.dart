@@ -42,6 +42,7 @@ class AppContext extends ChangeNotifier {
 
   // * event head related
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
+  void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
 
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
@@ -59,9 +60,7 @@ class AppContext extends ChangeNotifier {
   void setCurrentUser(String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
 
   // * data related
-  void saveEmailPassword(String email, String password) => _dataManager.saveCreds(email, password);
-  void clearCreds() => _dataManager.clearCreds();
-  String get deviceToken => _dataManager.token;
+  AppDataManager get dataManager => _dataManager;
 
   // * other related
   void rebuildPlease() => notifyListeners();

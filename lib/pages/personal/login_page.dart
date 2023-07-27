@@ -88,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _saveCredsAndToken() {
-    Provider.of<AppContext>(context, listen: false).saveEmailPassword(_tecEmail.text.trim(), _tecPassword.text);
+    Provider.of<AppContext>(context, listen: false).dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     // TODO the token should in theory already exist here, all we need to do is fetch it from storage and push it up
   }
 
