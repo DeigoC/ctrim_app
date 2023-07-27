@@ -1,20 +1,19 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctrim_app/firebase/auth_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
+import 'firebase/db_managers/user_contact_db_manager.dart';
+import 'firebase/db_managers/user_db_manager.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
+import 'utility/app_context.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -32,16 +31,17 @@ void main() async {
   await Firebase.initializeApp();
 
   // * Make sure we connect to the emulator on debug
-  if (kDebugMode) {
-    try {
-      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-      // FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
-    } catch (e) {
-      // ignore: avoid_print
-      print(e);
-    }
-  }
+  // if (kDebugMode) {
+  //   try {
+  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  //     // ! Remember to change the line in "functions_manager.dart" !
+  //     // FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
+  //   } catch (e) {
+  //     // ignore: avoid_print
+  //     print(e);
+  //   }
+  // }
 
   // * First up, we log the returning user in, otherwise it's a guest
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();

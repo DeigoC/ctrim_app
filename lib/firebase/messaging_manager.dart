@@ -15,4 +15,12 @@ class MessagingManager {
   Future<void> subscribeToCTRIMBelfast() {
     return _instance.subscribeToTopic(_ctrimBelfast);
   }
+
+  Future<void> subscribeToTopic(final String topic) {
+    return _instance.subscribeToTopic(topic);
+  }
+
+  Future<void> unsubscribeFromTopic(final String topic) {
+    return _instance.unsubscribeFromTopic(topic);
+  }
 }
