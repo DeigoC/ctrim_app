@@ -15,12 +15,12 @@ class AppContext extends ChangeNotifier {
   // these will always be fetched on startup and maintained for the session
   static late final List<EventHead> _eventHeads;
   static late final List<User> _allUsers;
-  static late final AppDataManager _dataManager;
 
   // there's an interesting idea for optimisation to do with the recentDate and writing to file
   // so this file below here might be unecessary for now
   static final Map<String, EventMetadata> _metaData = {};
   static final List<UserContact> _allContacts = List<UserContact>.empty(growable: true);
+  static late final AppDataManager _dataManager;
 
   late User _currentUser;
 

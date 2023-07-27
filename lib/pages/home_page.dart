@@ -23,9 +23,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     _informationTabController = TabController(length: 3, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkIfFirstOpen();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _checkIfFirstOpen();
+    // });
     super.initState();
   }
 
@@ -71,10 +71,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget? _buildFAB() {
-    if (_selectedIndex == 0) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    if (_selectedIndex == 0 && appContext.currentUser.isLeader) {
       return FloatingActionButton.extended(
           onPressed: () {
-            final String uid = Provider.of<AppContext>(context, listen: false).currentUser.id;
+            final String uid = appContext.currentUser.id;
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding(uid: uid)))).then((_) {
               setState(() {});

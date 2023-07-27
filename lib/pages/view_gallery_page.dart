@@ -30,12 +30,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gallery'),
-      ),
-      body: _buildBody(),
-    );
+    return Scaffold(appBar: AppBar(title: const Text('Gallery')), body: _buildBody());
   }
 
   Widget _buildBody() {
