@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utility/app_context.dart';
@@ -70,9 +71,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (_selectedIndex == 0) {
       return FloatingActionButton.extended(
           onPressed: () {
-            final String uid = Provider.of<AppContext>(context).currentUser.id;
-            Navigator.push(
-                context, MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding(uid: uid))));
+            final String uid = Provider.of<AppContext>(context, listen: false).currentUser.id;
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding(uid: uid)))).then((_) {
+              setState(() {});
+            });
           },
           label: const Text('Add Post'));
     }
@@ -92,5 +95,47 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  void _checkIfFirstOpen() async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    if (appContext.dataManager.isFirstOpen) {
+      final MessagingManager messagingManager = MessagingManager();
+      await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => Dialog(
+              child: SingleChildScrollView(
+                  child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Text('Welcome! 👋',
+                                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.start)),
+                        const SizedBox(height: 16),
+                        const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Text('Please allow notifications to keep up with the latest from CTRIM!',
+                                textAlign: TextAlign.start, style: TextStyle(fontSize: 16))),
+                        const SizedBox(height: 8),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                                padding: const EdgeInsets.only(right: 16.0),
+                                child: TextButton(
+                                    onPressed: () => Navigator.pop(_),
+                                    child: const Text('Ok', style: TextStyle(fontSize: 16)))))
+                      ])))));
+
+      final token = await messagingManager.requestPermissionAndToken();
+      if (token != null) {
+        debugPrint('Token to save is $token');
+        appContext.dataManager.saveToken(token);
+      }
+      messagingManager.subscribeToCTRIMBelfast();
+      appContext.dataManager.nowOpened();
+    }
   }
 }

@@ -1,14 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctrim_app/firebase/auth_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase/db_managers/event_db_manager.dart';
-import 'models/user.dart';
+import 'models/user.dart' as ctrim;
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
@@ -28,7 +31,19 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // * First up, we log the returning user in
+  // * Make sure we connect to the emulator on debug
+  if (kDebugMode) {
+    try {
+      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+      // FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
+    } catch (e) {
+      // ignore: avoid_print
+      print(e);
+    }
+  }
+
+  // * First up, we log the returning user in, otherwise it's a guest
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
 
@@ -42,7 +57,7 @@ void main() async {
 
   final UserContactDBManager userContactDBManager = UserContactDBManager();
   final UserDBManager userDBManager = UserDBManager();
-  User user = User(id: '0', forname: 'Guest', surname: 'Account');
+  ctrim.User user = ctrim.User(id: '0', forname: 'Guest', surname: 'Account');
   if (uAuth != null) {
     final uContact = await userContactDBManager.fetchUserContactByAuthID(uAuth);
     user = await userDBManager.fetchUserByID(uContact.id);

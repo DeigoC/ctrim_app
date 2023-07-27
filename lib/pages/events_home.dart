@@ -10,24 +10,16 @@ class ViewEventsHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      return CustomScrollView(
-        key: const PageStorageKey<String>('events_page'),
-        slivers: [
-          const SliverAppBar(
-            title: Text('Posts'),
-          ),
-          SliverList.separated(
+      return CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
+        const SliverAppBar(title: Text('Posts')),
+        SliverList.separated(
             itemCount: appContext.eventHeads.length,
             itemBuilder: (_, index) => PostHead(
-              thisHead: appContext.eventHeads[index],
-              updatePost: () => rebuildFunction(),
-            ),
-            separatorBuilder: (BuildContext context, int index) => const Divider(
-              thickness: 1,
-            ),
-          )
-        ],
-      );
+                  thisHead: appContext.eventHeads[index],
+                  updatePost: () => rebuildFunction(),
+                ),
+            separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1))
+      ]);
     });
   }
 }
