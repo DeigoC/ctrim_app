@@ -13,6 +13,7 @@ dependencies:
   # chewie: ^1.5.0
   avatar_stack: ^1.2.0
   cloud_firestore: ^4.8.1
+  cloud_functions: ^4.3.4
   firebase_auth: ^4.7.0
   firebase_core: ^2.13.1
   firebase_messaging: ^14.6.5

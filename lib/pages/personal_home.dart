@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/pages/personal/login_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ class PersonalHome extends StatefulWidget {
 }
 
 class _PersonalHomeState extends State<PersonalHome> {
+  final CloudFunctionManager _functionManager = CloudFunctionManager();
+
   @override
   Widget build(BuildContext context) {
     // ? this may not be needed cause of the Consumer at the page level (home_page)
@@ -58,6 +61,33 @@ class _PersonalHomeState extends State<PersonalHome> {
         //             ))));
         //   },
         // )
+
+        ListTile(
+            title: const Text('Hello World Function'),
+            leading: const Icon(Icons.waving_hand),
+            onTap: () {
+              _functionManager.helloWorld();
+            }),
+        ListTile(
+            title: const Text('Send to Devices'),
+            leading: const Icon(Icons.send_to_mobile),
+            onTap: () {
+              _functionManager.sendMessageToSelectedTokens(
+                  tokens: ['not_a_real_token'],
+                  title: 'This is a test title',
+                  body: "Hopefully this works 🤞, if it does - yeah man! Otherwise, that's unfortuante!",
+                  data: {'data': 'nothing for all devices'});
+            }),
+        ListTile(
+            title: const Text('Send to Topic'),
+            leading: const Icon(Icons.people_alt),
+            onTap: () {
+              _functionManager.sendToTopic(
+                  topic: 'ctrim-belfast',
+                  title: 'This is for BELFAST - Yeahh1!!',
+                  body: "Hopefully this works 🤞, if it does - yeah man! This is for when a new post is uploaded",
+                  data: {'data': 'nothing for this topic'});
+            }),
       ];
 
       if (appContext.isCurrentUserGuest) {
