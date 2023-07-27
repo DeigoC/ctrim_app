@@ -29,6 +29,25 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    if (_videoController.value.isInitialized){
+      return SingleChildScrollView(
+        child: Column(children: [
+          AspectRatio(aspectRatio: _videoController.value.aspectRatio, child: VideoPlayer(_videoController)),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            IconButton(
+                onPressed: () {
+                  _videoController.pause();
+                },
+                icon: const Icon(Icons.pause)),
+            IconButton(
+                onPressed: () {
+                  _videoController.play();
+                },
+                icon: const Icon(Icons.play_arrow))
+          ])
+        ]),
+      );
+    }
     return FutureBuilder(
         future: _initialiseVideo,
         builder: (_, snap) {
