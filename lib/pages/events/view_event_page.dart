@@ -1,3 +1,7 @@
+import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
+import 'package:ctrim_app/firebase/functions_manager.dart';
+import 'package:ctrim_app/firebase/messaging_manager.dart';
+import 'package:ctrim_app/models/user_contact.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
@@ -22,6 +26,9 @@ class ViewEventPage extends StatefulWidget {
 }
 
 class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProviderStateMixin {
+  static final MessagingManager _messagingManager = MessagingManager();
+  static const String _post = 'post-';
+
   late final TabController _tabController;
   late final EventContext _eventContext;
   late final List<Map<String, String>> _originalHeadMedia;
@@ -35,9 +42,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   void initState() {
-    // ? This tab issue thing with Program will depend on:
-    // - if eventDate in Head is null then don't build it unless it's a leader
-    // - viewing it (we can't make sure it's the author viewing it without the meta)
+    // TODO for the future: make user unsubscibe to post if they are a contributor
+
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
@@ -102,22 +108,29 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   List<Widget> _buildHeaderSliver() {
     final List<Widget> metaChildren = [PostMetadataSection(eventContext: _eventContext, update: _updateWholePostBody)];
     if (!_eventContext.isCurrentUserAuthor(_currentUID) && !_eventContext.isCurrentUserContributor(_currentUID)) {
-      metaChildren.insert(0, IconButton.filled(onPressed: _bookmarkClick, icon: const Icon(Icons.bookmark_border)));
+      metaChildren.insert(0, _buildBookmarkButton());
     }
     return [
       SliverAppBar(
-        expandedHeight: MediaQuery.of(context).size.height * 0.33,
-        flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-        actions: _buildAppBarAction(),
-      ),
+          expandedHeight: MediaQuery.of(context).size.height * 0.33,
+          flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
+          actions: _buildAppBarAction()),
       SliverList(
           delegate: SliverChildListDelegate([
         Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
-        // const Divider(),
         TabBar(labelColor: Colors.black, controller: _tabController, tabs: _appBarTabs)
       ]))
     ];
+  }
+
+  Widget _buildBookmarkButton() {
+    return Consumer<AppContext>(builder: (_, appContext, __) {
+      final bool bookmarked = appContext.dataManager.bookmarkedPosts.contains(_eventContext.id);
+      return IconButton.filled(
+          onPressed: () => _bookmarkClick(appContext, bookmarked),
+          icon: bookmarked ? const Icon(Icons.bookmark) : const Icon(Icons.bookmark_border));
+    });
   }
 
   Widget _buildTitle() {
@@ -139,7 +152,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return TabBarView(controller: _tabController, children: _bodyTabs);
   }
 
-  List<Widget> _buildAppBarAction() {
+  List<Widget>? _buildAppBarAction() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
         ElevatedButton.icon(
@@ -155,7 +168,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         const SizedBox(width: 8)
       ];
     }
-    return [];
+    return null;
   }
 
   // * Logic
@@ -201,7 +214,17 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   void _updateWholePostBody() => setState(() {});
 
-  void _bookmarkClick() {}
+  void _bookmarkClick(final AppContext appContext, final bool bookmarked) {
+    setState(() {
+      if (bookmarked) {
+        appContext.dataManager.removePostBookmark(_eventContext.id);
+        // _messagingManager.unsubscribeFromTopic(_topic);
+      } else {
+        appContext.dataManager.addPostBookmark(_eventContext.id);
+        // _messagingManager.subscribeToTopic(_topic);
+      }
+    });
+  }
 
   void _onTitleTap() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditHeadDetailsPage(eventContext: _eventContext)))
@@ -215,16 +238,27 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         context: context,
         builder: (_) => EventLogDialog(
             eventContext: _eventContext,
+            originalTitle: _originalTitle,
+            topic: _topic,
             updatePage: () {
               setState(() {});
             }));
   }
+
+  String get _topic => _post + _eventContext.id;
 }
 
 class EventLogDialog extends StatefulWidget {
-  const EventLogDialog({super.key, required this.eventContext, required this.updatePage});
+  const EventLogDialog(
+      {super.key,
+      required this.eventContext,
+      required this.updatePage,
+      required this.originalTitle,
+      required this.topic});
   final EventContext eventContext;
   final Function() updatePage;
+  final String originalTitle;
+  final String topic;
 
   @override
   State<EventLogDialog> createState() => _EventLogDialogState();
@@ -294,7 +328,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
             cancelText: 'Wait a sec.')
         .then((confirmation) {
       if (confirmation) {
-        // TOOD test from here
         DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
         final appContext = Provider.of<AppContext>(context, listen: false);
         _performUpdate(appContext.currentUser.id).then((_) {
@@ -312,6 +345,64 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.id);
       widget.eventContext.setFetchedLogs(await dbManager.fetchLog());
     }
+
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
+    await _sendNotification();
+  }
+
+  Future<void> _sendNotification() async {
+    // message to topic
+    // message to author + contributors
+    // hmm basically both will use the same title-subtitle but we should mention who updated it
+    final AppContext appContext = Provider.of<AppContext>(context);
+    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
+    final String currentUserName = appContext.currentUser.forname;
+    final String subtitle = _tecLog.text.trim();
+    final String adminSubtitle = '$currentUserName updated: $subtitle';
+
+    final List<String> deviceTokens = await _getAdminContactTokens(appContext);
+
+    await cloudFunctionManager
+        .sendMessageToSelectedTokens(tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: {});
+    await cloudFunctionManager.sendToTopic(topic: widget.topic, title: widget.originalTitle, body: subtitle, data: {});
+  }
+
+  Future<List<String>> _getAdminContactTokens(final AppContext appContext) async {
+    // ! oh man, test this out please
+    // Fetching all the contacts for the admins
+    // Remember to remove the current user from this list
+    // Fetch all the contributor device tokens (unless it's the current user)
+    final String currentUID = appContext.currentUser.id;
+
+    final List<String> missingContacts = widget.eventContext.metadata.contributorUIDs
+        .where((contributorID) =>
+            contributorID.compareTo(currentUID) != 0 &&
+            !appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
+        .toList();
+
+    // fetch the author contact (if the current user isn't already the author)
+    if (currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
+        !appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
+      missingContacts.add(widget.eventContext.metadata.authorUID);
+    }
+
+    // fetch and add any missing contacts we need for this operation
+    if (missingContacts.isNotEmpty) {
+      final List<UserContact> contacts = await _fetchMissingContacts(missingContacts);
+      appContext.addAllUserContacts(contacts);
+    }
+
+    // create the cumulative device token list and return it
+    final List<String> deviceTokens = List<String>.empty(growable: true);
+    for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
+      deviceTokens.addAll(appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+    }
+
+    return deviceTokens;
+  }
+
+  Future<List<UserContact>> _fetchMissingContacts(final List<String> missingIds) async {
+    final UserContactDBManager userContactDBManager = UserContactDBManager();
+    return await userContactDBManager.fetchUserContacts(missingIds);
   }
 }

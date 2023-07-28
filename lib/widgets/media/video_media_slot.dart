@@ -24,48 +24,37 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: InkWell(onTap: widget.onTap, child: const Text('This is a video')),
-    );
-    // return FutureBuilder(
-    //     future: _attemptToGetExistingThumbnailFile(),
-    //     builder: (_, snap) {
-    //       Widget result = const Center(
-    //         child: CircularProgressIndicator(),
-    //       );
+    return FutureBuilder(
+        future: _attemptToGetExistingThumbnailFile(),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator());
 
-    //       if (snap.hasData) {
-    //         _thisThumbnail = snap.data;
-    //         result = _buildExistingThumbnail();
-    //       } else if (!snap.hasData) {
-    //         result = _buildThumbnailFB();
-    //       } else if (snap.hasError) {
-    //         debugPrint('Something went wrong with attepmting to fetch the exisitng thumbnail: ${snap.error}');
-    //         result = const Center(
-    //           child: Text('Something went wrong'),
-    //         );
-    //       }
+          if (snap.hasData) {
+            _thisThumbnail = snap.data;
+            result = _buildExistingThumbnail();
+          } else if (!snap.hasData) {
+            result = _buildThumbnailFB();
+          } else if (snap.hasError) {
+            debugPrint('Something went wrong with attepmting to fetch the exisitng thumbnail: ${snap.error}');
+            result = const Center(child: Text("Can't load video thumbnail"));
+          }
 
-    //       return result;
-    //     });
+          return result;
+        });
   }
 
   Widget _buildThumbnailFB() {
     return FutureBuilder(
         future: _createThumbnail(),
         builder: (_, snap) {
-          Widget result = const Center(
-            child: CircularProgressIndicator(),
-          );
+          Widget result = const Center(child: CircularProgressIndicator());
 
           if (snap.hasData) {
             _thisThumbnail = File(snap.data!);
             debugPrint(_thisThumbnail!.path);
             result = _buildExistingThumbnail();
           } else if (snap.hasError) {
-            result = const Center(
-              child: Text('Something went wrong'),
-            );
+            result = const Center(child: Text("Can't load video"));
             debugPrint('Something with the Video Media Slot: ${snap.error}');
           }
 
@@ -75,23 +64,11 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
   Widget _buildExistingThumbnail() {
     return InkWell(
-      onTap: widget.onTap,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: Image.file(
-              _thisThumbnail!,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const Icon(
-            Icons.play_circle,
-            color: Colors.white,
-          ),
-        ],
-      ),
-    );
+        onTap: widget.onTap,
+        child: Stack(alignment: Alignment.center, children: [
+          Positioned.fill(child: Image.file(_thisThumbnail!, fit: BoxFit.cover)),
+          const Icon(Icons.play_circle, color: Colors.white)
+        ]));
   }
 
   // * Logic

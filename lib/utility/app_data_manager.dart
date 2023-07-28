@@ -1,9 +1,16 @@
 // This will utilse both approaches - SharedPref and File read/writing
+import 'dart:collection';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppDataManager {
   static late final SharedPreferences _pref;
-  static const String _isFirstOpen = 'isFirstOpen', _email = 'email', _pass = 'password', _clear = '', _token = 'token';
+  static const String _isFirstOpen = 'isFirstOpen',
+      _email = 'email',
+      _pass = 'password',
+      _clear = '',
+      _token = 'token',
+      _bookmarkedPosts = 'bookmarked';
 
   AppDataManager({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -26,4 +33,21 @@ class AppDataManager {
 
   String get token => _pref.getString(_token)!;
   void saveToken(String thisToken) => _pref.setString(_token, thisToken);
+
+  // * Post related
+  List<String> get bookmarkedPosts => UnmodifiableListView(_pref.getStringList(_bookmarkedPosts) ?? List.empty());
+
+  void addPostBookmark(final String id) {
+    final List<String> bookmarked = _pref.getStringList(_bookmarkedPosts) ?? List.empty(growable: true);
+    if (!bookmarked.contains(id)) {
+      bookmarked.add(id);
+      _pref.setStringList(_bookmarkedPosts, bookmarked);
+    }
+  }
+
+  void removePostBookmark(final String id) {
+    final List<String> bookmarked = _pref.getStringList(_bookmarkedPosts) ?? List.empty(growable: true);
+    bookmarked.remove(id);
+    _pref.setStringList(_bookmarkedPosts, bookmarked);
+  }
 }

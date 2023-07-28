@@ -8,37 +8,40 @@ class UserContactDBManager {
           fromFirestore: (snap, _) => UserContact.fromMap(snap.id, snap.data()!),
           toFirestore: (record, _) => record.toJson());
 
-  Future addUserContact(String id, UserContact contact) async {
+  Future addUserContact(final String id, final UserContact contact) async {
     await _ref.doc(id).set(contact);
   }
 
-  Future addTokenToUser(String id, String token) async {
+  Future addTokenToUser(final String id, final String token) async {
     final details = await fetchUserContact(id);
     details.addToken(token);
     await updateUserContact(id, details);
   }
 
-  Future removeTokenFromUser(String id, String token) async {
+  Future removeTokenFromUser(final String id, final String token) async {
     final details = await fetchUserContact(id);
     details.removeToken(token);
     await updateUserContact(id, details);
   }
 
-  Future updateUserContact(String id, UserContact contact) async {
+  Future updateUserContact(final String id, final UserContact contact) async {
     await _ref.doc(id).update(contact.toJson());
   }
 
-  Future<UserContact> fetchUserContact(String id) async {
+  Future<UserContact> fetchUserContact(final String id) async {
     return await _ref.doc(id).get().then((value) => value.data() as UserContact);
+  }
+
+  Future<List<UserContact>> fetchUserContacts(final List<String> ids) async {
+    final List<UserContact> results = List<UserContact>.empty(growable: true);
+    for (final String id in ids) {
+      results.add(await fetchUserContact(id));
+    }
+    return results;
   }
 
   Future<UserContact> fetchUserContactByAuthID(String authID) async {
     var query = await _ref.where('AuthID', isEqualTo: authID).get();
     return query.docs.first.data() as UserContact;
-  }
-
-  Future<List<String>> fetchDeviceTokensOfAMember(String id) async {
-    var details = await _ref.doc(id).get().then((value) => value.data() as UserContact);
-    return details.deviceTokens;
   }
 }

@@ -6,12 +6,12 @@ import '../utility/app_context.dart';
 class ViewEventsHome extends StatelessWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction});
   final Function() rebuildFunction;
-
+  static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
-        const SliverAppBar(title: Text('Posts')),
+        SliverAppBar(title: Image.asset(_ctrimLogo)),
         SliverList.separated(
             itemCount: appContext.eventHeads.length,
             itemBuilder: (_, index) => PostHead(
