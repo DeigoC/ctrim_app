@@ -1,5 +1,6 @@
 // import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/pages/personal/login_page.dart';
+import 'package:ctrim_app/pages/personal/view_bookmarked_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,9 +22,10 @@ class _PersonalHomeState extends State<PersonalHome> {
     // ? this may not be needed cause of the Consumer at the page level (home_page)
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final List<Widget> children = [
-        const ListTile(
-          leading: Icon(Icons.bookmarks),
-          title: Text('Bookmarks'),
+        ListTile(
+          leading: const Icon(Icons.bookmarks),
+          title: const Text('Bookmarks'),
+          onTap: _onViewBookmarkedPageClick,
         ),
 
         // ! The following is used for testing
@@ -104,8 +106,11 @@ class _PersonalHomeState extends State<PersonalHome> {
       return CustomScrollView(
         slivers: [
           SliverAppBar(
-            title: Image.asset(_ctrimLogo),
-          ),
+              title: const Text('Personal'),
+              centerTitle: false,
+              leading: appContext.isCurrentUserGuest
+                  ? Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)
+                  : null),
           SliverList(delegate: SliverChildListDelegate(children))
         ],
       );
@@ -118,5 +123,9 @@ class _PersonalHomeState extends State<PersonalHome> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
       widget.appContext.rebuildPlease();
     });
+  }
+
+  void _onViewBookmarkedPageClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
   }
 }

@@ -9,72 +9,72 @@ class MyVideoPlayer extends StatefulWidget {
   State<MyVideoPlayer> createState() => _MyVideoPlayerState();
 }
 
-class _MyVideoPlayerState extends State<MyVideoPlayer> {
+class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProviderStateMixin {
   late final VideoPlayerController _videoController;
   late final Future<void> _initialiseVideo;
+
+  late AnimationController _videoPlaybackAnimationController;
+  late Animation<double> animation;
 
   @override
   void initState() {
     _videoController = VideoPlayerController.network(widget.src);
     _initialiseVideo = _videoController.initialize();
     _videoController.setLooping(true);
+
+    _videoPlaybackAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+
+    animation = Tween<double>(begin: 0.0, end: 1.0).animate(_videoPlaybackAnimationController);
     super.initState();
   }
 
   @override
   void dispose() {
     _videoController.dispose();
+    _videoPlaybackAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_videoController.value.isInitialized){
-      return SingleChildScrollView(
-        child: Column(children: [
-          AspectRatio(aspectRatio: _videoController.value.aspectRatio, child: VideoPlayer(_videoController)),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            IconButton(
-                onPressed: () {
-                  _videoController.pause();
-                },
-                icon: const Icon(Icons.pause)),
-            IconButton(
-                onPressed: () {
-                  _videoController.play();
-                },
-                icon: const Icon(Icons.play_arrow))
-          ])
-        ]),
-      );
-    }
-    return FutureBuilder(
-        future: _initialiseVideo,
-        builder: (_, snap) {
-          if (snap.connectionState == ConnectionState.done) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _videoController.play();
-            });
+    return Center(
+      child: FutureBuilder(
+          future: _initialiseVideo,
+          builder: (_, snap) {
+            if (snap.connectionState == ConnectionState.done) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _videoController.play();
+              });
 
-            return SingleChildScrollView(
-              child: Column(children: [
-                AspectRatio(aspectRatio: _videoController.value.aspectRatio, child: VideoPlayer(_videoController)),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  IconButton(
-                      onPressed: () {
-                        _videoController.pause();
-                      },
-                      icon: const Icon(Icons.pause)),
-                  IconButton(
-                      onPressed: () {
-                        _videoController.play();
-                      },
-                      icon: const Icon(Icons.play_arrow))
-                ])
-              ]),
-            );
-          }
-          return const Center(child: CircularProgressIndicator());
-        });
+              return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Flexible(
+                    child: AspectRatio(
+                        aspectRatio: _videoController.value.aspectRatio, child: VideoPlayer(_videoController))),
+                IconButton(
+                    onPressed: _onIconClick,
+                    icon: AnimatedIcon(
+                      icon: AnimatedIcons.pause_play,
+                      progress: animation,
+                      color: Colors.white,
+                    )),
+              ]);
+            }
+            return const Center(child: CircularProgressIndicator());
+          }),
+    );
+  }
+
+  void _onIconClick() {
+    if (_videoController.value.isPlaying) {
+      _videoController.pause();
+      _videoPlaybackAnimationController.forward();
+    } else {
+      // ? Idk about buffering
+      _videoController.play();
+      _videoPlaybackAnimationController.reverse();
+    }
   }
 }

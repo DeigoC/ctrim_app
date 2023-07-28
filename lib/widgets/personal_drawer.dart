@@ -1,4 +1,5 @@
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,10 +16,13 @@ class PersonalDrawer extends StatelessWidget {
       return Drawer(
         child: ListView(
           children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(color: Colors.blue),
-              child: Align(alignment: Alignment.bottomLeft, child: Text('Hi, ${currentUser.forname}')),
+            Image.asset('assets/images/ctrim_logo.png'),
+            const Divider(),
+            ListTile(
+              title: Text('Hi, ${currentUser.forname}'),
+              leading: MyUserAvatar(currentUser),
             ),
+            const Divider(),
             ListTile(
               title: const Text('View Users'),
               leading: const Icon(Icons.people),

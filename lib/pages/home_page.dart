@@ -39,19 +39,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
-        body: _buildSelectedBody(appContext),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.collections_bookmark), label: 'Notice Board'),
-            BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal'),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: (index) => _onNavigationItemTap(index),
-        ),
-        drawer: _buildDrawer(appContext),
-        floatingActionButton: _buildFAB(),
-      );
+          body: _buildSelectedBody(appContext),
+          drawer: _buildDrawer(appContext),
+          floatingActionButton: _buildFAB(),
+          bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) => _onNavigationItemTap(index),
+              unselectedFontSize: 0,
+              selectedFontSize: 0,
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(icon: Icon(Icons.collections_bookmark), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+              ]));
     });
   }
 
