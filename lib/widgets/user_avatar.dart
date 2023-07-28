@@ -18,18 +18,12 @@ class MyUserAvatar extends StatelessWidget {
 
   Widget _buildImageAvatar() {
     return CircleAvatar(
-      backgroundImage: NetworkImage(tmpImageSrc != null ? tmpImageSrc! : _user.imgSrc),
-      radius: radius,
-    );
+        backgroundImage: NetworkImage(tmpImageSrc != null ? tmpImageSrc! : _user.imgSrc), radius: radius);
   }
 
   Widget _buildTextAvatar() {
     return CircleAvatar(
-      radius: radius,
-      child: Text(
-        _user.initials,
-        style: TextStyle(fontSize: radius == null ? null : (radius! * 0.7)),
-      ),
-    );
+        radius: radius,
+        child: Text(_user.initials, style: TextStyle(fontSize: radius == null ? null : (radius! * 0.7))));
   }
 }

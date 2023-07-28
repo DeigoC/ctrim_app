@@ -10,11 +10,10 @@ class ImageMediaSlot extends StatelessWidget {
     return InkWell(
         onTap: onTap,
         child: Hero(
-          tag: mediaEntry['src']!,
-          child: Image.network(
-            mediaEntry['src']!,
-            fit: BoxFit.cover,
-          ),
-        ));
+            tag: mediaEntry['src']!,
+            child: Image.network(mediaEntry['src']!,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) =>
+                    const Center(child: CircularProgressIndicator()))));
   }
 }
