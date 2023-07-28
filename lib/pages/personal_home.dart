@@ -14,6 +14,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   // final CloudFunctionManager _functionManager = CloudFunctionManager();
+  static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +103,8 @@ class _PersonalHomeState extends State<PersonalHome> {
 
       return CustomScrollView(
         slivers: [
-          const SliverAppBar(
-            title: Text('Profile'),
+          SliverAppBar(
+            title: Image.asset(_ctrimLogo),
           ),
           SliverList(delegate: SliverChildListDelegate(children))
         ],

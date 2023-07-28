@@ -49,15 +49,16 @@ class AppContext extends ChangeNotifier {
   User get currentUser => _currentUser;
   List<User> get allUsers => UnmodifiableListView(_allUsers);
 
-  void addUserContact(UserContact contact) {
-    if (!_allContacts.contains(contact)) {
-      _allContacts.add(contact);
-    }
-  }
-
   void addUser(User u) => _allUsers.add(u);
   void setUserToGuest() => _currentUser = _guest;
   void setCurrentUser(String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
+
+  // contact related
+  void addAllUserContacts(List<UserContact> contacts) {
+    _allContacts.addAll(contacts);
+  }
+
+  List<UserContact> get userContacts => UnmodifiableListView(_allContacts);
 
   // * data related
   AppDataManager get dataManager => _dataManager;

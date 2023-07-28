@@ -8,12 +8,14 @@ class InformationHome extends StatefulWidget {
 }
 
 class _InformationHomeState extends State<InformationHome> {
+  static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+
   @override
   Widget build(BuildContext context) {
     return NestedScrollView(
       headerSliverBuilder: (_, __) => [
         SliverAppBar(
-          title: const Text('Information'),
+          title: Image.asset(_ctrimLogo),
           bottom: TabBar(
             controller: widget.tabController,
             tabs: const [
