@@ -13,6 +13,7 @@ class AddMediaFilePage extends StatefulWidget {
 
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController();
+  final RegExp _driveRegExp = RegExp(r"/d/([a-zA-Z0-9_-]+)");
   VideoPlayerController? _videoPlayerController;
   bool _canSave = false, _isSaved = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
@@ -171,7 +172,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   String _sanitiseSrc() {
-    // ! remember those google stuff
+    RegExpMatch? match = _driveRegExp.firstMatch(_tecSrc.text.trim());
+    if (match != null) {
+      String id = match.group(1)!;
+      debugPrint('Link is a GoogleDrive Share link. Parsing now. ID is $id');
+      return 'https://drive.google.com/uc?id=$id';
+    }
     return _tecSrc.text.trim();
   }
 }

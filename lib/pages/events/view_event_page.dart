@@ -218,10 +218,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     setState(() {
       if (bookmarked) {
         appContext.dataManager.removePostBookmark(_eventContext.id);
-        // _messagingManager.unsubscribeFromTopic(_topic);
+        _messagingManager.unsubscribeFromTopic(_topic);
       } else {
         appContext.dataManager.addPostBookmark(_eventContext.id);
-        // _messagingManager.subscribeToTopic(_topic);
+        _messagingManager.subscribeToTopic(_topic);
       }
     });
   }
