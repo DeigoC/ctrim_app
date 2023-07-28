@@ -17,25 +17,26 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('View All Users'),
-        ),
-        floatingActionButton: appContext.currentUser.isAreaAdmin
-            ? FloatingActionButton.extended(
-                icon: const Icon(Icons.person_add), onPressed: _addUserClick, label: const Text('Register User'))
-            : null,
-        body: ListView.builder(
-            itemCount: appContext.allUsers.length,
-            itemBuilder: (_, index) {
-              final thisUser = appContext.allUsers[index];
-              return ListTile(
-                title: Text(thisUser.fullname),
-                subtitle: Text(thisUser.location),
-                leading: MyUserAvatar(thisUser),
-                onTap: () => DialogManager.showUserProfile(selectedUser: thisUser, context: context),
-              );
-            }),
-      );
+          appBar: AppBar(
+            title: const Text('View All Users'),
+          ),
+          floatingActionButton: appContext.currentUser.isAreaAdmin
+              ? FloatingActionButton.extended(
+                  icon: const Icon(Icons.person_add), onPressed: _addUserClick, label: const Text('Register User'))
+              : null,
+          body: ListView.builder(
+              itemCount: appContext.allUsers.length,
+              itemBuilder: (_, index) {
+                final thisUser = appContext.allUsers[index];
+                return ListTile(
+                    title: Text(thisUser.fullname),
+                    subtitle: Text(thisUser.location),
+                    leading: MyUserAvatar(thisUser),
+                    onTap: () => DialogManager.showUserProfile(
+                        selectedUser: thisUser,
+                        context: context,
+                        currentUserAdmin: appContext.currentUser.isAreaAdmin));
+              }));
     });
   }
 

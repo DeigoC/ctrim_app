@@ -15,6 +15,7 @@ class ViewGalleryPage extends StatefulWidget {
 
 class _ViewGalleryPageState extends State<ViewGalleryPage> {
   late final PageController _pageController;
+  bool _dismissed = false;
 
   @override
   void initState() {
@@ -30,7 +31,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Gallery')), body: _buildBody());
+    return Scaffold(appBar: AppBar(), body: _buildBody(), backgroundColor: Colors.black);
   }
 
   Widget _buildBody() {
@@ -48,25 +49,51 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
     // final List<String> mediaSrcs = testData.keys.toList();
 
-    return PageView.builder(
-        itemCount: widget.media.length,
-        controller: _pageController,
-        itemBuilder: (_, index) {
-          final Map<String, String> thisEntry = widget.media[index];
-          final String thisMediaSrc = thisEntry['src']!;
-          final String type = thisEntry['type']!;
-
-          if (type.compareTo('vid') == 0) {
-            return MyVideoPlayer(
-              src: thisMediaSrc,
+    return SafeArea(
+      top: false,
+      child: PageView.builder(
+          itemCount: widget.media.length,
+          controller: _pageController,
+          itemBuilder: (_, index) {
+            final Map<String, String> thisEntry = widget.media[index];
+            return Dismissible(
+              direction: DismissDirection.vertical,
+              dismissThresholds: const {DismissDirection.vertical: 0.7},
+              onUpdate: (details) {
+                if (details.progress >= 0.6 && !_dismissed) {
+                  debugPrint('Reached beyond 0.6');
+                  _dismissed = true;
+                  Navigator.of(context).pop();
+                }
+              },
+              key: Key(thisEntry['src']!),
+              child: Column(children: [
+                Flexible(child: _buildMedia(thisEntry)),
+                ListTile(
+                    title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
+                    leading:
+                        thisEntry['title']!.isNotEmpty ? const Icon(Icons.photo_library, color: Colors.white) : null)
+              ]),
+              onDismissed: (_) {
+                Navigator.of(context).pop();
+              },
             );
-          } else if (type.compareTo('img') == 0) {
-            return MyPhotoViewer(src: thisMediaSrc); // TODO does this work with gifs?
-          }
+          }),
+    );
+  }
 
-          return const Center(
-            child: Text('Something went wrong'),
-          );
-        });
+  Widget _buildMedia(final Map<String, String> thisEntry) {
+    final String thisMediaSrc = thisEntry['src']!;
+    final String type = thisEntry['type']!;
+
+    if (type.compareTo('vid') == 0) {
+      return MyVideoPlayer(src: thisMediaSrc);
+    } else if (type.compareTo('img') == 0) {
+      return MyPhotoViewer(src: thisMediaSrc); // TODO does this work with gifs?
+    }
+
+    return const Center(
+      child: Text('Something went wrong'),
+    );
   }
 }

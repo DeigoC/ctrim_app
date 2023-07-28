@@ -15,7 +15,9 @@ class _InformationHomeState extends State<InformationHome> {
     return NestedScrollView(
       headerSliverBuilder: (_, __) => [
         SliverAppBar(
-          title: Image.asset(_ctrimLogo),
+          title: const Text('CTRIM'),
+          centerTitle: false,
+          leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight),
           bottom: TabBar(
             controller: widget.tabController,
             tabs: const [

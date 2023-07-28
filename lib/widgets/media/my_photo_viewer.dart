@@ -7,6 +7,6 @@ class MyPhotoViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PhotoView(imageProvider: NetworkImage(src));
+    return PhotoView(imageProvider: NetworkImage(src), heroAttributes: PhotoViewHeroAttributes(tag: src));
   }
 }

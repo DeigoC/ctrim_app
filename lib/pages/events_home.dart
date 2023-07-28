@@ -11,7 +11,11 @@ class ViewEventsHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
-        SliverAppBar(title: Image.asset(_ctrimLogo)),
+        // const SliverAppBar(title: CircleAvatar(backgroundImage: AssetImage(_ctrimLogo))),
+        SliverAppBar(
+            title: const Text('Posts'),
+            centerTitle: false,
+            leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
         SliverList.separated(
             itemCount: appContext.eventHeads.length,
             itemBuilder: (_, index) => PostHead(
