@@ -10,6 +10,7 @@ class ViewEventsHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
+      appContext.orderEventDatesByRecency();
       return CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
         // const SliverAppBar(title: CircleAvatar(backgroundImage: AssetImage(_ctrimLogo))),
         SliverAppBar(

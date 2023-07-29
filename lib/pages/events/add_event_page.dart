@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/posts/add_header_meta_tab_body.dart';
 import 'package:ctrim_app/widgets/posts/add_media_tab.dart';
@@ -204,6 +205,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
             eventDate: _eventDate,
             uid: appContext.currentUser.id)
         .then((newID) => _updateParentMetadata(newID));
+    await _notifyOfNewPost();
     appContext.addNewPostHead(widget.eventContext.head);
   }
 
@@ -231,5 +233,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
                 trailing: CircularProgressIndicator(),
               ),
             ));
+  }
+
+  Future<void> _notifyOfNewPost() async {
+    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
+    await cloudFunctionManager
+        .sendToTopic(topic: 'ctrim-belfast', title: _tecTitle.text.trim(), body: _tecSubtitle.text.trim(), data: {});
   }
 }
