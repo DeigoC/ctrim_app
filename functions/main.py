@@ -85,8 +85,3 @@ def send_to_topic(req: https_fn.CallableRequest) -> any:
 
     messaging.send(msg)
     return {'result':'finished sending to topic!'}
-
-@https_fn.on_call(region='europe-west1')
-def hello_world(req: https_fn.CallableRequest) -> any:
-    print('Hello there! Here is the Request data: ' + str(req.data))
-    return{'result':'finished hello world!'}

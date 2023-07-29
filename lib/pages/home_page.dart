@@ -23,9 +23,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     _informationTabController = TabController(length: 3, vsync: this);
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   _checkIfFirstOpen();
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkIfFirstOpen();
+    });
     super.initState();
   }
 

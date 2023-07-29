@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../models/event/event_head.dart';
 import '../../pages/events/view_event_page.dart';
 import '../../pages/view_gallery_page.dart';
@@ -16,18 +17,23 @@ class PostHead extends StatelessWidget {
   final bool viewingChild, childToParent;
   final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16;
+  static final DateFormat _recentFormat = DateFormat('d MMM, HH:mm');
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> children = [
       _buildTitle(),
-      const SizedBox(height: 8),
+      // const SizedBox(height: 2),
+      _buildLastEdit(),
+      const SizedBox(height: 16),
       _buildSubtitle(),
       const SizedBox(height: 8)
     ];
 
     if (thisHead.media.isNotEmpty) {
       children.insert(0, _buildMediaSection(context));
+    } else {
+      children.insert(0, const SizedBox(height: 8));
     }
 
     return InkWell(
@@ -40,6 +46,13 @@ class PostHead extends StatelessWidget {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Text(thisHead.title, style: const TextStyle(fontSize: _titleFontSize)));
+  }
+
+  Widget _buildLastEdit() {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text('(edit ${_recentFormat.format(thisHead.recentDate)})',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600)));
   }
 
   Widget _buildSubtitle() {

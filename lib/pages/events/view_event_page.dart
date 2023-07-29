@@ -119,7 +119,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           actions: _buildAppBarAction()),
       SliverList(
           delegate: SliverChildListDelegate([
-        Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
+        Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
         TabBar(labelColor: onDark ? Colors.white : Colors.black, controller: _tabController, tabs: _appBarTabs)
       ]))
@@ -356,7 +356,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     // message to topic
     // message to author + contributors
     // hmm basically both will use the same title-subtitle but we should mention who updated it
-    final AppContext appContext = Provider.of<AppContext>(context);
+    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
     final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
     final String currentUserName = appContext.currentUser.forname;
     final String subtitle = _tecLog.text.trim();
@@ -364,8 +364,11 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     final List<String> deviceTokens = await _getAdminContactTokens(appContext);
 
-    await cloudFunctionManager
-        .sendMessageToSelectedTokens(tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: {});
+    if (deviceTokens.isNotEmpty) {
+      await cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: {});
+    }
+
     await cloudFunctionManager.sendToTopic(topic: widget.topic, title: widget.originalTitle, body: subtitle, data: {});
   }
 

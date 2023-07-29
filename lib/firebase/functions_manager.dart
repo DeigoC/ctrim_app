@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 class CloudFunctionManager {
   static final _inst = FirebaseFunctions.instanceFor(region: 'europe-west1');
 
-  CloudFunctionManager() {
-    if (kDebugMode) {
-      _inst.useFunctionsEmulator('localhost', 5001);
-    }
-  }
+  // CloudFunctionManager() {
+  //   if (kDebugMode) {
+  //     _inst.useFunctionsEmulator('localhost', 5001);
+  //   }
+  // }
 
   Future<void> sendMessageToSelectedTokens(
       {required List<String> tokens,
@@ -68,12 +68,14 @@ class CloudFunctionManager {
 
   List<String> _convertMapToKeyValueStrings(final Map<String, String> data) {
     String dataKeys = '', dataValues = '';
-    for (final element in data.entries) {
-      dataKeys += '${element.key},';
-      dataValues += '${element.value},';
+    if (data.isNotEmpty) {
+      for (final element in data.entries) {
+        dataKeys += '${element.key},';
+        dataValues += '${element.value},';
+      }
+      dataKeys = dataKeys.substring(0, dataKeys.length - 1);
+      dataValues = dataValues.substring(0, dataValues.length - 1);
     }
-    dataKeys = dataKeys.substring(0, dataKeys.length - 1);
-    dataValues = dataValues.substring(0, dataValues.length - 1);
 
     return [dataKeys, dataValues];
   }
