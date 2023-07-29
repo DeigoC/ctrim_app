@@ -3,6 +3,7 @@ import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:ctrim_app/models/user_contact.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
@@ -110,6 +111,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (!_eventContext.isCurrentUserAuthor(_currentUID) && !_eventContext.isCurrentUserContributor(_currentUID)) {
       metaChildren.insert(0, _buildBookmarkButton());
     }
+    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     return [
       SliverAppBar(
           expandedHeight: MediaQuery.of(context).size.height * 0.33,
@@ -119,7 +121,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           delegate: SliverChildListDelegate([
         Padding(padding: const EdgeInsets.all(8.0), child: _buildTitle()),
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
-        TabBar(labelColor: Colors.black, controller: _tabController, tabs: _appBarTabs)
+        TabBar(labelColor: onDark ? Colors.white : Colors.black, controller: _tabController, tabs: _appBarTabs)
       ]))
     ];
   }
