@@ -1,4 +1,5 @@
 import 'package:ctrim_app/firebase/messaging_manager.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utility/app_context.dart';
@@ -22,6 +23,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void initState() {
+    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    analytics.logAppOpen();
+
     _informationTabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkIfFirstOpen();
