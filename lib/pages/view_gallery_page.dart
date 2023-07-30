@@ -89,7 +89,10 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     if (type.compareTo('vid') == 0) {
       return MyVideoPlayer(src: thisMediaSrc);
     } else if (type.compareTo('img') == 0) {
-      return MyPhotoViewer(src: thisMediaSrc); // TODO does this work with gifs?
+      return MyPhotoViewer(
+        src: thisMediaSrc,
+        heroPrefix: widget.postId,
+      ); // TODO does this work with gifs?
     }
 
     return const Center(
