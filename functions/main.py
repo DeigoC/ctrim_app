@@ -49,7 +49,7 @@ def send_notification_to_multiple_tokens(req: https_fn.CallableRequest) -> any:
     )
 
     messaging.send_multicast(msg)
-    return {'result':'finished sending to multiple devices!'}
+    return {'result':'finished sending to multiple devices! - via Emulator'}
 
 @https_fn.on_call(region='europe-west1')
 def send_to_topic(req: https_fn.CallableRequest) -> any:
@@ -84,4 +84,4 @@ def send_to_topic(req: https_fn.CallableRequest) -> any:
     )
 
     messaging.send(msg)
-    return {'result':'finished sending to topic!'}
+    return {'result':'finished sending to topic! - via Emulator'}

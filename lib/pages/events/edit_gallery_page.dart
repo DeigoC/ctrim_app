@@ -79,7 +79,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: AspectRatio(
           aspectRatio: 16 / 9,
-          child: _buildMediaViewer(thisEntry),
+          child: _buildMediaViewer(thisEntry, isKey),
         ),
       ),
       ListTile(
@@ -91,9 +91,13 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     ]);
   }
 
-  Widget _buildMediaViewer(final Map<String, String> thisEntry) {
+  Widget _buildMediaViewer(final Map<String, String> thisEntry, bool isKey) {
     if (thisEntry['type']!.compareTo('img') == 0) {
-      return ImageMediaSlot(mediaEntry: thisEntry, onTap: null);
+      return ImageMediaSlot(
+        mediaEntry: thisEntry,
+        onTap: null,
+        heroPrefix: isKey ? 'key' : 'media',
+      );
     }
     return VideoMediaSlot(mediaEntry: thisEntry, onTap: null);
   }

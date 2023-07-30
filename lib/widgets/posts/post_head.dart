@@ -105,7 +105,12 @@ class PostHead extends StatelessWidget {
 
   Widget _buildMediaSlot(Map<String, String> entry, int index, BuildContext context) {
     return entry['type']!.compareTo('img') == 0
-        ? Expanded(child: ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, context)))
+        ? Expanded(
+            child: ImageMediaSlot(
+            mediaEntry: entry,
+            onTap: () => _onMediaTap(index, context),
+            heroPrefix: thisHead.id,
+          ))
         : Expanded(child: VideoMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, context)));
   }
 

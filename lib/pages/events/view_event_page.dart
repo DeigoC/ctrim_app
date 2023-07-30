@@ -187,6 +187,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   void _figureOutTabs() {
+    final bool isAuthor = _eventContext.metadata.authorUID.compareTo(_currentUID) == 0;
+    final bool isContributor = _eventContext.metadata.contributorUIDs.contains(_currentUID);
+    final bool isLeader = Provider.of<AppContext>(context, listen: false).currentUser.isLeader;
+
     int length = 1;
     _bodyTabs.add(ViewPostBody(
       eventContext: _eventContext,
@@ -194,18 +198,18 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       currentUID: _currentUID,
     ));
 
-    if (_eventContext.head.eventDate != null) {
+    if (_eventContext.head.eventDate != null || isAuthor) {
       _bodyTabs.add(ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody));
       _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Program'));
       length++;
     }
-    if (_eventContext.media.allMedia.isNotEmpty) {
+    if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {
       _bodyTabs.add(
           ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _updateWholePostBody, currentUID: _currentUID));
       _appBarTabs.add(const Tab(icon: Icon(Icons.photo_album), text: 'Media'));
       length++;
     }
-    if (_eventContext.metadata.hasChildren || _eventContext.metadata.hasParent) {
+    if (_eventContext.metadata.hasChildren || _eventContext.metadata.hasParent || isLeader) {
       _bodyTabs.add(ViewRelatedPostsTab(eventContext: _eventContext));
       _appBarTabs.add(const Tab(icon: Icon(Icons.library_books), text: 'Related'));
       length++;
@@ -335,6 +339,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         _performUpdate(appContext.currentUser.id).then((_) {
           widget.eventContext.resetSavingOfTheEdit();
           appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+          widget.updatePage();
           Navigator.of(context).pop();
           Navigator.of(context).pop();
         });
