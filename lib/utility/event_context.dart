@@ -305,12 +305,26 @@ class EventContext {
 
     _metadata.setLastUID(lines[metadataStartIndex + 2]);
 
-    final List<String> contributors = lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '').split(',');
+    final String contributorLine = lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '');
+    final List<String> contributors = List.empty(growable: true);
+    if (contributorLine.isNotEmpty && !contributorLine.contains(',')) {
+      contributors.add(contributorLine);
+    } else {
+      contributors.addAll(contributorLine.split(','));
+    }
+
     for (final contributor in contributors) {
       _metadata.addContributorUID(contributor);
     }
 
-    final List<String> childrenIDs = lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '').split(',');
+    final String childrenLine = lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '');
+    final List<String> childrenIDs = List.empty(growable: true);
+    if (childrenLine.isNotEmpty && !childrenLine.contains(',')) {
+      childrenIDs.add(childrenLine);
+    } else {
+      childrenIDs.addAll(childrenLine.split(','));
+    }
+
     for (final child in childrenIDs) {
       _metadata.addChildID(child);
     }
@@ -334,7 +348,13 @@ class EventContext {
     });
 
     for (final roleDataSet in roles) {
-      final List<String> uids = roleDataSet[0].replaceAll('[', '').replaceAll(']', '').split(',');
+      final String uidLine = roleDataSet[0].replaceAll('[', '').replaceAll(']', '');
+      final List<String> uids = List<String>.empty(growable: true);
+      if (uidLine.isNotEmpty && !uidLine.contains(',')) {
+        uids.add(uidLine);
+      } else {
+        uids.addAll(uidLine.split(','));
+      }
 
       _program.addRole({
         'uids': uids,

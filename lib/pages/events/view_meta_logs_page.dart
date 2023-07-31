@@ -110,16 +110,20 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               // _onTestMedia();
               // _onTestLogs();
               // _onTestMetaData();
-              // final String result = widget.eventContext.transformPostToTxtFile();
+              final String result = widget.eventContext.transformPostToTxtFile();
               // debugPrint(result);
 
-              // final File tempF = File('${(await getTemporaryDirectory()).path}/postTest.txt');
-              // await tempF.writeAsString(result);
+              final File tempF = File('${(await getTemporaryDirectory()).path}/postTest.txt');
+              await tempF.writeAsString(result);
 
               // const LineSplitter ls = LineSplitter();
-              // final content = await tempF.readAsString();
+              final content = await tempF.readAsLines();
+              for (var line in content) {
+                debugPrint(line);
+              }
+
               // final dataTest = ls.convert(content);
-              // EventContext.viewing(eventHead: widget.eventContext.head, data: dataTest);
+              // EventContext.viewing(eventHead: widget.eventContext.head, data: content);
 
               // debugPrint('Finished!');
               // ! Time for a critical test:

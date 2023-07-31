@@ -1,12 +1,10 @@
-import 'dart:io';
-
 import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
 import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:ctrim_app/models/user_contact.dart';
+import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
@@ -54,7 +52,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalSubtitle = widget.eventHead.subtitle;
 
     // may have to change the context here
-    _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
+    // _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
     super.initState();
   }
 
@@ -69,7 +67,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-        onWillPop: _eventContext.canSaveTheEditing
+        onWillPop: _canSaveEditing
             ? () => DialogManager.discardChanges(context: context).then((confirmation) {
                   if (confirmation) {
                     widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
@@ -79,21 +77,31 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   return confirmation;
                 })
             : () async => true,
-        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildFetchPostBody()));
+        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
   }
 
   Widget _buildCheckExistingPostBody() {
     return FutureBuilder(
-        future: _attemptToGetExistingPost(),
+        future: _attemptToGetExistingPostData(),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
           if (snap.hasData) {
             // build with data
             // set the post context here
-            result = _buildBodyWithData();
-          } else if (!snap.hasData) {
-            // fetch the post
-            result = _buildFetchPostBody();
+            final List<String> data = snap.data!;
+
+            if (data.isNotEmpty) {
+              debugPrint('Using existing post data');
+              _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data);
+              _haveFetchedPost = true;
+
+              _figureOutTabs();
+              Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+              result = _buildBodyWithData();
+            } else {
+              debugPrint('Fetching post from DB');
+              result = _buildFetchPostBody();
+            }
           } else if (snap.hasError) {
             result = const Center(child: Text('Something went wrong!'));
           }
@@ -108,10 +116,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
-          if (snap.connectionState == ConnectionState.done) {
-            _figureOutTabs();
-            _haveFetchedPost = true;
+          if (snap.hasData) {
             Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+            _figureOutTabs();
+            _savePostData();
+            _haveFetchedPost = true;
             result = _buildBodyWithData();
           } else if (snap.hasError) {
             debugPrint('Something with fetching the post ${snap.error}');
@@ -197,16 +206,22 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
-  Future<void> _fetchEssentialPostData() async {
-    // we need to fetch the media, program and metadata to figure out how many tabs to create
-    // for the guest.
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(_eventContext.id);
+  // TODO remember to remove all the checking for fetched
+  Future<bool> _fetchEssentialPostData() async {
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventHead.id);
     final media = await dbManager.fetchMedia();
     final meta = await dbManager.fetchMetadata();
     final program = await dbManager.fetchProgram();
+    final logs = await dbManager.fetchLog();
+    final body = await dbManager.fetchBody();
+
+    _eventContext = EventContext.viewing(eventHead: widget.eventHead);
     _eventContext.setFetchedMedia(media);
     _eventContext.setFetchedMetadata(meta);
     _eventContext.setFetchedProgram(program);
+    _eventContext.setFetchedLogs(logs);
+    _eventContext.setFetchedBody(body);
+    return true;
   }
 
   void _figureOutTabs() {
@@ -274,16 +289,32 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             }));
   }
 
-  Future<File?> _attemptToGetExistingPost() async {
-    final File file = File('${(await getTemporaryDirectory()).path}/posts/${widget.eventHead.id}.txt');
-
-    if (await file.exists()) {
-      return file;
+  Future<List<String>> _attemptToGetExistingPostData() async {
+    final LocalDataManager localDataManager = LocalDataManager();
+    final content = await localDataManager.readPostData(widget.eventHead.id);
+    if (content.isNotEmpty &&
+        DateTime.fromMillisecondsSinceEpoch(int.parse(content[0])).compareTo(widget.eventHead.recentDate) == 0) {
+      return content;
     }
-    return file;
+    return List.empty();
   }
 
   String get _topic => _post + _eventContext.id;
+
+  Future<void> _savePostData() async {
+    debugPrint('writing to local storage');
+    final LocalDataManager localDataManager = LocalDataManager();
+    final String content = _eventContext.transformPostToTxtFile();
+    localDataManager.setPostData(_eventContext.id, content);
+
+    final postTrack = await localDataManager.readPostTrack();
+    if (!postTrack.contains(_eventContext.id)) {
+      postTrack.add(_eventContext.id);
+      localDataManager.setPostTrack(postTrack);
+    }
+  }
+
+  bool get _canSaveEditing => _haveFetchedPost && _eventContext.canSaveTheEditing;
 }
 
 class EventLogDialog extends StatefulWidget {
