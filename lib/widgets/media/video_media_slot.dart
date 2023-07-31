@@ -81,7 +81,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
     }
 
     final String? result = await VideoThumbnail.thumbnailFile(
-        video: widget.mediaEntry['src']!, thumbnailPath: path, imageFormat: ImageFormat.WEBP);
+        video: widget.mediaEntry['src']!, thumbnailPath: path, imageFormat: ImageFormat.WEBP, quality: 5);
 
     return result;
   }

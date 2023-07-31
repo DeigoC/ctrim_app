@@ -178,4 +178,14 @@ class EventContext {
 
   bool isCurrentUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
   bool isCurrentUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+
+  // * This one is going to be big
+  // we need to run through all supplemental parts of a post (body, meta, media etc.)
+  // and save it as a txt file. This file should be able to work backwards and create the
+  // post from it to save having to read from the DB
+  String transformPostToTxtFile() {
+    return '';
+  }
+
+  void setWholePostFromTxt() {}
 }

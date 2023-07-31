@@ -3,7 +3,7 @@ import 'dart:collection';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AppDataManager {
+class AppSharedPreferences {
   static late final SharedPreferences _pref;
   static const String _isFirstOpen = 'isFirstOpen',
       _email = 'email',
@@ -12,7 +12,7 @@ class AppDataManager {
       _token = 'token',
       _bookmarkedPosts = 'bookmarked';
 
-  AppDataManager({required SharedPreferences preferences}) {
+  AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
   }
 

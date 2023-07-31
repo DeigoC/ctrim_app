@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
@@ -95,7 +97,12 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           const SizedBox(height: 16),
           const Padding(
               padding: EdgeInsets.only(left: 16.0, bottom: 16),
-              child: Text('Update Logs', style: TextStyle(fontSize: 16)))
+              child: Text('Update Logs', style: TextStyle(fontSize: 16))),
+          ListTile(
+            title: const Text('Test Data thingy'),
+            leading: const Icon(Icons.science),
+            onTap: _onDataTestTap,
+          ),
         ])),
         SliverList.builder(
             itemCount: widget.eventContext.log.logs.length,
@@ -103,9 +110,15 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               final thisEntry = widget.eventContext.log.logs[index];
               final thisU = allUsers.firstWhere((e) => e.id.compareTo(thisEntry['uid']) == 0);
               return ListTile(
-                  title: Text(thisEntry['log']),
-                  subtitle: Text(ViewMetaLogsPage._dateFormat.format(thisEntry['ts'])),
-                  leading: MyUserAvatar(thisU));
+                title: Text(
+                  thisEntry['log'],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(ViewMetaLogsPage._dateFormat.format(thisEntry['ts'])),
+                leading: MyUserAvatar(thisU),
+                onTap: () => _showFullLog(thisEntry),
+              );
             })
       ],
     );
@@ -132,6 +145,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   }
 
   // * Logic
+  void _showFullLog(final Map<String, dynamic> entry) {}
+
   void _showContributors(final List<User> selectedUsers) {
     showDialog(
         context: context,
@@ -233,6 +248,29 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
     if (haveContributorsChange) {
       widget.eventContext.allowSavingOfTheEdit();
+    }
+  }
+
+  void _onDataTestTap() {
+    final eventLog = widget.eventContext.log;
+    // final List<String> testFileData = List<String>.empty(growable: true);
+    String result = '----LOGS_START----';
+    for (final entry in eventLog.logs) {
+      final String log = (entry['log'] as String).replaceAll('\n', r'\n');
+      final DateTime ts = entry['ts'];
+      final String uid = entry['uid'];
+      result += '\n$log';
+      result += '\n${ts.millisecondsSinceEpoch}';
+      result += '\n$uid';
+    }
+    result += '\n----LOGS_END----';
+    debugPrint(result);
+    debugPrint('------That is the end of the raw string to be saved, now comes the linesplitter:\n');
+
+    LineSplitter ls = const LineSplitter();
+    final lines = ls.convert(result);
+    for (final line in lines) {
+      debugPrint(line.replaceAll(r'\n', '\n'));
     }
   }
 }

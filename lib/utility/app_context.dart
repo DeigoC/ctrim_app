@@ -4,7 +4,7 @@ import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/models/user_contact.dart';
-import 'package:ctrim_app/utility/app_data_manager.dart';
+import 'package:ctrim_app/utility/app_shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +20,7 @@ class AppContext extends ChangeNotifier {
   // so this file below here might be unecessary for now
   static final Map<String, EventMetadata> _metaData = {};
   static final List<UserContact> _allContacts = List<UserContact>.empty(growable: true);
-  static late final AppDataManager _dataManager;
+  static late final AppSharedPreferences _dataManager;
 
   late User _currentUser;
 
@@ -33,7 +33,7 @@ class AppContext extends ChangeNotifier {
     _eventHeads = heads;
     _allUsers = allUsers;
     _currentUser = user;
-    _dataManager = AppDataManager(preferences: prefInstance);
+    _dataManager = AppSharedPreferences(preferences: prefInstance);
   }
 
   // * meta related
@@ -62,7 +62,7 @@ class AppContext extends ChangeNotifier {
   List<UserContact> get userContacts => UnmodifiableListView(_allContacts);
 
   // * data related
-  AppDataManager get dataManager => _dataManager;
+  AppSharedPreferences get dataManager => _dataManager;
 
   // * other related
   void rebuildPlease() => notifyListeners();

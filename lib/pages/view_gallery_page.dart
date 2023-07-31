@@ -71,8 +71,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
                 Flexible(child: _buildMedia(thisEntry)),
                 ListTile(
                     title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
-                    leading:
-                        thisEntry['title']!.isNotEmpty ? const Icon(Icons.photo_library, color: Colors.white) : null)
+                    leading: const Icon(Icons.photo_library, color: Colors.white))
               ]),
               onDismissed: (_) {
                 Navigator.of(context).pop();
