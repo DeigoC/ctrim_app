@@ -92,7 +92,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
       return MyPhotoViewer(
         src: thisMediaSrc,
         heroPrefix: widget.postId,
-      ); // TODO does this work with gifs?
+      );
     }
 
     return const Center(

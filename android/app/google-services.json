@@ -29,6 +29,13 @@
             {
               "client_id": "92089281469-5gevuko4790dvij8lvm3h7vsu6g5jfsc.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "92089281469-28s4nr0vm08oe0isc78ajn43ljg2g89r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ctrim.ctrimApp"
+              }
             }
           ]
         }
