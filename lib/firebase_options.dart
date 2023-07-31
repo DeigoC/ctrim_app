@@ -25,7 +25,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -63,21 +66,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAsy5v3NS7xafvjk-v25QtKHheHlMCQVis',
-    appId: '1:92089281469:ios:779df7691ccb0f267680d4',
+    appId: '1:92089281469:ios:45c653aae9e0ec697680d4',
     messagingSenderId: '92089281469',
     projectId: 'ctrim-8b49b',
     storageBucket: 'ctrim-8b49b.appspot.com',
-    iosClientId: '92089281469-28s4nr0vm08oe0isc78ajn43ljg2g89r.apps.googleusercontent.com',
-    iosBundleId: 'com.ctrim.ctrimApp',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAsy5v3NS7xafvjk-v25QtKHheHlMCQVis',
-    appId: '1:92089281469:ios:14cd537deb7234b07680d4',
-    messagingSenderId: '92089281469',
-    projectId: 'ctrim-8b49b',
-    storageBucket: 'ctrim-8b49b.appspot.com',
-    iosClientId: '92089281469-incdaec8pmdcvarcjdai0ev5jjabo8l9.apps.googleusercontent.com',
-    iosBundleId: 'com.ctrim.ctrimApp.RunnerTests',
+    iosClientId: '92089281469-i1faceuc2ein3c0kbmoel8cfd8d1plpr.apps.googleusercontent.com',
+    iosBundleId: 'com.ctrim.app',
   );
 }
