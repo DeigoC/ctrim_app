@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
@@ -99,9 +101,31 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               padding: EdgeInsets.only(left: 16.0, bottom: 16),
               child: Text('Update Logs', style: TextStyle(fontSize: 16))),
           ListTile(
-            title: const Text('Test Data thingy'),
+            title: const Text('Test Part of the Post'),
             leading: const Icon(Icons.science),
-            onTap: _onDataTestTap,
+            onTap: () async {
+              // _onTestBody();
+              // _onTestProgramDetails();
+              // _onTestProgramRoles();
+              // _onTestMedia();
+              // _onTestLogs();
+              // _onTestMetaData();
+              // final String result = widget.eventContext.transformPostToTxtFile();
+              // debugPrint(result);
+
+              // final File tempF = File('${(await getTemporaryDirectory()).path}/postTest.txt');
+              // await tempF.writeAsString(result);
+
+              // const LineSplitter ls = LineSplitter();
+              // final content = await tempF.readAsString();
+              // final dataTest = ls.convert(content);
+              // EventContext.viewing(eventHead: widget.eventContext.head, data: dataTest);
+
+              // debugPrint('Finished!');
+              // ! Time for a critical test:
+              // save the result to file and then try to create a new event context with the data and see if it
+              // just initialises as normal!
+            },
           ),
         ])),
         SliverList.builder(
@@ -251,7 +275,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     }
   }
 
-  void _onDataTestTap() {
+  void _onTestLogs() {
     final eventLog = widget.eventContext.log;
     // final List<String> testFileData = List<String>.empty(growable: true);
     String result = '----LOGS_START----';
@@ -272,5 +296,65 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     for (final line in lines) {
       debugPrint(line.replaceAll(r'\n', '\n'));
     }
+  }
+
+  void _onTestBody() {
+    String result = '----BODY_START----';
+    result += '\n${widget.eventContext.encodedBody}';
+    result += '\n----BODY_END----';
+    debugPrint(result);
+  }
+
+  void _onTestProgramDetails() {
+    final program = widget.eventContext.program;
+    String result = '----PROGRAM_DETAILS_START----';
+    result += '\n${program.allDay ? '1' : '0'}';
+    result += '\n${program.finishTime != null ? program.finishTime!.millisecondsSinceEpoch.toString() : 'null'}';
+    result += '\n----PROGRAM_DETAILS_END----';
+    debugPrint(result);
+  }
+
+  void _onTestProgramRoles() {
+    final program = widget.eventContext.program;
+    String result = '----PROGRAM_ROLES_START----';
+    final roles = program.roles;
+    for (final role in roles) {
+      result += '\n${role['uids']}';
+      result += '\n${role['title'] as String}';
+      result += '\n${(role['detail'] as String).replaceAll('\n', r'\n')}';
+      result += '\n${role['start'] != null ? (role['start'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
+      result += '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
+      result += '\n${role['for_guests'] == true ? '1' : '0'}';
+      result += '\n${role['priority'] as int}';
+    }
+    result += '\n----PROGRAM_ROLES_END----';
+    debugPrint(result);
+  }
+
+  void _onTestMedia() {
+    final media = widget.eventContext.media;
+    String result = '----MEDIA_START----';
+    final items = media.allMedia;
+    for (final item in items) {
+      result += '\n${item['type']}';
+      result += '\n${item['src']}';
+      result += '\n${item['title']}';
+    }
+    result += '\n----MEDIA_END----';
+    debugPrint(result);
+  }
+
+  void _onTestMetaData() {
+    final meta = widget.eventContext.metadata;
+    String result = '----META_START----';
+
+    result += '\n${meta.authorUID}';
+    result += '\n${meta.lastUID}';
+    result += '\n${meta.contributorUIDs}';
+    result += '\n${meta.parentID ?? ''}';
+    result += '\n${meta.children}';
+
+    result += '\n----META_END----';
+    debugPrint(result);
   }
 }

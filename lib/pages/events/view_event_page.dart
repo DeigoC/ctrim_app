@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
 import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:ctrim_app/models/user_contact.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
@@ -45,13 +48,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   void initState() {
     // TODO for the future: make user unsubscibe to post if they are a contributor
 
+    _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
+
+    // may have to change the context here
     _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
-
-    _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
-
     super.initState();
   }
 
@@ -76,10 +79,30 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   return confirmation;
                 })
             : () async => true,
-        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildFB()));
+        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildFetchPostBody()));
   }
 
-  Widget _buildFB() {
+  Widget _buildCheckExistingPostBody() {
+    return FutureBuilder(
+        future: _attemptToGetExistingPost(),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator());
+          if (snap.hasData) {
+            // build with data
+            // set the post context here
+            result = _buildBodyWithData();
+          } else if (!snap.hasData) {
+            // fetch the post
+            result = _buildFetchPostBody();
+          } else if (snap.hasError) {
+            result = const Center(child: Text('Something went wrong!'));
+          }
+
+          return result;
+        });
+  }
+
+  Widget _buildFetchPostBody() {
     return FutureBuilder(
         future: _fetchEssentialPostData(),
         builder: (_, snap) {
@@ -249,6 +272,15 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             updatePage: () {
               setState(() {});
             }));
+  }
+
+  Future<File?> _attemptToGetExistingPost() async {
+    final File file = File('${(await getTemporaryDirectory()).path}/posts/${widget.eventHead.id}.txt');
+
+    if (await file.exists()) {
+      return file;
+    }
+    return file;
   }
 
   String get _topic => _post + _eventContext.id;

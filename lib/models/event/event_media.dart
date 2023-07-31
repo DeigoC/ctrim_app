@@ -5,7 +5,6 @@ class EventMedia {
   // type - string id of the user performing the update (img or vid)
   // src - the short string explaining the change
   // title - short string to give it some description (optional)
-  // aspectRatio
   late final List<Map<String, String>> _media;
 
   EventMedia() {

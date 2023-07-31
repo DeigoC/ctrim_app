@@ -16,6 +16,7 @@ class EventContext {
   late final EventMedia _media;
   final EventBody _body = EventBody();
 
+  // there will be no need for these
   bool _fetchedBody = false,
       _fetchedProgram = false,
       _fetchedMedia = false,
@@ -25,10 +26,14 @@ class EventContext {
       _fetchedMeta = false;
 
   // for viewing and editing
-  EventContext.viewing({required EventHead eventHead, bool? viewingChild}) {
+  EventContext.viewing({required EventHead eventHead, bool? viewingChild, List<String>? data}) {
     _head = eventHead;
     _canSaveTheEditing = false;
     _viewingChild = viewingChild ?? _viewingChild;
+
+    if (data != null) {
+      _setWholePostFromTxt(data);
+    }
   }
 
   EventContext.adding({required String uid, String? parentID}) {
@@ -47,6 +52,7 @@ class EventContext {
   // ! be weary because trim() could not be applied
   bool get isBodyUntouched => _body.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
   List<dynamic> get body => _body.decodedJson;
+  String get encodedBody => _body.json;
 
   void setBodyJson(List<dynamic> json) {
     _body.encodeJson(json);
@@ -183,9 +189,210 @@ class EventContext {
   // we need to run through all supplemental parts of a post (body, meta, media etc.)
   // and save it as a txt file. This file should be able to work backwards and create the
   // post from it to save having to read from the DB
+  // ! The following is assumed when all of the post is fetched (including logs)
+  // ? i just realised i can put a lot of this logic into each of the part's dedicated class,
+  // I'll do that later...
   String transformPostToTxtFile() {
-    return '';
+    // * Head - RecentDate
+    String result = _head.recentDate.millisecondsSinceEpoch.toString();
+
+    // * Body - whole json as 1 line?
+    result += '\n----BODY_START----';
+    result += '\n${_body.json}';
+    result += '\n----BODY_END----';
+
+    // * Program - Details
+    result += '\n----PROGRAM_DETAILS_START----';
+    result += '\n${_program.allDay ? '1' : '0'}';
+    result += '\n${_program.finishTime != null ? _program.finishTime!.millisecondsSinceEpoch.toString() : 'null'}';
+    result += '\n----PROGRAM_DETAILS_END----';
+
+    // * Program - Roles
+    result += '\n----PROGRAM_ROLES_START----';
+    final roles = _program.roles;
+    for (final role in roles) {
+      result += '\n${role['uids']}';
+      result += '\n${role['title'] as String}';
+      result += '\n${(role['detail'] as String).replaceAll('\n', r'\n')}';
+      result += '\n${role['start'] != null ? (role['start'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
+      result += '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
+      result += '\n${role['for_guests'] == true ? '1' : '0'}';
+      result += '\n${role['priority'] as int}';
+    }
+    result += '\n----PROGRAM_ROLES_END----';
+
+    // * Media
+    result += '\n----MEDIA_START----';
+    final items = media.allMedia;
+    for (final item in items) {
+      result += '\n${item['type']}';
+      result += '\n${item['src']}';
+      result += '\n${item['title']}';
+    }
+    result += '\n----MEDIA_END----';
+
+    // * Logs
+    result += '\n----LOGS_START----';
+    for (final entry in _log.logs) {
+      final String log = (entry['log'] as String).replaceAll('\n', r'\n');
+      final DateTime ts = entry['ts'];
+      final String uid = entry['uid'];
+      result += '\n$log';
+      result += '\n${ts.millisecondsSinceEpoch}';
+      result += '\n$uid';
+    }
+    result += '\n----LOGS_END----';
+
+    // * Metadata
+    result += '\n----META_START----';
+    result += '\n${_metadata.authorUID}';
+    result += '\n${_metadata.lastUID}';
+    result += '\n${_metadata.contributorUIDs}';
+    result += '\n${_metadata.parentID ?? 'null'}';
+    result += '\n${_metadata.children}';
+    result += '\n----META_END----';
+
+    return result;
   }
 
-  void setWholePostFromTxt() {}
+  // the file has been parsed by a linesplitter
+  // refer to the transform method for parsing to a full post
+  void _setWholePostFromTxt(List<String> lines) {
+    // * Body - whole json as 1 line?
+    final int bodyStartIndex = lines.indexWhere((element) => element.contains('----BODY_START----'));
+    _body.setJson(lines[bodyStartIndex + 1]);
+
+    // * Program - Details
+    final int programDetailStartIndex =
+        lines.indexWhere((element) => element.contains('----PROGRAM_DETAILS_START----'));
+    final int allDayIndex = programDetailStartIndex + 1;
+    final int finishTimeIndex = programDetailStartIndex + 2;
+
+    _program = EventProgram();
+    _program.setAllDay(lines[allDayIndex].compareTo('1') == 0);
+    _program.setFinishTime(lines[finishTimeIndex].compareTo('null') == 0
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(int.parse(lines[finishTimeIndex])));
+
+    // * Program - Roles
+    final int programRoleStartIndex = lines.indexWhere((element) => element.contains('----PROGRAM_ROLES_START----'));
+    final int programRoleEndIndex = lines.indexWhere((element) => element.contains('----PROGRAM_ROLES_END----'));
+    if (programRoleEndIndex != programRoleStartIndex + 1) {
+      // sublist and create the roles from it
+      _initialiseProgramRoles(lines.sublist(programRoleStartIndex + 1, programRoleEndIndex));
+    }
+
+    // * Media
+    final int mediaStartIndex = lines.indexWhere((element) => element.contains('----MEDIA_START----'));
+    final int mediaEndIndex = lines.indexWhere((element) => element.contains('----MEDIA_END----'));
+    _media = EventMedia();
+    if (mediaEndIndex != mediaStartIndex + 1) {
+      // build roles from sublist
+      _initialiseMedia(lines.sublist(mediaStartIndex + 1, mediaEndIndex));
+    }
+
+    // * Logs
+    final int logsStartIndex = lines.indexWhere((element) => element.contains('----LOGS_START----'));
+    final int logsEndIndex = lines.indexWhere((element) => element.contains('----LOGS_END----'));
+    // build logs from sublist
+    _initialiseLogs(lines.sublist(logsStartIndex + 1, logsEndIndex));
+
+    // * Metadata
+    final int metadataStartIndex = lines.indexWhere((element) => element.contains('----META_START----'));
+    _metadata = EventMetadata(
+        authorUID: lines[metadataStartIndex + 1],
+        parentID: lines[metadataStartIndex + 4] == 'null' ? null : lines[metadataStartIndex + 4]);
+
+    _metadata.setLastUID(lines[metadataStartIndex + 2]);
+
+    final List<String> contributors = lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '').split(',');
+    for (final contributor in contributors) {
+      _metadata.addContributorUID(contributor);
+    }
+
+    final List<String> childrenIDs = lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '').split(',');
+    for (final child in childrenIDs) {
+      _metadata.addChildID(child);
+    }
+
+    _fetchedBody = true;
+    _fetchedProgram = true;
+    _fetchedMedia = true;
+    _fetchedLogs = true;
+    _fetchedMeta = true;
+  }
+
+  void _initialiseProgramRoles(final List<String> data) {
+    // groups of 7 elements
+    const int chunkSize = 7;
+    final int numberOfChunks = data.length ~/ chunkSize;
+
+    final List<List<String>> roles = List<List<String>>.generate(numberOfChunks, (index) {
+      int startIndex = index * chunkSize;
+      int endIndex = (index + 1) * chunkSize;
+      return data.sublist(startIndex, endIndex);
+    });
+
+    for (final roleDataSet in roles) {
+      final List<String> uids = roleDataSet[0].replaceAll('[', '').replaceAll(']', '').split(',');
+
+      _program.addRole({
+        'uids': uids,
+        'title': roleDataSet[1],
+        'detail': roleDataSet[2].replaceAll(r'\n', '\n'),
+        'start': roleDataSet[3].compareTo('null') != 0
+            ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[3]))
+            : null,
+        'end': roleDataSet[4].compareTo('null') != 0
+            ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[4]))
+            : null,
+        'for_guests': roleDataSet[5] == '1' ? true : false,
+        'priority': int.parse(roleDataSet[6])
+      });
+    }
+  }
+
+  void _initialiseMedia(final List<String> data) {
+    // groups of 3
+    const int chunkSize = 3;
+    final int numberOfChunks = data.length ~/ chunkSize;
+
+    final List<List<String>> media = List<List<String>>.generate(numberOfChunks, (index) {
+      int startIndex = index * chunkSize;
+      int endIndex = (index + 1) * chunkSize;
+      return data.sublist(startIndex, endIndex);
+    });
+
+    for (final mediaItem in media) {
+      _media.addMediaFile({'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
+    }
+  }
+
+  void _initialiseLogs(final List<String> data) {
+    // groups of 3
+    const int chunkSize = 3;
+    final int numberOfChunks = data.length ~/ chunkSize;
+
+    final List<List<String>> logs = List<List<String>>.generate(numberOfChunks, (index) {
+      int startIndex = index * chunkSize;
+      int endIndex = (index + 1) * chunkSize;
+      return data.sublist(startIndex, endIndex);
+    });
+
+    final firstLog = logs.removeAt(0);
+
+    _log = EventLog({
+      'log': firstLog[0].replaceAll(r'\n', '\n'),
+      'ts': DateTime.fromMillisecondsSinceEpoch(int.parse(firstLog[1])),
+      'uid': firstLog[2]
+    });
+
+    for (final logItem in logs) {
+      _log.addLog({
+        'log': logItem[0].replaceAll(r'\n', '\n'),
+        'ts': DateTime.fromMillisecondsSinceEpoch(int.parse(logItem[1])),
+        'uid': logItem[2]
+      });
+    }
+  }
 }
