@@ -91,7 +91,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             final List<String> data = snap.data!;
 
             if (data.isNotEmpty) {
-              debugPrint('Using existing post data');
+              debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
               _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data);
               _haveFetchedPost = true;
 
@@ -99,7 +99,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
               Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
               result = _buildBodyWithData();
             } else {
-              debugPrint('Fetching post from DB');
+              debugPrint('Fetching from DB for post ID: ${widget.eventHead.id}');
               result = _buildFetchPostBody();
             }
           } else if (snap.hasError) {
@@ -289,28 +289,37 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             }));
   }
 
+  String get _topic => _post + _eventContext.id;
+
   Future<List<String>> _attemptToGetExistingPostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
     final content = await localDataManager.readPostData(widget.eventHead.id);
-    if (content.isNotEmpty &&
-        DateTime.fromMillisecondsSinceEpoch(int.parse(content[0])).compareTo(widget.eventHead.recentDate) == 0) {
+
+    // debugPrint('Is local post data not empty: ${content.isNotEmpty}');
+    final bool canUseLocalContent =
+        content.isNotEmpty && int.parse(content[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch;
+    // debugPrint('is the same recent date: $hasSameRecentDate');
+
+    // final DateTime recentDateOfLocalData = DateTime.fromMillisecondsSinceEpoch(int.parse(content[0]));
+    // debugPrint('Recent date of local data: $recentDateOfLocalData');
+    // debugPrint('Recent date of head: ${widget.eventHead.recentDate}');
+
+    if (canUseLocalContent) {
       return content;
     }
     return List.empty();
   }
 
-  String get _topic => _post + _eventContext.id;
-
   Future<void> _savePostData() async {
-    debugPrint('writing to local storage');
     final LocalDataManager localDataManager = LocalDataManager();
     final String content = _eventContext.transformPostToTxtFile();
-    localDataManager.setPostData(_eventContext.id, content);
+    debugPrint('writing to local storage for post ID: ${_eventContext.id}');
+    localDataManager.writePostData(_eventContext.id, content);
 
     final postTrack = await localDataManager.readPostTrack();
     if (!postTrack.contains(_eventContext.id)) {
       postTrack.add(_eventContext.id);
-      localDataManager.setPostTrack(postTrack);
+      localDataManager.writePostTrack(postTrack);
     }
   }
 
