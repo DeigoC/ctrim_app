@@ -71,6 +71,7 @@ class LocalDataManager {
 
   // * Post Data
   Future<void> writePostData(final String id, final String postData) async {
+    debugPrint('writing post data for ID: $id');
     final file = await _getPostFile(id);
     if (!await file.exists()) {
       file.create(recursive: true).then((createdFile) async => await createdFile.writeAsString(postData));

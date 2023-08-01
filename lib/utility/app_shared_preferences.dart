@@ -31,7 +31,7 @@ class AppSharedPreferences {
   bool get isFirstOpen => _pref.getBool(_isFirstOpen) ?? true;
   void nowOpened() => _pref.setBool(_isFirstOpen, false);
 
-  String get token => _pref.getString(_token)!;
+  String get token => _pref.getString(_token) ?? '';
   void saveToken(String thisToken) => _pref.setString(_token, thisToken);
 
   // * Post related

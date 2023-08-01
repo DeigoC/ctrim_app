@@ -15,6 +15,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final UserContactDBManager _userContactDBManager = UserContactDBManager();
   final TextEditingController _tecEmail = TextEditingController(), _tecPassword = TextEditingController();
   final FocusNode _fnPassword = FocusNode();
 
@@ -56,8 +57,16 @@ class _LoginPageState extends State<LoginPage> {
     _showLoadingDialog();
     _attemptToLogin().then((id) {
       if (id != null) {
-        Provider.of<AppContext>(context, listen: false).setCurrentUser(id);
-        _saveCredsAndToken();
+        final appContext = Provider.of<AppContext>(context, listen: false);
+        final String token = appContext.dataManager.token;
+
+        // ? i think it's much safer to just grab the token from the offical API instead of using
+        // a potentially outdated one?
+        debugPrint('setting contact token as $token');
+        _userContactDBManager.addTokenToUser(id, token);
+        appContext.setCurrentUser(id);
+        appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
+
         Navigator.of(context).pop();
         Navigator.of(context).pop();
       }
@@ -66,10 +75,9 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<String?> _attemptToLogin() async {
     try {
-      final UserContactDBManager userContactDBManager = UserContactDBManager();
       final AuthManager authManager = AuthManager();
       final String authID = await authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
-      final UserContact userContact = await userContactDBManager.fetchUserContactByAuthID(authID);
+      final UserContact userContact = await _userContactDBManager.fetchUserContactByAuthID(authID);
       return userContact.id;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'invalid-email') {
@@ -85,11 +93,6 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
     return null;
-  }
-
-  void _saveCredsAndToken() {
-    Provider.of<AppContext>(context, listen: false).dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
-    // TODO the token should in theory already exist here, all we need to do is fetch it from storage and push it up
   }
 
   void _showErrorMessage(String message) {

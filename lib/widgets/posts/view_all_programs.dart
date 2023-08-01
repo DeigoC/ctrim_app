@@ -134,9 +134,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     }
 
     if (assignedUsers.isNotEmpty) {
-      children.addAll([
-        const Divider(),
-      ]);
+      children.addAll([const Divider()]);
 
       for (final user in assignedUsers) {
         children.add(ListTile(title: Text(user.fullname), leading: MyUserAvatar(user)));

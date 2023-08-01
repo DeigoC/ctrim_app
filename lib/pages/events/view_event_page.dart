@@ -51,8 +51,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
 
-    // may have to change the context here
-    // _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
     super.initState();
   }
 
@@ -313,7 +311,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   Future<void> _savePostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
     final String content = _eventContext.transformPostToTxtFile();
-    debugPrint('writing to local storage for post ID: ${_eventContext.id}');
     localDataManager.writePostData(_eventContext.id, content);
 
     final postTrack = await localDataManager.readPostTrack();
@@ -420,11 +417,18 @@ class _EventLogDialogState extends State<EventLogDialog> {
   }
 
   Future<void> _performUpdate(String uid) async {
+    final LocalDataManager localDataManager = LocalDataManager();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
-    await _sendNotification();
+
+    final content = widget.eventContext.transformPostToTxtFile();
+    localDataManager.writePostData(widget.eventContext.id, content);
+
+    await _sendPostNotification();
+    // TODO sendProgramRoleNotifications
+    // TODO sendContributorEditNotifications
   }
 
-  Future<void> _sendNotification() async {
+  Future<void> _sendPostNotification() async {
     // message to topic
     // message to author + contributors
     // hmm basically both will use the same title-subtitle but we should mention who updated it
@@ -464,6 +468,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     }
 
     // fetch and add any missing contacts we need for this operation
+    debugPrint('missing contacts are: $missingContacts');
     if (missingContacts.isNotEmpty) {
       final List<UserContact> contacts = await _fetchMissingContacts(missingContacts);
       appContext.addAllUserContacts(contacts);

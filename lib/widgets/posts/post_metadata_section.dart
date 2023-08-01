@@ -24,6 +24,7 @@ class PostMetadataSection extends StatelessWidget {
 
   // * Logic
   void _onMetaTap(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: eventContext)));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: eventContext)))
+        .then((_) => update());
   }
 }

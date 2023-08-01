@@ -27,7 +27,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   @override
   void initState() {
-    _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs);
+    _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
     widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
@@ -45,7 +45,6 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   // this will show both metadata and logs
   Widget _buildWithData(BuildContext context) {
-    // TODO remember the optimisation of fetching (and storing) the key users on demand!
     final List<User> allUsers = _appContext.allUsers;
     final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
     final List<User> selectedUsers =

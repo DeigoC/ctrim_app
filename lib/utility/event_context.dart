@@ -16,8 +16,10 @@ class EventContext {
   late final EventMedia _media;
   final EventBody _body = EventBody();
 
-  // there will be no need for these
   bool _canSaveTheEditing = false, _viewingChild = false;
+
+  final List<Map<String, String>> _roleAdditionNotifications = List<Map<String, String>>.empty(growable: true),
+      _roleRemovalNotifications = List<Map<String, String>>.empty(growable: true);
 
   // for viewing and editing
   EventContext.viewing({required EventHead eventHead, bool? viewingChild, List<String>? data}) {
@@ -75,13 +77,16 @@ class EventContext {
     required String uid,
     DateTime? eventDate,
   }) async {
-    final String id = await _getNewID();
+    final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
+    final String id = await idTrackerDBManager.getAndIncrementEventID();
+
     final EventSupplementalDBManager dbManager = EventSupplementalDBManager(id);
     final EventHeadDBManager headDBManager = EventHeadDBManager();
     final DateTime now = DateTime.now();
 
     // head stuff
-    _head = EventHead(id: id); // TODO add the key media!
+    // TODO add the key media!
+    _head = EventHead(id: id);
     _head.setTitle(title);
     _head.setSubtitle(subtitle);
     _head.setRecentDate(now);
@@ -119,20 +124,14 @@ class EventContext {
     dbManager.updateMedia(_media);
   }
 
-  Future<String> _getNewID() async {
-    final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
-    return await idTrackerDBManager.getAndIncrementEventID();
-  }
-
   String get id => _head.id;
-
-  bool isUserAdminOfPost(String currentUID) {
-    return _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
-  }
+  bool isUserAdminOfPost(String currentUID) =>
+      _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
+  // This one is to be used after update is complete
+  void resetSavingOfTheEdit() => _canSaveTheEditing = false;
   bool get canSaveTheEditing => _canSaveTheEditing;
-  void resetSavingOfTheEdit() => _canSaveTheEditing = false; // This one is to be used after update is complete
 
   bool get isViewingChild => _viewingChild;
   void enableViewingChild() => _viewingChild = true;
@@ -146,8 +145,7 @@ class EventContext {
   // and save it as a txt file. This file should be able to work backwards and create the
   // post from it to save having to read from the DB
   // ! The following is assumed when all of the post is fetched (including logs)
-  // ? i just realised i can put a lot of this logic into each of the part's dedicated class,
-  // I'll do that later...
+  // TODO: just realised i can put a lot of this logic into each of the part's dedicated class
   String transformPostToTxtFile() {
     // * Head - RecentDate
     String result = _head.recentDate.millisecondsSinceEpoch.toString();
@@ -211,7 +209,6 @@ class EventContext {
     return result;
   }
 
-  // the file has been parsed by a linesplitter
   // refer to the transform method for parsing to a full post
   void _setWholePostFromTxt(List<String> lines) {
     // * Body - whole json as 1 line?
@@ -261,11 +258,12 @@ class EventContext {
 
     _metadata.setLastUID(lines[metadataStartIndex + 2]);
 
-    final String contributorLine = lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '');
+    final String contributorLine =
+        lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
     final List<String> contributors = List.empty(growable: true);
     if (contributorLine.isNotEmpty && !contributorLine.contains(',')) {
       contributors.add(contributorLine);
-    } else {
+    } else if (contributorLine.isNotEmpty) {
       contributors.addAll(contributorLine.split(','));
     }
 
@@ -273,11 +271,12 @@ class EventContext {
       _metadata.addContributorUID(contributor);
     }
 
-    final String childrenLine = lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '');
+    final String childrenLine =
+        lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
     final List<String> childrenIDs = List.empty(growable: true);
     if (childrenLine.isNotEmpty && !childrenLine.contains(',')) {
       childrenIDs.add(childrenLine);
-    } else {
+    } else if (childrenLine.isNotEmpty) {
       childrenIDs.addAll(childrenLine.split(','));
     }
 
@@ -298,11 +297,11 @@ class EventContext {
     });
 
     for (final roleDataSet in roles) {
-      final String uidLine = roleDataSet[0].replaceAll('[', '').replaceAll(']', '');
+      final String uidLine = roleDataSet[0].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
       final List<String> uids = List<String>.empty(growable: true);
       if (uidLine.isNotEmpty && !uidLine.contains(',')) {
         uids.add(uidLine);
-      } else {
+      } else if (uidLine.isNotEmpty) {
         uids.addAll(uidLine.split(','));
       }
 
@@ -365,4 +364,11 @@ class EventContext {
       });
     }
   }
+
+  List<Map<String, String>> get roleAdditionNotifications => UnmodifiableListView(_roleAdditionNotifications);
+  List<Map<String, String>> get roleRemovalNotifications => UnmodifiableListView(_roleRemovalNotifications);
+
+  // two fields: 'uid' and 'roleTitle'
+  void addRoleAdditionNotification(Map<String, String> entry) => _roleAdditionNotifications.add(entry);
+  void addRoleRemovalNotification(Map<String, String> entry) => _roleRemovalNotifications.add(entry);
 }

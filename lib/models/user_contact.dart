@@ -27,8 +27,8 @@ class UserContact {
     };
   }
 
-  addToken(String newToken) => _deviceTokens.add(newToken);
-  removeToken(String token) => _deviceTokens.remove(token);
+  void addToken(String newToken) => _deviceTokens.add(newToken);
+  void removeToken(String token) => _deviceTokens.remove(token);
 
   String get authID => _authID;
   String get id => _id;
