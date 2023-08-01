@@ -1,15 +1,14 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/pages/events/edit_event_date_location_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/widgets/posts/program_tile.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/user.dart';
 import '../../pages/events/add_program_page.dart';
+import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_page.dart';
+import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
+import '../user_avatar.dart';
+import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
   const ViewAllPrograms({super.key, required this.eventContext, required this.onProgramChanged});
@@ -34,36 +33,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.eventContext.haveFetchedProgram) {
-      widget.eventContext.program.orderProgramsByStartDate();
-      return _buildBodyWithData();
-    }
-    return _buildFB();
-  }
-
-  Widget _buildFB() {
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.head.id);
-    return FutureBuilder(
-        future: dbManager.fetchProgram(),
-        builder: (_, snap) {
-          Widget result = const Center(
-            child: CircularProgressIndicator(),
-          );
-          if (snap.hasData) {
-            widget.eventContext.setFetchedProgram(snap.data!);
-            widget.eventContext.program.orderProgramsByStartDate();
-            result = _buildBodyWithData();
-          } else if (snap.hasError) {
-            // when there's no program, it goes here
-            result = const Center(
-              child: Text('No program fetched'),
-            );
-          }
-          return result;
-        });
-  }
-
-  Widget _buildBodyWithData() {
+    widget.eventContext.program.orderProgramsByStartDate();
     if (widget.eventContext.head.eventDate != null) {
       return _buildBodyWithEventDate();
     }

@@ -420,11 +420,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
   }
 
   Future<void> _performUpdate(String uid) async {
-    if (!widget.eventContext.fetchedLogs) {
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.id);
-      widget.eventContext.setFetchedLogs(await dbManager.fetchLog());
-    }
-
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
     await _sendNotification();
   }

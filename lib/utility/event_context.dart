@@ -17,13 +17,7 @@ class EventContext {
   final EventBody _body = EventBody();
 
   // there will be no need for these
-  bool _fetchedBody = false,
-      _fetchedProgram = false,
-      _fetchedMedia = false,
-      _canSaveTheEditing = false,
-      _viewingChild = false,
-      _fetchedLogs = false,
-      _fetchedMeta = false;
+  bool _canSaveTheEditing = false, _viewingChild = false;
 
   // for viewing and editing
   EventContext.viewing({required EventHead eventHead, bool? viewingChild, List<String>? data}) {
@@ -37,7 +31,6 @@ class EventContext {
   }
 
   EventContext.adding({required String uid, String? parentID}) {
-    _fetchedBody = true;
     _metadata = EventMetadata(authorUID: uid, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
@@ -47,67 +40,32 @@ class EventContext {
   EventHead get head => _head;
 
   // * Body Related
-  bool get haveFetchedBody => _fetchedBody;
-
-  // ! be weary because trim() could not be applied
   bool get isBodyUntouched => _body.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
   List<dynamic> get body => _body.decodedJson;
   String get encodedBody => _body.json;
-
-  void setBodyJson(List<dynamic> json) {
-    _body.encodeJson(json);
-  }
-
-  void setFetchedBody(String encodedBody) {
-    _body.setJson(encodedBody);
-    _fetchedBody = true;
-  }
-
   bool isSameJson(List<dynamic> json) => _body.compareTo(json) == 0;
 
-  // * Program Related (and the Event Date)
+  void setBodyJson(List<dynamic> json) => _body.encodeJson(json);
+  void setFetchedBody(String encodedBody) => _body.setJson(encodedBody);
 
+  // * Program Related (and the Event Date)
   EventProgram get program => _program;
-  bool get haveFetchedProgram => _fetchedProgram;
   List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 
-  void setFetchedProgram(EventProgram program) {
-    _fetchedProgram = true;
-    _program = program;
-  }
-
+  void setFetchedProgram(EventProgram program) => _program = program;
   void addProgram(Map<String, dynamic> programEntry) => _program.addRole(programEntry);
 
   // * Supplemental - Metadata Related
-
   EventMetadata get metadata => _metadata;
-
-  void setFetchedMetadata(EventMetadata data) {
-    if (!_fetchedMeta) {
-      _metadata = data;
-      _fetchedMeta = true;
-    }
-  }
-
-  bool get fetchedMetadata => _fetchedMeta;
+  void setFetchedMetadata(EventMetadata data) => _metadata = data;
 
   // * Supplemental - Media Related
-
   EventMedia get media => _media;
-  bool get fethcedMedia => _fetchedMedia;
-  void setFetchedMedia(EventMedia media) {
-    _media = media;
-    _fetchedMedia = true;
-  }
+  void setFetchedMedia(EventMedia media) => _media = media;
 
   // * Logs Related
   EventLog get log => _log;
-  bool get fetchedLogs => _fetchedLogs;
-
-  void setFetchedLogs(EventLog log) {
-    _log = log;
-    _fetchedLogs = true;
-  }
+  void setFetchedLogs(EventLog log) => _log = log;
 
   // * General logic
 
@@ -158,9 +116,7 @@ class EventContext {
     dbManager.updateMetadata(_metadata);
     dbManager.updateProgram(_program);
     dbManager.updateLog(_log);
-    if (_fetchedMedia) {
-      dbManager.updateMedia(_media);
-    }
+    dbManager.updateMedia(_media);
   }
 
   Future<String> _getNewID() async {
@@ -328,12 +284,6 @@ class EventContext {
     for (final child in childrenIDs) {
       _metadata.addChildID(child);
     }
-
-    _fetchedBody = true;
-    _fetchedProgram = true;
-    _fetchedMedia = true;
-    _fetchedLogs = true;
-    _fetchedMeta = true;
   }
 
   void _initialiseProgramRoles(final List<String> data) {

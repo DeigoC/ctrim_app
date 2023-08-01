@@ -1,7 +1,8 @@
-import 'package:ctrim_app/pages/information/belfast_church_page.dart';
-import 'package:ctrim_app/pages/information/north_coast_church_page.dart';
-import 'package:ctrim_app/pages/information/portadown_church_page.dart';
 import 'package:flutter/material.dart';
+
+import 'information/belfast_church_page.dart';
+import 'information/north_coast_church_page.dart';
+import 'information/portadown_church_page.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({super.key, required this.tabController});
@@ -203,7 +204,7 @@ class _InformationHomeState extends State<InformationHome> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {},
+                      onTap: () => _onTeachingTap(teaching),
                     ),
                   ),
                 ),

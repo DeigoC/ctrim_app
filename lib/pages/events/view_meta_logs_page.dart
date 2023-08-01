@@ -1,16 +1,14 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:avatar_stack/avatar_stack.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/user_avatar.dart';
 
@@ -31,9 +29,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   void initState() {
     _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs);
     _appContext = Provider.of<AppContext>(context, listen: false);
-    if (widget.eventContext.fetchedLogs) {
-      widget.eventContext.log.orderLogsBackwards();
-    }
+    widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
   }
 
@@ -44,33 +40,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           _checkForChangesToContributors();
           return true;
         },
-        child: Scaffold(
-            appBar: AppBar(title: const Text('Logs')),
-            body: widget.eventContext.fetchedLogs ? _buildWithData(context) : _buildFB()));
-  }
-
-  Widget _buildFB() {
-    final EventSupplementalDBManager eventSupplementalDBManager = EventSupplementalDBManager(widget.eventContext.id);
-    return FutureBuilder(
-        future: eventSupplementalDBManager.fetchLog(),
-        builder: (_, snap) {
-          Widget result = const Center(
-            child: CircularProgressIndicator(),
-          );
-
-          if (snap.hasData) {
-            widget.eventContext.setFetchedLogs(snap.data!);
-            widget.eventContext.log.orderLogsBackwards();
-            result = _buildWithData(_);
-          } else if (snap.hasError) {
-            debugPrint('Something with fetching logs: ${snap.error}');
-            result = const Center(
-              child: Text('Something went wrong :('),
-            );
-          }
-
-          return result;
-        });
+        child: Scaffold(appBar: AppBar(title: const Text('Logs')), body: _buildWithData(context)));
   }
 
   // this will show both metadata and logs
@@ -277,88 +247,5 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     if (haveContributorsChange) {
       widget.eventContext.allowSavingOfTheEdit();
     }
-  }
-
-  void _onTestLogs() {
-    final eventLog = widget.eventContext.log;
-    // final List<String> testFileData = List<String>.empty(growable: true);
-    String result = '----LOGS_START----';
-    for (final entry in eventLog.logs) {
-      final String log = (entry['log'] as String).replaceAll('\n', r'\n');
-      final DateTime ts = entry['ts'];
-      final String uid = entry['uid'];
-      result += '\n$log';
-      result += '\n${ts.millisecondsSinceEpoch}';
-      result += '\n$uid';
-    }
-    result += '\n----LOGS_END----';
-    debugPrint(result);
-    debugPrint('------That is the end of the raw string to be saved, now comes the linesplitter:\n');
-
-    LineSplitter ls = const LineSplitter();
-    final lines = ls.convert(result);
-    for (final line in lines) {
-      debugPrint(line.replaceAll(r'\n', '\n'));
-    }
-  }
-
-  void _onTestBody() {
-    String result = '----BODY_START----';
-    result += '\n${widget.eventContext.encodedBody}';
-    result += '\n----BODY_END----';
-    debugPrint(result);
-  }
-
-  void _onTestProgramDetails() {
-    final program = widget.eventContext.program;
-    String result = '----PROGRAM_DETAILS_START----';
-    result += '\n${program.allDay ? '1' : '0'}';
-    result += '\n${program.finishTime != null ? program.finishTime!.millisecondsSinceEpoch.toString() : 'null'}';
-    result += '\n----PROGRAM_DETAILS_END----';
-    debugPrint(result);
-  }
-
-  void _onTestProgramRoles() {
-    final program = widget.eventContext.program;
-    String result = '----PROGRAM_ROLES_START----';
-    final roles = program.roles;
-    for (final role in roles) {
-      result += '\n${role['uids']}';
-      result += '\n${role['title'] as String}';
-      result += '\n${(role['detail'] as String).replaceAll('\n', r'\n')}';
-      result += '\n${role['start'] != null ? (role['start'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
-      result += '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
-      result += '\n${role['for_guests'] == true ? '1' : '0'}';
-      result += '\n${role['priority'] as int}';
-    }
-    result += '\n----PROGRAM_ROLES_END----';
-    debugPrint(result);
-  }
-
-  void _onTestMedia() {
-    final media = widget.eventContext.media;
-    String result = '----MEDIA_START----';
-    final items = media.allMedia;
-    for (final item in items) {
-      result += '\n${item['type']}';
-      result += '\n${item['src']}';
-      result += '\n${item['title']}';
-    }
-    result += '\n----MEDIA_END----';
-    debugPrint(result);
-  }
-
-  void _onTestMetaData() {
-    final meta = widget.eventContext.metadata;
-    String result = '----META_START----';
-
-    result += '\n${meta.authorUID}';
-    result += '\n${meta.lastUID}';
-    result += '\n${meta.contributorUIDs}';
-    result += '\n${meta.parentID ?? ''}';
-    result += '\n${meta.children}';
-
-    result += '\n----META_END----';
-    debugPrint(result);
   }
 }
