@@ -45,6 +45,11 @@ class AppContext extends ChangeNotifier {
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
   void orderEventDatesByRecency() => _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
 
+  void addOrUpdatePostHead(final EventHead head) {
+    _eventHeads.removeWhere((element) => element.id.compareTo(head.id) == 0);
+    _eventHeads.insert(0, head);
+  }
+
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
   User get currentUser => _currentUser;

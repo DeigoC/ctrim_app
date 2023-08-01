@@ -10,25 +10,43 @@ import '../models/event/event_program.dart';
 
 class EventContext {
   late final EventHead _head;
-  late final EventLog _log;
+  late final EventLog _log; // ? doesn't have to be late
   late final EventMetadata _metadata;
   late final EventProgram _program;
-  late final EventMedia _media;
+  late final EventMedia _media; // ? doesn't have to be late
+  late final bool _viewingChild;
   final EventBody _body = EventBody();
 
-  bool _canSaveTheEditing = false, _viewingChild = false;
+  bool _canSaveTheEditing = false;
 
-  final List<Map<String, String>> _roleAdditionNotifications = List<Map<String, String>>.empty(growable: true),
-      _roleRemovalNotifications = List<Map<String, String>>.empty(growable: true);
+  late final List<Map<String, String>> _roleAdditionNotifications, _roleRemovalNotifications;
+  late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
 
   // for viewing and editing
-  EventContext.viewing({required EventHead eventHead, bool? viewingChild, List<String>? data}) {
+  EventContext.viewing(
+      {required EventHead eventHead, required String currentUID, bool? viewingChild, List<String>? data}) {
     _head = eventHead;
     _canSaveTheEditing = false;
-    _viewingChild = viewingChild ?? _viewingChild;
+    _viewingChild = viewingChild ?? false;
 
     if (data != null) {
       _setWholePostFromTxt(data);
+    }
+
+    if (_metadata.authorUID == currentUID) {
+      _contributorAdditionUIDs = List<String>.empty(growable: true);
+      _contributorRemovalUIDs = List<String>.empty(growable: true);
+    } else {
+      _contributorAdditionUIDs = List.empty();
+      _contributorRemovalUIDs = List.empty();
+    }
+
+    if (_metadata.contributorUIDs.contains(currentUID) || _metadata.authorUID == currentUID) {
+      _roleAdditionNotifications = List<Map<String, String>>.empty(growable: true);
+      _roleRemovalNotifications = List<Map<String, String>>.empty(growable: true);
+    } else {
+      _roleAdditionNotifications = List.empty();
+      _roleRemovalNotifications = List.empty();
     }
   }
 
@@ -368,7 +386,11 @@ class EventContext {
   List<Map<String, String>> get roleAdditionNotifications => UnmodifiableListView(_roleAdditionNotifications);
   List<Map<String, String>> get roleRemovalNotifications => UnmodifiableListView(_roleRemovalNotifications);
 
-  // two fields: 'uid' and 'roleTitle'
-  void addRoleAdditionNotification(Map<String, String> entry) => _roleAdditionNotifications.add(entry);
-  void addRoleRemovalNotification(Map<String, String> entry) => _roleRemovalNotifications.add(entry);
+  void addRoleAdditionNotification({required String uid, required String roleTitle}) =>
+      _roleAdditionNotifications.add({'uid': uid, 'roleTitle': roleTitle});
+  void addRoleRemovalNotification({required String uid, required String roleTitle}) =>
+      _roleRemovalNotifications.add({'uid': uid, 'roleTitle': roleTitle});
+
+  List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
+  List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
 }

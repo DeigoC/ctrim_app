@@ -17,6 +17,10 @@ class EventHeadDBManager {
     return List<EventHead>.from(collection.docs.map((e) => e.data()));
   }
 
+  Future<EventHead> fetchHead(final String id) async {
+    return await _ref.doc(id).get().then((value) => value.data() as EventHead);
+  }
+
   Future<void> saveNewHead(final EventHead head) async {
     await _ref.doc(head.id).set(head);
   }

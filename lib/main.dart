@@ -1,13 +1,11 @@
-import 'package:ctrim_app/firebase/db_managers/id_tracker.dart';
-import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
+import 'firebase/db_managers/id_tracker.dart';
 import 'firebase/db_managers/user_contact_db_manager.dart';
 import 'firebase/db_managers/user_db_manager.dart';
 import 'models/user.dart' as ctrim;
@@ -15,6 +13,7 @@ import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
+import 'utility/local_data_manager.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:flutter/foundation.dart';
@@ -72,10 +71,10 @@ void main() async {
   // * Then fetch the rest of the important data
   final heads = await eventHeadDBManager.fetchEventHeads();
 
-  // * Create the AppContext and run the app
-  runApp(ChangeNotifierProvider(
-      create: (_) => AppContext(heads: heads, allUsers: allUsers, prefInstance: prefInstance, user: currentUser),
-      child: MyApp(settingsController: settingsController)));
+  // * Create the AppContext, setup the FCM and run the app
+  final AppContext appContext =
+      AppContext(heads: heads, allUsers: allUsers, prefInstance: prefInstance, user: currentUser);
+  runApp(ChangeNotifierProvider(create: (_) => appContext, child: MyApp(settingsController: settingsController)));
 }
 
 Future<List<ctrim.User>> _fetchAllUsers() async {

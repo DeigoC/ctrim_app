@@ -44,9 +44,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   void initState() {
-    // TODO for the future: make user unsubscibe to post if they are a contributor
-
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
+
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
@@ -90,11 +89,12 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
             if (data.isNotEmpty) {
               debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
-              _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data);
+              _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data, currentUID: _currentUID);
               _haveFetchedPost = true;
 
               _figureOutTabs();
               Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+              _checkToUnbookForContributor();
               result = _buildBodyWithData();
             } else {
               debugPrint('Fetching from DB for post ID: ${widget.eventHead.id}');
@@ -119,6 +119,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             _figureOutTabs();
             _savePostData();
             _haveFetchedPost = true;
+            _checkToUnbookForContributor();
             result = _buildBodyWithData();
           } else if (snap.hasError) {
             debugPrint('Something with fetching the post ${snap.error}');
@@ -204,7 +205,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
-  // TODO remember to remove all the checking for fetched
   Future<bool> _fetchEssentialPostData() async {
     final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventHead.id);
     final media = await dbManager.fetchMedia();
@@ -213,7 +213,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final logs = await dbManager.fetchLog();
     final body = await dbManager.fetchBody();
 
-    _eventContext = EventContext.viewing(eventHead: widget.eventHead);
+    _eventContext = EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID);
     _eventContext.setFetchedMedia(media);
     _eventContext.setFetchedMetadata(meta);
     _eventContext.setFetchedProgram(program);
@@ -321,6 +321,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   bool get _canSaveEditing => _haveFetchedPost && _eventContext.canSaveTheEditing;
+
+  void _checkToUnbookForContributor() {
+    if (_eventContext.metadata.contributorUIDs.contains(_currentUID)) {
+      debugPrint('removing post from bookmarks because user is already contributor!');
+      Provider.of<AppContext>(context, listen: false).dataManager.removePostBookmark(_eventContext.id);
+    }
+  }
 }
 
 class EventLogDialog extends StatefulWidget {
@@ -340,8 +347,20 @@ class EventLogDialog extends StatefulWidget {
 }
 
 class _EventLogDialogState extends State<EventLogDialog> {
+  late final AppContext _appContext;
+  late final String _currentUserName, _currentUID;
   final TextEditingController _tecLog = TextEditingController();
+  final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
+  final UserContactDBManager _userContactDBManager = UserContactDBManager();
   bool _canSave = false;
+
+  @override
+  void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
+    _currentUID = _appContext.currentUser.id;
+    _currentUserName = _appContext.currentUser.forname;
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -424,67 +443,130 @@ class _EventLogDialogState extends State<EventLogDialog> {
     localDataManager.writePostData(widget.eventContext.id, content);
 
     await _sendPostNotification();
-    // TODO sendProgramRoleNotifications
-    // TODO sendContributorEditNotifications
+
+    if (widget.eventContext.head.eventDate != null) {
+      await _sendRoleAdditionNotiifications();
+      await _sendRoleRemovalNotiifications();
+    }
+    await _sendContributorAdditionNotificaitons();
+    await _sendContributorRemovalNotificaitons();
   }
 
   Future<void> _sendPostNotification() async {
     // message to topic
     // message to author + contributors
     // hmm basically both will use the same title-subtitle but we should mention who updated it
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
-    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-    final String currentUserName = appContext.currentUser.forname;
-    final String subtitle = _tecLog.text.trim();
-    final String adminSubtitle = '$currentUserName updated: $subtitle';
 
-    final List<String> deviceTokens = await _getAdminContactTokens(appContext);
+    final String subtitle = _tecLog.text.trim();
+    final String adminSubtitle = '$_currentUserName updated: $subtitle';
+
+    final List<String> deviceTokens = await _getAdminContactTokens();
 
     if (deviceTokens.isNotEmpty) {
-      await cloudFunctionManager.sendMessageToSelectedTokens(
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: {});
     }
 
-    await cloudFunctionManager.sendToTopic(topic: widget.topic, title: widget.originalTitle, body: subtitle, data: {});
+    await _cloudFunctionManager.sendToTopic(topic: widget.topic, title: widget.originalTitle, body: subtitle, data: {});
   }
 
-  Future<List<String>> _getAdminContactTokens(final AppContext appContext) async {
-    // ! oh man, test this out please
+  Future<List<String>> _getAdminContactTokens() async {
     // Fetching all the contacts for the admins
     // Remember to remove the current user from this list
     // Fetch all the contributor device tokens (unless it's the current user)
-    final String currentUID = appContext.currentUser.id;
 
     final List<String> missingContacts = widget.eventContext.metadata.contributorUIDs
         .where((contributorID) =>
-            contributorID.compareTo(currentUID) != 0 &&
-            !appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
+            contributorID.compareTo(_currentUID) != 0 &&
+            !_appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
         .toList();
 
     // fetch the author contact (if the current user isn't already the author)
-    if (currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
-        !appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
+    if (_currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
+        !_appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
       missingContacts.add(widget.eventContext.metadata.authorUID);
     }
 
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
     if (missingContacts.isNotEmpty) {
-      final List<UserContact> contacts = await _fetchMissingContacts(missingContacts);
-      appContext.addAllUserContacts(contacts);
+      final List<UserContact> contacts = await _userContactDBManager.fetchUserContacts(missingContacts);
+      _appContext.addAllUserContacts(contacts);
     }
 
     // create the cumulative device token list and return it
     final List<String> deviceTokens = List<String>.empty(growable: true);
     for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
-      deviceTokens.addAll(appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+      deviceTokens.addAll(_appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
     }
 
     return deviceTokens;
   }
 
-  Future<List<UserContact>> _fetchMissingContacts(final List<String> missingIds) async {
-    final UserContactDBManager userContactDBManager = UserContactDBManager();
-    return await userContactDBManager.fetchUserContacts(missingIds);
+  Future<void> _sendRoleAdditionNotiifications() async {
+    for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
+      final String title = "$_currentUserName has assinged you to a role!";
+      final String body = "You are assigned to '${additionEntry['title']!}' for ${widget.originalTitle}";
+
+      final String thisUID = additionEntry['uid']!;
+      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager
+          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+    }
+  }
+
+  Future<void> _sendRoleRemovalNotiifications() async {
+    for (final removalEntry in widget.eventContext.roleRemovalNotifications) {
+      final String title = "$_currentUserName has removed you from a role";
+      final String body = "You are no longer assigned to '${removalEntry['title']!}' for ${widget.originalTitle}";
+
+      final String thisUID = removalEntry['uid']!;
+      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager
+          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+    }
+  }
+
+  // mention whether a user has been added or removed
+  Future<void> _sendContributorAdditionNotificaitons() async {
+    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
+      const String title = "Contributor update";
+      final String body = "You are given access to perform updates for '${widget.originalTitle}'";
+
+      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager
+          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+    }
+  }
+
+  Future<void> _sendContributorRemovalNotificaitons() async {
+    for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
+      const String title = "Contributor update";
+      final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
+
+      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager
+          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+    }
   }
 }

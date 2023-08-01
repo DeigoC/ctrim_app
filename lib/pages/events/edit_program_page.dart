@@ -352,7 +352,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     for (final originalUID in originalList) {
       if (!_selectedUsers.contains(originalUID)) {
         debugPrint('Sending role removal to ID: $originalUID');
-        widget.eventContext.addRoleRemovalNotification({'uid': originalUID, 'roleTitle': originalRoleTitle});
+        widget.eventContext.addRoleRemovalNotification(uid: originalUID, roleTitle: originalRoleTitle);
       }
     }
 
@@ -360,8 +360,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     for (final currentlySelectedUID in _selectedUsers) {
       if (!originalList.contains(currentlySelectedUID)) {
         debugPrint('Sending role addition to ID: $currentlySelectedUID');
-        widget.eventContext
-            .addRoleAdditionNotification({'uid': currentlySelectedUID, 'roleTitle': _tecTitle.text.trim()});
+        widget.eventContext.addRoleAdditionNotification(uid: currentlySelectedUID, roleTitle: _tecTitle.text.trim());
       }
     }
   }

@@ -68,8 +68,6 @@ class PersonalDrawer extends StatelessWidget {
   Future<void> _logout(AppContext appContext) async {
     final AuthManager authManager = AuthManager();
     final UserContactDBManager userContactDBManager = UserContactDBManager();
-    // TODO remove the device token from UserContacts
-
     // Provider.of<AppContext>(context, listen: false).clearCreds();
     // Provider.of<AppContext>(context, listen: false).setUserToGuest();
     await userContactDBManager.removeTokenFromUser(appContext.currentUser.id, appContext.dataManager.token);
