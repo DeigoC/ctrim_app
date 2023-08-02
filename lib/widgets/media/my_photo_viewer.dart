@@ -16,6 +16,7 @@ class MyPhotoViewer extends StatelessWidget {
     final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
     final fullPath = '$cacheDir/$sanitisedFilePath.png';
     final file = File(fullPath);
-    return PhotoView(imageProvider: FileImage(file), heroAttributes: PhotoViewHeroAttributes(tag: postID + src));
+    final ImageProvider image = (file.existsSync() ? FileImage(file) : NetworkImage(src)) as ImageProvider;
+    return PhotoView(imageProvider: image, heroAttributes: PhotoViewHeroAttributes(tag: postID + src));
   }
 }

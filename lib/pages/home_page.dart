@@ -182,6 +182,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       postUIDs.removeWhere((e) => toDelete.contains(e));
       localDataManager.writePostTrack(postUIDs);
     }
+
+    // debugPrint('deleting post 1 data for testing');
+    // localDataManager.deletePostData('1');
   }
 
   void _setupCloudOnMessage() {

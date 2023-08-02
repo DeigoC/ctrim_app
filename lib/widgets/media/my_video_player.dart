@@ -96,16 +96,13 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProvider
     final sanitisedFilePath = widget.src.replaceAll(RegExp(r'[^\w]'), '');
     final fullPath = '$cacheDir/posts/${widget.postID}/$sanitisedFilePath.webp';
     final file = File(fullPath);
-    return Expanded(
-      child: Stack(alignment: Alignment.center, children: [
-        Positioned.fill(
-            child: Hero(
-          tag: widget.postID + widget.src,
-          child: Image.file(file),
-        )),
-        const CircularProgressIndicator()
-      ]),
-    );
+
+    final List<Widget> children = [const CircularProgressIndicator()];
+    if (file.existsSync()) {
+      children.insert(0, Positioned.fill(child: Hero(tag: widget.postID + widget.src, child: Image.file(file))));
+    }
+
+    return Expanded(child: Stack(alignment: Alignment.center, children: children));
   }
 
   void _onIconClick() {
