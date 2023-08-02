@@ -90,6 +90,15 @@ class LocalDataManager {
     return List<String>.empty();
   }
 
+  Future<void> deletePostData(final String id) async {
+    try {
+      final file = await _getPostFile(id);
+      file.delete();
+    } catch (e) {
+      debugPrint('file for post $id does not exist yet');
+    }
+  }
+
   Future<File> _getPostFile(final String id) async {
     final path = await _localPath;
     return File('$path/posts/$id.txt');

@@ -1,16 +1,16 @@
-import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
-import 'package:ctrim_app/firebase/functions_manager.dart';
-import 'package:ctrim_app/firebase/messaging_manager.dart';
-import 'package:ctrim_app/models/user_contact.dart';
-import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/user_contact_db_manager.dart';
+import '../../firebase/functions_manager.dart';
+import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/user_contact.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/local_data_manager.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
@@ -459,15 +459,22 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     final String subtitle = _tecLog.text.trim();
     final String adminSubtitle = '$_currentUserName updated: $subtitle';
+    final String? keyGraphic = widget.eventContext.head.getKeyGraphic();
 
     final List<String> deviceTokens = await _getAdminContactTokens();
 
     if (deviceTokens.isNotEmpty) {
       await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: {});
+          tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: _notificationdata);
     }
 
-    await _cloudFunctionManager.sendToTopic(topic: widget.topic, title: widget.originalTitle, body: subtitle, data: {});
+    await _cloudFunctionManager.sendToTopic(
+        topic: widget.topic,
+        title: widget.originalTitle,
+        body: subtitle,
+        data: _notificationdata,
+        iOSImage: keyGraphic,
+        androidImage: keyGraphic);
   }
 
   Future<List<String>> _getAdminContactTokens() async {
@@ -504,8 +511,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
   }
 
   Future<void> _sendRoleAdditionNotiifications() async {
+    final String title = "$_currentUserName has assinged you to a role!";
+
     for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
-      final String title = "$_currentUserName has assinged you to a role!";
       final String body = "You are assigned to '${additionEntry['title']!}' for ${widget.originalTitle}";
 
       final String thisUID = additionEntry['uid']!;
@@ -515,14 +523,15 @@ class _EventLogDialogState extends State<EventLogDialog> {
       }
 
       final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager
-          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
   Future<void> _sendRoleRemovalNotiifications() async {
+    final String title = "$_currentUserName has removed you from a role";
+
     for (final removalEntry in widget.eventContext.roleRemovalNotifications) {
-      final String title = "$_currentUserName has removed you from a role";
       final String body = "You are no longer assigned to '${removalEntry['title']!}' for ${widget.originalTitle}";
 
       final String thisUID = removalEntry['uid']!;
@@ -532,41 +541,43 @@ class _EventLogDialogState extends State<EventLogDialog> {
       }
 
       final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager
-          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
   // mention whether a user has been added or removed
   Future<void> _sendContributorAdditionNotificaitons() async {
-    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
-      const String title = "Contributor update";
-      final String body = "You are given access to perform updates for '${widget.originalTitle}'";
+    const String title = "Contributor update";
+    final String body = "You are given access to perform updates for '${widget.originalTitle}'";
 
+    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
         final contact = await _userContactDBManager.fetchUserContact(thisUID);
         _appContext.addAllUserContacts([contact]);
       }
 
       final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager
-          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
   Future<void> _sendContributorRemovalNotificaitons() async {
-    for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
-      const String title = "Contributor update";
-      final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
+    const String title = "Contributor update";
+    final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
 
+    for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
         final contact = await _userContactDBManager.fetchUserContact(thisUID);
         _appContext.addAllUserContacts([contact]);
       }
 
       final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager
-          .sendMessageToSelectedTokens(tokens: contact.deviceTokens, title: title, body: body, data: {});
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
     }
   }
+
+  Map<String, String> get _notificationdata => {'PostID': widget.eventContext.id};
 }

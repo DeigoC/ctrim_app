@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:ctrim_app/models/event/event_head.dart';
+import 'package:ctrim_app/pages/information/teachings/bible_reading_page.dart';
+import 'package:ctrim_app/pages/information/teachings/love_page.dart';
+import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -37,6 +40,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     analytics.logAppOpen();
 
     _informationTabController = TabController(length: 3, vsync: this);
+
     if (!kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
@@ -44,6 +48,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     _setupCloudOnMessage();
+    _removeLocallySavedPosts();
     super.initState();
   }
 
@@ -160,6 +165,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  Future<void> _removeLocallySavedPosts() async {
+    final LocalDataManager localDataManager = LocalDataManager();
+    final List<String> postUIDs = await localDataManager.readPostTrack();
+    final List<String> toDelete = List<String>.empty(growable: true);
+
+    for (final String postUID in postUIDs) {
+      if (!_appContext.eventHeads.any((e) => e.id.compareTo(postUID) == 0)) {
+        debugPrint('deleting post id: $postUID');
+        toDelete.add(postUID); // ? I don't think i can modify the list that's beeing for-looped?
+        localDataManager.deletePostData(postUID);
+      }
+    }
+
+    if (toDelete.isNotEmpty) {
+      postUIDs.removeWhere((e) => toDelete.contains(e));
+      localDataManager.writePostTrack(postUIDs);
+    }
+  }
+
   void _setupCloudOnMessage() {
     // when the app is opened
     FirebaseMessaging.onMessage.listen((message) {
@@ -182,28 +206,52 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         .then((message) => message != null ? () => _handleInitialMessage(message) : null);
   }
 
-  void _handleInitialMessage(final RemoteMessage message) {
+  Future<void> _handleInitialMessage(final RemoteMessage message) async {
+    // ! this one should just open the appropriate page, no need to show an opening message?
     if (message.data.containsKey('PostID')) {
       // open Post Page?
+      final String postID = message.data['PostID'];
+      final bool hasHead = _appContext.eventHeads.any((element) => element.id.compareTo(postID) == 0);
+
+      if (!hasHead) {
+        //  fetch and add the head
+        final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+        final head = await eventHeadDBManager.fetchHead(postID);
+        _appContext.addNewPostHead(head);
+      }
+      final thisHead = _appContext.eventHeads.firstWhere((element) => element.id.compareTo(postID) == 0);
+      _openPost(thisHead);
+    } else if (message.data.containsKey('InfoPage')) {
+      _openInformationTeachingPage(message.data['InfoPage']);
     }
-    _showFCMMessage(message);
+    // _showFCMMessage(message);
   }
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {
+    // ! this one makes sense to have an opening dialog
+    final bool openPage = await _showFCMMessage(message, true);
+
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
-      await _reloadEventHead(postID);
+      final head = await _reloadEventHead(postID);
+      if (openPage) {
+        _openPost(head);
+      }
+    } else if (message.data.containsKey('InfoPage') && openPage) {
+      _openInformationTeachingPage(message.data['InfoPage']);
     }
-    _showFCMMessage(message);
   }
 
   Future<void> _handleOnMessageOpenedBackground(final RemoteMessage message) async {
+    // ! no need for a dialog, just open the page no matter where the user may be
+
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final head = await _reloadEventHead(postID);
       _openPost(head);
+    } else if (message.data.containsKey('InfoPage')) {
+      _openInformationTeachingPage(message.data['InfoPage']);
     }
-    _showFCMMessage(message);
   }
 
   Future<EventHead> _reloadEventHead(final String postID) async {
@@ -223,12 +271,42 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 )));
   }
 
-  Future<void> _showFCMMessage(final RemoteMessage message) async {
+  void _openInformationTeachingPage(final String page) {
+    switch (page) {
+      case 'love':
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LovePage()));
+        break;
+      case 'bible_reading':
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BibleReadingPage()));
+        break;
+      default:
+    }
+  }
+
+  // all notifications potentially will be asking to open a page
+  // well... maybe not, let's make it an optional thing
+  Future<bool> _showFCMMessage(final RemoteMessage message, bool openingPage) async {
     final RemoteNotification notification = message.notification!;
     final String? closeText = message.data['CloseText'];
     final String? superImageUrl = message.data['SuperImageUrl'];
     final String? imageUrl =
         superImageUrl ?? (Platform.isAndroid ? notification.android!.imageUrl : notification.apple!.imageUrl);
+
+    bool result = false;
+
+    final List<Widget> buttonChildren = [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(closeText ?? 'Ok', style: const TextStyle(fontSize: 16)))
+    ];
+    if (openingPage) {
+      buttonChildren.add(TextButton(
+          onPressed: () {
+            result = true;
+            Navigator.of(context).pop();
+          },
+          child: const Text('Show More', style: TextStyle(fontSize: 16))));
+    }
 
     await showDialog(
         context: context,
@@ -251,25 +329,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             child: Image.network(imageUrl) // so jank lol! It works though
                             ))
                     : Container(),
-                const SizedBox(height: 24),
+                imageUrl != null ? const SizedBox(height: 16) : const SizedBox(height: 24),
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child:
                         Text(notification.title!, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold))),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Text(notification.body!, style: const TextStyle(fontSize: 16))),
                 const SizedBox(height: 8),
-                Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                        padding: const EdgeInsets.only(right: 24.0),
-                        child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(closeText ?? 'Ok', style: const TextStyle(fontSize: 16))))),
+                Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.end, children: buttonChildren)),
                 const SizedBox(height: 16)
               ])));
         });
+
+    return result;
   }
 }

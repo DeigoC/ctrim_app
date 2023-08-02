@@ -37,8 +37,8 @@ class AppContext extends ChangeNotifier {
   }
 
   // * meta related
-  void setMetadata(String id, EventMetadata data) => _metaData[id] = data;
-  EventMetadata? getMetadata(String id) => _metaData[id];
+  void setMetadata(final String id, final EventMetadata data) => _metaData[id] = data;
+  EventMetadata? getMetadata(final String id) => _metaData[id];
 
   // * event head related
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
@@ -55,14 +55,12 @@ class AppContext extends ChangeNotifier {
   User get currentUser => _currentUser;
   List<User> get allUsers => UnmodifiableListView(_allUsers);
 
-  void addUser(User u) => _allUsers.add(u);
+  void addUser(final User u) => _allUsers.add(u);
   void setUserToGuest() => _currentUser = _guest;
-  void setCurrentUser(String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
+  void setCurrentUser(final String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
 
   // contact related
-  void addAllUserContacts(List<UserContact> contacts) {
-    _allContacts.addAll(contacts);
-  }
+  void addAllUserContacts(final List<UserContact> contacts) => _allContacts.addAll(contacts);
 
   List<UserContact> get userContacts => UnmodifiableListView(_allContacts);
 
