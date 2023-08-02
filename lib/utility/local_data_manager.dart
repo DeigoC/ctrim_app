@@ -50,7 +50,7 @@ class LocalDataManager {
   // * Post Tracking
   Future<void> writePostTrack(final List<String> postTrack) async {
     final file = await _getPostTrackerFile();
-    await file.writeAsString(postTrack.toString().replaceAll('[', '').replaceAll(']', ''));
+    await file.writeAsString(postTrack.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', ''));
   }
 
   Future<List<String>> readPostTrack() async {

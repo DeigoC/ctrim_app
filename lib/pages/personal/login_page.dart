@@ -2,6 +2,7 @@ import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
 import 'package:ctrim_app/models/user_contact.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -62,10 +63,12 @@ class _LoginPageState extends State<LoginPage> {
 
         // ? i think it's much safer to just grab the token from the offical API instead of using
         // a potentially outdated one?
-        debugPrint('setting contact token as $token');
-        _userContactDBManager.addTokenToUser(id, token);
-        appContext.setCurrentUser(id);
-        appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
+        if (kDebugMode) {
+          debugPrint('setting contact token as $token');
+          _userContactDBManager.addTokenToUser(id, token);
+          appContext.setCurrentUser(id);
+          appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
+        }
 
         Navigator.of(context).pop();
         Navigator.of(context).pop();

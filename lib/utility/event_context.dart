@@ -15,6 +15,7 @@ class EventContext {
   late final EventProgram _program;
   late final EventMedia _media; // ? doesn't have to be late
   late final bool _viewingChild;
+  late final String _currentUID;
   final EventBody _body = EventBody();
 
   bool _canSaveTheEditing = false;
@@ -28,25 +29,10 @@ class EventContext {
     _head = eventHead;
     _canSaveTheEditing = false;
     _viewingChild = viewingChild ?? false;
-
+    _currentUID = currentUID;
     if (data != null) {
       _setWholePostFromTxt(data);
-    }
-
-    if (_metadata.authorUID == currentUID) {
-      _contributorAdditionUIDs = List<String>.empty(growable: true);
-      _contributorRemovalUIDs = List<String>.empty(growable: true);
-    } else {
-      _contributorAdditionUIDs = List.empty();
-      _contributorRemovalUIDs = List.empty();
-    }
-
-    if (_metadata.contributorUIDs.contains(currentUID) || _metadata.authorUID == currentUID) {
-      _roleAdditionNotifications = List<Map<String, String>>.empty(growable: true);
-      _roleRemovalNotifications = List<Map<String, String>>.empty(growable: true);
-    } else {
-      _roleAdditionNotifications = List.empty();
-      _roleRemovalNotifications = List.empty();
+      _initialiseInternalLists();
     }
   }
 
@@ -77,7 +63,10 @@ class EventContext {
 
   // * Supplemental - Metadata Related
   EventMetadata get metadata => _metadata;
-  void setFetchedMetadata(EventMetadata data) => _metadata = data;
+  void setFetchedMetadata(EventMetadata data) {
+    _metadata = data;
+    _initialiseInternalLists();
+  }
 
   // * Supplemental - Media Related
   EventMedia get media => _media;
@@ -157,6 +146,24 @@ class EventContext {
 
   bool isCurrentUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
   bool isCurrentUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+
+  void _initialiseInternalLists() {
+    if (_metadata.authorUID == _currentUID) {
+      _contributorAdditionUIDs = List<String>.empty(growable: true);
+      _contributorRemovalUIDs = List<String>.empty(growable: true);
+    } else {
+      _contributorAdditionUIDs = List.empty();
+      _contributorRemovalUIDs = List.empty();
+    }
+
+    if (_metadata.contributorUIDs.contains(_currentUID) || _metadata.authorUID == _currentUID) {
+      _roleAdditionNotifications = List<Map<String, String>>.empty(growable: true);
+      _roleRemovalNotifications = List<Map<String, String>>.empty(growable: true);
+    } else {
+      _roleAdditionNotifications = List.empty();
+      _roleRemovalNotifications = List.empty();
+    }
+  }
 
   // * This one is going to be big
   // we need to run through all supplemental parts of a post (body, meta, media etc.)

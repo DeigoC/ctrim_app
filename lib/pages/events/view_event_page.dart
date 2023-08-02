@@ -124,6 +124,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           } else if (snap.hasError) {
             debugPrint('Something with fetching the post ${snap.error}');
             result = const Center(child: Text('Something went wrong!'));
+            // TODO show an error dialog and pop the page
           }
           return result;
         });

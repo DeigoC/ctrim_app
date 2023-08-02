@@ -62,7 +62,6 @@ class _EditBodyPageState extends State<EditBodyPage> {
         quill.QuillToolbar.basic(
           controller: _controller,
           multiRowsDisplay: false,
-          // embedButtons: FlutterQuillEmbeds.buttons(showCameraButton: false),
         ),
         Expanded(
           child: Padding(
