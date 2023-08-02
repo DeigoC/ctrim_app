@@ -90,18 +90,24 @@ class LocalDataManager {
     return List<String>.empty();
   }
 
+  // delete the post data and the saved video thumbnails
   Future<void> deletePostData(final String id) async {
     try {
-      final file = await _getPostFile(id);
-      file.delete();
+      final dir = await _getPostDirectory(id);
+      dir.delete(recursive: true);
     } catch (e) {
       debugPrint('file for post $id does not exist yet');
     }
   }
 
+  Future<Directory> _getPostDirectory(String id) async {
+    final path = await _localPath;
+    return Directory('$path/posts/$id');
+  }
+
   Future<File> _getPostFile(final String id) async {
     final path = await _localPath;
-    return File('$path/posts/$id.txt');
+    return File('$path/posts/$id/post_data.txt');
   }
 
   Future<String> get _localPath async {

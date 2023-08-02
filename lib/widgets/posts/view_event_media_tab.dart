@@ -23,10 +23,9 @@ class ViewEventMediaTab extends StatelessWidget {
               itemBuilder: (_, index) {
                 final Map<String, String> entry = eventContext.media.allMedia[index];
                 if (entry['type']!.compareTo('img') == 0) {
-                  return ImageMediaSlot(
-                      mediaEntry: entry, onTap: () => _onMediaTap(index, _), heroPrefix: eventContext.id);
+                  return ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: eventContext.id);
                 }
-                return VideoMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _));
+                return VideoMediaSlot(mediaEntry: entry, postId: eventContext.id, onTap: () => _onMediaTap(index, _));
               }))
     ];
 

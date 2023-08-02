@@ -21,19 +21,23 @@ class AppContext extends ChangeNotifier {
   static final Map<String, EventMetadata> _metaData = {};
   static final List<UserContact> _allContacts = List<UserContact>.empty(growable: true);
   static late final AppSharedPreferences _dataManager;
+  static late final String _cacheDir, _appDir;
 
   late User _currentUser;
 
-  AppContext({
-    required List<EventHead> heads,
-    required List<User> allUsers,
-    required SharedPreferences prefInstance,
-    required User user,
-  }) {
+  AppContext(
+      {required List<EventHead> heads,
+      required List<User> allUsers,
+      required SharedPreferences prefInstance,
+      required User user,
+      required String cacheDir,
+      required String appDir}) {
     _eventHeads = heads;
     _allUsers = allUsers;
     _currentUser = user;
     _dataManager = AppSharedPreferences(preferences: prefInstance);
+    _cacheDir = cacheDir;
+    _appDir = appDir;
   }
 
   // * meta related
@@ -69,4 +73,6 @@ class AppContext extends ChangeNotifier {
 
   // * other related
   void rebuildPlease() => notifyListeners();
+  String get cacheDir => _cacheDir;
+  String get appDir => _appDir;
 }

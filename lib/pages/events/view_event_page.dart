@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/db_managers/user_contact_db_manager.dart';
 import '../../firebase/functions_manager.dart';
@@ -177,7 +181,19 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     // * If there are no images, we should just remove the expanded height
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
     if (keyGraphicSrc != null) {
-      return Image.network(keyGraphicSrc, fit: BoxFit.cover);
+      return FutureBuilder(
+        future: _fetchImage(keyGraphicSrc),
+        builder: (_, snapshot) {
+          Widget result = const Center(child: CircularProgressIndicator());
+          if (snapshot.hasData) {
+            return Image.file(snapshot.data!, fit: BoxFit.cover);
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong trying to get the image'));
+          }
+
+          return result;
+        },
+      );
     }
     return null;
   }
@@ -206,6 +222,20 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
+  Future<File> _fetchImage(String src) async {
+    final dir = await getTemporaryDirectory();
+    final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
+    final fullPath = '${dir.path}/$sanitisedFilePath.png';
+    final file = File(fullPath);
+
+    if (!await file.exists()) {
+      debugPrint('Creating image file for: $fullPath');
+      final response = await http.get(Uri.parse(src));
+      return await file.writeAsBytes(response.bodyBytes);
+    }
+    return file;
+  }
+
   Future<bool> _fetchEssentialPostData() async {
     final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventHead.id);
     final media = await dbManager.fetchMedia();
@@ -291,17 +321,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   String get _topic => _post + _eventContext.id;
 
   Future<List<String>> _attemptToGetExistingPostData() async {
+    // TODO we should also make sure that we unconditionally fetch when an update has occured for safety
     final LocalDataManager localDataManager = LocalDataManager();
     final content = await localDataManager.readPostData(widget.eventHead.id);
 
     // debugPrint('Is local post data not empty: ${content.isNotEmpty}');
     final bool canUseLocalContent =
         content.isNotEmpty && int.parse(content[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch;
-    // debugPrint('is the same recent date: $hasSameRecentDate');
-
-    // final DateTime recentDateOfLocalData = DateTime.fromMillisecondsSinceEpoch(int.parse(content[0]));
-    // debugPrint('Recent date of local data: $recentDateOfLocalData');
-    // debugPrint('Recent date of head: ${widget.eventHead.recentDate}');
 
     if (canUseLocalContent) {
       return content;

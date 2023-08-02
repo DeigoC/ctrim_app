@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -70,10 +71,17 @@ void main() async {
 
   // * Then fetch the rest of the important data
   final heads = await eventHeadDBManager.fetchEventHeads();
+  final cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
+  final appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
 
   // * Create the AppContext, setup the FCM and run the app
-  final AppContext appContext =
-      AppContext(heads: heads, allUsers: allUsers, prefInstance: prefInstance, user: currentUser);
+  final AppContext appContext = AppContext(
+      heads: heads,
+      allUsers: allUsers,
+      prefInstance: prefInstance,
+      user: currentUser,
+      cacheDir: cacheDir,
+      appDir: appDir);
   runApp(ChangeNotifierProvider(create: (_) => appContext, child: MyApp(settingsController: settingsController)));
 }
 
