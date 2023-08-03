@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               unselectedFontSize: 0,
               selectedFontSize: 0,
               items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.collections_bookmark), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.collections), label: 'Posts'),
                 BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
                 BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
               ]));
@@ -98,8 +98,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return FloatingActionButton.extended(
           onPressed: () {
             final String uid = _appContext.currentUser.id;
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => AddEventPage(eventContext: EventContext.adding(uid: uid)))).then((_) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => AddEventPage(eventContext: EventContext.adding(currentUserID: uid)))).then((_) {
               setState(() {});
             });
           },

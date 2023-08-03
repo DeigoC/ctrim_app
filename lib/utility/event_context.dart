@@ -36,8 +36,8 @@ class EventContext {
     }
   }
 
-  EventContext.adding({required String uid, String? parentID}) {
-    _metadata = EventMetadata(authorUID: uid, parentID: parentID);
+  EventContext.adding({required String currentUserID, String? parentID}) {
+    _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
   }

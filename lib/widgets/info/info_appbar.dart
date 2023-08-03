@@ -1,7 +1,7 @@
-import 'package:ctrim_app/pages/information/edit_info_body_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+
+import '../../pages/information/edit_info_body_page.dart';
 
 class InfoAction extends StatelessWidget {
   const InfoAction({super.key, required this.json});
@@ -9,7 +9,7 @@ class InfoAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Provider.of<AppContext>(context, listen: false).currentUser.id == '1'
+    return kDebugMode
         ? IconButton(
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json)));

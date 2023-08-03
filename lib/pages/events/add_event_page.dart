@@ -48,8 +48,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody()),
-    );
+        body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody()));
   }
 
   List<Widget> _buildHeaderSliver() {
@@ -76,22 +75,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               labelColor: Colors.black,
               controller: _tabController,
               tabs: const [
-                Tab(
-                  icon: Icon(Icons.info_outline),
-                  text: 'Header',
-                ),
-                Tab(
-                  icon: Icon(Icons.note),
-                  text: 'Body',
-                ),
-                Tab(
-                  icon: Icon(Icons.calendar_today),
-                  text: 'Program',
-                ),
-                Tab(
-                  icon: Icon(Icons.photo_album),
-                  text: 'Media',
-                ),
+                Tab(icon: Icon(Icons.info_outline), text: 'Header'),
+                Tab(icon: Icon(Icons.note), text: 'Body'),
+                Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
+                Tab(icon: Icon(Icons.photo_album), text: 'Media'),
               ],
             ),
           ]),
@@ -120,6 +107,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
+      //  ? should these be views instead?
       AddEventHeadMeta(
           tecTitle: _tecTitle,
           tecSubtitle: _tecSubtitle,

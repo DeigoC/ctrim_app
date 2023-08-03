@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'information/belfast_church_page.dart';
 import 'information/north_coast_church_page.dart';
 import 'information/portadown_church_page.dart';
+import 'information/teachings/bible_reading_page.dart';
+import 'information/teachings/love_page.dart';
+import 'information/teachings/prayer_page.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({super.key, required this.tabController});
@@ -47,10 +50,12 @@ class _InformationHomeState extends State<InformationHome> {
         child: ListView(children: const [
           // Image.network('https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'),
           SizedBox(height: 32),
-          Text(
-              'Christ the Redeemer International Ministries is dedicated and committed to making true disciples who will passionately advance the Kingdom of God.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18)),
+          Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                  'Christ the Redeemer International Ministries is dedicated and committed to making true disciples who will passionately advance the Kingdom of God.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18))),
           SizedBox(height: 32),
           Divider(thickness: 1),
           SizedBox(height: 32),
@@ -167,5 +172,18 @@ class _InformationHomeState extends State<InformationHome> {
     }
   }
 
-  void _onTeachingTap(final String teaching) {}
+  void _onTeachingTap(final String teaching) {
+    switch (teaching) {
+      case 'Prayer':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerPage()));
+        break;
+      case 'Love':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const LovePage()));
+        break;
+      case 'Reading the Bible':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const BibleReadingPage()));
+        break;
+      default:
+    }
+  }
 }

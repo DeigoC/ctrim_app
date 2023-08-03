@@ -1,10 +1,30 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import '../../../widgets/info/info_appbar.dart';
 
 class LovePage extends StatelessWidget {
   const LovePage({super.key});
 
+  static const String _json = r"""
+[{"insert":"The topic of love is central to Christianity, and the Bible contains numerous references that emphasize its significance in the life of a Christian. Here are some reasons why love is crucial for Christians:\n\nGod's Love: The Bible repeatedly speaks of God's love for humanity. One of the most well-known verses is John 3:16, which states, \"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.\" God's love is the foundation of Christian faith, and it serves as an example for believers to follow.\n\nCommand to Love: Jesus emphasized the importance of love in the New Testament. In Matthew 22:37-39, He summarized the greatest commandments, saying, \"Love the Lord your God with all your heart and with all your soul and with all your mind. This is the first and greatest commandment. And the second is like it: 'Love your neighbor as yourself.'\" Christians are called to love both God and their fellow human beings.\n\nLove as a Fruit of the Spirit: In Galatians 5:22-23, love is listed as one of the fruits of the Holy Spirit. This implies that love should naturally manifest in the lives of believers who are filled with the Spirit.\n\nUnity and Fellowship: Love fosters unity and fellowship among Christians. In 1 Peter 4:8, it says, \"Above all, love each other deeply because love covers over a multitude of sins.\" Love enables believers to support and care for one another, creating a strong and supportive community.\n\nLove for Enemies: Jesus challenged His followers to love even their enemies (Matthew 5:44). This radical form of love demonstrates the transformative power of Christ's teachings and showcases God's love to the world.\n\nLove in Action: The Bible stresses the importance of not merely professing love but demonstrating it through actions. 1 John 3:18 urges believers to love not with words or speech but with actions and truth.\n\nSelfless Love: Christians are encouraged to love selflessly, as Christ loved them. In John 15:13, Jesus said, \"Greater love has no one than this: to lay down one's life for one's friends.\" Following Jesus' example, believers are called to sacrificially love others.\n\nLove and Forgiveness: Love is intrinsically linked to forgiveness. Colossians 3:13 emphasizes that Christians should forgive others as the Lord forgave them, promoting reconciliation and healing.\n\nLove in Marriage and Relationships: The Bible provides guidance on love within the context of marriage and relationships. Ephesians 5:25 instructs husbands to love their wives as Christ loved the church, setting an example of sacrificial and caring love.\n\nLove as a Witness: Jesus said that people will recognize His followers by their love for one another (John 13:35). Love serves as a powerful witness to the world, drawing others to the message of Christ's love and salvation.\n\nIn conclusion, love is a fundamental aspect of Christianity, reflecting God's character and commandments. It is a transformative force that unites believers, empowers them to serve others, and serves as a powerful testimony of God's love to the world.\n"}]""";
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Love')));
+    final quill.QuillController controller = quill.QuillController(
+        document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
+
+    return Scaffold(
+        appBar: AppBar(
+          actions: const [InfoAction(json: _json)],
+        ),
+        body: SingleChildScrollView(
+            child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
+            const SizedBox(height: 32)
+          ]),
+        )));
   }
 }

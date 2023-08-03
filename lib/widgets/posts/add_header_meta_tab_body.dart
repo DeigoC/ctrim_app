@@ -30,6 +30,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           controller: widget.tecSubtitle,
           onChanged: widget.onRequiredFieldChange,
           maxLength: 128,
+          maxLines: null,
           decoration: const InputDecoration(label: Text('Subtitle'), hintText: 'The synopsis of the post'),
         ),
         _buildContributorSection(),
