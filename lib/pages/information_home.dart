@@ -1,3 +1,5 @@
+import 'package:ctrim_app/pages/information/teachings/family_page.dart';
+import 'package:ctrim_app/pages/information/teachings/money_page.dart';
 import 'package:flutter/material.dart';
 
 import 'information/belfast_church_page.dart';
@@ -24,8 +26,8 @@ class _InformationHomeState extends State<InformationHome> {
               SliverAppBar(
                   title: const Text('CTRIM'),
                   centerTitle: false,
-                  snap: true,
                   floating: true,
+                  snap: true,
                   leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight),
                   bottom: TabBar(
                       controller: widget.tabController,
@@ -127,37 +129,32 @@ class _InformationHomeState extends State<InformationHome> {
 
   Widget _buildTeachingSlot(final String teaching, final String img) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-        child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.4,
-            width: double.infinity,
-            child: Stack(children: [
-              Positioned.fill(
-                  child: ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(32)),
-                      child: Image.asset('assets/images/$img', fit: BoxFit.cover))),
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.all(Radius.circular(32)),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _onTeachingTap(teaching),
-                    ),
-                  ),
-                ),
-              ),
-              Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(teaching, style: const TextStyle(fontSize: 32, color: Colors.white))))
-            ])),
-      ),
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+        child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                width: double.infinity,
+                child: Stack(children: [
+                  Positioned.fill(
+                      child: ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(32)),
+                          child: Image.asset('assets/images/$img', fit: BoxFit.cover))),
+                  Positioned.fill(
+                      child: ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(32)),
+                          child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => _onTeachingTap(teaching),
+                              )))),
+                  Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(teaching, style: const TextStyle(fontSize: 32, color: Colors.white))))
+                ]))));
   }
 
   // * Logic
@@ -182,6 +179,12 @@ class _InformationHomeState extends State<InformationHome> {
         break;
       case 'Reading the Bible':
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BibleReadingPage()));
+        break;
+      case 'Family':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const FamilyPage()));
+        break;
+      case 'Money':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MoneyPage()));
         break;
       default:
     }

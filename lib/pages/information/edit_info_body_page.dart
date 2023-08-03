@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -31,19 +32,23 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: _buildBody(),
-        appBar: AppBar(title: const Text('Edit Body'), actions: [
-          IconButton(
-              onPressed: () {
-                final rawJson = _controller.document.toDelta().toJson();
-                final exampleJson = jsonEncode(rawJson);
-                Clipboard.setData(ClipboardData(text: exampleJson)).then(
-                    (_) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Json saved!'))));
-                debugPrint(exampleJson);
-              },
-              icon: const Icon(Icons.copy_all))
-        ]));
+    return WillPopScope(
+      onWillPop: () async => DialogManager.showConfirmationDialog(
+          context: context, title: 'Leave?', content: 'Make sure you have copied the json!'),
+      child: Scaffold(
+          body: _buildBody(),
+          appBar: AppBar(title: const Text('Edit Body'), actions: [
+            IconButton(
+                onPressed: () {
+                  final rawJson = _controller.document.toDelta().toJson();
+                  final exampleJson = jsonEncode(rawJson);
+                  Clipboard.setData(ClipboardData(text: exampleJson)).then(
+                      (_) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Json saved!'))));
+                  debugPrint(exampleJson);
+                },
+                icon: const Icon(Icons.copy_all))
+          ])),
+    );
   }
 
   Widget _buildBody() {

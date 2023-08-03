@@ -14,16 +14,16 @@ class BibleReadingPage extends StatelessWidget {
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
 
     return Scaffold(
-        appBar: AppBar(
-          actions: const [InfoAction(json: _json)],
-        ),
-        body: SingleChildScrollView(
-            child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
-            const SizedBox(height: 32)
-          ]),
-        )));
+        body: CustomScrollView(slivers: [
+      const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
+      SliverToBoxAdapter(
+          child: SingleChildScrollView(
+              child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
+                    const SizedBox(height: 32)
+                  ]))))
+    ]));
   }
 }
