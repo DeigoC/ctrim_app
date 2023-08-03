@@ -7,25 +7,37 @@ import 'package:video_player/video_player.dart';
 import '../../utility/app_context.dart';
 
 class MyVideoPlayer extends StatefulWidget {
-  const MyVideoPlayer({super.key, required this.src, required this.postID});
+  const MyVideoPlayer(
+      {super.key,
+      required this.src,
+      required this.postID,
+      required this.onLockTap,
+      required this.videoPlayerController,
+      required this.showControls});
   final String src, postID;
+  final bool showControls;
+  final Function onLockTap;
+  final VideoPlayerController videoPlayerController;
 
   @override
   State<MyVideoPlayer> createState() => _MyVideoPlayerState();
 }
 
 class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProviderStateMixin {
-  late final VideoPlayerController _videoController;
-  late final Future<void> _initialiseVideo;
-
   late AnimationController _videoPlaybackAnimationController;
   late Animation<double> animation;
 
   @override
   void initState() {
-    _videoController = VideoPlayerController.network(widget.src);
-    _initialiseVideo = _videoController.initialize();
-    _videoController.setLooping(true);
+    if (widget.videoPlayerController.value.isInitialized &&
+        !widget.videoPlayerController.value.isPlaying &&
+        widget.videoPlayerController.value.position != Duration.zero) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _videoPlaybackAnimationController.forward();
+      });
+    }
+
+    widget.videoPlayerController.setLooping(true);
 
     _videoPlaybackAnimationController = AnimationController(
       vsync: this,
@@ -38,56 +50,67 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProvider
 
   @override
   void dispose() {
-    _videoController.dispose();
-    _videoPlaybackAnimationController.dispose();
+    // widget.videoPlayerController.pause();
+    // widget.videoPlayerController.seekTo(Duration.zero);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: FutureBuilder(
-          future: _initialiseVideo,
-          builder: (_, snap) {
-            List<Widget> children = [_buildThumbnailLoader()];
+    return widget.videoPlayerController.value.isInitialized ? _buildVideoPlayer() : _buildVideoInitialiser();
+  }
 
-            if (snap.connectionState == ConnectionState.done) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _videoController.play();
-              });
+  Widget _buildVideoInitialiser() {
+    debugPrint('initialising the video for: ${widget.src}');
+    return FutureBuilder(
+        future: widget.videoPlayerController.initialize(),
+        builder: (_, snap) {
+          Widget result = _buildThumbnailLoader();
 
-              children = [
-                Flexible(
-                    child: AspectRatio(
-                        aspectRatio: _videoController.value.aspectRatio,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            VideoPlayer(_videoController),
-                            IconButton(
-                                onPressed: _onIconClick,
-                                icon: AnimatedIcon(
-                                  icon: AnimatedIcons.pause_play,
-                                  progress: animation,
-                                  color: Colors.white,
-                                ))
-                          ],
-                        ))),
-              ];
-            } else if (snap.hasError) {
-              children = [
-                const Text(
-                  'Something went wrong!',
-                  textAlign: TextAlign.center,
-                )
-              ];
-            }
+          if (snap.connectionState == ConnectionState.done) {
+            result = _buildVideoPlayer();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              widget.videoPlayerController.play();
+            });
+          } else if (snap.hasError) {
+            debugPrint('something went wrong with video initialiser: ${snap.error}');
+            result = const Center(child: Text('Something went wrong'));
+          }
 
-            return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: children);
-          }),
+          return result;
+        });
+  }
+
+  Widget _buildVideoPlayer() {
+    final List<Widget> children = [
+      Flexible(
+        child: AspectRatio(
+            aspectRatio: widget.videoPlayerController.value.aspectRatio,
+            child: Stack(alignment: Alignment.center, children: [
+              VideoPlayer(widget.videoPlayerController),
+              Positioned(
+                  bottom: 0,
+                  width: MediaQuery.of(context).size.width,
+                  child: VideoProgressIndicator(widget.videoPlayerController, allowScrubbing: true)),
+              widget.showControls
+                  ? IconButton(
+                      onPressed: _onIconClick,
+                      icon: AnimatedIcon(
+                          icon: AnimatedIcons.pause_play, progress: animation, size: 32, color: Colors.white))
+                  : Container()
+            ])),
+      )
+    ];
+
+    return InkWell(
+      onTap: () {
+        widget.onLockTap();
+      },
+      splashColor: Colors.transparent,
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: children),
     );
   }
 
@@ -102,16 +125,19 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProvider
       children.insert(0, Positioned.fill(child: Hero(tag: widget.postID + widget.src, child: Image.file(file))));
     }
 
-    return Expanded(child: Stack(alignment: Alignment.center, children: children));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [Expanded(child: Stack(alignment: Alignment.center, children: children))],
+    );
   }
 
   void _onIconClick() {
-    if (_videoController.value.isPlaying) {
-      _videoController.pause();
+    if (widget.videoPlayerController.value.isPlaying) {
+      widget.videoPlayerController.pause();
       _videoPlaybackAnimationController.forward();
     } else {
       // ? Idk about buffering
-      _videoController.play();
+      widget.videoPlayerController.play();
       _videoPlaybackAnimationController.reverse();
     }
   }

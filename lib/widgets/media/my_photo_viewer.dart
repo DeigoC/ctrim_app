@@ -20,7 +20,7 @@ class MyPhotoViewer extends StatelessWidget {
     final ImageProvider image = (file.existsSync() ? FileImage(file) : NetworkImage(src)) as ImageProvider;
     return InkWell(
       onTap: () {
-        debugPrint('tap once');
+        // debugPrint('tap once');
         onLockTap();
       },
       child: PhotoView(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import '../widgets/media/my_photo_viewer.dart';
 import '../widgets/media/my_video_player.dart';
@@ -17,14 +18,27 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
   late final PageController _pageController;
   bool _dismissed = false, _lockScreen = false;
 
+  final Map<String, VideoPlayerController> _videoControllers = {};
+
   @override
   void initState() {
     _pageController = PageController(initialPage: widget.initialIndex);
+
+    for (final entry in widget.media) {
+      if (entry['type'] == 'vid') {
+        _videoControllers[entry['src']!] = VideoPlayerController.network(entry['src']!);
+      }
+    }
+
     super.initState();
   }
 
   @override
   void dispose() {
+    for (final vidController in _videoControllers.values) {
+      vidController.dispose();
+    }
+
     _pageController.dispose();
     super.dispose();
   }
@@ -59,6 +73,20 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     return SafeArea(
         top: false,
         child: PageView.builder(
+            onPageChanged: (newIndex) {
+              debugPrint('the new index is $newIndex');
+              for (var videoPlayer in _videoControllers.values) {
+                // pause all videos that aren't the current one being switched to
+                if (videoPlayer.value.isInitialized &&
+                    widget.media.indexWhere((entry) => entry['src']!.compareTo(videoPlayer.dataSource) == 0) !=
+                        newIndex) {
+                  videoPlayer.pause();
+                  videoPlayer.seekTo(Duration.zero);
+                } else {
+                  videoPlayer.play();
+                }
+              }
+            },
             physics: _lockScreen ? const NeverScrollableScrollPhysics() : null,
             itemCount: widget.media.length,
             controller: _pageController,
@@ -109,6 +137,11 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
               leading: const Icon(Icons.photo_library, color: Colors.white)),
         )
       ]);
+    } else {
+      children.add(const Align(
+        alignment: Alignment.bottomCenter,
+        child: ListTile(leading: Icon(Icons.lock, color: Colors.white)),
+      ));
     }
 
     return Stack(
@@ -122,13 +155,14 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     final String type = thisEntry['type']!;
 
     if (type.compareTo('vid') == 0) {
-      return MyVideoPlayer(src: thisMediaSrc, postID: widget.postId);
+      return MyVideoPlayer(
+          src: thisMediaSrc,
+          postID: widget.postId,
+          onLockTap: _onLockTap,
+          showControls: !_lockScreen,
+          videoPlayerController: _videoControllers[thisMediaSrc]!);
     } else if (type.compareTo('img') == 0) {
-      return MyPhotoViewer(
-        src: thisMediaSrc,
-        postID: widget.postId,
-        onLockTap: _onLockTap,
-      );
+      return MyPhotoViewer(src: thisMediaSrc, postID: widget.postId, onLockTap: _onLockTap);
     }
 
     return const Center(child: Text('Something went wrong'));
