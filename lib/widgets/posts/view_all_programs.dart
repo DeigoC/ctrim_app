@@ -1,6 +1,8 @@
+import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/user.dart';
 import '../../pages/events/add_program_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
@@ -72,12 +74,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                   label: const Text('Add Program')))));
     }
 
-    return SafeArea(
-      top: false,
-      child: Column(
-        children: children,
-      ),
-    );
+    return SafeArea(top: false, child: Column(children: children));
   }
 
   Widget _buildEventDateSelector() {
@@ -91,21 +88,24 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       }
     }
 
+    final List<Widget> children = [
+      ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
+      const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
+    ];
+
+    if (DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0) {
+      children.add(Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: ElevatedButton.icon(
+            onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
+      ));
+    }
+
+    children.add(const Divider(thickness: 1));
+
     return InkWell(
-      onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
-        const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: ElevatedButton.icon(
-              onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
-        ),
-        const Divider(
-          thickness: 1,
-        ),
-      ]),
-    );
+        onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
   void _showProgramDialog(final Map<String, dynamic> programEntry) {
@@ -196,7 +196,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     });
   }
 
-  void _onRemindEventClick() {}
+  void _onRemindEventClick() {
+    // in theory, there should be an event date start and end (or all day)
+    final String description =
+        '${widget.eventContext.head.subtitle}\n\n***************\nPlease keep track of the event via the CTRIM app for any updates. Thank you! 🙏 \n***************';
+    // remember about the online event url, we'll add it to the description another time.
+    final Event event = Event(
+      title: widget.eventContext.head.title,
+      description: description,
+      location: widget.eventContext.head.location,
+      startDate: widget.eventContext.head.eventDate!,
+      endDate:
+          widget.eventContext.program.finishTime ?? widget.eventContext.head.eventDate!.add(const Duration(hours: 1)),
+      allDay: widget.eventContext.program.allDay,
+    );
+    Add2Calendar.addEvent2Cal(event);
+  }
 
   void _onEditPostProgram() {
     Navigator.push(

@@ -67,6 +67,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
   Widget _buildWithDismissible(int index) {
     return Dismissible(
+        movementDuration: const Duration(milliseconds: 900),
         direction: DismissDirection.vertical,
         dismissThresholds: const {DismissDirection.vertical: 0.4},
         onUpdate: (details) {
