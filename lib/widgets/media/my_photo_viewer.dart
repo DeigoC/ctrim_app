@@ -5,9 +5,10 @@ import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 
 class MyPhotoViewer extends StatelessWidget {
-  const MyPhotoViewer({super.key, required this.src, required this.postID});
+  const MyPhotoViewer({super.key, required this.src, required this.postID, required this.onLockTap});
   final String src;
   final String postID;
+  final Function onLockTap;
 
   // in theory the file already exists in cache
   @override
@@ -17,6 +18,21 @@ class MyPhotoViewer extends StatelessWidget {
     final fullPath = '$cacheDir/$sanitisedFilePath.png';
     final file = File(fullPath);
     final ImageProvider image = (file.existsSync() ? FileImage(file) : NetworkImage(src)) as ImageProvider;
-    return PhotoView(imageProvider: image, heroAttributes: PhotoViewHeroAttributes(tag: postID + src));
+    return InkWell(
+      onTap: () {
+        debugPrint('tap once');
+        onLockTap();
+      },
+      child: PhotoView(
+        imageProvider: image,
+        heroAttributes: PhotoViewHeroAttributes(tag: postID + src),
+        scaleStateChangedCallback: (value) {
+          // debugPrint('zooming: ${value.isScaleStateZooming}');
+        },
+        onScaleEnd: (context, details, controllerValue) {
+          // debugPrint('scale end');
+        },
+      ),
+    );
   }
 }

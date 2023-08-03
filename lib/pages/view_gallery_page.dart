@@ -15,7 +15,7 @@ class ViewGalleryPage extends StatefulWidget {
 
 class _ViewGalleryPageState extends State<ViewGalleryPage> {
   late final PageController _pageController;
-  bool _dismissed = false;
+  bool _dismissed = false, _lockScreen = false;
 
   @override
   void initState() {
@@ -32,9 +32,11 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-        ),
+        // appBar: !_lockScreen
+        //     ? AppBar(
+        //         backgroundColor: Colors.transparent,
+        //       )
+        //     : null,
         body: _buildBody(),
         backgroundColor: Colors.black);
   }
@@ -57,43 +59,85 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     return SafeArea(
         top: false,
         child: PageView.builder(
+            physics: _lockScreen ? const NeverScrollableScrollPhysics() : null,
             itemCount: widget.media.length,
             controller: _pageController,
-            itemBuilder: (_, index) {
-              final Map<String, String> thisEntry = widget.media[index];
-              return Dismissible(
-                  direction: DismissDirection.vertical,
-                  dismissThresholds: const {DismissDirection.vertical: 0.4},
-                  onUpdate: (details) {
-                    if (details.progress >= 0.4 && !_dismissed) {
-                      // debugPrint('Reached beyond 0.4');
-                      _dismissed = true;
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  key: Key(thisEntry['src']!),
-                  child: Column(children: [
-                    Flexible(child: _buildMedia(thisEntry)),
-                    ListTile(
-                        title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
-                        leading: const Icon(Icons.photo_library, color: Colors.white))
-                  ]),
-                  onDismissed: (_) {
-                    Navigator.of(context).pop();
-                  });
-            }));
+            itemBuilder: (_, index) => _lockScreen ? _buildMediaBody(index) : _buildWithDismissible(index)));
   }
 
-  Widget _buildMedia(final Map<String, String> thisEntry) {
+  Widget _buildWithDismissible(int index) {
+    return Dismissible(
+        direction: DismissDirection.vertical,
+        dismissThresholds: const {DismissDirection.vertical: 0.4},
+        onUpdate: (details) {
+          if (details.progress >= 0.4 && !_dismissed) {
+            // debugPrint('Reached beyond 0.4');
+            _dismissed = true;
+            Navigator.of(context).pop();
+          }
+        },
+        key: Key(index.toString()),
+        child: _buildMediaBody(index),
+        onDismissed: (_) {
+          Navigator.of(context).pop();
+        });
+  }
+
+  Widget _buildMediaBody(int index) {
+    final Map<String, String> thisEntry = widget.media[index];
+    final List<Widget> children = [
+      Positioned.fill(child: _buildMediaView(thisEntry)),
+    ];
+
+    if (!_lockScreen) {
+      children.addAll([
+        Align(
+            alignment: Alignment.topCenter,
+            child: SafeArea(
+              child: SizedBox(
+                height: kToolbarHeight,
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                ),
+              ),
+            )),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: ListTile(
+              title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.photo_library, color: Colors.white)),
+        )
+      ]);
+    }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: children,
+    );
+  }
+
+  Widget _buildMediaView(final Map<String, String> thisEntry) {
     final String thisMediaSrc = thisEntry['src']!;
     final String type = thisEntry['type']!;
 
     if (type.compareTo('vid') == 0) {
       return MyVideoPlayer(src: thisMediaSrc, postID: widget.postId);
     } else if (type.compareTo('img') == 0) {
-      return MyPhotoViewer(src: thisMediaSrc, postID: widget.postId);
+      return MyPhotoViewer(
+        src: thisMediaSrc,
+        postID: widget.postId,
+        onLockTap: _onLockTap,
+      );
     }
 
     return const Center(child: Text('Something went wrong'));
+  }
+
+  // * Logic
+  void _onLockTap() {
+    // we will rerbuild without the appbar, with lock scoll physics and without the dismissable
+    setState(() {
+      _lockScreen = !_lockScreen;
+    });
   }
 }
