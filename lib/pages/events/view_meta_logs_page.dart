@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
@@ -69,37 +66,6 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           const Padding(
               padding: EdgeInsets.only(left: 16.0, bottom: 16),
               child: Text('Update Logs', style: TextStyle(fontSize: 16))),
-          ListTile(
-            title: const Text('Test Part of the Post'),
-            leading: const Icon(Icons.science),
-            onTap: () async {
-              // _onTestBody();
-              // _onTestProgramDetails();
-              // _onTestProgramRoles();
-              // _onTestMedia();
-              // _onTestLogs();
-              // _onTestMetaData();
-              final String result = widget.eventContext.transformPostToTxtFile();
-              // debugPrint(result);
-
-              final File tempF = File('${(await getTemporaryDirectory()).path}/postTest.txt');
-              await tempF.writeAsString(result);
-
-              // const LineSplitter ls = LineSplitter();
-              final content = await tempF.readAsLines();
-              for (var line in content) {
-                debugPrint(line);
-              }
-
-              // final dataTest = ls.convert(content);
-              // EventContext.viewing(eventHead: widget.eventContext.head, data: content);
-
-              // debugPrint('Finished!');
-              // ! Time for a critical test:
-              // save the result to file and then try to create a new event context with the data and see if it
-              // just initialises as normal!
-            },
-          ),
         ])),
         SliverList.builder(
             itemCount: widget.eventContext.log.logs.length,

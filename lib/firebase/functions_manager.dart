@@ -39,11 +39,14 @@ class CloudFunctionManager {
     if (!kDebugMode) {
       final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
       final result = await callable.call(callParams);
-
       debugPrint(result.data.toString());
     } else {
       debugPrint('in debug - send_notification_to_multiple_tokens was meant to be called');
     }
+
+    // final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
+    // final result = await callable.call(callParams);
+    // debugPrint(result.data.toString());
   }
 
   Future<void> sendToTopic(
@@ -71,6 +74,10 @@ class CloudFunctionManager {
     } else {
       debugPrint('in debug - send_to_topic was meant to be called');
     }
+
+    // final HttpsCallable callable = _inst.httpsCallable('send_to_topic');
+    // final result = await callable.call(callParams);
+    // debugPrint(result.data.toString());
   }
 
   List<String> _convertMapToKeyValueStrings(final Map<String, String> data) {

@@ -38,11 +38,15 @@ class ViewEventMediaTab extends StatelessWidget {
               icon: const Icon(Icons.photo_album))));
     }
 
-    return SafeArea(
-      top: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
+    return MediaQuery.removePadding(
+      context: context,
+      removeTop: true,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
       ),
     );
   }

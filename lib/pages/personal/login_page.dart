@@ -31,27 +31,19 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(8),
-        children: [
+        appBar: AppBar(title: const Text('Login')),
+        body: ListView(padding: const EdgeInsets.all(8), children: [
           TextField(
-            controller: _tecEmail,
-            decoration: const InputDecoration(label: Text('Email'), hintText: "It's what you use for your app store"),
-            onSubmitted: (_) => _fnPassword.requestFocus(),
-          ),
+              controller: _tecEmail,
+              decoration: const InputDecoration(label: Text('Email'), hintText: "It's what you use for your app store"),
+              onSubmitted: (_) => _fnPassword.requestFocus()),
           TextField(
-            controller: _tecPassword,
-            decoration: const InputDecoration(label: Text('Password'), hintText: 'Ask your admin if forgotten'),
-            onSubmitted: (_) => _fnPassword.unfocus(),
-            obscureText: true,
-          ),
+              controller: _tecPassword,
+              decoration: const InputDecoration(label: Text('Password'), hintText: 'Ask your admin if forgotten'),
+              onSubmitted: (_) => _fnPassword.unfocus(),
+              obscureText: true),
           ElevatedButton(onPressed: () => _onLoginClick(), child: const Text('Login'))
-        ],
-      ),
-    );
+        ]));
   }
 
   void _onLoginClick() {
@@ -63,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
 
         // ? i think it's much safer to just grab the token from the offical API instead of using
         // a potentially outdated one?
-        if (kDebugMode) {
+        if (!kDebugMode) {
           debugPrint('setting contact token as $token');
           _userContactDBManager.addTokenToUser(id, token);
           appContext.setCurrentUser(id);

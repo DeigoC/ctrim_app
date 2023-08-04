@@ -3,28 +3,36 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../pages/events/edit_body_page.dart';
 import '../../utility/event_context.dart';
 
-class ViewPostBody extends StatelessWidget {
+class ViewPostBody extends StatefulWidget {
   const ViewPostBody({super.key, required this.eventContext, required this.updateBody, required this.currentUID});
   final EventContext eventContext;
   final Function updateBody;
   final String currentUID;
 
   @override
+  State<ViewPostBody> createState() => _ViewPostBodyState();
+}
+
+class _ViewPostBodyState extends State<ViewPostBody> {
+  @override
   Widget build(BuildContext context) {
     final quill.QuillController controller = quill.QuillController(
-        document: quill.Document.fromJson(eventContext.body), selection: const TextSelection.collapsed(offset: 0));
+        document: quill.Document.fromJson(widget.eventContext.body),
+        selection: const TextSelection.collapsed(offset: 0));
     return _buildBodyWithData(controller, context);
   }
 
   Widget _buildBodyWithData(final quill.QuillController controller, BuildContext context) {
     final List<Widget> children = [
       Expanded(
-          child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: quill.QuillEditor.basic(controller: controller, readOnly: true)))
+          child: SingleChildScrollView(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16),
+                  child: quill.QuillEditor.basic(controller: controller, readOnly: true))))
     ];
 
-    if (eventContext.isCurrentUserContributor(currentUID) || eventContext.isCurrentUserAuthor(currentUID)) {
+    if (widget.eventContext.isCurrentUserContributor(widget.currentUID) ||
+        widget.eventContext.isCurrentUserAuthor(widget.currentUID)) {
       children.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: ElevatedButton.icon(
@@ -33,19 +41,18 @@ class ViewPostBody extends StatelessWidget {
               label: const Text('Edit Text'))));
     }
 
-    return SafeArea(
-      top: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
-      ),
-    );
+    return SafeArea(top: false, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
   // * LOGIC
   void _onEditBodyClick(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: eventContext))).then((_) {
-      updateBody();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
+        .then((_) {
+      widget.updateBody();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // how annoying!
+        setState(() {});
+      });
     });
   }
 }

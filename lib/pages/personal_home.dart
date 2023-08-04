@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../firebase/functions_manager.dart';
+// import '../firebase/functions_manager.dart';
 import '../utility/app_context.dart';
 import 'personal/login_page.dart';
 import 'personal/view_bookmarked_page.dart';
@@ -15,7 +15,7 @@ class PersonalHome extends StatefulWidget {
 }
 
 class _PersonalHomeState extends State<PersonalHome> {
-  final CloudFunctionManager _functionManager = CloudFunctionManager();
+  // final CloudFunctionManager _functionManager = CloudFunctionManager();
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
 
   @override
@@ -35,21 +35,27 @@ class _PersonalHomeState extends State<PersonalHome> {
         //   leading: const Icon(Icons.science),
         //   onTap: () => _showFCMTest().then((result) => debugPrint('Result is $result')),
         // )
-        ListTile(
-            title: const Text('Send to Devices'),
-            leading: const Icon(Icons.send_to_mobile),
-            onTap: () {
-              _functionManager.sendMessageToSelectedTokens(
-                  tokens: [
-                    'dvCfNRzI80t1t1BWCdz--9:APA91bH86KrqzB7e0zUVvl-Yolsj0cntGQNfkd8AN4TfKOzZwSnkPQCBODODJoSc3OAtbS86JmqsHhamf0BPFzRgiC2UUHjn0Hvw_n_SBugKPLeEoQ3yZdAmbX-At_aTLAXUZXRdshU0',
-                    'dnH1XfQFQn-tS8DZwYXw9e:APA91bE6jOjOAlw4K-AiAnIcY5zn_xV4w4zbDaaihjTlVNosR0PhLMy9HHVhDT0LVFaquZeFwtlJRkGtzrMNqkNIoifq6IXaiJw3a3zhq9ah1YRAxIYI-oYP3D_Tqihk6DJ8Wbycz_Ic'
-                  ],
-                  title: 'Click for Love page',
-                  body: "This is to test the FCM feature of opening pages. Let's see how it fairs",
-                  iOSImage: 'https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg',
-                  androidImage: 'https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg',
-                  data: {'InfoPage': 'love'});
-            }),
+        // ListTile(
+        //     title: const Text('Send to Topic - Love'),
+        //     leading: const Icon(Icons.send_to_mobile),
+        //     onTap: () {
+        //       // _functionManager.sendMessageToSelectedTokens(
+        //       //     tokens: [
+        //       //       'dvCfNRzI80t1t1BWCdz--9:APA91bH86KrqzB7e0zUVvl-Yolsj0cntGQNfkd8AN4TfKOzZwSnkPQCBODODJoSc3OAtbS86JmqsHhamf0BPFzRgiC2UUHjn0Hvw_n_SBugKPLeEoQ3yZdAmbX-At_aTLAXUZXRdshU0',
+        //       //       'dnH1XfQFQn-tS8DZwYXw9e:APA91bE6jOjOAlw4K-AiAnIcY5zn_xV4w4zbDaaihjTlVNosR0PhLMy9HHVhDT0LVFaquZeFwtlJRkGtzrMNqkNIoifq6IXaiJw3a3zhq9ah1YRAxIYI-oYP3D_Tqihk6DJ8Wbycz_Ic'
+        //       //     ],
+        //       //     title: 'Click for Love page',
+        //       //     body: "This is to test the FCM feature of opening pages. Let's see how it fairs",
+        //       //     iOSImage: 'https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg',
+        //       //     androidImage: 'https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg',
+        //       //     data: {'InfoPage': 'love'});
+
+        //       _functionManager.sendToTopic(
+        //           topic: 'post-1',
+        //           title: 'You will look at a post',
+        //           body: 'Lets see if this actually works, do we have the option to look at love?',
+        //           data: {'PostID': '2'});
+        //     }),
         // ListTile(
         //     title: const Text('Send to Topic'),
         //     leading: const Icon(Icons.people_alt),
