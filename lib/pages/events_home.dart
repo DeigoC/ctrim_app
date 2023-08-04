@@ -16,6 +16,7 @@ class ViewEventsHome extends StatelessWidget {
         SliverAppBar(
             title: const Text('Bulletin'),
             centerTitle: false,
+            floating: true,
             leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
         SliverList.separated(
             itemCount: appContext.eventHeads.length,

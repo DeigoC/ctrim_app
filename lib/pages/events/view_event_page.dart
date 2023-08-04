@@ -93,7 +93,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
             if (data.isNotEmpty) {
               debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
-              _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data, currentUID: _currentUID);
+              _eventContext = EventContext.viewing(
+                  eventHead: widget.eventHead, data: data, currentUID: _currentUID, viewingChild: widget.viewingChild);
               _haveFetchedPost = true;
 
               _figureOutTabs();
@@ -244,7 +245,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final logs = await dbManager.fetchLog();
     final body = await dbManager.fetchBody();
 
-    _eventContext = EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID);
+    _eventContext =
+        EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID, viewingChild: widget.viewingChild);
     _eventContext.setFetchedMedia(media);
     _eventContext.setFetchedMetadata(meta);
     _eventContext.setFetchedProgram(program);
