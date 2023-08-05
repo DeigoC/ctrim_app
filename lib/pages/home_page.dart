@@ -36,12 +36,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
-    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-    analytics.logAppOpen();
-
     _informationTabController = TabController(length: 3, vsync: this);
 
     if (!kDebugMode) {
+      final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+      analytics.logAppOpen();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
       });

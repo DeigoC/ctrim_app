@@ -27,7 +27,7 @@ class _ViewPostBodyState extends State<ViewPostBody> {
       Expanded(
           child: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16),
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 8),
                   child: quill.QuillEditor.basic(controller: controller, readOnly: true))))
     ];
 

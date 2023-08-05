@@ -1,12 +1,12 @@
-import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
-import 'package:ctrim_app/models/user_contact.dart';
-import 'package:ctrim_app/utility/app_context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
+import '../../firebase/db_managers/user_contact_db_manager.dart';
+import '../../models/user_contact.dart';
+import '../../utility/app_context.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
