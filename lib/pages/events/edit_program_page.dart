@@ -109,6 +109,13 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(height: 16),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Update')),
+        ElevatedButton.icon(
+          onPressed: _onDeleteTap,
+          icon: const Icon(Icons.delete),
+          label: const Text('Delete'),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+        ),
+        const SizedBox(height: 32)
       ],
     );
   }
@@ -327,12 +334,38 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   void _saveAllChanges() {
+    _sortNotifications();
     widget.programEntry['uids'] = _selectedUsers;
     widget.programEntry['detail'] = _tecDetail.text.trim();
     widget.programEntry['title'] = _tecTitle.text.trim();
     widget.programEntry['start'] = _start;
     widget.programEntry['end'] = _end;
     widget.programEntry['for_guests'] = _forGuests;
-    widget.programEntry['priority'] = _end;
+    widget.programEntry['priority'] = 1; // ! remember to change this!
+  }
+
+  void _sortNotifications() {
+    final List<String> originalList = List<String>.from(widget.programEntry['uids']);
+    final String originalRoleTitle = widget.programEntry['title'];
+
+    // figure out the removed members
+    for (final originalUID in originalList) {
+      if (!_selectedUsers.contains(originalUID)) {
+        debugPrint('Sending role removal to ID: $originalUID');
+        widget.eventContext.addRoleRemovalNotification(uid: originalUID, roleTitle: originalRoleTitle);
+      }
+    }
+
+    // figure out the new members
+    for (final currentlySelectedUID in _selectedUsers) {
+      if (!originalList.contains(currentlySelectedUID)) {
+        debugPrint('Sending role addition to ID: $currentlySelectedUID');
+        widget.eventContext.addRoleAdditionNotification(uid: currentlySelectedUID, roleTitle: _tecTitle.text.trim());
+      }
+    }
+  }
+
+  void _onDeleteTap() {
+    // remember to send all from the original about the removal of role
   }
 }

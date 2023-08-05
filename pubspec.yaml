@@ -4,14 +4,15 @@ description: A new Flutter project.
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-# version: 0.1.0+2 # iOS
-version: 0.1.0+1 # Android
+version: 0.2.0+3 # iOS
+# version: 0.2.0+2 # Android
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
 
 dependencies:
   # chewie: ^1.5.0
+  add_2_calendar: ^2.2.4
   avatar_stack: ^1.2.0
   cloud_firestore: ^4.8.1
   cloud_functions: ^4.3.4
@@ -25,6 +26,7 @@ dependencies:
     sdk: flutter
   flutter_quill: ^7.2.4
   flutter_quill_extensions: ^0.3.2
+  http: ^0.13.6
   intl: ^0.18.0
   path_provider: ^2.0.15
   photo_view: ^0.14.0

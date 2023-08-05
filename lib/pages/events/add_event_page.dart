@@ -28,7 +28,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   // a log is created when uploading as well that higlights the publication of the app.
 
   // * The optional variables
-  final List<String> _contributorUIDs = List.empty(growable: true);
+  final List<String> _contributorUIDs = List<String>.empty(growable: true);
   DateTime? _eventDate;
 
   @override
@@ -48,8 +48,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody()),
-    );
+        body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody()));
   }
 
   List<Widget> _buildHeaderSliver() {
@@ -76,22 +75,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               labelColor: Colors.black,
               controller: _tabController,
               tabs: const [
-                Tab(
-                  icon: Icon(Icons.info_outline),
-                  text: 'Header',
-                ),
-                Tab(
-                  icon: Icon(Icons.note),
-                  text: 'Body',
-                ),
-                Tab(
-                  icon: Icon(Icons.calendar_today),
-                  text: 'Program',
-                ),
-                Tab(
-                  icon: Icon(Icons.photo_album),
-                  text: 'Media',
-                ),
+                Tab(icon: Icon(Icons.info_outline), text: 'Header'),
+                Tab(icon: Icon(Icons.note), text: 'Body'),
+                Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
+                Tab(icon: Icon(Icons.photo_album), text: 'Media'),
               ],
             ),
           ]),
@@ -120,6 +107,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
+      //  ? should these be views instead?
       AddEventHeadMeta(
           tecTitle: _tecTitle,
           tecSubtitle: _tecSubtitle,
@@ -210,16 +198,22 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   void _updateParentMetadata(String thisPostID) {
-    if (widget.eventContext.metadata.parentID != null) {
-      final String parentID = widget.eventContext.metadata.parentID!;
-      final metadata = Provider.of<AppContext>(context, listen: false).getMetadata(parentID);
-      // the metadata cannot be null at this stage right? - well, we still have to perform the check regardless
-      if (metadata != null) {
-        final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-        metadata.addChildID(thisPostID);
-        dbManager.updateMetadata(metadata);
-      }
-    }
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final String parentID = widget.eventContext.metadata.parentID!;
+    final metadata = appContext.getMetadata(parentID)!;
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+    final EventHeadDBManager headDBManager = EventHeadDBManager();
+    final parentHead = appContext.eventHeads.firstWhere((element) => element.id.compareTo(parentID) == 0);
+
+    metadata.addChildID(thisPostID);
+    dbManager.updateMetadata(metadata);
+
+    // add a log and update the head's recentdate so that people can have their parent post instance updated
+    final now = DateTime.now();
+    dbManager.addLogEntry(
+        log: "Created related post: '${widget.eventContext.head.title}'", uid: appContext.currentUser.id, ts: now);
+    parentHead.setRecentDate(now);
+    headDBManager.updateHead(parentHead);
   }
 
   void _showUploadingDialog() {

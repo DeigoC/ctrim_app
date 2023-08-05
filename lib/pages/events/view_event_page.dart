@@ -1,15 +1,20 @@
-import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
-import 'package:ctrim_app/firebase/functions_manager.dart';
-import 'package:ctrim_app/firebase/messaging_manager.dart';
-import 'package:ctrim_app/models/user_contact.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/user_contact_db_manager.dart';
+import '../../firebase/functions_manager.dart';
+import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/user_contact.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/local_data_manager.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
@@ -43,14 +48,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   void initState() {
-    // TODO for the future: make user unsubscibe to post if they are a contributor
+    _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
-    _eventContext = EventContext.viewing(eventHead: widget.eventHead, viewingChild: widget.viewingChild);
-
-    _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
     super.initState();
   }
@@ -66,7 +68,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-        onWillPop: _eventContext.canSaveTheEditing
+        onWillPop: _canSaveEditing
             ? () => DialogManager.discardChanges(context: context).then((confirmation) {
                   if (confirmation) {
                     widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
@@ -76,23 +78,58 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   return confirmation;
                 })
             : () async => true,
-        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildFB()));
+        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
   }
 
-  Widget _buildFB() {
+  Widget _buildCheckExistingPostBody() {
+    return FutureBuilder(
+        future: _attemptToGetExistingPostData(),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator());
+          if (snap.hasData) {
+            // build with data
+            // set the post context here
+            final List<String> data = snap.data!;
+
+            if (data.isNotEmpty) {
+              debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
+              _eventContext = EventContext.viewing(
+                  eventHead: widget.eventHead, data: data, currentUID: _currentUID, viewingChild: widget.viewingChild);
+              _haveFetchedPost = true;
+
+              _figureOutTabs();
+              Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+              _checkToUnbookForContributor();
+              result = _buildBodyWithData();
+            } else {
+              debugPrint('Fetching from DB for post ID: ${widget.eventHead.id}');
+              result = _buildFetchPostBody();
+            }
+          } else if (snap.hasError) {
+            result = const Center(child: Text('Something went wrong!'));
+          }
+
+          return result;
+        });
+  }
+
+  Widget _buildFetchPostBody() {
     return FutureBuilder(
         future: _fetchEssentialPostData(),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
-          if (snap.connectionState == ConnectionState.done) {
-            _figureOutTabs();
-            _haveFetchedPost = true;
+          if (snap.hasData) {
             Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+            _figureOutTabs();
+            _savePostData();
+            _haveFetchedPost = true;
+            _checkToUnbookForContributor();
             result = _buildBodyWithData();
           } else if (snap.hasError) {
             debugPrint('Something with fetching the post ${snap.error}');
             result = const Center(child: Text('Something went wrong!'));
+            // TODO show an error dialog and pop the page
           }
           return result;
         });
@@ -145,7 +182,19 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     // * If there are no images, we should just remove the expanded height
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
     if (keyGraphicSrc != null) {
-      return Image.network(keyGraphicSrc, fit: BoxFit.cover);
+      return FutureBuilder(
+        future: _fetchImage(keyGraphicSrc),
+        builder: (_, snapshot) {
+          Widget result = const Center(child: CircularProgressIndicator());
+          if (snapshot.hasData) {
+            return Image.file(snapshot.data!, fit: BoxFit.cover);
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong trying to get the image'));
+          }
+
+          return result;
+        },
+      );
     }
     return null;
   }
@@ -174,16 +223,36 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
-  Future<void> _fetchEssentialPostData() async {
-    // we need to fetch the media, program and metadata to figure out how many tabs to create
-    // for the guest.
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(_eventContext.id);
+  Future<File> _fetchImage(String src) async {
+    final dir = await getTemporaryDirectory();
+    final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
+    final fullPath = '${dir.path}/$sanitisedFilePath.png';
+    final file = File(fullPath);
+
+    if (!await file.exists()) {
+      debugPrint('Creating image file for: $fullPath');
+      final response = await http.get(Uri.parse(src));
+      return await file.writeAsBytes(response.bodyBytes);
+    }
+    return file;
+  }
+
+  Future<bool> _fetchEssentialPostData() async {
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventHead.id);
     final media = await dbManager.fetchMedia();
     final meta = await dbManager.fetchMetadata();
     final program = await dbManager.fetchProgram();
+    final logs = await dbManager.fetchLog();
+    final body = await dbManager.fetchBody();
+
+    _eventContext =
+        EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID, viewingChild: widget.viewingChild);
     _eventContext.setFetchedMedia(media);
     _eventContext.setFetchedMetadata(meta);
     _eventContext.setFetchedProgram(program);
+    _eventContext.setFetchedLogs(logs);
+    _eventContext.setFetchedBody(body);
+    return true;
   }
 
   void _figureOutTabs() {
@@ -252,6 +321,42 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   String get _topic => _post + _eventContext.id;
+
+  Future<List<String>> _attemptToGetExistingPostData() async {
+    // TODO we should also make sure that we unconditionally fetch when an update has occured for safety
+    final LocalDataManager localDataManager = LocalDataManager();
+    final content = await localDataManager.readPostData(widget.eventHead.id);
+
+    // debugPrint('Is local post data not empty: ${content.isNotEmpty}');
+    final bool canUseLocalContent =
+        content.isNotEmpty && int.parse(content[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch;
+
+    if (canUseLocalContent) {
+      return content;
+    }
+    return List.empty();
+  }
+
+  Future<void> _savePostData() async {
+    final LocalDataManager localDataManager = LocalDataManager();
+    final String content = _eventContext.transformPostToTxtFile();
+    localDataManager.writePostData(_eventContext.id, content);
+
+    final postTrack = await localDataManager.readPostTrack();
+    if (!postTrack.contains(_eventContext.id)) {
+      postTrack.add(_eventContext.id);
+      localDataManager.writePostTrack(postTrack);
+    }
+  }
+
+  bool get _canSaveEditing => _haveFetchedPost && _eventContext.canSaveTheEditing;
+
+  void _checkToUnbookForContributor() {
+    if (_eventContext.metadata.contributorUIDs.contains(_currentUID)) {
+      debugPrint('removing post from bookmarks because user is already contributor!');
+      Provider.of<AppContext>(context, listen: false).dataManager.removePostBookmark(_eventContext.id);
+    }
+  }
 }
 
 class EventLogDialog extends StatefulWidget {
@@ -271,8 +376,20 @@ class EventLogDialog extends StatefulWidget {
 }
 
 class _EventLogDialogState extends State<EventLogDialog> {
+  late final AppContext _appContext;
+  late final String _currentUserName, _currentUID;
   final TextEditingController _tecLog = TextEditingController();
+  final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
+  final UserContactDBManager _userContactDBManager = UserContactDBManager();
   bool _canSave = false;
+
+  @override
+  void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
+    _currentUID = _appContext.currentUser.id;
+    _currentUserName = _appContext.currentUser.forname;
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -348,71 +465,158 @@ class _EventLogDialogState extends State<EventLogDialog> {
   }
 
   Future<void> _performUpdate(String uid) async {
-    if (!widget.eventContext.fetchedLogs) {
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.id);
-      widget.eventContext.setFetchedLogs(await dbManager.fetchLog());
-    }
-
+    final LocalDataManager localDataManager = LocalDataManager();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
-    await _sendNotification();
+
+    final content = widget.eventContext.transformPostToTxtFile();
+    localDataManager.writePostData(widget.eventContext.id, content);
+
+    await _sendPostNotification();
+
+    if (widget.eventContext.head.eventDate != null) {
+      await _sendRoleAdditionNotiifications();
+      await _sendRoleRemovalNotiifications();
+    }
+    await _sendContributorAdditionNotificaitons();
+    await _sendContributorRemovalNotificaitons();
   }
 
-  Future<void> _sendNotification() async {
+  Future<void> _sendPostNotification() async {
     // message to topic
     // message to author + contributors
     // hmm basically both will use the same title-subtitle but we should mention who updated it
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
-    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-    final String currentUserName = appContext.currentUser.forname;
-    final String subtitle = _tecLog.text.trim();
-    final String adminSubtitle = '$currentUserName updated: $subtitle';
 
-    final List<String> deviceTokens = await _getAdminContactTokens(appContext);
+    final String subtitle = _tecLog.text.trim();
+    final String adminSubtitle = '$_currentUserName updated: $subtitle';
+    final String? keyGraphic = widget.eventContext.head.getKeyGraphic();
+
+    final List<String> deviceTokens = await _getAdminContactTokens();
 
     if (deviceTokens.isNotEmpty) {
-      await cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: {});
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: _notificationdata);
     }
 
-    await cloudFunctionManager.sendToTopic(topic: widget.topic, title: widget.originalTitle, body: subtitle, data: {});
+    await _cloudFunctionManager.sendToTopic(
+        topic: widget.topic,
+        title: widget.originalTitle,
+        body: subtitle,
+        data: _notificationdata,
+        iOSImage: keyGraphic,
+        androidImage: keyGraphic);
   }
 
-  Future<List<String>> _getAdminContactTokens(final AppContext appContext) async {
-    // ! oh man, test this out please
+  Future<List<String>> _getAdminContactTokens() async {
     // Fetching all the contacts for the admins
     // Remember to remove the current user from this list
     // Fetch all the contributor device tokens (unless it's the current user)
-    final String currentUID = appContext.currentUser.id;
 
     final List<String> missingContacts = widget.eventContext.metadata.contributorUIDs
         .where((contributorID) =>
-            contributorID.compareTo(currentUID) != 0 &&
-            !appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
+            contributorID.compareTo(_currentUID) != 0 &&
+            !_appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
         .toList();
 
     // fetch the author contact (if the current user isn't already the author)
-    if (currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
-        !appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
+    if (_currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
+        !_appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
       missingContacts.add(widget.eventContext.metadata.authorUID);
     }
 
     // fetch and add any missing contacts we need for this operation
+    debugPrint('missing contacts are: $missingContacts');
     if (missingContacts.isNotEmpty) {
-      final List<UserContact> contacts = await _fetchMissingContacts(missingContacts);
-      appContext.addAllUserContacts(contacts);
+      final List<UserContact> contacts = await _userContactDBManager.fetchUserContacts(missingContacts);
+      _appContext.addAllUserContacts(contacts);
     }
 
-    // create the cumulative device token list and return it
+    // create token list of contributors
     final List<String> deviceTokens = List<String>.empty(growable: true);
     for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
-      deviceTokens.addAll(appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+      if (_appContext.currentUser.id.compareTo(contributorID) != 0) {
+        deviceTokens
+            .addAll(_appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+      }
+    }
+
+    // add the author tokens
+    if (_appContext.currentUser.id.compareTo(widget.eventContext.metadata.authorUID) != 0) {
+      deviceTokens.addAll(_appContext.userContacts
+          .firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0)
+          .deviceTokens);
     }
 
     return deviceTokens;
   }
 
-  Future<List<UserContact>> _fetchMissingContacts(final List<String> missingIds) async {
-    final UserContactDBManager userContactDBManager = UserContactDBManager();
-    return await userContactDBManager.fetchUserContacts(missingIds);
+  Future<void> _sendRoleAdditionNotiifications() async {
+    final String title = "$_currentUserName has assinged you to a role!";
+
+    for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
+      final String body = "You are assigned to '${additionEntry['title']!}' for ${widget.originalTitle}";
+
+      final String thisUID = additionEntry['uid']!;
+      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+    }
   }
+
+  Future<void> _sendRoleRemovalNotiifications() async {
+    final String title = "$_currentUserName has removed you from a role";
+
+    for (final removalEntry in widget.eventContext.roleRemovalNotifications) {
+      final String body = "You are no longer assigned to '${removalEntry['title']!}' for ${widget.originalTitle}";
+
+      final String thisUID = removalEntry['uid']!;
+      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+    }
+  }
+
+  // mention whether a user has been added or removed
+  Future<void> _sendContributorAdditionNotificaitons() async {
+    const String title = "Contributor update";
+    final String body = "You are given access to perform updates for '${widget.originalTitle}'";
+
+    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
+      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+    }
+  }
+
+  Future<void> _sendContributorRemovalNotificaitons() async {
+    const String title = "Contributor update";
+    final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
+
+    for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
+      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+        final contact = await _userContactDBManager.fetchUserContact(thisUID);
+        _appContext.addAllUserContacts([contact]);
+      }
+
+      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+    }
+  }
+
+  Map<String, String> get _notificationdata => {'PostID': widget.eventContext.id};
 }

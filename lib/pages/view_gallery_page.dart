@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import '../widgets/media/my_photo_viewer.dart';
 import '../widgets/media/my_video_player.dart';
@@ -15,23 +16,43 @@ class ViewGalleryPage extends StatefulWidget {
 
 class _ViewGalleryPageState extends State<ViewGalleryPage> {
   late final PageController _pageController;
-  bool _dismissed = false;
+  bool _dismissed = false, _lockScreen = false;
+
+  final Map<String, VideoPlayerController> _videoControllers = {};
 
   @override
   void initState() {
     _pageController = PageController(initialPage: widget.initialIndex);
+
+    for (final entry in widget.media) {
+      if (entry['type'] == 'vid') {
+        _videoControllers[entry['src']!] = VideoPlayerController.network(entry['src']!);
+      }
+    }
+
     super.initState();
   }
 
   @override
   void dispose() {
+    for (final vidController in _videoControllers.values) {
+      vidController.dispose();
+    }
+
     _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(), body: _buildBody(), backgroundColor: Colors.black);
+    return Scaffold(
+        // appBar: !_lockScreen
+        //     ? AppBar(
+        //         backgroundColor: Colors.transparent,
+        //       )
+        //     : null,
+        body: _buildBody(),
+        backgroundColor: Colors.black);
   }
 
   Widget _buildBody() {
@@ -50,53 +71,108 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     // final List<String> mediaSrcs = testData.keys.toList();
 
     return SafeArea(
-      top: false,
-      child: PageView.builder(
-          itemCount: widget.media.length,
-          controller: _pageController,
-          itemBuilder: (_, index) {
-            final Map<String, String> thisEntry = widget.media[index];
-            return Dismissible(
-              direction: DismissDirection.vertical,
-              dismissThresholds: const {DismissDirection.vertical: 0.7},
-              onUpdate: (details) {
-                if (details.progress >= 0.6 && !_dismissed) {
-                  debugPrint('Reached beyond 0.6');
-                  _dismissed = true;
-                  Navigator.of(context).pop();
+        top: false,
+        child: PageView.builder(
+            onPageChanged: (newIndex) {
+              debugPrint('the new index is $newIndex');
+              for (var videoPlayer in _videoControllers.values) {
+                // pause all videos that aren't the current one being switched to
+                if (videoPlayer.value.isInitialized &&
+                    widget.media.indexWhere((entry) => entry['src']!.compareTo(videoPlayer.dataSource) == 0) !=
+                        newIndex) {
+                  videoPlayer.pause();
+                  videoPlayer.seekTo(Duration.zero);
+                } else {
+                  videoPlayer.play();
                 }
-              },
-              key: Key(thisEntry['src']!),
-              child: Column(children: [
-                Flexible(child: _buildMedia(thisEntry)),
-                ListTile(
-                    title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
-                    leading:
-                        thisEntry['title']!.isNotEmpty ? const Icon(Icons.photo_library, color: Colors.white) : null)
-              ]),
-              onDismissed: (_) {
-                Navigator.of(context).pop();
-              },
-            );
-          }),
+              }
+            },
+            physics: _lockScreen ? const NeverScrollableScrollPhysics() : null,
+            itemCount: widget.media.length,
+            controller: _pageController,
+            itemBuilder: (_, index) => _lockScreen ? _buildMediaBody(index) : _buildWithDismissible(index)));
+  }
+
+  Widget _buildWithDismissible(int index) {
+    return Dismissible(
+        movementDuration: const Duration(milliseconds: 900),
+        direction: DismissDirection.vertical,
+        dismissThresholds: const {DismissDirection.vertical: 0.4},
+        onUpdate: (details) {
+          if (details.progress >= 0.4 && !_dismissed) {
+            // debugPrint('Reached beyond 0.4');
+            _dismissed = true;
+            Navigator.of(context).pop();
+          }
+        },
+        key: Key(index.toString()),
+        child: _buildMediaBody(index),
+        onDismissed: (_) {
+          Navigator.of(context).pop();
+        });
+  }
+
+  Widget _buildMediaBody(int index) {
+    final Map<String, String> thisEntry = widget.media[index];
+    final List<Widget> children = [
+      Positioned.fill(child: _buildMediaView(thisEntry)),
+    ];
+
+    if (!_lockScreen) {
+      children.addAll([
+        Align(
+            alignment: Alignment.topCenter,
+            child: SafeArea(
+              child: SizedBox(
+                height: kToolbarHeight,
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                ),
+              ),
+            )),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: ListTile(
+              title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.photo_library, color: Colors.white)),
+        )
+      ]);
+    } else {
+      children.add(const Align(
+        alignment: Alignment.bottomCenter,
+        child: ListTile(leading: Icon(Icons.lock, color: Colors.white)),
+      ));
+    }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: children,
     );
   }
 
-  Widget _buildMedia(final Map<String, String> thisEntry) {
+  Widget _buildMediaView(final Map<String, String> thisEntry) {
     final String thisMediaSrc = thisEntry['src']!;
     final String type = thisEntry['type']!;
 
     if (type.compareTo('vid') == 0) {
-      return MyVideoPlayer(src: thisMediaSrc);
+      return MyVideoPlayer(
+          src: thisMediaSrc,
+          postID: widget.postId,
+          onLockTap: _onLockTap,
+          showControls: !_lockScreen,
+          videoPlayerController: _videoControllers[thisMediaSrc]!);
     } else if (type.compareTo('img') == 0) {
-      return MyPhotoViewer(
-        src: thisMediaSrc,
-        heroPrefix: widget.postId,
-      );
+      return MyPhotoViewer(src: thisMediaSrc, postID: widget.postId, onLockTap: _onLockTap);
     }
 
-    return const Center(
-      child: Text('Something went wrong'),
-    );
+    return const Center(child: Text('Something went wrong'));
+  }
+
+  // * Logic
+  void _onLockTap() {
+    // we will rerbuild without the appbar, with lock scoll physics and without the dismissable
+    setState(() {
+      _lockScreen = !_lockScreen;
+    });
   }
 }

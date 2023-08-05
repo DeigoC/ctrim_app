@@ -1,12 +1,11 @@
 import 'package:avatar_stack/avatar_stack.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/user_avatar.dart';
 
@@ -25,11 +24,9 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   @override
   void initState() {
-    _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs);
+    _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
-    if (widget.eventContext.fetchedLogs) {
-      widget.eventContext.log.orderLogsBackwards();
-    }
+    widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
   }
 
@@ -40,38 +37,11 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           _checkForChangesToContributors();
           return true;
         },
-        child: Scaffold(
-            appBar: AppBar(title: const Text('Logs')),
-            body: widget.eventContext.fetchedLogs ? _buildWithData(context) : _buildFB()));
-  }
-
-  Widget _buildFB() {
-    final EventSupplementalDBManager eventSupplementalDBManager = EventSupplementalDBManager(widget.eventContext.id);
-    return FutureBuilder(
-        future: eventSupplementalDBManager.fetchLog(),
-        builder: (_, snap) {
-          Widget result = const Center(
-            child: CircularProgressIndicator(),
-          );
-
-          if (snap.hasData) {
-            widget.eventContext.setFetchedLogs(snap.data!);
-            widget.eventContext.log.orderLogsBackwards();
-            result = _buildWithData(_);
-          } else if (snap.hasError) {
-            debugPrint('Something with fetching logs: ${snap.error}');
-            result = const Center(
-              child: Text('Something went wrong :('),
-            );
-          }
-
-          return result;
-        });
+        child: Scaffold(appBar: AppBar(title: const Text('Logs')), body: _buildWithData(context)));
   }
 
   // this will show both metadata and logs
   Widget _buildWithData(BuildContext context) {
-    // TODO remember the optimisation of fetching (and storing) the key users on demand!
     final List<User> allUsers = _appContext.allUsers;
     final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
     final List<User> selectedUsers =
@@ -95,7 +65,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           const SizedBox(height: 16),
           const Padding(
               padding: EdgeInsets.only(left: 16.0, bottom: 16),
-              child: Text('Update Logs', style: TextStyle(fontSize: 16)))
+              child: Text('Update Logs', style: TextStyle(fontSize: 16))),
         ])),
         SliverList.builder(
             itemCount: widget.eventContext.log.logs.length,
@@ -103,9 +73,15 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               final thisEntry = widget.eventContext.log.logs[index];
               final thisU = allUsers.firstWhere((e) => e.id.compareTo(thisEntry['uid']) == 0);
               return ListTile(
-                  title: Text(thisEntry['log']),
-                  subtitle: Text(ViewMetaLogsPage._dateFormat.format(thisEntry['ts'])),
-                  leading: MyUserAvatar(thisU));
+                title: Text(
+                  thisEntry['log'],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(ViewMetaLogsPage._dateFormat.format(thisEntry['ts'])),
+                leading: MyUserAvatar(thisU),
+                onTap: () => _showFullLog(thisEntry),
+              );
             })
       ],
     );
@@ -132,6 +108,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   }
 
   // * Logic
+  void _showFullLog(final Map<String, dynamic> entry) {}
+
   void _showContributors(final List<User> selectedUsers) {
     showDialog(
         context: context,

@@ -1,12 +1,10 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/models/event/event_media.dart';
-import 'package:ctrim_app/pages/events/edit_gallery_page.dart';
-import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/widgets/media/image_media_slot.dart';
-import 'package:ctrim_app/widgets/media/video_media_slot.dart';
 import 'package:flutter/material.dart';
 
+import '../../pages/events/edit_gallery_page.dart';
 import '../../pages/view_gallery_page.dart';
+import '../../utility/event_context.dart';
+import '../media/image_media_slot.dart';
+import '../media/video_media_slot.dart';
 
 class ViewEventMediaTab extends StatelessWidget {
   const ViewEventMediaTab({super.key, required this.eventContext, required this.onMediaEdit, required this.currentUID});
@@ -16,35 +14,6 @@ class ViewEventMediaTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (eventContext.fethcedMedia) {
-      return _buildWithData(context);
-    }
-    return FutureBuilder(
-        future: _fetchMedia(),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
-
-          if (snap.hasData) {
-            eventContext.setFetchedMedia(snap.data!);
-            result = _buildWithData(_);
-          } else if (snap.hasError) {
-            debugPrint('Something with the post media tab: ${snap.error}');
-            result = const Center(child: Text('Something went wrong!'));
-          }
-
-          return result;
-        });
-  }
-
-  Widget _buildWithData(final BuildContext context) {
-    return _buildMediaGrid(context);
-    // if (eventContext.media.allMedia.isEmpty) {
-    //   return _buildNoMediaBody();
-    // }
-    // return _buildMediaGrid(context);
-  }
-
-  Widget _buildMediaGrid(final BuildContext context) {
     final List<Widget> children = [
       Expanded(
           child: GridView.builder(
@@ -54,10 +23,9 @@ class ViewEventMediaTab extends StatelessWidget {
               itemBuilder: (_, index) {
                 final Map<String, String> entry = eventContext.media.allMedia[index];
                 if (entry['type']!.compareTo('img') == 0) {
-                  return ImageMediaSlot(
-                      mediaEntry: entry, onTap: () => _onMediaTap(index, _), heroPrefix: eventContext.id);
+                  return ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: eventContext.id);
                 }
-                return VideoMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _));
+                return VideoMediaSlot(mediaEntry: entry, postId: eventContext.id, onTap: () => _onMediaTap(index, _));
               }))
     ];
 
@@ -70,17 +38,17 @@ class ViewEventMediaTab extends StatelessWidget {
               icon: const Icon(Icons.photo_album))));
     }
 
-    return SafeArea(
-      top: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
+    return MediaQuery.removePadding(
+      context: context,
+      removeTop: true,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
       ),
     );
-  }
-
-  Widget _buildNoMediaBody() {
-    return const Center(child: Text('No media files!'));
   }
 
   // * Logic
@@ -96,10 +64,5 @@ class ViewEventMediaTab extends StatelessWidget {
         MaterialPageRoute(
             builder: (_) =>
                 ViewGalleryPage(media: eventContext.media.allMedia, initialIndex: index, postId: eventContext.id)));
-  }
-
-  Future<EventMedia> _fetchMedia() {
-    final EventSupplementalDBManager manager = EventSupplementalDBManager(eventContext.id);
-    return manager.fetchMedia();
   }
 }

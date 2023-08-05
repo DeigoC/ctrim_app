@@ -5,7 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class VideoMediaSlot extends StatefulWidget {
-  const VideoMediaSlot({super.key, required this.mediaEntry, required this.onTap});
+  const VideoMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postId});
+  final String postId;
   final Map<String, String> mediaEntry;
   final Function()? onTap;
 
@@ -14,7 +15,6 @@ class VideoMediaSlot extends StatefulWidget {
 }
 
 class _VideoMediaSlotState extends State<VideoMediaSlot> {
-  static final RegExp _fileNameReg = RegExp(r'\/([^\/.]+)(?:\.[^\/.]+)?$');
   File? _thisThumbnail;
 
   @override
@@ -51,7 +51,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
           if (snap.hasData) {
             _thisThumbnail = File(snap.data!);
-            debugPrint(_thisThumbnail!.path);
+            debugPrint('saving thumbnail to ${_thisThumbnail!.path}');
             result = _buildExistingThumbnail();
           } else if (snap.hasError) {
             result = const Center(child: Text("Can't load video"));
@@ -73,38 +73,27 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
   // * Logic
   Future<String?> _createThumbnail() async {
-    String path = (await getTemporaryDirectory()).path;
-
-    String? title = _attemptToGetImageID();
-    if (title != null) {
-      path += '/$title.webp';
-    }
+    final String title = _removeSpecialCharacters(widget.mediaEntry['src']!);
+    final String path = '${(await getApplicationDocumentsDirectory()).path}/posts/${widget.postId}/$title.webp';
 
     final String? result = await VideoThumbnail.thumbnailFile(
-        video: widget.mediaEntry['src']!, thumbnailPath: path, imageFormat: ImageFormat.WEBP);
+        video: widget.mediaEntry['src']!, thumbnailPath: path, imageFormat: ImageFormat.WEBP, quality: 5);
 
     return result;
   }
 
   Future<File?> _attemptToGetExistingThumbnailFile() async {
-    String? title = _attemptToGetImageID();
-    if (title != null) {
-      final file = File('${(await getTemporaryDirectory()).path}/$title.webp');
+    final String title = _removeSpecialCharacters(widget.mediaEntry['src']!);
+    final file = File('${(await getApplicationDocumentsDirectory()).path}/posts/${widget.postId}/$title.webp');
 
-      if (await file.exists()) {
-        return file;
-      }
+    if (await file.exists()) {
+      return file;
     }
+    debugPrint('thumbnail for $title does not exist!');
     return null;
   }
 
-  String? _attemptToGetImageID() {
-    RegExpMatch? match = _fileNameReg.firstMatch(widget.mediaEntry['src']!);
-    if (match != null) {
-      final group = match.group(1)!;
-      final result = group.replaceAll(r'%', '').replaceAll('?', '').replaceAll('=', '');
-      return result; // for the google drive IDs
-    }
-    return null;
+  String _removeSpecialCharacters(String webLink) {
+    return webLink.replaceAll(RegExp(r'[^\w]'), '');
   }
 }

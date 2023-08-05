@@ -1,15 +1,16 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/pages/events/edit_event_date_location_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/widgets/posts/program_tile.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
+import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/user.dart';
 import '../../pages/events/add_program_page.dart';
+import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_page.dart';
+import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
+import '../user_avatar.dart';
+import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
   const ViewAllPrograms({super.key, required this.eventContext, required this.onProgramChanged});
@@ -34,36 +35,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.eventContext.haveFetchedProgram) {
-      widget.eventContext.program.orderProgramsByStartDate();
-      return _buildBodyWithData();
-    }
-    return _buildFB();
-  }
-
-  Widget _buildFB() {
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventContext.head.id);
-    return FutureBuilder(
-        future: dbManager.fetchProgram(),
-        builder: (_, snap) {
-          Widget result = const Center(
-            child: CircularProgressIndicator(),
-          );
-          if (snap.hasData) {
-            widget.eventContext.setFetchedProgram(snap.data!);
-            widget.eventContext.program.orderProgramsByStartDate();
-            result = _buildBodyWithData();
-          } else if (snap.hasError) {
-            // when there's no program, it goes here
-            result = const Center(
-              child: Text('No program fetched'),
-            );
-          }
-          return result;
-        });
-  }
-
-  Widget _buildBodyWithData() {
+    widget.eventContext.program.orderProgramsByStartDate();
     if (widget.eventContext.head.eventDate != null) {
       return _buildBodyWithEventDate();
     }
@@ -102,12 +74,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                   label: const Text('Add Program')))));
     }
 
-    return SafeArea(
-      top: false,
-      child: Column(
-        children: children,
-      ),
-    );
+    return SafeArea(top: false, child: Column(children: children));
   }
 
   Widget _buildEventDateSelector() {
@@ -121,21 +88,25 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       }
     }
 
+    final List<Widget> children = [
+      ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
+      const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
+    ];
+
+    if (widget.eventContext.head.eventDate != null &&
+        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0) {
+      children.add(Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: ElevatedButton.icon(
+            onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
+      ));
+    }
+
+    children.add(const Divider(thickness: 1));
+
     return InkWell(
-      onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        ListTile(title: Text(dateStr), leading: const Icon(Icons.calendar_today)),
-        const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: ElevatedButton.icon(
-              onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
-        ),
-        const Divider(
-          thickness: 1,
-        ),
-      ]),
-    );
+        onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
   void _showProgramDialog(final Map<String, dynamic> programEntry) {
@@ -163,10 +134,13 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       ]);
     }
 
+    if (!programEntry['for_guests']) {
+      children
+          .add(const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('(Do not show for Guests)')));
+    }
+
     if (assignedUsers.isNotEmpty) {
-      children.addAll([
-        const Divider(),
-      ]);
+      children.addAll([const Divider()]);
 
       for (final user in assignedUsers) {
         children.add(ListTile(title: Text(user.fullname), leading: MyUserAvatar(user)));
@@ -228,7 +202,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     });
   }
 
-  void _onRemindEventClick() {}
+  void _onRemindEventClick() {
+    // in theory, there should be an event date start and end (or all day)
+    final String description =
+        '${widget.eventContext.head.subtitle}\n\n***************\nPlease keep track of the event via the CTRIM app for any updates. Thank you! 🙏 \n***************';
+    // remember about the online event url, we'll add it to the description another time.
+    final Event event = Event(
+      title: widget.eventContext.head.title,
+      description: description,
+      location: widget.eventContext.head.location,
+      startDate: widget.eventContext.head.eventDate!,
+      endDate:
+          widget.eventContext.program.finishTime ?? widget.eventContext.head.eventDate!.add(const Duration(hours: 1)),
+      allDay: widget.eventContext.program.allDay,
+    );
+    Add2Calendar.addEvent2Cal(event);
+  }
 
   void _onEditPostProgram() {
     Navigator.push(

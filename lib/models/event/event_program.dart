@@ -9,6 +9,7 @@ class EventProgram {
   // end - datetime/timestamp of finishing time
   // for_guests - bool to signigfy whether to show to guests or not
   // priority - int to signfy it's importance (higher numbers for significance)
+  // ! NOTE: start is optional, but if it exists then end must also be a thing
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
   DateTime? _finishTime;

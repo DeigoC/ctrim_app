@@ -15,7 +15,7 @@ class ViewBookmarksPage extends StatefulWidget {
 class _ViewBookmarksPageState extends State<ViewBookmarksPage> {
   @override
   void initState() {
-    // remember to remove bookmarks of posts that aren't being fetched anymore
+    // TODO remember to remove bookmarks of posts that aren't being fetched anymore
     super.initState();
   }
 

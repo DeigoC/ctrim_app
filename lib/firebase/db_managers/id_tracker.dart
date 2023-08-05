@@ -7,6 +7,13 @@ class IDTrackerDBManager {
 
   Future<String> getAndIncrementEventID() async => await _getAndIncrementIDFromDocument('events');
 
+  Future<String> getCurrentUserID() async {
+    var data = await _ref.doc('users').get();
+    final String id = data['id'];
+    final String currentID = (int.parse(id) - 1).toString();
+    return currentID;
+  }
+
   Future<String> _getAndIncrementIDFromDocument(String doc) async {
     var data = await _ref.doc(doc).get();
     final String id = data['id'];
