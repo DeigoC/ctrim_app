@@ -59,13 +59,10 @@ class _EditBodyPageState extends State<EditBodyPage> {
   Widget _buildBody() {
     return Column(
       children: [
-        quill.QuillToolbar.basic(
-          controller: _controller,
-          multiRowsDisplay: false,
-        ),
+        quill.QuillToolbar.basic(controller: _controller, showAlignmentButtons: true),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16),
             child: quill.QuillEditor.basic(
               // embedBuilders: FlutterQuillEmbeds.builders(),
               controller: _controller,

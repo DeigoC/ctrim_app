@@ -530,10 +530,20 @@ class _EventLogDialogState extends State<EventLogDialog> {
       _appContext.addAllUserContacts(contacts);
     }
 
-    // create the cumulative device token list and return it
+    // create token list of contributors
     final List<String> deviceTokens = List<String>.empty(growable: true);
     for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
-      deviceTokens.addAll(_appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+      if (_appContext.currentUser.id.compareTo(contributorID) != 0) {
+        deviceTokens
+            .addAll(_appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+      }
+    }
+
+    // add the author tokens
+    if (_appContext.currentUser.id.compareTo(widget.eventContext.metadata.authorUID) != 0) {
+      deviceTokens.addAll(_appContext.userContacts
+          .firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0)
+          .deviceTokens);
     }
 
     return deviceTokens;

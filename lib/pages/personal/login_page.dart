@@ -58,9 +58,9 @@ class _LoginPageState extends State<LoginPage> {
         if (!kDebugMode) {
           debugPrint('setting contact token as $token');
           _userContactDBManager.addTokenToUser(id, token);
-          appContext.setCurrentUser(id);
-          appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
         }
+        appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
+        appContext.setCurrentUser(id);
 
         Navigator.of(context).pop();
         Navigator.of(context).pop();

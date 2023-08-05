@@ -93,7 +93,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       const ListTile(title: Text('Belfast'), leading: Icon(Icons.map)),
     ];
 
-    if (DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0) {
+    if (widget.eventContext.head.eventDate != null &&
+        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0) {
       children.add(Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: ElevatedButton.icon(
@@ -131,6 +132,11 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(programEntry['detail'], style: const TextStyle(fontSize: 16), textAlign: TextAlign.start))
       ]);
+    }
+
+    if (!programEntry['for_guests']) {
+      children
+          .add(const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('(Do not show for Guests)')));
     }
 
     if (assignedUsers.isNotEmpty) {
