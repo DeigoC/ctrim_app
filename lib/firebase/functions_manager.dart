@@ -36,10 +36,17 @@ class CloudFunctionManager {
       'AndroidImage': androidImage ?? '',
     };
 
-    final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
-    final result = await callable.call(callParams);
+    if (!kDebugMode) {
+      final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
+      final result = await callable.call(callParams);
+      debugPrint(result.data.toString());
+    } else {
+      debugPrint('in debug - send_notification_to_multiple_tokens was meant to be called');
+    }
 
-    debugPrint(result.data.toString());
+    // final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
+    // final result = await callable.call(callParams);
+    // debugPrint(result.data.toString());
   }
 
   Future<void> sendToTopic(
@@ -60,10 +67,17 @@ class CloudFunctionManager {
       'AndroidImage': androidImage ?? '',
     };
 
-    final HttpsCallable callable = _inst.httpsCallable('send_to_topic');
-    final result = await callable.call(callParams);
+    if (!kDebugMode) {
+      final HttpsCallable callable = _inst.httpsCallable('send_to_topic');
+      final result = await callable.call(callParams);
+      debugPrint(result.data.toString());
+    } else {
+      debugPrint('in debug - send_to_topic was meant to be called');
+    }
 
-    debugPrint(result.data.toString());
+    // final HttpsCallable callable = _inst.httpsCallable('send_to_topic');
+    // final result = await callable.call(callParams);
+    // debugPrint(result.data.toString());
   }
 
   List<String> _convertMapToKeyValueStrings(final Map<String, String> data) {
@@ -78,11 +92,5 @@ class CloudFunctionManager {
     }
 
     return [dataKeys, dataValues];
-  }
-
-  Future<void> helloWorld() async {
-    final HttpsCallable callable = _inst.httpsCallable('hello_world');
-    final result = await callable.call({'Message': 'Hello World'});
-    debugPrint(result.data.toString());
   }
 }

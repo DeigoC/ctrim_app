@@ -35,7 +35,8 @@ class UserContactDBManager {
   Future<List<UserContact>> fetchUserContacts(final List<String> ids) async {
     final List<UserContact> results = List<UserContact>.empty(growable: true);
     for (final String id in ids) {
-      results.add(await fetchUserContact(id));
+      final contact = await fetchUserContact(id);
+      results.add(contact);
     }
     return results;
   }

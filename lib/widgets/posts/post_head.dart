@@ -109,9 +109,10 @@ class PostHead extends StatelessWidget {
             child: ImageMediaSlot(
             mediaEntry: entry,
             onTap: () => _onMediaTap(index, context),
-            heroPrefix: thisHead.id,
+            postID: thisHead.id,
           ))
-        : Expanded(child: VideoMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, context)));
+        : Expanded(
+            child: VideoMediaSlot(mediaEntry: entry, postId: thisHead.id, onTap: () => _onMediaTap(index, context)));
   }
 
   // * Logic

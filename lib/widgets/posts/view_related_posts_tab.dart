@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/events/add_event_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/widgets/posts/post_head.dart';
@@ -98,5 +99,16 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   // * Logic
 
-  void _onCreatePost() {}
+  void _onCreatePost() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => AddEventPage(
+                eventContext: EventContext.adding(
+                    currentUserID: _appContext.currentUser.id, parentID: widget.eventContext.id)))).then((_) {
+      setState(() {
+        // rebuild?
+      });
+    });
+  }
 }

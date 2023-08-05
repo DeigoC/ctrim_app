@@ -30,7 +30,7 @@ class ProgramTile extends StatelessWidget {
   }
 
   Widget? _buildTileTrailing(BuildContext context) {
-    final List<String> assignees = List<String>.from(programEntry['uids']);
+    final List<String> assignees = programEntry['uids'];
     if (assignees.isEmpty) return null;
 
     final List<ImageProvider> avatars = List<ImageProvider>.empty(growable: true);

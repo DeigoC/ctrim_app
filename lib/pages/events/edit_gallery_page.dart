@@ -96,10 +96,10 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
       return ImageMediaSlot(
         mediaEntry: thisEntry,
         onTap: null,
-        heroPrefix: isKey ? 'key' : 'media',
+        postID: isKey ? 'key' : 'media',
       );
     }
-    return VideoMediaSlot(mediaEntry: thisEntry, onTap: null);
+    return VideoMediaSlot(postId: widget.eventContext.id, mediaEntry: thisEntry, onTap: null);
   }
 
   // * Logic

@@ -78,10 +78,12 @@ class EventHead {
   void removeEventDate() => _eventDate = null;
 
   bool containsMediaItem(String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
+
+  // TODO remember to check all Map additions to make them more 'tight'
   void addMediaItem(final Map<String, String> thisEntry) => _media.add(thisEntry);
   void removeMediaItem(final Map<String, String> thisEntry) => _media.remove(thisEntry);
-  void resetMediaWithOriginal(List<Map<String, String>> origianl) {
+  void resetMediaWithOriginal(List<Map<String, String>> original) {
     _media.clear();
-    _media.addAll(origianl);
+    _media.addAll(original);
   }
 }

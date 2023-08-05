@@ -7,6 +7,7 @@ class User {
     required String forname,
     required String surname,
     String imgSrc = '',
+    String location = 'Belfast',
     bool isAreaAdmin = false,
     bool isLeader = false,
   }) {
@@ -16,7 +17,7 @@ class User {
     _imgSrc = imgSrc;
     _isAreaAdmin = isAreaAdmin;
     _isLeader = isLeader;
-    _location = 'Belfast';
+    _location = location;
   }
 
   User.fromMap(String id, Map<String, dynamic> data)

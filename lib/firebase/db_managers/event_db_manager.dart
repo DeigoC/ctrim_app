@@ -17,6 +17,10 @@ class EventHeadDBManager {
     return List<EventHead>.from(collection.docs.map((e) => e.data()));
   }
 
+  Future<EventHead> fetchHead(final String id) async {
+    return await _ref.doc(id).get().then((value) => value.data() as EventHead);
+  }
+
   Future<void> saveNewHead(final EventHead head) async {
     await _ref.doc(head.id).set(head);
   }
@@ -108,5 +112,10 @@ class EventSupplementalDBManager {
 
   Future<void> addLog(final EventLog log) async {
     await _colRef.doc('logs').set(log.toJson());
+  }
+
+  Future<void> addLogEntry({required String log, required String uid, required DateTime ts}) async {
+    final log = await fetchLog();
+    log.addLog(Map<String, dynamic>.from({'log': log, 'uid': uid, 'ts': ts}));
   }
 }
