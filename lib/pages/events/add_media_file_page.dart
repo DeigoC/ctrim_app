@@ -112,10 +112,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       _videoPlayerController!.play();
       _videoPlayerController!.setLooping(true);
       _videoPlayerController!.value.aspectRatio;
-      //  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      //   _videoPlayerController!.play();
-      //   _videoPlayerController!.setLooping(true);
-      // });
     }
 
     return VideoPlayer(_videoPlayerController!);
