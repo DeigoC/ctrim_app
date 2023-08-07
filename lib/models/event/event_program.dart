@@ -15,10 +15,6 @@ class EventProgram {
   DateTime? _finishTime;
   bool _allDay = false;
 
-  void addRole(Map<String, dynamic> role) {
-    _roles.add(role);
-  }
-
   EventProgram();
 
   EventProgram.fromMap(Map<String, dynamic> data) {
@@ -66,14 +62,20 @@ class EventProgram {
     return result;
   }
 
-  List<Map<String, dynamic>> get roles => _roles; // unmodifiable?
+  List<Map<String, dynamic>> get roles => _roles; // TODO make this unmodifiable
   bool get allDay => _allDay;
   DateTime? get finishTime => _finishTime;
 
-  void setAllDay(bool state) => _allDay = state;
-  void setFinishTime(DateTime? finish) => _finishTime = finish;
+  void setAllDay(final bool state) => _allDay = state;
+  void setFinishTime(final DateTime? finish) => _finishTime = finish;
   void orderProgramsByStartDate() =>
       _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
+
+  void addRole(final Map<String, dynamic> role) {
+    _roles.add(role);
+  }
+
+  void removeRole(final List<String> uids, final String title) {}
 
   @override
   String toString() {

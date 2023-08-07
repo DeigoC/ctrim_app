@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../utility/event_context.dart';
@@ -29,31 +31,20 @@ class _EditBodyPageState extends State<EditBodyPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        // ! This isn't perfect? Remember that the user can add empty lines
-        if (!widget.eventContext.isSameJson(_controller.document.toDelta().toJson())) {
-          widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
-          widget.eventContext.allowSavingOfTheEdit();
-        }
+        onWillPop: () async {
+          // ! This isn't perfect? Remember that the user can add empty lines
+          if (!widget.eventContext.isSameJson(_controller.document.toDelta().toJson())) {
+            widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
+            widget.eventContext.allowSavingOfTheEdit();
+          }
 
-        return true;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Edit Body'),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  // var json = jsonEncode(_controller.document.toDelta().toJson());
-                  // debugPrint(json);
-                  _getSizeOfText();
-                },
-                icon: const Icon(Icons.save))
-          ],
-        ),
-        body: _buildBody(),
-      ),
-    );
+          return true;
+        },
+        child: Scaffold(
+            appBar: AppBar(
+                title: const Text('Edit Body'),
+                actions: [IconButton(onPressed: () => _testButton(), icon: const Icon(Icons.save))]),
+            body: _buildBody()));
   }
 
   Widget _buildBody() {
@@ -74,7 +65,9 @@ class _EditBodyPageState extends State<EditBodyPage> {
     );
   }
 
-  _getSizeOfText() async {
+  void _testButton() async {
+    var json = jsonEncode(_controller.document.toDelta().toJson());
+    debugPrint(json);
     // var path = await getApplicationDocumentsDirectory();
     // var file = File('${path.path}/someTest.txt');
     // final rawJson = _controller.document.toDelta().toJson();

@@ -1,13 +1,14 @@
 import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/posts/add_header_meta_tab_body.dart';
-import 'package:ctrim_app/widgets/posts/add_media_tab.dart';
-import 'package:ctrim_app/widgets/posts/add_program_tab.dart';
+import 'package:ctrim_app/widgets/posts/view_all_programs.dart';
+import 'package:ctrim_app/widgets/posts/view_event_media_tab.dart';
+import 'package:ctrim_app/widgets/posts/view_post_body.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../utility/event_context.dart';
-import '../../widgets/posts/add_body_tab.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -18,21 +19,19 @@ class AddEventPage extends StatefulWidget {
 }
 
 class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderStateMixin {
-  bool _canSave = false;
-
   // * Required variables
+  late final AppContext _appContext;
   late final TabController _tabController;
   final TextEditingController _tecTitle = TextEditingController(), _tecSubtitle = TextEditingController();
-  // this can only be created after the user sets the _eventDate, we need to set the finishTime
-  // the metadata is created at the end when uploading everything
-  // a log is created when uploading as well that higlights the publication of the app.
 
   // * The optional variables
   final List<String> _contributorUIDs = List<String>.empty(growable: true);
-  DateTime? _eventDate;
+
+  bool _canSave = false;
 
   @override
   void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
     _tabController = TabController(length: 4, vsync: this);
     super.initState();
   }
@@ -52,83 +51,71 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   List<Widget> _buildHeaderSliver() {
+    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+
     return [
       SliverAppBar(
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
-        flexibleSpace: FlexibleSpaceBar(
-          background: _buildAppBarBackground(),
-        ),
+        flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
           ElevatedButton.icon(
-            onPressed: _canSave ? _onSaveClick : null,
-            icon: const Icon(Icons.upload),
-            label: const Text('Save'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          )
+              onPressed: _canSave ? _onSaveClick : null,
+              icon: const Icon(Icons.upload),
+              label: const Text('Save'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green))
         ],
       ),
       SliverPadding(
-        padding: const EdgeInsets.all(8.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate([
+          padding: const EdgeInsets.all(8.0),
+          sliver: SliverList(
+              delegate: SliverChildListDelegate([
             TabBar(
-              labelColor: Colors.black,
+              labelColor: onDark ? Colors.white : Colors.black,
               controller: _tabController,
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
-                Tab(icon: Icon(Icons.note), text: 'Body'),
+                Tab(icon: Icon(Icons.note), text: 'Info'),
                 Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
-                Tab(icon: Icon(Icons.photo_album), text: 'Media'),
+                Tab(icon: Icon(Icons.photo_album), text: 'Media')
               ],
-            ),
-          ]),
-        ),
-      )
+            )
+          ])))
     ];
   }
 
   Widget? _buildAppBarBackground() {
     // * If there are no images, we should just remove the expanded height
-    if (widget.eventContext.media.allMedia.isEmpty) {
+    if (widget.eventContext.head.getKeyGraphic() == null) {
       return null;
     }
     return Stack(
       alignment: Alignment.bottomRight,
-      children: [
-        Positioned.fill(
-          child: Image.network(
-            'https://assets.gocomics.com/uploads/collection_images/collection_image_large_1721649_Garfield_Sandwich_V2_201805291007.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
-      ],
+      children: [Positioned.fill(child: Image.network(widget.eventContext.head.getKeyGraphic()!, fit: BoxFit.cover))],
     );
   }
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
-      //  ? should these be views instead?
       AddEventHeadMeta(
           tecTitle: _tecTitle,
           tecSubtitle: _tecSubtitle,
           onRequiredFieldChange: _onRequiredFieldTextChange,
           contributorUIDs: _contributorUIDs),
-      AddBodyTab(
-        eventContext: widget.eventContext,
-        onRequiredFieldTextChange: _onRequiredFieldTextChange,
-      ),
-      AddProgramTab(
-        eventContext: widget.eventContext,
-        eventDate: _eventDate,
-      ),
-      AddMediaTabBody(
-        eventContext: widget.eventContext,
-      ),
+      ViewPostBody(
+          eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
+      ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
+      ViewEventMediaTab(
+          eventContext: widget.eventContext, onMediaEdit: () => _updateBody(), currentUID: _appContext.currentUser.id)
     ]);
   }
 
   // * Logic
-  // the core requirements of a post
+
+  void _updateBody() {
+    setState(() {});
+    _onRequiredFieldTextChange('');
+  }
+
   void _onRequiredFieldTextChange(String newText) {
     if (_okToSave() && !_canSave) {
       setState(() {
@@ -141,6 +128,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
+  // the core requirements of a post - title, subtitle, an update to the body
   bool _okToSave() {
     if (_tecTitle.text.trim().isEmpty || _tecSubtitle.text.trim().isEmpty) {
       return false;
@@ -190,10 +178,12 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         .addNewPost(
             title: _tecTitle.text.trim(),
             subtitle: _tecSubtitle.text.trim(),
-            eventDate: _eventDate,
+            eventDate: widget.eventContext.head.eventDate,
             uid: appContext.currentUser.id)
         .then((newID) => _updateParentMetadata(newID));
     await _notifyOfNewPost();
+    await _notifyContributorAdditions();
+
     appContext.addNewPostHead(widget.eventContext.head);
   }
 
@@ -234,4 +224,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     await cloudFunctionManager
         .sendToTopic(topic: 'ctrim-belfast', title: _tecTitle.text.trim(), body: _tecSubtitle.text.trim(), data: {});
   }
+
+  Future<void> _notifyContributorAdditions() async {}
+
+  Future<void> _notifyProgramRoleAddtitions() async {}
 }

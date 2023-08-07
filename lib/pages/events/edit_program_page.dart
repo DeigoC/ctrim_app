@@ -367,5 +367,20 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   void _onDeleteTap() {
     // remember to send all from the original about the removal of role
+    DialogManager.showConfirmationDialog(
+            context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?')
+        .then((confirmation) {
+      if (confirmation) {
+        widget.eventContext.removeProgram(widget.programEntry['uids'], widget.programEntry['title']);
+        widget.eventContext.allowSavingOfTheEdit();
+
+        for (final uid in widget.programEntry['uids'] as List<String>) {
+          widget.eventContext.removeRoleAdditionNotification(uid: uid, roleTitle: widget.programEntry['title']);
+          widget.eventContext.addRoleRemovalNotification(uid: uid, roleTitle: widget.programEntry['title']);
+        }
+        _isSaved = true;
+        Navigator.of(context).pop();
+      }
+    });
   }
 }

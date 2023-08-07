@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
-import '../../pages/events/add_program_page.dart';
+import '../../pages/events/add_program_role_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_page.dart';
 import '../../utility/app_context.dart';
@@ -13,9 +13,11 @@ import '../user_avatar.dart';
 import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
-  const ViewAllPrograms({super.key, required this.eventContext, required this.onProgramChanged});
+  const ViewAllPrograms(
+      {super.key, required this.eventContext, required this.onProgramChanged, this.isAddingPost = false});
   final EventContext eventContext;
   final Function onProgramChanged;
+  final bool isAddingPost;
 
   @override
   State<ViewAllPrograms> createState() => _ViewAllProgramsPageState();
@@ -94,7 +96,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     ];
 
     if (widget.eventContext.head.eventDate != null &&
-        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0) {
+        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0 &&
+        !widget.isAddingPost) {
       children.add(Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: ElevatedButton.icon(

@@ -40,13 +40,14 @@ class EventContext {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
+    _head = EventHead(id: 'X'); // temporary
   }
 
   // * Head Related
   EventHead get head => _head;
 
   // * Body Related
-  bool get isBodyUntouched => _body.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
+  bool get isBodyUntouched => _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') == 0;
   List<dynamic> get body => _body.decodedJson;
   String get encodedBody => _body.json;
   bool isSameJson(List<dynamic> json) => _body.compareTo(json) == 0;
@@ -58,8 +59,9 @@ class EventContext {
   EventProgram get program => _program;
   List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 
-  void setFetchedProgram(EventProgram program) => _program = program;
-  void addProgram(Map<String, dynamic> programEntry) => _program.addRole(programEntry);
+  void setFetchedProgram(final EventProgram program) => _program = program;
+  void addProgram(final Map<String, dynamic> programEntry) => _program.addRole(programEntry);
+  void removeProgram(final List<String> uids, final String title) => _program.removeRole(uids, title);
 
   // * Supplemental - Metadata Related
   EventMetadata get metadata => _metadata;
@@ -394,9 +396,15 @@ class EventContext {
   List<Map<String, String>> get roleRemovalNotifications => UnmodifiableListView(_roleRemovalNotifications);
 
   void addRoleAdditionNotification({required String uid, required String roleTitle}) =>
-      _roleAdditionNotifications.add({'uid': uid, 'roleTitle': roleTitle});
+      _roleAdditionNotifications.add({'uid': uid, 'title': roleTitle});
   void addRoleRemovalNotification({required String uid, required String roleTitle}) =>
-      _roleRemovalNotifications.add({'uid': uid, 'roleTitle': roleTitle});
+      _roleRemovalNotifications.add({'uid': uid, 'title': roleTitle});
+
+  // ! flawed, but the occurance of this issue should be really rare?
+  // it's possible that multiple roles could have the same title
+  void removeRoleAdditionNotification({required String uid, required String roleTitle}) {
+    _roleAdditionNotifications.removeWhere((e) => e['title'] == roleTitle && e['uid'] == uid);
+  }
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;

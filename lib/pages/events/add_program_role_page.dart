@@ -332,7 +332,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
       'start': _start!,
       'end': _end!,
       'for_guests': _forGuests,
-      'priority': 1,
+      'priority': 1
     });
   }
 }
