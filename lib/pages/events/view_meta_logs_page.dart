@@ -147,7 +147,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   void _removeContributor(final User removed) {
     setState(() {
-      widget.eventContext.metadata.removeContributorUID(removed.id);
+      widget.eventContext.metadata.contributorUIDs.remove(removed.id);
       widget.eventContext.allowSavingOfTheEdit();
     });
   }
@@ -191,7 +191,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   void _addContributor(final User newContributor) {
     setState(() {
-      widget.eventContext.metadata.addContributorUID(newContributor.id);
+      widget.eventContext.metadata.contributorUIDs.add(newContributor.id);
       widget.eventContext.allowSavingOfTheEdit();
     });
   }

@@ -34,6 +34,7 @@ class _UserSelectorDialogState extends State<UserSelectorDialog> {
     return Consumer<AppContext>(builder: (_, appContext, __) {
       final users = appContext.allUsers
           .where((e) =>
+              e.id != appContext.currentUser.id &&
               !widget.alreadySelectedUIDs.contains(e.id) &&
               e.fullname.toLowerCase().contains(_tecSearch.text.toLowerCase().trim()))
           .toList();

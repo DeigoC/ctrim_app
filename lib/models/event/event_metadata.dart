@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 class EventMetadata {
   late final String _authorUID;
   late final List<String> _contributorUIDs;
@@ -35,13 +33,10 @@ class EventMetadata {
   String get lastUID => _lastUID;
   String get authorUID => _authorUID;
   String? get parentID => _parentID;
-  List<String> get contributorUIDs => UnmodifiableListView(_contributorUIDs);
-  List<String> get children => UnmodifiableListView(_childrenIDs);
+  List<String> get contributorUIDs => _contributorUIDs;
+  List<String> get childrenPostIDs => _childrenIDs;
   bool get hasChildren => _childrenIDs.isNotEmpty;
   bool get hasParent => _parentID != null;
 
   void setLastUID(String newLastUID) => _lastUID = newLastUID;
-  void addContributorUID(String newUID) => _contributorUIDs.add(newUID);
-  void removeContributorUID(String toBeRemovedUID) => _contributorUIDs.remove(toBeRemovedUID);
-  void addChildID(String childID) => _childrenIDs.add(childID);
 }

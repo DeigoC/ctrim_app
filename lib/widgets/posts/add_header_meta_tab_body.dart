@@ -1,4 +1,5 @@
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:ctrim_app/widgets/user_selector_dialog.dart';
 import 'package:flutter/material.dart';
@@ -10,10 +11,10 @@ class AddEventHeadMeta extends StatefulWidget {
       required this.tecTitle,
       required this.tecSubtitle,
       required this.onRequiredFieldChange,
-      required this.contributorUIDs});
+      required this.eventContext});
   final TextEditingController tecTitle, tecSubtitle;
+  final EventContext eventContext;
   final Function(String) onRequiredFieldChange;
-  final List<String> contributorUIDs;
 
   @override
   State<AddEventHeadMeta> createState() => _AddEventHeadMetaState();
@@ -48,11 +49,11 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       const Divider(),
     ];
 
-    if (widget.contributorUIDs.isEmpty) {
+    if (widget.eventContext.metadata.contributorUIDs.isEmpty) {
       children.add(const Text('No one selected.'));
     } else {
       final appContext = Provider.of<AppContext>(context, listen: false);
-      for (final uid in widget.contributorUIDs) {
+      for (final uid in widget.eventContext.metadata.contributorUIDs) {
         final thisU = appContext.allUsers.firstWhere((e) => e.id.compareTo(uid) == 0);
         children.add(ListTile(
           title: Text(thisU.fullname),
@@ -69,19 +70,21 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   void _onAddContributorClick() {
     showDialog(
         context: context,
-        builder: (_) =>
-            UserSelectorDialog(alreadySelectedUIDs: widget.contributorUIDs, onSelected: _onContributorSelected));
+        builder: (_) => UserSelectorDialog(
+            alreadySelectedUIDs: widget.eventContext.metadata.contributorUIDs, onSelected: _onContributorSelected));
   }
 
   void _onContributorSelected(String id) {
     setState(() {
-      widget.contributorUIDs.add(id);
+      widget.eventContext.metadata.contributorUIDs.add(id);
+      widget.eventContext.contributorAdditionUIDs.add(id);
     });
   }
 
   void _onContributorRemoved(String id) {
     setState(() {
-      widget.contributorUIDs.remove(id);
+      widget.eventContext.metadata.contributorUIDs.remove(id);
+      widget.eventContext.contributorAdditionUIDs.remove(id);
     });
   }
 }

@@ -41,6 +41,8 @@ class EventContext {
     _program = EventProgram();
     _media = EventMedia();
     _head = EventHead(id: 'X'); // temporary
+    _currentUID = currentUserID;
+    _initialiseInternalLists();
   }
 
   // * Head Related
@@ -87,18 +89,21 @@ class EventContext {
     DateTime? eventDate,
   }) async {
     final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
-    final String id = await idTrackerDBManager.getAndIncrementEventID();
+    final String newID = await idTrackerDBManager.getAndIncrementEventID();
 
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(id);
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(newID);
     final EventHeadDBManager headDBManager = EventHeadDBManager();
     final DateTime now = DateTime.now();
 
     // head stuff
-    // TODO add the key media!
-    _head = EventHead(id: id);
-    _head.setTitle(title);
-    _head.setSubtitle(subtitle);
-    _head.setRecentDate(now);
+    final headToUpload = EventHead(id: newID);
+    headToUpload.setTitle(title);
+    headToUpload.setSubtitle(subtitle);
+    headToUpload.setRecentDate(now);
+    headToUpload.setEventDate(_head.eventDate);
+    for (var mediaEntry in _head.media) {
+      headToUpload.addMediaItem(mediaEntry);
+    }
 
     // metadata
     _metadata.setLastUID(uid);
@@ -106,13 +111,13 @@ class EventContext {
     // log, create the new one for creation
     _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': now});
 
-    await headDBManager.saveNewHead(_head);
+    await headDBManager.saveNewHead(headToUpload);
     dbManager.addBody(_body.json);
     dbManager.addMedia(_media);
     dbManager.addMetadata(_metadata);
     dbManager.addLog(_log);
     dbManager.addProgram(_program);
-    return id;
+    return newID;
   }
 
   Future<void> updatePost({required String log, required String uid}) async {
@@ -230,7 +235,7 @@ class EventContext {
     result += '\n${_metadata.lastUID}';
     result += '\n${_metadata.contributorUIDs}';
     result += '\n${_metadata.parentID ?? 'null'}';
-    result += '\n${_metadata.children}';
+    result += '\n${_metadata.childrenPostIDs}';
     result += '\n----META_END----';
 
     return result;
@@ -295,7 +300,7 @@ class EventContext {
     }
 
     for (final contributor in contributors) {
-      _metadata.addContributorUID(contributor);
+      _metadata.contributorUIDs.add(contributor);
     }
 
     final String childrenLine =
@@ -308,7 +313,7 @@ class EventContext {
     }
 
     for (final child in childrenIDs) {
-      _metadata.addChildID(child);
+      _metadata.childrenPostIDs.add(child);
     }
   }
 

@@ -153,7 +153,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       SliverAppBar(
           expandedHeight: MediaQuery.of(context).size.height * 0.33,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-          actions: _buildAppBarAction()),
+          actions: _buildSaveButton()),
       SliverList(
           delegate: SliverChildListDelegate([
         Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
@@ -203,19 +203,22 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return TabBarView(controller: _tabController, children: _bodyTabs);
   }
 
-  List<Widget>? _buildAppBarAction() {
+  List<Widget>? _buildSaveButton() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
-        ElevatedButton.icon(
-            style: ButtonStyle(
-                backgroundColor: _eventContext.canSaveTheEditing
-                    ? const MaterialStatePropertyAll<Color>(Colors.green)
-                    : const MaterialStatePropertyAll<Color>(Colors.grey),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)))),
-            onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
-            icon: const Icon(Icons.save),
-            label: const Text('Update')),
+        Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: ElevatedButton.icon(
+              style: ButtonStyle(
+                  backgroundColor: _eventContext.canSaveTheEditing
+                      ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+                      : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+              onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
+              icon: const Icon(Icons.save),
+              label: const Text('Update')),
+        ),
         const SizedBox(width: 8)
       ];
     }
@@ -556,14 +559,15 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String body = "You are assigned to '${additionEntry['title']!}' for ${widget.originalTitle}";
 
       final String thisUID = additionEntry['uid']!;
-      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
+      if (thisUID != _currentUID) {
+        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+          final contact = await _userContactDBManager.fetchUserContact(thisUID);
+          _appContext.addAllUserContacts([contact]);
+        }
+        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+        await _cloudFunctionManager.sendMessageToSelectedTokens(
+            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
       }
-
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
@@ -574,31 +578,33 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String body = "You are no longer assigned to '${removalEntry['title']!}' for ${widget.originalTitle}";
 
       final String thisUID = removalEntry['uid']!;
-      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
+      if (thisUID != _currentUID) {
+        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+          final contact = await _userContactDBManager.fetchUserContact(thisUID);
+          _appContext.addAllUserContacts([contact]);
+        }
+        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+        await _cloudFunctionManager.sendMessageToSelectedTokens(
+            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
       }
-
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
-  // mention whether a user has been added or removed
   Future<void> _sendContributorAdditionNotificaitons() async {
     const String title = "Contributor update";
-    final String body = "You are given access to perform updates for '${widget.originalTitle}'";
+    final String body = "You can modify aspects of the post: '${widget.originalTitle}'";
 
     for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
-      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
-      }
+      if (thisUID != _currentUID) {
+        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+          final contact = await _userContactDBManager.fetchUserContact(thisUID);
+          _appContext.addAllUserContacts([contact]);
+        }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+        await _cloudFunctionManager.sendMessageToSelectedTokens(
+            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+      }
     }
   }
 
@@ -607,14 +613,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
 
     for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
-      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
-      }
+      if (thisUID != _currentUID) {
+        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
+          final contact = await _userContactDBManager.fetchUserContact(thisUID);
+          _appContext.addAllUserContacts([contact]);
+        }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+        await _cloudFunctionManager.sendMessageToSelectedTokens(
+            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+      }
     }
   }
 
