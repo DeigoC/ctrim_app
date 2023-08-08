@@ -56,11 +56,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       for (final uid in widget.eventContext.metadata.contributorUIDs) {
         final thisU = appContext.allUsers.firstWhere((e) => e.id.compareTo(uid) == 0);
         children.add(ListTile(
-          title: Text(thisU.fullname),
-          leading: MyUserAvatar(thisU),
-          trailing: IconButton(
-              onPressed: () => _onContributorRemoved(uid), icon: const Icon(Icons.delete, color: Colors.red)),
-        ));
+            title: Text(thisU.fullname),
+            leading: MyUserAvatar(thisU),
+            trailing: IconButton(
+                onPressed: () => _onContributorRemoved(uid), icon: const Icon(Icons.delete, color: Colors.red))));
       }
     }
 

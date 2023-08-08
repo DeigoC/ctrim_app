@@ -226,11 +226,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     Navigator.push(
             context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
         .then((_) {
-      setState(() {
-        if (widget.eventContext.canSaveTheEditing) {
-          widget.onProgramChanged();
-        }
-      });
+      setState(() {});
+      if (widget.eventContext.canSaveTheEditing) {
+        widget.onProgramChanged();
+      }
     });
   }
 }

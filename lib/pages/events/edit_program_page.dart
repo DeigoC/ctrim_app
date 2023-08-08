@@ -6,6 +6,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/user_selector_dialog.dart';
 
 class EditEventProgramPage extends StatefulWidget {
   const EditEventProgramPage({super.key, required this.eventContext, required this.programEntry});
@@ -243,44 +244,14 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   void _onSelectMembersTap() {
-    final availableUsers = _appContext.allUsers.where((element) => !_selectedUsers.contains(element.id)).toList();
     showDialog(
         context: context,
-        builder: (_) {
-          return Dialog(
-            child: SizedBox(
-              height: MediaQuery.of(_).size.height * 0.6,
-              child: Column(
-                children: [
-                  const ListTile(
-                    title: Text('Select User For Role'),
-                    leading: Icon(Icons.people),
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: ListView.builder(
-                        itemCount: availableUsers.length,
-                        itemBuilder: (_, index) {
-                          final thisUser = availableUsers[index];
-                          return ListTile(
-                            title: Text(thisUser.fullname),
-                            subtitle: Text(thisUser.location),
-                            leading: MyUserAvatar(thisUser),
-                            onTap: () {
-                              setState(() {
-                                _selectedUsers.add(thisUser.id);
-                                Navigator.of(context).pop();
-                              });
-                              _hasAnythingChanged();
-                            },
-                          );
-                        }),
-                  ),
-                ],
-              ),
-            ),
-          );
-        });
+        builder: (_) => UserSelectorDialog(
+            alreadySelectedUIDs: _selectedUsers,
+            onSelected: (newID) => setState(() {
+                  _selectedUsers.add(newID);
+                  _hasAnythingChanged();
+                })));
   }
 
   void _onRemoveUserFromRole(String uid) {

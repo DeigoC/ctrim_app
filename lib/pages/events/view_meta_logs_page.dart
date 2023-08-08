@@ -8,6 +8,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/user_selector_dialog.dart';
 
 class ViewMetaLogsPage extends StatefulWidget {
   const ViewMetaLogsPage({super.key, required this.eventContext});
@@ -40,7 +41,6 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
         child: Scaffold(appBar: AppBar(title: const Text('Logs')), body: _buildWithData(context)));
   }
 
-  // this will show both metadata and logs
   Widget _buildWithData(BuildContext context) {
     final List<User> allUsers = _appContext.allUsers;
     final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
@@ -153,45 +153,18 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   }
 
   void _viewPotentialContributorsTap() {
-    final List<User> potentialUsers =
-        _appContext.allUsers.where((e) => !widget.eventContext.metadata.contributorUIDs.contains(e.id)).toList();
-    potentialUsers.removeWhere((element) => element.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
+    final List<String> alreadySelected = List<String>.from(widget.eventContext.metadata.contributorUIDs);
+    alreadySelected.add(widget.eventContext.metadata.authorUID);
 
     showDialog(
         context: context,
-        builder: (_) {
-          return Dialog(
-              child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.7,
-                  child: ListView.builder(
-                      itemCount: potentialUsers.length,
-                      itemBuilder: (_, index) {
-                        final User thisU = potentialUsers[index];
-                        return ListTile(
-                            title: Text(thisU.fullname),
-                            subtitle: Text(thisU.location),
-                            leading: MyUserAvatar(thisU),
-                            onTap: () => _onAddContributorTap(thisU));
-                      })));
-        });
+        builder: (_) =>
+            UserSelectorDialog(alreadySelectedUIDs: alreadySelected, onSelected: (newID) => _addContributor(newID)));
   }
 
-  void _onAddContributorTap(final User newContributor) {
-    DialogManager.showConfirmationDialog(
-            context: context,
-            title: 'Add Contributor',
-            content: 'Are you sure you want to add ${newContributor.forname} as a contributor?')
-        .then((confirm) {
-      if (confirm) {
-        _addContributor(newContributor);
-      }
-      Navigator.of(context).pop();
-    });
-  }
-
-  void _addContributor(final User newContributor) {
+  void _addContributor(final String newContributorID) {
     setState(() {
-      widget.eventContext.metadata.contributorUIDs.add(newContributor.id);
+      widget.eventContext.metadata.contributorUIDs.add(newContributorID);
       widget.eventContext.allowSavingOfTheEdit();
     });
   }
