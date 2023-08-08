@@ -25,6 +25,8 @@ class AppContext extends ChangeNotifier {
 
   late User _currentUser;
 
+  int _postSortIndex = 0;
+
   AppContext(
       {required List<EventHead> heads,
       required List<User> allUsers,
@@ -47,12 +49,31 @@ class AppContext extends ChangeNotifier {
   // * event head related
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
-  void orderEventDatesByRecency() => _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+
+  void sortPostByRecencyDescending() => _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+  void sortPostByRecencyAscending() => _eventHeads.sort((a, b) => a.recentDate.compareTo(b.recentDate));
+
+  void sortPostByEventDateDesending() => _eventHeads.sort((a, b) {
+        if (a.eventDate == null && b.eventDate == null) return 0;
+        if (a.eventDate == null) return 1;
+        if (b.eventDate == null) return -1;
+        return b.eventDate!.compareTo(a.eventDate!);
+      });
+
+  void sortPostByEventDateAscending() => _eventHeads.sort((a, b) {
+        if (a.eventDate == null && b.eventDate == null) return 0;
+        if (a.eventDate == null) return 1;
+        if (b.eventDate == null) return -1;
+        return a.eventDate!.compareTo(b.eventDate!);
+      });
 
   void addOrUpdatePostHead(final EventHead head) {
     _eventHeads.removeWhere((element) => element.id.compareTo(head.id) == 0);
     _eventHeads.insert(0, head);
   }
+
+  int get postSortIndex => _postSortIndex;
+  void setPostSortIndex(int newIndex) => _postSortIndex = newIndex;
 
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;

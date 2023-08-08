@@ -13,14 +13,39 @@ class ViewEventsHome extends StatefulWidget {
 }
 
 class _ViewEventsHomeState extends State<ViewEventsHome> {
-  int _sortIndex = 0;
+  late final AppContext _appContext;
+
+  @override
+  void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
+    switch (_appContext.postSortIndex) {
+      case 0:
+        _appContext.sortPostByRecencyDescending();
+        break;
+      case 1:
+        _appContext.sortPostByEventDateDesending();
+        break;
+      case 2:
+        _appContext.sortPostByEventDateAscending();
+        break;
+      case 3:
+        _appContext.sortPostByRecencyAscending();
+        break;
+      default:
+    }
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      appContext.orderEventDatesByRecency();
+      debugPrint('order looks like:');
+      for (var head in appContext.eventHeads) {
+        debugPrint('head: ${head.id} has recent date of ${head.recentDate}');
+      }
       return RefreshIndicator(
-        edgeOffset: kToolbarHeight * 2,
+        edgeOffset: (kToolbarHeight * 2) - 8,
         onRefresh: _onRefresh,
         child: CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
           SliverAppBar(
@@ -50,11 +75,11 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
         ),
         builder: (_) => SafeArea(
                 child: BulletinSettingSheet(
-              sortIndex: _sortIndex,
-              descendingRecentDate: _onSortByRecentDateDescending,
-              ascendingRecentDate: _onSortByRecentDateAscending,
-              descendingEventDate: _onSortByEventDateDescending,
-              ascendingEventDate: _onSortByEventDateAscending,
+              sortIndex: _appContext.postSortIndex,
+              descendingRecentDate: () => _onSortPosts(0),
+              descendingEventDate: () => _onSortPosts(1),
+              ascendingEventDate: () => _onSortPosts(2),
+              ascendingRecentDate: () => _onSortPosts(3),
             )));
   }
 
@@ -64,28 +89,26 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     debugPrint('refresh called');
   }
 
-  void _onSortByRecentDateDescending() {
-    setState(() {
-      _sortIndex = 0;
-    });
-  }
-
-  void _onSortByRecentDateAscending() {
-    setState(() {
-      _sortIndex = 1;
-    });
-  }
-
-  void _onSortByEventDateDescending() {
-    setState(() {
-      _sortIndex = 2;
-    });
-  }
-
-  void _onSortByEventDateAscending() {
-    setState(() {
-      _sortIndex = 3;
-    });
+  void _onSortPosts(int newSortIndex) {
+    if (newSortIndex != _appContext.postSortIndex) {
+      setState(() {
+        _appContext.setPostSortIndex(newSortIndex);
+        switch (_appContext.postSortIndex) {
+          case 0:
+            _appContext.sortPostByRecencyDescending();
+            break;
+          case 1:
+            _appContext.sortPostByEventDateDesending();
+            break;
+          case 2:
+            _appContext.sortPostByEventDateAscending();
+            break;
+          case 3:
+            _appContext.sortPostByRecencyAscending();
+            break;
+        }
+      });
+    }
   }
 }
 
@@ -133,17 +156,17 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
           ListTile(
               title: const Text('Upcoming Events'),
               leading: const Icon(Icons.calendar_month),
-              selected: _sortIndex == 2,
+              selected: _sortIndex == 1,
               onTap: () => _onSortByEventDateDescending()),
           ListTile(
               title: const Text('Past Events'),
               leading: const Icon(Icons.calendar_month_outlined),
-              selected: _sortIndex == 3,
+              selected: _sortIndex == 2,
               onTap: () => _onSortByEventDateAscending()),
           ListTile(
               title: const Text('Stale Posts'),
               leading: const Icon(Icons.folder_outlined),
-              selected: _sortIndex == 1,
+              selected: _sortIndex == 3,
               onTap: () => _onSortByRecentDateAscending()),
         ],
       ),
@@ -160,21 +183,21 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
   void _onSortByRecentDateAscending() {
     setState(() {
       widget.ascendingRecentDate();
-      _sortIndex = 1;
+      _sortIndex = 3;
     });
   }
 
   void _onSortByEventDateDescending() {
     setState(() {
       widget.descendingEventDate();
-      _sortIndex = 2;
+      _sortIndex = 1;
     });
   }
 
   void _onSortByEventDateAscending() {
     setState(() {
       widget.ascendingEventDate();
-      _sortIndex = 3;
+      _sortIndex = 2;
     });
   }
 }
