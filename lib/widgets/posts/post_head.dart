@@ -17,7 +17,7 @@ class PostHead extends StatelessWidget {
   final bool viewingChild, childToParent;
   final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16;
-  static final DateFormat _eventDateFormat = DateFormat('d MMM, HH:mm');
+  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM, HH:mm');
 
   @override
   Widget build(BuildContext context) {

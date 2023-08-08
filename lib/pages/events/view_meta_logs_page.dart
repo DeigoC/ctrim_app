@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -95,7 +97,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     final List<ImageProvider> avatars = List<ImageProvider>.empty(growable: true);
     for (final thisU in selectedUsers) {
       if (thisU.imgSrc.isNotEmpty) {
-        avatars.add(NetworkImage(thisU.imgSrc));
+        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
+        avatars.add(FileImage(File(path)));
       } else {
         avatars.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }

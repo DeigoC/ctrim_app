@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/user.dart';
 
@@ -11,14 +15,17 @@ class MyUserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_user.imgSrc != '' || tmpImageSrc != null) {
-      return _buildImageAvatar();
+      return _buildImageAvatar(context);
     }
     return _buildTextAvatar();
   }
 
-  Widget _buildImageAvatar() {
+  Widget _buildImageAvatar(BuildContext context) {
+    final String filePath = '${Provider.of<AppContext>(context, listen: false).appDir}/user_imgs/${_user.id}.png';
+    final File imgFile = File(filePath);
     return CircleAvatar(
-        backgroundImage: NetworkImage(tmpImageSrc != null ? tmpImageSrc! : _user.imgSrc), radius: radius);
+        backgroundImage: (tmpImageSrc != null ? NetworkImage(tmpImageSrc!) : FileImage(imgFile)) as ImageProvider,
+        radius: radius);
   }
 
   Widget _buildTextAvatar() {

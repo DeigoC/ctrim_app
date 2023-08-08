@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -130,7 +132,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     for (final uid in _selectedUsers) {
       final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
       if (thisU.imgSrc.isNotEmpty) {
-        result.add(NetworkImage(thisU.imgSrc));
+        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
+        result.add(FileImage(File(path)));
       } else {
         result.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }

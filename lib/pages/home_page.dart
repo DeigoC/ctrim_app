@@ -1,22 +1,23 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/firebase/messaging_manager.dart';
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/pages/information/teachings/bible_reading_page.dart';
-import 'package:ctrim_app/pages/information/teachings/love_page.dart';
-import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/messaging_manager.dart';
+import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
+import '../utility/local_data_manager.dart';
 import '../widgets/personal_drawer.dart';
 import 'events/add_event_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
+import 'information/teachings/bible_reading_page.dart';
+import 'information/teachings/love_page.dart';
 import 'information_home.dart';
 import 'personal_home.dart';
 
@@ -44,6 +45,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
       });
+    }
+
+    if (_appContext.dataManager.shouldFetchUserImages) {
+      _performLocalUserImgCleanup();
+      _appContext.dataManager.justFetchedUserImages();
     }
 
     _setupCloudOnMessage();
@@ -316,7 +322,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         context: context,
         barrierDismissible: false,
         builder: (_) {
-          // TODO wrap this in an orientation builder!
+          // ! wrap this in an orientation builder!
           return Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: SingleChildScrollView(
@@ -351,5 +357,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         });
 
     return result;
+  }
+
+  void _performLocalUserImgCleanup() async {
+    final String userImgDir = '${_appContext.appDir}/user_imgs';
+    final dir = Directory(userImgDir);
+    if (!await dir.exists()) {
+      debugPrint('creating user_img directory!');
+      await dir.create();
+    }
+
+    for (final user in _appContext.allUsers) {
+      final File potentialUserImg = File('$userImgDir/${user.id}.png');
+      if (user.imgSrc.isNotEmpty) {
+        debugPrint('Creating user profile pic for ${user.forname} ID ${user.id}');
+        _setImageForFile(potentialUserImg, user.imgSrc);
+      } else if (user.imgSrc.isEmpty && await potentialUserImg.exists()) {
+        debugPrint('Deleting user profile pic for ${user.forname} ID ${user.id}');
+        potentialUserImg.delete();
+      } else {
+        debugPrint('doing nothing, no need to create/delete profile pics');
+      }
+    }
+  }
+
+  Future<void> _setImageForFile(final File file, final String src) async {
+    final response = await http.get(Uri.parse(src));
+    file.writeAsBytes(response.bodyBytes);
   }
 }

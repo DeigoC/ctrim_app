@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:avatar_stack/positions.dart';
 import 'package:ctrim_app/utility/app_context.dart';
@@ -34,12 +36,14 @@ class ProgramTile extends StatelessWidget {
     if (assignees.isEmpty) return null;
 
     final List<ImageProvider> avatars = List<ImageProvider>.empty(growable: true);
-    final allUsers = Provider.of<AppContext>(context, listen: false).allUsers;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final allUsers = appContext.allUsers;
 
     for (final uid in assignees) {
       final thisU = allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
       if (thisU.imgSrc.isNotEmpty) {
-        avatars.add(NetworkImage(thisU.imgSrc));
+        final path = '${appContext.appDir}/user_imgs/${thisU.id}.png';
+        avatars.add(FileImage(File(path)));
       } else {
         avatars.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }

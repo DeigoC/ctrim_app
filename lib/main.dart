@@ -58,7 +58,7 @@ void main() async {
         await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
   }
 
-  final allUsers = await _fetchAllUsers();
+  final allUsers = await _fetchAllUsers(prefInstance);
   ctrim.User currentUser = ctrim.User(id: '0', forname: 'Guest', surname: 'Account');
 
   if (uAuth != null) {
@@ -83,7 +83,7 @@ void main() async {
   runApp(ChangeNotifierProvider(create: (_) => appContext, child: MyApp(settingsController: settingsController)));
 }
 
-Future<List<ctrim.User>> _fetchAllUsers() async {
+Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
   final LocalDataManager dataManager = LocalDataManager();
 
@@ -93,6 +93,7 @@ Future<List<ctrim.User>> _fetchAllUsers() async {
   final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 7;
 
   // only use the local data if the count is the same in the DB and the last time has been multiple days ago (7 days)
+  // TODO also make sure that the saved version of the app matches the current one
   final bool shouldReadLocalData = usersData.isNotEmpty && usersData[0] == currentID && lastFetchWasNotAWhileAgo;
 
   if (shouldReadLocalData) {
@@ -142,6 +143,7 @@ Future<List<ctrim.User>> _fetchAllUsers() async {
     // this write thing should be updated when we register users
     await dataManager.writeUsersList(allUsersContent);
     await dataManager.writeLastUsersFetch();
+    pref.setBool('FetchUserImages', true); // refresh user image fetch
 
     return allUsers;
   }

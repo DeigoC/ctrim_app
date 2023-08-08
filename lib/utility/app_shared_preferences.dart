@@ -10,7 +10,8 @@ class AppSharedPreferences {
       _pass = 'password',
       _clear = '',
       _token = 'token',
-      _bookmarkedPosts = 'bookmarked';
+      _bookmarkedPosts = 'bookmarked',
+      _fetchUserImgs = 'FetchUserImages';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -50,4 +51,8 @@ class AppSharedPreferences {
     bookmarked.remove(id);
     _pref.setStringList(_bookmarkedPosts, bookmarked);
   }
+
+  // * Local data related
+  bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;
+  void justFetchedUserImages() => _pref.setBool(_fetchUserImgs, false);
 }

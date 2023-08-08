@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -103,12 +105,12 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           title: const Text('For Guests'),
           subtitle: const Text('Is this something guests should see?'),
         ),
-        ListTile(
-          title: const Text('Priority: 1'),
-          subtitle: const Text('Should this be viewed higher than others of the same start time?'),
-          trailing: const Icon(Icons.edit),
-          onTap: () {},
-        ),
+        // ListTile(
+        //   title: const Text('Priority: 1'),
+        //   subtitle: const Text('Should this be viewed higher than others of the same start time?'),
+        //   trailing: const Icon(Icons.edit),
+        //   onTap: () {},
+        // ),
         const SizedBox(height: 16),
         const Divider(),
         ElevatedButton.icon(
@@ -127,7 +129,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     for (final uid in _selectedUsers) {
       final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
       if (thisU.imgSrc.isNotEmpty) {
-        result.add(NetworkImage(thisU.imgSrc));
+        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
+        result.add(FileImage(File(path)));
       } else {
         result.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }
