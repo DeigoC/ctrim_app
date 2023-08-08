@@ -95,6 +95,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget? _buildFAB() {
     if (_selectedIndex == 0 && _appContext.currentUser.isLeader) {
       return FloatingActionButton.extended(
+          icon: const Icon(Icons.post_add),
           onPressed: () {
             final String uid = _appContext.currentUser.id;
             Navigator.push(

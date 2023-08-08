@@ -17,14 +17,14 @@ class PostHead extends StatelessWidget {
   final bool viewingChild, childToParent;
   final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16;
-  static final DateFormat _recentFormat = DateFormat('d MMM, HH:mm');
+  static final DateFormat _eventDateFormat = DateFormat('d MMM, HH:mm');
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> children = [
       _buildTitle(),
       // const SizedBox(height: 2),
-      _buildLastEdit(),
+      _buildMetaData(),
       const SizedBox(height: 16),
       _buildSubtitle(),
       const SizedBox(height: 8)
@@ -48,11 +48,15 @@ class PostHead extends StatelessWidget {
         child: Text(thisHead.title, style: const TextStyle(fontSize: _titleFontSize)));
   }
 
-  Widget _buildLastEdit() {
+  Widget _buildMetaData() {
+    // final String timeAgo =
+    final String finalStr = thisHead.eventDate != null
+        ? 'On ${_eventDateFormat.format(thisHead.eventDate!)} • Edit ${timeAgo(thisHead.recentDate)}'
+        : 'Edit ${timeAgo(thisHead.recentDate)}';
+
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Text('(edit ${_recentFormat.format(thisHead.recentDate)})',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600)));
+        child: Text(finalStr, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)));
   }
 
   Widget _buildSubtitle() {
@@ -140,5 +144,25 @@ class PostHead extends StatelessWidget {
                   initialIndex: index,
                   postId: thisHead.id,
                 )));
+  }
+
+  String timeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 5) {
+      return "a few seconds ago";
+    } else if (difference.inMinutes < 1) {
+      return "a few minutes ago";
+    } else if (difference.inHours < 1) {
+      final minutes = difference.inMinutes;
+      return "$minutes ${(minutes == 1) ? 'minute' : 'minutes'} ago";
+    } else if (difference.inDays < 1) {
+      final hours = difference.inHours;
+      return "$hours ${(hours == 1) ? 'hour' : 'hours'} ago";
+    } else {
+      final days = difference.inDays;
+      return "$days ${(days == 1) ? 'day' : 'days'} ago";
+    }
   }
 }
