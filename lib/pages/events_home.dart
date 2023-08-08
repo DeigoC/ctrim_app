@@ -1,6 +1,7 @@
 import 'package:ctrim_app/widgets/posts/post_head.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../firebase/db_managers/event_db_manager.dart';
 import '../utility/app_context.dart';
 
 class ViewEventsHome extends StatefulWidget {
@@ -18,35 +19,22 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
-    switch (_appContext.postSortIndex) {
-      case 0:
-        _appContext.sortPostByRecencyDescending();
-        break;
-      case 1:
-        _appContext.sortPostByEventDateDesending();
-        break;
-      case 2:
-        _appContext.sortPostByEventDateAscending();
-        break;
-      case 3:
-        _appContext.sortPostByRecencyAscending();
-        break;
-      default:
-    }
-
+    _appContext.sortPostsByIndex();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      debugPrint('order looks like:');
-      for (var head in appContext.eventHeads) {
-        debugPrint('head: ${head.id} has recent date of ${head.recentDate}');
-      }
+      // debugPrint('order looks like:');
+      // for (var head in appContext.eventHeads) {
+      //   debugPrint('head: ${head.id} has recent date of ${head.recentDate}');
+      // }
       return RefreshIndicator(
         edgeOffset: (kToolbarHeight * 2) - 8,
-        onRefresh: _onRefresh,
+        onRefresh: () => _onRefresh().then((value) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            behavior: !appContext.currentUser.isLeader ? SnackBarBehavior.floating : null,
+            content: const Text('You are up to date!')))),
         child: CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
           SliverAppBar(
               title: const Text('Bulletin'),
@@ -85,30 +73,31 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
 
   // * Logic
   Future<void> _onRefresh() async {
-    await Future.delayed(const Duration(seconds: 1));
-    debugPrint('refresh called');
+    if (_appContext.dataManager.canRefreshPosts) {
+      debugPrint('refreshing now!');
+      await _refreshPosts();
+      _appContext.dataManager.setPostRefreshTime();
+    } else {
+      debugPrint('cannot refresh cause of timer');
+      await Future.delayed(const Duration(seconds: 1));
+    }
   }
 
   void _onSortPosts(int newSortIndex) {
     if (newSortIndex != _appContext.postSortIndex) {
       setState(() {
         _appContext.setPostSortIndex(newSortIndex);
-        switch (_appContext.postSortIndex) {
-          case 0:
-            _appContext.sortPostByRecencyDescending();
-            break;
-          case 1:
-            _appContext.sortPostByEventDateDesending();
-            break;
-          case 2:
-            _appContext.sortPostByEventDateAscending();
-            break;
-          case 3:
-            _appContext.sortPostByRecencyAscending();
-            break;
-        }
+        _appContext.sortPostsByIndex();
       });
     }
+  }
+
+  Future<void> _refreshPosts() async {
+    final EventHeadDBManager headDBManager = EventHeadDBManager();
+    final heads = await headDBManager.fetchEventHeads();
+    setState(() {
+      _appContext.setRefreshedHeads(heads);
+    });
   }
 }
 
@@ -138,39 +127,36 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const ListTile(
-            title: Text('Locations: Belfast'),
-            subtitle: Text('(Fixed for now!)'),
-            leading: Icon(Icons.church),
-            trailing: Icon(Icons.edit),
-          ),
-          const Divider(),
-          ListTile(
-              title: const Text('Most Recent Activity'),
-              leading: const Icon(Icons.edit_document),
-              selected: _sortIndex == 0,
-              onTap: () => _onSortByRecentDateDescending()),
-          ListTile(
-              title: const Text('Upcoming Events'),
-              leading: const Icon(Icons.calendar_month),
-              selected: _sortIndex == 1,
-              onTap: () => _onSortByEventDateDescending()),
-          ListTile(
-              title: const Text('Past Events'),
-              leading: const Icon(Icons.calendar_month_outlined),
-              selected: _sortIndex == 2,
-              onTap: () => _onSortByEventDateAscending()),
-          ListTile(
-              title: const Text('Stale Posts'),
-              leading: const Icon(Icons.folder_outlined),
-              selected: _sortIndex == 3,
-              onTap: () => _onSortByRecentDateAscending()),
-        ],
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+      ListTile(
+        title: const Text('Locations: Belfast'),
+        subtitle: const Text('(Fixed for now!)'),
+        leading: const Icon(Icons.church),
+        trailing: const Icon(Icons.edit),
+        onTap: () {},
       ),
-    );
+      const Divider(),
+      ListTile(
+          title: const Text('Most Recent Activity'),
+          leading: const Icon(Icons.edit_document),
+          selected: _sortIndex == 0,
+          onTap: () => _onSortByRecentDateDescending()),
+      ListTile(
+          title: const Text('Upcoming Events'),
+          leading: const Icon(Icons.calendar_month),
+          selected: _sortIndex == 1,
+          onTap: () => _onSortByEventDateDescending()),
+      ListTile(
+          title: const Text('Past Events'),
+          leading: const Icon(Icons.calendar_month_outlined),
+          selected: _sortIndex == 2,
+          onTap: () => _onSortByEventDateAscending()),
+      ListTile(
+          title: const Text('Stale Posts'),
+          leading: const Icon(Icons.folder_outlined),
+          selected: _sortIndex == 3,
+          onTap: () => _onSortByRecentDateAscending())
+    ]));
   }
 
   void _onSortByRecentDateDescending() {

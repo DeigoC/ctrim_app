@@ -11,7 +11,8 @@ class AppSharedPreferences {
       _clear = '',
       _token = 'token',
       _bookmarkedPosts = 'bookmarked',
-      _fetchUserImgs = 'FetchUserImages';
+      _fetchUserImgs = 'fetchUserImages',
+      _lastPostRefresh = 'lastPostRefresh';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -51,6 +52,11 @@ class AppSharedPreferences {
     bookmarked.remove(id);
     _pref.setStringList(_bookmarkedPosts, bookmarked);
   }
+
+  bool get canRefreshPosts => _pref.getInt(_lastPostRefresh) == null
+      ? true
+      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >= 2;
+  void setPostRefreshTime() => _pref.setInt(_lastPostRefresh, DateTime.now().millisecondsSinceEpoch);
 
   // * Local data related
   bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;

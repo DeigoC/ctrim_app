@@ -50,9 +50,10 @@ class PostHead extends StatelessWidget {
 
   Widget _buildMetaData() {
     // final String timeAgo =
+
     final String finalStr = thisHead.eventDate != null
-        ? 'On ${_eventDateFormat.format(thisHead.eventDate!)} • Edit ${timeAgo(thisHead.recentDate)}'
-        : 'Edit ${timeAgo(thisHead.recentDate)}';
+        ? '${thisHead.location} • On ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${timeAgo(thisHead.recentDate)}'
+        : '${thisHead.location} • Edited ${timeAgo(thisHead.recentDate)}';
 
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),

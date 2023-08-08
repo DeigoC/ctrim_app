@@ -50,30 +50,50 @@ class AppContext extends ChangeNotifier {
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
 
-  void sortPostByRecencyDescending() => _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
-  void sortPostByRecencyAscending() => _eventHeads.sort((a, b) => a.recentDate.compareTo(b.recentDate));
-
-  void sortPostByEventDateDesending() => _eventHeads.sort((a, b) {
-        if (a.eventDate == null && b.eventDate == null) return 0;
-        if (a.eventDate == null) return 1;
-        if (b.eventDate == null) return -1;
-        return b.eventDate!.compareTo(a.eventDate!);
-      });
-
-  void sortPostByEventDateAscending() => _eventHeads.sort((a, b) {
-        if (a.eventDate == null && b.eventDate == null) return 0;
-        if (a.eventDate == null) return 1;
-        if (b.eventDate == null) return -1;
-        return a.eventDate!.compareTo(b.eventDate!);
-      });
-
   void addOrUpdatePostHead(final EventHead head) {
     _eventHeads.removeWhere((element) => element.id.compareTo(head.id) == 0);
     _eventHeads.insert(0, head);
   }
 
+  void sortPostsByIndex() {
+    // 0 Recency date descending
+    // 1 Event date descending
+    // 2 Event date ascending
+    // 3 Recency date ascending
+    switch (_postSortIndex) {
+      case 0:
+        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        break;
+      case 1:
+        _eventHeads.sort((a, b) {
+          if (a.eventDate == null && b.eventDate == null) return 0;
+          if (a.eventDate == null) return 1;
+          if (b.eventDate == null) return -1;
+          return b.eventDate!.compareTo(a.eventDate!);
+        });
+        break;
+      case 2:
+        _eventHeads.sort((a, b) {
+          if (a.eventDate == null && b.eventDate == null) return 0;
+          if (a.eventDate == null) return 1;
+          if (b.eventDate == null) return -1;
+          return a.eventDate!.compareTo(b.eventDate!);
+        });
+        break;
+      case 3:
+        _eventHeads.sort((a, b) => a.recentDate.compareTo(b.recentDate));
+        break;
+    }
+  }
+
   int get postSortIndex => _postSortIndex;
   void setPostSortIndex(int newIndex) => _postSortIndex = newIndex;
+
+  void setRefreshedHeads(final List<EventHead> heads) {
+    _eventHeads.clear();
+    _eventHeads.addAll(heads);
+    sortPostsByIndex();
+  }
 
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;

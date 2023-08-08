@@ -143,7 +143,7 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
     // this write thing should be updated when we register users
     await dataManager.writeUsersList(allUsersContent);
     await dataManager.writeLastUsersFetch();
-    pref.setBool('FetchUserImages', true); // refresh user image fetch
+    pref.setBool('fetchUserImages', true); // refresh user image fetch
 
     return allUsers;
   }

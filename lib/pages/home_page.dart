@@ -38,6 +38,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     _informationTabController = TabController(length: 3, vsync: this);
+    _appContext.dataManager.setPostRefreshTime();
 
     if (!kDebugMode) {
       final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
