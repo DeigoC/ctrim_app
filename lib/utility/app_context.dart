@@ -28,15 +28,15 @@ class AppContext extends ChangeNotifier {
   int _postSortIndex = 0;
 
   AppContext(
-      {required List<EventHead> heads,
-      required List<User> allUsers,
+      {required List<EventHead>? heads,
+      required List<User>? allUsers,
+      required User? user,
       required SharedPreferences prefInstance,
-      required User user,
       required String cacheDir,
       required String appDir}) {
-    _eventHeads = heads;
-    _allUsers = allUsers;
-    _currentUser = user;
+    _eventHeads = heads ?? List<EventHead>.empty(growable: true);
+    _allUsers = allUsers ?? List<User>.empty(growable: true);
+    _currentUser = user ?? _guest;
     _dataManager = AppSharedPreferences(preferences: prefInstance);
     _cacheDir = cacheDir;
     _appDir = appDir;

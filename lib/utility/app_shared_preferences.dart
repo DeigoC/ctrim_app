@@ -9,10 +9,11 @@ class AppSharedPreferences {
       _email = 'email',
       _pass = 'password',
       _clear = '',
-      _token = 'token',
+      _fcmToken = 'token',
       _bookmarkedPosts = 'bookmarked',
       _fetchUserImgs = 'fetchUserImages',
-      _lastPostRefresh = 'lastPostRefresh';
+      _lastPostRefresh = 'lastPostRefresh',
+      _phoneToken = 'phoneToken';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -29,12 +30,18 @@ class AppSharedPreferences {
     _pref.setString(_pass, _clear);
   }
 
+  void savePhoneToken(int token) {
+    _pref.setInt(_phoneToken, token);
+  }
+
+  int? get phoneToken => _pref.getInt(_phoneToken);
+
   // * Notification related
   bool get isFirstOpen => _pref.getBool(_isFirstOpen) ?? true;
   void nowOpened() => _pref.setBool(_isFirstOpen, false);
 
-  String get token => _pref.getString(_token) ?? '';
-  void saveToken(String thisToken) => _pref.setString(_token, thisToken);
+  String get fcmToken => _pref.getString(_fcmToken) ?? '';
+  void saveFCMToken(String thisToken) => _pref.setString(_fcmToken, thisToken);
 
   // * Post related
   List<String> get bookmarkedPosts => UnmodifiableListView(_pref.getStringList(_bookmarkedPosts) ?? List.empty());

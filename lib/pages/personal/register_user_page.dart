@@ -218,7 +218,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   Future<String?> _attemptToRegisterUserAuth() async {
     String? uid;
     try {
-      uid = await _authManager.registerUserAndGetUID(_tecEmail.text, _tecPassword.text);
+      // uid = await _authManager.registerUserAndSendVerification(_tecEmail.text, _tecPassword.text);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
         _showErrorMessage('That email is already in use, please try another');

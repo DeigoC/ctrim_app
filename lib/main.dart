@@ -15,9 +15,9 @@ import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:flutter/foundation.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -35,15 +35,15 @@ void main() async {
   await Firebase.initializeApp();
 
   // * Make sure we connect to the emulator on debug
-  if (kDebugMode) {
-    try {
-      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-    } catch (e) {
-      // ignore: avoid_print
-      print(e);
-    }
-  }
+  // if (kDebugMode) {
+  //   try {
+  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  //   } catch (e) {
+  //     // ignore: avoid_print
+  //     print(e);
+  //   }
+  // }
 
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();

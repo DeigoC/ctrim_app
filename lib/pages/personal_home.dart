@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/startup_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -30,11 +31,11 @@ class _PersonalHomeState extends State<PersonalHome> {
         ),
 
         // ! The following are used for testing
-        // ListTile(
-        //   title: const Text('Testing dialogs'),
-        //   leading: const Icon(Icons.science),
-        //   onTap: () => _showFCMTest().then((result) => debugPrint('Result is $result')),
-        // )
+        ListTile(
+          title: const Text('Startup login test'),
+          leading: const Icon(Icons.science),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StartupLoginPage())),
+        )
         // ListTile(
         //     title: const Text('Send to Topic - Love'),
         //     leading: const Icon(Icons.send_to_mobile),

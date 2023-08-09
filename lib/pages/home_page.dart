@@ -167,7 +167,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final token = await messagingManager.requestPermissionAndToken();
       if (token != null) {
         debugPrint('Token to save is $token');
-        appContext.dataManager.saveToken(token);
+        appContext.dataManager.saveFCMToken(token);
       }
       messagingManager.subscribeToCTRIMBelfast();
       appContext.dataManager.nowOpened();

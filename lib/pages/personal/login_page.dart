@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
     _attemptToLogin().then((id) {
       if (id != null) {
         final appContext = Provider.of<AppContext>(context, listen: false);
-        final String token = appContext.dataManager.token;
+        final String token = appContext.dataManager.fcmToken;
 
         // ? i think it's much safer to just grab the token from the offical API instead of using
         // a potentially outdated one?

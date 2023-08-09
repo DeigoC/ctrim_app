@@ -70,7 +70,7 @@ class PersonalDrawer extends StatelessWidget {
     final UserContactDBManager userContactDBManager = UserContactDBManager();
     // Provider.of<AppContext>(context, listen: false).clearCreds();
     // Provider.of<AppContext>(context, listen: false).setUserToGuest();
-    await userContactDBManager.removeTokenFromUser(appContext.currentUser.id, appContext.dataManager.token);
+    await userContactDBManager.removeTokenFromUser(appContext.currentUser.id, appContext.dataManager.fcmToken);
     appContext.dataManager.clearCreds();
     appContext.setUserToGuest();
     appContext.rebuildPlease();

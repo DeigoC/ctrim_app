@@ -4,17 +4,23 @@ import 'package:flutter/material.dart';
 class AuthManager {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future signInForUserRegistration(String email, String password) async {
+  Future<void> signInForUserRegistration(String email, String password) async {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
-  Future signOut() async {
+  Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  Future<String> registerUserAndGetUID(String email, String password) async {
-    UserCredential cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-    return cred.user!.uid;
+  Future<bool> registerUserAndSendVerification(final String email, final String password) async {
+    await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    await _auth.currentUser!.sendEmailVerification();
+    return true;
+  }
+
+  Future<bool> hasUserVerifiedEmail() async {
+    await _auth.currentUser!.reload();
+    return _auth.currentUser!.emailVerified;
   }
 
   Future<String> loginAndReturnAuthID(String email, String password) async {
