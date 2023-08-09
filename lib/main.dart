@@ -51,6 +51,7 @@ void main() async {
 
   // * First up, we log the returning user in, otherwise it's a guest
   final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
+  // String? email, pass;
   String? uAuth;
   if (email != null && email != '' && pass != null && pass != '') {
     debugPrint('email is $email and pass is $pass');

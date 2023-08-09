@@ -23,7 +23,7 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
   final AuthManager _authManager = AuthManager();
   final FocusNode _fnPassword = FocusNode(), _fnConfirmPassword = FocusNode(), _fnLoginPassword = FocusNode();
 
-  bool _isWaitingForVerification = false;
+  bool _isWaitingForVerification = false, _showLoginPassword = false, _showRegisterPassword = false;
 
   @override
   void initState() {
@@ -49,15 +49,15 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: const Text(
-              'Startup login/registration',
-            ),
+            title: const Text('Hi, Welcome!'),
+            centerTitle: false,
+            leading: Image.asset('assets/images/ctrim_logo.png', fit: BoxFit.contain, height: kToolbarHeight),
             bottom: _isWaitingForVerification
                 ? null
-                : TabBar(controller: _tabController, tabs: const [Tab(text: 'Login'), Tab(text: 'Registration')])),
+                : TabBar(controller: _tabController, tabs: const [Tab(text: 'Registration'), Tab(text: 'Login')])),
         body: _isWaitingForVerification
             ? _buildWaitingForVerification()
-            : TabBarView(controller: _tabController, children: [_buildLoginTab(), _buildRegistrationTab()]));
+            : TabBarView(controller: _tabController, children: [_buildRegistrationTab(), _buildLoginTab()]));
   }
 
   Widget _buildLoginTab() {
@@ -80,13 +80,25 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
               controller: _tecLoginPassword,
               onSubmitted: (_) => _fnLoginPassword.unfocus(),
               focusNode: _fnLoginPassword,
-              decoration: const InputDecoration(label: Text('Password'), prefixIcon: Icon(Icons.password)),
+              obscureText: _showLoginPassword,
+              decoration: InputDecoration(
+                  label: const Text('Password'),
+                  prefixIcon: const Icon(Icons.password),
+                  suffixIcon: IconButton(
+                      onPressed: () => setState(() {
+                            _showLoginPassword = !_showLoginPassword;
+                          }),
+                      icon: Icon(
+                        _showLoginPassword ? Icons.visibility_off : Icons.visibility,
+                        color: _showLoginPassword ? Colors.grey : Colors.blue,
+                      ))),
             ),
             Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(onPressed: _attemptToLogin, child: const Text('Forgot Password'))),
+                child: TextButton(onPressed: _onForgotEmailClick, child: const Text('Forgot Password'))),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loginClick, child: const Text('Login')),
+            ElevatedButton(onPressed: _testButton, child: const Text('Test Button')),
           ],
         ),
       ),
@@ -112,10 +124,20 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
             TextField(
                 controller: _tecRegistrationPassword,
                 keyboardType: TextInputType.visiblePassword,
-                obscureText: true,
+                obscureText: _showRegisterPassword,
                 focusNode: _fnPassword,
                 onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
-                decoration: const InputDecoration(label: Text('Password'), prefixIcon: Icon(Icons.password))),
+                decoration: InputDecoration(
+                    label: const Text('Password'),
+                    prefixIcon: const Icon(Icons.password),
+                    suffixIcon: IconButton(
+                        onPressed: () => setState(() {
+                              _showRegisterPassword = !_showRegisterPassword;
+                            }),
+                        icon: Icon(
+                          _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
+                          color: _showRegisterPassword ? Colors.grey : Colors.blue,
+                        )))),
             const SizedBox(height: 8),
             TextField(
                 controller: _tecRegistrationPasswordConfirmation,
@@ -136,10 +158,13 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Awaiting Email Verification!',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 21),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Verification Link Sent! Awaiting Email Verification',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 21),
+            ),
           ),
           Padding(
               padding: const EdgeInsets.all(16.0),
@@ -150,10 +175,27 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
   }
 
   // * LOGIC
-  Future<void> _loginClick() async {}
+  void _testButton() {
+    _authManager.whoAmI();
+  }
+
+  Future<void> _loginClick() async {
+    if (_tecLoginEmail.text.trim().isEmpty || _tecLoginPassword.text.isEmpty) {
+      DialogManager.showAlertDialog(
+          context: context, title: 'Login', content: 'Please provide your email and password to login');
+    } else {
+      _attemptToLogin().then((loggedIn) {
+        if (loggedIn) {
+          Navigator.of(context).pop();
+          _instantiateTheRest(false);
+        }
+      });
+    }
+  }
 
   Future<bool> _attemptToLogin() async {
     try {
+      DialogManager.showProgressDialog(context: context, title: 'Attempting to Login');
       await _authManager.loginAndReturnAuthID(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
       return true;
     } on FirebaseAuthException catch (e) {
@@ -161,6 +203,42 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
     } on Exception catch (e) {
       debugPrint('Something went really wrong for login: $e');
       DialogManager.showAlertDialog(context: context, title: 'Login Error', content: 'See exception: $e');
+    }
+    return false;
+  }
+
+  void _onForgotEmailClick() {
+    if (_tecLoginEmail.text.trim().isEmpty) {
+      DialogManager.showAlertDialog(
+          context: context,
+          title: 'Forgot Password',
+          content: "Enter email in the 'Email' login text field to send the password reset link");
+    } else {
+      DialogManager.showConfirmationDialog(
+              context: context,
+              title: 'Password Reset',
+              content: "Send password reset link to '${_tecLoginEmail.text.trim()}?'")
+          .then((confirm) {
+        if (confirm) {
+          _attemptToSendPasswordResetEmail().then((sent) {
+            if (sent) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password reset link sent!'), behavior: SnackBarBehavior.floating));
+            }
+          });
+        }
+      });
+    }
+  }
+
+  Future<bool> _attemptToSendPasswordResetEmail() async {
+    try {
+      DialogManager.showProgressDialog(context: context, title: 'Sending Password Reset Link!');
+      await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _handleException(e);
     }
     return false;
   }
@@ -183,17 +261,20 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
         confirmText: 'Send Verification!');
 
     if (confirmation) {
-      final bool canVerifyEmail = await _attemptToRegister();
-      if (canVerifyEmail) {
-        setState(() {
-          _isWaitingForVerification = true;
-        });
-      }
+      await _attemptToRegister().then((canVerifyEmail) {
+        if (canVerifyEmail) {
+          Navigator.of(context).pop();
+          setState(() {
+            _isWaitingForVerification = true;
+          });
+        }
+      });
     }
   }
 
   Future<bool> _attemptToRegister() async {
     try {
+      DialogManager.showProgressDialog(context: context, title: 'Attempting To Register');
       await _authManager.registerUserAndSendVerification(
           _tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
       return true;
@@ -207,27 +288,23 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
   }
 
   void _handleException(final FirebaseAuthException e) {
+    Navigator.of(context).pop(); // pop the loading dialog
+    const String title = 'Error';
+    String content = 'Something went wrong!\n\n$e';
     if (e.code == 'invalid-email') {
-      DialogManager.showAlertDialog(context: context, title: 'Error', content: 'That email badly formatted');
+      content = 'That email was badly formatted, please enter your complete email';
     } else if (e.code == 'email-already-in-use') {
-      DialogManager.showAlertDialog(
-          context: context, title: 'Error', content: 'That email is already in use, please try to login');
+      content = 'That email is already in use, please try to login';
     } else if (e.code == 'weak-password') {
-      DialogManager.showAlertDialog(
-          context: context, title: 'Error', content: 'Password is really weak, please try a stronger alternative!');
+      content = 'Password is really weak, please try a stronger alternative!';
     } else if (e.code == 'user-disabled') {
-      DialogManager.showAlertDialog(context: context, title: 'Error', content: 'This user has been disabled');
+      content = 'This user has been disabled';
     } else if (e.code == 'user-not-found') {
-      DialogManager.showAlertDialog(
-          context: context, title: 'Error', content: 'User with this email has not been found');
+      content = 'User with this email has not been found';
     } else if (e.code == 'wrong-password') {
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Error',
-          content: 'Wrong password, please try again or reset the password if forgotten');
-    } else {
-      DialogManager.showAlertDialog(context: context, title: 'Error', content: 'Something went wrong!\n\n$e');
+      content = 'Wrong password, please try again or reset the password if forgotten';
     }
+    DialogManager.showAlertDialog(context: context, title: title, content: content);
   }
 
   // ! There's technically a chance that the user token might be expired by then
@@ -252,18 +329,23 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
     DialogManager.showProgressDialog(title: 'Success! Loading the rest of the app', context: context);
     _saveCreds(fromRegistration);
     _fetchEssentialData().then((_) {
-      Navigator.of(context).pop();
-      Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
       debugPrint('opened home page here');
+      Navigator.of(context).pop(); // pop the progress dialog
+      Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
     });
   }
 
-  Future<void> _fetchEssentialData() async {}
+  Future<void> _fetchEssentialData() async {
+    await Future.delayed(const Duration(seconds: 1));
+  }
 
   Future<void> _saveCreds(bool fromRegistration) async {
     if (fromRegistration) {
+      debugPrint(
+          'Creds to save are: ${_tecRegistrationEmail.text.trim()} with password ${_tecRegistrationPassword.text}');
       _appContext.dataManager.saveCreds(_tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
     } else {
+      debugPrint('Creds to save are: ${_tecLoginEmail.text.trim()} with password ${_tecLoginPassword.text}');
       _appContext.dataManager.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
     }
   }

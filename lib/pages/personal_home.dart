@@ -1,4 +1,4 @@
-import 'package:ctrim_app/pages/startup_login_page.dart';
+import 'package:ctrim_app/pages/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

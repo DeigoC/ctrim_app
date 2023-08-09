@@ -33,4 +33,8 @@ class AuthManager {
     debugPrint(message);
     return message;
   }
+
+  Future<void> sendPasswordResetEmail(final String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
 }
