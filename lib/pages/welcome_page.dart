@@ -1,11 +1,16 @@
 import 'package:ctrim_app/firebase/auth_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../firebase/db_managers/id_tracker.dart';
+import '../models/user.dart';
+import '../utility/local_data_manager.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -24,6 +29,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       _tecLoginPassword = TextEditingController();
   final AuthManager _authManager = AuthManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final UserDBManager _userDBManager = UserDBManager();
   final FocusNode _fnPassword = FocusNode(), _fnConfirmPassword = FocusNode(), _fnLoginPassword = FocusNode();
 
   bool _isWaitingForVerification = false, _showLoginPassword = false, _showRegisterPassword = false;
@@ -200,8 +206,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       _attemptToLogin().then((loggedIn) {
         if (loggedIn) {
           Navigator.of(context).pop();
-          _attemptToFetchAndSetUser();
-          _instantiateTheRest(false);
+          _attemptToFetchAndSetUser().then((value) => _instantiateTheRest(false));
         }
       });
     }
@@ -212,7 +217,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       DialogManager.showProgressDialog(context: context, title: 'Attempting to Login');
       await _authManager.loginAndReturnAuthID(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
       return true;
-    } on FirebaseAuthException catch (e) {
+    } on auth.FirebaseAuthException catch (e) {
       _handleException(e);
     } on Exception catch (e) {
       debugPrint('Something went really wrong for login: $e');
@@ -221,9 +226,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     return false;
   }
 
-  void _attemptToFetchAndSetUser() async {
-    UserDBManager userDBManager = UserDBManager();
-    final u = await userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
+  Future<void> _attemptToFetchAndSetUser() async {
+    final u = await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
     _appContext.setCurrentUser(u);
   }
 
@@ -257,7 +261,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       DialogManager.showProgressDialog(context: context, title: 'Sending Password Reset Link!');
       await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
       return true;
-    } on FirebaseAuthException catch (e) {
+    } on auth.FirebaseAuthException catch (e) {
       _handleException(e);
     }
     return false;
@@ -298,7 +302,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       await _authManager.registerUserAndSendVerification(
           _tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
       return true;
-    } on FirebaseAuthException catch (e) {
+    } on auth.FirebaseAuthException catch (e) {
       _handleException(e);
     } on Exception catch (e) {
       debugPrint('Something went really wrong for registration: $e');
@@ -307,7 +311,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     return false;
   }
 
-  void _handleException(final FirebaseAuthException e) {
+  void _handleException(final auth.FirebaseAuthException e) {
     Navigator.of(context).pop(); // pop the loading dialog
     const String title = 'Error';
     String content = 'Something went wrong!\n\n$e';
@@ -356,7 +360,39 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   }
 
   Future<void> _fetchEssentialData() async {
-    await Future.delayed(const Duration(seconds: 1));
+    final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+    final allUsers = await _fetchUsers();
+    final heads = await eventHeadDBManager.fetchEventHeads();
+    _appContext.allUsers.addAll(allUsers);
+    _appContext.addAllEventHeads(heads);
+  }
+
+  Future<List<User>> _fetchUsers() async {
+    debugPrint('--fetching users from DB');
+    final LocalDataManager dataManager = LocalDataManager();
+    final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
+    final UserDBManager userDBManager = UserDBManager();
+
+    final List<User> allUsers = await userDBManager.fetchAllUsers();
+    final String currentID = await trackerDBManager.getCurrentUserID();
+
+    // TODO add the version check here
+    String allUsersContent = currentID; // start with the current count / uID
+    for (final user in allUsers) {
+      allUsersContent += '\n${user.id}';
+      allUsersContent += '\n${user.forname}';
+      allUsersContent += '\n${user.surname}';
+      allUsersContent += '\n${user.imgSrc}';
+      allUsersContent += '\n${user.isLeader ? '1' : '0'}';
+      allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
+      allUsersContent += '\n${user.location}';
+    }
+
+    debugPrint('--writing users from DB');
+    // this write thing should be updated when we register users
+    await dataManager.writeUsersList(allUsersContent);
+    await dataManager.writeLastUsersFetch();
+    return allUsers;
   }
 
   Future<void> _saveCreds(bool fromRegistration) async {

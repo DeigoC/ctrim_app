@@ -61,9 +61,11 @@ void main() async {
         await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
   }
 
+  // user has logged in before, we fetch the data as per usual and open the app from home
   if (authID != null) {
     final UserDBManager userDBManager = UserDBManager();
     currentUser = await userDBManager.fetchUserByAuthID(authID);
+
     // * Then fetch the rest of the important data
     final allUsers = await _fetchAllUsers(prefInstance);
     final heads = await eventHeadDBManager.fetchEventHeads();
@@ -82,9 +84,10 @@ void main() async {
           settingsController: settingsController,
           openWelcomePage: false,
         )));
-  } else {
-    // we need to open the welcome page!
-    // do not perform any fetching at this stage
+  }
+  // otherwise we open the welcome page! we perform the rest of the fetching at the end of that page
+  // ? this could be because of the authentication not working on the saved creds
+  else {
     final AppContext appContext = AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir);
     runApp(ChangeNotifierProvider(
         create: (_) => appContext,

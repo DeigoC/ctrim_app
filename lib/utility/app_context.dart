@@ -51,6 +51,8 @@ class AppContext extends ChangeNotifier {
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
 
+  void addAllEventHeads(final List<EventHead> heads) => _eventHeads.addAll(heads);
+
   void addOrUpdatePostHead(final EventHead head) {
     _eventHeads.removeWhere((element) => element.id.compareTo(head.id) == 0);
     _eventHeads.insert(0, head);
@@ -99,9 +101,8 @@ class AppContext extends ChangeNotifier {
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
   User get currentUser => _currentUser;
-  List<User> get allUsers => UnmodifiableListView(_allUsers);
+  List<User> get allUsers => _allUsers;
 
-  void addUser(final User u) => _allUsers.add(u);
   void setUserToGuest() => _currentUser = _guest;
   void setCurrentUser(final User user) => _currentUser = user;
 

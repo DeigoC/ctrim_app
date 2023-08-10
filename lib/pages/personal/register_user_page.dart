@@ -143,7 +143,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       Navigator.of(context).pop();
                       _showAttemptingToSaveDialog();
                       _registerUser().then((newUser) {
-                        Provider.of<AppContext>(context, listen: false).addUser(newUser);
+                        Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
                         _isSaved = true;
                         Navigator.of(context).pop(); // pop the 'progress' indicator
                         Navigator.of(context).pop(); // pop the page
