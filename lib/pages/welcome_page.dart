@@ -1,4 +1,6 @@
 import 'package:ctrim_app/firebase/auth_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,6 +23,7 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
       _tecLoginEmail = TextEditingController(),
       _tecLoginPassword = TextEditingController();
   final AuthManager _authManager = AuthManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   final FocusNode _fnPassword = FocusNode(), _fnConfirmPassword = FocusNode(), _fnLoginPassword = FocusNode();
 
   bool _isWaitingForVerification = false, _showLoginPassword = false, _showRegisterPassword = false;
@@ -80,7 +83,7 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
               controller: _tecLoginPassword,
               onSubmitted: (_) => _fnLoginPassword.unfocus(),
               focusNode: _fnLoginPassword,
-              obscureText: _showLoginPassword,
+              obscureText: !_showLoginPassword,
               decoration: InputDecoration(
                   label: const Text('Password'),
                   prefixIcon: const Icon(Icons.password),
@@ -90,7 +93,7 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
                           }),
                       icon: Icon(
                         _showLoginPassword ? Icons.visibility_off : Icons.visibility,
-                        color: _showLoginPassword ? Colors.grey : Colors.blue,
+                        color: Colors.grey,
                       ))),
             ),
             Align(
@@ -98,7 +101,8 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
                 child: TextButton(onPressed: _onForgotEmailClick, child: const Text('Forgot Password'))),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loginClick, child: const Text('Login')),
-            ElevatedButton(onPressed: _testButton, child: const Text('Test Button')),
+            ElevatedButton(onPressed: _testButton, child: const Text('Who Am I?')),
+            ElevatedButton(onPressed: _performWriteTest, child: const Text('Write Test')),
           ],
         ),
       ),
@@ -124,7 +128,7 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
             TextField(
                 controller: _tecRegistrationPassword,
                 keyboardType: TextInputType.visiblePassword,
-                obscureText: _showRegisterPassword,
+                obscureText: !_showRegisterPassword,
                 focusNode: _fnPassword,
                 onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
                 decoration: InputDecoration(
@@ -179,6 +183,15 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
     _authManager.whoAmI();
   }
 
+  void _performWriteTest() {
+    // EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+    // everyoneDBManager.bookmarksWriteTest([DateTime.now().toString()])
+    //     .then((_) => debugPrint('bookmark success!'));
+    // everyoneDBManager
+    //     .userWriteTest(false)
+    //     .then((_) => debugPrint('isUser success!'));
+  }
+
   Future<void> _loginClick() async {
     if (_tecLoginEmail.text.trim().isEmpty || _tecLoginPassword.text.isEmpty) {
       DialogManager.showAlertDialog(
@@ -187,6 +200,7 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
       _attemptToLogin().then((loggedIn) {
         if (loggedIn) {
           Navigator.of(context).pop();
+          _attemptToFetchAndSetUser();
           _instantiateTheRest(false);
         }
       });
@@ -205,6 +219,12 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
       DialogManager.showAlertDialog(context: context, title: 'Login Error', content: 'See exception: $e');
     }
     return false;
+  }
+
+  void _attemptToFetchAndSetUser() async {
+    UserDBManager userDBManager = UserDBManager();
+    final u = await userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
+    _appContext.setCurrentUser(u);
   }
 
   void _onForgotEmailClick() {
@@ -318,8 +338,8 @@ class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerPr
             title: 'Error',
             content: 'Email verification not complete! Please check your emails on ${_tecRegistrationEmail.text}');
       } else {
-        // show done dialog and loading data
         Navigator.of(context).pop();
+        _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
         _instantiateTheRest(true);
       }
     });

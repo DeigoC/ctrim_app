@@ -102,7 +102,7 @@ class AppContext extends ChangeNotifier {
 
   void addUser(final User u) => _allUsers.add(u);
   void setUserToGuest() => _currentUser = _guest;
-  void setCurrentUser(final String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
+  void setCurrentUser(final User user) => _currentUser = user;
 
   // contact related
   void addAllUserContacts(final List<UserContact> contacts) => _allContacts.addAll(contacts);

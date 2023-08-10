@@ -22,4 +22,8 @@ class UserDBManager {
   Future<User> fetchUserByID(String id) async {
     return await _ref.doc(id).get().then((value) => value.data() as User);
   }
+
+  Future<User> fetchUserByAuthID(String authID) async {
+    return await _ref.where('AuthID', isEqualTo: authID).get().then((value) => value.docs.first as User);
+  }
 }

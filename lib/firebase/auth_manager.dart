@@ -28,6 +28,8 @@ class AuthManager {
     return cred.user!.uid;
   }
 
+  String get currentAuthUID => _auth.currentUser!.uid;
+
   String whoAmI() {
     String message = 'The current auth user is ${_auth.currentUser}';
     debugPrint(message);

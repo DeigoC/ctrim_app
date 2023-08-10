@@ -1,11 +1,16 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+
+import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
-import '../../firebase/db_managers/user_contact_db_manager.dart';
-import '../../models/user_contact.dart';
+
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/db_managers/user_db_manager.dart';
 import '../../utility/app_context.dart';
 
 class LoginPage extends StatefulWidget {
@@ -16,7 +21,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final UserContactDBManager _userContactDBManager = UserContactDBManager();
   final TextEditingController _tecEmail = TextEditingController(), _tecPassword = TextEditingController();
   final FocusNode _fnPassword = FocusNode();
 
@@ -47,20 +51,19 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onLoginClick() {
-    _showLoadingDialog();
-    _attemptToLogin().then((id) {
-      if (id != null) {
+    DialogManager.showProgressDialog(context: context, title: 'Attempting To Login');
+    _attemptToLogin().then((user) {
+      if (user != null) {
         final appContext = Provider.of<AppContext>(context, listen: false);
         final String token = appContext.dataManager.fcmToken;
 
-        // ? i think it's much safer to just grab the token from the offical API instead of using
-        // a potentially outdated one?
         if (!kDebugMode) {
           debugPrint('setting contact token as $token');
-          _userContactDBManager.addTokenToUser(id, token);
+          final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+          everyoneDBManager.addToken(authID: user.authID, token: token, platform: Platform.operatingSystem);
         }
         appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
-        appContext.setCurrentUser(id);
+        appContext.setCurrentUser(user);
 
         Navigator.of(context).pop();
         Navigator.of(context).pop();
@@ -68,13 +71,14 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Future<String?> _attemptToLogin() async {
+  Future<User?> _attemptToLogin() async {
     try {
       final AuthManager authManager = AuthManager();
+      final UserDBManager userDBManager = UserDBManager();
       final String authID = await authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
-      final UserContact userContact = await _userContactDBManager.fetchUserContactByAuthID(authID);
-      return userContact.id;
-    } on FirebaseAuthException catch (e) {
+      final u = await userDBManager.fetchUserByAuthID(authID);
+      return u;
+    } on auth.FirebaseAuthException catch (e) {
       if (e.code == 'invalid-email') {
         _showErrorMessage('That email is incorrect');
       } else if (e.code == 'user-disabled') {
@@ -99,21 +103,6 @@ class _LoginPageState extends State<LoginPage> {
             title: const Text('Login Error'),
             content: Text(message),
             actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Ok'))],
-          );
-        });
-  }
-
-  void _showLoadingDialog() {
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (_) {
-          return const Dialog(
-            child: ListTile(
-              title: Text('Attempting to Login'),
-              subtitle: Text('Please wait...'),
-              trailing: CircularProgressIndicator(),
-            ),
           );
         });
   }
