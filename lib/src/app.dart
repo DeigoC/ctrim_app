@@ -1,8 +1,9 @@
-import 'package:ctrim_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../pages/home_page.dart';
+import '../pages/welcome_page.dart';
 import 'settings/settings_controller.dart';
 // import 'settings/settings_view.dart';
 
@@ -11,8 +12,10 @@ class MyApp extends StatelessWidget {
   const MyApp({
     super.key,
     required this.settingsController,
+    required this.openWelcomePage,
   });
 
+  final bool openWelcomePage;
   final SettingsController settingsController;
 
   @override
@@ -58,7 +61,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(),
           darkTheme: ThemeData.dark(useMaterial3: true),
           themeMode: settingsController.themeMode,
-          home: const HomePage(),
+          home: openWelcomePage ? const WelcomePage() : const HomePage(),
 
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.

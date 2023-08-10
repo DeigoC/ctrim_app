@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
 import 'firebase/db_managers/id_tracker.dart';
-import 'firebase/db_managers/user_contact_db_manager.dart';
 import 'firebase/db_managers/user_db_manager.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
@@ -47,40 +46,53 @@ void main() async {
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
   final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+  final String cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
+  final String appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
 
   // * First up, we log the returning user in, otherwise it's a guest
   final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
-  // String? email, pass;
-  String? uAuth;
+
+  String? authID;
+  ctrim.User? currentUser;
+
   if (email != null && email != '' && pass != null && pass != '') {
     debugPrint('email is $email and pass is $pass');
-    uAuth =
+    authID =
         await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
   }
 
-  final allUsers = await _fetchAllUsers(prefInstance);
-  ctrim.User currentUser = ctrim.User(id: '0', forname: 'Guest', surname: 'Account');
+  if (authID != null) {
+    final UserDBManager userDBManager = UserDBManager();
+    currentUser = await userDBManager.fetchUserByAuthID(authID);
+    // * Then fetch the rest of the important data
+    final allUsers = await _fetchAllUsers(prefInstance);
+    final heads = await eventHeadDBManager.fetchEventHeads();
 
-  if (uAuth != null) {
-    final UserContactDBManager userContactDBManager = UserContactDBManager();
-    final uContact = await userContactDBManager.fetchUserContactByAuthID(uAuth);
-    currentUser = allUsers.firstWhere((u) => u.id.compareTo(uContact.id) == 0);
+    // * Create the AppContext, setup the FCM and run the app
+    final AppContext appContext = AppContext(
+        heads: heads,
+        allUsers: allUsers,
+        prefInstance: prefInstance,
+        user: currentUser,
+        cacheDir: cacheDir,
+        appDir: appDir);
+    runApp(ChangeNotifierProvider(
+        create: (_) => appContext,
+        child: MyApp(
+          settingsController: settingsController,
+          openWelcomePage: false,
+        )));
+  } else {
+    // we need to open the welcome page!
+    // do not perform any fetching at this stage
+    final AppContext appContext = AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir);
+    runApp(ChangeNotifierProvider(
+        create: (_) => appContext,
+        child: MyApp(
+          settingsController: settingsController,
+          openWelcomePage: true,
+        )));
   }
-
-  // * Then fetch the rest of the important data
-  final heads = await eventHeadDBManager.fetchEventHeads();
-  final cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
-  final appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
-
-  // * Create the AppContext, setup the FCM and run the app
-  final AppContext appContext = AppContext(
-      heads: heads,
-      allUsers: allUsers,
-      prefInstance: prefInstance,
-      user: currentUser,
-      cacheDir: cacheDir,
-      appDir: appDir);
-  runApp(ChangeNotifierProvider(create: (_) => appContext, child: MyApp(settingsController: settingsController)));
 }
 
 Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {

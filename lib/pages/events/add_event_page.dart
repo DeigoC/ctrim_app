@@ -1,15 +1,15 @@
-import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
-import 'package:ctrim_app/firebase/functions_manager.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/widgets/posts/add_header_meta_tab_body.dart';
-import 'package:ctrim_app/widgets/posts/view_all_programs.dart';
-import 'package:ctrim_app/widgets/posts/view_event_media_tab.dart';
-import 'package:ctrim_app/widgets/posts/view_post_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/functions_manager.dart';
+import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
+import '../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../widgets/posts/view_all_programs.dart';
+import '../../widgets/posts/view_event_media_tab.dart';
+import '../../widgets/posts/view_post_body.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -24,7 +24,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   late final AppContext _appContext;
   late final TabController _tabController;
   final TextEditingController _tecTitle = TextEditingController(), _tecSubtitle = TextEditingController();
-  final UserContactDBManager _userContactDBManager = UserContactDBManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EventHeadDBManager _headDBManager = EventHeadDBManager();
 
@@ -253,14 +253,14 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final String body = "You can modify aspects of the post: '${_tecTitle.text.trim()}'";
 
     for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
-      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
+      if (!_appContext.haveTokensForUserID(thisUID)) {
+        final List<String> tokens = await _everyoneDBManager.fetchTokens(thisUID);
+        _appContext.addTokensToUser(thisUID, tokens);
       }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+      final tokens = _appContext.getTokensFromUserID(thisUID);
       await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens,
+          tokens: tokens,
           title: title,
           body: body,
           data: {'PostID': newID},
@@ -272,21 +272,21 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   Future<void> _notifyProgramRoleAddtitions(final String newID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
-
     final String title = "$currentUserName has assinged you to a role!";
 
     for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
       final String body = "You are assigned to '${additionEntry['title']!}' for ${_tecTitle.text.trim()}";
-
       final String thisUID = additionEntry['uid']!;
+
       if (thisUID != currentUID) {
-        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-          final contact = await _userContactDBManager.fetchUserContact(thisUID);
-          _appContext.addAllUserContacts([contact]);
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final List<String> tokens = await _everyoneDBManager.fetchTokens(thisUID);
+          _appContext.addTokensToUser(thisUID, tokens);
         }
-        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-        await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: contact.deviceTokens, title: title, body: body, data: {'PostID': newID});
+
+        final tokens = _appContext.getTokensFromUserID(thisUID);
+        await _cloudFunctionManager
+            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
       }
     }
   }

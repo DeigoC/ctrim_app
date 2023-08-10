@@ -34,7 +34,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ListTile(
           title: const Text('Startup login test'),
           leading: const Icon(Icons.science),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StartupLoginPage())),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomePage())),
         )
         // ListTile(
         //     title: const Text('Send to Topic - Love'),

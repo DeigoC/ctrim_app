@@ -1,12 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/id_tracker.dart';
-import '../../firebase/db_managers/user_contact_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
-import '../../models/user_contact.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
 
@@ -20,14 +19,11 @@ class RegisterUserPage extends StatefulWidget {
 class _RegisterUserPageState extends State<RegisterUserPage> {
   final TextEditingController _tecForename = TextEditingController(),
       _tecSurname = TextEditingController(),
-      _tecEmail = TextEditingController(),
-      _tecPassword = TextEditingController(),
-      _tecConfirmPassword = TextEditingController();
-  final FocusNode _fnSurname = FocusNode(),
-      _fnEmail = FocusNode(),
-      _fnPassword = FocusNode(),
-      _fnConfirmPassword = FocusNode();
+      _tecEmail = TextEditingController();
+  TextEditingController _tecAuthID = TextEditingController();
+  final FocusNode _fnSurname = FocusNode(), _fnEmail = FocusNode();
   final AuthManager _authManager = AuthManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
 
   bool _canSave = false;
   bool _isSaved = false;
@@ -41,13 +37,10 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     _tecForename.dispose();
     _tecSurname.dispose();
     _tecEmail.dispose();
-    _tecPassword.dispose();
-    _tecConfirmPassword.dispose();
 
     _fnSurname.dispose();
-    _fnPassword.dispose();
     _fnEmail.dispose();
-    _fnConfirmPassword.dispose();
+    _tecAuthID.dispose();
     super.dispose();
   }
 
@@ -56,9 +49,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Register User'),
-        ),
+        appBar: AppBar(title: const Text('Register User')),
         body: _buildBody(),
       ),
     );
@@ -69,51 +60,31 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       padding: const EdgeInsets.all(8),
       children: [
         TextField(
-          decoration: const InputDecoration(label: Text('Forename'), hintText: 'Enter first name please'),
-          controller: _tecForename,
-          onChanged: _areFieldsGood,
-          onSubmitted: (_) => _fnSurname.requestFocus(),
-        ),
+            decoration: const InputDecoration(label: Text('Forename'), hintText: 'Enter first name please'),
+            controller: _tecForename,
+            onChanged: _areFieldsGood,
+            onSubmitted: (_) => _fnSurname.requestFocus()),
         TextField(
-          decoration: const InputDecoration(label: Text('Surname'), hintText: 'Enter second name please'),
-          controller: _tecSurname,
-          onChanged: _areFieldsGood,
-          focusNode: _fnSurname,
-          onSubmitted: (_) => _fnEmail.requestFocus(),
-        ),
-        const SizedBox(
-          height: 16,
-        ),
+            decoration: const InputDecoration(label: Text('Surname'), hintText: 'Enter second name please'),
+            controller: _tecSurname,
+            onChanged: _areFieldsGood,
+            focusNode: _fnSurname,
+            onSubmitted: (_) => _fnEmail.requestFocus()),
+        const SizedBox(height: 16),
         _buildLocationSelector(),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
         TextField(
-          decoration: const InputDecoration(label: Text('Email'), hintText: 'Enter email please'),
-          controller: _tecEmail,
-          onChanged: _areFieldsGood,
-          focusNode: _fnEmail,
-          onSubmitted: (_) => _fnPassword.requestFocus(),
-        ),
+            decoration: const InputDecoration(label: Text('Email'), hintText: 'Enter email please'),
+            controller: _tecEmail,
+            onChanged: _areFieldsGood,
+            focusNode: _fnEmail),
         TextField(
-          decoration: const InputDecoration(label: Text('Password'), hintText: 'Enter password'),
-          controller: _tecPassword,
-          onChanged: _areFieldsGood,
-          focusNode: _fnPassword,
-          onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
-          obscureText: true,
-        ),
-        TextField(
-          decoration: const InputDecoration(label: Text('Confirm Password'), hintText: 'Confirm password'),
-          controller: _tecConfirmPassword,
-          onChanged: _areFieldsGood,
-          focusNode: _fnConfirmPassword,
-          onSubmitted: (_) => _fnConfirmPassword.unfocus(),
-          obscureText: true,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
+            decoration:
+                const InputDecoration(label: Text('AuthID'), hintText: '...search for existing authenticated user'),
+            controller: _tecAuthID,
+            readOnly: true),
+        const SizedBox(height: 16),
+        ElevatedButton(onPressed: _onSearchForAuthID, child: const Text('Search for AuthID')),
         _buildSaveButton(),
       ],
     );
@@ -146,8 +117,19 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   // * Logic
+  Future _onSearchForAuthID() async {
+    // TODO make sure we're not looking for an already existing email in the users collection
+
+    final String? auth = await _everyoneDBManager.fetchAuthIDFromEmail(_tecEmail.text.trim());
+    if (auth != null) {
+      setState(() {
+        _tecAuthID = TextEditingController(text: auth);
+      });
+    }
+  }
+
   void _saveUserClick() {
-    if (_tecPassword.text.compareTo(_tecConfirmPassword.text) == 0) {
+    if (_tecAuthID.text.isNotEmpty) {
       showDialog(
           context: context,
           builder: (_) {
@@ -160,43 +142,33 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                     onPressed: () {
                       Navigator.of(context).pop();
                       _showAttemptingToSaveDialog();
-
-                      _attemptToRegisterUserAuth().then(
-                        (authID) {
-                          if (authID != null) {
-                            _registerUser(
-                              authID,
-                            ).then((newUser) {
-                              Provider.of<AppContext>(context, listen: false).addUser(newUser);
-                              _isSaved = true;
-                              Navigator.of(context).pop(); // pop the 'progress' indicator
-                              Navigator.of(context).pop(); // pop the page
-                            });
-                          }
-                        },
-                      );
+                      _registerUser().then((newUser) {
+                        Provider.of<AppContext>(context, listen: false).addUser(newUser);
+                        _isSaved = true;
+                        Navigator.of(context).pop(); // pop the 'progress' indicator
+                        Navigator.of(context).pop(); // pop the page
+                      });
                     },
                     child: const Text('Save')),
               ],
             );
           });
     } else {
-      _showErrorMessage('Passwords do not match!');
+      DialogManager.showAlertDialog(
+          context: context, title: 'Registration error', content: 'Please look for email of user you want to register');
     }
   }
 
-  Future<ctrim.User> _registerUser(String authID) async {
+  Future<ctrim.User> _registerUser() async {
     final IDTrackerDBManager idTracker = IDTrackerDBManager();
     final UserDBManager userDBManager = UserDBManager();
-    final UserContactDBManager contactDBManager = UserContactDBManager();
 
     final String newID = await idTracker.getAndIncrementUserID();
-    final ctrim.User newUser =
-        ctrim.User(id: newID, forname: _tecForename.text.trim(), surname: _tecSurname.text.trim());
+    final ctrim.User newUser = ctrim.User(
+        id: newID, forname: _tecForename.text.trim(), surname: _tecSurname.text.trim(), authID: _tecAuthID.text);
 
+    _everyoneDBManager.setAsUser(_tecAuthID.text, false); // TODO add isLeader selector
     userDBManager.addUser(newUser);
-    contactDBManager.addUserContact(newID, UserContact(authID: authID, id: newID, email: _tecEmail.text.trim()));
-
     return newUser;
   }
 
@@ -211,40 +183,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
               subtitle: Text('Please wait...'),
               trailing: CircularProgressIndicator(),
             ),
-          );
-        });
-  }
-
-  Future<String?> _attemptToRegisterUserAuth() async {
-    String? uid;
-    try {
-      // uid = await _authManager.registerUserAndSendVerification(_tecEmail.text, _tecPassword.text);
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        _showErrorMessage('That email is already in use, please try another');
-      } else if (e.code == 'invalid-email') {
-        _showErrorMessage('Not a correct email');
-      } else if (e.code == 'operation-not-allowed') {
-        _showErrorMessage('Registration is not enabled, please check up with Admin(s)');
-      } else if (e.code == 'weak-password') {
-        _showErrorMessage('That password is too weak, please improve it 🤷');
-      } else {
-        _showErrorMessage('Something went wrong!');
-      }
-    }
-
-    return uid;
-  }
-
-  void _showErrorMessage(String message) {
-    Navigator.of(context).pop();
-    showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text('Registration Error'),
-            content: Text(message),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Ok'))],
           );
         });
   }
@@ -277,21 +215,11 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   void _areFieldsGood(String _) {
-    if (!_canSave &&
-        _tecForename.text.isNotEmpty &&
-        _tecSurname.text.isNotEmpty &&
-        _tecEmail.text.isNotEmpty &&
-        _tecPassword.text.isNotEmpty &&
-        _tecConfirmPassword.text.isNotEmpty) {
+    if (!_canSave && _tecForename.text.isNotEmpty && _tecSurname.text.isNotEmpty && _tecEmail.text.isNotEmpty) {
       setState(() {
         _canSave = true;
       });
-    } else if (_canSave &&
-        (_tecForename.text.isEmpty ||
-            _tecSurname.text.isEmpty ||
-            _tecEmail.text.isEmpty ||
-            _tecPassword.text.isEmpty ||
-            _tecConfirmPassword.text.isEmpty)) {
+    } else if (_canSave && (_tecForename.text.isEmpty || _tecSurname.text.isEmpty || _tecEmail.text.isEmpty)) {
       setState(() {
         _canSave = false;
       });

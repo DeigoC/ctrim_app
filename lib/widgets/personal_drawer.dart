@@ -1,4 +1,4 @@
-import 'package:ctrim_app/firebase/db_managers/user_contact_db_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
@@ -67,10 +67,10 @@ class PersonalDrawer extends StatelessWidget {
 
   Future<void> _logout(AppContext appContext) async {
     final AuthManager authManager = AuthManager();
-    final UserContactDBManager userContactDBManager = UserContactDBManager();
+    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
     // Provider.of<AppContext>(context, listen: false).clearCreds();
     // Provider.of<AppContext>(context, listen: false).setUserToGuest();
-    await userContactDBManager.removeTokenFromUser(appContext.currentUser.id, appContext.dataManager.fcmToken);
+    await everyoneDBManager.removeToken(authManager.currentAuthUID, appContext.dataManager.fcmToken);
     appContext.dataManager.clearCreds();
     appContext.setUserToGuest();
     appContext.rebuildPlease();

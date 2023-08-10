@@ -6,11 +6,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/db_managers/user_contact_db_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
-import '../../models/user_contact.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -383,7 +382,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
   late final String _currentUserName, _currentUID;
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
-  final UserContactDBManager _userContactDBManager = UserContactDBManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   bool _canSave = false;
 
   @override
@@ -516,37 +515,33 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     final List<String> missingContacts = widget.eventContext.metadata.contributorUIDs
         .where((contributorID) =>
-            contributorID.compareTo(_currentUID) != 0 &&
-            !_appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
+            contributorID.compareTo(_currentUID) != 0 && !_appContext.haveTokensForUserID(contributorID))
         .toList();
 
     // fetch the author contact (if the current user isn't already the author)
     if (_currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
-        !_appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
+        !_appContext.haveTokensForUserID(widget.eventContext.metadata.authorUID)) {
       missingContacts.add(widget.eventContext.metadata.authorUID);
     }
 
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
-    if (missingContacts.isNotEmpty) {
-      final List<UserContact> contacts = await _userContactDBManager.fetchUserContacts(missingContacts);
-      _appContext.addAllUserContacts(contacts);
+    for (final uid in missingContacts) {
+      final tokens = await _everyoneDBManager.fetchTokens(_appContext.allUsers.firstWhere((e) => e.id == uid).authID);
+      _appContext.addTokensToUser(uid, tokens);
     }
 
     // create token list of contributors
     final List<String> deviceTokens = List<String>.empty(growable: true);
     for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
       if (_appContext.currentUser.id.compareTo(contributorID) != 0) {
-        deviceTokens
-            .addAll(_appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+        deviceTokens.addAll(_appContext.getTokensFromUserID(contributorID));
       }
     }
 
     // add the author tokens
     if (_appContext.currentUser.id.compareTo(widget.eventContext.metadata.authorUID) != 0) {
-      deviceTokens.addAll(_appContext.userContacts
-          .firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0)
-          .deviceTokens);
+      deviceTokens.addAll(_appContext.getTokensFromUserID(widget.eventContext.metadata.authorUID));
     }
 
     return deviceTokens;
@@ -560,13 +555,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
       final String thisUID = additionEntry['uid']!;
       if (thisUID != _currentUID) {
-        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-          final contact = await _userContactDBManager.fetchUserContact(thisUID);
-          _appContext.addAllUserContacts([contact]);
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
+          _appContext.addTokensToUser(thisUID, tokens);
         }
-        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+
+        final tokens = _appContext.getTokensFromUserID(thisUID);
         await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+            tokens: tokens, title: title, body: body, data: _notificationdata);
       }
     }
   }
@@ -579,13 +575,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
       final String thisUID = removalEntry['uid']!;
       if (thisUID != _currentUID) {
-        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-          final contact = await _userContactDBManager.fetchUserContact(thisUID);
-          _appContext.addAllUserContacts([contact]);
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
+          _appContext.addTokensToUser(thisUID, tokens);
         }
-        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+
+        final tokens = _appContext.getTokensFromUserID(thisUID);
         await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+            tokens: tokens, title: title, body: body, data: _notificationdata);
       }
     }
   }
@@ -596,14 +593,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (thisUID != _currentUID) {
-        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-          final contact = await _userContactDBManager.fetchUserContact(thisUID);
-          _appContext.addAllUserContacts([contact]);
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
+          _appContext.addTokensToUser(thisUID, tokens);
         }
 
-        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+        final tokens = _appContext.getTokensFromUserID(thisUID);
         await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+            tokens: tokens, title: title, body: body, data: _notificationdata);
       }
     }
   }
@@ -614,14 +611,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (thisUID != _currentUID) {
-        if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-          final contact = await _userContactDBManager.fetchUserContact(thisUID);
-          _appContext.addAllUserContacts([contact]);
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
+          _appContext.addTokensToUser(thisUID, tokens);
         }
 
-        final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
+        final tokens = _appContext.getTokensFromUserID(thisUID);
         await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+            tokens: tokens, title: title, body: body, data: _notificationdata);
       }
     }
   }

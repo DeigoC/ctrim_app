@@ -7,14 +7,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class StartupLoginPage extends StatefulWidget {
-  const StartupLoginPage({super.key});
+class WelcomePage extends StatefulWidget {
+  const WelcomePage({super.key});
 
   @override
-  State<StartupLoginPage> createState() => _StartupLoginPageState();
+  State<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _StartupLoginPageState extends State<StartupLoginPage> with SingleTickerProviderStateMixin {
+class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final AppContext _appContext;
   final TextEditingController _tecRegistrationEmail = TextEditingController(),

@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/models/user_contact.dart';
 import 'package:ctrim_app/utility/app_shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +18,9 @@ class AppContext extends ChangeNotifier {
   // there's an interesting idea for optimisation to do with the recentDate and writing to file
   // so this file below here might be unecessary for now
   static final Map<String, EventMetadata> _metaData = {};
-  static final List<UserContact> _allContacts = List<UserContact>.empty(growable: true);
+
+  // no more 'user contact' we will hold the tokens as necessary
+  static final Map<String, List<String>> _userTokens = {};
   static late final AppSharedPreferences _dataManager;
   static late final String _cacheDir, _appDir;
 
@@ -28,12 +29,12 @@ class AppContext extends ChangeNotifier {
   int _postSortIndex = 0;
 
   AppContext(
-      {required List<EventHead>? heads,
-      required List<User>? allUsers,
-      required User? user,
-      required SharedPreferences prefInstance,
+      {required SharedPreferences prefInstance,
       required String cacheDir,
-      required String appDir}) {
+      required String appDir,
+      List<EventHead>? heads,
+      List<User>? allUsers,
+      User? user}) {
     _eventHeads = heads ?? List<EventHead>.empty(growable: true);
     _allUsers = allUsers ?? List<User>.empty(growable: true);
     _currentUser = user ?? _guest;
@@ -104,10 +105,9 @@ class AppContext extends ChangeNotifier {
   void setUserToGuest() => _currentUser = _guest;
   void setCurrentUser(final User user) => _currentUser = user;
 
-  // contact related
-  void addAllUserContacts(final List<UserContact> contacts) => _allContacts.addAll(contacts);
-
-  List<UserContact> get userContacts => UnmodifiableListView(_allContacts);
+  List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
+  bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
+  void addTokensToUser(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
 
   // * data related
   AppSharedPreferences get dataManager => _dataManager;
