@@ -1,8 +1,11 @@
 import 'package:ctrim_app/pages/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 // import '../firebase/functions_manager.dart';
+import '../firebase/auth_manager.dart';
+import '../firebase/db_managers/everyone_db_manager.dart';
 import '../utility/app_context.dart';
 import 'personal/login_page.dart';
 import 'personal/view_bookmarked_page.dart';
@@ -30,12 +33,31 @@ class _PersonalHomeState extends State<PersonalHome> {
           onTap: _onViewBookmarkedPageClick,
         ),
 
+        ListTile(
+          title: const Text('Log out'),
+          leading: const Icon(Icons.logout),
+          onTap: _onLogoutClick,
+        ),
+
         // ! The following are used for testing
         ListTile(
           title: const Text('Startup login test'),
           leading: const Icon(Icons.science),
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomePage())),
-        )
+        ),
+        ListTile(
+          title: const Text('Test Version'),
+          leading: const Icon(Icons.science),
+          onTap: _testVersion,
+        ),
+        ListTile(
+          title: const Text('Who Am I'),
+          leading: const Icon(Icons.science),
+          onTap: () {
+            AuthManager authManager = AuthManager();
+            authManager.whoAmI();
+          },
+        ),
         // ListTile(
         //     title: const Text('Send to Topic - Love'),
         //     leading: const Icon(Icons.send_to_mobile),
@@ -69,14 +91,6 @@ class _PersonalHomeState extends State<PersonalHome> {
         //     }),
       ];
 
-      if (appContext.isCurrentUserGuest) {
-        children.add(ListTile(
-          title: const Text('Log In'),
-          leading: const Icon(Icons.login),
-          onTap: () => _onLoginTap(appContext),
-        ));
-      }
-
       return CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -92,6 +106,41 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   // * Logic
+  void _onLogoutClick() {
+    showDialog(
+        context: context,
+        builder: (logcontext) {
+          return AlertDialog(
+            title: const Text('Sign out'),
+            content: const Text('Are you sure you want to continue?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () {
+                    _logout();
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
+                      setState(() {
+                        // update in case of logging in again
+                      });
+                    });
+                  },
+                  child: const Text('Sign out')),
+            ],
+          );
+        });
+  }
+
+  Future<void> _logout() async {
+    final AuthManager authManager = AuthManager();
+    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+    await everyoneDBManager.removeToken(authManager.currentAuthUID, widget.appContext.dataManager.fcmToken);
+    widget.appContext.dataManager.clearCreds();
+    widget.appContext.setUserToGuest();
+    widget.appContext.rebuildPlease();
+
+    await authManager.signOut();
+  }
 
   void _onLoginTap(AppContext appContext) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
@@ -101,6 +150,22 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _onViewBookmarkedPageClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
+  }
+
+  void _testVersion() async {
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final String version = packageInfo.version;
+    debugPrint('version is $version');
+
+    String testStr1 = '6-$version';
+    String testStr2 = '6';
+
+    final split1 = testStr1.split('-');
+    final split2 = testStr2.split('-');
+    debugPrint('split 1 is $split1');
+    debugPrint('split 2 is $split2');
+
+    debugPrint('now is ${DateTime.now().millisecondsSinceEpoch}');
   }
 
   // Future<bool> _showFCMTest() async {

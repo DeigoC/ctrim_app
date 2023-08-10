@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,8 +58,13 @@ void main() async {
 
   if (email != null && email != '' && pass != null && pass != '') {
     debugPrint('email is $email and pass is $pass');
-    authID =
-        await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
+    try {
+      authID =
+          await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
+    } on FirebaseAuthException catch (e) {
+      // means that there was no user
+      debugPrint('error on attempting to sign in: $e');
+    }
   }
 
   // user has logged in before, we fetch the data as per usual and open the app from home
@@ -101,6 +107,9 @@ void main() async {
 Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
   final LocalDataManager dataManager = LocalDataManager();
+  final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  final String version = packageInfo.version;
+  debugPrint('version is $version');
 
   final String currentID = await trackerDBManager.getCurrentUserID();
   final usersData = await dataManager.readUsers();
@@ -108,8 +117,14 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 7;
 
   // only use the local data if the count is the same in the DB and the last time has been multiple days ago (7 days)
-  // TODO also make sure that the saved version of the app matches the current one
-  final bool shouldReadLocalData = usersData.isNotEmpty && usersData[0] == currentID && lastFetchWasNotAWhileAgo;
+  bool shouldReadLocalData = false;
+  if (usersData.isNotEmpty) {
+    // from now on we check that the version is the same as before
+    final firstLine = usersData[0].split('-');
+    if (firstLine.length == 2) {
+      shouldReadLocalData = firstLine[0] == currentID && firstLine[1] == version && lastFetchWasNotAWhileAgo;
+    }
+  }
 
   if (shouldReadLocalData) {
     debugPrint('--fetching users from Local Data');
@@ -143,7 +158,7 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
     final UserDBManager userDBManager = UserDBManager();
     final allUsers = await userDBManager.fetchAllUsers();
 
-    String allUsersContent = currentID; // start with the current count / uID
+    String allUsersContent = '$currentID-$version'; // start with the current count / uID
     for (final user in allUsers) {
       allUsersContent += '\n${user.id}';
       allUsersContent += '\n${user.forname}';

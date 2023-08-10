@@ -1,4 +1,5 @@
 import 'dart:collection';
+
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_body.dart';
@@ -178,9 +179,9 @@ class EventContext {
   // post from it to save having to read from the DB
   // ! The following is assumed when all of the post is fetched (including logs)
   // TODO: just realised i can put a lot of this logic into each of the part's dedicated class
-  String transformPostToTxtFile() {
+  String transformPostToTxtFile(final String version) {
     // * Head - RecentDate
-    String result = _head.recentDate.millisecondsSinceEpoch.toString();
+    String result = '${_head.recentDate.millisecondsSinceEpoch}-$version';
 
     // * Body - whole json as 1 line?
     result += '\n----BODY_START----';

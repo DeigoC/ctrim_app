@@ -9,15 +9,12 @@ service cloud.firestore {
     }
 
     match /everyone/{auth_id}{
-      allow write: if request.auth != null && 
-      (
-        ((exists(/databases/$(database)/documents/everyone/$(request.auth.uid)) && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true))
-      );
-      
       // allow authenticated users to create their own document 
       // TODO add the restriction on the fields. Only create if fields are [email]
-      allow create: if request.auth != null && request.resource.data.id == request.auth;
-    
+      allow create: if request.auth != null && auth_id == request.auth.uid;
+      
+      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;    
+     
       // for the bookmarks and supplemental parts, we should only allow the same user access to it
       match /supplemental/{document}{
         allow write: if request.auth != null && request.resource.data.auth == request.auth.uid;

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -325,13 +326,19 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   String get _topic => _post + _eventContext.id;
 
   Future<List<String>> _attemptToGetExistingPostData() async {
-    // TODO we should also make sure that we unconditionally fetch when an update has occured for safety
     final LocalDataManager localDataManager = LocalDataManager();
     final content = await localDataManager.readPostData(widget.eventHead.id);
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
     // debugPrint('Is local post data not empty: ${content.isNotEmpty}');
-    final bool canUseLocalContent =
-        content.isNotEmpty && int.parse(content[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch;
+    bool canUseLocalContent = false;
+    if (content.isNotEmpty) {
+      final firstLine = content[0].split('-');
+      if (firstLine.length == 2) {
+        canUseLocalContent = int.parse(firstLine[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch &&
+            firstLine[1] == packageInfo.version;
+      }
+    }
 
     if (canUseLocalContent) {
       return content;
@@ -341,7 +348,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Future<void> _savePostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
-    final String content = _eventContext.transformPostToTxtFile();
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final String content = _eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(_eventContext.id, content);
 
     final postTrack = await localDataManager.readPostTrack();
@@ -468,9 +476,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   Future<void> _performUpdate(String uid) async {
     final LocalDataManager localDataManager = LocalDataManager();
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
-
-    final content = widget.eventContext.transformPostToTxtFile();
+    final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
     await _sendPostNotification();

@@ -2,10 +2,12 @@ import 'package:ctrim_app/firebase/auth_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
+import 'package:ctrim_app/pages/home_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../firebase/db_managers/id_tracker.dart';
@@ -146,7 +148,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                             }),
                         icon: Icon(
                           _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
-                          color: _showRegisterPassword ? Colors.grey : Colors.blue,
+                          color: Colors.grey,
                         )))),
             const SizedBox(height: 8),
             TextField(
@@ -342,6 +344,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             title: 'Error',
             content: 'Email verification not complete! Please check your emails on ${_tecRegistrationEmail.text}');
       } else {
+        debugPrint('creating user with auth: ${_authManager.currentAuthUID}');
         Navigator.of(context).pop();
         _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
         _instantiateTheRest(true);
@@ -356,6 +359,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       debugPrint('opened home page here');
       Navigator.of(context).pop(); // pop the progress dialog
       Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
     });
   }
 
@@ -369,6 +373,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
   Future<List<User>> _fetchUsers() async {
     debugPrint('--fetching users from DB');
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final LocalDataManager dataManager = LocalDataManager();
     final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
     final UserDBManager userDBManager = UserDBManager();
@@ -376,8 +381,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final List<User> allUsers = await userDBManager.fetchAllUsers();
     final String currentID = await trackerDBManager.getCurrentUserID();
 
-    // TODO add the version check here
-    String allUsersContent = currentID; // start with the current count / uID
+    String allUsersContent = '$currentID-${packageInfo.version}';
     for (final user in allUsers) {
       allUsersContent += '\n${user.id}';
       allUsersContent += '\n${user.forname}';

@@ -1,11 +1,8 @@
-import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../firebase/auth_manager.dart';
 import '../pages/personal/view_all_users_page.dart';
+import '../utility/app_context.dart';
+import 'user_avatar.dart';
 
 class PersonalDrawer extends StatelessWidget {
   const PersonalDrawer({Key? key}) : super(key: key);
@@ -29,11 +26,6 @@ class PersonalDrawer extends StatelessWidget {
               leading: const Icon(Icons.people),
               onTap: () => _onViewAllUserTap(context),
             ),
-            ListTile(
-              title: const Text('Log out'),
-              leading: const Icon(Icons.logout),
-              onTap: () => _confirmLogout(context, appContext),
-            ),
           ],
         ),
       );
@@ -42,39 +34,5 @@ class PersonalDrawer extends StatelessWidget {
 
   void _onViewAllUserTap(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()));
-  }
-
-  void _confirmLogout(BuildContext context, AppContext appContext) async {
-    showDialog(
-        context: context,
-        builder: (logcontext) {
-          return AlertDialog(
-            title: const Text('Sign out'),
-            content: const Text('Are you sure you want to continue?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () {
-                    _logout(appContext).then((_) {
-                      Navigator.of(logcontext).pop();
-                    });
-                  },
-                  child: const Text('Sign out')),
-            ],
-          );
-        });
-  }
-
-  Future<void> _logout(AppContext appContext) async {
-    final AuthManager authManager = AuthManager();
-    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    // Provider.of<AppContext>(context, listen: false).clearCreds();
-    // Provider.of<AppContext>(context, listen: false).setUserToGuest();
-    await everyoneDBManager.removeToken(authManager.currentAuthUID, appContext.dataManager.fcmToken);
-    appContext.dataManager.clearCreds();
-    appContext.setUserToGuest();
-    appContext.rebuildPlease();
-
-    await authManager.signOut();
   }
 }

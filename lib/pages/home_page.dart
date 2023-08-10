@@ -219,7 +219,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
-    // ! this one should just open the appropriate page, no need to show an opening message?
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final bool hasHead = _appContext.eventHeads.any((element) => element.id.compareTo(postID) == 0);
