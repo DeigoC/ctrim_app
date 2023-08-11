@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ctrim_app/firebase/auth_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
 import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
@@ -11,6 +13,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../firebase/db_managers/id_tracker.dart';
+import '../firebase/messaging_manager.dart';
 import '../models/user.dart';
 import '../utility/local_data_manager.dart';
 
@@ -355,8 +358,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   void _instantiateTheRest(bool fromRegistration) {
     DialogManager.showProgressDialog(title: 'Success! Loading the rest of the app', context: context);
     _saveCreds(fromRegistration);
+    _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
+      _appContext.dataManager.setLoggedOut(false);
       Navigator.of(context).pop(); // pop the progress dialog
       Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
       Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
@@ -369,6 +374,17 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final heads = await eventHeadDBManager.fetchEventHeads();
     _appContext.allUsers.addAll(allUsers);
     _appContext.addAllEventHeads(heads);
+  }
+
+  Future<void> _saveFCMToken() async {
+    final MessagingManager messagingManager = MessagingManager();
+    final token = await messagingManager.getToken();
+    if (token != null) {
+      debugPrint('token to save is $token');
+      _appContext.dataManager.saveFCMToken(token);
+      _everyoneDBManager.addTokenForAuthID(
+          authID: _authManager.currentAuthUID, token: token, platform: Platform.operatingSystem);
+    }
   }
 
   Future<List<User>> _fetchUsers() async {

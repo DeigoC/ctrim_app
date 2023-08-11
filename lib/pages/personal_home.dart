@@ -11,8 +11,9 @@ import 'personal/login_page.dart';
 import 'personal/view_bookmarked_page.dart';
 
 class PersonalHome extends StatefulWidget {
-  const PersonalHome({super.key, required this.appContext});
+  const PersonalHome({super.key, required this.appContext, required this.onUserUpdate});
   final AppContext appContext;
+  final void Function() onUserUpdate;
 
   @override
   State<PersonalHome> createState() => _PersonalHomeState();
@@ -120,8 +121,10 @@ class _PersonalHomeState extends State<PersonalHome> {
                     _logout();
                     Navigator.of(context).pop();
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
-                      setState(() {
-                        // update in case of logging in again
+                      // update both parts
+                      setState(() {});
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        widget.onUserUpdate();
                       });
                     });
                   },
@@ -134,18 +137,13 @@ class _PersonalHomeState extends State<PersonalHome> {
   Future<void> _logout() async {
     final AuthManager authManager = AuthManager();
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+    debugPrint('token to remove is ${widget.appContext.dataManager.fcmToken}');
     await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, widget.appContext.dataManager.fcmToken);
     widget.appContext.dataManager.clearCreds();
     widget.appContext.setUserToGuest();
     widget.appContext.rebuildPlease();
-
+    widget.appContext.dataManager.setLoggedOut(true);
     await authManager.signOut();
-  }
-
-  void _onLoginTap(AppContext appContext) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
-      widget.appContext.rebuildPlease();
-    });
   }
 
   void _onViewBookmarkedPageClick() {

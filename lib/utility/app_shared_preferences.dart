@@ -13,7 +13,8 @@ class AppSharedPreferences {
       _bookmarkedPosts = 'bookmarked',
       _fetchUserImgs = 'fetchUserImages',
       _lastPostRefresh = 'lastPostRefresh',
-      _phoneToken = 'phoneToken';
+      _phoneToken = 'phoneToken',
+      _loggedOut = 'loggedOut';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -42,6 +43,9 @@ class AppSharedPreferences {
 
   String get fcmToken => _pref.getString(_fcmToken) ?? '';
   void saveFCMToken(String thisToken) => _pref.setString(_fcmToken, thisToken);
+
+  bool get loggedOut => _pref.getBool(_loggedOut) ?? true;
+  void setLoggedOut(bool state) => _pref.setBool(_loggedOut, state);
 
   // * Post related
   List<String> get bookmarkedPosts => UnmodifiableListView(_pref.getStringList(_bookmarkedPosts) ?? List.empty());

@@ -94,9 +94,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         tabController: _informationTabController,
       );
     }
-    return PersonalHome(
-      appContext: appContext,
-    );
+    return PersonalHome(appContext: appContext, onUserUpdate: () => setState(() {}));
   }
 
   Widget? _buildFAB() {
@@ -165,6 +163,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ])))));
 
       final token = await messagingManager.requestPermissionAndToken();
+
+      // we don't need to perfrom the token grabbing here anymore
       if (token != null) {
         debugPrint('Token to save is $token');
         appContext.dataManager.saveFCMToken(token);
@@ -219,7 +219,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
-    if (message.data.containsKey('PostID')) {
+    if (!_appContext.dataManager.loggedOut && message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final bool hasHead = _appContext.eventHeads.any((element) => element.id.compareTo(postID) == 0);
 
@@ -239,7 +239,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {
     // ! this one makes sense to have an opening dialog
-    final bool openPage = await _showFCMMessage(message, true);
+    final bool openPage = _appContext.dataManager.loggedOut ? false : await _showFCMMessage(message, true);
 
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
@@ -254,12 +254,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessageOpenedBackground(final RemoteMessage message) async {
     // ! no need for a dialog, just open the page no matter where the user may be
-
+    final bool hasLoggedOut = _appContext.dataManager.loggedOut;
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final head = await _reloadEventHead(postID);
-      _openPost(head);
-    } else if (message.data.containsKey('InfoPage')) {
+      if (!hasLoggedOut) {
+        _openPost(head);
+      }
+    } else if (!hasLoggedOut && message.data.containsKey('InfoPage')) {
       _openInformationTeachingPage(message.data['InfoPage']);
     }
   }

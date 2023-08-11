@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
@@ -55,35 +54,43 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _onLoginClick() {
+  void _onLoginClick() async {
     DialogManager.showProgressDialog(context: context, title: 'Attempting To Login');
-    _attemptToLogin().then((user) {
-      if (user != null) {
-        final appContext = Provider.of<AppContext>(context, listen: false);
-        final String token = appContext.dataManager.fcmToken;
+    final authID = await _attemptToLogin();
 
-        if (!kDebugMode) {
-          debugPrint('setting contact token as $token');
-          final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-          everyoneDBManager.addTokenForAuthID(authID: user.authID, token: token, platform: Platform.operatingSystem);
-        }
-        appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
-        appContext.setCurrentUser(user);
-
-        _loggedIn = true;
+    if (authID != null) {
+      _logUserToApp(authID).then((_) {
         Navigator.of(context).pop();
         Navigator.of(context).pop();
-      }
-    });
+      });
+    }
   }
 
-  Future<User?> _attemptToLogin() async {
+  Future<void> _logUserToApp(final String authID) async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final String token = appContext.dataManager.fcmToken;
+    final UserDBManager userDBManager = UserDBManager();
+    final user = await userDBManager.fetchUserByAuthID(authID);
+
+    // ! Set this back
+    // if (!kDebugMode) {
+    debugPrint('setting contact token as $token');
+    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+    everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
+    // }
+
+    appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
+    appContext.setCurrentUser(user);
+    appContext.dataManager.setLoggedOut(false);
+    _loggedIn = true;
+  }
+
+// e7bOH2rpmUIEpoVjGdZUsx:APA91bEbnwrvmnrHLQr2s0oZTV7jpu4PrTuwgeigjrts-zEUPD_eK-7soUy5h2s1JMcm
+  Future<String?> _attemptToLogin() async {
     try {
       final AuthManager authManager = AuthManager();
-      final UserDBManager userDBManager = UserDBManager();
       final String authID = await authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
-      final u = await userDBManager.fetchUserByAuthID(authID);
-      return u;
+      return authID;
     } on auth.FirebaseAuthException catch (e) {
       if (e.code == 'invalid-email') {
         _showErrorMessage('That email is incorrect');
