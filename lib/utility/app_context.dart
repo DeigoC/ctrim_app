@@ -105,6 +105,7 @@ class AppContext extends ChangeNotifier {
 
   void setUserToGuest() => _currentUser = _guest;
   void setCurrentUser(final User? user) => _currentUser = user ?? _guest;
+  User getUserFromID(final String id) => _allUsers.firstWhere((e) => e.id == id);
 
   List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
   bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);

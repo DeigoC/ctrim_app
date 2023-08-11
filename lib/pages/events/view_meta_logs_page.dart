@@ -15,7 +15,6 @@ import '../../widgets/user_selector_dialog.dart';
 class ViewMetaLogsPage extends StatefulWidget {
   const ViewMetaLogsPage({super.key, required this.eventContext});
   final EventContext eventContext;
-  static final DateFormat _dateFormat = DateFormat('d MMM yyyy. HH:mm');
 
   @override
   State<ViewMetaLogsPage> createState() => _ViewMetaLogsPageState();
@@ -24,7 +23,7 @@ class ViewMetaLogsPage extends StatefulWidget {
 class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   late final AppContext _appContext;
   late final List<String> _originalContribtors;
-
+  static final DateFormat _dateFormat = DateFormat('d MMM yyyy. HH:mm');
   @override
   void initState() {
     _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
@@ -40,7 +39,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           _checkForChangesToContributors();
           return true;
         },
-        child: Scaffold(appBar: AppBar(title: const Text('Logs')), body: _buildWithData(context)));
+        child: Scaffold(appBar: AppBar(title: const Text('Change Log')), body: _buildWithData(context)));
   }
 
   Widget _buildWithData(BuildContext context) {
@@ -64,10 +63,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           _buildContributors(selectedUsers),
           const SizedBox(height: 16),
           const Divider(thickness: 1),
-          const SizedBox(height: 16),
-          const Padding(
-              padding: EdgeInsets.only(left: 16.0, bottom: 16),
-              child: Text('Update Logs', style: TextStyle(fontSize: 16))),
+          // const SizedBox(height: 16),
+          // const Padding(
+          //     padding: EdgeInsets.only(left: 16.0, bottom: 16),
+          //     child: Text('Update Logs', style: TextStyle(fontSize: 16))),
         ])),
         SliverList.builder(
             itemCount: widget.eventContext.log.logs.length,
@@ -80,7 +79,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                subtitle: Text(ViewMetaLogsPage._dateFormat.format(thisEntry['ts'])),
+                subtitle: Text(_dateFormat.format(thisEntry['ts'])),
                 leading: MyUserAvatar(thisU),
                 onTap: () => _showFullLog(thisEntry),
               );
@@ -111,7 +110,26 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   }
 
   // * Logic
-  void _showFullLog(final Map<String, dynamic> entry) {}
+  void _showFullLog(final Map<String, dynamic> entry) {
+    final thisU = _appContext.getUserFromID(entry['uid']);
+    showDialog(
+        context: context,
+        builder: (_) => Dialog(
+                child: SingleChildScrollView(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                  ListTile(
+                      title: Text(thisU.fullname),
+                      subtitle: Text(_dateFormat.format(entry['ts'])),
+                      leading: MyUserAvatar(thisU)),
+                  const Divider(),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0, bottom: 16),
+                      child: Text(entry['log'], style: const TextStyle(fontSize: 16))),
+                ]))));
+  }
 
   void _showContributors(final List<User> selectedUsers) {
     showDialog(

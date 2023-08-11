@@ -10,8 +10,9 @@ import 'information/teachings/love_page.dart';
 import 'information/teachings/prayer_page.dart';
 
 class InformationHome extends StatefulWidget {
-  const InformationHome({super.key, required this.tabController});
+  const InformationHome({super.key, required this.tabController, required this.scrollController});
   final TabController tabController;
+  final ScrollController scrollController;
   @override
   State<InformationHome> createState() => _InformationHomeState();
 }
@@ -22,6 +23,7 @@ class _InformationHomeState extends State<InformationHome> {
   @override
   Widget build(BuildContext context) {
     return NestedScrollView(
+        controller: widget.scrollController,
         headerSliverBuilder: (_, __) => [
               SliverAppBar(
                   title: const Text('CTRIM'),

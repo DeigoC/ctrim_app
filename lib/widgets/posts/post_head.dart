@@ -23,7 +23,7 @@ class PostHead extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> children = [
       _buildTitle(),
-      // const SizedBox(height: 2),
+      const SizedBox(height: 2),
       _buildMetaData(),
       const SizedBox(height: 16),
       _buildSubtitle(),

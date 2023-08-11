@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   int _selectedIndex = 0;
 
   late final AppContext _appContext;
+  final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
 
   @override
   void initState() {
@@ -61,6 +62,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _informationTabController.dispose();
+    _postsScrollController.dispose();
+    _informationScrollController.dispose();
     super.dispose();
   }
 
@@ -77,7 +80,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               unselectedFontSize: 0,
               selectedFontSize: 0,
               items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.collections), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
                 BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
                 BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
               ]));
@@ -86,12 +89,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Widget _buildSelectedBody(AppContext appContext) {
     if (_selectedIndex == 0) {
-      return ViewEventsHome(rebuildFunction: () {
-        setState(() {});
-      });
+      return ViewEventsHome(
+          scrollController: _postsScrollController,
+          rebuildFunction: () {
+            setState(() {});
+          });
     } else if (_selectedIndex == 1) {
       return InformationHome(
         tabController: _informationTabController,
+        scrollController: _informationScrollController,
       );
     }
     return PersonalHome(appContext: appContext, onUserUpdate: () => setState(() {}));
@@ -125,9 +131,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // * Logic
 
   void _onNavigationItemTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index != _selectedIndex) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    } else {
+      // scroll page to top
+      if (index == 0) {
+        _postsScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+      } else if (index == 1) {
+        _informationScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+      }
+    }
   }
 
   void _checkIfFirstOpen() async {

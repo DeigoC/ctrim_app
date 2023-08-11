@@ -5,9 +5,10 @@ import '../firebase/db_managers/event_db_manager.dart';
 import '../utility/app_context.dart';
 
 class ViewEventsHome extends StatefulWidget {
-  const ViewEventsHome({super.key, required this.rebuildFunction});
+  const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
   final Function() rebuildFunction;
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  final ScrollController scrollController;
 
   @override
   State<ViewEventsHome> createState() => _ViewEventsHomeState();
@@ -35,21 +36,24 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
         onRefresh: () => _onRefresh().then((value) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             behavior: !appContext.currentUser.isLeader ? SnackBarBehavior.floating : null,
             content: const Text('You are up to date!')))),
-        child: CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
-          SliverAppBar(
-              title: const Text('Bulletin'),
-              centerTitle: false,
-              floating: true,
-              actions: [IconButton(onPressed: () => _showFilterModel(context), icon: const Icon(Icons.sort))],
-              leading: Image.asset(ViewEventsHome._ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
-          SliverList.separated(
-              itemCount: appContext.eventHeads.length,
-              itemBuilder: (_, index) => PostHead(
-                    thisHead: appContext.eventHeads[index],
-                    updatePost: () => widget.rebuildFunction(),
-                  ),
-              separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1))
-        ]),
+        child: CustomScrollView(
+            controller: widget.scrollController,
+            key: const PageStorageKey<String>('events_page'),
+            slivers: [
+              SliverAppBar(
+                  title: const Text('Bulletin'),
+                  centerTitle: false,
+                  floating: true,
+                  actions: [IconButton(onPressed: () => _showFilterModel(context), icon: const Icon(Icons.sort))],
+                  leading: Image.asset(ViewEventsHome._ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
+              SliverList.separated(
+                  itemCount: appContext.eventHeads.length,
+                  itemBuilder: (_, index) => PostHead(
+                        thisHead: appContext.eventHeads[index],
+                        updatePost: () => widget.rebuildFunction(),
+                      ),
+                  separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1))
+            ]),
       );
     });
   }
