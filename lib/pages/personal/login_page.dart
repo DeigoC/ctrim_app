@@ -90,7 +90,14 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final AuthManager authManager = AuthManager();
       final String authID = await authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
-      return authID;
+      if (!await authManager.hasUserVerifiedEmail()) {
+        authManager.signOut().then((_) => DialogManager.showAlertDialog(
+            context: context,
+            title: 'Login Error',
+            content: 'This user has not been verified, please look for your verify email link!'));
+      } else {
+        return authID;
+      }
     } on auth.FirebaseAuthException catch (e) {
       if (e.code == 'invalid-email') {
         _showErrorMessage('That email is incorrect');

@@ -87,6 +87,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             TextField(
               controller: _tecLoginEmail,
               onSubmitted: (_) => _fnLoginPassword.requestFocus(),
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(label: Text('Email'), prefixIcon: Icon(Icons.email)),
             ),
             const SizedBox(height: 8),
@@ -95,6 +97,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
               onSubmitted: (_) => _fnLoginPassword.unfocus(),
               focusNode: _fnLoginPassword,
               obscureText: !_showLoginPassword,
+              textInputAction: TextInputAction.next,
+              keyboardType: _showLoginPassword ? TextInputType.visiblePassword : null,
               decoration: InputDecoration(
                   label: const Text('Password'),
                   prefixIcon: const Icon(Icons.password),
@@ -133,13 +137,15 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             TextField(
                 controller: _tecRegistrationEmail,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 onSubmitted: (_) => _fnPassword.requestFocus(),
                 decoration: const InputDecoration(label: Text('Email'), prefixIcon: Icon(Icons.email))),
             const SizedBox(height: 8),
             TextField(
                 controller: _tecRegistrationPassword,
-                keyboardType: TextInputType.visiblePassword,
+                keyboardType: _showRegisterPassword ? TextInputType.visiblePassword : null,
                 obscureText: !_showRegisterPassword,
+                textInputAction: TextInputAction.next,
                 focusNode: _fnPassword,
                 onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
                 decoration: InputDecoration(
@@ -221,7 +227,14 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     try {
       DialogManager.showProgressDialog(context: context, title: 'Attempting to Login');
       await _authManager.loginAndReturnAuthID(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
-      return true;
+      if (!await _authManager.hasUserVerifiedEmail()) {
+        _authManager.signOut().then((_) => DialogManager.showAlertDialog(
+            context: context,
+            title: 'Login Error',
+            content: 'This user has not been verified, please look for your verify email link!'));
+      } else {
+        return true;
+      }
     } on auth.FirebaseAuthException catch (e) {
       _handleException(e);
     } on Exception catch (e) {
@@ -349,15 +362,18 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       } else {
         debugPrint('creating user with auth: ${_authManager.currentAuthUID}');
         Navigator.of(context).pop();
-        _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
         _instantiateTheRest(true);
       }
     });
   }
 
-  void _instantiateTheRest(bool fromRegistration) {
+  void _instantiateTheRest(bool fromRegistration) async {
     DialogManager.showProgressDialog(title: 'Success! Loading the rest of the app', context: context);
     _saveCreds(fromRegistration);
+
+    if (fromRegistration) {
+      await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+    }
     _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
