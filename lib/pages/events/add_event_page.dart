@@ -198,9 +198,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return newID;
     });
 
-    await _notifyOfNewPost(newID);
-    await _notifyContributorAdditions(newID);
-    await _notifyProgramRoleAddtitions(newID);
+    _notifyContributorAdditions(newID);
+    _notifyProgramRoleAddtitions(newID);
+    _notifyOfNewPost(newID);
   }
 
   void _updateParentMetadata(String thisPostID) {
@@ -237,9 +237,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
             ));
   }
 
-  Future<void> _notifyOfNewPost(final String newID) async {
-    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-    await cloudFunctionManager.sendToTopic(
+  void _notifyOfNewPost(final String newID) async {
+    _cloudFunctionManager.sendToTopic(
         topic: 'ctrim-belfast',
         title: _tecTitle.text.trim(),
         body: _tecSubtitle.text.trim(),
@@ -251,16 +250,21 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   Future<void> _notifyContributorAdditions(final String newID) async {
     const String title = "Contributor update";
     final String body = "You can modify aspects of the post: '${_tecTitle.text.trim()}'";
+    final List<String> allTokens = List<String>.empty(growable: true);
 
-    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
+    for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (!_appContext.haveTokensForUserID(thisUID)) {
-        final List<String> tokens = await _everyoneDBManager.fetchTokens(thisUID);
-        _appContext.addTokensToUser(thisUID, tokens);
+        final List<String> tokens =
+            await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+        _appContext.addTokensToUserID(thisUID, tokens);
       }
 
-      final tokens = _appContext.getTokensFromUserID(thisUID);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: tokens,
+      allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
+    }
+
+    if (allTokens.isNotEmpty) {
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: allTokens,
           title: title,
           body: body,
           data: {'PostID': newID},
@@ -280,12 +284,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
       if (thisUID != currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final List<String> tokens = await _everyoneDBManager.fetchTokens(thisUID);
-          _appContext.addTokensToUser(thisUID, tokens);
+          final List<String> tokens =
+              await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
         }
 
         final tokens = _appContext.getTokensFromUserID(thisUID);
-        await _cloudFunctionManager
+        _cloudFunctionManager
             .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
       }
     }

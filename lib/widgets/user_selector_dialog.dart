@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class UserSelectorDialog extends StatefulWidget {
-  const UserSelectorDialog({super.key, required this.alreadySelectedUIDs, required this.onSelected});
+  const UserSelectorDialog(
+      {super.key, required this.alreadySelectedUIDs, required this.onSelected, this.includeCurrentUser = false});
   final List<String> alreadySelectedUIDs;
+  final bool includeCurrentUser;
   final void Function(String) onSelected;
 
   @override
@@ -34,10 +36,14 @@ class _UserSelectorDialogState extends State<UserSelectorDialog> {
     return Consumer<AppContext>(builder: (_, appContext, __) {
       final users = appContext.allUsers
           .where((e) =>
-              e.id != appContext.currentUser.id &&
               !widget.alreadySelectedUIDs.contains(e.id) &&
               e.fullname.toLowerCase().contains(_tecSearch.text.toLowerCase().trim()))
           .toList();
+
+      if (!widget.includeCurrentUser) {
+        users.removeWhere((e) => e.id == appContext.currentUser.id);
+      }
+
       return Dialog(
           child: SingleChildScrollView(
               child: Column(mainAxisSize: MainAxisSize.min, children: [

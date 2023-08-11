@@ -75,7 +75,9 @@ class EventProgram {
     _roles.add(role);
   }
 
-  void removeRole(final List<String> uids, final String title) {}
+  void removeRole(final List<String> uids, final String title) {
+    _roles.removeWhere((entry) => entry['title'] == title && entry['uids'] == uids);
+  }
 
   @override
   String toString() {

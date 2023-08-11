@@ -108,7 +108,8 @@ class AppContext extends ChangeNotifier {
 
   List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
   bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
-  void addTokensToUser(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
+  void addTokensToUserID(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
+  String getAuthIDFromUID(String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
 
   // * data related
   AppSharedPreferences get dataManager => _dataManager;

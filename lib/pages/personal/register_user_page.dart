@@ -3,7 +3,6 @@ import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/id_tracker.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
@@ -22,11 +21,9 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       _tecEmail = TextEditingController();
   TextEditingController _tecAuthID = TextEditingController();
   final FocusNode _fnSurname = FocusNode(), _fnEmail = FocusNode();
-  final AuthManager _authManager = AuthManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
 
-  bool _canSave = false;
-  bool _isSaved = false;
+  bool _canSave = false, _isSaved = false, _isLeader = false;
 
   final List<String> _locations = <String>['Belfast', 'Portadown', 'North Coast'];
 
@@ -84,17 +81,35 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             controller: _tecAuthID,
             readOnly: true),
         const SizedBox(height: 16),
-        ElevatedButton(onPressed: _onSearchForAuthID, child: const Text('Search for AuthID')),
-        _buildSaveButton(),
+        const Divider(),
+        SwitchListTile(
+            title: const Text('Are they a leader?'),
+            subtitle: const Text('Can create posts'),
+            value: _isLeader,
+            onChanged: (_) => setState(() {
+                  _isLeader = _;
+                })),
+        const Divider(),
+        const SizedBox(height: 16),
+        ElevatedButton(
+            onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
+            child: const Text('Search for AuthID')),
+        ElevatedButton(
+            onPressed: _tecAuthID.text.isNotEmpty
+                ? () {
+                    setState(() {
+                      _tecAuthID.clear();
+                    });
+                  }
+                : null,
+            child: const Text('Clear AuthID')),
+        ElevatedButton(
+          onPressed: _canSave ? () => _saveUserClick() : null,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: const Text('Save'),
+        ),
       ],
     );
-  }
-
-  Widget _buildSaveButton() {
-    return ElevatedButton(
-        style: ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20)),
-        onPressed: _canSave ? () => _saveUserClick() : null,
-        child: const Text('Save'));
   }
 
   Widget _buildLocationSelector() {
@@ -117,15 +132,24 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   // * Logic
-  Future _onSearchForAuthID() async {
+  void _onSearchForAuthIDClick() {
     // TODO make sure we're not looking for an already existing email in the users collection
-
-    final String? auth = await _everyoneDBManager.fetchAuthIDFromEmail(_tecEmail.text.trim());
-    if (auth != null) {
-      setState(() {
-        _tecAuthID = TextEditingController(text: auth);
-      });
-    }
+    _everyoneDBManager.fetchAuthIDFromEmail(_tecEmail.text.trim()).then((auth) {
+      debugPrint('auth is $auth');
+      if (auth != null) {
+        setState(() {
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            _areFieldsGood('');
+          });
+          _tecAuthID = TextEditingController(text: auth);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No auth found for this email!'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
   }
 
   void _saveUserClick() {
@@ -165,9 +189,13 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
     final String newID = await idTracker.getAndIncrementUserID();
     final ctrim.User newUser = ctrim.User(
-        id: newID, forname: _tecForename.text.trim(), surname: _tecSurname.text.trim(), authID: _tecAuthID.text);
+        id: newID,
+        forname: _tecForename.text.trim(),
+        surname: _tecSurname.text.trim(),
+        authID: _tecAuthID.text,
+        isLeader: _isLeader);
 
-    _everyoneDBManager.setAsUser(_tecAuthID.text, false); // TODO add isLeader selector
+    _everyoneDBManager.setAsUser(_tecAuthID.text, _isLeader);
     userDBManager.addUser(newUser);
     return newUser;
   }
@@ -202,7 +230,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             TextButton(
                 onPressed: () {
                   shouldPop = true;
-                  _authManager.signOut(); // sign out the "admin" account from registering a new user
                   Navigator.of(context).pop();
                 },
                 child: const Text('Discard')),
@@ -215,11 +242,16 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   void _areFieldsGood(String _) {
-    if (!_canSave && _tecForename.text.isNotEmpty && _tecSurname.text.isNotEmpty && _tecEmail.text.isNotEmpty) {
+    if (!_canSave &&
+        _tecForename.text.isNotEmpty &&
+        _tecSurname.text.isNotEmpty &&
+        _tecEmail.text.isNotEmpty &&
+        _tecAuthID.text.isNotEmpty) {
       setState(() {
         _canSave = true;
       });
-    } else if (_canSave && (_tecForename.text.isEmpty || _tecSurname.text.isEmpty || _tecEmail.text.isEmpty)) {
+    } else if (_canSave &&
+        (_tecForename.text.isEmpty || _tecSurname.text.isEmpty || _tecEmail.text.isEmpty || _tecAuthID.text.isEmpty)) {
       setState(() {
         _canSave = false;
       });

@@ -180,10 +180,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         .then((_) {
       setState(() {
         // rebuild in case of update
-        if (widget.eventContext.canSaveTheEditing) {
-          widget.onProgramChanged();
-        }
       });
+      if (widget.eventContext.canSaveTheEditing) {
+        widget.onProgramChanged();
+      }
     });
   }
 
@@ -198,10 +198,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                 ))).then((_) {
       setState(() {
         // rebuild in case of update
-        if (widget.eventContext.canSaveTheEditing) {
-          widget.onProgramChanged();
-        }
       });
+      if (widget.eventContext.canSaveTheEditing) {
+        widget.onProgramChanged();
+      }
     });
   }
 

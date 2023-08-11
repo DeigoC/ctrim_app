@@ -390,6 +390,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       allUsersContent += '\n${user.isLeader ? '1' : '0'}';
       allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
       allUsersContent += '\n${user.location}';
+      allUsersContent += '\n${user.authID}';
     }
 
     debugPrint('--writing users from DB');

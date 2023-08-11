@@ -142,15 +142,17 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
             context: context, title: 'Remove Contributor', content: 'Are you sure you want to continue?')
         .then((confirm) {
       if (confirm) {
-        _removeContributor(thisU);
+        _removeContributor(thisU.id);
       }
       Navigator.of(context).pop();
     });
   }
 
-  void _removeContributor(final User removed) {
+  void _removeContributor(final String removedUID) {
     setState(() {
-      widget.eventContext.metadata.contributorUIDs.remove(removed.id);
+      widget.eventContext.metadata.contributorUIDs.remove(removedUID);
+      widget.eventContext.contributorAdditionUIDs.remove(removedUID);
+      widget.eventContext.contributorRemovalUIDs.add(removedUID);
       widget.eventContext.allowSavingOfTheEdit();
     });
   }
@@ -167,7 +169,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   void _addContributor(final String newContributorID) {
     setState(() {
+      // bothersome? just put all of this in eventContext?
       widget.eventContext.metadata.contributorUIDs.add(newContributorID);
+      widget.eventContext.contributorAdditionUIDs.add(newContributorID);
+      widget.eventContext.contributorRemovalUIDs.remove(newContributorID);
       widget.eventContext.allowSavingOfTheEdit();
     });
   }

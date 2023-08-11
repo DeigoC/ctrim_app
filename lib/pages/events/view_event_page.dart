@@ -39,6 +39,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late final EventContext _eventContext;
   late final List<Map<String, String>> _originalHeadMedia;
   late final String _originalTitle, _originalSubtitle, _currentUID;
+  late final DateTime? _originalEventDate;
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
   ];
@@ -53,6 +54,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
+    _originalEventDate = widget.eventHead.eventDate;
 
     super.initState();
   }
@@ -74,6 +76,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                     widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
                     widget.eventHead.setTitle(_originalTitle);
                     widget.eventHead.setSubtitle(_originalSubtitle);
+                    widget.eventHead.setEventDate(_originalEventDate);
                   }
                   return confirmation;
                 })
@@ -481,14 +484,13 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
-    await _sendPostNotification();
-
     if (widget.eventContext.head.eventDate != null) {
-      await _sendRoleAdditionNotiifications();
-      await _sendRoleRemovalNotiifications();
+      _sendRoleAdditionNotiifications();
+      _sendRoleRemovalNotiifications();
     }
-    await _sendContributorAdditionNotificaitons();
-    await _sendContributorRemovalNotificaitons();
+    _sendContributorAdditionNotificaitons();
+    _sendContributorRemovalNotificaitons();
+    _sendPostNotification();
   }
 
   Future<void> _sendPostNotification() async {
@@ -534,9 +536,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
-    for (final uid in missingContacts) {
-      final tokens = await _everyoneDBManager.fetchTokens(_appContext.allUsers.firstWhere((e) => e.id == uid).authID);
-      _appContext.addTokensToUser(uid, tokens);
+    for (final String uid in missingContacts) {
+      final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(uid));
+      _appContext.addTokensToUserID(uid, tokens);
     }
 
     // create token list of contributors
@@ -564,8 +566,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String thisUID = additionEntry['uid']!;
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
-          _appContext.addTokensToUser(thisUID, tokens);
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
         }
 
         final tokens = _appContext.getTokensFromUserID(thisUID);
@@ -584,8 +586,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String thisUID = removalEntry['uid']!;
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
-          _appContext.addTokensToUser(thisUID, tokens);
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
         }
 
         final tokens = _appContext.getTokensFromUserID(thisUID);
@@ -598,36 +600,44 @@ class _EventLogDialogState extends State<EventLogDialog> {
   Future<void> _sendContributorAdditionNotificaitons() async {
     const String title = "Contributor update";
     final String body = "You can modify aspects of the post: '${widget.originalTitle}'";
+    final List<String> allTokens = List<String>.empty(growable: true);
 
-    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
+    for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
-          _appContext.addTokensToUser(thisUID, tokens);
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
         }
 
-        final tokens = _appContext.getTokensFromUserID(thisUID);
-        await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: tokens, title: title, body: body, data: _notificationdata);
+        allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
       }
+    }
+
+    if (allTokens.isNotEmpty) {
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: allTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
   Future<void> _sendContributorRemovalNotificaitons() async {
     const String title = "Contributor update";
     final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
+    final List<String> allTokens = List<String>.empty(growable: true);
 
-    for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
+    for (final String thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokens(thisUID);
-          _appContext.addTokensToUser(thisUID, tokens);
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
         }
 
-        final tokens = _appContext.getTokensFromUserID(thisUID);
-        await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: tokens, title: title, body: body, data: _notificationdata);
+        allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
       }
+    }
+
+    if (allTokens.isNotEmpty) {
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: allTokens, title: title, body: body, data: _notificationdata);
     }
   }
 

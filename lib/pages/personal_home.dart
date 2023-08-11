@@ -134,7 +134,7 @@ class _PersonalHomeState extends State<PersonalHome> {
   Future<void> _logout() async {
     final AuthManager authManager = AuthManager();
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    await everyoneDBManager.removeToken(authManager.currentAuthUID, widget.appContext.dataManager.fcmToken);
+    await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, widget.appContext.dataManager.fcmToken);
     widget.appContext.dataManager.clearCreds();
     widget.appContext.setUserToGuest();
     widget.appContext.rebuildPlease();

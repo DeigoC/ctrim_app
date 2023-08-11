@@ -251,6 +251,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         context: context,
         builder: (_) => UserSelectorDialog(
             alreadySelectedUIDs: _selectedUsers,
+            includeCurrentUser: true,
             onSelected: (newID) => setState(() {
                   _selectedUsers.add(newID);
                   _hasAnythingChanged();
@@ -345,13 +346,14 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
             context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?')
         .then((confirmation) {
       if (confirmation) {
-        widget.eventContext.removeProgram(widget.programEntry['uids'], widget.programEntry['title']);
-        widget.eventContext.allowSavingOfTheEdit();
-
         for (final uid in widget.programEntry['uids'] as List<String>) {
           widget.eventContext.removeRoleAdditionNotification(uid: uid, roleTitle: widget.programEntry['title']);
           widget.eventContext.addRoleRemovalNotification(uid: uid, roleTitle: widget.programEntry['title']);
         }
+
+        widget.eventContext.removeProgram(widget.programEntry['uids'], widget.programEntry['title']);
+        widget.eventContext.allowSavingOfTheEdit();
+
         _isSaved = true;
         Navigator.of(context).pop();
       }

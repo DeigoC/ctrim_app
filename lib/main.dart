@@ -130,7 +130,7 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
     debugPrint('--fetching users from Local Data');
 
     usersData.removeAt(0); // remove the first line that tells the current ID
-    const int chunkSize = 7;
+    const int chunkSize = 8;
     final int numberOfChunks = usersData.length ~/ chunkSize;
 
     final List<List<String>> allUserEntries = List<List<String>>.generate(numberOfChunks, (index) {
@@ -148,7 +148,8 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
           imgSrc: userEntry[3],
           isLeader: userEntry[4] == '1',
           isAreaAdmin: userEntry[5] == '1',
-          location: userEntry[6]);
+          location: userEntry[6],
+          authID: userEntry[7]);
       result.add(thisUser);
     }
 
@@ -167,6 +168,7 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
       allUsersContent += '\n${user.isLeader ? '1' : '0'}';
       allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
       allUsersContent += '\n${user.location}';
+      allUsersContent += '\n${user.authID}';
     }
 
     debugPrint('--writing users from DB');

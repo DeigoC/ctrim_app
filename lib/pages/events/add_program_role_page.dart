@@ -146,6 +146,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         context: context,
         builder: (_) => UserSelectorDialog(
             alreadySelectedUIDs: _selectedUsers,
+            includeCurrentUser: true,
             onSelected: (id) => setState(() {
                   _selectedUsers.add(id);
                 })));

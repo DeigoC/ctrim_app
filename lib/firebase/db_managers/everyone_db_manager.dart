@@ -30,13 +30,13 @@ class EveryoneDBManager {
 
   // ! token related
 
-  Future<List<String>> fetchTokens(final String authID) async {
+  Future<List<String>> fetchTokensFromAuthID(final String authID) async {
     final doc = await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).get();
     final deviceTokens = Map<String, String>.from(doc.data()![_deviceTokens]);
     return deviceTokens.keys.toList();
   }
 
-  Future<void> addToken({required String authID, required String token, required String platform}) async {
+  Future<void> addTokenForAuthID({required String authID, required String token, required String platform}) async {
     // check it doesn't exist, add it
     final doc = await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).get();
     final deviceTokens = Map<String, String>.from(doc.data()![_deviceTokens]);
@@ -44,7 +44,7 @@ class EveryoneDBManager {
     await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).update({_deviceTokens: deviceTokens});
   }
 
-  Future<void> removeToken(final String authID, final String token) async {
+  Future<void> removeTokenForAuthID(final String authID, final String token) async {
     final doc = await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).get();
     final deviceTokens = Map<String, String>.from(doc.data()![_deviceTokens]);
     deviceTokens.remove(token);
@@ -53,12 +53,12 @@ class EveryoneDBManager {
 
   // ! bookmark related
 
-  Future<List<String>> fetchBookmarks(final String authID) async {
+  Future<List<String>> fetchBookmarksForAuthID(final String authID) async {
     final doc = await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).get();
     return List<String>.from(doc.data()![_bookmarks]);
   }
 
-  Future<void> updateBookmark(final String authID, final List<String> bookmarks) async {
+  Future<void> updateBookmarkForAuthID(final String authID, final List<String> bookmarks) async {
     await _ref.doc(authID).collection(_supplemental).doc(_bookmarks).update({_bookmarks: bookmarks});
   }
 

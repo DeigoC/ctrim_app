@@ -145,7 +145,14 @@ class EventContext {
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
   // This one is to be used after update is complete
-  void resetSavingOfTheEdit() => _canSaveTheEditing = false;
+  void resetSavingOfTheEdit() {
+    _roleAdditionNotifications.clear();
+    _roleRemovalNotifications.clear();
+    _contributorAdditionUIDs.clear();
+    _contributorRemovalUIDs.clear();
+    _canSaveTheEditing = false;
+  }
+
   bool get canSaveTheEditing => _canSaveTheEditing;
 
   bool get isViewingChild => _viewingChild;

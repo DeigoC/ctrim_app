@@ -65,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
         if (!kDebugMode) {
           debugPrint('setting contact token as $token');
           final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-          everyoneDBManager.addToken(authID: user.authID, token: token, platform: Platform.operatingSystem);
+          everyoneDBManager.addTokenForAuthID(authID: user.authID, token: token, platform: Platform.operatingSystem);
         }
         appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
         appContext.setCurrentUser(user);

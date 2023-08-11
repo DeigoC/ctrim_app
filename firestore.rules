@@ -22,17 +22,17 @@ service cloud.firestore {
     }
 
     // TODO only 'isLeader' can create. 'isUser' (this includes leaders) can write
-    match /events/{document}{
+    match /events/{documents=**}{
       allow write: if request.auth != null;
     }
     
     // TODO only 'isAdmin' can create. 'isUser' (this includes leaders) can write
-    match /users/{document}{
+    match /users/{documents=**}{
       allow write: if request.auth != null;
     }
 
     // TODO only 'isLeader' can write (all admins should be a leader as well)
-    match /id_tracker/{document}{
+    match /id_tracker/{documents=**}{
       allow write: if request.auth != null;
     }
   }
