@@ -37,7 +37,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
-        child: Scaffold(appBar: AppBar(title: const Text('Add media')), body: _buildBody()));
+        child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Add media'),
+              actions: [IconButton(onPressed: _showHelp, icon: const Icon(Icons.help))],
+            ),
+            body: _buildBody()));
   }
 
   Widget _buildBody() {
@@ -66,12 +71,16 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildMediaTestSlot() {
-    Widget child = const Center(child: Text('Awaiting File...'));
+    Widget child = const Center(
+        child: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Text('Awaiting File...'),
+    ));
     if (_isTesting) {
       child = _isVideo ? _buildVideoPlayerTest() : _buildImageTest();
     }
 
-    return AspectRatio(aspectRatio: 16 / 9, child: child);
+    return child;
   }
 
   Widget _buildImageTest() {
@@ -114,7 +123,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       _videoPlayerController!.value.aspectRatio;
     }
 
-    return VideoPlayer(_videoPlayerController!);
+    return AspectRatio(
+        aspectRatio: _videoPlayerController!.value.aspectRatio, child: VideoPlayer(_videoPlayerController!));
   }
 
   // * Logic
@@ -161,6 +171,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   void _onSrcTestError() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      DialogManager.showAlertDialog(
+          context: context,
+          title: 'Error',
+          content:
+              'That link does not work. Make sure to set file as video if you are expecting one, otherwise please check your link again.');
       setState(() {
         _canSave = false;
         _isTesting = false;
@@ -176,5 +191,13 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       return 'https://drive.google.com/uc?id=$id';
     }
     return _tecSrc.text.trim();
+  }
+
+  void _showHelp() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Adding Media Files',
+        content:
+            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here');
   }
 }

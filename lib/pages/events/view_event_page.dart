@@ -275,7 +275,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
     if (_eventContext.head.eventDate != null || isAuthor) {
       _bodyTabs.add(ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody));
-      _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Program'));
+      _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
     }
     if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {

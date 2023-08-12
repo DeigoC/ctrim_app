@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,6 +21,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _tecEmail = TextEditingController(), _tecPassword = TextEditingController();
   final FocusNode _fnPassword = FocusNode();
+  final AuthManager _authManager = AuthManager();
   bool _loggedIn = false;
 
   @override
@@ -41,14 +41,20 @@ class _LoginPageState extends State<LoginPage> {
           body: ListView(padding: const EdgeInsets.all(8), children: [
             TextField(
                 controller: _tecEmail,
-                decoration:
-                    const InputDecoration(label: Text('Email'), hintText: "It's what you use for your app store"),
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(label: Text('Email')),
                 onSubmitted: (_) => _fnPassword.requestFocus()),
             TextField(
                 controller: _tecPassword,
-                decoration: const InputDecoration(label: Text('Password'), hintText: 'Ask your admin if forgotten'),
+                decoration: const InputDecoration(label: Text('Password')),
                 onSubmitted: (_) => _fnPassword.unfocus(),
+                focusNode: _fnPassword,
                 obscureText: true),
+            Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(onPressed: _onForgotEmailClick, child: const Text('Forgot Password'))),
+            const SizedBox(height: 8),
             ElevatedButton(onPressed: () => _onLoginClick(), child: const Text('Login'))
           ])),
     );
@@ -85,13 +91,11 @@ class _LoginPageState extends State<LoginPage> {
     _loggedIn = true;
   }
 
-// e7bOH2rpmUIEpoVjGdZUsx:APA91bEbnwrvmnrHLQr2s0oZTV7jpu4PrTuwgeigjrts-zEUPD_eK-7soUy5h2s1JMcm
   Future<String?> _attemptToLogin() async {
     try {
-      final AuthManager authManager = AuthManager();
-      final String authID = await authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
-      if (!await authManager.hasUserVerifiedEmail()) {
-        authManager.signOut().then((_) => DialogManager.showAlertDialog(
+      final String authID = await _authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
+      if (!await _authManager.hasUserVerifiedEmail()) {
+        _authManager.signOut().then((_) => DialogManager.showAlertDialog(
             context: context,
             title: 'Login Error',
             content: 'This user has not been verified, please look for your verify email link!'));
@@ -99,31 +103,64 @@ class _LoginPageState extends State<LoginPage> {
         return authID;
       }
     } on auth.FirebaseAuthException catch (e) {
-      if (e.code == 'invalid-email') {
-        _showErrorMessage('That email is incorrect');
-      } else if (e.code == 'user-disabled') {
-        _showErrorMessage('This user has been disabled, please contact an admin');
-      } else if (e.code == 'user-not-found') {
-        _showErrorMessage('User with this email has not been found');
-      } else if (e.code == 'wrong-password') {
-        _showErrorMessage('Wrong password, please try again or reset the password if forgotten');
-      } else {
-        _showErrorMessage('Something went horribly wrong!');
-      }
+      _handleException(e);
     }
     return null;
   }
 
-  void _showErrorMessage(String message) {
+  void _onForgotEmailClick() {
+    if (_tecEmail.text.trim().isEmpty) {
+      DialogManager.showAlertDialog(
+          context: context,
+          title: 'Forgot Password',
+          content: "Enter email in the 'Email' login text field to send the password reset link");
+    } else {
+      DialogManager.showConfirmationDialog(
+              context: context,
+              title: 'Password Reset',
+              content: "Send password reset link to '${_tecEmail.text.trim()}?'")
+          .then((confirm) {
+        if (confirm) {
+          _attemptToSendPasswordResetEmail().then((sent) {
+            if (sent) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password reset link sent!'), behavior: SnackBarBehavior.floating));
+            }
+          });
+        }
+      });
+    }
+  }
+
+  Future<bool> _attemptToSendPasswordResetEmail() async {
+    try {
+      DialogManager.showProgressDialog(context: context, title: 'Sending Password Reset Link!');
+      await _authManager.sendPasswordResetEmail(_tecEmail.text.trim());
+      return true;
+    } on auth.FirebaseAuthException catch (e) {
+      _handleException(e);
+    }
+    return false;
+  }
+
+  void _handleException(final auth.FirebaseAuthException e) {
     Navigator.of(context).pop(); // pop the loading dialog
-    showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text('Login Error'),
-            content: Text(message),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Ok'))],
-          );
-        });
+    const String title = 'Error';
+    String content = 'Something went wrong!\n\n$e';
+    if (e.code == 'invalid-email') {
+      content = 'That email was badly formatted, please enter your complete email';
+    } else if (e.code == 'email-already-in-use') {
+      content = 'That email is already in use, please try to login';
+    } else if (e.code == 'weak-password') {
+      content = 'Password is really weak, please try a stronger alternative!';
+    } else if (e.code == 'user-disabled') {
+      content = 'This user has been disabled';
+    } else if (e.code == 'user-not-found') {
+      content = 'User with this email has not been found';
+    } else if (e.code == 'wrong-password') {
+      content = 'Wrong password, please try again or reset the password if forgotten';
+    }
+    DialogManager.showAlertDialog(context: context, title: title, content: content);
   }
 }

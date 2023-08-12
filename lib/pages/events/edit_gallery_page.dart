@@ -268,6 +268,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     DialogManager.showAlertDialog(
         context: context,
         title: 'Post Media',
-        content: 'Your goto images and videos for the post. Remember that you can write captions if you wish to.');
+        content: 'Your go-to images and videos for the post. Remember that you can write captions if you wish to.');
   }
 }

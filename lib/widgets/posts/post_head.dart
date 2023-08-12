@@ -16,7 +16,7 @@ class PostHead extends StatelessWidget {
   final EventHead thisHead;
   final bool viewingChild, childToParent;
   final Function() updatePost;
-  static const double _titleFontSize = 24, _subtitleFontSize = 16;
+  static const double _titleFontSize = 24, _subtitleFontSize = 16, _metaFontSize = 14;
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM, HH:mm');
 
   @override
@@ -57,7 +57,7 @@ class PostHead extends StatelessWidget {
 
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Text(finalStr, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)));
+        child: Text(finalStr, style: TextStyle(fontSize: _metaFontSize, color: Colors.grey.shade600)));
   }
 
   Widget _buildSubtitle() {

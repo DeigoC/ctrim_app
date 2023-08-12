@@ -1,3 +1,4 @@
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
@@ -48,8 +49,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody()));
+    return WillPopScope(
+      onWillPop: () => DialogManager.discardChanges(context: context),
+      child:
+          Scaffold(body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody())),
+    );
   }
 
   List<Widget> _buildHeaderSliver() {
@@ -86,7 +90,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
                 Tab(icon: Icon(Icons.note), text: 'Info'),
-                Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
+                Tab(icon: Icon(Icons.calendar_today), text: 'Programme'),
                 Tab(icon: Icon(Icons.photo_album), text: 'Media')
               ],
             )
@@ -210,8 +214,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       final metadata = _appContext.getMetadata(parentID)!;
       final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
 
-      final parentHead = _appContext.eventHeads.firstWhere((element) => element.id.compareTo(parentID) == 0);
-
       metadata.childrenPostIDs.add(thisPostID);
       dbManager.updateMetadata(metadata);
 
@@ -219,8 +221,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       final now = DateTime.now();
       dbManager.addLogEntry(
           log: "Created related post: '${widget.eventContext.head.title}'", uid: _appContext.currentUser.id, ts: now);
-      parentHead.setRecentDate(now);
-      _headDBManager.updateHead(parentHead);
     }
   }
 

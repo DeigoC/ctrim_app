@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../utility/event_context.dart';
@@ -40,17 +38,19 @@ class _EditBodyPageState extends State<EditBodyPage> {
 
           return true;
         },
-        child: Scaffold(
-            appBar: AppBar(
-                title: const Text('Edit Body'),
-                actions: [IconButton(onPressed: () => _testButton(), icon: const Icon(Icons.save))]),
-            body: _buildBody()));
+        child: Scaffold(appBar: AppBar(title: const Text('Edit Body')), body: _buildBody()));
   }
 
   Widget _buildBody() {
     return Column(
       children: [
-        quill.QuillToolbar.basic(controller: _controller, showAlignmentButtons: true),
+        quill.QuillToolbar.basic(
+          controller: _controller,
+          showAlignmentButtons: true,
+          showSubscript: false,
+          showSuperscript: false,
+          showCodeBlock: false,
+        ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16),
@@ -65,19 +65,19 @@ class _EditBodyPageState extends State<EditBodyPage> {
     );
   }
 
-  void _testButton() async {
-    var json = jsonEncode(_controller.document.toDelta().toJson());
-    debugPrint(json);
-    // var path = await getApplicationDocumentsDirectory();
-    // var file = File('${path.path}/someTest.txt');
-    // final rawJson = _controller.document.toDelta().toJson();
-    // final _exampleJson = jsonEncode(rawJson);
-    // debugPrint(_exampleJson);
-    // debugPrint('The example json encoded looks like $_exampleJson');
-    // EventDBManager eventDBManager = EventDBManager('1');
-    // eventDBManager.addBody(rawJson);
+  // void _testButton() async {
+  //   var json = jsonEncode(_controller.document.toDelta().toJson());
+  //   debugPrint(json);
+  // var path = await getApplicationDocumentsDirectory();
+  // var file = File('${path.path}/someTest.txt');
+  // final rawJson = _controller.document.toDelta().toJson();
+  // final _exampleJson = jsonEncode(rawJson);
+  // debugPrint(_exampleJson);
+  // debugPrint('The example json encoded looks like $_exampleJson');
+  // EventDBManager eventDBManager = EventDBManager('1');
+  // eventDBManager.addBody(rawJson);
 
-    // await file.writeAsString(_exampleJson);
-    // debugPrint('Size is ${await file.length()}');
-  }
+  // await file.writeAsString(_exampleJson);
+  // debugPrint('Size is ${await file.length()}');
+  // }
 }

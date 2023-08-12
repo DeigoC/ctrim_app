@@ -228,10 +228,15 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       DialogManager.showProgressDialog(context: context, title: 'Attempting to Login');
       await _authManager.loginAndReturnAuthID(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
       if (!await _authManager.hasUserVerifiedEmail()) {
-        _authManager.signOut().then((_) => DialogManager.showAlertDialog(
-            context: context,
-            title: 'Login Error',
-            content: 'This user has not been verified, please look for your verify email link!'));
+        _authManager
+            .signOut()
+            .then((_) => DialogManager.showAlertDialog(
+                context: context,
+                title: 'Login Error',
+                content: 'This user has not been verified, please look for your verify email link!'))
+            .then((_) {
+          Navigator.of(context).pop();
+        });
       } else {
         return true;
       }

@@ -12,7 +12,6 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
-import '../widgets/personal_drawer.dart';
 import 'events/add_event_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -40,6 +39,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _appContext = Provider.of<AppContext>(context, listen: false);
     _informationTabController = TabController(length: 3, vsync: this);
     _appContext.dataManager.setPostRefreshTime();
+    _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
 
     if (!kDebugMode) {
       final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
@@ -72,7 +72,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
           body: _buildSelectedBody(appContext),
-          drawer: _buildDrawer(appContext),
           floatingActionButton: _buildFAB(),
           bottomNavigationBar: BottomNavigationBar(
               currentIndex: _selectedIndex,
@@ -100,7 +99,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         scrollController: _informationScrollController,
       );
     }
-    return PersonalHome(appContext: appContext, onUserUpdate: () => setState(() {}));
+    return PersonalHome(appContext: appContext);
   }
 
   Widget? _buildFAB() {
@@ -117,13 +116,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             });
           },
           label: const Text('Add Post'));
-    }
-    return null;
-  }
-
-  Widget? _buildDrawer(AppContext appContext) {
-    if (_selectedIndex == 2 && !appContext.isCurrentUserGuest) {
-      return const PersonalDrawer();
     }
     return null;
   }

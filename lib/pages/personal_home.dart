@@ -1,19 +1,21 @@
-import 'package:ctrim_app/pages/welcome_page.dart';
+// import 'package:ctrim_app/pages/welcome_page.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 // import '../firebase/functions_manager.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../utility/app_context.dart';
+import '../widgets/user_avatar.dart';
 import 'personal/login_page.dart';
+import 'personal/view_all_users_page.dart';
 import 'personal/view_bookmarked_page.dart';
 
 class PersonalHome extends StatefulWidget {
-  const PersonalHome({super.key, required this.appContext, required this.onUserUpdate});
+  const PersonalHome({super.key, required this.appContext});
   final AppContext appContext;
-  final void Function() onUserUpdate;
 
   @override
   State<PersonalHome> createState() => _PersonalHomeState();
@@ -22,6 +24,7 @@ class PersonalHome extends StatefulWidget {
 class _PersonalHomeState extends State<PersonalHome> {
   // final CloudFunctionManager _functionManager = CloudFunctionManager();
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
   Widget build(BuildContext context) {
@@ -34,31 +37,25 @@ class _PersonalHomeState extends State<PersonalHome> {
           onTap: _onViewBookmarkedPageClick,
         ),
 
-        ListTile(
-          title: const Text('Log out'),
-          leading: const Icon(Icons.logout),
-          onTap: _onLogoutClick,
-        ),
-
         // ! The following are used for testing
-        ListTile(
-          title: const Text('Startup login test'),
-          leading: const Icon(Icons.science),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomePage())),
-        ),
-        ListTile(
-          title: const Text('Test Version'),
-          leading: const Icon(Icons.science),
-          onTap: _testVersion,
-        ),
-        ListTile(
-          title: const Text('Who Am I'),
-          leading: const Icon(Icons.science),
-          onTap: () {
-            AuthManager authManager = AuthManager();
-            authManager.whoAmI();
-          },
-        ),
+        // ListTile(
+        //   title: const Text('Startup login test'),
+        //   leading: const Icon(Icons.science),
+        //   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomePage())),
+        // ),
+        // ListTile(
+        //   title: const Text('Test Version'),
+        //   leading: const Icon(Icons.science),
+        //   onTap: _testVersion,
+        // ),
+        // ListTile(
+        //   title: const Text('Who Am I'),
+        //   leading: const Icon(Icons.science),
+        //   onTap: () {
+        //     AuthManager authManager = AuthManager();
+        //     authManager.whoAmI();
+        //   },
+        // ),
         // ListTile(
         //     title: const Text('Send to Topic - Love'),
         //     leading: const Icon(Icons.send_to_mobile),
@@ -92,14 +89,47 @@ class _PersonalHomeState extends State<PersonalHome> {
         //     }),
       ];
 
+      if (!appContext.isCurrentUserGuest) {
+        children.insert(
+            0,
+            Column(
+              children: [
+                const SizedBox(height: 8),
+                ListTile(
+                  title: Text('Hi, ${appContext.currentUser.forname}'),
+                  leading: MyUserAvatar(appContext.currentUser),
+                ),
+                const Divider(),
+              ],
+            ));
+        children.addAll([
+          ListTile(
+              title: const Text('Belfast Staff'),
+              leading: const Icon(Icons.people),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
+          ListTile(
+            title: const Text('Readme'),
+            leading: const Icon(Icons.info),
+            onTap: () => launchUrlString(_readmeUrl),
+          ),
+        ]);
+      }
+
+      children.addAll([
+        // ListTile(
+        //   title: const Text('Readme'),
+        //   leading: const Icon(Icons.info),
+        //   onTap: () => launchUrlString('https://pub.dev/packages/url_launcher'),
+        // ),
+        ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)
+      ]);
+
       return CustomScrollView(
         slivers: [
           SliverAppBar(
               title: const Text('Personal'),
               centerTitle: false,
-              leading: appContext.isCurrentUserGuest
-                  ? Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)
-                  : null),
+              leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
           SliverList(delegate: SliverChildListDelegate(children))
         ],
       );
@@ -121,11 +151,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                     _logout();
                     Navigator.of(context).pop();
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
-                      // update both parts
                       setState(() {});
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        widget.onUserUpdate();
-                      });
                     });
                   },
                   child: const Text('Sign out')),
@@ -150,21 +176,21 @@ class _PersonalHomeState extends State<PersonalHome> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
   }
 
-  void _testVersion() async {
-    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final String version = packageInfo.version;
-    debugPrint('version is $version');
+  // void _testVersion() async {
+  //   final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  //   final String version = packageInfo.version;
+  //   debugPrint('version is $version');
 
-    String testStr1 = '6-$version';
-    String testStr2 = '6';
+  //   String testStr1 = '6-$version';
+  //   String testStr2 = '6';
 
-    final split1 = testStr1.split('-');
-    final split2 = testStr2.split('-');
-    debugPrint('split 1 is $split1');
-    debugPrint('split 2 is $split2');
+  //   final split1 = testStr1.split('-');
+  //   final split2 = testStr2.split('-');
+  //   debugPrint('split 1 is $split1');
+  //   debugPrint('split 2 is $split2');
 
-    debugPrint('now is ${DateTime.now().millisecondsSinceEpoch}');
-  }
+  //   debugPrint('now is ${DateTime.now().millisecondsSinceEpoch}');
+  // }
 
   // Future<bool> _showFCMTest() async {
   //   const String imageUrl = 'https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg';
