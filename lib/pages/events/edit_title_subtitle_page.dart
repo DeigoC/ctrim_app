@@ -49,7 +49,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
       children: [
         TextField(
           controller: _tecTitle,
-          maxLength: 58,
+          maxLength: 64,
           decoration: const InputDecoration(hintText: 'Make it snappy!', label: Text('Title')),
         ),
         TextField(

@@ -1,22 +1,22 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/firebase/messaging_manager.dart';
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/pages/information/teachings/bible_reading_page.dart';
-import 'package:ctrim_app/pages/information/teachings/love_page.dart';
-import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/messaging_manager.dart';
+import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
-import '../widgets/personal_drawer.dart';
+import '../utility/local_data_manager.dart';
 import 'events/add_event_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
+import 'information/teachings/bible_reading_page.dart';
+import 'information/teachings/love_page.dart';
 import 'information_home.dart';
 import 'personal_home.dart';
 
@@ -32,11 +32,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   int _selectedIndex = 0;
 
   late final AppContext _appContext;
+  final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
 
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     _informationTabController = TabController(length: 3, vsync: this);
+    _appContext.dataManager.setPostRefreshTime();
+    _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
 
     if (!kDebugMode) {
       final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
@@ -44,6 +47,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
       });
+    }
+
+    if (_appContext.dataManager.shouldFetchUserImages) {
+      _performLocalUserImgCleanup();
+      _appContext.dataManager.justFetchedUserImages();
     }
 
     _setupCloudOnMessage();
@@ -54,6 +62,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _informationTabController.dispose();
+    _postsScrollController.dispose();
+    _informationScrollController.dispose();
     super.dispose();
   }
 
@@ -62,7 +72,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
           body: _buildSelectedBody(appContext),
-          drawer: _buildDrawer(appContext),
           floatingActionButton: _buildFAB(),
           bottomNavigationBar: BottomNavigationBar(
               currentIndex: _selectedIndex,
@@ -70,7 +79,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               unselectedFontSize: 0,
               selectedFontSize: 0,
               items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.collections), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
                 BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
                 BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
               ]));
@@ -79,22 +88,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Widget _buildSelectedBody(AppContext appContext) {
     if (_selectedIndex == 0) {
-      return ViewEventsHome(rebuildFunction: () {
-        setState(() {});
-      });
+      return ViewEventsHome(
+          scrollController: _postsScrollController,
+          rebuildFunction: () {
+            setState(() {});
+          });
     } else if (_selectedIndex == 1) {
       return InformationHome(
         tabController: _informationTabController,
+        scrollController: _informationScrollController,
       );
     }
-    return PersonalHome(
-      appContext: appContext,
-    );
+    return PersonalHome(appContext: appContext);
   }
 
   Widget? _buildFAB() {
     if (_selectedIndex == 0 && _appContext.currentUser.isLeader) {
       return FloatingActionButton.extended(
+          icon: const Icon(Icons.post_add),
           onPressed: () {
             final String uid = _appContext.currentUser.id;
             Navigator.push(
@@ -109,19 +120,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return null;
   }
 
-  Widget? _buildDrawer(AppContext appContext) {
-    if (_selectedIndex == 2 && !appContext.isCurrentUserGuest) {
-      return const PersonalDrawer();
-    }
-    return null;
-  }
-
   // * Logic
 
   void _onNavigationItemTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index != _selectedIndex) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    } else {
+      // scroll page to top
+      if (index == 0) {
+        _postsScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+      } else if (index == 1) {
+        _informationScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+      }
+    }
   }
 
   void _checkIfFirstOpen() async {
@@ -157,9 +170,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ])))));
 
       final token = await messagingManager.requestPermissionAndToken();
+
+      // we don't need to perfrom the token grabbing here anymore
       if (token != null) {
         debugPrint('Token to save is $token');
-        appContext.dataManager.saveToken(token);
+        appContext.dataManager.saveFCMToken(token);
       }
       messagingManager.subscribeToCTRIMBelfast();
       appContext.dataManager.nowOpened();
@@ -211,8 +226,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
-    // ! this one should just open the appropriate page, no need to show an opening message?
-    if (message.data.containsKey('PostID')) {
+    if (!_appContext.dataManager.loggedOut && message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final bool hasHead = _appContext.eventHeads.any((element) => element.id.compareTo(postID) == 0);
 
@@ -232,7 +246,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {
     // ! this one makes sense to have an opening dialog
-    final bool openPage = await _showFCMMessage(message, true);
+    final bool openPage = _appContext.dataManager.loggedOut ? false : await _showFCMMessage(message, true);
 
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
@@ -247,12 +261,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessageOpenedBackground(final RemoteMessage message) async {
     // ! no need for a dialog, just open the page no matter where the user may be
-
+    final bool hasLoggedOut = _appContext.dataManager.loggedOut;
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final head = await _reloadEventHead(postID);
-      _openPost(head);
-    } else if (message.data.containsKey('InfoPage')) {
+      if (!hasLoggedOut) {
+        _openPost(head);
+      }
+    } else if (!hasLoggedOut && message.data.containsKey('InfoPage')) {
       _openInformationTeachingPage(message.data['InfoPage']);
     }
   }
@@ -315,7 +331,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         context: context,
         barrierDismissible: false,
         builder: (_) {
-          // TODO wrap this in an orientation builder!
+          // ! wrap this in an orientation builder!
           return Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: SingleChildScrollView(
@@ -350,5 +366,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         });
 
     return result;
+  }
+
+  void _performLocalUserImgCleanup() async {
+    final String userImgDir = '${_appContext.appDir}/user_imgs';
+    final dir = Directory(userImgDir);
+    if (!await dir.exists()) {
+      debugPrint('creating user_img directory!');
+      await dir.create();
+    }
+
+    for (final user in _appContext.allUsers) {
+      final File potentialUserImg = File('$userImgDir/${user.id}.png');
+      if (user.imgSrc.isNotEmpty) {
+        debugPrint('Creating user profile pic for ${user.forname} ID ${user.id}');
+        _setImageForFile(potentialUserImg, user.imgSrc);
+      } else if (user.imgSrc.isEmpty && await potentialUserImg.exists()) {
+        debugPrint('Deleting user profile pic for ${user.forname} ID ${user.id}');
+        potentialUserImg.delete();
+      } else {
+        debugPrint('doing nothing, no need to create/delete profile pics');
+      }
+    }
+  }
+
+  Future<void> _setImageForFile(final File file, final String src) async {
+    final response = await http.get(Uri.parse(src));
+    file.writeAsBytes(response.bodyBytes);
   }
 }

@@ -83,7 +83,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   List<Widget> _buildPostChildren() {
     final childrenHeads =
-        _appContext.eventHeads.where((head) => widget.eventContext.metadata.children.contains(head.id)).toList();
+        _appContext.eventHeads.where((head) => widget.eventContext.metadata.childrenPostIDs.contains(head.id)).toList();
     return [
       SliverList.separated(
           itemCount: childrenHeads.length,

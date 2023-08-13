@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/models/user_contact.dart';
 import 'package:ctrim_app/utility/app_shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,22 +18,26 @@ class AppContext extends ChangeNotifier {
   // there's an interesting idea for optimisation to do with the recentDate and writing to file
   // so this file below here might be unecessary for now
   static final Map<String, EventMetadata> _metaData = {};
-  static final List<UserContact> _allContacts = List<UserContact>.empty(growable: true);
+
+  // no more 'user contact' we will hold the tokens as necessary
+  static final Map<String, List<String>> _userTokens = {};
   static late final AppSharedPreferences _dataManager;
   static late final String _cacheDir, _appDir;
 
   late User _currentUser;
 
+  int _postSortIndex = 0;
+
   AppContext(
-      {required List<EventHead> heads,
-      required List<User> allUsers,
-      required SharedPreferences prefInstance,
-      required User user,
+      {required SharedPreferences prefInstance,
       required String cacheDir,
-      required String appDir}) {
-    _eventHeads = heads;
-    _allUsers = allUsers;
-    _currentUser = user;
+      required String appDir,
+      List<EventHead>? heads,
+      List<User>? allUsers,
+      User? user}) {
+    _eventHeads = heads ?? List<EventHead>.empty(growable: true);
+    _allUsers = allUsers ?? List<User>.empty(growable: true);
+    _currentUser = user ?? _guest;
     _dataManager = AppSharedPreferences(preferences: prefInstance);
     _cacheDir = cacheDir;
     _appDir = appDir;
@@ -47,26 +50,67 @@ class AppContext extends ChangeNotifier {
   // * event head related
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
-  void orderEventDatesByRecency() => _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+
+  void addAllEventHeads(final List<EventHead> heads) => _eventHeads.addAll(heads);
 
   void addOrUpdatePostHead(final EventHead head) {
     _eventHeads.removeWhere((element) => element.id.compareTo(head.id) == 0);
     _eventHeads.insert(0, head);
   }
 
+  void sortPostsByIndex() {
+    // 0 Recency date descending
+    // 1 Event date descending
+    // 2 Event date ascending
+    // 3 Recency date ascending
+    switch (_postSortIndex) {
+      case 0:
+        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        break;
+      case 1:
+        _eventHeads.sort((a, b) {
+          if (a.eventDate == null && b.eventDate == null) return 0;
+          if (a.eventDate == null) return 1;
+          if (b.eventDate == null) return -1;
+          return b.eventDate!.compareTo(a.eventDate!);
+        });
+        break;
+      case 2:
+        _eventHeads.sort((a, b) {
+          if (a.eventDate == null && b.eventDate == null) return 0;
+          if (a.eventDate == null) return 1;
+          if (b.eventDate == null) return -1;
+          return a.eventDate!.compareTo(b.eventDate!);
+        });
+        break;
+      case 3:
+        _eventHeads.sort((a, b) => a.recentDate.compareTo(b.recentDate));
+        break;
+    }
+  }
+
+  int get postSortIndex => _postSortIndex;
+  void setPostSortIndex(int newIndex) => _postSortIndex = newIndex;
+
+  void setRefreshedHeads(final List<EventHead> heads) {
+    _eventHeads.clear();
+    _eventHeads.addAll(heads);
+    sortPostsByIndex();
+  }
+
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
   User get currentUser => _currentUser;
-  List<User> get allUsers => UnmodifiableListView(_allUsers);
+  List<User> get allUsers => _allUsers;
 
-  void addUser(final User u) => _allUsers.add(u);
   void setUserToGuest() => _currentUser = _guest;
-  void setCurrentUser(final String id) => _currentUser = _allUsers.firstWhere((e) => e.id.compareTo(id) == 0);
+  void setCurrentUser(final User? user) => _currentUser = user ?? _guest;
+  User getUserFromID(final String id) => _allUsers.firstWhere((e) => e.id == id);
 
-  // contact related
-  void addAllUserContacts(final List<UserContact> contacts) => _allContacts.addAll(contacts);
-
-  List<UserContact> get userContacts => UnmodifiableListView(_allContacts);
+  List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
+  bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
+  void addTokensToUserID(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
+  String getAuthIDFromUID(String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
 
   // * data related
   AppSharedPreferences get dataManager => _dataManager;

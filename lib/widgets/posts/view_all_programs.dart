@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
-import '../../pages/events/add_program_page.dart';
+import '../../pages/events/add_program_role_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_page.dart';
 import '../../utility/app_context.dart';
@@ -13,9 +13,11 @@ import '../user_avatar.dart';
 import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
-  const ViewAllPrograms({super.key, required this.eventContext, required this.onProgramChanged});
+  const ViewAllPrograms(
+      {super.key, required this.eventContext, required this.onProgramChanged, this.isAddingPost = false});
   final EventContext eventContext;
   final Function onProgramChanged;
+  final bool isAddingPost;
 
   @override
   State<ViewAllPrograms> createState() => _ViewAllProgramsPageState();
@@ -94,7 +96,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     ];
 
     if (widget.eventContext.head.eventDate != null &&
-        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0) {
+        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0 &&
+        !widget.isAddingPost) {
       children.add(Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: ElevatedButton.icon(
@@ -177,10 +180,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         .then((_) {
       setState(() {
         // rebuild in case of update
-        if (widget.eventContext.canSaveTheEditing) {
-          widget.onProgramChanged();
-        }
       });
+      if (widget.eventContext.canSaveTheEditing) {
+        widget.onProgramChanged();
+      }
     });
   }
 
@@ -195,10 +198,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                 ))).then((_) {
       setState(() {
         // rebuild in case of update
-        if (widget.eventContext.canSaveTheEditing) {
-          widget.onProgramChanged();
-        }
       });
+      if (widget.eventContext.canSaveTheEditing) {
+        widget.onProgramChanged();
+      }
     });
   }
 
@@ -223,11 +226,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     Navigator.push(
             context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
         .then((_) {
-      setState(() {
-        if (widget.eventContext.canSaveTheEditing) {
-          widget.onProgramChanged();
-        }
-      });
+      setState(() {});
+      if (widget.eventContext.canSaveTheEditing) {
+        widget.onProgramChanged();
+      }
     });
   }
 }

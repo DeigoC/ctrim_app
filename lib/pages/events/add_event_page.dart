@@ -1,13 +1,16 @@
-import 'package:ctrim_app/firebase/functions_manager.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/widgets/posts/add_header_meta_tab_body.dart';
-import 'package:ctrim_app/widgets/posts/add_media_tab.dart';
-import 'package:ctrim_app/widgets/posts/add_program_tab.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/functions_manager.dart';
+import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
-import '../../widgets/posts/add_body_tab.dart';
+import '../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../widgets/posts/view_all_programs.dart';
+import '../../widgets/posts/view_event_media_tab.dart';
+import '../../widgets/posts/view_post_body.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -18,21 +21,20 @@ class AddEventPage extends StatefulWidget {
 }
 
 class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderStateMixin {
-  bool _canSave = false;
-
   // * Required variables
+  late final AppContext _appContext;
   late final TabController _tabController;
   final TextEditingController _tecTitle = TextEditingController(), _tecSubtitle = TextEditingController();
-  // this can only be created after the user sets the _eventDate, we need to set the finishTime
-  // the metadata is created at the end when uploading everything
-  // a log is created when uploading as well that higlights the publication of the app.
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
+  final EventHeadDBManager _headDBManager = EventHeadDBManager();
 
-  // * The optional variables
-  final List<String> _contributorUIDs = List<String>.empty(growable: true);
-  DateTime? _eventDate;
+  bool _canSave = false;
+  // String? _keygraphic;
 
   @override
   void initState() {
+    _appContext = Provider.of<AppContext>(context, listen: false);
     _tabController = TabController(length: 4, vsync: this);
     super.initState();
   }
@@ -47,88 +49,89 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody()));
+    return WillPopScope(
+      onWillPop: () => DialogManager.discardChanges(context: context),
+      child:
+          Scaffold(body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody())),
+    );
   }
 
   List<Widget> _buildHeaderSliver() {
+    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+
     return [
       SliverAppBar(
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
-        flexibleSpace: FlexibleSpaceBar(
-          background: _buildAppBarBackground(),
-        ),
+        flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
-          ElevatedButton.icon(
-            onPressed: _canSave ? _onSaveClick : null,
-            icon: const Icon(Icons.upload),
-            label: const Text('Save'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          )
+          Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: ElevatedButton.icon(
+                style: ButtonStyle(
+                    backgroundColor: _canSave
+                        ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+                        : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+                onPressed: _canSave ? _onSaveClick : null,
+                icon: const Icon(Icons.upload),
+                label: const Text('Save')),
+          ),
+          const SizedBox(width: 8)
         ],
       ),
       SliverPadding(
-        padding: const EdgeInsets.all(8.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate([
+          padding: const EdgeInsets.all(8.0),
+          sliver: SliverList(
+              delegate: SliverChildListDelegate([
             TabBar(
-              labelColor: Colors.black,
+              labelColor: onDark ? Colors.white : Colors.black,
               controller: _tabController,
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
-                Tab(icon: Icon(Icons.note), text: 'Body'),
-                Tab(icon: Icon(Icons.calendar_today), text: 'Program'),
-                Tab(icon: Icon(Icons.photo_album), text: 'Media'),
+                Tab(icon: Icon(Icons.note), text: 'Info'),
+                Tab(icon: Icon(Icons.calendar_today), text: 'Programme'),
+                Tab(icon: Icon(Icons.photo_album), text: 'Media')
               ],
-            ),
-          ]),
-        ),
-      )
+            )
+          ])))
     ];
   }
 
   Widget? _buildAppBarBackground() {
     // * If there are no images, we should just remove the expanded height
-    if (widget.eventContext.media.allMedia.isEmpty) {
+    if (widget.eventContext.head.getKeyGraphic() == null) {
       return null;
     }
     return Stack(
       alignment: Alignment.bottomRight,
-      children: [
-        Positioned.fill(
-          child: Image.network(
-            'https://assets.gocomics.com/uploads/collection_images/collection_image_large_1721649_Garfield_Sandwich_V2_201805291007.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
-      ],
+      children: [Positioned.fill(child: Image.network(widget.eventContext.head.getKeyGraphic()!, fit: BoxFit.cover))],
     );
   }
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
-      //  ? should these be views instead?
       AddEventHeadMeta(
-          tecTitle: _tecTitle,
-          tecSubtitle: _tecSubtitle,
-          onRequiredFieldChange: _onRequiredFieldTextChange,
-          contributorUIDs: _contributorUIDs),
-      AddBodyTab(
-        eventContext: widget.eventContext,
-        onRequiredFieldTextChange: _onRequiredFieldTextChange,
-      ),
-      AddProgramTab(
-        eventContext: widget.eventContext,
-        eventDate: _eventDate,
-      ),
-      AddMediaTabBody(
+        tecTitle: _tecTitle,
+        tecSubtitle: _tecSubtitle,
+        onRequiredFieldChange: _onRequiredFieldTextChange,
         eventContext: widget.eventContext,
       ),
+      ViewPostBody(
+          eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
+      ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
+      ViewEventMediaTab(
+          eventContext: widget.eventContext, onMediaEdit: () => _updateBody(), currentUID: _appContext.currentUser.id)
     ]);
   }
 
   // * Logic
-  // the core requirements of a post
+
+  void _updateBody() {
+    setState(() {});
+    _onRequiredFieldTextChange('');
+  }
+
   void _onRequiredFieldTextChange(String newText) {
     if (_okToSave() && !_canSave) {
       setState(() {
@@ -141,6 +144,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
+  // the core requirements of a post - title, subtitle, an update to the body
   bool _okToSave() {
     if (_tecTitle.text.trim().isEmpty || _tecSubtitle.text.trim().isEmpty) {
       return false;
@@ -185,35 +189,39 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   Future<void> _savePost() async {
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    await widget.eventContext
+    final newID = await widget.eventContext
         .addNewPost(
             title: _tecTitle.text.trim(),
             subtitle: _tecSubtitle.text.trim(),
-            eventDate: _eventDate,
-            uid: appContext.currentUser.id)
-        .then((newID) => _updateParentMetadata(newID));
-    await _notifyOfNewPost();
-    appContext.addNewPostHead(widget.eventContext.head);
+            eventDate: widget.eventContext.head.eventDate,
+            uid: _appContext.currentUser.id)
+        .then((newID) async {
+      _updateParentMetadata(newID);
+      final newHead = await _headDBManager.fetchHead(newID);
+      _appContext.addNewPostHead(newHead);
+      return newID;
+    });
+
+    _notifyContributorAdditions(newID);
+    _notifyProgramRoleAddtitions(newID);
+    _notifyOfNewPost(newID);
   }
 
   void _updateParentMetadata(String thisPostID) {
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final String parentID = widget.eventContext.metadata.parentID!;
-    final metadata = appContext.getMetadata(parentID)!;
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-    final EventHeadDBManager headDBManager = EventHeadDBManager();
-    final parentHead = appContext.eventHeads.firstWhere((element) => element.id.compareTo(parentID) == 0);
+    if (widget.eventContext.metadata.parentID != null) {
+      debugPrint('updating parent post metadata');
+      final String parentID = widget.eventContext.metadata.parentID!;
+      final metadata = _appContext.getMetadata(parentID)!;
+      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
 
-    metadata.addChildID(thisPostID);
-    dbManager.updateMetadata(metadata);
+      metadata.childrenPostIDs.add(thisPostID);
+      dbManager.updateMetadata(metadata);
 
-    // add a log and update the head's recentdate so that people can have their parent post instance updated
-    final now = DateTime.now();
-    dbManager.addLogEntry(
-        log: "Created related post: '${widget.eventContext.head.title}'", uid: appContext.currentUser.id, ts: now);
-    parentHead.setRecentDate(now);
-    headDBManager.updateHead(parentHead);
+      // add a log and update the head's recentdate so that people can have their parent post instance updated
+      final now = DateTime.now();
+      dbManager.addLogEntry(
+          log: "Created related post: '${widget.eventContext.head.title}'", uid: _appContext.currentUser.id, ts: now);
+    }
   }
 
   void _showUploadingDialog() {
@@ -229,9 +237,62 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
             ));
   }
 
-  Future<void> _notifyOfNewPost() async {
-    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-    await cloudFunctionManager
-        .sendToTopic(topic: 'ctrim-belfast', title: _tecTitle.text.trim(), body: _tecSubtitle.text.trim(), data: {});
+  void _notifyOfNewPost(final String newID) async {
+    _cloudFunctionManager.sendToTopic(
+        topic: 'ctrim-belfast',
+        title: _tecTitle.text.trim(),
+        body: _tecSubtitle.text.trim(),
+        data: {'PostID': newID},
+        iOSImage: widget.eventContext.head.getKeyGraphic(),
+        androidImage: widget.eventContext.head.getKeyGraphic());
+  }
+
+  Future<void> _notifyContributorAdditions(final String newID) async {
+    const String title = "Contributor update";
+    final String body = "You can modify aspects of the post: '${_tecTitle.text.trim()}'";
+    final List<String> allTokens = List<String>.empty(growable: true);
+
+    for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
+      if (!_appContext.haveTokensForUserID(thisUID)) {
+        final List<String> tokens =
+            await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+        _appContext.addTokensToUserID(thisUID, tokens);
+      }
+
+      allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
+    }
+
+    if (allTokens.isNotEmpty) {
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: allTokens,
+          title: title,
+          body: body,
+          data: {'PostID': newID},
+          androidImage: widget.eventContext.head.getKeyGraphic(),
+          iOSImage: widget.eventContext.head.getKeyGraphic());
+    }
+  }
+
+  Future<void> _notifyProgramRoleAddtitions(final String newID) async {
+    final String currentUserName = _appContext.currentUser.forname;
+    final String currentUID = _appContext.currentUser.id;
+    final String title = "$currentUserName has assinged you to a role!";
+
+    for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
+      final String body = "You are assigned to '${additionEntry['title']!}' for ${_tecTitle.text.trim()}";
+      final String thisUID = additionEntry['uid']!;
+
+      if (thisUID != currentUID) {
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final List<String> tokens =
+              await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
+        }
+
+        final tokens = _appContext.getTokensFromUserID(thisUID);
+        _cloudFunctionManager
+            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
+      }
+    }
   }
 }

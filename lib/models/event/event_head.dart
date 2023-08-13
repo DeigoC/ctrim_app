@@ -11,7 +11,7 @@ class EventHead {
   DateTime? _eventDate;
 
   EventHead({
-    required id,
+    required String id,
     String title = '',
     String subtitle = '',
     String location = 'Belfast',

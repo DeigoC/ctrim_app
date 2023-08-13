@@ -116,6 +116,7 @@ class DialogManager {
         context: context,
         barrierDismissible: barrierDismissible,
         builder: (_) => AlertDialog(
+              scrollable: true,
               title: Text(title),
               content: Text(content),
               actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(closeText))],

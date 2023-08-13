@@ -1,3 +1,4 @@
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -29,7 +30,19 @@ class _ViewBookmarksPageState extends State<ViewBookmarksPage> {
       final List<EventHead> bookedmarked =
           appContext.eventHeads.where((head) => appContext.dataManager.bookmarkedPosts.contains(head.id)).toList();
       return CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
-        const SliverAppBar(title: Text('Bookmarked')),
+        SliverAppBar(
+          title: const Text('Bookmarked'),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  DialogManager.showAlertDialog(
+                      context: context,
+                      title: 'Bookmarked Posts',
+                      content: 'You will be notified of updates made to the posts you bookmark.');
+                },
+                icon: const Icon(Icons.help))
+          ],
+        ),
         SliverList.separated(
             itemCount: bookedmarked.length,
             separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1),

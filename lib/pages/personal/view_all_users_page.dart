@@ -18,7 +18,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
           appBar: AppBar(
-            title: const Text('View All Users'),
+            title: const Text('Belfast Staff'),
           ),
           floatingActionButton: appContext.currentUser.isAreaAdmin
               ? FloatingActionButton.extended(
@@ -30,7 +30,6 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 final thisUser = appContext.allUsers[index];
                 return ListTile(
                     title: Text(thisUser.fullname),
-                    subtitle: Text(thisUser.location),
                     leading: MyUserAvatar(thisUser),
                     onTap: () => DialogManager.showUserProfile(
                         selectedUser: thisUser,

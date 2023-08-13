@@ -12,6 +12,10 @@ class MessagingManager {
     return token;
   }
 
+  Future<String?> getToken() async {
+    return await _instance.getToken();
+  }
+
   Future<void> subscribeToCTRIMBelfast() {
     return _instance.subscribeToTopic(_ctrimBelfast);
   }

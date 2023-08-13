@@ -48,10 +48,10 @@ class _ViewPostBodyState extends State<ViewPostBody> {
   void _onEditBodyClick(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
         .then((_) {
-      widget.updateBody();
+      setState(() {});
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // how annoying!
-        setState(() {});
+        widget.updateBody();
       });
     });
   }

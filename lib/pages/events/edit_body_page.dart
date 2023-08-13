@@ -29,37 +29,28 @@ class _EditBodyPageState extends State<EditBodyPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        // ! This isn't perfect? Remember that the user can add empty lines
-        if (!widget.eventContext.isSameJson(_controller.document.toDelta().toJson())) {
-          widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
-          widget.eventContext.allowSavingOfTheEdit();
-        }
+        onWillPop: () async {
+          // ! This isn't perfect? Remember that the user can add empty lines
+          if (!widget.eventContext.isSameJson(_controller.document.toDelta().toJson())) {
+            widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
+            widget.eventContext.allowSavingOfTheEdit();
+          }
 
-        return true;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Edit Body'),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  // var json = jsonEncode(_controller.document.toDelta().toJson());
-                  // debugPrint(json);
-                  _getSizeOfText();
-                },
-                icon: const Icon(Icons.save))
-          ],
-        ),
-        body: _buildBody(),
-      ),
-    );
+          return true;
+        },
+        child: Scaffold(appBar: AppBar(title: const Text('Edit Body')), body: _buildBody()));
   }
 
   Widget _buildBody() {
     return Column(
       children: [
-        quill.QuillToolbar.basic(controller: _controller, showAlignmentButtons: true),
+        quill.QuillToolbar.basic(
+          controller: _controller,
+          showAlignmentButtons: true,
+          showSubscript: false,
+          showSuperscript: false,
+          showCodeBlock: false,
+        ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16),
@@ -74,17 +65,19 @@ class _EditBodyPageState extends State<EditBodyPage> {
     );
   }
 
-  _getSizeOfText() async {
-    // var path = await getApplicationDocumentsDirectory();
-    // var file = File('${path.path}/someTest.txt');
-    // final rawJson = _controller.document.toDelta().toJson();
-    // final _exampleJson = jsonEncode(rawJson);
-    // debugPrint(_exampleJson);
-    // debugPrint('The example json encoded looks like $_exampleJson');
-    // EventDBManager eventDBManager = EventDBManager('1');
-    // eventDBManager.addBody(rawJson);
+  // void _testButton() async {
+  //   var json = jsonEncode(_controller.document.toDelta().toJson());
+  //   debugPrint(json);
+  // var path = await getApplicationDocumentsDirectory();
+  // var file = File('${path.path}/someTest.txt');
+  // final rawJson = _controller.document.toDelta().toJson();
+  // final _exampleJson = jsonEncode(rawJson);
+  // debugPrint(_exampleJson);
+  // debugPrint('The example json encoded looks like $_exampleJson');
+  // EventDBManager eventDBManager = EventDBManager('1');
+  // eventDBManager.addBody(rawJson);
 
-    // await file.writeAsString(_exampleJson);
-    // debugPrint('Size is ${await file.length()}');
-  }
+  // await file.writeAsString(_exampleJson);
+  // debugPrint('Size is ${await file.length()}');
+  // }
 }
