@@ -1,12 +1,15 @@
+import 'dart:io';
+
 import 'package:avatar_stack/avatar_stack.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
+import '../../utility/event_context.dart';
+import '../../widgets/user_avatar.dart';
+import '../../widgets/user_selector_dialog.dart';
 
 class AddEventProgramPage extends StatefulWidget {
   const AddEventProgramPage({super.key, required this.eventContext});
@@ -102,12 +105,12 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           title: const Text('For Guests'),
           subtitle: const Text('Is this something guests should see?'),
         ),
-        ListTile(
-          title: const Text('Priority: 1'),
-          subtitle: const Text('Should this be viewed higher than others of the same start time?'),
-          trailing: const Icon(Icons.edit),
-          onTap: () {},
-        ),
+        // ListTile(
+        //   title: const Text('Priority: 1'),
+        //   subtitle: const Text('Should this be viewed higher than others of the same start time?'),
+        //   trailing: const Icon(Icons.edit),
+        //   onTap: () {},
+        // ),
         const SizedBox(height: 16),
         const Divider(),
         ElevatedButton.icon(
@@ -126,7 +129,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     for (final uid in _selectedUsers) {
       final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
       if (thisU.imgSrc.isNotEmpty) {
-        result.add(NetworkImage(thisU.imgSrc));
+        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
+        result.add(FileImage(File(path)));
       } else {
         result.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }
@@ -138,44 +142,14 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   // * Logic
 
   void _onSelectMembersTap() {
-    final List<User> availableUsers =
-        _appContext.allUsers.where((element) => !_selectedUsers.contains(element.id)).toList();
     showDialog(
         context: context,
-        builder: (_) {
-          return Dialog(
-            child: SizedBox(
-              height: MediaQuery.of(_).size.height * 0.6,
-              child: Column(
-                children: [
-                  const ListTile(
-                    title: Text('Select User For Role'),
-                    leading: Icon(Icons.people),
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: ListView.builder(
-                        itemCount: availableUsers.length,
-                        itemBuilder: (_, index) {
-                          final thisUser = availableUsers[index];
-                          return ListTile(
-                            title: Text(thisUser.fullname),
-                            subtitle: Text(thisUser.location),
-                            leading: MyUserAvatar(thisUser),
-                            onTap: () {
-                              setState(() {
-                                _selectedUsers.add(thisUser.id);
-                                Navigator.of(context).pop();
-                              });
-                            },
-                          );
-                        }),
-                  ),
-                ],
-              ),
-            ),
-          );
-        });
+        builder: (_) => UserSelectorDialog(
+            alreadySelectedUIDs: _selectedUsers,
+            includeCurrentUser: true,
+            onSelected: (id) => setState(() {
+                  _selectedUsers.add(id);
+                })));
   }
 
   void _onViewAssignedMembersTap() {
@@ -332,7 +306,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
       'start': _start!,
       'end': _end!,
       'for_guests': _forGuests,
-      'priority': 1,
+      'priority': 1
     });
   }
 }

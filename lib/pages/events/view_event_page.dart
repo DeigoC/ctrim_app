@@ -2,15 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/db_managers/user_contact_db_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
-import '../../models/user_contact.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -39,6 +39,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late final EventContext _eventContext;
   late final List<Map<String, String>> _originalHeadMedia;
   late final String _originalTitle, _originalSubtitle, _currentUID;
+  late final DateTime? _originalEventDate;
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
   ];
@@ -53,6 +54,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
+    _originalEventDate = widget.eventHead.eventDate;
 
     super.initState();
   }
@@ -74,6 +76,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                     widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
                     widget.eventHead.setTitle(_originalTitle);
                     widget.eventHead.setSubtitle(_originalSubtitle);
+                    widget.eventHead.setEventDate(_originalEventDate);
                   }
                   return confirmation;
                 })
@@ -153,7 +156,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       SliverAppBar(
           expandedHeight: MediaQuery.of(context).size.height * 0.33,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-          actions: _buildAppBarAction()),
+          actions: _buildSaveButton()),
       SliverList(
           delegate: SliverChildListDelegate([
         Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
@@ -203,19 +206,22 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return TabBarView(controller: _tabController, children: _bodyTabs);
   }
 
-  List<Widget>? _buildAppBarAction() {
+  List<Widget>? _buildSaveButton() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
-        ElevatedButton.icon(
-            style: ButtonStyle(
-                backgroundColor: _eventContext.canSaveTheEditing
-                    ? const MaterialStatePropertyAll<Color>(Colors.green)
-                    : const MaterialStatePropertyAll<Color>(Colors.grey),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)))),
-            onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
-            icon: const Icon(Icons.save),
-            label: const Text('Update')),
+        Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: ElevatedButton.icon(
+              style: ButtonStyle(
+                  backgroundColor: _eventContext.canSaveTheEditing
+                      ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+                      : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+              onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
+              icon: const Icon(Icons.save),
+              label: const Text('Update')),
+        ),
         const SizedBox(width: 8)
       ];
     }
@@ -269,7 +275,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
     if (_eventContext.head.eventDate != null || isAuthor) {
       _bodyTabs.add(ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody));
-      _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Program'));
+      _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
     }
     if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {
@@ -323,13 +329,19 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   String get _topic => _post + _eventContext.id;
 
   Future<List<String>> _attemptToGetExistingPostData() async {
-    // TODO we should also make sure that we unconditionally fetch when an update has occured for safety
     final LocalDataManager localDataManager = LocalDataManager();
     final content = await localDataManager.readPostData(widget.eventHead.id);
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
     // debugPrint('Is local post data not empty: ${content.isNotEmpty}');
-    final bool canUseLocalContent =
-        content.isNotEmpty && int.parse(content[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch;
+    bool canUseLocalContent = false;
+    if (content.isNotEmpty) {
+      final firstLine = content[0].split('-');
+      if (firstLine.length == 2) {
+        canUseLocalContent = int.parse(firstLine[0]) == widget.eventHead.recentDate.millisecondsSinceEpoch &&
+            firstLine[1] == packageInfo.version;
+      }
+    }
 
     if (canUseLocalContent) {
       return content;
@@ -339,7 +351,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Future<void> _savePostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
-    final String content = _eventContext.transformPostToTxtFile();
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final String content = _eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(_eventContext.id, content);
 
     final postTrack = await localDataManager.readPostTrack();
@@ -380,7 +393,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
   late final String _currentUserName, _currentUID;
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
-  final UserContactDBManager _userContactDBManager = UserContactDBManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   bool _canSave = false;
 
   @override
@@ -466,19 +479,18 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   Future<void> _performUpdate(String uid) async {
     final LocalDataManager localDataManager = LocalDataManager();
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
-
-    final content = widget.eventContext.transformPostToTxtFile();
+    final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
-    await _sendPostNotification();
-
     if (widget.eventContext.head.eventDate != null) {
-      await _sendRoleAdditionNotiifications();
-      await _sendRoleRemovalNotiifications();
+      _sendRoleAdditionNotiifications();
+      _sendRoleRemovalNotiifications();
     }
-    await _sendContributorAdditionNotificaitons();
-    await _sendContributorRemovalNotificaitons();
+    _sendContributorAdditionNotificaitons();
+    _sendContributorRemovalNotificaitons();
+    _sendPostNotification();
   }
 
   Future<void> _sendPostNotification() async {
@@ -513,37 +525,33 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     final List<String> missingContacts = widget.eventContext.metadata.contributorUIDs
         .where((contributorID) =>
-            contributorID.compareTo(_currentUID) != 0 &&
-            !_appContext.userContacts.any((contact) => contact.id.compareTo(contributorID) == 0))
+            contributorID.compareTo(_currentUID) != 0 && !_appContext.haveTokensForUserID(contributorID))
         .toList();
 
     // fetch the author contact (if the current user isn't already the author)
     if (_currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
-        !_appContext.userContacts.any((contact) => contact.id.compareTo(widget.eventContext.metadata.authorUID) == 0)) {
+        !_appContext.haveTokensForUserID(widget.eventContext.metadata.authorUID)) {
       missingContacts.add(widget.eventContext.metadata.authorUID);
     }
 
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
-    if (missingContacts.isNotEmpty) {
-      final List<UserContact> contacts = await _userContactDBManager.fetchUserContacts(missingContacts);
-      _appContext.addAllUserContacts(contacts);
+    for (final String uid in missingContacts) {
+      final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(uid));
+      _appContext.addTokensToUserID(uid, tokens);
     }
 
     // create token list of contributors
     final List<String> deviceTokens = List<String>.empty(growable: true);
     for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
       if (_appContext.currentUser.id.compareTo(contributorID) != 0) {
-        deviceTokens
-            .addAll(_appContext.userContacts.firstWhere((e) => e.id.compareTo(contributorID) == 0).deviceTokens);
+        deviceTokens.addAll(_appContext.getTokensFromUserID(contributorID));
       }
     }
 
     // add the author tokens
     if (_appContext.currentUser.id.compareTo(widget.eventContext.metadata.authorUID) != 0) {
-      deviceTokens.addAll(_appContext.userContacts
-          .firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0)
-          .deviceTokens);
+      deviceTokens.addAll(_appContext.getTokensFromUserID(widget.eventContext.metadata.authorUID));
     }
 
     return deviceTokens;
@@ -556,14 +564,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String body = "You are assigned to '${additionEntry['title']!}' for ${widget.originalTitle}";
 
       final String thisUID = additionEntry['uid']!;
-      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
-      }
+      if (thisUID != _currentUID) {
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
+        }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+        final tokens = _appContext.getTokensFromUserID(thisUID);
+        await _cloudFunctionManager.sendMessageToSelectedTokens(
+            tokens: tokens, title: title, body: body, data: _notificationdata);
+      }
     }
   }
 
@@ -574,47 +584,60 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String body = "You are no longer assigned to '${removalEntry['title']!}' for ${widget.originalTitle}";
 
       final String thisUID = removalEntry['uid']!;
-      if (thisUID != _currentUID && !_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
-      }
+      if (thisUID != _currentUID) {
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
+        }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+        final tokens = _appContext.getTokensFromUserID(thisUID);
+        await _cloudFunctionManager.sendMessageToSelectedTokens(
+            tokens: tokens, title: title, body: body, data: _notificationdata);
+      }
     }
   }
 
-  // mention whether a user has been added or removed
   Future<void> _sendContributorAdditionNotificaitons() async {
     const String title = "Contributor update";
-    final String body = "You are given access to perform updates for '${widget.originalTitle}'";
+    final String body = "You can modify aspects of the post: '${widget.originalTitle}'";
+    final List<String> allTokens = List<String>.empty(growable: true);
 
-    for (final thisUID in widget.eventContext.contributorAdditionUIDs) {
-      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
+    for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
+      if (thisUID != _currentUID) {
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
+        }
+
+        allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
       }
+    }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+    if (allTokens.isNotEmpty) {
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: allTokens, title: title, body: body, data: _notificationdata);
     }
   }
 
   Future<void> _sendContributorRemovalNotificaitons() async {
     const String title = "Contributor update";
     final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
+    final List<String> allTokens = List<String>.empty(growable: true);
 
-    for (final thisUID in widget.eventContext.contributorRemovalUIDs) {
-      if (!_appContext.userContacts.any((e) => e.id.compareTo(thisUID) == 0)) {
-        final contact = await _userContactDBManager.fetchUserContact(thisUID);
-        _appContext.addAllUserContacts([contact]);
+    for (final String thisUID in widget.eventContext.contributorRemovalUIDs) {
+      if (thisUID != _currentUID) {
+        if (!_appContext.haveTokensForUserID(thisUID)) {
+          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          _appContext.addTokensToUserID(thisUID, tokens);
+        }
+
+        allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
       }
+    }
 
-      final contact = _appContext.userContacts.firstWhere((e) => e.id.compareTo(thisUID) == 0);
-      await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: contact.deviceTokens, title: title, body: body, data: _notificationdata);
+    if (allTokens.isNotEmpty) {
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: allTokens, title: title, body: body, data: _notificationdata);
     }
   }
 

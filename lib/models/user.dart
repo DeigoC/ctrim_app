@@ -1,5 +1,5 @@
 class User {
-  late String _forename, _surname, _imgSrc, _id, _location;
+  late String _forename, _surname, _authID, _imgSrc, _id, _location;
   late bool _isAreaAdmin, _isLeader;
 
   User({
@@ -10,6 +10,7 @@ class User {
     String location = 'Belfast',
     bool isAreaAdmin = false,
     bool isLeader = false,
+    String authID = '',
   }) {
     _id = id;
     _forename = forname;
@@ -18,6 +19,7 @@ class User {
     _isAreaAdmin = isAreaAdmin;
     _isLeader = isLeader;
     _location = location;
+    _authID = authID;
   }
 
   User.fromMap(String id, Map<String, dynamic> data)
@@ -27,6 +29,7 @@ class User {
         _location = data['Location'],
         _isAreaAdmin = data['IsAreaAdmin'],
         _isLeader = data['IsLeader'],
+        _authID = data['AuthID'],
         _imgSrc = data['ImgSrc'];
 
   toJson() {
@@ -37,6 +40,7 @@ class User {
       'IsAreaAdmin': _isAreaAdmin,
       'IsLeader': _isLeader,
       'ImgSrc': _imgSrc,
+      'AuthID': _authID,
     };
   }
 
@@ -55,6 +59,7 @@ class User {
   String get shortenedFullName => '$_forename ${_surname.split('-').map((e) => e[0]).join('')}.';
   String get imgSrc => _imgSrc;
   String get location => _location;
+  String get authID => _authID;
   bool get isAreaAdmin => _isAreaAdmin;
   bool get isLeader => _isLeader;
 }

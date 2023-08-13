@@ -9,8 +9,12 @@ class AppSharedPreferences {
       _email = 'email',
       _pass = 'password',
       _clear = '',
-      _token = 'token',
-      _bookmarkedPosts = 'bookmarked';
+      _fcmToken = 'token',
+      _bookmarkedPosts = 'bookmarked',
+      _fetchUserImgs = 'fetchUserImages',
+      _lastPostRefresh = 'lastPostRefresh',
+      _phoneToken = 'phoneToken',
+      _loggedOut = 'loggedOut';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -27,12 +31,21 @@ class AppSharedPreferences {
     _pref.setString(_pass, _clear);
   }
 
+  void savePhoneToken(int token) {
+    _pref.setInt(_phoneToken, token);
+  }
+
+  int? get phoneToken => _pref.getInt(_phoneToken);
+
   // * Notification related
   bool get isFirstOpen => _pref.getBool(_isFirstOpen) ?? true;
   void nowOpened() => _pref.setBool(_isFirstOpen, false);
 
-  String get token => _pref.getString(_token) ?? '';
-  void saveToken(String thisToken) => _pref.setString(_token, thisToken);
+  String get fcmToken => _pref.getString(_fcmToken) ?? '';
+  void saveFCMToken(String thisToken) => _pref.setString(_fcmToken, thisToken);
+
+  bool get loggedOut => _pref.getBool(_loggedOut) ?? true;
+  void setLoggedOut(bool state) => _pref.setBool(_loggedOut, state);
 
   // * Post related
   List<String> get bookmarkedPosts => UnmodifiableListView(_pref.getStringList(_bookmarkedPosts) ?? List.empty());
@@ -50,4 +63,13 @@ class AppSharedPreferences {
     bookmarked.remove(id);
     _pref.setStringList(_bookmarkedPosts, bookmarked);
   }
+
+  bool get canRefreshPosts => _pref.getInt(_lastPostRefresh) == null
+      ? true
+      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >= 2;
+  void setPostRefreshTime() => _pref.setInt(_lastPostRefresh, DateTime.now().millisecondsSinceEpoch);
+
+  // * Local data related
+  bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;
+  void justFetchedUserImages() => _pref.setBool(_fetchUserImgs, false);
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +8,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/user_selector_dialog.dart';
 
 class EditEventProgramPage extends StatefulWidget {
   const EditEventProgramPage({super.key, required this.eventContext, required this.programEntry});
@@ -129,7 +132,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     for (final uid in _selectedUsers) {
       final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
       if (thisU.imgSrc.isNotEmpty) {
-        result.add(NetworkImage(thisU.imgSrc));
+        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
+        result.add(FileImage(File(path)));
       } else {
         result.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }
@@ -243,44 +247,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   void _onSelectMembersTap() {
-    final availableUsers = _appContext.allUsers.where((element) => !_selectedUsers.contains(element.id)).toList();
     showDialog(
         context: context,
-        builder: (_) {
-          return Dialog(
-            child: SizedBox(
-              height: MediaQuery.of(_).size.height * 0.6,
-              child: Column(
-                children: [
-                  const ListTile(
-                    title: Text('Select User For Role'),
-                    leading: Icon(Icons.people),
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: ListView.builder(
-                        itemCount: availableUsers.length,
-                        itemBuilder: (_, index) {
-                          final thisUser = availableUsers[index];
-                          return ListTile(
-                            title: Text(thisUser.fullname),
-                            subtitle: Text(thisUser.location),
-                            leading: MyUserAvatar(thisUser),
-                            onTap: () {
-                              setState(() {
-                                _selectedUsers.add(thisUser.id);
-                                Navigator.of(context).pop();
-                              });
-                              _hasAnythingChanged();
-                            },
-                          );
-                        }),
-                  ),
-                ],
-              ),
-            ),
-          );
-        });
+        builder: (_) => UserSelectorDialog(
+            alreadySelectedUIDs: _selectedUsers,
+            includeCurrentUser: true,
+            onSelected: (newID) => setState(() {
+                  _selectedUsers.add(newID);
+                  _hasAnythingChanged();
+                })));
   }
 
   void _onRemoveUserFromRole(String uid) {
@@ -367,5 +342,21 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   void _onDeleteTap() {
     // remember to send all from the original about the removal of role
+    DialogManager.showConfirmationDialog(
+            context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?')
+        .then((confirmation) {
+      if (confirmation) {
+        for (final uid in widget.programEntry['uids'] as List<String>) {
+          widget.eventContext.removeRoleAdditionNotification(uid: uid, roleTitle: widget.programEntry['title']);
+          widget.eventContext.addRoleRemovalNotification(uid: uid, roleTitle: widget.programEntry['title']);
+        }
+
+        widget.eventContext.removeProgram(widget.programEntry['uids'], widget.programEntry['title']);
+        widget.eventContext.allowSavingOfTheEdit();
+
+        _isSaved = true;
+        Navigator.of(context).pop();
+      }
+    });
   }
 }

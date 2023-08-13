@@ -1,4 +1,5 @@
 import 'dart:collection';
+
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_body.dart';
@@ -40,13 +41,16 @@ class EventContext {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
+    _head = EventHead(id: 'X'); // temporary
+    _currentUID = currentUserID;
+    _initialiseInternalLists();
   }
 
   // * Head Related
   EventHead get head => _head;
 
   // * Body Related
-  bool get isBodyUntouched => _body.json.compareTo('[{"insert":"Hello, time to start writing!\n"}]') == 0;
+  bool get isBodyUntouched => _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') == 0;
   List<dynamic> get body => _body.decodedJson;
   String get encodedBody => _body.json;
   bool isSameJson(List<dynamic> json) => _body.compareTo(json) == 0;
@@ -58,8 +62,9 @@ class EventContext {
   EventProgram get program => _program;
   List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 
-  void setFetchedProgram(EventProgram program) => _program = program;
-  void addProgram(Map<String, dynamic> programEntry) => _program.addRole(programEntry);
+  void setFetchedProgram(final EventProgram program) => _program = program;
+  void addProgram(final Map<String, dynamic> programEntry) => _program.addRole(programEntry);
+  void removeProgram(final List<String> uids, final String title) => _program.removeRole(uids, title);
 
   // * Supplemental - Metadata Related
   EventMetadata get metadata => _metadata;
@@ -85,18 +90,21 @@ class EventContext {
     DateTime? eventDate,
   }) async {
     final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
-    final String id = await idTrackerDBManager.getAndIncrementEventID();
+    final String newID = await idTrackerDBManager.getAndIncrementEventID();
 
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(id);
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(newID);
     final EventHeadDBManager headDBManager = EventHeadDBManager();
     final DateTime now = DateTime.now();
 
     // head stuff
-    // TODO add the key media!
-    _head = EventHead(id: id);
-    _head.setTitle(title);
-    _head.setSubtitle(subtitle);
-    _head.setRecentDate(now);
+    final headToUpload = EventHead(id: newID);
+    headToUpload.setTitle(title);
+    headToUpload.setSubtitle(subtitle);
+    headToUpload.setRecentDate(now);
+    headToUpload.setEventDate(_head.eventDate);
+    for (var mediaEntry in _head.media) {
+      headToUpload.addMediaItem(mediaEntry);
+    }
 
     // metadata
     _metadata.setLastUID(uid);
@@ -104,13 +112,13 @@ class EventContext {
     // log, create the new one for creation
     _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': now});
 
-    await headDBManager.saveNewHead(_head);
+    await headDBManager.saveNewHead(headToUpload);
     dbManager.addBody(_body.json);
     dbManager.addMedia(_media);
     dbManager.addMetadata(_metadata);
     dbManager.addLog(_log);
     dbManager.addProgram(_program);
-    return id;
+    return newID;
   }
 
   Future<void> updatePost({required String log, required String uid}) async {
@@ -137,7 +145,14 @@ class EventContext {
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
   // This one is to be used after update is complete
-  void resetSavingOfTheEdit() => _canSaveTheEditing = false;
+  void resetSavingOfTheEdit() {
+    _roleAdditionNotifications.clear();
+    _roleRemovalNotifications.clear();
+    _contributorAdditionUIDs.clear();
+    _contributorRemovalUIDs.clear();
+    _canSaveTheEditing = false;
+  }
+
   bool get canSaveTheEditing => _canSaveTheEditing;
 
   bool get isViewingChild => _viewingChild;
@@ -171,9 +186,9 @@ class EventContext {
   // post from it to save having to read from the DB
   // ! The following is assumed when all of the post is fetched (including logs)
   // TODO: just realised i can put a lot of this logic into each of the part's dedicated class
-  String transformPostToTxtFile() {
+  String transformPostToTxtFile(final String version) {
     // * Head - RecentDate
-    String result = _head.recentDate.millisecondsSinceEpoch.toString();
+    String result = '${_head.recentDate.millisecondsSinceEpoch}-$version';
 
     // * Body - whole json as 1 line?
     result += '\n----BODY_START----';
@@ -228,7 +243,7 @@ class EventContext {
     result += '\n${_metadata.lastUID}';
     result += '\n${_metadata.contributorUIDs}';
     result += '\n${_metadata.parentID ?? 'null'}';
-    result += '\n${_metadata.children}';
+    result += '\n${_metadata.childrenPostIDs}';
     result += '\n----META_END----';
 
     return result;
@@ -293,7 +308,7 @@ class EventContext {
     }
 
     for (final contributor in contributors) {
-      _metadata.addContributorUID(contributor);
+      _metadata.contributorUIDs.add(contributor);
     }
 
     final String childrenLine =
@@ -306,7 +321,7 @@ class EventContext {
     }
 
     for (final child in childrenIDs) {
-      _metadata.addChildID(child);
+      _metadata.childrenPostIDs.add(child);
     }
   }
 
@@ -394,9 +409,15 @@ class EventContext {
   List<Map<String, String>> get roleRemovalNotifications => UnmodifiableListView(_roleRemovalNotifications);
 
   void addRoleAdditionNotification({required String uid, required String roleTitle}) =>
-      _roleAdditionNotifications.add({'uid': uid, 'roleTitle': roleTitle});
+      _roleAdditionNotifications.add({'uid': uid, 'title': roleTitle});
   void addRoleRemovalNotification({required String uid, required String roleTitle}) =>
-      _roleRemovalNotifications.add({'uid': uid, 'roleTitle': roleTitle});
+      _roleRemovalNotifications.add({'uid': uid, 'title': roleTitle});
+
+  // ! flawed, but the occurance of this issue should be really rare?
+  // it's possible that multiple roles could have the same title
+  void removeRoleAdditionNotification({required String uid, required String roleTitle}) {
+    _roleAdditionNotifications.removeWhere((e) => e['title'] == roleTitle && e['uid'] == uid);
+  }
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;

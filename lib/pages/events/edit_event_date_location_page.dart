@@ -88,7 +88,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         subtitle: Text('Location'),
         leading: Icon(Icons.map),
       ),
-      SwitchListTile(value: _online, onChanged: _onOnlineSwitchTap, title: const Text('Online')),
+      // SwitchListTile(value: _online, onChanged: _onOnlineSwitchTap, title: const Text('Online')),
     ];
   }
 
