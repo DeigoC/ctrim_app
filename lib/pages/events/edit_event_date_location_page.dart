@@ -13,9 +13,14 @@ class EditEventDateLocationPage extends StatefulWidget {
 class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy, HH:mm');
   static final DateFormat _endFormat = DateFormat('HH:mm');
+  static final List<String> _locations = ['Belfast'];
   late final DateTime? _originalStart, _originalEnd;
-  late final bool _originalAllDay;
+  late final bool _originalAllDay, _originalOnline;
+  late final String _originalAddress, _originalLocation, _originalMapLink;
 
+  late TextEditingController _tecAddress, _tecMapLink;
+  String _location = 'Belfast';
+  String _webLink = 'link';
   DateTime? _start, _end;
   bool _isAllDay = false, _online = false;
 
@@ -24,6 +29,19 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     _originalStart = widget.eventContext.head.eventDate;
     _originalEnd = widget.eventContext.program.finishTime;
     _originalAllDay = widget.eventContext.program.allDay;
+    _originalAddress = widget.eventContext.program.address;
+    _originalOnline = widget.eventContext.program.online;
+    _originalLocation = widget.eventContext.head.location.replaceAll(' (Online)', '');
+    _originalMapLink = widget.eventContext.program.mapLink;
+
+    _location = widget.eventContext.head.location.replaceAll(' (Online)', '');
+    _tecAddress = TextEditingController(text: _originalAddress);
+    _tecMapLink = TextEditingController(text: _originalMapLink);
+    _online = widget.eventContext.program.online;
+
+    if (_online) {
+      _webLink = _originalAddress;
+    }
 
     _start = _originalStart;
     _end = _originalEnd;
@@ -34,6 +52,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   @override
   void dispose() {
+    _tecAddress.dispose();
     super.dispose();
   }
 
@@ -69,10 +88,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   List<Widget> _buildEverything() {
-    return [
+    final List<Widget> children = [
       ListTile(
         title: Text(_startFormat.format(_start!)),
         subtitle: const Text('Event Date and Time'),
+        leading: const Icon(Icons.calendar_today),
         trailing: IconButton(onPressed: _onDeleteStartTimeClick, icon: const Icon(Icons.delete)),
         onTap: _onSelectStartDateClick,
       ),
@@ -82,14 +102,40 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         onTap: _onSelectEndTimeClick,
       ),
       SwitchListTile(value: _isAllDay, onChanged: _onAllDaySwitchTap, title: const Text('All Day')),
-      const Divider(),
-      const ListTile(
-        title: Text('Belfast'),
-        subtitle: Text('Location'),
-        leading: Icon(Icons.map),
+      const SizedBox(height: 8),
+      const Divider(thickness: 1),
+      const SizedBox(height: 8),
+      ListTile(
+        title: Text(_location),
+        subtitle: const Text('Location'),
+        leading: const Icon(Icons.map),
+        onTap: _onSelectLocationClick,
+        trailing: const Icon(Icons.edit),
       ),
-      // SwitchListTile(value: _online, onChanged: _onOnlineSwitchTap, title: const Text('Online')),
+      SwitchListTile(value: _online, onChanged: _onOnlineSwitchTap, title: const Text('Online')),
+      const SizedBox(height: 8),
+      const Divider(thickness: 1),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _tecAddress,
+        maxLines: null,
+        decoration: InputDecoration(
+            hintText: _online ? 'https://...' : '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
+            label: _online ? const Text('Online Meeting Link') : const Text('Address')),
+      ),
     ];
+
+    if (!_online) {
+      children.add(TextField(
+        controller: _tecMapLink,
+        decoration: InputDecoration(
+            hintText: 'https://...',
+            label: const Text('Map Link'),
+            suffixIcon: IconButton(onPressed: _mapLinkHelpClick, icon: const Icon(Icons.help))),
+      ));
+    }
+
+    return children;
   }
 
   // * Logic
@@ -120,6 +166,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         });
         showDialog(
             context: context,
+            barrierDismissible: false,
             builder: (_) => AlertDialog(
                     title: const Text('Finish Time'),
                     content: const Text('Does the event last all day or finishes at a time?'),
@@ -162,8 +209,36 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   void _onOnlineSwitchTap(bool newState) {
     setState(() {
-      _online = !_online;
+      _online = newState;
+      if (newState) {
+        _tecAddress = TextEditingController(text: _webLink);
+      } else {
+        _webLink = _tecAddress.text.trim();
+        if (_location == 'Belfast') {
+          _tecAddress = TextEditingController(text: '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland');
+        }
+      }
     });
+  }
+
+  void _onSelectLocationClick() {
+    showDialog(
+        context: context,
+        builder: (_) => Dialog(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: ListView.builder(
+                    itemCount: _locations.length,
+                    itemBuilder: (_, index) => ListTile(
+                          title: Text(_locations[index]),
+                          onTap: () {
+                            setState(() {
+                              _location = _locations[index];
+                            });
+                          },
+                        )),
+              ),
+            ));
   }
 
   void _onDeleteStartTimeClick() {
@@ -173,11 +248,24 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   void _checkToUpdate() {
-    if (_start != _originalStart || _end != _originalEnd || _isAllDay != _originalAllDay) {
-      widget.eventContext.head.setEventDate(_start);
-      widget.eventContext.program.setFinishTime(_end);
+    if (_start != _originalStart ||
+        _end != _originalEnd ||
+        _isAllDay != _originalAllDay ||
+        _tecAddress.text.trim().toLowerCase().compareTo(_originalAddress.toLowerCase()) != 0 ||
+        widget.eventContext.program.online != _originalOnline ||
+        widget.eventContext.head.location.compareTo(_originalLocation) != 0) {
+      widget.eventContext.program.setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
       widget.eventContext.program.setAllDay(_isAllDay);
+      widget.eventContext.program.setAddress(_tecAddress.text.trim());
+      widget.eventContext.program.setOnline(_online);
+
+      final String newLocation = _location + (_online ? ' (Online)' : '');
+      widget.eventContext.head.setLocation(newLocation);
+      widget.eventContext.head.setEventDate(_start);
+
       widget.eventContext.allowSavingOfTheEdit();
     }
   }
+
+  void _mapLinkHelpClick() {}
 }

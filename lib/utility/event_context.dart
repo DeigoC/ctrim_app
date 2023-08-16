@@ -126,7 +126,7 @@ class EventContext {
     final EventHeadDBManager headDBManager = EventHeadDBManager();
     final DateTime now = DateTime.now();
 
-    head.setRecentDate(now);
+    _head.setRecentDate(now);
     metadata.setLastUID(uid);
 
     _log.addLog({'log': log, 'uid': uid, 'ts': now});
@@ -146,10 +146,18 @@ class EventContext {
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
   // This one is to be used after update is complete
   void resetSavingOfTheEdit() {
-    _roleAdditionNotifications.clear();
-    _roleRemovalNotifications.clear();
-    _contributorAdditionUIDs.clear();
-    _contributorRemovalUIDs.clear();
+    if (_contributorAdditionUIDs.isNotEmpty) {
+      _contributorAdditionUIDs.clear();
+    }
+    if (_contributorRemovalUIDs.isNotEmpty) {
+      _contributorRemovalUIDs.clear();
+    }
+    if (_roleAdditionNotifications.isNotEmpty) {
+      _roleAdditionNotifications.clear();
+    }
+    if (_roleRemovalNotifications.isNotEmpty) {
+      _roleRemovalNotifications.clear();
+    }
     _canSaveTheEditing = false;
   }
 
@@ -199,6 +207,9 @@ class EventContext {
     result += '\n----PROGRAM_DETAILS_START----';
     result += '\n${_program.allDay ? '1' : '0'}';
     result += '\n${_program.finishTime != null ? _program.finishTime!.millisecondsSinceEpoch.toString() : 'null'}';
+    result += '\n${_program.online ? '1' : '0'}';
+    result += '\n${_program.address}';
+    result += '\n${_program.mapLink}';
     result += '\n----PROGRAM_DETAILS_END----';
 
     // * Program - Roles
@@ -260,12 +271,18 @@ class EventContext {
         lines.indexWhere((element) => element.contains('----PROGRAM_DETAILS_START----'));
     final int allDayIndex = programDetailStartIndex + 1;
     final int finishTimeIndex = programDetailStartIndex + 2;
+    final int onlineIndex = programDetailStartIndex + 3;
+    final int addressIndex = programDetailStartIndex + 4;
+    final int mapLinkIndex = programDetailStartIndex + 5;
 
     _program = EventProgram();
     _program.setAllDay(lines[allDayIndex].compareTo('1') == 0);
     _program.setFinishTime(lines[finishTimeIndex].compareTo('null') == 0
         ? null
         : DateTime.fromMillisecondsSinceEpoch(int.parse(lines[finishTimeIndex])));
+    _program.setOnline(lines[onlineIndex] == '1');
+    _program.setAddress(lines[addressIndex]);
+    _program.setMapLink(lines[mapLinkIndex]);
 
     // * Program - Roles
     final int programRoleStartIndex = lines.indexWhere((element) => element.contains('----PROGRAM_ROLES_START----'));
