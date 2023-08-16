@@ -109,7 +109,18 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
               result = _buildFetchPostBody();
             }
           } else if (snap.hasError) {
-            result = const Center(child: Text('Something went wrong!'));
+            result = Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Something went wrong with checking local data!\n\n${snap.error}',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close Page'))
+              ],
+            );
           }
 
           return result;
@@ -131,8 +142,18 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             result = _buildBodyWithData();
           } else if (snap.hasError) {
             debugPrint('Something with fetching the post ${snap.error}');
-            result = const Center(child: Text('Something went wrong!'));
-            // TODO show an error dialog and pop the page
+            result = Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Something went wrong with fetching the post!\n\n${snap.error}',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close Page'))
+              ],
+            );
           }
           return result;
         });
@@ -317,6 +338,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   void _updateClick() {
     showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (_) => EventLogDialog(
             eventContext: _eventContext,
             originalTitle: _originalTitle,
@@ -420,20 +442,24 @@ class _EventLogDialogState extends State<EventLogDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Please describe the update',
+                'Please describe the update:',
                 style: TextStyle(fontSize: 16),
               ),
+              const SizedBox(height: 8),
               TextField(
                 controller: _tecLog,
-                decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Log')),
+                decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Update Log')),
                 maxLength: 128,
                 maxLines: null,
                 onChanged: _onTextChange,
               ),
+              const SizedBox(height: 8),
               ElevatedButton.icon(
                   onPressed: _canSave ? _saveClick : null,
+                  style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green)),
                   icon: const Icon(Icons.cloud_upload),
-                  label: const Text('Update'))
+                  label: const Text('Save!')),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))
             ],
           ),
         ),
@@ -459,8 +485,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
     DialogManager.showConfirmationDialog(
             context: context,
             title: 'Last Chance',
-            content: 'The log will be sent to all who have bookmarked this post',
-            confirmText: 'I understand, Save!',
+            content: 'This log will be sent to all who have bookmarked this post',
+            confirmText: 'I understand, save!',
             cancelText: 'Wait a sec.')
         .then((confirmation) {
       if (confirmation) {

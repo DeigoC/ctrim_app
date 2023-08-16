@@ -13,7 +13,8 @@ class EventProgram {
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
   DateTime? _finishTime;
-  bool _allDay = false;
+  bool _allDay = false, _online = false;
+  String _address = '', _mapLink = '';
 
   EventProgram();
 
@@ -22,6 +23,9 @@ class EventProgram {
       _finishTime = (data['FinishTime'] as Timestamp).toDate();
     }
     _allDay = data['AllDay'];
+    _online = data['Online'] ?? false;
+    _address = data['Address'] ?? '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland';
+    _mapLink = data['MapLink'] ?? 'https://goo.gl/maps/ns21zf5F9KPxeKxn6';
 
     final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(data['Roles']);
     for (final entry in rawData) {
@@ -40,6 +44,9 @@ class EventProgram {
   toJson() {
     return {
       'AllDay': _allDay,
+      'Online': _online,
+      'Address': _address,
+      'MapLink': _mapLink,
       'FinishTime': _finishTime == null ? null : Timestamp.fromDate(_finishTime!),
       'Roles': _roleToJson(),
     };
@@ -64,10 +71,16 @@ class EventProgram {
 
   List<Map<String, dynamic>> get roles => _roles; // TODO make this unmodifiable
   bool get allDay => _allDay;
+  bool get online => _online;
+  String get address => _address;
+  String get mapLink => _mapLink;
   DateTime? get finishTime => _finishTime;
 
   void setAllDay(final bool state) => _allDay = state;
   void setFinishTime(final DateTime? finish) => _finishTime = finish;
+  void setOnline(final bool state) => _online = state;
+  void setAddress(final String address) => _address = address;
+  void setMapLink(final String newMapLink) => _mapLink = newMapLink;
   void orderProgramsByStartDate() =>
       _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
 

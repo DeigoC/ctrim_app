@@ -4,9 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class EventHead {
-  late final String _location, _id;
+  late final String _id;
   late final List<Map<String, String>> _media;
-  late String _title, _subtitle;
+  late String _title, _subtitle, _location;
   late DateTime _recentDate;
   DateTime? _eventDate;
 
@@ -76,6 +76,7 @@ class EventHead {
   void setRecentDate(final DateTime recentDate) => _recentDate = recentDate;
   void setEventDate(final DateTime? newEventDate) => _eventDate = newEventDate;
   void removeEventDate() => _eventDate = null;
+  void setLocation(final String newLocation) => _location = newLocation;
 
   bool containsMediaItem(String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
 

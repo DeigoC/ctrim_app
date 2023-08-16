@@ -24,7 +24,9 @@ class ProgramTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(programEntry['title'], maxLines: 2, overflow: TextOverflow.ellipsis),
-      subtitle: Text(programEntry['detail'], maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: (programEntry['detail'] as String).isNotEmpty
+          ? Text(programEntry['detail'], maxLines: 1, overflow: TextOverflow.ellipsis)
+          : null,
       leading: Text(_getTimeLeadingText()),
       onTap: () => onTap(programEntry),
       trailing: _buildTileTrailing(context),
