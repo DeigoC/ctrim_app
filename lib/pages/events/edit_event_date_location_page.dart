@@ -1,6 +1,8 @@
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../utility/dialog_manager.dart';
+import '../../utility/event_context.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
   const EditEventDateLocationPage({super.key, required this.eventContext});
@@ -267,5 +269,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     }
   }
 
-  void _mapLinkHelpClick() {}
+  void _mapLinkHelpClick() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Map Link',
+        content:
+            'Link to open the maps app (google maps seems to be a solid pick) for the address. \n\nTo get the link from google maps, enter the address of the location then create a share link. Paste that link here.');
+  }
 }

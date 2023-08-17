@@ -12,7 +12,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
-import 'events/add_event_page.dart';
+import 'events/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
 import 'information/teachings/bible_reading_page.dart';
@@ -109,9 +109,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           onPressed: () {
             final String uid = _appContext.currentUser.id;
             Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => AddEventPage(eventContext: EventContext.adding(currentUserID: uid)))).then((_) {
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => SelectPostTemplatePage(eventContext: EventContext.adding(currentUserID: uid))))
+                .then((_) {
               setState(() {});
             });
           },

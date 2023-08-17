@@ -52,10 +52,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           child: CustomScrollView(slivers: [
         SliverToBoxAdapter(child: _buildEventDateSelector()),
         SliverList.separated(
-          itemCount: widget.eventContext.allPrograms.length,
+          itemCount: widget.eventContext.program.roles.length,
           itemBuilder: (_, index) {
             return ProgramTile(
-              programEntry: widget.eventContext.allPrograms[index],
+              programEntry: widget.eventContext.program.roles[index],
               onTap: (_) => _showProgramDialog(_),
             );
           },
@@ -273,10 +273,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     Navigator.push(
             context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
         .then((_) {
-      setState(() {});
       if (widget.eventContext.canSaveTheEditing) {
         widget.onProgramChanged();
       }
+      setState(() {});
     });
   }
 }

@@ -60,10 +60,8 @@ class EventContext {
 
   // * Program Related (and the Event Date)
   EventProgram get program => _program;
-  List<Map<String, dynamic>> get allPrograms => UnmodifiableListView(_program.roles);
 
   void setFetchedProgram(final EventProgram program) => _program = program;
-  void addProgram(final Map<String, dynamic> programEntry) => _program.addRole(programEntry);
   void removeProgram(final List<String> uids, final String title) => _program.removeRole(uids, title);
 
   // * Supplemental - Metadata Related
@@ -362,19 +360,18 @@ class EventContext {
         uids.addAll(uidLine.split(','));
       }
 
-      _program.addRole({
-        'uids': uids,
-        'title': roleDataSet[1],
-        'detail': roleDataSet[2].replaceAll(r'\n', '\n'),
-        'start': roleDataSet[3].compareTo('null') != 0
-            ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[3]))
-            : null,
-        'end': roleDataSet[4].compareTo('null') != 0
-            ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[4]))
-            : null,
-        'for_guests': roleDataSet[5] == '1' ? true : false,
-        'priority': int.parse(roleDataSet[6])
-      });
+      _program.addRole(
+          uids: uids,
+          title: roleDataSet[1],
+          detail: roleDataSet[2].replaceAll(r'\n', '\n'),
+          start: roleDataSet[3].compareTo('null') != 0
+              ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[3]))
+              : null,
+          end: roleDataSet[4].compareTo('null') != 0
+              ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[4]))
+              : null,
+          forGuests: roleDataSet[5] == '1' ? true : false,
+          priority: int.parse(roleDataSet[6]));
     }
   }
 

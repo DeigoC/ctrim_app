@@ -50,7 +50,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () => DialogManager.discardChanges(context: context),
+      onWillPop: () => _onWillPop(),
       child:
           Scaffold(body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody())),
     );
@@ -159,10 +159,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   void _onSaveClick() {
     _confirmSave().then((confirmed) {
       if (confirmed) {
-        _showUploadingDialog();
+        DialogManager.showProgressDialog(context: context, title: 'Uploading Post');
         _savePost().then((_) {
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(); // pop the progress dialog
+          Navigator.of(context).pop(); // pop this add page
+          Navigator.of(context).pop(); // pop the template page
         });
       }
     });
@@ -220,21 +221,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       // add a log and update the head's recentdate so that people can have their parent post instance updated
       final now = DateTime.now();
       dbManager.addLogEntry(
-          log: "Created related post: '${widget.eventContext.head.title}'", uid: _appContext.currentUser.id, ts: now);
+          logMessage: "Created related post: '${widget.eventContext.head.title}'",
+          uid: _appContext.currentUser.id,
+          ts: now);
     }
-  }
-
-  void _showUploadingDialog() {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Dialog(
-              child: ListTile(
-                title: Text('Uploading Post'),
-                subtitle: Text('Please wait...'),
-                trailing: CircularProgressIndicator(),
-              ),
-            ));
   }
 
   void _notifyOfNewPost(final String newID) async {
@@ -294,5 +284,15 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
             .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
       }
     }
+  }
+
+  Future<bool> _onWillPop() async {
+    final bool confirmation = await DialogManager.discardChanges(context: context);
+    if (confirmation) {
+      // reset all supplemental parts - media, program, body, head, metadata
+      // logs should remain untouched at this point
+    }
+
+    return confirmation;
   }
 }

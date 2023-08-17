@@ -1,21 +1,21 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/auth_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
-import 'package:ctrim_app/pages/home_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
+import '../firebase/auth_manager.dart';
+import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
+import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../models/user.dart';
+import '../utility/app_context.dart';
+import '../utility/dialog_manager.dart';
 import '../utility/local_data_manager.dart';
+import 'home_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -116,8 +116,6 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                 child: TextButton(onPressed: _onForgotEmailClick, child: const Text('Forgot Password'))),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loginClick, child: const Text('Login')),
-            ElevatedButton(onPressed: _testButton, child: const Text('Who Am I?')),
-            ElevatedButton(onPressed: _performWriteTest, child: const Text('Write Test')),
           ],
         ),
       ),
@@ -196,19 +194,6 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   }
 
   // * LOGIC
-  void _testButton() {
-    _authManager.whoAmI();
-  }
-
-  void _performWriteTest() {
-    // EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    // everyoneDBManager.bookmarksWriteTest([DateTime.now().toString()])
-    //     .then((_) => debugPrint('bookmark success!'));
-    // everyoneDBManager
-    //     .userWriteTest(false)
-    //     .then((_) => debugPrint('isUser success!'));
-  }
-
   Future<void> _loginClick() async {
     if (_tecLoginEmail.text.trim().isEmpty || _tecLoginPassword.text.isEmpty) {
       DialogManager.showAlertDialog(
@@ -413,9 +398,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final LocalDataManager dataManager = LocalDataManager();
     final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
-    final UserDBManager userDBManager = UserDBManager();
 
-    final List<User> allUsers = await userDBManager.fetchAllUsers();
+    final List<User> allUsers = await _userDBManager.fetchAllUsers();
     final String currentID = await trackerDBManager.getCurrentUserID();
 
     String allUsersContent = '$currentID-${packageInfo.version}';

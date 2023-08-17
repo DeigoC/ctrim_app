@@ -1,9 +1,10 @@
-import 'package:ctrim_app/pages/events/add_event_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/widgets/posts/post_head.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../pages/events/select_post_template_page.dart';
+import '../../utility/app_context.dart';
+import '../../utility/event_context.dart';
+import 'post_head.dart';
 
 class ViewRelatedPostsTab extends StatefulWidget {
   const ViewRelatedPostsTab({super.key, required this.eventContext});
@@ -103,7 +104,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (_) => AddEventPage(
+            builder: (_) => SelectPostTemplatePage(
                 eventContext: EventContext.adding(
                     currentUserID: _appContext.currentUser.id, parentID: widget.eventContext.id)))).then((_) {
       setState(() {

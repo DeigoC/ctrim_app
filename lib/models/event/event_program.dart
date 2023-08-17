@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventProgram {
@@ -33,7 +35,7 @@ class EventProgram {
         'uids': List<String>.from(entry['uids']),
         'detail': entry['detail'],
         'title': entry['title'],
-        'start': (entry['start'] as Timestamp).toDate(),
+        'start': (entry['start'] as Timestamp).toDate(), // TODO remember to make this nullable
         'end': (entry['end'] as Timestamp).toDate(),
         'for_guests': entry['for_guests'],
         'priority': entry['priority'],
@@ -69,7 +71,7 @@ class EventProgram {
     return result;
   }
 
-  List<Map<String, dynamic>> get roles => _roles; // TODO make this unmodifiable
+  List<Map<String, dynamic>> get roles => UnmodifiableListView(_roles);
   bool get allDay => _allDay;
   bool get online => _online;
   String get address => _address;
@@ -84,11 +86,27 @@ class EventProgram {
   void orderProgramsByStartDate() =>
       _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
 
-  void addRole(final Map<String, dynamic> role) {
-    _roles.add(role);
+  void addRole(
+      {required List<String> uids,
+      required String title,
+      required DateTime? start,
+      required DateTime? end,
+      bool forGuests = true,
+      int priority = 1,
+      String detail = ''}) {
+    _roles.add(<String, dynamic>{
+      'uids': uids,
+      'detail': detail,
+      'title': title,
+      'start': start,
+      'end': end,
+      'for_guests': forGuests,
+      'priority': priority
+    });
   }
 
   void removeRole(final List<String> uids, final String title) {
+    // ! this is sketchy, shouldn't we find out more about the record we want to remove?
     _roles.removeWhere((entry) => entry['title'] == title && entry['uids'] == uids);
   }
 
