@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
 
 class AddMediaFilePage extends StatefulWidget {
@@ -15,8 +19,9 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController();
   final RegExp _driveRegExp = RegExp(r"/d/([a-zA-Z0-9_-]+)");
   VideoPlayerController? _videoPlayerController;
-  bool _canSave = false, _isSaved = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
+  bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
+  File? _tmpFile;
 
   // * Test data
   // Image: https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg
@@ -35,14 +40,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
-        child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Add media'),
-              actions: [IconButton(onPressed: _showHelp, icon: const Icon(Icons.help))],
-            ),
-            body: _buildBody()));
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Add media'),
+          actions: [IconButton(onPressed: _showHelp, icon: const Icon(Icons.help))],
+        ),
+        body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -84,16 +87,57 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildImageTest() {
-    _src = _sanitiseSrc();
-    return Image.network(_src, errorBuilder: (_, __, ___) {
-      _onSrcTestError();
-      return const Center(child: Text('Image did not work! 😢'));
-    });
+    if (_tmpFile != null && _canSave) {
+      return Image.file(_tmpFile!);
+    }
+    return FutureBuilder(
+        future: _fetchFile(true),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator());
+
+          if (snap.hasData) {
+            _tmpFile = snap.data!;
+            final size = _tmpFile!.lengthSync();
+            final double sizeInKb = size / 1024;
+
+            if (sizeInKb <= 100) {
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  _canSave = true;
+                });
+              });
+              result = Image.file(_tmpFile!);
+            } else {
+              _canSave = false;
+              result = Container(
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is 100 KB, so please compress it or use another image!',
+                          textAlign: TextAlign.center),
+                      TextButton(
+                          onPressed: () => launchUrlString('https://imagecompressor.com'),
+                          child: const Text('Online Image Compressor'))
+                    ],
+                  ));
+            }
+          } else if (snap.hasError) {
+            debugPrint('something with fetching the file: ${snap.error}');
+            result = const Center(child: Text('Something went wrong'));
+          }
+
+          return result;
+        });
   }
 
   Widget _buildVideoPlayerTest() {
-    _src = _sanitiseSrc();
     _videoPlayerController = VideoPlayerController.network(_src);
+    // video compressor - https://www.freeconvert.com/video-compressor
 
     return FutureBuilder(
         future: _videoPlayerController!.initialize().onError((error, stackTrace) {
@@ -129,12 +173,21 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   // * Logic
 
+  Future<File> _fetchFile(final bool isImage) async {
+    final dir = await getTemporaryDirectory();
+    _src = _sanitiseSrc();
+    final String type = isImage ? '.img' : '.mp4';
+    final String tmpPath = '${dir.path}tmp$type';
+    final File tmp = File(tmpPath);
+    final response = await http.get(Uri.parse(_src));
+    return await tmp.writeAsBytes(response.bodyBytes);
+  }
+
   void _onSaveClick() {
     DialogManager.showConfirmationDialog(context: context, title: 'Save Media', content: 'Are you sure?')
         .then((confirmation) {
       if (confirmation) {
         widget.eventContext.media.addMediaFile({'title': '', 'src': _src, 'type': _isVideo ? 'vid' : 'img'});
-        _isSaved = true;
         Navigator.of(context).pop();
       }
     });
@@ -146,7 +199,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         _videoPlayerController!.pause();
         _videoPlayerController = null;
       }
-      _canSave = true;
+      _src = '';
+      _tmpFile = null;
       _isTesting = true;
     });
   }
@@ -198,6 +252,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         context: context,
         title: 'Adding Media Files',
         content:
-            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here');
+            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here\n\nMax image size is 100 KB and 128 MB for videos');
   }
 }
