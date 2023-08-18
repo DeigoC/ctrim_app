@@ -3,14 +3,13 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventProgram {
-  // * a role is made of 8 fields
+  // * a role is made of 7 fields
   // uids - list of users assigned by their IDs
   // title - short title of the role
   // detail (optional) - more text to describe the role
   // start - datetime/timestamp of starting time
   // end - datetime/timestamp of finishing time
   // for_guests - bool to signigfy whether to show to guests or not
-  // priority - int to signfy it's importance (higher numbers for significance)
   // id - DateTime creation (DateTime.now().millisecondsSinceEpoch) int of the role
   // ! NOTE: start is optional, but if it exists then end must also be a thing
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
@@ -36,10 +35,9 @@ class EventProgram {
         'uids': List<String>.from(entry['uids']),
         'detail': entry['detail'],
         'title': entry['title'],
-        'start': (entry['start'] as Timestamp).toDate(), // TODO remember to make this nullable
-        'end': (entry['end'] as Timestamp).toDate(),
+        'start': entry['start'] != null ? (entry['start'] as Timestamp).toDate() : null,
+        'end': entry['end'] != null ? (entry['end'] as Timestamp).toDate() : null,
         'for_guests': entry['for_guests'],
-        'priority': entry['priority'],
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch
       });
     }
@@ -66,7 +64,6 @@ class EventProgram {
         'start': Timestamp.fromDate(entry['start']),
         'end': Timestamp.fromDate(entry['end']),
         'for_guests': entry['for_guests'],
-        'priority': entry['priority'],
         'id': entry['id'],
       });
     }
@@ -105,15 +102,11 @@ class EventProgram {
       'start': start,
       'end': end,
       'for_guests': forGuests,
-      'priority': priority,
       'id': id
     });
   }
 
-  void removeRole(final List<String> uids, final String title) {
-    // ! this is sketchy, shouldn't we find out more about the record we want to remove?
-    _roles.removeWhere((entry) => entry['title'] == title && entry['uids'] == uids);
-  }
+  void removeRole(final int id) => _roles.removeWhere((entry) => entry['id'] == id);
 
   @override
   String toString() {

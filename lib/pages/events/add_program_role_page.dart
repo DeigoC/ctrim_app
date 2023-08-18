@@ -294,10 +294,9 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   }
 
   void _addProgramRoleToEventContext() {
-    for (final id in _selectedUsers) {
-      debugPrint('sending the role addition to ID: $id');
-      widget.eventContext.addRoleAdditionNotification(uid: id, roleTitle: _tecTitle.text.trim());
-    }
+    final int id = DateTime.now().millisecondsSinceEpoch;
+    debugPrint('sending the role addition to the following: $_selectedUsers');
+    widget.eventContext.addRoleAdditionNotification(_selectedUsers, id);
 
     widget.eventContext.program.addRole(
         uids: _selectedUsers,
@@ -307,6 +306,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         end: _end,
         forGuests: _forGuests,
         priority: 1,
-        id: DateTime.now().millisecondsSinceEpoch);
+        id: id);
   }
 }

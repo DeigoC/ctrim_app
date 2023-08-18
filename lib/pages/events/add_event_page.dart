@@ -263,26 +263,30 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
+  // TODO: insane! We need to break these mothods down
   Future<void> _notifyProgramRoleAddtitions(final String newID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
     final String title = "$currentUserName has assinged you to a role!";
 
-    for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
-      final String body = "You are assigned to '${additionEntry['title']!}' for ${_tecTitle.text.trim()}";
-      final String thisUID = additionEntry['uid']!;
+    for (final additionEntry in widget.eventContext.roleAdditions.entries) {
+      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
+      final String body = "You are assigned to '${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
 
-      if (thisUID != currentUID) {
-        if (!_appContext.haveTokensForUserID(thisUID)) {
-          final List<String> tokens =
-              await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+      final List<String> tokens = [];
+      for (var thisUID in additionEntry.value) {
+        if (thisUID != currentUID) {
+          if (!_appContext.haveTokensForUserID(thisUID)) {
+            final List<String> tokens =
+                await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, tokens);
+          }
+
+          tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-
-        final tokens = _appContext.getTokensFromUserID(thisUID);
-        _cloudFunctionManager
-            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
       }
+      _cloudFunctionManager
+          .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
     }
   }
 

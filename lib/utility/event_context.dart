@@ -21,7 +21,8 @@ class EventContext {
 
   bool _canSaveTheEditing = false;
 
-  late final List<Map<String, String>> _roleAdditionNotifications, _roleRemovalNotifications;
+  // id (datetime milliseconds) to uids
+  late final Map<int, List<String>> _roleAdditions, _roleRemovals;
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
 
   // for viewing and editing
@@ -62,7 +63,6 @@ class EventContext {
   EventProgram get program => _program;
 
   void setFetchedProgram(final EventProgram program) => _program = program;
-  void removeProgram(final List<String> uids, final String title) => _program.removeRole(uids, title);
 
   // * Supplemental - Metadata Related
   EventMetadata get metadata => _metadata;
@@ -150,11 +150,11 @@ class EventContext {
     if (_contributorRemovalUIDs.isNotEmpty) {
       _contributorRemovalUIDs.clear();
     }
-    if (_roleAdditionNotifications.isNotEmpty) {
-      _roleAdditionNotifications.clear();
+    if (_roleAdditions.isNotEmpty) {
+      _roleAdditions.clear();
     }
-    if (_roleRemovalNotifications.isNotEmpty) {
-      _roleRemovalNotifications.clear();
+    if (_roleRemovals.isNotEmpty) {
+      _roleRemovals.clear();
     }
     _canSaveTheEditing = false;
   }
@@ -178,11 +178,11 @@ class EventContext {
     }
 
     if (_metadata.contributorUIDs.contains(_currentUID) || _metadata.authorUID == _currentUID) {
-      _roleAdditionNotifications = List<Map<String, String>>.empty(growable: true);
-      _roleRemovalNotifications = List<Map<String, String>>.empty(growable: true);
+      _roleAdditions = <int, List<String>>{};
+      _roleRemovals = <int, List<String>>{};
     } else {
-      _roleAdditionNotifications = List.empty();
-      _roleRemovalNotifications = List.empty();
+      _roleAdditions = Map.unmodifiable({});
+      _roleRemovals = Map.unmodifiable({});
     }
   }
 
@@ -220,7 +220,6 @@ class EventContext {
       result += '\n${role['start'] != null ? (role['start'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['for_guests'] == true ? '1' : '0'}';
-      result += '\n${role['priority'] as int}';
       result += '\n${role['id'] as int}';
     }
     result += '\n----PROGRAM_ROLES_END----';
@@ -372,8 +371,7 @@ class EventContext {
               ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[4]))
               : null,
           forGuests: roleDataSet[5] == '1' ? true : false,
-          priority: int.parse(roleDataSet[6]),
-          id: int.parse(roleDataSet[7]));
+          id: int.parse(roleDataSet[6]));
     }
   }
 
@@ -421,20 +419,25 @@ class EventContext {
     }
   }
 
-  List<Map<String, String>> get roleAdditionNotifications => UnmodifiableListView(_roleAdditionNotifications);
-  List<Map<String, String>> get roleRemovalNotifications => UnmodifiableListView(_roleRemovalNotifications);
+  Map<int, List<String>> get roleAdditions => UnmodifiableMapView(_roleAdditions);
+  Map<int, List<String>> get roleRemovalals => UnmodifiableMapView(_roleRemovals);
 
-  void addRoleAdditionNotification({required String uid, required String roleTitle}) =>
-      _roleAdditionNotifications.add({'uid': uid, 'title': roleTitle});
-
-  void addRoleRemovalNotification({required String uid, required String roleTitle}) =>
-      _roleRemovalNotifications.add({'uid': uid, 'title': roleTitle});
-
-  // ! flawed, but the occurance of this issue should be really rare?
-  // it's possible that multiple roles could have the same title
-  void removeRoleAdditionNotification({required String uid, required String roleTitle}) {
-    _roleAdditionNotifications.removeWhere((e) => e['title'] == roleTitle && e['uid'] == uid);
+  void addRoleAdditionNotification(Iterable<String> uids, int id) {
+    if (_roleAdditions[id] == null) {
+      _roleAdditions[id] = <String>[];
+    }
+    _roleAdditions[id]!.addAll(uids);
   }
+
+  void addRoleRemovalNotification(Iterable<String> uids, int id) {
+    if (_roleRemovals[id] == null) {
+      _roleRemovals[id] = <String>[];
+    }
+    _roleRemovals[id]!.addAll(uids);
+  }
+
+  // ! This one requires some thought, might be a very rare occurance but.. uhh let's be mindful of it
+  void removeRoleAdditionNotification(final int id) => _roleAdditions.remove(id);
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;

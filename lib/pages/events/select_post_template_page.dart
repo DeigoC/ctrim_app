@@ -54,19 +54,33 @@ class SelectPostTemplatePage extends StatelessWidget {
   void _onBelfastSundayServiceClick(BuildContext context) {
     // add the typical Sunday roles to the program
     final DateTime now = DateTime.now();
+
+    final int openingPrayerID = DateTime.now().millisecondsSinceEpoch;
+    debugPrint('id is $openingPrayerID');
     eventContext.program.addRole(
         uids: [],
         title: 'Opening Prayer',
         start: DateTime(now.year, now.month, now.day, 10, 5),
         end: DateTime(now.year, now.month, now.day, 10, 10),
-        id: DateTime.now().millisecondsSinceEpoch);
+        id: openingPrayerID);
 
+    final int praiseAndWorshipID = DateTime.now().millisecondsSinceEpoch;
+    debugPrint('id is $praiseAndWorshipID');
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
         start: DateTime(now.year, now.month, now.day, 10, 10),
         end: DateTime(now.year, now.month, now.day, 10, 35),
-        id: DateTime.now().millisecondsSinceEpoch);
+        id: praiseAndWorshipID);
+
+    final int wordOfGodID = DateTime.now().millisecondsSinceEpoch;
+    debugPrint('id is $wordOfGodID');
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Word of God',
+        start: DateTime(now.year, now.month, now.day, 10, 35),
+        end: DateTime(now.year, now.month, now.day, 11, 45),
+        id: praiseAndWorshipID);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 }

@@ -511,11 +511,11 @@ class _EventLogDialogState extends State<EventLogDialog> {
     localDataManager.writePostData(widget.eventContext.id, content);
 
     if (widget.eventContext.head.eventDate != null) {
-      _sendRoleAdditionNotiifications();
-      _sendRoleRemovalNotiifications();
+      await _sendRoleAdditionNotiifications();
+      await _sendRoleRemovalNotiifications();
     }
-    _sendContributorAdditionNotificaitons();
-    _sendContributorRemovalNotificaitons();
+    await _sendContributorAdditionNotificaitons();
+    await _sendContributorRemovalNotificaitons();
     _sendPostNotification();
   }
 
@@ -586,40 +586,46 @@ class _EventLogDialogState extends State<EventLogDialog> {
   Future<void> _sendRoleAdditionNotiifications() async {
     final String title = "$_currentUserName has assinged you to a role!";
 
-    for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
-      final String body = "You are assigned to '${additionEntry['title']!}' for ${widget.originalTitle}";
+    for (final additionEntry in widget.eventContext.roleAdditions.entries) {
+      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
+      final String body = "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
 
-      final String thisUID = additionEntry['uid']!;
-      if (thisUID != _currentUID) {
-        if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+      final List<String> tokens = [];
+      for (var thisUID in additionEntry.value) {
+        if (thisUID != _currentUID) {
+          if (!_appContext.haveTokensForUserID(thisUID)) {
+            final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, tokens);
+          }
+
+          tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-
-        final tokens = _appContext.getTokensFromUserID(thisUID);
-        await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: tokens, title: title, body: body, data: _notificationdata);
       }
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: tokens, title: title, body: body, data: _notificationdata);
     }
   }
 
   Future<void> _sendRoleRemovalNotiifications() async {
     final String title = "$_currentUserName has removed you from a role";
 
-    for (final removalEntry in widget.eventContext.roleRemovalNotifications) {
-      final String body = "You are no longer assigned to '${removalEntry['title']!}' for ${widget.originalTitle}";
+    for (final removalEntry in widget.eventContext.roleRemovalals.entries) {
+      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == removalEntry.key);
+      final String body = "You are no longer assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
 
-      final String thisUID = removalEntry['uid']!;
-      if (thisUID != _currentUID) {
-        if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+      final List<String> tokens = [];
+      for (var thisUID in removalEntry.value) {
+        if (thisUID != _currentUID) {
+          if (!_appContext.haveTokensForUserID(thisUID)) {
+            final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, tokens);
+          }
+
+          tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-
-        final tokens = _appContext.getTokensFromUserID(thisUID);
-        await _cloudFunctionManager.sendMessageToSelectedTokens(
-            tokens: tokens, title: title, body: body, data: _notificationdata);
       }
+      await _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: tokens, title: title, body: body, data: _notificationdata);
     }
   }
 
