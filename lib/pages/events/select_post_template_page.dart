@@ -58,13 +58,15 @@ class SelectPostTemplatePage extends StatelessWidget {
         uids: [],
         title: 'Opening Prayer',
         start: DateTime(now.year, now.month, now.day, 10, 5),
-        end: DateTime(now.year, now.month, now.day, 10, 10));
+        end: DateTime(now.year, now.month, now.day, 10, 10),
+        id: DateTime.now().millisecondsSinceEpoch);
 
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
         start: DateTime(now.year, now.month, now.day, 10, 10),
-        end: DateTime(now.year, now.month, now.day, 10, 35));
+        end: DateTime(now.year, now.month, now.day, 10, 35),
+        id: DateTime.now().millisecondsSinceEpoch);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 }

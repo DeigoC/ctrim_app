@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventProgram {
-  // * a role is made of 6 fields
+  // * a role is made of 8 fields
   // uids - list of users assigned by their IDs
   // title - short title of the role
   // detail (optional) - more text to describe the role
@@ -11,6 +11,7 @@ class EventProgram {
   // end - datetime/timestamp of finishing time
   // for_guests - bool to signigfy whether to show to guests or not
   // priority - int to signfy it's importance (higher numbers for significance)
+  // id - DateTime creation (DateTime.now().millisecondsSinceEpoch) int of the role
   // ! NOTE: start is optional, but if it exists then end must also be a thing
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
@@ -39,6 +40,7 @@ class EventProgram {
         'end': (entry['end'] as Timestamp).toDate(),
         'for_guests': entry['for_guests'],
         'priority': entry['priority'],
+        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch
       });
     }
   }
@@ -65,6 +67,7 @@ class EventProgram {
         'end': Timestamp.fromDate(entry['end']),
         'for_guests': entry['for_guests'],
         'priority': entry['priority'],
+        'id': entry['id'],
       });
     }
 
@@ -91,6 +94,7 @@ class EventProgram {
       required String title,
       required DateTime? start,
       required DateTime? end,
+      required int id,
       bool forGuests = true,
       int priority = 1,
       String detail = ''}) {
@@ -101,7 +105,8 @@ class EventProgram {
       'start': start,
       'end': end,
       'for_guests': forGuests,
-      'priority': priority
+      'priority': priority,
+      'id': id
     });
   }
 

@@ -306,6 +306,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         start: _start,
         end: _end,
         forGuests: _forGuests,
-        priority: 1);
+        priority: 1,
+        id: DateTime.now().millisecondsSinceEpoch);
   }
 }

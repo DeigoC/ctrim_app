@@ -221,6 +221,7 @@ class EventContext {
       result += '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['for_guests'] == true ? '1' : '0'}';
       result += '\n${role['priority'] as int}';
+      result += '\n${role['id'] as int}';
     }
     result += '\n----PROGRAM_ROLES_END----';
 
@@ -371,7 +372,8 @@ class EventContext {
               ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[4]))
               : null,
           forGuests: roleDataSet[5] == '1' ? true : false,
-          priority: int.parse(roleDataSet[6]));
+          priority: int.parse(roleDataSet[6]),
+          id: int.parse(roleDataSet[7]));
     }
   }
 
@@ -424,6 +426,7 @@ class EventContext {
 
   void addRoleAdditionNotification({required String uid, required String roleTitle}) =>
       _roleAdditionNotifications.add({'uid': uid, 'title': roleTitle});
+
   void addRoleRemovalNotification({required String uid, required String roleTitle}) =>
       _roleRemovalNotifications.add({'uid': uid, 'title': roleTitle});
 

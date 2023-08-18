@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../models/user.dart';
 import '../../pages/events/add_program_role_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
-import '../../pages/events/edit_program_page.dart';
+import '../../pages/events/edit_program_role_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import '../user_avatar.dart';
