@@ -56,7 +56,10 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         TextField(
           controller: _tecSrc,
           onChanged: _onSrcTextChange,
-          decoration: const InputDecoration(hintText: 'Web link e.g. ', label: Text('Media web source')),
+          decoration: InputDecoration(
+              hintText: 'Web link e.g. ',
+              label: const Text('Media web source'),
+              suffixIcon: IconButton(onPressed: () => _tecSrc.clear(), icon: const Icon(Icons.clear))),
         ),
         SwitchListTile(value: _isVideo, onChanged: _onIsVideoChange, title: const Text('Video File')),
         _buildTestSrcButton(),

@@ -23,6 +23,7 @@ class EventContext {
 
   // id (datetime milliseconds) to uids
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
+  late final Map<int, String> _deletedRoleTitle;
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
 
   // for viewing and editing
@@ -155,6 +156,7 @@ class EventContext {
     }
     if (_roleRemovals.isNotEmpty) {
       _roleRemovals.clear();
+      _deletedRoleTitle.clear();
     }
     _canSaveTheEditing = false;
   }
@@ -180,9 +182,11 @@ class EventContext {
     if (_metadata.contributorUIDs.contains(_currentUID) || _metadata.authorUID == _currentUID) {
       _roleAdditions = <int, List<String>>{};
       _roleRemovals = <int, List<String>>{};
+      _deletedRoleTitle = <int, String>{};
     } else {
       _roleAdditions = Map.unmodifiable({});
       _roleRemovals = Map.unmodifiable({});
+      _deletedRoleTitle = Map.unmodifiable({});
     }
   }
 
@@ -421,6 +425,7 @@ class EventContext {
 
   Map<int, List<String>> get roleAdditions => UnmodifiableMapView(_roleAdditions);
   Map<int, List<String>> get roleRemovalals => UnmodifiableMapView(_roleRemovals);
+  String deletedRoleTitle(final int id) => _deletedRoleTitle[id]!;
 
   void addRoleAdditionNotification(Iterable<String> uids, int id) {
     if (_roleAdditions[id] == null) {
@@ -429,12 +434,14 @@ class EventContext {
     _roleAdditions[id]!.addAll(uids);
   }
 
-  void addRoleRemovalNotification(Iterable<String> uids, int id) {
+  void addRoleRemovalNotification(final Iterable<String> uids, final int id) {
     if (_roleRemovals[id] == null) {
       _roleRemovals[id] = <String>[];
     }
     _roleRemovals[id]!.addAll(uids);
   }
+
+  void addRoleDeletionTitle(final int id, final String title) => _deletedRoleTitle[id] = title;
 
   // ! This one requires some thought, might be a very rare occurance but.. uhh let's be mindful of it
   void removeRoleAdditionNotification(final int id) => _roleAdditions.remove(id);

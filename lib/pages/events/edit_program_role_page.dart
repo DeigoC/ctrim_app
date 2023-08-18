@@ -341,6 +341,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
       if (confirmation) {
         widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
         widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
+        widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
 
         widget.eventContext.program.removeRole(widget.programEntry['id']);
         widget.eventContext.allowSavingOfTheEdit();

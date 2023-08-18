@@ -610,8 +610,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final String title = "$_currentUserName has removed you from a role";
 
     for (final removalEntry in widget.eventContext.roleRemovalals.entries) {
-      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == removalEntry.key);
-      final String body = "You are no longer assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
+      final String roleTitle = widget.eventContext.deletedRoleTitle(removalEntry.key);
+      final String body = "You are no longer assigned to '$roleTitle' for ${widget.originalTitle}";
 
       final List<String> tokens = [];
       for (var thisUID in removalEntry.value) {
