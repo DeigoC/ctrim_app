@@ -17,7 +17,7 @@ class AddMediaFilePage extends StatefulWidget {
 
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController();
-  final RegExp _driveRegExp = RegExp(r"/d/([a-zA-Z0-9_-]+)");
+  final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
   VideoPlayerController? _videoPlayerController;
   bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
@@ -176,8 +176,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   Future<File> _fetchFile(final bool isImage) async {
     final dir = await getTemporaryDirectory();
     _src = _sanitiseSrc();
-    final String type = isImage ? '.img' : '.mp4';
-    final String tmpPath = '${dir.path}tmp$type';
+    final String type = isImage ? '.png' : '.mp4';
+    final String tmpPath = '${dir.path}/tmp$type';
     final File tmp = File(tmpPath);
     final response = await http.get(Uri.parse(_src));
     return await tmp.writeAsBytes(response.bodyBytes);
