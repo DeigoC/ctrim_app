@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -416,6 +417,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final UserDBManager _userDBManager = UserDBManager();
   bool _canSave = false;
 
   @override
@@ -594,12 +596,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
       for (var thisUID in additionEntry.value) {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
+            debugPrint('fetching tokens for UID: $thisUID');
             final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, tokens);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
+        _updateUserRoleAdditions(thisUID, additionEntry.key);
       }
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -617,12 +621,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
       for (var thisUID in removalEntry.value) {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
+            debugPrint('fetching tokens for UID: $thisUID');
             final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, tokens);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
+        _removeUserRole(thisUID, removalEntry.key);
       }
       await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -671,6 +677,18 @@ class _EventLogDialogState extends State<EventLogDialog> {
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: allTokens, title: title, body: body, data: _notificationdata);
     }
+  }
+
+  Future<void> _updateUserRoleAdditions(final String uid, final int roleID) async {
+    final roles = await _userDBManager.fetchUserRoles(uid);
+    roles.add({'id': roleID, 'postID': widget.eventContext.id});
+    await _userDBManager.updateRoles(uid, roles);
+  }
+
+  Future<void> _removeUserRole(final String uid, final int roleID) async {
+    final roles = await _userDBManager.fetchUserRoles(uid);
+    roles.removeWhere((e) => e['id'] == roleID);
+    await _userDBManager.updateRoles(uid, roles);
   }
 
   Map<String, String> get _notificationdata => {'PostID': widget.eventContext.id};

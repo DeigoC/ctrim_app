@@ -30,4 +30,19 @@ class UserDBManager {
     }
     return null;
   }
+
+  Future<List<Map<String, dynamic>>> fetchUserRoles(String uid) async {
+    final doc = await _ref.doc(uid).collection('supplemental').doc('roles').get();
+    final roleData = List<Map<String, dynamic>>.from(doc.data()!['roles']);
+    final List<Map<String, dynamic>> result = [];
+    for (final dataEntry in roleData) {
+      result.add({'postID': dataEntry['postID'], 'id': dataEntry['id']});
+    }
+
+    return result;
+  }
+
+  Future<void> updateRoles(final String uid, final List<Map<String, dynamic>> content) async {
+    await _ref.doc(uid).collection('supplemental').doc('roles').update({'roles': content});
+  }
 }
