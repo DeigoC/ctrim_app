@@ -21,7 +21,7 @@ class AppContext extends ChangeNotifier {
 
   // no more 'user contact' we will hold the tokens as necessary
   static final Map<String, List<String>> _userTokens = {};
-  static late final AppSharedPreferences _dataManager;
+  static late final AppSharedPreferences _sharedPref;
   static late final String _cacheDir, _appDir;
 
   late User _currentUser;
@@ -38,7 +38,7 @@ class AppContext extends ChangeNotifier {
     _eventHeads = heads ?? List<EventHead>.empty(growable: true);
     _allUsers = allUsers ?? List<User>.empty(growable: true);
     _currentUser = user ?? _guest;
-    _dataManager = AppSharedPreferences(preferences: prefInstance);
+    _sharedPref = AppSharedPreferences(preferences: prefInstance);
     _cacheDir = cacheDir;
     _appDir = appDir;
   }
@@ -113,7 +113,7 @@ class AppContext extends ChangeNotifier {
   String getAuthIDFromUID(String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
 
   // * data related
-  AppSharedPreferences get dataManager => _dataManager;
+  AppSharedPreferences get sharedPref => _sharedPref;
 
   // * other related
   void rebuildPlease() => notifyListeners();

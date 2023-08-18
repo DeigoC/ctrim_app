@@ -13,7 +13,7 @@ class DialogManager {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: MyUserAvatar(selectedUser, radius: MediaQuery.of(context).size.width * 0.35)),
         const SizedBox(height: 16),
-        Text(currentUserAdmin ? '${selectedUser.fullname} (${selectedUser.id})' : selectedUser.fullname,
+        Text(selectedUser.isAreaAdmin ? '${selectedUser.fullname} (${selectedUser.id})' : selectedUser.fullname,
             style: const TextStyle(fontSize: 21), textAlign: TextAlign.center),
         Text(selectedUser.isAreaAdmin ? '${selectedUser.location} (Admin)' : selectedUser.location,
             style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),

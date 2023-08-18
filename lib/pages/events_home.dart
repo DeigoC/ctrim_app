@@ -77,10 +77,10 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
 
   // * Logic
   Future<void> _onRefresh() async {
-    if (_appContext.dataManager.canRefreshPosts) {
+    if (_appContext.sharedPref.canRefreshPosts) {
       debugPrint('refreshing now!');
       await _refreshPosts();
-      _appContext.dataManager.setPostRefreshTime();
+      _appContext.sharedPref.setPostRefreshTime();
     } else {
       debugPrint('cannot refresh cause of timer');
       await Future.delayed(const Duration(seconds: 1));

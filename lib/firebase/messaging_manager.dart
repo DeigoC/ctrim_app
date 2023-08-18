@@ -20,6 +20,10 @@ class MessagingManager {
     return _instance.subscribeToTopic(_ctrimBelfast);
   }
 
+  Future<void> unsubscribeFromCTRIMBelfast() {
+    return _instance.unsubscribeFromTopic(_ctrimBelfast);
+  }
+
   Future<void> subscribeToTopic(final String topic) {
     return _instance.subscribeToTopic(topic);
   }

@@ -1,4 +1,6 @@
 // import 'package:ctrim_app/pages/welcome_page.dart';
+import 'package:ctrim_app/pages/personal/current_user_page.dart';
+import 'package:ctrim_app/pages/personal/notification_management_page.dart';
 import 'package:flutter/material.dart';
 // import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -32,17 +34,18 @@ class _PersonalHomeState extends State<PersonalHome> {
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final List<Widget> children = [
         ListTile(
-          leading: const Icon(Icons.bookmarks),
-          title: const Text('Bookmarks'),
-          onTap: _onViewBookmarkedPageClick,
-        ),
+            leading: const Icon(Icons.bookmarks), title: const Text('Bookmarks'), onTap: _onViewBookmarkedPageClick),
+        ListTile(
+            leading: const Icon(Icons.notifications),
+            title: const Text('Notification Manager'),
+            onTap: _onNotificationManagerClick),
 
         // ! The following are used for testing
-        // ListTile(
-        //   title: const Text('Startup login test'),
-        //   leading: const Icon(Icons.science),
-        //   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomePage())),
-        // ),
+        ListTile(
+          title: const Text('Starting dialog test'),
+          leading: const Icon(Icons.science),
+          onTap: () {},
+        ),
         // ListTile(
         //   title: const Text('Test Version'),
         //   leading: const Icon(Icons.science),
@@ -96,9 +99,10 @@ class _PersonalHomeState extends State<PersonalHome> {
               children: [
                 const SizedBox(height: 8),
                 ListTile(
-                  title: Text('Hi, ${appContext.currentUser.forname}'),
-                  leading: MyUserAvatar(appContext.currentUser),
-                ),
+                    title: Text('Hi, ${appContext.currentUser.forname}'),
+                    subtitle: const Text('Change your image here!'),
+                    leading: MyUserAvatar(appContext.currentUser),
+                    onTap: _onUserProfileClick),
                 const Divider(),
               ],
             ));
@@ -163,17 +167,29 @@ class _PersonalHomeState extends State<PersonalHome> {
   Future<void> _logout() async {
     final AuthManager authManager = AuthManager();
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    debugPrint('token to remove is ${widget.appContext.dataManager.fcmToken}');
-    await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, widget.appContext.dataManager.fcmToken);
-    widget.appContext.dataManager.clearCreds();
+    debugPrint('token to remove is ${widget.appContext.sharedPref.fcmToken}');
+    await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, widget.appContext.sharedPref.fcmToken);
+    widget.appContext.sharedPref.clearCreds();
     widget.appContext.setUserToGuest();
     widget.appContext.rebuildPlease();
-    widget.appContext.dataManager.setLoggedOut(true);
+    widget.appContext.sharedPref.setLoggedOut(true);
     await authManager.signOut();
   }
 
   void _onViewBookmarkedPageClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
+  }
+
+  void _onNotificationManagerClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationManagementPage()));
+  }
+
+  void _onUserProfileClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CurrentUserPage())).then((_) {
+      setState(() {
+        // update incase user has changed their image
+      });
+    });
   }
 
   // void _testVersion() async {

@@ -189,7 +189,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget _buildBookmarkButton() {
     return Consumer<AppContext>(builder: (_, appContext, __) {
-      final bool bookmarked = appContext.dataManager.bookmarkedPosts.contains(_eventContext.id);
+      final bool bookmarked = appContext.sharedPref.bookmarkedPosts.contains(_eventContext.id);
       return IconButton.filled(
           onPressed: () => _bookmarkClick(appContext, bookmarked),
           icon: bookmarked ? const Icon(Icons.bookmark) : const Icon(Icons.bookmark_border));
@@ -319,10 +319,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   void _bookmarkClick(final AppContext appContext, final bool bookmarked) {
     setState(() {
       if (bookmarked) {
-        appContext.dataManager.removePostBookmark(_eventContext.id);
+        appContext.sharedPref.removePostBookmark(_eventContext.id);
         _messagingManager.unsubscribeFromTopic(_topic);
       } else {
-        appContext.dataManager.addPostBookmark(_eventContext.id);
+        appContext.sharedPref.addPostBookmark(_eventContext.id);
         _messagingManager.subscribeToTopic(_topic);
       }
     });
@@ -389,7 +389,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   void _checkToUnbookForContributor() {
     if (_eventContext.metadata.contributorUIDs.contains(_currentUID)) {
       debugPrint('removing post from bookmarks because user is already contributor!');
-      Provider.of<AppContext>(context, listen: false).dataManager.removePostBookmark(_eventContext.id);
+      Provider.of<AppContext>(context, listen: false).sharedPref.removePostBookmark(_eventContext.id);
     }
   }
 }

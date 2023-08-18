@@ -367,7 +367,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
-      _appContext.dataManager.setLoggedOut(false);
+      _appContext.sharedPref.setLoggedOut(false);
       Navigator.of(context).pop(); // pop the progress dialog
       Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
       Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
@@ -387,7 +387,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final token = await messagingManager.getToken();
     if (token != null) {
       debugPrint('token to save is $token');
-      _appContext.dataManager.saveFCMToken(token);
+      _appContext.sharedPref.saveFCMToken(token);
       _everyoneDBManager.addTokenForAuthID(
           authID: _authManager.currentAuthUID, token: token, platform: Platform.operatingSystem);
     }
@@ -425,10 +425,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     if (fromRegistration) {
       debugPrint(
           'Creds to save are: ${_tecRegistrationEmail.text.trim()} with password ${_tecRegistrationPassword.text}');
-      _appContext.dataManager.saveCreds(_tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
+      _appContext.sharedPref.saveCreds(_tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
     } else {
       debugPrint('Creds to save are: ${_tecLoginEmail.text.trim()} with password ${_tecLoginPassword.text}');
-      _appContext.dataManager.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
+      _appContext.sharedPref.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
     }
   }
 }

@@ -76,6 +76,12 @@ void main() async {
     final allUsers = await _fetchAllUsers(prefInstance);
     final heads = await eventHeadDBManager.fetchEventHeads();
 
+    // this is done incase the current user has updated their image
+    // this is dumb, we need to move the local data writing logic to it's own class so
+    // it can be called anywhere and remove the need to do these weird, hacky things!
+    allUsers.removeWhere((e) => e.id == currentUser!.id);
+    allUsers.add(currentUser!);
+
     // * Create the AppContext, setup the FCM and run the app
     final AppContext appContext = AppContext(
         heads: heads,
