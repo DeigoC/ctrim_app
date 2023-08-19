@@ -30,7 +30,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody(), appBar: AppBar(title: const Text('User Roles')));
+    return Scaffold(body: _buildBody(), appBar: AppBar(title: Text("${widget.selectedUser.forname}'s Tasks")));
   }
 
   Widget _buildBody() {
@@ -77,7 +77,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'No roles assigned, yet! 😎',
+              'No tasks assigned... yet! 😎',
               textAlign: TextAlign.center,
             ),
             TextButton.icon(
@@ -89,13 +89,18 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           ]);
     }
 
+    final sortedPostIDs = roleConterPerPost.keys.toList();
+    debugPrint('pre sort: $sortedPostIDs');
+    sortedPostIDs
+        .sort((a, b) => _appContext.getPostHead(a).eventDate!.compareTo(_appContext.getPostHead(b).eventDate!));
+    debugPrint('post sort: $sortedPostIDs');
     return RefreshIndicator(
       onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
       child: ListView.builder(
-          itemCount: roleConterPerPost.length,
+          itemCount: sortedPostIDs.length,
           itemBuilder: (_, index) {
-            final postID = roleConterPerPost.keys.elementAt(index);
+            final postID = sortedPostIDs[index];
             return _buildTile(postID, roleConterPerPost[postID]!);
           }),
     );
@@ -131,7 +136,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     return ListTile(
         leading: const Icon(Icons.event),
         trailing: Text(_eventDateFormat.format(postHead.eventDate!)),
-        subtitle: Text('$roleCount role${roleCount == 1 ? '' : 's'}'),
+        subtitle: Text('$roleCount task${roleCount == 1 ? '' : 's'}'),
         onTap: () => _onPostTap(postHead),
         title: Text(postHead.title, maxLines: 2, overflow: TextOverflow.ellipsis));
   }

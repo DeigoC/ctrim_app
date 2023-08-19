@@ -613,6 +613,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
   Future<void> _sendRoleRemovalNotiifications() async {
     final String title = "$_currentUserName has removed you from a role";
 
+    debugPrint('on the removals: the entries look like:${widget.eventContext.roleRemovalals.entries}');
     for (final removalEntry in widget.eventContext.roleRemovalals.entries) {
       final String roleTitle = widget.eventContext.deletedRoleTitle(removalEntry.key);
       final String body = "You are no longer assigned to '$roleTitle' for ${widget.originalTitle}";

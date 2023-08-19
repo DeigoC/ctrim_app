@@ -325,12 +325,16 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     // figure out the removed members
     final removedMembers = originalList.where((e) => !_selectedUsers.contains(e));
     debugPrint('Sending role removal to the following: $removedMembers');
-    widget.eventContext.addRoleRemovalNotification(removedMembers, widget.programEntry['id']);
+    if (removedMembers.isNotEmpty) {
+      widget.eventContext.addRoleRemovalNotification(removedMembers, widget.programEntry['id']);
+    }
 
     // figure out the new members
     final newMembers = _selectedUsers.where((e) => !originalList.contains(e));
     debugPrint('Sending role addition to the following: $newMembers');
-    widget.eventContext.addRoleAdditionNotification(newMembers, widget.programEntry['id']);
+    if (newMembers.isNotEmpty) {
+      widget.eventContext.addRoleAdditionNotification(newMembers, widget.programEntry['id']);
+    }
   }
 
   void _onDeleteTap() {

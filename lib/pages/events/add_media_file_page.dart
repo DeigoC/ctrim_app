@@ -53,15 +53,22 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       padding: const EdgeInsets.all(8),
       children: [
         _buildMediaTestSlot(),
+        const SizedBox(height: 16),
         TextField(
           controller: _tecSrc,
           onChanged: _onSrcTextChange,
           decoration: InputDecoration(
               hintText: 'Web link e.g. ',
               label: const Text('Media web source'),
-              suffixIcon: IconButton(onPressed: () => _tecSrc.clear(), icon: const Icon(Icons.clear))),
+              suffixIcon: IconButton(onPressed: _onClearMediaSrc, icon: const Icon(Icons.clear))),
         ),
-        SwitchListTile(value: _isVideo, onChanged: _onIsVideoChange, title: const Text('Video File')),
+        const SizedBox(height: 16),
+        SwitchListTile(
+            value: _isVideo,
+            onChanged: _onIsVideoChange,
+            subtitle: const Text('Large videos can take a while to load!'),
+            title: const Text('Video File')),
+        const Divider(),
         _buildTestSrcButton(),
         _buildSaveButton(),
       ],
@@ -91,27 +98,30 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   Widget _buildImageTest() {
     if (_tmpFile != null && _canSave) {
-      return Image.file(_tmpFile!);
+      return Image.network(_src);
     }
+
     return FutureBuilder(
         future: _fetchFile(true),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
           if (snap.hasData) {
+            _canTestSrc = true;
             _tmpFile = snap.data!;
             final size = _tmpFile!.lengthSync();
             final double sizeInKb = size / 1024;
 
             if (sizeInKb <= 100) {
+              debugPrint('image size is good: $sizeInKb KB');
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
                   _canSave = true;
                 });
               });
-              result = Image.file(_tmpFile!);
             } else {
               _canSave = false;
+              _canTestSrc = true;
               result = Container(
                   height: MediaQuery.of(context).size.height * 0.3,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -130,6 +140,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                   ));
             }
           } else if (snap.hasError) {
+            _canTestSrc = true;
             debugPrint('something with fetching the file: ${snap.error}');
             result = const Center(child: Text('Something went wrong'));
           }
@@ -139,23 +150,61 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildVideoPlayerTest() {
-    _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(_src));
-    // video compressor - https://www.freeconvert.com/video-compressor
+    if (_tmpFile != null && _canSave) {
+      return _buildVideoPlayer();
+    }
 
     return FutureBuilder(
-        future: _videoPlayerController!.initialize().onError((error, stackTrace) {
-          debugPrint('On error of the initialise');
-          _onSrcTestError();
-        }),
+        future: _fetchFile(false),
         builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
+          Widget result = const Padding(
+            padding: EdgeInsets.only(top: 32.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
 
-          if (!snap.hasData || snap.hasData) {
-            result = _buildVideoPlayer();
+          if (snap.hasData) {
+            _canTestSrc = true;
+            _tmpFile = snap.data!;
+            final size = _tmpFile!.lengthSync();
+            final double sizeInMb = size / (1024 * 1024);
+
+            if (sizeInMb <= 128) {
+              debugPrint('video size is good: $sizeInMb MB');
+              _videoPlayerController = VideoPlayerController.file(_tmpFile!);
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                _videoPlayerController!.initialize().then((_) {
+                  setState(() {
+                    _canSave = true;
+                    _videoPlayerController!.play();
+                  });
+                });
+              });
+
+              // we don't actually build a widget here, continue the spinner until the video is ready
+            } else {
+              _canTestSrc = true;
+              _canSave = false;
+              result = Container(
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'This file is too large (${sizeInMb.toStringAsFixed(2)} KB)! Maximum video file size is 128 MB, so please compress it!',
+                          textAlign: TextAlign.center),
+                      TextButton(
+                          onPressed: () => launchUrlString('https://www.freeconvert.com/video-compressor'),
+                          child: const Text('Online Video Compressor'))
+                    ],
+                  ));
+            }
           } else if (snap.hasError) {
-            // can we ever get here?
-            debugPrint('Something wrong with the video fetching: ${snap.error}');
-            result = const Center(child: Text('Video did not work! 😢'));
+            _canTestSrc = true;
+            debugPrint('something with fetching the file: ${snap.error}');
+            result = const Center(child: Text('Something went wrong!'));
           }
 
           return result;
@@ -167,7 +216,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       debugPrint('We are initialised!');
       _videoPlayerController!.play();
       _videoPlayerController!.setLooping(true);
-      _videoPlayerController!.value.aspectRatio;
     }
 
     return AspectRatio(
@@ -179,11 +227,24 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   Future<File> _fetchFile(final bool isImage) async {
     final dir = await getTemporaryDirectory();
     _src = _sanitiseSrc();
+    debugPrint('src is $_src');
     final String type = isImage ? '.png' : '.mp4';
     final String tmpPath = '${dir.path}/tmp$type';
     final File tmp = File(tmpPath);
+    if (await tmp.exists()) {
+      debugPrint('this file exists and will now be deleted?');
+      await tmp.delete();
+    }
+
     final response = await http.get(Uri.parse(_src));
     return await tmp.writeAsBytes(response.bodyBytes);
+  }
+
+  void _onClearMediaSrc() {
+    setState(() {
+      _canTestSrc = true;
+      _tecSrc.clear();
+    });
   }
 
   void _onSaveClick() {
@@ -203,8 +264,10 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         _videoPlayerController = null;
       }
       _src = '';
+      _canSave = false;
       _tmpFile = null;
       _isTesting = true;
+      _canTestSrc = false;
     });
   }
 
@@ -223,20 +286,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   void _onIsVideoChange(bool newState) {
     setState(() {
       _isVideo = newState;
-    });
-  }
-
-  void _onSrcTestError() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Error',
-          content:
-              'That link does not work. Make sure to set file as video if you are expecting one, otherwise please check your link again.');
-      setState(() {
-        _canSave = false;
-        _isTesting = false;
-      });
     });
   }
 

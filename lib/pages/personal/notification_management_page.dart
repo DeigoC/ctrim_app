@@ -24,7 +24,12 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody(), appBar: AppBar(title: const Text('Notifications')));
+    return Scaffold(
+        body: _buildBody(),
+        appBar: AppBar(
+          title: const Text('Push Notifications'),
+          actions: [IconButton(onPressed: _helpClick, icon: const Icon(Icons.help))],
+        ));
   }
 
   Widget _buildBody() {
@@ -32,8 +37,8 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
       padding: const EdgeInsets.all(8),
       children: [
         SwitchListTile(
-            title: const Text('Belfast'),
-            subtitle: const Text('New posts from Belfast'),
+            secondary: const Icon(Icons.church),
+            title: const Text('New Belfast Posts'),
             value: _appContext.sharedPref.subscribedToBelfast,
             onChanged: _onSubscribedToBelfastClick)
       ],
@@ -55,5 +60,13 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
     setState(() {
       _appContext.sharedPref.setSubscribedToBelfast(newState);
     });
+  }
+
+  void _helpClick() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Notifications',
+        content:
+            'Please bear in mind that you can still receive push notifications on posts that you bookmarked, are tagged to, or assigned for a task');
   }
 }

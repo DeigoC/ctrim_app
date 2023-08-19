@@ -16,7 +16,8 @@ class EventProgram {
 
   DateTime? _finishTime;
   bool _allDay = false, _online = false;
-  String _address = '', _mapLink = '';
+  String _address = '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
+      _mapLink = 'https://goo.gl/maps/ns21zf5F9KPxeKxn6';
 
   EventProgram();
 

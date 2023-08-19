@@ -31,12 +31,21 @@ class _InformationHomeState extends State<InformationHome> {
                   floating: true,
                   snap: true,
                   leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight),
-                  bottom: TabBar(
-                      controller: widget.tabController,
-                      tabs: const [Tab(text: 'About'), Tab(text: 'Churches'), Tab(text: 'Teachings')]))
+                  bottom: TabBar(controller: widget.tabController, isScrollable: true, tabs: const [
+                    Tab(text: 'About'),
+                    Tab(text: 'Churches'),
+                    Tab(text: 'Teachings'),
+                    Tab(text: 'Testimonies'),
+                    Tab(text: 'One Verse Evangelisms')
+                  ]))
             ],
-        body: TabBarView(
-            controller: widget.tabController, children: [_buildAbout(), _buildChurchesTab(), _buildTeachingsTab()]));
+        body: TabBarView(controller: widget.tabController, children: [
+          _buildAbout(),
+          _buildChurchesTab(),
+          _buildTeachingsTab(),
+          _buildTestimoniesTab(),
+          _buildOneVerseTestimoniesTab()
+        ]));
   }
 
   Widget _buildAbout() {
@@ -157,6 +166,14 @@ class _InformationHomeState extends State<InformationHome> {
                           padding: const EdgeInsets.all(16.0),
                           child: Text(teaching, style: const TextStyle(fontSize: 32, color: Colors.white))))
                 ]))));
+  }
+
+  Widget _buildTestimoniesTab() {
+    return const Center(child: Text('Under Construction! 👷‍♂️🚧🏗️'));
+  }
+
+  Widget _buildOneVerseTestimoniesTab() {
+    return const Center(child: Text('Under Construction! 👷‍♂️🚧🏗️'));
   }
 
   // * Logic

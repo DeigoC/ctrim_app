@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -37,7 +38,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _informationTabController = TabController(length: 3, vsync: this);
+    _informationTabController = TabController(length: 5, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
 
@@ -170,7 +171,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     child: const Text('Ok', style: TextStyle(fontSize: 16)))))
                       ])))));
 
-      final token = await messagingManager.requestPermissionAndToken();
+      final String? token = await messagingManager.requestPermissionAndToken().then((token) {
+        showDialog(context: context, builder: (_) => const TimedButtonDialog());
+        return token;
+      });
 
       // we don't need to perfrom the token grabbing here anymore
       if (token != null) {
