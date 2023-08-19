@@ -1,6 +1,7 @@
 // import 'package:ctrim_app/pages/welcome_page.dart';
 import 'package:ctrim_app/pages/personal/current_user_page.dart';
 import 'package:ctrim_app/pages/personal/notification_management_page.dart';
+import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:flutter/material.dart';
 // import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +36,11 @@ class _PersonalHomeState extends State<PersonalHome> {
       final List<Widget> children = [
         ListTile(
             leading: const Icon(Icons.bookmarks), title: const Text('Bookmarks'), onTap: _onViewBookmarkedPageClick),
+        ListTile(
+          title: const Text('My Assigned Roles'),
+          leading: const Icon(Icons.task_alt),
+          onTap: _onViewTasksClick,
+        ),
         ListTile(
             leading: const Icon(Icons.notifications),
             title: const Text('Notification Manager'),
@@ -178,6 +184,11 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _onViewBookmarkedPageClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
+  }
+
+  void _onViewTasksClick() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => ViewUserRolesPage(selectedUser: widget.appContext.currentUser)));
   }
 
   void _onNotificationManagerClick() {

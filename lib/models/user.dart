@@ -47,15 +47,14 @@ class User {
     };
   }
 
-  void setName(String? forname, String? surname) {
-    if (forname != null) _forename = forname;
-    if (surname != null) _surname = surname;
+  void setImgSrc(final String newImgSrc) => _imgSrc = newImgSrc;
+
+  void setRoles(final List<Map<String, dynamic>> newRoles) {
+    _roles = newRoles;
   }
 
-  void setImgSrc(String newImgSrc) => _imgSrc = newImgSrc;
-
-  void setRoles(List<Map<String, dynamic>> newRoles) {
-    _roles = newRoles;
+  void removeRoles(final List<String> postIDs) {
+    _roles!.removeWhere((e) => postIDs.contains(e['postID']));
   }
 
   String get id => _id;

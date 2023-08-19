@@ -15,7 +15,8 @@ class AppSharedPreferences {
       _lastPostRefresh = 'lastPostRefresh',
       _phoneToken = 'phoneToken',
       _loggedOut = 'loggedOut',
-      _subscribedToBelfast = 'subscribedToBelfast';
+      _subscribedToBelfast = 'subscribedToBelfast',
+      _lastRoleRefresh = 'lastRoleRefresh';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -72,6 +73,11 @@ class AppSharedPreferences {
       ? true
       : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >= 2;
   void setPostRefreshTime() => _pref.setInt(_lastPostRefresh, DateTime.now().millisecondsSinceEpoch);
+
+  bool get canRefreshRoles => _pref.getInt(_lastRoleRefresh) == null
+      ? true
+      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastRoleRefresh)!)).inMinutes >= 2;
+  void setRoleRefreshTime() => _pref.setInt(_lastRoleRefresh, DateTime.now().millisecondsSinceEpoch);
 
   // * Local data related
   bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;

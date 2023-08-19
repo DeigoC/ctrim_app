@@ -39,7 +39,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   @override
   Widget build(BuildContext context) {
-    widget.eventContext.program.orderProgramsByStartDate();
+    widget.eventContext.program.orderProgramsByStartTime();
     if (widget.eventContext.head.eventDate != null) {
       return _buildBodyWithEventDate();
     }
@@ -98,7 +98,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       ListTile(
           title: Text(dateStr),
           subtitle: timeStr.isNotEmpty ? Text(timeStr) : null,
-          leading: const Icon(Icons.calendar_today)),
+          leading: const Icon(Icons.calendar_month)),
       ListTile(
           title: Text(widget.eventContext.head.location),
           subtitle: Text(
@@ -194,13 +194,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     if (widget.eventContext.program.online) {
       return TextButton(onPressed: _onClickLocationTrailingIcon, child: const Text('Join'));
     }
-    return IconButton(onPressed: _onClickLocationTrailingIcon, icon: const Icon(Icons.location_on));
+    return TextButton(onPressed: _onClickLocationTrailingIcon, child: const Text('Maps'));
   }
 
   // * LOGIC
   void _openAddProgramPage() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) {
+      widget.eventContext.program.orderProgramsByStartTime();
       setState(() {
         // rebuild in case of update
       });
@@ -273,10 +274,11 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     Navigator.push(
             context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
         .then((_) {
+      widget.eventContext.program.orderProgramsByStartTime();
+      setState(() {});
       if (widget.eventContext.canSaveTheEditing) {
         widget.onProgramChanged();
       }
-      setState(() {});
     });
   }
 }

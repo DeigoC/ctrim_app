@@ -439,15 +439,11 @@ class _EventLogDialogState extends State<EventLogDialog> {
     return Dialog(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Please describe the update:',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
               TextField(
                 controller: _tecLog,
                 decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Update Log')),
@@ -458,7 +454,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
               const SizedBox(height: 8),
               ElevatedButton.icon(
                   onPressed: _canSave ? _saveClick : null,
-                  style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green)),
+                  style: ButtonStyle(
+                      backgroundColor:
+                          _canSave ? MaterialStateProperty.all(Colors.green) : MaterialStateProperty.all(Colors.grey)),
                   icon: const Icon(Icons.cloud_upload),
                   label: const Text('Save!')),
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))
@@ -500,6 +498,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
           widget.updatePage();
           Navigator.of(context).pop();
           Navigator.of(context).pop();
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
         });
       }
     });

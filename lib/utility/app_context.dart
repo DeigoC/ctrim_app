@@ -49,6 +49,8 @@ class AppContext extends ChangeNotifier {
 
   // * event head related
   List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
+  EventHead getPostHead(final String id) => _eventHeads.firstWhere((e) => e.id == id);
+
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
 
   void addAllEventHeads(final List<EventHead> heads) => _eventHeads.addAll(heads);

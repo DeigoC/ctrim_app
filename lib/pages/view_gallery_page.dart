@@ -26,7 +26,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
     for (final entry in widget.media) {
       if (entry['type'] == 'vid') {
-        _videoControllers[entry['src']!] = VideoPlayerController.network(entry['src']!);
+        _videoControllers[entry['src']!] = VideoPlayerController.networkUrl(Uri.parse(entry['src']!));
       }
     }
 

@@ -83,7 +83,7 @@ class EventProgram {
   void setOnline(final bool state) => _online = state;
   void setAddress(final String address) => _address = address;
   void setMapLink(final String newMapLink) => _mapLink = newMapLink;
-  void orderProgramsByStartDate() =>
+  void orderProgramsByStartTime() =>
       _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
 
   void addRole(

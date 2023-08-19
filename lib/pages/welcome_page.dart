@@ -226,10 +226,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
         return true;
       }
     } on auth.FirebaseAuthException catch (e) {
-      _handleException(e);
+      _handleFirebaseException(e);
     } on Exception catch (e) {
       debugPrint('Something went really wrong for login: $e');
-      DialogManager.showAlertDialog(context: context, title: 'Login Error', content: 'See exception: $e');
+      _handleException(e, 'Login Error!');
     }
     return false;
   }
@@ -270,7 +270,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
       return true;
     } on auth.FirebaseAuthException catch (e) {
-      _handleException(e);
+      _handleFirebaseException(e);
     }
     return false;
   }
@@ -311,15 +311,15 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
           _tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
       return true;
     } on auth.FirebaseAuthException catch (e) {
-      _handleException(e);
+      _handleFirebaseException(e);
     } on Exception catch (e) {
       debugPrint('Something went really wrong for registration: $e');
-      DialogManager.showAlertDialog(context: context, title: 'Registration Error', content: 'See exception: $e');
+      _handleException(e, 'Registration Error!');
     }
     return false;
   }
 
-  void _handleException(final auth.FirebaseAuthException e) {
+  void _handleFirebaseException(final auth.FirebaseAuthException e) {
     Navigator.of(context).pop(); // pop the loading dialog
     const String title = 'Error';
     String content = 'Something went wrong!\n\n$e';
@@ -337,6 +337,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       content = 'Wrong password, please try again or reset the password if forgotten';
     }
     DialogManager.showAlertDialog(context: context, title: title, content: content);
+  }
+
+  void _handleException(final Exception e, final String title) {
+    DialogManager.showAlertDialog(context: context, title: title, content: 'See exception: $e');
   }
 
   // ! There's technically a chance that the user token might be expired by then

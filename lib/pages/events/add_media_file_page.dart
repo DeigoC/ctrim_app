@@ -139,7 +139,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildVideoPlayerTest() {
-    _videoPlayerController = VideoPlayerController.network(_src);
+    _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(_src));
     // video compressor - https://www.freeconvert.com/video-compressor
 
     return FutureBuilder(

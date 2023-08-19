@@ -1,9 +1,13 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/user_db_manager.dart';
+import '../../models/event/event_head.dart';
+import '../../models/user.dart';
+import '../../utility/app_context.dart';
+import '../events/view_event_page.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
   const ViewUserRolesPage({super.key, required this.selectedUser});
@@ -16,6 +20,7 @@ class ViewUserRolesPage extends StatefulWidget {
 class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   late final AppContext _appContext;
   final UserDBManager _userDBManager = UserDBManager();
+  static final DateFormat _eventDateFormat = DateFormat('d MMM');
 
   @override
   void initState() {
@@ -41,6 +46,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
           if (snap.hasData) {
             widget.selectedUser.setRoles(snap.data!);
+            _performRoleCleanupCheck();
             result = _buildBodyWithData();
           } else if (snap.hasError) {
             debugPrint('something with fetching roles: ${snap.error}');
@@ -66,23 +72,43 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     }
 
     if (roleConterPerPost.isEmpty) {
-      return const Center(child: Text('No roles assigned, yet! 😎'));
+      return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'No roles assigned, yet! 😎',
+              textAlign: TextAlign.center,
+            ),
+            TextButton.icon(
+              onPressed: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
+              label: const Text('Refresh'),
+              icon: const Icon(Icons.refresh),
+            )
+          ]);
     }
 
-    return ListView.builder(
-        itemCount: roleConterPerPost.length,
-        itemBuilder: (_, index) {
-          final postID = roleConterPerPost.keys.elementAt(index);
-          return _buildTile(postID, roleConterPerPost[postID]!);
-        });
+    return RefreshIndicator(
+      onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
+      child: ListView.builder(
+          itemCount: roleConterPerPost.length,
+          itemBuilder: (_, index) {
+            final postID = roleConterPerPost.keys.elementAt(index);
+            return _buildTile(postID, roleConterPerPost[postID]!);
+          }),
+    );
   }
 
   Widget _buildTile(final String postID, final int roleCount) {
     if (_appContext.eventHeads.any((e) => e.id == postID)) {
+      debugPrint('building with existing post head');
       return _buildTileWithData(postID, roleCount);
     }
 
     final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+    debugPrint('fetching post head');
     return FutureBuilder(
         future: eventHeadDBManager.fetchHead(postID),
         builder: (_, snap) {
@@ -102,6 +128,53 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   Widget _buildTileWithData(final String postID, final int roleCount) {
     final postHead = _appContext.eventHeads.firstWhere((e) => e.id == postID);
-    return ListTile(leading: Text('$roleCount role${roleCount == 1 ? '' : 's'}'), title: Text(postHead.title));
+    return ListTile(
+        leading: const Icon(Icons.event),
+        trailing: Text(_eventDateFormat.format(postHead.eventDate!)),
+        subtitle: Text('$roleCount role${roleCount == 1 ? '' : 's'}'),
+        onTap: () => _onPostTap(postHead),
+        title: Text(postHead.title, maxLines: 2, overflow: TextOverflow.ellipsis));
   }
+
+  // * Logic
+
+  Future<void> _refreshRoles() async {
+    if (_appContext.sharedPref.canRefreshRoles) {
+      debugPrint('Real Refreshing!');
+      final roles = await _userDBManager.fetchUserRoles(widget.selectedUser.id);
+      setState(() {
+        _appContext.sharedPref.setRoleRefreshTime();
+        widget.selectedUser.setRoles(roles);
+        _performRoleCleanupCheck();
+      });
+    } else {
+      debugPrint('Fake Refreshing');
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+
+  void _performRoleCleanupCheck() {
+    // remove roles set in the past
+    final List<String> postsToRemove = [];
+    for (final roleEntry in widget.selectedUser.roles!) {
+      final post = _appContext.getPostHead(roleEntry['postID']);
+      if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
+        postsToRemove.add(post.id);
+      }
+    }
+
+    if (postsToRemove.isNotEmpty) {
+      debugPrint('removing the following dated roles: $postsToRemove');
+      widget.selectedUser.removeRoles(postsToRemove);
+      _userDBManager.updateRoles(widget.selectedUser.id, widget.selectedUser.roles!);
+    }
+  }
+
+  void _onPostTap(EventHead head) =>
+      Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head, viewingChild: false)))
+          .then((_) {
+        setState(() {
+          // technically a user can edit a post from here! 🥲
+        });
+      });
 }
