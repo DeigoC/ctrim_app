@@ -1,3 +1,4 @@
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -95,7 +96,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
   Widget _buildWithDismissible(int index) {
     return Dismissible(
-        movementDuration: const Duration(milliseconds: 900),
+        movementDuration: const Duration(milliseconds: 800),
         direction: DismissDirection.vertical,
         dismissThresholds: const {DismissDirection.vertical: 0.4},
         onUpdate: (details) {
@@ -127,14 +128,18 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
                 height: kToolbarHeight,
                 child: AppBar(
                   backgroundColor: Colors.transparent,
+                  actions: [IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))],
                 ),
               ),
             )),
         Align(
           alignment: Alignment.bottomCenter,
-          child: ListTile(
-              title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
-              leading: const Icon(Icons.photo_library, color: Colors.white)),
+          child: Container(
+            color: Colors.black.withOpacity(0.55),
+            child: ListTile(
+                title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
+                leading: const Icon(Icons.photo_library, color: Colors.white)),
+          ),
         )
       ]);
     } else {
@@ -174,5 +179,13 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     setState(() {
       _lockScreen = !_lockScreen;
     });
+  }
+
+  void _onHelpClick() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Viewing Media',
+        content:
+            "Because of the many scrolling effects in place, please tap the screen once to toggle the 'locking' of the page.\n\nThis allows you to pinch in and out of images as well as to scrub through videos (which can be tricky!)");
   }
 }

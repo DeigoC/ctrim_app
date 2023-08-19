@@ -77,8 +77,9 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'No tasks assigned... yet! 😎',
+              'No tasks assigned... for now! 😎',
               textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
             ),
             TextButton.icon(
               onPressed: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context).showSnackBar(

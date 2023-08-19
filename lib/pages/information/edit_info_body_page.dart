@@ -55,6 +55,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     return Column(children: [
       quill.QuillToolbar.basic(
         controller: _controller,
+        showAlignmentButtons: true,
+        showSubscript: false,
+        showSuperscript: false,
+        showCodeBlock: false,
       ),
       Expanded(
           child: Padding(
