@@ -1,6 +1,8 @@
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../utility/dialog_manager.dart';
+import '../../utility/event_context.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
   const EditEventDateLocationPage({super.key, required this.eventContext});
@@ -13,14 +15,14 @@ class EditEventDateLocationPage extends StatefulWidget {
 class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy, HH:mm');
   static final DateFormat _endFormat = DateFormat('HH:mm');
-  static final List<String> _locations = ['Belfast'];
+  // static final List<String> _locations = ['Belfast'];
   late final DateTime? _originalStart, _originalEnd;
   late final bool _originalAllDay, _originalOnline;
   late final String _originalAddress, _originalLocation, _originalMapLink;
 
   late TextEditingController _tecAddress, _tecMapLink;
   String _location = 'Belfast';
-  String _webLink = 'link';
+  String _webLink = '';
   DateTime? _start, _end;
   bool _isAllDay = false, _online = false;
 
@@ -107,7 +109,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       const SizedBox(height: 8),
       ListTile(
         title: Text(_location),
-        subtitle: const Text('Location'),
+        subtitle: const Text('Location (fixed for now!)'),
         leading: const Icon(Icons.map),
         onTap: _onSelectLocationClick,
         trailing: const Icon(Icons.edit),
@@ -121,13 +123,16 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         maxLines: null,
         decoration: InputDecoration(
             hintText: _online ? 'https://...' : '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
-            label: _online ? const Text('Online Meeting Link') : const Text('Address')),
+            label: _online ? const Text('Online Meeting Link') : const Text('Address'),
+            suffixIcon:
+                _online ? IconButton(onPressed: _onOnlineMeetingLinkHelpClick, icon: const Icon(Icons.help)) : null),
       ),
     ];
 
     if (!_online) {
       children.add(TextField(
         controller: _tecMapLink,
+        maxLines: null,
         decoration: InputDecoration(
             hintText: 'https://...',
             label: const Text('Map Link'),
@@ -222,23 +227,23 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   void _onSelectLocationClick() {
-    showDialog(
-        context: context,
-        builder: (_) => Dialog(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: ListView.builder(
-                    itemCount: _locations.length,
-                    itemBuilder: (_, index) => ListTile(
-                          title: Text(_locations[index]),
-                          onTap: () {
-                            setState(() {
-                              _location = _locations[index];
-                            });
-                          },
-                        )),
-              ),
-            ));
+    // showDialog(
+    //     context: context,
+    //     builder: (_) => Dialog(
+    //           child: SizedBox(
+    //             height: MediaQuery.of(context).size.height * 0.6,
+    //             child: ListView.builder(
+    //                 itemCount: _locations.length,
+    //                 itemBuilder: (_, index) => ListTile(
+    //                       title: Text(_locations[index]),
+    //                       onTap: () {
+    //                         setState(() {
+    //                           _location = _locations[index];
+    //                         });
+    //                       },
+    //                     )),
+    //           ),
+    //         ));
   }
 
   void _onDeleteStartTimeClick() {
@@ -267,5 +272,16 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     }
   }
 
-  void _mapLinkHelpClick() {}
+  void _mapLinkHelpClick() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Map Link',
+        content:
+            'Link to open the maps app (google maps seems to be a solid pick) for the address. \n\nTo get the link from google maps, enter the address of the location then create a share link. Paste that link here.');
+  }
+
+  void _onOnlineMeetingLinkHelpClick() {
+    DialogManager.showAlertDialog(
+        context: context, title: 'Online Link', content: 'Insert the meeting link here, typically for Zoom meetings!');
+  }
 }

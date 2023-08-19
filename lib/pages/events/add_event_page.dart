@@ -50,7 +50,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () => DialogManager.discardChanges(context: context),
+      onWillPop: () => _onWillPop(),
       child:
           Scaffold(body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody())),
     );
@@ -159,10 +159,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   void _onSaveClick() {
     _confirmSave().then((confirmed) {
       if (confirmed) {
-        _showUploadingDialog();
+        DialogManager.showProgressDialog(context: context, title: 'Uploading Post');
         _savePost().then((_) {
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(); // pop the progress dialog
+          Navigator.of(context).pop(); // pop this add page
+          Navigator.of(context).pop(); // pop the template page
         });
       }
     });
@@ -220,21 +221,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       // add a log and update the head's recentdate so that people can have their parent post instance updated
       final now = DateTime.now();
       dbManager.addLogEntry(
-          log: "Created related post: '${widget.eventContext.head.title}'", uid: _appContext.currentUser.id, ts: now);
+          logMessage: "Created related post: '${widget.eventContext.head.title}'",
+          uid: _appContext.currentUser.id,
+          ts: now);
     }
-  }
-
-  void _showUploadingDialog() {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Dialog(
-              child: ListTile(
-                title: Text('Uploading Post'),
-                subtitle: Text('Please wait...'),
-                trailing: CircularProgressIndicator(),
-              ),
-            ));
   }
 
   void _notifyOfNewPost(final String newID) async {
@@ -273,26 +263,40 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
+  // TODO: insane! We need to break these mothods down
   Future<void> _notifyProgramRoleAddtitions(final String newID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
     final String title = "$currentUserName has assinged you to a role!";
 
-    for (final additionEntry in widget.eventContext.roleAdditionNotifications) {
-      final String body = "You are assigned to '${additionEntry['title']!}' for ${_tecTitle.text.trim()}";
-      final String thisUID = additionEntry['uid']!;
+    for (final additionEntry in widget.eventContext.roleAdditions.entries) {
+      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
+      final String body = "You are assigned to '${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
 
-      if (thisUID != currentUID) {
-        if (!_appContext.haveTokensForUserID(thisUID)) {
-          final List<String> tokens =
-              await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+      final List<String> tokens = [];
+      for (var thisUID in additionEntry.value) {
+        if (thisUID != currentUID) {
+          if (!_appContext.haveTokensForUserID(thisUID)) {
+            final List<String> tokens =
+                await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, tokens);
+          }
+
+          tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-
-        final tokens = _appContext.getTokensFromUserID(thisUID);
-        _cloudFunctionManager
-            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
       }
+      _cloudFunctionManager
+          .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
     }
+  }
+
+  Future<bool> _onWillPop() async {
+    final bool confirmation = await DialogManager.discardChanges(context: context);
+    if (confirmation) {
+      // reset all supplemental parts - media, program, body, head, metadata
+      // logs should remain untouched at this point
+    }
+
+    return confirmation;
   }
 }

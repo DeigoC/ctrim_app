@@ -321,22 +321,19 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   void _sortNotifications() {
     final List<String> originalList = List<String>.from(widget.programEntry['uids']);
-    final String originalRoleTitle = widget.programEntry['title'];
 
     // figure out the removed members
-    for (final originalUID in originalList) {
-      if (!_selectedUsers.contains(originalUID)) {
-        debugPrint('Sending role removal to ID: $originalUID');
-        widget.eventContext.addRoleRemovalNotification(uid: originalUID, roleTitle: originalRoleTitle);
-      }
+    final removedMembers = originalList.where((e) => !_selectedUsers.contains(e));
+    debugPrint('Sending role removal to the following: $removedMembers');
+    if (removedMembers.isNotEmpty) {
+      widget.eventContext.addRoleRemovalNotification(removedMembers, widget.programEntry['id']);
     }
 
     // figure out the new members
-    for (final currentlySelectedUID in _selectedUsers) {
-      if (!originalList.contains(currentlySelectedUID)) {
-        debugPrint('Sending role addition to ID: $currentlySelectedUID');
-        widget.eventContext.addRoleAdditionNotification(uid: currentlySelectedUID, roleTitle: _tecTitle.text.trim());
-      }
+    final newMembers = _selectedUsers.where((e) => !originalList.contains(e));
+    debugPrint('Sending role addition to the following: $newMembers');
+    if (newMembers.isNotEmpty) {
+      widget.eventContext.addRoleAdditionNotification(newMembers, widget.programEntry['id']);
     }
   }
 
@@ -346,12 +343,11 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
             context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?')
         .then((confirmation) {
       if (confirmation) {
-        for (final uid in widget.programEntry['uids'] as List<String>) {
-          widget.eventContext.removeRoleAdditionNotification(uid: uid, roleTitle: widget.programEntry['title']);
-          widget.eventContext.addRoleRemovalNotification(uid: uid, roleTitle: widget.programEntry['title']);
-        }
+        widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
+        widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
+        widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
 
-        widget.eventContext.removeProgram(widget.programEntry['uids'], widget.programEntry['title']);
+        widget.eventContext.program.removeRole(widget.programEntry['id']);
         widget.eventContext.allowSavingOfTheEdit();
 
         _isSaved = true;

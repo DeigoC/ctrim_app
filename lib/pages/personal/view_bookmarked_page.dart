@@ -28,7 +28,7 @@ class _ViewBookmarksPageState extends State<ViewBookmarksPage> {
   Widget _buildBody() {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final List<EventHead> bookedmarked =
-          appContext.eventHeads.where((head) => appContext.dataManager.bookmarkedPosts.contains(head.id)).toList();
+          appContext.eventHeads.where((head) => appContext.sharedPref.bookmarkedPosts.contains(head.id)).toList();
       return CustomScrollView(key: const PageStorageKey<String>('events_page'), slivers: [
         SliverAppBar(
           title: const Text('Bookmarked'),

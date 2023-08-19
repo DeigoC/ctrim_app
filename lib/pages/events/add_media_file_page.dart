@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
 
 class AddMediaFilePage extends StatefulWidget {
@@ -13,10 +17,11 @@ class AddMediaFilePage extends StatefulWidget {
 
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController();
-  final RegExp _driveRegExp = RegExp(r"/d/([a-zA-Z0-9_-]+)");
+  final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
   VideoPlayerController? _videoPlayerController;
-  bool _canSave = false, _isSaved = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
+  bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
+  File? _tmpFile;
 
   // * Test data
   // Image: https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg
@@ -35,14 +40,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
-        child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Add media'),
-              actions: [IconButton(onPressed: _showHelp, icon: const Icon(Icons.help))],
-            ),
-            body: _buildBody()));
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Add media'),
+          actions: [IconButton(onPressed: _showHelp, icon: const Icon(Icons.help))],
+        ),
+        body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -50,12 +53,22 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       padding: const EdgeInsets.all(8),
       children: [
         _buildMediaTestSlot(),
+        const SizedBox(height: 16),
         TextField(
           controller: _tecSrc,
           onChanged: _onSrcTextChange,
-          decoration: const InputDecoration(hintText: 'Web link e.g. ', label: Text('Media web source')),
+          decoration: InputDecoration(
+              hintText: 'Web link e.g. ',
+              label: const Text('Media web source'),
+              suffixIcon: IconButton(onPressed: _onClearMediaSrc, icon: const Icon(Icons.clear))),
         ),
-        SwitchListTile(value: _isVideo, onChanged: _onIsVideoChange, title: const Text('Video File')),
+        const SizedBox(height: 16),
+        SwitchListTile(
+            value: _isVideo,
+            onChanged: _onIsVideoChange,
+            subtitle: const Text('Large videos can take a while to load!'),
+            title: const Text('Video File')),
+        const Divider(),
         _buildTestSrcButton(),
         _buildSaveButton(),
       ],
@@ -84,31 +97,114 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildImageTest() {
-    _src = _sanitiseSrc();
-    return Image.network(_src, errorBuilder: (_, __, ___) {
-      _onSrcTestError();
-      return const Center(child: Text('Image did not work! 😢'));
-    });
-  }
-
-  Widget _buildVideoPlayerTest() {
-    _src = _sanitiseSrc();
-    _videoPlayerController = VideoPlayerController.network(_src);
+    if (_tmpFile != null && _canSave) {
+      return Image.network(_src);
+    }
 
     return FutureBuilder(
-        future: _videoPlayerController!.initialize().onError((error, stackTrace) {
-          debugPrint('On error of the initialise');
-          _onSrcTestError();
-        }),
+        future: _fetchFile(true),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
-          if (!snap.hasData || snap.hasData) {
-            result = _buildVideoPlayer();
+          if (snap.hasData) {
+            _canTestSrc = true;
+            _tmpFile = snap.data!;
+            final size = _tmpFile!.lengthSync();
+            final double sizeInKb = size / 1024;
+
+            if (sizeInKb <= 100) {
+              debugPrint('image size is good: $sizeInKb KB');
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  _canSave = true;
+                });
+              });
+            } else {
+              _canSave = false;
+              _canTestSrc = true;
+              result = Container(
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is 100 KB, so please compress it or use another image!',
+                          textAlign: TextAlign.center),
+                      TextButton(
+                          onPressed: () => launchUrlString('https://imagecompressor.com'),
+                          child: const Text('Online Image Compressor'))
+                    ],
+                  ));
+            }
           } else if (snap.hasError) {
-            // can we ever get here?
-            debugPrint('Something wrong with the video fetching: ${snap.error}');
-            result = const Center(child: Text('Video did not work! 😢'));
+            _canTestSrc = true;
+            debugPrint('something with fetching the file: ${snap.error}');
+            result = const Center(child: Text('Something went wrong'));
+          }
+
+          return result;
+        });
+  }
+
+  Widget _buildVideoPlayerTest() {
+    if (_tmpFile != null && _canSave) {
+      return _buildVideoPlayer();
+    }
+
+    return FutureBuilder(
+        future: _fetchFile(false),
+        builder: (_, snap) {
+          Widget result = const Padding(
+            padding: EdgeInsets.only(top: 32.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+
+          if (snap.hasData) {
+            _canTestSrc = true;
+            _tmpFile = snap.data!;
+            final size = _tmpFile!.lengthSync();
+            final double sizeInMb = size / (1024 * 1024);
+
+            if (sizeInMb <= 128) {
+              debugPrint('video size is good: $sizeInMb MB');
+              _videoPlayerController = VideoPlayerController.file(_tmpFile!);
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                _videoPlayerController!.initialize().then((_) {
+                  setState(() {
+                    _canSave = true;
+                    _videoPlayerController!.play();
+                  });
+                });
+              });
+
+              // we don't actually build a widget here, continue the spinner until the video is ready
+            } else {
+              _canTestSrc = true;
+              _canSave = false;
+              result = Container(
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'This file is too large (${sizeInMb.toStringAsFixed(2)} KB)! Maximum video file size is 128 MB, so please compress it!',
+                          textAlign: TextAlign.center),
+                      TextButton(
+                          onPressed: () => launchUrlString('https://www.freeconvert.com/video-compressor'),
+                          child: const Text('Online Video Compressor'))
+                    ],
+                  ));
+            }
+          } else if (snap.hasError) {
+            _canTestSrc = true;
+            debugPrint('something with fetching the file: ${snap.error}');
+            result = const Center(child: Text('Something went wrong!'));
           }
 
           return result;
@@ -120,7 +216,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       debugPrint('We are initialised!');
       _videoPlayerController!.play();
       _videoPlayerController!.setLooping(true);
-      _videoPlayerController!.value.aspectRatio;
     }
 
     return AspectRatio(
@@ -129,12 +224,34 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   // * Logic
 
+  Future<File> _fetchFile(final bool isImage) async {
+    final dir = await getTemporaryDirectory();
+    _src = _sanitiseSrc();
+    debugPrint('src is $_src');
+    final String type = isImage ? '.png' : '.mp4';
+    final String tmpPath = '${dir.path}/tmp$type';
+    final File tmp = File(tmpPath);
+    if (await tmp.exists()) {
+      debugPrint('this file exists and will now be deleted?');
+      await tmp.delete();
+    }
+
+    final response = await http.get(Uri.parse(_src));
+    return await tmp.writeAsBytes(response.bodyBytes);
+  }
+
+  void _onClearMediaSrc() {
+    setState(() {
+      _canTestSrc = true;
+      _tecSrc.clear();
+    });
+  }
+
   void _onSaveClick() {
     DialogManager.showConfirmationDialog(context: context, title: 'Save Media', content: 'Are you sure?')
         .then((confirmation) {
       if (confirmation) {
         widget.eventContext.media.addMediaFile({'title': '', 'src': _src, 'type': _isVideo ? 'vid' : 'img'});
-        _isSaved = true;
         Navigator.of(context).pop();
       }
     });
@@ -146,8 +263,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         _videoPlayerController!.pause();
         _videoPlayerController = null;
       }
-      _canSave = true;
+      _src = '';
+      _canSave = false;
+      _tmpFile = null;
       _isTesting = true;
+      _canTestSrc = false;
     });
   }
 
@@ -169,20 +289,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     });
   }
 
-  void _onSrcTestError() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Error',
-          content:
-              'That link does not work. Make sure to set file as video if you are expecting one, otherwise please check your link again.');
-      setState(() {
-        _canSave = false;
-        _isTesting = false;
-      });
-    });
-  }
-
   String _sanitiseSrc() {
     RegExpMatch? match = _driveRegExp.firstMatch(_tecSrc.text.trim());
     if (match != null) {
@@ -198,6 +304,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         context: context,
         title: 'Adding Media Files',
         content:
-            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here');
+            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here\n\nMax image size is 100 KB and 128 MB for videos');
   }
 }

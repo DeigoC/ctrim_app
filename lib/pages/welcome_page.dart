@@ -1,21 +1,21 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/auth_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
-import 'package:ctrim_app/pages/home_page.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
+import '../firebase/auth_manager.dart';
+import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
+import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../models/user.dart';
+import '../utility/app_context.dart';
+import '../utility/dialog_manager.dart';
 import '../utility/local_data_manager.dart';
+import 'home_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -116,8 +116,6 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                 child: TextButton(onPressed: _onForgotEmailClick, child: const Text('Forgot Password'))),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loginClick, child: const Text('Login')),
-            ElevatedButton(onPressed: _testButton, child: const Text('Who Am I?')),
-            ElevatedButton(onPressed: _performWriteTest, child: const Text('Write Test')),
           ],
         ),
       ),
@@ -196,19 +194,6 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   }
 
   // * LOGIC
-  void _testButton() {
-    _authManager.whoAmI();
-  }
-
-  void _performWriteTest() {
-    // EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    // everyoneDBManager.bookmarksWriteTest([DateTime.now().toString()])
-    //     .then((_) => debugPrint('bookmark success!'));
-    // everyoneDBManager
-    //     .userWriteTest(false)
-    //     .then((_) => debugPrint('isUser success!'));
-  }
-
   Future<void> _loginClick() async {
     if (_tecLoginEmail.text.trim().isEmpty || _tecLoginPassword.text.isEmpty) {
       DialogManager.showAlertDialog(
@@ -241,10 +226,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
         return true;
       }
     } on auth.FirebaseAuthException catch (e) {
-      _handleException(e);
+      _handleFirebaseException(e);
     } on Exception catch (e) {
       debugPrint('Something went really wrong for login: $e');
-      DialogManager.showAlertDialog(context: context, title: 'Login Error', content: 'See exception: $e');
+      _handleException(e, 'Login Error!');
     }
     return false;
   }
@@ -285,7 +270,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
       return true;
     } on auth.FirebaseAuthException catch (e) {
-      _handleException(e);
+      _handleFirebaseException(e);
     }
     return false;
   }
@@ -326,15 +311,15 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
           _tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
       return true;
     } on auth.FirebaseAuthException catch (e) {
-      _handleException(e);
+      _handleFirebaseException(e);
     } on Exception catch (e) {
       debugPrint('Something went really wrong for registration: $e');
-      DialogManager.showAlertDialog(context: context, title: 'Registration Error', content: 'See exception: $e');
+      _handleException(e, 'Registration Error!');
     }
     return false;
   }
 
-  void _handleException(final auth.FirebaseAuthException e) {
+  void _handleFirebaseException(final auth.FirebaseAuthException e) {
     Navigator.of(context).pop(); // pop the loading dialog
     const String title = 'Error';
     String content = 'Something went wrong!\n\n$e';
@@ -352,6 +337,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
       content = 'Wrong password, please try again or reset the password if forgotten';
     }
     DialogManager.showAlertDialog(context: context, title: title, content: content);
+  }
+
+  void _handleException(final Exception e, final String title) {
+    DialogManager.showAlertDialog(context: context, title: title, content: 'See exception: $e');
   }
 
   // ! There's technically a chance that the user token might be expired by then
@@ -382,7 +371,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
-      _appContext.dataManager.setLoggedOut(false);
+      _appContext.sharedPref.setLoggedOut(false);
       Navigator.of(context).pop(); // pop the progress dialog
       Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
       Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
@@ -402,7 +391,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final token = await messagingManager.getToken();
     if (token != null) {
       debugPrint('token to save is $token');
-      _appContext.dataManager.saveFCMToken(token);
+      _appContext.sharedPref.saveFCMToken(token);
       _everyoneDBManager.addTokenForAuthID(
           authID: _authManager.currentAuthUID, token: token, platform: Platform.operatingSystem);
     }
@@ -413,9 +402,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final LocalDataManager dataManager = LocalDataManager();
     final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
-    final UserDBManager userDBManager = UserDBManager();
 
-    final List<User> allUsers = await userDBManager.fetchAllUsers();
+    final List<User> allUsers = await _userDBManager.fetchAllUsers();
     final String currentID = await trackerDBManager.getCurrentUserID();
 
     String allUsersContent = '$currentID-${packageInfo.version}';
@@ -441,10 +429,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     if (fromRegistration) {
       debugPrint(
           'Creds to save are: ${_tecRegistrationEmail.text.trim()} with password ${_tecRegistrationPassword.text}');
-      _appContext.dataManager.saveCreds(_tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
+      _appContext.sharedPref.saveCreds(_tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
     } else {
       debugPrint('Creds to save are: ${_tecLoginEmail.text.trim()} with password ${_tecLoginPassword.text}');
-      _appContext.dataManager.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
+      _appContext.sharedPref.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
     }
   }
 }

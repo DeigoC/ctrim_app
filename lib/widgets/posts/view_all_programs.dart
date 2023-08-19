@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../models/user.dart';
 import '../../pages/events/add_program_role_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
-import '../../pages/events/edit_program_page.dart';
+import '../../pages/events/edit_program_role_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import '../user_avatar.dart';
@@ -39,7 +39,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   @override
   Widget build(BuildContext context) {
-    widget.eventContext.program.orderProgramsByStartDate();
+    widget.eventContext.program.orderProgramsByStartTime();
     if (widget.eventContext.head.eventDate != null) {
       return _buildBodyWithEventDate();
     }
@@ -52,10 +52,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           child: CustomScrollView(slivers: [
         SliverToBoxAdapter(child: _buildEventDateSelector()),
         SliverList.separated(
-          itemCount: widget.eventContext.allPrograms.length,
+          itemCount: widget.eventContext.program.roles.length,
           itemBuilder: (_, index) {
             return ProgramTile(
-              programEntry: widget.eventContext.allPrograms[index],
+              programEntry: widget.eventContext.program.roles[index],
               onTap: (_) => _showProgramDialog(_),
             );
           },
@@ -98,7 +98,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       ListTile(
           title: Text(dateStr),
           subtitle: timeStr.isNotEmpty ? Text(timeStr) : null,
-          leading: const Icon(Icons.calendar_today)),
+          leading: const Icon(Icons.calendar_month)),
       ListTile(
           title: Text(widget.eventContext.head.location),
           subtitle: Text(
@@ -194,13 +194,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     if (widget.eventContext.program.online) {
       return TextButton(onPressed: _onClickLocationTrailingIcon, child: const Text('Join'));
     }
-    return IconButton(onPressed: _onClickLocationTrailingIcon, icon: const Icon(Icons.location_on));
+    return TextButton(onPressed: _onClickLocationTrailingIcon, child: const Text('Maps'));
   }
 
   // * LOGIC
   void _openAddProgramPage() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) {
+      widget.eventContext.program.orderProgramsByStartTime();
       setState(() {
         // rebuild in case of update
       });
@@ -273,6 +274,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     Navigator.push(
             context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
         .then((_) {
+      widget.eventContext.program.orderProgramsByStartTime();
       setState(() {});
       if (widget.eventContext.canSaveTheEditing) {
         widget.onProgramChanged();

@@ -1,20 +1,23 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventProgram {
-  // * a role is made of 6 fields
+  // * a role is made of 7 fields
   // uids - list of users assigned by their IDs
   // title - short title of the role
   // detail (optional) - more text to describe the role
   // start - datetime/timestamp of starting time
   // end - datetime/timestamp of finishing time
   // for_guests - bool to signigfy whether to show to guests or not
-  // priority - int to signfy it's importance (higher numbers for significance)
+  // id - DateTime creation (DateTime.now().millisecondsSinceEpoch) int of the role
   // ! NOTE: start is optional, but if it exists then end must also be a thing
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
   DateTime? _finishTime;
   bool _allDay = false, _online = false;
-  String _address = '', _mapLink = '';
+  String _address = '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
+      _mapLink = 'https://goo.gl/maps/ns21zf5F9KPxeKxn6';
 
   EventProgram();
 
@@ -33,10 +36,10 @@ class EventProgram {
         'uids': List<String>.from(entry['uids']),
         'detail': entry['detail'],
         'title': entry['title'],
-        'start': (entry['start'] as Timestamp).toDate(),
-        'end': (entry['end'] as Timestamp).toDate(),
+        'start': entry['start'] != null ? (entry['start'] as Timestamp).toDate() : null,
+        'end': entry['end'] != null ? (entry['end'] as Timestamp).toDate() : null,
         'for_guests': entry['for_guests'],
-        'priority': entry['priority'],
+        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch
       });
     }
   }
@@ -62,14 +65,14 @@ class EventProgram {
         'start': Timestamp.fromDate(entry['start']),
         'end': Timestamp.fromDate(entry['end']),
         'for_guests': entry['for_guests'],
-        'priority': entry['priority'],
+        'id': entry['id'],
       });
     }
 
     return result;
   }
 
-  List<Map<String, dynamic>> get roles => _roles; // TODO make this unmodifiable
+  List<Map<String, dynamic>> get roles => UnmodifiableListView(_roles);
   bool get allDay => _allDay;
   bool get online => _online;
   String get address => _address;
@@ -81,16 +84,30 @@ class EventProgram {
   void setOnline(final bool state) => _online = state;
   void setAddress(final String address) => _address = address;
   void setMapLink(final String newMapLink) => _mapLink = newMapLink;
-  void orderProgramsByStartDate() =>
+  void orderProgramsByStartTime() =>
       _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
 
-  void addRole(final Map<String, dynamic> role) {
-    _roles.add(role);
+  void addRole(
+      {required List<String> uids,
+      required String title,
+      required DateTime? start,
+      required DateTime? end,
+      required int id,
+      bool forGuests = true,
+      int priority = 1,
+      String detail = ''}) {
+    _roles.add(<String, dynamic>{
+      'uids': uids,
+      'detail': detail,
+      'title': title,
+      'start': start,
+      'end': end,
+      'for_guests': forGuests,
+      'id': id
+    });
   }
 
-  void removeRole(final List<String> uids, final String title) {
-    _roles.removeWhere((entry) => entry['title'] == title && entry['uids'] == uids);
-  }
+  void removeRole(final int id) => _roles.removeWhere((entry) => entry['id'] == id);
 
   @override
   String toString() {
