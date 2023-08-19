@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _logUserToApp(final String authID) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final String token = appContext.dataManager.fcmToken;
+    final String token = appContext.sharedPref.fcmToken;
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
 
@@ -85,9 +85,9 @@ class _LoginPageState extends State<LoginPage> {
     everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
     // }
 
-    appContext.dataManager.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
+    appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);
-    appContext.dataManager.setLoggedOut(false);
+    appContext.sharedPref.setLoggedOut(false);
     _loggedIn = true;
   }
 

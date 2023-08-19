@@ -114,9 +114,9 @@ class EventSupplementalDBManager {
     await _colRef.doc('logs').set(log.toJson());
   }
 
-  Future<void> addLogEntry({required String log, required String uid, required DateTime ts}) async {
+  Future<void> addLogEntry({required String logMessage, required String uid, required DateTime ts}) async {
     final log = await fetchLog();
-    log.addLog(Map<String, dynamic>.from({'log': log, 'uid': uid, 'ts': ts}));
+    log.addLog(Map<String, dynamic>.from({'log': logMessage, 'uid': uid, 'ts': ts}));
     await updateLog(log);
   }
 }

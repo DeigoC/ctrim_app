@@ -1,6 +1,9 @@
+import 'dart:collection';
+
 class User {
   late String _forename, _surname, _authID, _imgSrc, _id, _location;
   late bool _isAreaAdmin, _isLeader;
+  List<Map<String, dynamic>>? _roles;
 
   User({
     required String id,
@@ -44,12 +47,15 @@ class User {
     };
   }
 
-  void setName(String? forname, String? surname) {
-    if (forname != null) _forename = forname;
-    if (surname != null) _surname = surname;
+  void setImgSrc(final String newImgSrc) => _imgSrc = newImgSrc;
+
+  void setRoles(final List<Map<String, dynamic>> newRoles) {
+    _roles = newRoles;
   }
 
-  void setImgSrc(String newImgSrc) => _imgSrc = newImgSrc;
+  void removeRoles(final List<String> postIDs) {
+    _roles!.removeWhere((e) => postIDs.contains(e['postID']));
+  }
 
   String get id => _id;
   String get forname => _forename;
@@ -62,4 +68,5 @@ class User {
   String get authID => _authID;
   bool get isAreaAdmin => _isAreaAdmin;
   bool get isLeader => _isLeader;
+  List<Map<String, dynamic>>? get roles => _roles == null ? null : UnmodifiableListView(_roles!);
 }

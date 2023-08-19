@@ -50,6 +50,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
           showSubscript: false,
           showSuperscript: false,
           showCodeBlock: false,
+          multiRowsDisplay: false,
         ),
         Expanded(
           child: Padding(

@@ -14,7 +14,9 @@ class AppSharedPreferences {
       _fetchUserImgs = 'fetchUserImages',
       _lastPostRefresh = 'lastPostRefresh',
       _phoneToken = 'phoneToken',
-      _loggedOut = 'loggedOut';
+      _loggedOut = 'loggedOut',
+      _subscribedToBelfast = 'subscribedToBelfast',
+      _lastRoleRefresh = 'lastRoleRefresh';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -42,10 +44,13 @@ class AppSharedPreferences {
   void nowOpened() => _pref.setBool(_isFirstOpen, false);
 
   String get fcmToken => _pref.getString(_fcmToken) ?? '';
-  void saveFCMToken(String thisToken) => _pref.setString(_fcmToken, thisToken);
+  void saveFCMToken(final String thisToken) => _pref.setString(_fcmToken, thisToken);
 
   bool get loggedOut => _pref.getBool(_loggedOut) ?? true;
-  void setLoggedOut(bool state) => _pref.setBool(_loggedOut, state);
+  void setLoggedOut(final bool state) => _pref.setBool(_loggedOut, state);
+
+  bool get subscribedToBelfast => _pref.getBool(_subscribedToBelfast) ?? true;
+  void setSubscribedToBelfast(final bool newState) => _pref.setBool(_subscribedToBelfast, newState);
 
   // * Post related
   List<String> get bookmarkedPosts => UnmodifiableListView(_pref.getStringList(_bookmarkedPosts) ?? List.empty());
@@ -68,6 +73,11 @@ class AppSharedPreferences {
       ? true
       : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >= 2;
   void setPostRefreshTime() => _pref.setInt(_lastPostRefresh, DateTime.now().millisecondsSinceEpoch);
+
+  bool get canRefreshRoles => _pref.getInt(_lastRoleRefresh) == null
+      ? true
+      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastRoleRefresh)!)).inMinutes >= 2;
+  void setRoleRefreshTime() => _pref.setInt(_lastRoleRefresh, DateTime.now().millisecondsSinceEpoch);
 
   // * Local data related
   bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;

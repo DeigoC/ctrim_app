@@ -39,6 +39,6 @@ class EventLog {
   }
 
   List<Map<String, dynamic>> get logs => UnmodifiableListView(_logs);
-  void addLog(Map<String, dynamic> log) => _logs.insert(0, log);
+  void addLog(Map<String, dynamic> log) => _logs.insert(0, log); // TODO make this more fixed
   void orderLogsBackwards() => _logs.sort(((a, b) => (b['ts']! as DateTime).compareTo((a['ts']! as DateTime))));
 }

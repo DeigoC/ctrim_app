@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -12,7 +13,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
-import 'events/add_event_page.dart';
+import 'events/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
 import 'information/teachings/bible_reading_page.dart';
@@ -37,8 +38,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _informationTabController = TabController(length: 3, vsync: this);
-    _appContext.dataManager.setPostRefreshTime();
+    _informationTabController = TabController(length: 5, vsync: this);
+    _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
 
     if (!kDebugMode) {
@@ -49,9 +50,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       });
     }
 
-    if (_appContext.dataManager.shouldFetchUserImages) {
+    if (_appContext.sharedPref.shouldFetchUserImages) {
       _performLocalUserImgCleanup();
-      _appContext.dataManager.justFetchedUserImages();
+      _appContext.sharedPref.justFetchedUserImages();
     }
 
     _setupCloudOnMessage();
@@ -109,9 +110,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           onPressed: () {
             final String uid = _appContext.currentUser.id;
             Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => AddEventPage(eventContext: EventContext.adding(currentUserID: uid)))).then((_) {
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => SelectPostTemplatePage(eventContext: EventContext.adding(currentUserID: uid))))
+                .then((_) {
               setState(() {});
             });
           },
@@ -139,7 +141,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (appContext.dataManager.isFirstOpen) {
+    if (appContext.sharedPref.isFirstOpen) {
       final MessagingManager messagingManager = MessagingManager();
       await showDialog(
           context: context,
@@ -169,15 +171,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     child: const Text('Ok', style: TextStyle(fontSize: 16)))))
                       ])))));
 
-      final token = await messagingManager.requestPermissionAndToken();
+      final String? token = await messagingManager.requestPermissionAndToken().then((token) {
+        showDialog(context: context, builder: (_) => const TimedButtonDialog());
+        return token;
+      });
 
       // we don't need to perfrom the token grabbing here anymore
       if (token != null) {
         debugPrint('Token to save is $token');
-        appContext.dataManager.saveFCMToken(token);
+        appContext.sharedPref.saveFCMToken(token);
       }
       messagingManager.subscribeToCTRIMBelfast();
-      appContext.dataManager.nowOpened();
+      appContext.sharedPref.nowOpened();
     }
   }
 
@@ -226,7 +231,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
-    if (!_appContext.dataManager.loggedOut && message.data.containsKey('PostID')) {
+    if (!_appContext.sharedPref.loggedOut && message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final bool hasHead = _appContext.eventHeads.any((element) => element.id.compareTo(postID) == 0);
 
@@ -246,7 +251,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {
     // ! this one makes sense to have an opening dialog
-    final bool openPage = _appContext.dataManager.loggedOut ? false : await _showFCMMessage(message, true);
+    final bool openPage = _appContext.sharedPref.loggedOut ? false : await _showFCMMessage(message, true);
 
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
@@ -261,7 +266,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessageOpenedBackground(final RemoteMessage message) async {
     // ! no need for a dialog, just open the page no matter where the user may be
-    final bool hasLoggedOut = _appContext.dataManager.loggedOut;
+    final bool hasLoggedOut = _appContext.sharedPref.loggedOut;
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
       final head = await _reloadEventHead(postID);
