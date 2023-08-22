@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -9,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
@@ -448,12 +448,11 @@ class _EventLogDialogState extends State<EventLogDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _tecLog,
-                decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Update Log')),
-                maxLength: 128,
-                maxLines: null,
-                onChanged: _onTextChange,
-              ),
+                  controller: _tecLog,
+                  decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Update Log')),
+                  maxLength: 128,
+                  maxLines: null,
+                  onChanged: _onTextChange),
               const SizedBox(height: 8),
               ElevatedButton.icon(
                   onPressed: _canSave ? _saveClick : null,
@@ -496,8 +495,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
         DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
         final appContext = Provider.of<AppContext>(context, listen: false);
         _performUpdate(appContext.currentUser.id).then((_) {
-          widget.eventContext.resetSavingOfTheEdit();
           appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+          widget.eventContext.resetSavingOfTheEdit();
           widget.updatePage();
           Navigator.of(context).pop();
           Navigator.of(context).pop();
@@ -516,11 +515,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
     localDataManager.writePostData(widget.eventContext.id, content);
 
     if (widget.eventContext.head.eventDate != null) {
-      await _sendRoleAdditionNotiifications();
-      await _sendRoleRemovalNotiifications();
+      await _sortRoleAdditions();
+      await _sendRoleRemovals();
     }
     await _sendContributorAdditionNotificaitons();
     await _sendContributorRemovalNotificaitons();
+    await _updateAllUserPostInvolvement();
     _sendPostNotification();
   }
 
@@ -588,7 +588,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
     return deviceTokens;
   }
 
-  Future<void> _sendRoleAdditionNotiifications() async {
+  // sends notifications and handles the user roles document for addition of role
+  Future<void> _sortRoleAdditions() async {
     final String title = "$_currentUserName has assinged you to a role!";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
@@ -606,14 +607,15 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _updateUserRoleAdditions(thisUID, additionEntry.key);
+        _userDBManager.addUserRole(thisUID, widget.eventContext.id, additionEntry.key);
       }
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
     }
   }
 
-  Future<void> _sendRoleRemovalNotiifications() async {
+  // sends notifications and handles the user roles document for removal of role
+  Future<void> _sendRoleRemovals() async {
     final String title = "$_currentUserName has removed you from a role";
 
     debugPrint('on the removals: the entries look like:${widget.eventContext.roleRemovalals.entries}');
@@ -632,7 +634,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _removeUserRole(thisUID, removalEntry.key);
+        _userDBManager.removeUserRole(thisUID, removalEntry.key);
       }
       await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -683,16 +685,22 @@ class _EventLogDialogState extends State<EventLogDialog> {
     }
   }
 
-  Future<void> _updateUserRoleAdditions(final String uid, final int roleID) async {
-    final roles = await _userDBManager.fetchUserRoles(uid);
-    roles.add({'id': roleID, 'postID': widget.eventContext.id});
-    await _userDBManager.updateRoles(uid, roles);
-  }
+  Future<void> _updateAllUserPostInvolvement() async {
+    final String postID = widget.eventContext.id;
+    final UserDBManager userDBManager = UserDBManager();
 
-  Future<void> _removeUserRole(final String uid, final int roleID) async {
-    final roles = await _userDBManager.fetchUserRoles(uid);
-    roles.removeWhere((e) => e['id'] == roleID);
-    await _userDBManager.updateRoles(uid, roles);
+    // first up, the author
+    userDBManager.addPostToUser(_appContext.currentUser.id, postID, 'author');
+
+    // then add the new contributors
+    for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
+      userDBManager.addPostToUser(contributorID, postID, 'contributor');
+    }
+
+    // then remove the old contributors
+    for (final String contributorID in widget.eventContext.contributorRemovalUIDs) {
+      userDBManager.removePostFromUser(contributorID, postID);
+    }
   }
 
   Map<String, String> get _notificationdata => {'PostID': widget.eventContext.id};

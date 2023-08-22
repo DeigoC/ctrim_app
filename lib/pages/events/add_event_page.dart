@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -205,6 +206,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
     _notifyContributorAdditions(newID);
     _notifyProgramRoleAddtitions(newID);
+    _updateAllUserPostInvolvement(newID);
     _notifyOfNewPost(newID);
   }
 
@@ -287,6 +289,18 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       }
       _cloudFunctionManager
           .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
+    }
+  }
+
+  Future<void> _updateAllUserPostInvolvement(final String newPostID) async {
+    final UserDBManager userDBManager = UserDBManager();
+
+    // first up, the author
+    userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
+
+    // then all the contributors
+    for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
+      userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
     }
   }
 

@@ -159,21 +159,22 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     }
   }
 
+  // ! Let's leave this alone for now and see if we change our mind about cleaning up or keeping this data
   void _performRoleCleanupCheck() {
     // remove roles set in the past
-    final List<String> postsToRemove = [];
-    for (final roleEntry in widget.selectedUser.roles!) {
-      final post = _appContext.getPostHead(roleEntry['postID']);
-      if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
-        postsToRemove.add(post.id);
-      }
-    }
+    // final List<String> postsToRemove = [];
+    // for (final roleEntry in widget.selectedUser.roles!) {
+    //   final post = _appContext.getPostHead(roleEntry['postID']);
+    //   if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
+    //     postsToRemove.add(post.id);
+    //   }
+    // }
 
-    if (postsToRemove.isNotEmpty) {
-      debugPrint('removing the following dated roles: $postsToRemove');
-      widget.selectedUser.removeRoles(postsToRemove);
-      _userDBManager.updateRoles(widget.selectedUser.id, widget.selectedUser.roles!);
-    }
+    // if (postsToRemove.isNotEmpty) {
+    //   debugPrint('removing the following dated roles: $postsToRemove');
+    //   widget.selectedUser.removeRoles(postsToRemove);
+    //   _userDBManager.updateRoles(widget.selectedUser.id, widget.selectedUser.roles!);
+    // }
   }
 
   void _onPostTap(EventHead head) =>
