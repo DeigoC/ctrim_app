@@ -38,11 +38,10 @@ class ProgramTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) => SizeTransition(
-        sizeFactor: animation,
-        child: child,
-      ),
+      duration: const Duration(milliseconds: 400),
+      switchInCurve: Curves.easeIn,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) => SizeTransition(sizeFactor: animation, child: child),
       child: selected ? _buildExtendedView(context) : _buildTile(context),
     );
   }

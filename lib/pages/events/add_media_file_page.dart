@@ -58,7 +58,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           controller: _tecSrc,
           onChanged: _onSrcTextChange,
           decoration: InputDecoration(
-              hintText: 'Web link e.g. ',
+              hintText: 'https://...',
               label: const Text('Media web source'),
               suffixIcon: IconButton(onPressed: _onClearMediaSrc, icon: const Icon(Icons.clear))),
         ),

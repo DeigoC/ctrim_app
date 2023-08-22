@@ -176,7 +176,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     return [
       SliverAppBar(
-          expandedHeight: MediaQuery.of(context).size.height * 0.33,
+          expandedHeight: _eventContext.head.getKeyGraphic() != null ? MediaQuery.of(context).size.height * 0.33 : null,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
           actions: _buildSaveButton()),
       SliverList(
@@ -231,19 +231,22 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   List<Widget>? _buildSaveButton() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
-        Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: ElevatedButton.icon(
-              style: ButtonStyle(
-                  backgroundColor: _eventContext.canSaveTheEditing
-                      ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-                      : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-              onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
-              icon: const Icon(Icons.save),
-              label: const Text('Update')),
-        ),
+        ElevatedButton.icon(
+            style: ButtonStyle(
+                backgroundColor: _eventContext.canSaveTheEditing
+                    ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+                    : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+            onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
+            icon: Icon(
+              Icons.save,
+              color: _eventContext.canSaveTheEditing ? Colors.white : null,
+            ),
+            label: Text(
+              'Update',
+              style: _eventContext.canSaveTheEditing ? const TextStyle(color: Colors.white) : null,
+            )),
         const SizedBox(width: 8)
       ];
     }
@@ -457,8 +460,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
                   style: ButtonStyle(
                       backgroundColor:
                           _canSave ? MaterialStateProperty.all(Colors.green) : MaterialStateProperty.all(Colors.grey)),
-                  icon: const Icon(Icons.cloud_upload),
-                  label: const Text('Save!')),
+                  icon: const Icon(Icons.cloud_upload, color: Colors.white),
+                  label: const Text('Save!', style: TextStyle(color: Colors.white))),
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))
             ],
           ),

@@ -1,4 +1,3 @@
-import 'package:ctrim_app/pages/personal/attending_sunday_info_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -8,11 +7,11 @@ import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../utility/app_context.dart';
 import '../widgets/user_avatar.dart';
+import 'personal/attending_sunday_info_page.dart';
 import 'personal/current_user_page.dart';
 import 'personal/login_page.dart';
 import 'personal/notification_management_page.dart';
 import 'personal/view_all_users_page.dart';
-import 'personal/view_bookmarked_page.dart';
 import 'personal/view_user_roles_page.dart';
 
 class PersonalHome extends StatefulWidget {
@@ -33,8 +32,6 @@ class _PersonalHomeState extends State<PersonalHome> {
     // ? this may not be needed cause of the Consumer at the page level (home_page)
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final List<Widget> children = [
-        ListTile(
-            leading: const Icon(Icons.bookmarks), title: const Text('Bookmarks'), onTap: _onViewBookmarkedPageClick),
         ListTile(
           leading: const Icon(Icons.church),
           title: const Text('Attending Sunday Service'),
@@ -127,10 +124,6 @@ class _PersonalHomeState extends State<PersonalHome> {
     widget.appContext.rebuildPlease();
     widget.appContext.sharedPref.setLoggedOut(true);
     await authManager.signOut();
-  }
-
-  void _onViewBookmarkedPageClick() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
   }
 
   void _onViewTasksClick() {

@@ -103,6 +103,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         subtitle: const Text('Finish Time'),
         onTap: _onSelectEndTimeClick,
       ),
+      const Divider(thickness: 1),
+      const SizedBox(height: 8),
       SwitchListTile(value: _isAllDay, onChanged: _onAllDaySwitchTap, title: const Text('All Day')),
       const SizedBox(height: 8),
       const Divider(thickness: 1),

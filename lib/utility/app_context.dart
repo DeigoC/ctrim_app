@@ -48,7 +48,10 @@ class AppContext extends ChangeNotifier {
   EventMetadata? getMetadata(final String id) => _metaData[id];
 
   // * event head related
-  List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
+  List<EventHead> get eventHeads {
+    return UnmodifiableListView(_eventHeads);
+  }
+
   EventHead getPostHead(final String id) => _eventHeads.firstWhere((e) => e.id == id);
 
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
@@ -64,8 +67,9 @@ class AppContext extends ChangeNotifier {
     // 0 Recency date descending
     // 1 Event date descending
     // 2 Event date ascending
-    // 3 Recency date ascending
+    // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
+      case 3:
       case 0:
         _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
         break;
@@ -84,9 +88,6 @@ class AppContext extends ChangeNotifier {
           if (b.eventDate == null) return -1;
           return a.eventDate!.compareTo(b.eventDate!);
         });
-        break;
-      case 3:
-        _eventHeads.sort((a, b) => a.recentDate.compareTo(b.recentDate));
         break;
     }
   }

@@ -46,14 +46,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        // appBar: !_lockScreen
-        //     ? AppBar(
-        //         backgroundColor: Colors.transparent,
-        //       )
-        //     : null,
-        body: _buildBody(),
-        backgroundColor: Colors.black);
+    return Scaffold(body: _buildBody(), backgroundColor: Colors.black);
   }
 
   Widget _buildBody() {
@@ -127,7 +120,8 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
               child: SizedBox(
                 height: kToolbarHeight,
                 child: AppBar(
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: Colors.transparent.withOpacity(0.3),
+                  iconTheme: const IconThemeData(color: Colors.white),
                   actions: [IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))],
                 ),
               ),

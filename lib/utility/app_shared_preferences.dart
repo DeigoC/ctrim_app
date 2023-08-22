@@ -16,7 +16,8 @@ class AppSharedPreferences {
       _phoneToken = 'phoneToken',
       _loggedOut = 'loggedOut',
       _subscribedToBelfast = 'subscribedToBelfast',
-      _lastRoleRefresh = 'lastRoleRefresh';
+      _lastRoleRefresh = 'lastRoleRefresh',
+      _showMultirowTools = 'showMultirowTools';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -78,6 +79,9 @@ class AppSharedPreferences {
       ? true
       : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastRoleRefresh)!)).inMinutes >= 2;
   void setRoleRefreshTime() => _pref.setInt(_lastRoleRefresh, DateTime.now().millisecondsSinceEpoch);
+
+  bool get showMultirowTools => _pref.getBool(_showMultirowTools) ?? false;
+  void setShowMultirowTools(final bool newState) => _pref.setBool(_showMultirowTools, newState);
 
   // * Local data related
   bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;

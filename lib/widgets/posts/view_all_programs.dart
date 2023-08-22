@@ -81,7 +81,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               child: ElevatedButton.icon(
                   onPressed: _openAddProgramPage,
                   icon: const Icon(Icons.edit_calendar),
-                  label: const Text('Add Program')))));
+                  label: const Text('Add Schedule Item')))));
     }
 
     return SafeArea(top: false, child: Column(children: children));
