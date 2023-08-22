@@ -5,7 +5,7 @@ import '../widgets/user_avatar.dart';
 // used to show as much of the repeating dialogs throughout the entire app
 class DialogManager {
   static void showUserProfile(
-      {required User selectedUser, required BuildContext context, required bool currentUserAdmin}) {
+      {required User selectedUser, required BuildContext context, bool currentUserAdmin = false}) {
     Widget buildVerticalUserViewer(final User selectedUser) {
       return Column(mainAxisSize: MainAxisSize.min, children: [
         const SizedBox(height: 8),

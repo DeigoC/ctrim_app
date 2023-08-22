@@ -16,8 +16,8 @@ import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -35,14 +35,14 @@ void main() async {
   await Firebase.initializeApp();
 
   // * Make sure we connect to the emulator on debug
-  // if (kDebugMode) {
-  //   try {
-  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  //   } on Exception catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
+  if (kDebugMode) {
+    try {
+      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+    }
+  }
 
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
@@ -84,6 +84,13 @@ void main() async {
       allUsers.add(currentUser);
     }
 
+    // ? Testing purpose:
+    String order = 'order of the heads ID:';
+    for (final head in heads) {
+      order += ' ${head.id},';
+    }
+    debugPrint(order);
+
     // * Create the AppContext, setup the FCM and run the app
     final AppContext appContext = AppContext(
         heads: heads,
@@ -100,7 +107,6 @@ void main() async {
         )));
   }
   // otherwise we open the welcome page! we perform the rest of the fetching at the end of that page
-  // ? this could be because of the authentication not working on the saved creds
   else {
     final AppContext appContext = AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir);
     runApp(ChangeNotifierProvider(

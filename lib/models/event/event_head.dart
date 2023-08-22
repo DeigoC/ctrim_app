@@ -44,6 +44,7 @@ class EventHead {
 
   toJson() {
     return {
+      'ID': _id,
       'Title': _title,
       'Subtitle': _subtitle,
       'Location': _location,
