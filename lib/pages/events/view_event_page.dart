@@ -706,9 +706,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final String postID = widget.eventContext.id;
     final UserDBManager userDBManager = UserDBManager();
 
-    // first up, the author
-    userDBManager.addPostToUser(_appContext.currentUser.id, postID, 'author');
-
     // then add the new contributors
     for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
       userDBManager.addPostToUser(contributorID, postID, 'contributor');

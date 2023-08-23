@@ -154,7 +154,7 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   if (shouldReadLocalData) {
     debugPrint('--fetching users from Local Data');
 
-    usersData.removeAt(0); // remove the first line that tells the current ID
+    usersData.removeAt(0);
     const int chunkSize = 8;
     final int numberOfChunks = usersData.length ~/ chunkSize;
 

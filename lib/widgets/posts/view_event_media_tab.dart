@@ -32,7 +32,8 @@ class ViewEventMediaTab extends StatelessWidget {
               }))
     ];
 
-    if (eventContext.isCurrentUserAuthor(currentUID) || eventContext.isCurrentUserContributor(currentUID)) {
+    if ((eventContext.isCurrentUserAuthor(currentUID) || eventContext.isCurrentUserContributor(currentUID)) &&
+        !kIsWeb) {
       children.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: ElevatedButton.icon(

@@ -35,6 +35,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late final AppContext _appContext;
   final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
 
+  // bool _bottomBarIsVisible = true;
+
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
@@ -57,6 +59,22 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     _setupCloudOnMessage();
     _removeLocallySavedPosts();
+
+    // setting up the animated scroll aspects
+    // _postsScrollController.addListener(() {
+    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    //     setState(() {
+    //       _bottomBarIsVisible = false;
+    //     });
+    //   }
+
+    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.forward) {
+    //     setState(() {
+    //       _bottomBarIsVisible = true;
+    //     });
+    //   }
+    // });
+
     super.initState();
   }
 
@@ -72,18 +90,43 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
-          body: _buildSelectedBody(appContext),
-          floatingActionButton: _buildFAB(),
-          bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (index) => _onNavigationItemTap(index),
-              unselectedFontSize: 0,
-              selectedFontSize: 0,
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
-                BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
-              ]));
+        body: _buildSelectedBody(appContext),
+        floatingActionButton: _buildFAB(),
+        bottomNavigationBar: BottomNavigationBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            currentIndex: _selectedIndex,
+            onTap: (index) => _onNavigationItemTap(index),
+            unselectedFontSize: 0,
+            selectedFontSize: 0,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+              BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+            ]),
+        // ? Check the bottom out for another time
+        // bottomNavigationBar: SafeArea(
+        //   child: AnimatedContainer(
+        //     duration: const Duration(milliseconds: 300),
+        //     height: _bottomBarIsVisible ? kBottomNavigationBarHeight : 0,
+        //     child: Visibility(
+        //       visible: _bottomBarIsVisible,
+        //       child: BottomNavigationBar(
+        //           backgroundColor: Colors.transparent,
+        //           elevation: 0,
+        //           currentIndex: _selectedIndex,
+        //           onTap: (index) => _onNavigationItemTap(index),
+        //           unselectedFontSize: 0,
+        //           selectedFontSize: 0,
+        //           items: const <BottomNavigationBarItem>[
+        //             BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+        //             BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+        //             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+        //           ]),
+        //     ),
+        //   ),
+        // ),
+      );
     });
   }
 

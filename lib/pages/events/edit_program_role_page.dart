@@ -1,12 +1,10 @@
-import 'dart:io';
-
-import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
 
@@ -96,7 +94,10 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(height: 16),
         InkWell(
             onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
-            child: AvatarStack(height: 50, avatars: _getSelectedUsersAvatar())),
+            child: MyAvatarStack(
+              users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
+              appDir: _appContext.appDir,
+            )),
         const SizedBox(height: 16),
         const Divider(thickness: 1),
         SwitchListTile(
@@ -112,6 +113,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(height: 16),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Update')),
+        const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: _onDeleteTap,
           icon: const Icon(Icons.delete),
@@ -121,25 +123,6 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(height: 32)
       ],
     );
-  }
-
-  List<ImageProvider> _getSelectedUsersAvatar() {
-    if (_selectedUsers.isEmpty) {
-      return List.empty();
-    }
-
-    final List<ImageProvider> result = List<ImageProvider>.empty(growable: true);
-    for (final uid in _selectedUsers) {
-      final thisU = _appContext.allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
-      if (thisU.imgSrc.isNotEmpty) {
-        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
-        result.add(FileImage(File(path)));
-      } else {
-        result.add(const AssetImage('assets/images/Generic-Profile.jpg'));
-      }
-    }
-
-    return result;
   }
 
   // * Logic
