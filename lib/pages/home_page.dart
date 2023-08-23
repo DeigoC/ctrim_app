@@ -42,15 +42,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
 
-    if (!kDebugMode) {
-      final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-      analytics.logAppOpen();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkIfFirstOpen();
-      });
-    }
+    // if (!kDebugMode) {
+    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    analytics.logAppOpen();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkIfFirstOpen();
+    });
+    // }
 
-    if (_appContext.sharedPref.shouldFetchUserImages) {
+    if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
       _appContext.sharedPref.justFetchedUserImages();
     }
@@ -194,7 +194,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     for (final String postUID in postUIDs) {
       if (!_appContext.eventHeads.any((e) => e.id.compareTo(postUID) == 0)) {
         debugPrint('deleting post id: $postUID');
-        toDelete.add(postUID); // ? I don't think i can modify the list that's beeing for-looped?
+        toDelete.add(postUID);
         localDataManager.deletePostData(postUID);
       }
     }
@@ -203,9 +203,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       postUIDs.removeWhere((e) => toDelete.contains(e));
       localDataManager.writePostTrack(postUIDs);
     }
-
-    // debugPrint('deleting post 1 data for testing');
-    // localDataManager.deletePostData('1');
   }
 
   void _setupCloudOnMessage() {

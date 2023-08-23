@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -391,9 +392,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final token = await messagingManager.getToken();
     if (token != null) {
       debugPrint('token to save is $token');
+      final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
       _appContext.sharedPref.saveFCMToken(token);
-      _everyoneDBManager.addTokenForAuthID(
-          authID: _authManager.currentAuthUID, token: token, platform: Platform.operatingSystem);
+      _everyoneDBManager.addTokenForAuthID(authID: _authManager.currentAuthUID, token: token, platform: platform);
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -32,7 +33,11 @@ void main() async {
   // SettingsController for changes, then passes it further down to the
   // SettingsView.
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+  } else {
+    await Firebase.initializeApp();
+  }
 
   // * Make sure we connect to the emulator on debug
   if (kDebugMode) {
@@ -47,8 +52,14 @@ void main() async {
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
   final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-  final String cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
-  final String appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
+
+  String? cacheDir, appDir;
+  try {
+    cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
+    appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
+  } on Exception catch (e) {
+    debugPrint('-------- error getting directories: $e');
+  } finally {}
 
   // * First up, we log the returning user in, otherwise it's a guest
   final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');

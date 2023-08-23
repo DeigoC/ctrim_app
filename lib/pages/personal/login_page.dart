@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -35,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => _loggedIn,
+      onWillPop: _onWillPop,
       child: Scaffold(
           appBar: AppBar(title: const Text('Login'), leading: Container()),
           body: ListView(padding: const EdgeInsets.all(8), children: [
@@ -82,7 +83,9 @@ class _LoginPageState extends State<LoginPage> {
     // if (!kDebugMode) {
     debugPrint('setting contact token as $token');
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
+    final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
+
+    everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platform);
     // }
 
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
@@ -162,5 +165,10 @@ class _LoginPageState extends State<LoginPage> {
       content = 'Wrong password, please try again or reset the password if forgotten';
     }
     DialogManager.showAlertDialog(context: context, title: title, content: content);
+  }
+
+  Future<bool> _onWillPop() async {
+    DialogManager.showAlertDialog(context: context, title: 'CTRIM App', content: 'Please login to use the app');
+    return _loggedIn;
   }
 }

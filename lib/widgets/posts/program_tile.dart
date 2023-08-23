@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:avatar_stack/avatar_stack.dart';
 import 'package:avatar_stack/positions.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
@@ -9,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
+import '../my_avatar_stack.dart';
 import '../user_avatar.dart';
 
 class ProgramTile extends StatelessWidget {
@@ -38,7 +36,7 @@ class ProgramTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 300),
       switchInCurve: Curves.easeIn,
       switchOutCurve: Curves.easeIn,
       transitionBuilder: (child, animation) => SizeTransition(sizeFactor: animation, child: child),
@@ -112,29 +110,14 @@ class ProgramTile extends StatelessWidget {
           : null,
       leading: Text(_getTimeLeadingText()),
       onTap: () => onTap(programEntry),
-      trailing: _buildTileTrailing(context),
+      trailing: MyAvatarStack(
+        users: Provider.of<AppContext>(context, listen: false)
+            .allUsers
+            .where((e) => (programEntry['uids'] as List).contains(e.id))
+            .toList(),
+        appDir: Provider.of<AppContext>(context, listen: false).appDir,
+      ),
     );
-  }
-
-  Widget? _buildTileTrailing(BuildContext context) {
-    final List<String> assignees = programEntry['uids'];
-    if (assignees.isEmpty) return null;
-
-    final List<ImageProvider> avatars = List<ImageProvider>.empty(growable: true);
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final allUsers = appContext.allUsers;
-
-    for (final uid in assignees) {
-      final thisU = allUsers.firstWhere((user) => user.id.compareTo(uid) == 0);
-      if (thisU.imgSrc.isNotEmpty) {
-        final path = '${appContext.appDir}/user_imgs/${thisU.id}.png';
-        avatars.add(FileImage(File(path)));
-      } else {
-        avatars.add(const AssetImage('assets/images/Generic-Profile.jpg'));
-      }
-    }
-
-    return AvatarStack(width: 90, avatars: avatars);
   }
 
   // * Logic

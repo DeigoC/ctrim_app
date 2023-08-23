@@ -20,6 +20,7 @@ dependencies:
   firebase_auth: ^4.7.0
   firebase_core: ^2.13.1
   firebase_messaging: ^14.6.5
+  firebase_messaging_web: ^3.5.5
   flutter:
     sdk: flutter
   flutter_localizations:

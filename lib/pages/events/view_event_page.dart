@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -161,30 +162,41 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildBodyWithData() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
-          return _buildHeaderSliver();
+          return _buildHeaderSliver(webHorizontalPadding);
         },
-        body: _buildTabBody());
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          child: _buildTabBody(),
+        ));
   }
 
-  List<Widget> _buildHeaderSliver() {
+  List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
     final List<Widget> metaChildren = [PostMetadataSection(eventContext: _eventContext, update: _updateWholePostBody)];
+
     if (!_eventContext.isCurrentUserAuthor(_currentUID) && !_eventContext.isCurrentUserContributor(_currentUID)) {
       metaChildren.insert(0, _buildBookmarkButton());
     }
     final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+
     return [
       SliverAppBar(
           expandedHeight: _eventContext.head.getKeyGraphic() != null ? MediaQuery.of(context).size.height * 0.33 : null,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
           actions: _buildSaveButton()),
-      SliverList(
-          delegate: SliverChildListDelegate([
-        Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
-        Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
-        TabBar(labelColor: onDark ? Colors.white : Colors.black, controller: _tabController, tabs: _appBarTabs)
-      ]))
+      SliverPadding(
+        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+        sliver: SliverList(
+            delegate: SliverChildListDelegate([
+          Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
+          TabBar(labelColor: onDark ? Colors.white : Colors.black, controller: _tabController, tabs: _appBarTabs)
+        ])),
+      )
     ];
   }
 
@@ -206,20 +218,25 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   Widget? _buildAppBarBackground() {
     // * If there are no images, we should just remove the expanded height
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
-    if (keyGraphicSrc != null) {
-      return FutureBuilder(
-        future: _fetchImage(keyGraphicSrc),
-        builder: (_, snapshot) {
-          Widget result = const Center(child: CircularProgressIndicator());
-          if (snapshot.hasData) {
-            return Image.file(snapshot.data!, fit: BoxFit.cover);
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong trying to get the image'));
-          }
 
-          return result;
-        },
-      );
+    if (keyGraphicSrc != null) {
+      if (!kIsWeb) {
+        return FutureBuilder(
+          future: _fetchImage(keyGraphicSrc),
+          builder: (_, snapshot) {
+            Widget result = const Center(child: CircularProgressIndicator());
+            if (snapshot.hasData) {
+              return Image.file(snapshot.data!, fit: BoxFit.cover);
+            } else if (snapshot.hasError) {
+              return const Center(child: Text('Something went wrong trying to get the image'));
+            }
+
+            return result;
+          },
+        );
+      } else {
+        return Image.network(keyGraphicSrc, fit: BoxFit.cover);
+      }
     }
     return null;
   }

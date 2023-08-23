@@ -115,7 +115,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProvider
   }
 
   Widget _buildThumbnailLoader() {
-    final String cacheDir = Provider.of<AppContext>(context, listen: false).appDir;
+    final String? cacheDir = Provider.of<AppContext>(context, listen: false).appDir;
     final sanitisedFilePath = widget.src.replaceAll(RegExp(r'[^\w]'), '');
     final fullPath = '$cacheDir/posts/${widget.postID}/$sanitisedFilePath.webp';
     final file = File(fullPath);

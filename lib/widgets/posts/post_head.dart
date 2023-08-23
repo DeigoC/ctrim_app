@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/event/event_head.dart';
@@ -30,8 +31,9 @@ class PostHead extends StatelessWidget {
       const SizedBox(height: 8)
     ];
 
-    if (thisHead.media.isNotEmpty) {
-      children.insert(0, _buildMediaSection(context));
+    final List<Map<String, String>> media = _getMedia();
+    if (media.isNotEmpty) {
+      children.insert(0, _buildMediaSection(context, media));
     } else {
       children.insert(0, const SizedBox(height: 8));
     }
@@ -66,35 +68,35 @@ class PostHead extends StatelessWidget {
         child: Text(thisHead.subtitle, style: const TextStyle(fontSize: _subtitleFontSize)));
   }
 
-  Widget _buildMediaSection(BuildContext context) {
-    final List<Widget> children = [_buildMediaSlot(thisHead.media.first, 0, context)];
+  Widget _buildMediaSection(final BuildContext context, final List<Map<String, String>> media) {
+    final List<Widget> children = [_buildMediaSlot(media.first, 0, context)];
 
-    if (thisHead.media.length == 2) {
-      children.addAll([const SizedBox(width: 2), _buildMediaSlot(thisHead.media[1], 1, context)]);
-    } else if (thisHead.media.length == 3) {
+    if (media.length == 2) {
+      children.addAll([const SizedBox(width: 2), _buildMediaSlot(media[1], 1, context)]);
+    } else if (media.length == 3) {
       children.addAll([
         const SizedBox(width: 2),
         Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _buildMediaSlot(thisHead.media[1], 1, context),
+          _buildMediaSlot(media[1], 1, context),
           const SizedBox(height: 2),
-          _buildMediaSlot(thisHead.media[2], 2, context),
+          _buildMediaSlot(media[2], 2, context),
         ]))
       ]);
-    } else if (thisHead.media.length == 4) {
+    } else if (media.length == 4) {
       children[0] = Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _buildMediaSlot(thisHead.media[0], 0, context),
+        _buildMediaSlot(media[0], 0, context),
         const SizedBox(height: 2),
-        _buildMediaSlot(thisHead.media[2], 2, context),
+        _buildMediaSlot(media[2], 2, context),
       ]));
       children.addAll([
         const SizedBox(width: 2),
         Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _buildMediaSlot(thisHead.media[1], 1, context),
+          _buildMediaSlot(media[1], 1, context),
           const SizedBox(height: 2),
-          _buildMediaSlot(thisHead.media[3], 3, context),
+          _buildMediaSlot(media[3], 3, context),
         ]))
       ]);
     }
@@ -121,6 +123,13 @@ class PostHead extends StatelessWidget {
   }
 
   // * Logic
+
+  List<Map<String, String>> _getMedia() {
+    if (kIsWeb) {
+      return thisHead.media.where((e) => e['type'] == 'img').toList();
+    }
+    return thisHead.media;
+  }
 
   void _onHeadTap(BuildContext context) {
     if (childToParent) {

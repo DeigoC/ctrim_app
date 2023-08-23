@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:avatar_stack/avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +6,7 @@ import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
 
@@ -52,7 +50,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           ListTile(title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
           ListTile(
               title: const Text('Assigned Contributors'),
@@ -93,20 +91,14 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
       return const Padding(padding: EdgeInsets.only(left: 16.0), child: Text('None'));
     }
 
-    final List<ImageProvider> avatars = List<ImageProvider>.empty(growable: true);
-    for (final thisU in selectedUsers) {
-      if (thisU.imgSrc.isNotEmpty) {
-        final path = '${_appContext.appDir}/user_imgs/${thisU.id}.png';
-        avatars.add(FileImage(File(path)));
-      } else {
-        avatars.add(const AssetImage('assets/images/Generic-Profile.jpg'));
-      }
-    }
-
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child:
-            InkWell(onTap: () => _showContributors(selectedUsers), child: AvatarStack(height: 50, avatars: avatars)));
+        child: InkWell(
+            onTap: () => _showContributors(selectedUsers),
+            child: MyAvatarStack(
+              users: selectedUsers,
+              appDir: _appContext.appDir,
+            )));
   }
 
   // * Logic

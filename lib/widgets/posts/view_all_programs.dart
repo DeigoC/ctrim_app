@@ -1,5 +1,6 @@
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -202,13 +203,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           widget.eventContext.program.finishTime ?? widget.eventContext.head.eventDate!.add(const Duration(hours: 1)),
       allDay: widget.eventContext.program.allDay,
     );
-    Add2Calendar.addEvent2Cal(event);
+
+    if (!kIsWeb) {
+      Add2Calendar.addEvent2Cal(event);
+    } else {
+      DialogManager.showAlertDialog(
+          context: context,
+          title: 'Adding to Calendar',
+          content:
+              "Sorry, this feature only works on native mobile apps (iOS or Android), not on WebApps. Please look to install the app when it's available!");
+    }
   }
 
   void _onClickLocationTrailingIcon() {
     final String link =
         widget.eventContext.program.online ? widget.eventContext.program.address : widget.eventContext.program.mapLink;
-    launchUrlString(link).onError((error, stackTrace) async {
+    launchUrlString(link, mode: LaunchMode.externalApplication).onError((error, stackTrace) async {
       debugPrint('error with link: $link');
       DialogManager.showAlertDialog(
           context: context,

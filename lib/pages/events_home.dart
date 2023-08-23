@@ -45,6 +45,8 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
       }
 
       final int itemCount = defaultFilter ? appContext.eventHeads.length : eventHeads.length;
+      final double webHorizontalPadding =
+          MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
 
       return RefreshIndicator(
         edgeOffset: (kToolbarHeight * 2) - 8,
@@ -61,13 +63,16 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                   floating: true,
                   actions: [IconButton(onPressed: () => _showFilterModel(context), icon: const Icon(Icons.sort))],
                   leading: Image.asset(ViewEventsHome._ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
-              SliverList.separated(
-                  itemCount: itemCount,
-                  itemBuilder: (_, index) => PostHead(
-                        thisHead: defaultFilter ? appContext.eventHeads[index] : eventHeads[index],
-                        updatePost: () => widget.rebuildFunction(),
-                      ),
-                  separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1))
+              SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                sliver: SliverList.separated(
+                    itemCount: itemCount,
+                    itemBuilder: (_, index) => PostHead(
+                          thisHead: defaultFilter ? appContext.eventHeads[index] : eventHeads[index],
+                          updatePost: () => widget.rebuildFunction(),
+                        ),
+                    separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1)),
+              )
             ]),
       );
     });
