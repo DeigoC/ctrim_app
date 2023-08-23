@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -40,17 +41,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _informationTabController = TabController(length: 5, vsync: this);
+    _informationTabController = TabController(length: 4, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
 
-    // if (!kDebugMode) {
-    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-    analytics.logAppOpen();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkIfFirstOpen();
-    });
-    // }
+    if (!kDebugMode) {
+      final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+      analytics.logAppOpen();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkIfFirstOpen();
+        if (kIsWeb) {
+          _showWebMessage();
+        }
+      });
+    }
 
     if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
@@ -184,7 +188,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (appContext.sharedPref.isFirstOpen) {
+    if (appContext.sharedPref.isFirstOpen && !kIsWeb) {
       final MessagingManager messagingManager = MessagingManager();
       await showDialog(
           context: context,
@@ -438,5 +442,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _setImageForFile(final File file, final String src) async {
     final response = await http.get(Uri.parse(src));
     file.writeAsBytes(response.bodyBytes);
+  }
+
+  void _showWebMessage() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'CTRIM WebApp',
+        content:
+            "Hi, thanks for checking this page out! This is still a 'Work In Progress'. Please look to install and use the native app (Android or iOS) instead when it's available\n\nKey features this WebApp doesn't contain are Push Notifications and good Backend Optimisation.");
   }
 }

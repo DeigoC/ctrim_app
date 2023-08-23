@@ -1,3 +1,7 @@
+import 'package:ctrim_app/pages/information/one_verse_evangelism/jerimiah_29_11_page.dart';
+import 'package:ctrim_app/pages/information/one_verse_evangelism/matthew_6_33_page.dart';
+import 'package:ctrim_app/pages/information/one_verse_evangelism/romans_12_2_page.dart';
+import 'package:ctrim_app/pages/information/one_verse_evangelism/romans_6_23_page.dart';
 import 'package:ctrim_app/pages/information/teachings/family_page.dart';
 import 'package:ctrim_app/pages/information/teachings/money_page.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +23,15 @@ class InformationHome extends StatefulWidget {
 
 class _InformationHomeState extends State<InformationHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  static const Map<String, String> _oneVerseEvangelism = {
+    'Romans 6:23': 'For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord.',
+    'Jerimiah 29:11':
+        'For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope.',
+    'Matthew 6:33':
+        'But seek first the kingdom of God and his righteousness, and all these things will be added to you.',
+    'Romans 12:2':
+        'Do not be conformed to this world, but be transformed by the renewal of your mind, that by testing you may discern what is the will of God, what is good and acceptable and perfect.',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -34,18 +47,13 @@ class _InformationHomeState extends State<InformationHome> {
                   bottom: TabBar(controller: widget.tabController, isScrollable: true, tabs: const [
                     Tab(text: 'About'),
                     Tab(text: 'Churches'),
-                    Tab(text: 'Teachings'),
-                    Tab(text: 'Testimonies'),
-                    Tab(text: 'One Verse Evangelisms')
+                    Tab(text: 'Topics'),
+                    Tab(text: 'One Verse Evangelism')
                   ]))
             ],
-        body: TabBarView(controller: widget.tabController, children: [
-          _buildAbout(),
-          _buildChurchesTab(),
-          _buildTeachingsTab(),
-          _buildTestimoniesTab(),
-          _buildOneVerseTestimoniesTab()
-        ]));
+        body: TabBarView(
+            controller: widget.tabController,
+            children: [_buildAbout(), _buildChurchesTab(), _buildTeachingsTab(), _buildOneVerseTestimoniesTab()]));
   }
 
   Widget _buildAbout() {
@@ -168,12 +176,45 @@ class _InformationHomeState extends State<InformationHome> {
                 ]))));
   }
 
-  Widget _buildTestimoniesTab() {
-    return const Center(child: Text('Under Construction! 👷‍♂️🚧🏗️'));
+  Widget _buildOneVerseTestimoniesTab() {
+    return MediaQuery.removePadding(
+      removeTop: true,
+      context: context,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8.0),
+        child: ListView.separated(
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemCount: _oneVerseEvangelism.length,
+            itemBuilder: (_, index) => _buildVerseEvangelismCard(
+                _oneVerseEvangelism[_oneVerseEvangelism.keys.elementAt(index)]!,
+                _oneVerseEvangelism.keys.elementAt(index))),
+      ),
+    );
   }
 
-  Widget _buildOneVerseTestimoniesTab() {
-    return const Center(child: Text('Under Construction! 👷‍♂️🚧🏗️'));
+  Widget _buildVerseEvangelismCard(final String verse, final String chapter) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: InkWell(
+        onTap: () => _openVerseEvangelismPage(chapter),
+        child: Card(
+            child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child:
+                    Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  Text(
+                    verse,
+                    style: const TextStyle(fontSize: 21),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    chapter,
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.right,
+                  )
+                ]))),
+      ),
+    );
   }
 
   // * Logic
@@ -206,6 +247,23 @@ class _InformationHomeState extends State<InformationHome> {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MoneyPage()));
         break;
       default:
+    }
+  }
+
+  void _openVerseEvangelismPage(final String chapter) {
+    switch (chapter) {
+      case 'Romans 6:23':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const Romans623Page()));
+        break;
+      case 'Jerimiah 29:11':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const Jerimiah2911Page()));
+        break;
+      case 'Matthew 6:33':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const Matthew633Page()));
+        break;
+      case 'Romans 12:2':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const Romans122Page()));
+        break;
     }
   }
 }
