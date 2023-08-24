@@ -29,6 +29,9 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+
     // ? this may not be needed cause of the Consumer at the page level (home_page)
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final List<Widget> children = [
@@ -88,7 +91,9 @@ class _PersonalHomeState extends State<PersonalHome> {
               title: const Text('Personal'),
               centerTitle: false,
               leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
-          SliverList(delegate: SliverChildListDelegate(children))
+          SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+              sliver: SliverList(delegate: SliverChildListDelegate(children)))
         ],
       );
     });

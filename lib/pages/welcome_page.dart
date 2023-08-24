@@ -62,6 +62,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+
     return Scaffold(
         appBar: AppBar(
             title: const Text('Hi, Welcome!'),
@@ -70,9 +73,12 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             bottom: _isWaitingForVerification
                 ? null
                 : TabBar(controller: _tabController, tabs: const [Tab(text: 'Registration'), Tab(text: 'Login')])),
-        body: _isWaitingForVerification
-            ? _buildWaitingForVerification()
-            : TabBarView(controller: _tabController, children: [_buildRegistrationTab(), _buildLoginTab()]));
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          child: _isWaitingForVerification
+              ? _buildWaitingForVerification()
+              : TabBarView(controller: _tabController, children: [_buildRegistrationTab(), _buildLoginTab()]),
+        ));
   }
 
   Widget _buildLoginTab() {

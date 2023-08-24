@@ -14,6 +14,8 @@ class PrayerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
 
     return Scaffold(
         body: CustomScrollView(slivers: [
@@ -21,7 +23,7 @@ class PrayerPage extends StatelessWidget {
       SliverToBoxAdapter(
           child: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
                     const SizedBox(height: 32)

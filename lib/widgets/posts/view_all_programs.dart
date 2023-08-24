@@ -47,6 +47,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildBodyWithEventDate() {
+    final bool canEdit = (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
+            widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
+        DateTime.now().isBefore(widget.eventContext.head.eventDate!);
+
     final List<Widget> children = [
       Expanded(
           child: CustomScrollView(slivers: [
@@ -61,8 +65,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               assignedUsers: _appContext.allUsers
                   .where((e) => (widget.eventContext.program.roles[index]["uids"] as List).contains(e.id))
                   .toList(),
-              canEdit: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-                  widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id),
+              canEdit: canEdit,
               onEditClick: () => _openEditProgramPage(widget.eventContext.program.roles[index]),
             );
           },
@@ -73,8 +76,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       ]))
     ];
 
-    if (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-        widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) {
+    if (canEdit) {
       children.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: SizedBox(
@@ -119,7 +121,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     ];
 
     if (widget.eventContext.head.eventDate != null &&
-        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0 &&
+        DateTime.now().isBefore(widget.eventContext.head.eventDate!) &&
         !widget.isAddingPost) {
       children.add(Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -131,7 +133,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     children.add(const Divider(thickness: 1));
 
     return InkWell(
-        onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
+        onTap: DateTime.now().isBefore(widget.eventContext.head.eventDate!) &&
+                widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id)
+            ? _onEditPostProgram
+            : null,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 

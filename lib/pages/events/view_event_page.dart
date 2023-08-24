@@ -210,7 +210,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   Widget _buildTitle() {
     return InkWell(
         onTap: _eventContext.isCurrentUserAuthor(_currentUID) ? _onTitleTap : null,
-        child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28)));
+        child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28), textAlign: TextAlign.left));
   }
 
   Widget? _buildAppBarBackground() {

@@ -152,11 +152,10 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-      ListTile(
-        title: const Text('Locations: Belfast'),
-        subtitle: const Text('(Fixed for now!)'),
-        leading: const Icon(Icons.church),
-        onTap: () {},
+      const ListTile(
+        title: Text('Location: Belfast'),
+        leading: Icon(Icons.church),
+        // onTap: () {},
       ),
       const Divider(),
       ListTile(

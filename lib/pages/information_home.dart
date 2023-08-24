@@ -35,6 +35,9 @@ class _InformationHomeState extends State<InformationHome> {
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+
     return NestedScrollView(
         controller: widget.scrollController,
         headerSliverBuilder: (_, __) => [
@@ -51,12 +54,15 @@ class _InformationHomeState extends State<InformationHome> {
                     Tab(text: 'One Verse Evangelism')
                   ]))
             ],
-        body: TabBarView(
-            controller: widget.tabController,
-            children: [_buildAbout(), _buildChurchesTab(), _buildTeachingsTab(), _buildOneVerseTestimoniesTab()]));
+        body: TabBarView(controller: widget.tabController, children: [
+          _buildAbout(webHorizontalPadding),
+          _buildChurchesTab(),
+          _buildTeachingsTab(webHorizontalPadding),
+          _buildOneVerseEvangelismTab(webHorizontalPadding)
+        ]));
   }
 
-  Widget _buildAbout() {
+  Widget _buildAbout(final double webHorizontalPadding) {
     const String matthewVerse = '“Therefore go and make disciples of all nations, baptizing them in the '
         'name of the Father and of the Son and of the Holy Spirit, and '
         'teaching them to obey everything I have commanded you. And '
@@ -68,7 +74,7 @@ class _InformationHomeState extends State<InformationHome> {
     return MediaQuery.removePadding(
         context: context,
         removeTop: true,
-        child: ListView(children: const [
+        child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: const [
           // Image.network('https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'),
           SizedBox(height: 32),
           Padding(
@@ -118,10 +124,14 @@ class _InformationHomeState extends State<InformationHome> {
   }
 
   Widget _buildChurchSlot(final String church, final String img) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
+    final bool onWideWeb = webHorizontalPadding != 0;
+
     return InkWell(
         onTap: () => _onChurchTap(church),
         child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.4,
+            height: onWideWeb ? MediaQuery.of(context).size.height * 0.7 : MediaQuery.of(context).size.height * 0.4,
             width: double.infinity,
             child: Stack(children: [
               Positioned.fill(child: Image.asset('assets/images/$img', fit: BoxFit.cover)),
@@ -133,27 +143,29 @@ class _InformationHomeState extends State<InformationHome> {
             ])));
   }
 
-  Widget _buildTeachingsTab() {
+  Widget _buildTeachingsTab(final double webHorizontalPadding) {
+    final bool onWideWeb = webHorizontalPadding != 0;
     return MediaQuery.removePadding(
         removeTop: true,
         context: context,
-        child: ListView(children: [
-          _buildTeachingSlot('Prayer', 'prayer.jpg'),
-          _buildTeachingSlot('Reading the Bible', 'bible_reading.jpg'),
-          _buildTeachingSlot('Love', 'love.jpg'),
-          _buildTeachingSlot('Family', 'family.jpg'),
-          _buildTeachingSlot('Money', 'money.avif')
+        child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: [
+          _buildTeachingSlot('Prayer', 'prayer.jpg', onWideWeb),
+          _buildTeachingSlot('Reading The Bible', 'bible_reading.jpg', onWideWeb),
+          _buildTeachingSlot('Love', 'love.jpg', onWideWeb),
+          _buildTeachingSlot('Family', 'family.jpg', onWideWeb),
+          _buildTeachingSlot('Money', 'money.avif', onWideWeb)
         ]));
   }
 
-  Widget _buildTeachingSlot(final String teaching, final String img) {
+  Widget _buildTeachingSlot(final String teaching, final String img, bool onWideWeb) {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
         child: Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
             child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
+                height:
+                    onWideWeb ? MediaQuery.of(context).size.height * 0.55 : MediaQuery.of(context).size.height * 0.4,
                 width: double.infinity,
                 child: Stack(children: [
                   Positioned.fill(
@@ -176,13 +188,14 @@ class _InformationHomeState extends State<InformationHome> {
                 ]))));
   }
 
-  Widget _buildOneVerseTestimoniesTab() {
+  Widget _buildOneVerseEvangelismTab(final double webHorizontalPadding) {
     return MediaQuery.removePadding(
       removeTop: true,
       context: context,
       child: Padding(
         padding: const EdgeInsets.only(top: 8.0),
         child: ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemCount: _oneVerseEvangelism.length,
             itemBuilder: (_, index) => _buildVerseEvangelismCard(
@@ -237,7 +250,7 @@ class _InformationHomeState extends State<InformationHome> {
       case 'Love':
         Navigator.push(context, MaterialPageRoute(builder: (_) => const LovePage()));
         break;
-      case 'Reading the Bible':
+      case 'Reading The Bible':
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BibleReadingPage()));
         break;
       case 'Family':

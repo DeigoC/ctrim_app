@@ -43,7 +43,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _appContext = Provider.of<AppContext>(context, listen: false);
     _informationTabController = TabController(length: 4, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
-    _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
+
+    _appContext.allUsers.sort(((a, b) {
+      final surname = a.surname.compareTo(b.surname);
+      if (surname == 0) {
+        return a.forname.compareTo(b.forname);
+      }
+      return surname;
+    }));
 
     if (!kDebugMode) {
       final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
