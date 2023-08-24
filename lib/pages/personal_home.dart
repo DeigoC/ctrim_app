@@ -59,8 +59,12 @@ class _PersonalHomeState extends State<PersonalHome> {
             ));
         children.addAll([
           ListTile(
-            title: const Text('My Assigned Tasks'),
-            leading: const Icon(Icons.task_alt),
+            title: const Text('My Tasks'),
+            leading: const Icon(Icons.checklist),
+            trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
+                ? Text('(${appContext.currentUser.roles!.length.toString()})',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red))
+                : null,
             onTap: _onViewTasksClick,
           ),
           ListTile(
@@ -128,7 +132,12 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _onViewTasksClick() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (_) => ViewUserRolesPage(selectedUser: widget.appContext.currentUser)));
+        context,
+        MaterialPageRoute(
+            builder: (_) => ViewUserRolesPage(
+                  selectedUser: widget.appContext.currentUser,
+                  allowPostView: true,
+                )));
   }
 
   void _onNotificationManagerClick() {

@@ -10,7 +10,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Post Template')), body: _buildBody(context));
+    return Scaffold(appBar: AppBar(title: const Text('Choose Template')), body: _buildBody(context));
   }
 
   Widget _buildBody(BuildContext context) {
@@ -45,6 +45,7 @@ class SelectPostTemplatePage extends StatelessWidget {
                     Text('Fitted with the usual schedule of a weekly Sunday Service in Belfast',
                         style: _cardContentStyle)
                   ])))),
+      const SizedBox(height: 8),
       InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {
@@ -60,6 +61,7 @@ class SelectPostTemplatePage extends StatelessWidget {
                     const Divider(),
                     Text('Online service with the typical schedule', style: _cardContentStyle)
                   ])))),
+      const SizedBox(height: 8),
       InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {

@@ -65,6 +65,12 @@ class UserDBManager {
     _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
   }
 
+  Future<void> removeUserPostRole(final String uid, final String postID) async {
+    final data = await fetchUserRoles(uid);
+    data.removeWhere((e) => e['postID'] == postID);
+    _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+  }
+
   // User posts
   // this tracks the posts the user is tied with as either
   // an author or contributor

@@ -10,8 +10,9 @@ import '../../utility/app_context.dart';
 import '../events/view_event_page.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
-  const ViewUserRolesPage({super.key, required this.selectedUser});
+  const ViewUserRolesPage({super.key, required this.selectedUser, this.allowPostView = false});
   final User selectedUser;
+  final bool allowPostView;
 
   @override
   State<ViewUserRolesPage> createState() => _ViewUserRolesPageState();
@@ -25,6 +26,17 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
+
+    // pre-emptively cleanup
+    if (widget.selectedUser.roles != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _performRoleCleanupCheck().then((_) {
+          setState(() {
+            // cleanup complete
+          });
+        });
+      });
+    }
     super.initState();
   }
 
@@ -138,7 +150,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         leading: const Icon(Icons.event),
         trailing: Text(_eventDateFormat.format(postHead.eventDate!)),
         subtitle: Text('$roleCount task${roleCount == 1 ? '' : 's'}'),
-        onTap: () => _onPostTap(postHead),
+        onTap: widget.allowPostView ? () => _onPostTap(postHead) : null,
         title: Text(postHead.title, maxLines: 2, overflow: TextOverflow.ellipsis));
   }
 
@@ -160,21 +172,23 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   }
 
   // ! Let's leave this alone for now and see if we change our mind about cleaning up or keeping this data
-  void _performRoleCleanupCheck() {
+  Future<void> _performRoleCleanupCheck() async {
     // remove roles set in the past
-    // final List<String> postsToRemove = [];
-    // for (final roleEntry in widget.selectedUser.roles!) {
-    //   final post = _appContext.getPostHead(roleEntry['postID']);
-    //   if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
-    //     postsToRemove.add(post.id);
-    //   }
-    // }
+    final List<String> postsToRemove = [];
+    for (final roleEntry in widget.selectedUser.roles!) {
+      final post = _appContext.getPostHead(roleEntry['postID']);
+      if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
+        postsToRemove.add(post.id);
+      }
+    }
 
-    // if (postsToRemove.isNotEmpty) {
-    //   debugPrint('removing the following dated roles: $postsToRemove');
-    //   widget.selectedUser.removeRoles(postsToRemove);
-    //   _userDBManager.updateRoles(widget.selectedUser.id, widget.selectedUser.roles!);
-    // }
+    if (postsToRemove.isNotEmpty) {
+      debugPrint('removing the following dated roles: $postsToRemove');
+      widget.selectedUser.removeRoles(postsToRemove);
+      for (var postID in postsToRemove) {
+        await _userDBManager.removeUserPostRole(widget.selectedUser.id, postID);
+      }
+    }
   }
 
   void _onPostTap(EventHead head) =>

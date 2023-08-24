@@ -80,7 +80,7 @@ void main() async {
     }
   }
 
-  // user has logged in before, we fetch the data as per usual and open the app from home
+  // user has logged in before, we fetch the data as per usual and open the app to home
   if (authID != null) {
     final UserDBManager userDBManager = UserDBManager();
     currentUser = await userDBManager.fetchUserByAuthID(authID);
@@ -93,6 +93,7 @@ void main() async {
     // this is dumb, we need to move the local data writing logic to it's own class so
     // it can be called anywhere and remove the need to do these weird, hacky things!
     if (currentUser != null) {
+      currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
       allUsers.removeWhere((e) => e.id == currentUser!.id);
       allUsers.add(currentUser);
     }
