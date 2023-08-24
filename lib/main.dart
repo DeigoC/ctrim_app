@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ctrim_app/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -134,11 +136,16 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   final LocalDataManager dataManager = LocalDataManager();
   final PackageInfo packageInfo = await PackageInfo.fromPlatform();
   final String version = packageInfo.version;
+  const LineSplitter ls = LineSplitter();
   debugPrint('version is $version');
 
   final String currentID = await trackerDBManager.getCurrentUserID();
-  final usersData = await dataManager.readUsers();
-  final lastUserFetch = await dataManager.readLastUserFetch();
+  final List<String> usersData = kIsWeb ? ls.convert(pref.getString('usersData') ?? '') : await dataManager.readUsers();
+  final DateTime? lastWebUserFetch = pref.getString('lastUserFetch') == null
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(int.parse(pref.getString('lastUserFetch')!));
+
+  final lastUserFetch = kIsWeb ? lastWebUserFetch : await dataManager.readLastUserFetch();
   final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 7;
 
   // only use the local data if the count is the same in the DB and the last time has been multiple days ago (7 days)
@@ -198,10 +205,15 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
-    pref.setBool('fetchUserImages', true); // refresh user image fetch
+    if (kIsWeb) {
+      pref.setString('usersData', allUsersContent);
+      pref.setString('lastUserFetch', DateTime.now().millisecondsSinceEpoch.toString());
+    } else {
+      await dataManager.writeUsersList(allUsersContent);
+      await dataManager.writeLastUsersFetch();
+    }
 
+    pref.setBool('fetchUserImages', true); // refresh user image fetch
     return allUsers;
   }
 }

@@ -368,8 +368,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
     if (fromRegistration) {
       await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+    } else if (!fromRegistration && !_appContext.sharedPref.isFirstOpen) {
+      // save the token again if the user is logging in on an already activated app
+      _saveFCMToken();
     }
-    _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
       _appContext.sharedPref.setLoggedOut(false);
@@ -421,8 +423,13 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
+    if (kIsWeb) {
+      _appContext.sharedPref.setUsersData(allUsersContent);
+      _appContext.sharedPref.setLastUsersFetch();
+    } else {
+      await dataManager.writeUsersList(allUsersContent);
+      await dataManager.writeLastUsersFetch();
+    }
     return allUsers;
   }
 

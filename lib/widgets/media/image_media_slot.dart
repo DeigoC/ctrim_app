@@ -16,7 +16,7 @@ class ImageMediaSlot extends StatelessWidget {
 
     // most likely on the webapp
     if (cacheDir == null) {
-      debugPrint('building network image');
+      // debugPrint('building network image');
       return _buildNetworkImage();
     }
 

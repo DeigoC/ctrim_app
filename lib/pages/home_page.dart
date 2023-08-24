@@ -449,6 +449,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         context: context,
         title: 'CTRIM WebApp',
         content:
-            "Hi, thanks for checking this page out! This is still a 'Work In Progress'. Please look to install and use the native app (Android or iOS) instead when it's available\n\nKey features this WebApp doesn't contain are Push Notifications and good Backend Optimisation.");
+            "Hi, thanks for checking this page out! This is still a 'Work In Progress'. Please look to install and use the native app (on Android or iOS) instead when it's available\n\nKey feature this webapp doesn't contain are push notifications, media viewing and solid backend optimisation.");
   }
 }

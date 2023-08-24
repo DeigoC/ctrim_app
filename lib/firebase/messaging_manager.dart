@@ -11,11 +11,14 @@ class MessagingManager {
     await _instance.requestPermission();
 
     final String? token = await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+    debugPrint('token generated is $token');
     return token;
   }
 
   Future<String?> getToken() async {
-    return await _instance.getToken();
+    final token = await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+    debugPrint('token generated is $token');
+    return token;
   }
 
   Future<void> subscribeToCTRIMBelfast() {
