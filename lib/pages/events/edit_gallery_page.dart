@@ -208,7 +208,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   void _addMediaAsKeyClick(final Map<String, String> thisEntry) {
     setState(() {
       Navigator.of(context).pop();
-      widget.eventContext.head.addMediaItem(thisEntry);
+      widget.eventContext.head
+          .addMediaItem(type: thisEntry['type']!, src: thisEntry['src']!, title: thisEntry['title']!);
     });
   }
 

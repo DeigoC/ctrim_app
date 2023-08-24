@@ -98,8 +98,8 @@ class EventContext {
     headToUpload.setSubtitle(subtitle);
     headToUpload.setRecentDate(now);
     headToUpload.setEventDate(_head.eventDate);
-    for (var mediaEntry in _head.media) {
-      headToUpload.addMediaItem(mediaEntry);
+    for (final mediaEntry in _head.media) {
+      headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }
 
     // metadata
@@ -436,7 +436,6 @@ class EventContext {
 
   void addRoleDeletionTitle(final int id, final String title) => _deletedRoleTitle[id] = title;
 
-  // ! This one requires some thought, might be a very rare occurance but.. uhh let's be mindful of it
   void removeRoleAdditionNotification(final int id) => _roleAdditions.remove(id);
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;

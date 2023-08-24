@@ -16,20 +16,6 @@ class SelectPostTemplatePage extends StatelessWidget {
   Widget _buildBody(BuildContext context) {
     return ListView(padding: const EdgeInsets.all(8), children: [
       InkWell(
-          onTap: () => _onEmptyTemplateClick(context),
-          child: Card(
-              child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Empty', style: _cardTitleStyle),
-                        const Divider(),
-                        Text('A clean slate', style: _cardContentStyle)
-                      ])))),
-      const SizedBox(height: 8),
-      InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {
                   _createAndOpenSundayServiceTemplate(context, selectedDate);
@@ -65,6 +51,22 @@ class SelectPostTemplatePage extends StatelessWidget {
       InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {
+                  _createAndOpenIntentionalDiscipleshipTemplate(context, selectedDate);
+                }
+              }),
+          child: Card(
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                  child:
+                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                    Text('Intentional Discipleship Training', style: _cardTitleStyle),
+                    const Divider(),
+                    Text('Online training session with a schedule already applied', style: _cardContentStyle)
+                  ])))),
+      const SizedBox(height: 8),
+      InkWell(
+          onTap: () => _selectDate(context).then((selectedDate) {
+                if (selectedDate != null) {
                   _createAndOpenDawnWatchTemplate(context, selectedDate);
                 }
               }),
@@ -77,6 +79,20 @@ class SelectPostTemplatePage extends StatelessWidget {
                     const Divider(),
                     Text('Early online meeting, includes schedule', style: _cardContentStyle)
                   ])))),
+      const SizedBox(height: 8),
+      InkWell(
+          onTap: () => _onEmptyTemplateClick(context),
+          child: Card(
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Blank', style: _cardTitleStyle),
+                        const Divider(),
+                        Text('A clean slate', style: _cardContentStyle)
+                      ])))),
     ]);
   }
 
@@ -91,185 +107,256 @@ class SelectPostTemplatePage extends StatelessWidget {
   }
 
   void _onEmptyTemplateClick(BuildContext context) {
-    // nothing to be done to the context
+    _resetContext();
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
   void _createAndOpenSundayServiceTemplate(final BuildContext context, final DateTime selectedDate) {
-    // add the typical Sunday roles to the program
-    final int intercessoryPrayerID = DateTime.now().millisecondsSinceEpoch;
+    _resetContext();
 
-    debugPrint('id is $intercessoryPrayerID');
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0);
+    eventContext.head.setEventDate(startTime);
+
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 3)));
+
+    // add the typical Sunday roles to the program
+    int roleID = DateTime.now().millisecondsSinceEpoch;
+
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 50),
-        id: intercessoryPrayerID);
+        id: roleID++);
 
-    final int sundaySchoolID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $sundaySchoolID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Sunday School Teachers',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
-        id: sundaySchoolID);
+        id: roleID++);
 
-    final int welcomeAndOrientationID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $welcomeAndOrientationID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Welcome and Short Orientation',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
-        id: welcomeAndOrientationID);
+        id: roleID++);
 
-    final int openingPrayerID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $openingPrayerID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Scripture Reading & Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 10),
-        id: openingPrayerID);
+        id: roleID++);
 
-    final int praiseAndWorshipID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $praiseAndWorshipID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 10),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
-        id: praiseAndWorshipID);
+        id: roleID++);
 
-    final int wordOfGodID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $wordOfGodID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Word of God',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 45),
-        id: wordOfGodID);
+        id: roleID++);
 
-    final int tithesAndOfferingsID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $tithesAndOfferingsID');
     eventContext.program.addRole(
         uids: [],
         title: 'Tithes & Offerings',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 45),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
-        id: tithesAndOfferingsID);
+        id: roleID++);
 
-    final int closingSongID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $closingSongID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Song',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 55),
-        id: closingSongID);
+        id: roleID++);
 
-    final int prayerAndBenedictionID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $prayerAndBenedictionID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Prayer & Benediction',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 55),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
-        id: prayerAndBenedictionID);
+        id: roleID++);
 
-    final int groupPictureID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $groupPictureID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Group Picture',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
-        id: groupPictureID);
+        id: roleID++);
 
-    final int backToDiscipleshipID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $backToDiscipleshipID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Back To Discipleship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: backToDiscipleshipID);
+        id: roleID++);
 
-    final int eatingFellowshipID = DateTime.now().millisecondsSinceEpoch;
-    debugPrint('id is $eatingFellowshipID');
+    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Eating Fellowship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 14, 00),
-        id: eatingFellowshipID);
+        id: roleID++);
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
   void _createAndOpenMidweekServiceTemplate(final BuildContext context, final DateTime selectedDate) {
+    _resetContext();
+
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15);
+    eventContext.head.setEventDate(startTime);
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=19WLDp05yeZOtO10p9t26jiFd3-71ynAa');
+
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1)));
     eventContext.program.setOnline(true);
-    eventContext.program.setAddress(''); // TODO add join link
+    eventContext.program.setAddress('https://us02web.zoom.us/j/85038786530?pwd=bmRPaTg4WHhlSVVwek9QcjVPT1RPUT09');
+
+    int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
         uids: [],
         title: 'Opening Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Word of God',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 5),
+        id: roleID++);
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
   void _createAndOpenDawnWatchTemplate(final BuildContext context, final DateTime selectedDate) {
+    _resetContext();
+
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30);
+    eventContext.head.setEventDate(startTime);
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=14p-EMBeAjg9L_ekkHGpENaMMyPWH_ne8');
+
+    eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
     eventContext.program.setOnline(true);
-    eventContext.program.setAddress(''); // TODO add join link
+    eventContext.program.setAddress('https://us02web.zoom.us/j/89372805213?pwd=WlA4bzhPWlRWcE9CVHZWMXNpTFl6QT09');
+
+    int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
         uids: [],
-        title: 'Opening Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        title: 'Opening Prayer & Worship Song',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 35),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 35),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 45),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Word of God',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 45),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: DateTime.now().millisecondsSinceEpoch);
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 15),
+        id: roleID++);
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+  }
+
+  void _createAndOpenIntentionalDiscipleshipTemplate(final BuildContext context, final DateTime selectedDate) {
+    _resetContext();
+
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 15);
+    eventContext.head.setEventDate(startTime);
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1O3lXV494dVLmpreRiasLN0oOW6kngAy5');
+
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1)));
+    eventContext.program.setOnline(true);
+    eventContext.program.setAddress('https://us02web.zoom.us/j/84796425540?pwd=andVVW5FR0t1dkFjRjZUUnpDRWVKdz09');
+
+    int roleID = DateTime.now().millisecondsSinceEpoch;
+
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Opening Prayer and Worship Song',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 20),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Intentional Discipleship',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 20),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Closing Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 55),
+        id: roleID++);
+
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+  }
+
+  void _resetContext() {
+    eventContext.head.setEventDate(null);
+    eventContext.head.setTitle('');
+    eventContext.head.setSubtitle('');
+    eventContext.head.setLocation('Belfast');
+    eventContext.head.clearMedia();
+
+    eventContext.program.clearRoles();
+    eventContext.program.setAddress('8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland');
+    eventContext.program.setOnline(false);
+    eventContext.program.setFinishTime(null);
+    eventContext.program.setMapLink('https://goo.gl/maps/ns21zf5F9KPxeKxn6');
+    eventContext.program.setAllDay(false);
+
+    eventContext.media.clearAllMedia();
+    eventContext.setFetchedBody(r'[{"insert":"Hello, time to start writing!\n"}]');
+
+    eventContext.metadata.contributorUIDs.clear();
   }
 }

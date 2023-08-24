@@ -80,12 +80,14 @@ class EventHead {
   void setLocation(final String newLocation) => _location = newLocation;
 
   bool containsMediaItem(String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
+  void addMediaItem({required String type, required String src, String title = ''}) =>
+      _media.add({'type': type, 'src': src, 'title': title});
 
-  // TODO remember to check all Map additions to make them more 'tight'
-  void addMediaItem(final Map<String, String> thisEntry) => _media.add(thisEntry);
   void removeMediaItem(final Map<String, String> thisEntry) => _media.remove(thisEntry);
   void resetMediaWithOriginal(List<Map<String, String>> original) {
     _media.clear();
     _media.addAll(original);
   }
+
+  void clearMedia() => _media.clear();
 }

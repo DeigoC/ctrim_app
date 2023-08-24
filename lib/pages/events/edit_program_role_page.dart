@@ -113,13 +113,12 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
         const SizedBox(height: 16),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Update')),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         ElevatedButton.icon(
-          onPressed: _onDeleteTap,
-          icon: const Icon(Icons.delete),
-          label: const Text('Delete'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-        ),
+            onPressed: _onDeleteTap,
+            icon: const Icon(Icons.delete, color: Colors.white),
+            label: const Text('Delete', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red)),
         const SizedBox(height: 32)
       ],
     );
