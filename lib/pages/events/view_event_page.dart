@@ -25,9 +25,8 @@ import '../../widgets/posts/view_related_posts_tab.dart';
 import 'edit_title_subtitle_page.dart';
 
 class ViewEventPage extends StatefulWidget {
-  const ViewEventPage({super.key, required this.eventHead, required this.viewingChild});
+  const ViewEventPage({super.key, required this.eventHead});
   final EventHead eventHead;
-  final bool viewingChild;
 
   @override
   State<ViewEventPage> createState() => _ViewEventPageState();
@@ -42,10 +41,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late final List<Map<String, String>> _originalHeadMedia;
   late final String _originalTitle, _originalSubtitle, _currentUID;
   late final DateTime? _originalEventDate;
+
+  final List<Widget> _bodyTabs = List.empty(growable: true);
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
   ];
-  final List<Widget> _bodyTabs = List.empty(growable: true);
 
   bool _haveFetchedPost = false;
 
@@ -92,14 +92,12 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
           if (snap.hasData) {
-            // build with data
-            // set the post context here
+            // build with data, set the post context here
             final List<String> data = snap.data!;
 
             if (data.isNotEmpty) {
               debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
-              _eventContext = EventContext.viewing(
-                  eventHead: widget.eventHead, data: data, currentUID: _currentUID, viewingChild: widget.viewingChild);
+              _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data, currentUID: _currentUID);
               _haveFetchedPost = true;
 
               _figureOutTabs();
@@ -293,8 +291,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final logs = await dbManager.fetchLog();
     final body = await dbManager.fetchBody();
 
-    _eventContext =
-        EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID, viewingChild: widget.viewingChild);
+    _eventContext = EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID);
     _eventContext.setFetchedMedia(media);
     _eventContext.setFetchedMetadata(meta);
     _eventContext.setFetchedProgram(program);

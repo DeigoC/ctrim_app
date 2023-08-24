@@ -8,14 +8,8 @@ import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
 
 class PostHead extends StatelessWidget {
-  const PostHead(
-      {super.key,
-      required this.thisHead,
-      this.viewingChild = false,
-      this.childToParent = false,
-      required this.updatePost});
+  const PostHead({super.key, required this.thisHead, required this.updatePost});
   final EventHead thisHead;
-  final bool viewingChild, childToParent;
   final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16, _metaFontSize = 14;
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM, HH:mm');
@@ -132,17 +126,11 @@ class PostHead extends StatelessWidget {
   }
 
   void _onHeadTap(BuildContext context) {
-    if (childToParent) {
-      Navigator.of(context).pop();
-    } else {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) => ViewEventPage(
-                    eventHead: thisHead,
-                    viewingChild: viewingChild,
-                  ))).then((_) => updatePost());
-    }
+    // ! If this becomes an issue in the future, we should try to add some logic
+    // ! to pop the screen instead of opening another page to an already opened page
+    // ! to stop the deep viewing of related posts
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)))
+        .then((_) => updatePost());
   }
 
   void _onMediaTap(int index, BuildContext context) {

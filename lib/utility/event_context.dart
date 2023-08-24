@@ -15,7 +15,6 @@ class EventContext {
   late final EventMetadata _metadata;
   late final EventProgram _program;
   late final EventMedia _media; // ? doesn't have to be late
-  late final bool _viewingChild;
   late final String _currentUID;
   final EventBody _body = EventBody();
 
@@ -27,11 +26,9 @@ class EventContext {
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
 
   // for viewing and editing
-  EventContext.viewing(
-      {required EventHead eventHead, required String currentUID, bool? viewingChild, List<String>? data}) {
+  EventContext.viewing({required EventHead eventHead, required String currentUID, List<String>? data}) {
     _head = eventHead;
     _canSaveTheEditing = false;
-    _viewingChild = viewingChild ?? false;
     _currentUID = currentUID;
     if (data != null) {
       _setWholePostFromTxt(data);
@@ -162,10 +159,6 @@ class EventContext {
   }
 
   bool get canSaveTheEditing => _canSaveTheEditing;
-
-  bool get isViewingChild => _viewingChild;
-  void enableViewingChild() => _viewingChild = true;
-  void disableViewingChild() => _viewingChild = false;
 
   bool isCurrentUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
   bool isCurrentUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;

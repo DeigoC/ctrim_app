@@ -330,13 +330,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _openPost(final EventHead thisHead) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ViewEventPage(
-                  eventHead: thisHead,
-                  viewingChild: false,
-                )));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
   }
 
   void _openInformationTeachingPage(final String page) {

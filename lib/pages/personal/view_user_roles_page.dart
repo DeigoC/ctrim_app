@@ -178,8 +178,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   }
 
   void _onPostTap(EventHead head) =>
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head, viewingChild: false)))
-          .then((_) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head))).then((_) {
         setState(() {
           // technically a user can edit a post from here! 🥲
         });
