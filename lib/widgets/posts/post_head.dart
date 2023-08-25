@@ -33,6 +33,12 @@ class PostHead extends StatelessWidget {
     }
 
     return InkWell(
+        onLongPress: () {
+          showDialog(
+              context: context,
+              builder: (_) =>
+                  Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
+        },
         onTap: () => _onHeadTap(context),
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));

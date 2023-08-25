@@ -53,10 +53,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const SizedBox(height: 8),
                 ListTile(
                     title: Text('Hi, ${appContext.currentUser.forname}'),
-                    subtitle: kIsWeb ? null : const Text('Change your image here!'),
                     leading: MyUserAvatar(appContext.currentUser),
                     onTap: kIsWeb ? null : _onUserProfileClick),
-                const Divider(),
+                const Divider(indent: 16, endIndent: 16)
               ],
             ));
         children.addAll([

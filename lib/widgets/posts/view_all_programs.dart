@@ -78,7 +78,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
     if (canEdit) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -133,7 +133,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     children.add(const Divider(thickness: 1));
 
     return InkWell(
-        onTap: DateTime.now().isBefore(widget.eventContext.head.eventDate!) &&
+        onTap: DateTime.now()
+                    .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
                 widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id)
             ? _onEditPostProgram
             : null,

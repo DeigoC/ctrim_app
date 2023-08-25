@@ -35,7 +35,7 @@ class ViewEventMediaTab extends StatelessWidget {
     if ((eventContext.isCurrentUserAuthor(currentUID) || eventContext.isCurrentUserContributor(currentUID)) &&
         !kIsWeb) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: ElevatedButton.icon(
               onPressed: () => _onEditMediaTap(context),
               label: const Text('Edit Media Items'),

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
@@ -132,50 +133,57 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   Widget _buildRegistrationTab() {
     return SingleChildScrollView(
         child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            TextField(
-                controller: _tecRegistrationEmail,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) => _fnPassword.requestFocus(),
-                decoration: const InputDecoration(label: Text('Email'), prefixIcon: Icon(Icons.email))),
-            const SizedBox(height: 8),
-            TextField(
-                controller: _tecRegistrationPassword,
-                keyboardType: _showRegisterPassword ? TextInputType.visiblePassword : null,
-                obscureText: !_showRegisterPassword,
-                textInputAction: TextInputAction.next,
-                focusNode: _fnPassword,
-                onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
-                decoration: InputDecoration(
-                    label: const Text('Password'),
-                    prefixIcon: const Icon(Icons.password),
-                    suffixIcon: IconButton(
-                        onPressed: () => setState(() {
-                              _showRegisterPassword = !_showRegisterPassword;
-                            }),
-                        icon: Icon(
-                          _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey,
-                        )))),
-            const SizedBox(height: 8),
-            TextField(
-                controller: _tecRegistrationPasswordConfirmation,
-                keyboardType: TextInputType.visiblePassword,
-                obscureText: true,
-                focusNode: _fnConfirmPassword,
-                onSubmitted: (_) => _fnConfirmPassword.unfocus(),
-                decoration: const InputDecoration(label: Text('Confirm Password'), prefixIcon: Icon(Icons.password))),
-            const SizedBox(height: 32),
-            ElevatedButton(onPressed: _registerClick, child: const Text('Send Verification Email')),
-          ]),
-    ));
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 16),
+                  TextField(
+                      controller: _tecRegistrationEmail,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _fnPassword.requestFocus(),
+                      decoration: const InputDecoration(label: Text('Email'), prefixIcon: Icon(Icons.email))),
+                  const SizedBox(height: 8),
+                  TextField(
+                      controller: _tecRegistrationPassword,
+                      keyboardType: _showRegisterPassword ? TextInputType.visiblePassword : null,
+                      obscureText: !_showRegisterPassword,
+                      textInputAction: TextInputAction.next,
+                      focusNode: _fnPassword,
+                      onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
+                      decoration: InputDecoration(
+                          label: const Text('Password'),
+                          prefixIcon: const Icon(Icons.password),
+                          suffixIcon: IconButton(
+                              onPressed: () => setState(() {
+                                    _showRegisterPassword = !_showRegisterPassword;
+                                  }),
+                              icon: Icon(
+                                _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.grey,
+                              )))),
+                  const SizedBox(height: 8),
+                  TextField(
+                      controller: _tecRegistrationPasswordConfirmation,
+                      keyboardType: TextInputType.visiblePassword,
+                      obscureText: true,
+                      focusNode: _fnConfirmPassword,
+                      onSubmitted: (_) => _fnConfirmPassword.unfocus(),
+                      decoration:
+                          const InputDecoration(label: Text('Confirm Password'), prefixIcon: Icon(Icons.password))),
+                  const SizedBox(height: 32),
+                  ElevatedButton(onPressed: _registerClick, child: const Text('Send Verification Email')),
+                  const SizedBox(height: 8),
+                  kIsWeb
+                      ? TextButton(
+                          onPressed: () => launchUrlString(
+                              'https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+                          child: const Text('Privacy Policy'))
+                      : Container()
+                ])));
   }
 
   Widget _buildWaitingForVerification() {
@@ -210,7 +218,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
         if (loggedIn) {
           _appContext.analytics.logLogin(loginMethod: 'welcome page');
           Navigator.of(context).pop();
-          _attemptToFetchAndSetUser().then((value) => _instantiateTheRest(false));
+          _attemptToFetchAndSetUser().then((_) => _instantiateTheRest(false));
         }
       });
     }

@@ -126,7 +126,7 @@ class _InformationHomeState extends State<InformationHome> {
   Widget _buildChurchSlot(final String church, final String img) {
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
-    final bool onWideWeb = webHorizontalPadding != 0;
+    final bool onWideWeb = webHorizontalPadding != 8;
 
     return InkWell(
         onTap: () => _onChurchTap(church),

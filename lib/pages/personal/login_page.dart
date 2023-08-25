@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -77,18 +78,20 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _logUserToApp(final String authID) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final String token = appContext.sharedPref.fcmToken;
+    final MessagingManager messagingManager = MessagingManager();
+
+    final String? token = await messagingManager.getToken();
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
 
-    // ! Set this back
-    // if (!kDebugMode) {
-    debugPrint('setting contact token as $token');
+    debugPrint('setting device token as $token');
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
     final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
 
-    everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platform);
-    // }
+    if (token != null) {
+      everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platform);
+      appContext.sharedPref.saveFCMToken(token);
+    }
 
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);

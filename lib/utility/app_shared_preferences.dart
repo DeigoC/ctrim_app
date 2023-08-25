@@ -14,7 +14,6 @@ class AppSharedPreferences {
       _bookmarkedPosts = 'bookmarked',
       _fetchUserImgs = 'fetchUserImages',
       _lastPostRefresh = 'lastPostRefresh',
-      _phoneToken = 'phoneToken',
       _loggedOut = 'loggedOut',
       _subscribedToBelfast = 'subscribedToBelfast',
       _lastRoleRefresh = 'lastRoleRefresh',
@@ -34,12 +33,6 @@ class AppSharedPreferences {
     _pref.setString(_email, _clear);
     _pref.setString(_pass, _clear);
   }
-
-  void savePhoneToken(int token) {
-    _pref.setInt(_phoneToken, token);
-  }
-
-  int? get phoneToken => _pref.getInt(_phoneToken);
 
   // * Notification related
   bool get isFirstOpen => _pref.getBool(_isFirstOpen) ?? true;

@@ -34,7 +34,7 @@ class _ViewPostBodyState extends State<ViewPostBody> {
     if (widget.eventContext.isCurrentUserContributor(widget.currentUID) ||
         widget.eventContext.isCurrentUserAuthor(widget.currentUID)) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: ElevatedButton.icon(
               onPressed: () => _onEditBodyClick(context),
               icon: const Icon(Icons.edit),

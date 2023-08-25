@@ -32,7 +32,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
     if (_appContext.currentUser.isLeader) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: ElevatedButton.icon(
               onPressed: _onCreatePost, icon: const Icon(Icons.post_add), label: const Text('Create Related Post'))));
     }
