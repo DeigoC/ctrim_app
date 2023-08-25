@@ -24,6 +24,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   static final DateFormat _dateFormat = DateFormat('d MMM yyyy. HH:mm');
   @override
   void initState() {
+    _appContext.analytics.setCurrentScreen(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
     _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
     widget.eventContext.log.orderLogsBackwards(); // needed?

@@ -208,6 +208,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     } else {
       _attemptToLogin().then((loggedIn) {
         if (loggedIn) {
+          _appContext.analytics.logLogin(loginMethod: 'welcome page');
           Navigator.of(context).pop();
           _attemptToFetchAndSetUser().then((value) => _instantiateTheRest(false));
         }
@@ -302,6 +303,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     if (confirmation) {
       await _attemptToRegister().then((canVerifyEmail) {
         if (canVerifyEmail) {
+          _appContext.analytics.logEvent(name: 'register email');
           Navigator.of(context).pop();
           setState(() {
             _isWaitingForVerification = true;
@@ -361,6 +363,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             title: 'Error',
             content: 'Email verification not complete! Please check your emails on ${_tecRegistrationEmail.text}');
       } else {
+        _appContext.analytics.logSignUp(signUpMethod: 'email-verified');
         debugPrint('creating user with auth: ${_authManager.currentAuthUID}');
         Navigator.of(context).pop();
         _instantiateTheRest(true);

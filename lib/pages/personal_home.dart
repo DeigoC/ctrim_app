@@ -84,11 +84,6 @@ class _PersonalHomeState extends State<PersonalHome> {
       if (kIsWeb) {
         children.addAll([
           ListTile(
-            title: const Text('Privacy Policy'),
-            leading: const Icon(Icons.privacy_tip),
-            onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
-          ),
-          ListTile(
             title: const Text('Account Deletion Request'),
             leading: const Icon(Icons.no_accounts_rounded),
             onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
@@ -96,8 +91,14 @@ class _PersonalHomeState extends State<PersonalHome> {
         ]);
       }
 
-      children
-          .addAll([ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)]);
+      children.addAll([
+        ListTile(
+          title: const Text('Privacy Policy'),
+          leading: const Icon(Icons.privacy_tip),
+          onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+        ),
+        ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)
+      ]);
 
       return CustomScrollView(
         slivers: [
@@ -125,6 +126,7 @@ class _PersonalHomeState extends State<PersonalHome> {
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
               TextButton(
                   onPressed: () {
+                    widget.appContext.analytics.logEvent(name: 'logout');
                     _logout();
                     Navigator.of(context).pop();
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {

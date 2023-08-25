@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ctrim_app/firebase_options.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -54,6 +55,7 @@ void main() async {
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
   final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
   String? cacheDir, appDir;
   try {
@@ -111,6 +113,7 @@ void main() async {
         allUsers: allUsers,
         prefInstance: prefInstance,
         user: currentUser,
+        analytics: analytics,
         cacheDir: cacheDir,
         appDir: appDir);
     runApp(ChangeNotifierProvider(
@@ -122,7 +125,8 @@ void main() async {
   }
   // otherwise we open the welcome page! we perform the rest of the fetching at the end of that page
   else {
-    final AppContext appContext = AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir);
+    final AppContext appContext =
+        AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir, analytics: analytics);
     runApp(ChangeNotifierProvider(
         create: (_) => appContext,
         child: MyApp(

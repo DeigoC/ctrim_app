@@ -1,7 +1,9 @@
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import '../utility/app_context.dart';
 import '../widgets/media/my_photo_viewer.dart';
 import '../widgets/media/my_video_player.dart';
 
@@ -24,6 +26,9 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
   @override
   void initState() {
     _pageController = PageController(initialPage: widget.initialIndex);
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .setCurrentScreen(screenName: 'Post Gallery: ${widget.postId}');
 
     for (final entry in widget.media) {
       if (entry['type'] == 'vid') {

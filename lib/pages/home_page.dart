@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -53,8 +52,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }));
 
     if (!kDebugMode) {
-      final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-      analytics.logAppOpen();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
         if (kIsWeb) {
@@ -240,6 +237,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  // not really something that can be tested at the moment. Requires a good amount of posts made
+  // we want to see that post junk is removed when they are no longer being fetched
+  // we should really be clearing up images from the cache directory as well!
   Future<void> _removeLocallySavedPosts() async {
     final LocalDataManager localDataManager = LocalDataManager();
     final List<String> postUIDs = await localDataManager.readPostTrack();

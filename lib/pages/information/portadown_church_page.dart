@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:provider/provider.dart';
 
+import '../../utility/app_context.dart';
 import '../../widgets/info/info_appbar.dart';
 
 class PortadownChurchPage extends StatelessWidget {
@@ -13,6 +15,7 @@ class PortadownChurchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: 'Church Info: Portadown');
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
     final quill.QuillController controller = quill.QuillController(

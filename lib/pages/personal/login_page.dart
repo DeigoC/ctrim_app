@@ -93,6 +93,7 @@ class _LoginPageState extends State<LoginPage> {
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);
     appContext.sharedPref.setLoggedOut(false);
+    appContext.analytics.logLogin(loginMethod: 'in-app login page');
     _loggedIn = true;
   }
 

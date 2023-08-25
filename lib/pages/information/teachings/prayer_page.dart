@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:provider/provider.dart';
+
+import '../../../utility/app_context.dart';
 import '../../../widgets/info/info_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -12,6 +15,7 @@ class PrayerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: 'Topic: Family');
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
     final double webHorizontalPadding =
