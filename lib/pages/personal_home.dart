@@ -1,8 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-// import '../firebase/functions_manager.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../utility/app_context.dart';
@@ -23,7 +23,6 @@ class PersonalHome extends StatefulWidget {
 }
 
 class _PersonalHomeState extends State<PersonalHome> {
-  // final CloudFunctionManager _functionManager = CloudFunctionManager();
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
@@ -54,9 +53,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const SizedBox(height: 8),
                 ListTile(
                     title: Text('Hi, ${appContext.currentUser.forname}'),
-                    subtitle: const Text('Change your image here!'),
+                    subtitle: kIsWeb ? null : const Text('Change your image here!'),
                     leading: MyUserAvatar(appContext.currentUser),
-                    onTap: _onUserProfileClick),
+                    onTap: kIsWeb ? null : _onUserProfileClick),
                 const Divider(),
               ],
             ));
@@ -76,8 +75,23 @@ class _PersonalHomeState extends State<PersonalHome> {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
           ListTile(
             title: const Text('Readme'),
-            leading: const Icon(Icons.info),
+            leading: const Icon(Icons.info_outline),
             onTap: () => launchUrlString(_readmeUrl),
+          ),
+        ]);
+      }
+
+      if (kIsWeb) {
+        children.addAll([
+          ListTile(
+            title: const Text('Privacy Policy'),
+            leading: const Icon(Icons.privacy_tip),
+            onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+          ),
+          ListTile(
+            title: const Text('Account Deletion Request'),
+            leading: const Icon(Icons.no_accounts_rounded),
+            onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
           ),
         ]);
       }

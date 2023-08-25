@@ -35,11 +35,13 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
           appBar: AppBar(title: const Text('Login'), leading: Container()),
-          body: ListView(padding: const EdgeInsets.all(8), children: [
+          body: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8), children: [
             TextField(
                 controller: _tecEmail,
                 keyboardType: TextInputType.emailAddress,
@@ -99,9 +101,10 @@ class _LoginPageState extends State<LoginPage> {
       final String authID = await _authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
       if (!await _authManager.hasUserVerifiedEmail()) {
         _authManager.signOut().then((_) => DialogManager.showAlertDialog(
-            context: context,
-            title: 'Login Error',
-            content: 'This user has not been verified, please look for your verify email link!'));
+                context: context,
+                title: 'Login Error',
+                content: 'This user has not been verified, please look for your verify email link!')
+            .then((_) => Navigator.of(context).pop()));
       } else {
         return authID;
       }
