@@ -1,6 +1,7 @@
-import 'package:ctrim_app/pages/events/add_event_page.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
+
+import '../../utility/event_context.dart';
+import 'add_event_page.dart';
 
 class SelectPostTemplatePage extends StatelessWidget {
   const SelectPostTemplatePage({super.key, required this.eventContext});
@@ -312,7 +313,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.head
         .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1O3lXV494dVLmpreRiasLN0oOW6kngAy5');
 
-    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1)));
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 15)));
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/84796425540?pwd=andVVW5FR0t1dkFjRjZUUnpDRWVKdz09');
 
@@ -320,21 +321,28 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.program.addRole(
         uids: [],
-        title: 'Opening Prayer and Worship Song',
+        title: 'Host will accept guests',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 15),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 20),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
-        title: 'Intentional Discipleship',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 20),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
+        title: 'Welcome and Opening Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Word of God',
+        detail: 'With ministry & prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 55),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
         id: roleID++);
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));

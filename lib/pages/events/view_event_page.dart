@@ -143,17 +143,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           } else if (snap.hasError) {
             debugPrint('Something with fetching the post ${snap.error}');
             result = Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Something went wrong with fetching the post!\n\n${snap.error}',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close Page'))
-              ],
-            );
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Something went wrong with fetching the post!\n\n${snap.error}', textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close Page'))
+                ]);
           }
           return result;
         });
