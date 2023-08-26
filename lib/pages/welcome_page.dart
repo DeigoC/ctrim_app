@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
@@ -61,6 +63,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+
     return Scaffold(
         appBar: AppBar(
             title: const Text('Hi, Welcome!'),
@@ -69,9 +74,12 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             bottom: _isWaitingForVerification
                 ? null
                 : TabBar(controller: _tabController, tabs: const [Tab(text: 'Registration'), Tab(text: 'Login')])),
-        body: _isWaitingForVerification
-            ? _buildWaitingForVerification()
-            : TabBarView(controller: _tabController, children: [_buildRegistrationTab(), _buildLoginTab()]));
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          child: _isWaitingForVerification
+              ? _buildWaitingForVerification()
+              : TabBarView(controller: _tabController, children: [_buildRegistrationTab(), _buildLoginTab()]),
+        ));
   }
 
   Widget _buildLoginTab() {
@@ -125,50 +133,57 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   Widget _buildRegistrationTab() {
     return SingleChildScrollView(
         child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            TextField(
-                controller: _tecRegistrationEmail,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) => _fnPassword.requestFocus(),
-                decoration: const InputDecoration(label: Text('Email'), prefixIcon: Icon(Icons.email))),
-            const SizedBox(height: 8),
-            TextField(
-                controller: _tecRegistrationPassword,
-                keyboardType: _showRegisterPassword ? TextInputType.visiblePassword : null,
-                obscureText: !_showRegisterPassword,
-                textInputAction: TextInputAction.next,
-                focusNode: _fnPassword,
-                onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
-                decoration: InputDecoration(
-                    label: const Text('Password'),
-                    prefixIcon: const Icon(Icons.password),
-                    suffixIcon: IconButton(
-                        onPressed: () => setState(() {
-                              _showRegisterPassword = !_showRegisterPassword;
-                            }),
-                        icon: Icon(
-                          _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey,
-                        )))),
-            const SizedBox(height: 8),
-            TextField(
-                controller: _tecRegistrationPasswordConfirmation,
-                keyboardType: TextInputType.visiblePassword,
-                obscureText: true,
-                focusNode: _fnConfirmPassword,
-                onSubmitted: (_) => _fnConfirmPassword.unfocus(),
-                decoration: const InputDecoration(label: Text('Confirm Password'), prefixIcon: Icon(Icons.password))),
-            const SizedBox(height: 32),
-            ElevatedButton(onPressed: _registerClick, child: const Text('Send Verification Email')),
-          ]),
-    ));
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 16),
+                  TextField(
+                      controller: _tecRegistrationEmail,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _fnPassword.requestFocus(),
+                      decoration: const InputDecoration(label: Text('Email'), prefixIcon: Icon(Icons.email))),
+                  const SizedBox(height: 8),
+                  TextField(
+                      controller: _tecRegistrationPassword,
+                      keyboardType: _showRegisterPassword ? TextInputType.visiblePassword : null,
+                      obscureText: !_showRegisterPassword,
+                      textInputAction: TextInputAction.next,
+                      focusNode: _fnPassword,
+                      onSubmitted: (_) => _fnConfirmPassword.requestFocus(),
+                      decoration: InputDecoration(
+                          label: const Text('Password'),
+                          prefixIcon: const Icon(Icons.password),
+                          suffixIcon: IconButton(
+                              onPressed: () => setState(() {
+                                    _showRegisterPassword = !_showRegisterPassword;
+                                  }),
+                              icon: Icon(
+                                _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.grey,
+                              )))),
+                  const SizedBox(height: 8),
+                  TextField(
+                      controller: _tecRegistrationPasswordConfirmation,
+                      keyboardType: TextInputType.visiblePassword,
+                      obscureText: true,
+                      focusNode: _fnConfirmPassword,
+                      onSubmitted: (_) => _fnConfirmPassword.unfocus(),
+                      decoration:
+                          const InputDecoration(label: Text('Confirm Password'), prefixIcon: Icon(Icons.password))),
+                  const SizedBox(height: 32),
+                  ElevatedButton(onPressed: _registerClick, child: const Text('Send Verification Email')),
+                  const SizedBox(height: 8),
+                  kIsWeb
+                      ? TextButton(
+                          onPressed: () => launchUrlString(
+                              'https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+                          child: const Text('Privacy Policy'))
+                      : Container()
+                ])));
   }
 
   Widget _buildWaitingForVerification() {
@@ -201,8 +216,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     } else {
       _attemptToLogin().then((loggedIn) {
         if (loggedIn) {
+          _appContext.analytics.logLogin(loginMethod: 'welcome page');
           Navigator.of(context).pop();
-          _attemptToFetchAndSetUser().then((value) => _instantiateTheRest(false));
+          _attemptToFetchAndSetUser().then((_) => _instantiateTheRest(false));
         }
       });
     }
@@ -295,6 +311,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     if (confirmation) {
       await _attemptToRegister().then((canVerifyEmail) {
         if (canVerifyEmail) {
+          _appContext.analytics.logEvent(name: 'register email');
           Navigator.of(context).pop();
           setState(() {
             _isWaitingForVerification = true;
@@ -354,6 +371,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
             title: 'Error',
             content: 'Email verification not complete! Please check your emails on ${_tecRegistrationEmail.text}');
       } else {
+        _appContext.analytics.logSignUp(signUpMethod: 'email-verified');
         debugPrint('creating user with auth: ${_authManager.currentAuthUID}');
         Navigator.of(context).pop();
         _instantiateTheRest(true);
@@ -367,8 +385,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
     if (fromRegistration) {
       await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+    } else if (!fromRegistration && !_appContext.sharedPref.isFirstOpen) {
+      // save the token again if the user is logging in on an already activated app
+      _saveFCMToken();
     }
-    _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
       _appContext.sharedPref.setLoggedOut(false);
@@ -391,9 +411,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     final token = await messagingManager.getToken();
     if (token != null) {
       debugPrint('token to save is $token');
+      final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
       _appContext.sharedPref.saveFCMToken(token);
-      _everyoneDBManager.addTokenForAuthID(
-          authID: _authManager.currentAuthUID, token: token, platform: Platform.operatingSystem);
+      _everyoneDBManager.addTokenForAuthID(authID: _authManager.currentAuthUID, token: token, platform: platform);
     }
   }
 
@@ -420,8 +440,13 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
+    if (kIsWeb) {
+      _appContext.sharedPref.setUsersData(allUsersContent);
+      _appContext.sharedPref.setLastUsersFetch();
+    } else {
+      await dataManager.writeUsersList(allUsersContent);
+      await dataManager.writeLastUsersFetch();
+    }
     return allUsers;
   }
 

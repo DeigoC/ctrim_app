@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -205,15 +206,20 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
     _notifyContributorAdditions(newID);
     _notifyProgramRoleAddtitions(newID);
+    _updateAllUserPostInvolvement(newID);
     _notifyOfNewPost(newID);
   }
 
-  void _updateParentMetadata(String thisPostID) {
-    if (widget.eventContext.metadata.parentID != null) {
-      debugPrint('updating parent post metadata');
-      final String parentID = widget.eventContext.metadata.parentID!;
-      final metadata = _appContext.getMetadata(parentID)!;
+  void _updateParentMetadata(String thisPostID) async {
+    final String? parentID = widget.eventContext.metadata.parentID;
+
+    if (parentID != null) {
       final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+      final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+      debugPrint('updating parent post metadata');
+
+      // grab the latest metadata from DB cause we don't know if the meta right now is stale
+      final metadata = await dbManager.fetchMetadata();
 
       metadata.childrenPostIDs.add(thisPostID);
       dbManager.updateMetadata(metadata);
@@ -221,9 +227,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       // add a log and update the head's recentdate so that people can have their parent post instance updated
       final now = DateTime.now();
       dbManager.addLogEntry(
-          logMessage: "Created related post: '${widget.eventContext.head.title}'",
-          uid: _appContext.currentUser.id,
-          ts: now);
+          logMessage: "Created related post: '${_tecTitle.text.trim()}'", uid: _appContext.currentUser.id, ts: now);
+
+      eventHeadDBManager.updateRecentDateForID(parentID, now);
+      _appContext.setMetadata(parentID, metadata);
+      _appContext.getPostHead(parentID).setRecentDate(now);
     }
   }
 
@@ -287,6 +295,18 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       }
       _cloudFunctionManager
           .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
+    }
+  }
+
+  Future<void> _updateAllUserPostInvolvement(final String newPostID) async {
+    final UserDBManager userDBManager = UserDBManager();
+
+    // first up, the author
+    userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
+
+    // then all the contributors
+    for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
+      userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
     }
   }
 

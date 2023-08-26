@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
 class ImageMediaSlot extends StatelessWidget {
   const ImageMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postID});
@@ -11,8 +12,16 @@ class ImageMediaSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String? cacheDir = Provider.of<AppContext>(context, listen: false).cacheDir;
+
+    // most likely on the webapp
+    if (cacheDir == null) {
+      // debugPrint('building network image');
+      return _buildNetworkImage();
+    }
+
     return FutureBuilder(
-        future: _fetchImage(),
+        future: _fetchFileImage(cacheDir),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
@@ -29,10 +38,13 @@ class ImageMediaSlot extends StatelessWidget {
         });
   }
 
-  Future<File> _fetchImage() async {
-    final dir = await getTemporaryDirectory();
+  Widget _buildNetworkImage() {
+    return Image.network(mediaEntry['src']!, fit: BoxFit.cover);
+  }
+
+  Future<File> _fetchFileImage(final String cacheDir) async {
     final sanitisedFilePath = mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '${dir.path}/$sanitisedFilePath.png';
+    final fullPath = '$cacheDir/$sanitisedFilePath.png';
     final file = File(fullPath);
 
     if (!await file.exists()) {

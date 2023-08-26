@@ -1,0 +1,36 @@
+import 'dart:convert';
+import 'package:provider/provider.dart';
+
+import '../../../utility/app_context.dart';
+import '../../../widgets/info/info_appbar.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+
+class Jerimiah2911Page extends StatelessWidget {
+  const Jerimiah2911Page({super.key});
+  static const String _json = r"""
+[{"insert":"Trusting God's Plans"},{"insert":"\n","attributes":{"header":1,"align":"center"}},{"insert":"\nFor I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope."},{"insert":"\n","attributes":{"blockquote":true,"align":"center"}},{"insert":"Jeremiah 29:11"},{"insert":"\n","attributes":{"align":"right"}},{"insert":"\nThis verse holds a promise that has comforted countless souls throughout the ages. In a world often filled with uncertainty and challenges, these words remind us that our lives are not aimless or purposeless. They remind us that our Creator, the Almighty God, has a divine blueprint for each of us. As we delve into this verse, let us uncover three key lessons that can strengthen our faith and inspire us to live purposefully:\n\n1. God's Knowledge and Sovereignty"},{"insert":"\n","attributes":{"header":2}},{"insert":"\nJeremiah 29:11 begins with the profound declaration, \"For I know the plans I have for you...\" This speaks to the omniscience of our heavenly Father. God knows every detail of our lives – our past, present, and future. He understands our strengths and weaknesses, our desires and fears. And in His infinite wisdom, He orchestrates a plan that leads to our welfare and not to harm.\n\nIn times of confusion or when faced with the unknown, we can take solace in the fact that God's wisdom surpasses our understanding. When life takes unexpected turns, we can trust that His hand is guiding us. Just as a skilled artist crafts a masterpiece with purpose and intention, God is fashioning our lives into something beautiful and meaningful.\n\n2. Plans for Welfare and Hope"},{"insert":"\n","attributes":{"header":2}},{"insert":"\nContinuing in the verse, we read that God's plans for us are \"plans for welfare and not for evil, to give you a future and a hope.\" Our Creator's intentions for us are rooted in love, kindness, and goodness. He desires the best for His children, paving the way for a future filled with hope and promise.\n\nBut it's important to remember that God's plans may not always align with our immediate desires or expectations. Sometimes, His plans involve growth through challenges, perseverance through trials, and transformation through adversity. Yet, even in the midst of difficulties, we can hold onto the hope that God's ultimate purpose is to lead us to a place of fulfillment and joy.\n\n3. Embracing Trust and Patience"},{"insert":"\n","attributes":{"header":2}},{"insert":"\nTrusting God's plans often requires patience on our part. Our earthly perspective may not always grasp the grandeur of His design. This is where faith comes into play. We must learn to surrender our own plans and desires to God, acknowledging that His ways are higher than our ways.\n\nAs we navigate the journey of life, let us remember that God's timing is perfect, even when it doesn't align with our own. Patience and trust in His faithfulness are essential virtues that help us remain steadfast in the face of uncertainty. Just as a seed takes time to grow into a mighty tree, our lives are a process of growth and development under God's watchful care.\n\nConclusion"},{"insert":"\n","attributes":{"header":2}},{"insert":"\nIn conclusion, Jeremiah 29:11 offers a powerful reminder that our lives are not random, but purposefully designed by a loving and all-knowing God. Let us hold onto this promise during both times of tranquility and times of trial. May we trust in His plans, embrace the hope He provides, and patiently walk the path He lays before us. Through it all, may we find comfort, strength, and unwavering faith in the One who holds our future.\n"}]""";
+
+  @override
+  Widget build(BuildContext context) {
+    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: 'Verse: Jerimiah 29:11');
+    final quill.QuillController controller = quill.QuillController(
+        document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
+
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
+
+    return Scaffold(
+        body: CustomScrollView(slivers: [
+      const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
+      SliverToBoxAdapter(
+          child: SingleChildScrollView(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
+                    const SizedBox(height: 32)
+                  ]))))
+    ]));
+  }
+}

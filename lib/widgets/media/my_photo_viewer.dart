@@ -13,10 +13,11 @@ class MyPhotoViewer extends StatelessWidget {
   // in theory the file already exists in cache
   @override
   Widget build(BuildContext context) {
-    final String cacheDir = Provider.of<AppContext>(context, listen: false).cacheDir;
+    final String? cacheDir = Provider.of<AppContext>(context, listen: false).cacheDir;
     final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
     final fullPath = '$cacheDir/$sanitisedFilePath.png';
     final file = File(fullPath);
+
     final ImageProvider image = (file.existsSync() ? FileImage(file) : NetworkImage(src)) as ImageProvider;
     return InkWell(
       onTap: () {

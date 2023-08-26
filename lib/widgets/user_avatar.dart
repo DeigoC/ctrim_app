@@ -21,11 +21,23 @@ class MyUserAvatar extends StatelessWidget {
   }
 
   Widget _buildImageAvatar(BuildContext context) {
-    final String filePath = '${Provider.of<AppContext>(context, listen: false).appDir}/user_imgs/${_user.id}.png';
-    final File imgFile = File(filePath);
-    return CircleAvatar(
-        backgroundImage: (tmpImageSrc != null ? NetworkImage(tmpImageSrc!) : FileImage(imgFile)) as ImageProvider,
-        radius: radius);
+    final String? appDir = Provider.of<AppContext>(context, listen: false).appDir;
+
+    if (tmpImageSrc != null) {
+      return _buildCircularAvatar(NetworkImage(tmpImageSrc!));
+    }
+
+    if (appDir != null) {
+      final String filePath = '${Provider.of<AppContext>(context, listen: false).appDir}/user_imgs/${_user.id}.png';
+      final File imgFile = File(filePath);
+      return _buildCircularAvatar(FileImage(imgFile));
+    } else {
+      return _buildCircularAvatar(NetworkImage(_user.imgSrc));
+    }
+  }
+
+  Widget _buildCircularAvatar(final ImageProvider imageProvider) {
+    return CircleAvatar(backgroundImage: imageProvider, radius: radius);
   }
 
   Widget _buildTextAvatar() {

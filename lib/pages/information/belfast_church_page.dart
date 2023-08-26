@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../utility/app_context.dart';
 import '../../widgets/info/info_appbar.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
@@ -11,23 +13,32 @@ class BelfastChurchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: 'Church Info: Belfast');
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
 
     return Scaffold(
         appBar: AppBar(title: const Text('Belfast'), actions: const [InfoAction(json: _json)]),
         body: SingleChildScrollView(
-            child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AspectRatio(aspectRatio: 4 / 3, child: Image.asset('assets/images/bel2.jpg', fit: BoxFit.contain)),
-            const SizedBox(height: 8),
-            Flexible(
-                child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: quill.QuillEditor.basic(controller: controller, readOnly: true))),
-            const SizedBox(height: 32)
-          ],
+            child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/bel2.jpg',
+                height: webHorizontalPadding != 0 ? MediaQuery.of(context).size.height * 0.45 : null,
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                  child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: quill.QuillEditor.basic(controller: controller, readOnly: true))),
+              const SizedBox(height: 32)
+            ],
+          ),
         )));
   }
 }

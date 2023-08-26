@@ -70,6 +70,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '92089281469',
     projectId: 'ctrim-8b49b',
     storageBucket: 'ctrim-8b49b.appspot.com',
+    androidClientId: '92089281469-rkgm72ihoquo6pfrsptsf0unmdu8kdkc.apps.googleusercontent.com',
     iosClientId: '92089281469-i1faceuc2ein3c0kbmoel8cfd8d1plpr.apps.googleusercontent.com',
     iosBundleId: 'com.ctrim.app',
   );

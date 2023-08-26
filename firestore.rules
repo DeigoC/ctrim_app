@@ -3,37 +3,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // allow authenticated users to read all data
+    // allow authenticated users to read all data. Do not allow anyone to delete anything
     match /{document=**} {
       allow read: if request.auth != null;
+      allow delete: if false;
     }
 
     match /everyone/{auth_id}{
       // allow authenticated users to create their own document 
-      // TODO add the restriction on the fields. Only create if fields are [email]
-      allow create: if request.auth != null && auth_id == request.auth.uid;
+      allow create: if request.auth != null && auth_id == request.auth.uid && request.resource.data.keys().hasOnly(['email']);
       
+      // only allow admin to write to these (for registering users)
       allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;    
-     
+      
       // for the bookmarks and supplemental parts, we should only allow the same user access to it
       match /supplemental/{document}{
         allow write: if request.auth != null && request.resource.data.auth == request.auth.uid;
       }
     }
 
-    // TODO only 'isLeader' can create. 'isUser' (this includes leaders) can write
     match /events/{documents=**}{
-      allow write: if request.auth != null;
+      // only leaders (and ergo admins) can create new posts
+      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;  
+      
+      // allow workers to edit these posts (this covers leaders and admins)
+      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true;   
     }
     
-    // TODO only 'isAdmin' can create. 'isUser' (this includes leaders) can write
     match /users/{documents=**}{
-      allow write: if request.auth != null;
+      // only admins can register new users
+      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;  
+      
+      // allows users to change their own imgSrc (TODO: I think this can be tightened to only the same user can edit their own document)
+      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true; 
     }
 
-    // TODO only 'isLeader' can write (all admins should be a leader as well)
     match /id_tracker/{documents=**}{
-      allow write: if request.auth != null;
+      allow create: if false;
+
+      // allows leaders to create new posts and admins to register new users
+      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true; 
     }
   }
 }

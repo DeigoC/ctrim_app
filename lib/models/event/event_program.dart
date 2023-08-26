@@ -86,6 +86,7 @@ class EventProgram {
   void setMapLink(final String newMapLink) => _mapLink = newMapLink;
   void orderProgramsByStartTime() =>
       _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
+  void clearRoles() => _roles.clear();
 
   void addRole(
       {required List<String> uids,

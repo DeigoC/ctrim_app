@@ -1,8 +1,10 @@
-import 'package:ctrim_app/widgets/posts/post_head.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../firebase/db_managers/event_db_manager.dart';
+import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
+import '../utility/dialog_manager.dart';
+import '../widgets/posts/post_head.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -27,10 +29,25 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      // debugPrint('order looks like:');
-      // for (var head in appContext.eventHeads) {
-      //   debugPrint('head: ${head.id} has recent date of ${head.recentDate}');
-      // }
+      final bool defaultFilter = appContext.postSortIndex == 0;
+      final List<EventHead> eventHeads =
+          defaultFilter ? List.empty() : List.from(appContext.eventHeads, growable: true);
+
+      if (!defaultFilter) {
+        if (appContext.postSortIndex == 1) {
+          eventHeads.removeWhere(
+              (e) => e.eventDate == null || e.eventDate!.add(const Duration(hours: 12)).isBefore(DateTime.now()));
+        } else if (appContext.postSortIndex == 2) {
+          eventHeads.removeWhere((e) => e.eventDate == null || e.eventDate!.isAfter(DateTime.now()));
+        } else if (appContext.postSortIndex == 3) {
+          eventHeads.removeWhere((e) => !appContext.sharedPref.bookmarkedPosts.contains(e.id));
+        }
+      }
+
+      final int itemCount = defaultFilter ? appContext.eventHeads.length : eventHeads.length;
+      final double webHorizontalPadding =
+          MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+
       return RefreshIndicator(
         edgeOffset: (kToolbarHeight * 2) - 8,
         onRefresh: () => _onRefresh().then((value) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -46,13 +63,16 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                   floating: true,
                   actions: [IconButton(onPressed: () => _showFilterModel(context), icon: const Icon(Icons.sort))],
                   leading: Image.asset(ViewEventsHome._ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
-              SliverList.separated(
-                  itemCount: appContext.eventHeads.length,
-                  itemBuilder: (_, index) => PostHead(
-                        thisHead: appContext.eventHeads[index],
-                        updatePost: () => widget.rebuildFunction(),
-                      ),
-                  separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1))
+              SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                sliver: SliverList.separated(
+                    itemCount: itemCount,
+                    itemBuilder: (_, index) => PostHead(
+                          thisHead: defaultFilter ? appContext.eventHeads[index] : eventHeads[index],
+                          updatePost: () => widget.rebuildFunction(),
+                        ),
+                    separatorBuilder: (BuildContext context, int index) => const Divider(thickness: 1)),
+              )
             ]),
       );
     });
@@ -71,7 +91,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
               descendingRecentDate: () => _onSortPosts(0),
               descendingEventDate: () => _onSortPosts(1),
               ascendingEventDate: () => _onSortPosts(2),
-              ascendingRecentDate: () => _onSortPosts(3),
+              showBookmarks: () => _onSortPosts(3),
             )));
   }
 
@@ -110,11 +130,11 @@ class BulletinSettingSheet extends StatefulWidget {
       {super.key,
       required this.sortIndex,
       required this.descendingRecentDate,
-      required this.ascendingRecentDate,
       required this.descendingEventDate,
-      required this.ascendingEventDate});
+      required this.ascendingEventDate,
+      required this.showBookmarks});
   final int sortIndex;
-  final void Function() descendingRecentDate, ascendingRecentDate, descendingEventDate, ascendingEventDate;
+  final void Function() descendingRecentDate, descendingEventDate, ascendingEventDate, showBookmarks;
 
   @override
   State<BulletinSettingSheet> createState() => _BulletinSettingSheetState();
@@ -132,16 +152,14 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-      ListTile(
-        title: const Text('Locations: Belfast'),
-        subtitle: const Text('(Fixed for now!)'),
-        leading: const Icon(Icons.church),
-        trailing: const Icon(Icons.edit),
-        onTap: () {},
+      const ListTile(
+        title: Text('Location: Belfast'),
+        leading: Icon(Icons.church),
+        // onTap: () {},
       ),
       const Divider(),
       ListTile(
-          title: const Text('Most Recent Activity'),
+          title: const Text('Recent Activity'),
           leading: const Icon(Icons.edit_document),
           selected: _sortIndex == 0,
           onTap: () => _onSortByRecentDateDescending()),
@@ -156,10 +174,14 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
           selected: _sortIndex == 2,
           onTap: () => _onSortByEventDateAscending()),
       ListTile(
-          title: const Text('Stale Posts'),
-          leading: const Icon(Icons.folder_outlined),
+          title: const Text('Bookmarks'),
+          leading: const Icon(Icons.bookmarks),
           selected: _sortIndex == 3,
-          onTap: () => _onSortByRecentDateAscending())
+          trailing: IconButton(
+            icon: const Icon(Icons.help),
+            onPressed: _onBookmarkedHelp,
+          ),
+          onTap: () => _onShowBookmarks()),
     ]));
   }
 
@@ -167,13 +189,6 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
     setState(() {
       widget.descendingRecentDate();
       _sortIndex = 0;
-    });
-  }
-
-  void _onSortByRecentDateAscending() {
-    setState(() {
-      widget.ascendingRecentDate();
-      _sortIndex = 3;
     });
   }
 
@@ -189,5 +204,20 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
       widget.ascendingEventDate();
       _sortIndex = 2;
     });
+  }
+
+  void _onShowBookmarks() {
+    // TODO remember to remove bookmarks of posts that aren't being fetched anymore
+    setState(() {
+      widget.showBookmarks();
+      _sortIndex = 3;
+    });
+  }
+
+  void _onBookmarkedHelp() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'Bookmarked Posts',
+        content: 'You will be notified of updates made to the posts you bookmark.');
   }
 }

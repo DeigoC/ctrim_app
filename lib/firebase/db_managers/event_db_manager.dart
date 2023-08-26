@@ -13,12 +13,20 @@ class EventHeadDBManager {
       fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!), toFirestore: (head, _) => head.toJson());
 
   Future<List<EventHead>> fetchEventHeads() async {
-    final collection = await _ref.get();
+    final collection = await _ref.orderBy('RecentDate', descending: true).limit(40).get();
     return List<EventHead>.from(collection.docs.map((e) => e.data()));
   }
 
   Future<EventHead> fetchHead(final String id) async {
     return await _ref.doc(id).get().then((value) => value.data() as EventHead);
+  }
+
+  Future<List<EventHead>> fetchHeadsFromList(final List<String> ids) async {
+    final List<EventHead> result = [];
+    for (final String id in ids) {
+      result.add(await fetchHead(id));
+    }
+    return result;
   }
 
   Future<void> saveNewHead(final EventHead head) async {
@@ -27,6 +35,12 @@ class EventHeadDBManager {
 
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
+  }
+
+  Future<void> updateRecentDateForID(final String id, final DateTime recentDate) async {
+    final head = await fetchHead(id);
+    head.setRecentDate(recentDate);
+    await updateHead(head);
   }
 }
 

@@ -1,3 +1,5 @@
+import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
@@ -5,9 +7,13 @@ import 'package:provider/provider.dart';
 
 class UserSelectorDialog extends StatefulWidget {
   const UserSelectorDialog(
-      {super.key, required this.alreadySelectedUIDs, required this.onSelected, this.includeCurrentUser = false});
+      {super.key,
+      required this.alreadySelectedUIDs,
+      required this.onSelected,
+      this.includeCurrentUser = false,
+      this.allowTaskCheck = false});
   final List<String> alreadySelectedUIDs;
-  final bool includeCurrentUser;
+  final bool includeCurrentUser, allowTaskCheck;
   final void Function(String) onSelected;
 
   @override
@@ -66,10 +72,18 @@ class _UserSelectorDialogState extends State<UserSelectorDialog> {
                     leading: MyUserAvatar(thisU),
                     title: Text(thisU.fullname),
                     onTap: () => _onSelectedClick(thisU.id),
+                    trailing: _buildTrailing(thisU),
                   );
                 }))
       ])));
     });
+  }
+
+  Widget? _buildTrailing(final User selectedUser) {
+    if (widget.allowTaskCheck) {
+      return IconButton(onPressed: () => _onOpenUserTasks(selectedUser), icon: const Icon(Icons.checklist));
+    }
+    return null;
   }
 
   // * LOGIC
@@ -77,5 +91,9 @@ class _UserSelectorDialogState extends State<UserSelectorDialog> {
   void _onSelectedClick(String uid) {
     widget.onSelected(uid);
     Navigator.of(context).pop();
+  }
+
+  void _onOpenUserTasks(final User selectedUser) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewUserRolesPage(selectedUser: selectedUser)));
   }
 }

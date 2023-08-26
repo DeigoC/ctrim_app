@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -35,28 +35,54 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late final AppContext _appContext;
   final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
 
+  // bool _bottomBarIsVisible = true;
+
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _informationTabController = TabController(length: 5, vsync: this);
+    _informationTabController = TabController(length: 4, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
-    _appContext.allUsers.sort(((a, b) => a.surname.compareTo(b.surname)));
+
+    _appContext.allUsers.sort(((a, b) {
+      final surname = a.surname.compareTo(b.surname);
+      if (surname == 0) {
+        return a.forname.compareTo(b.forname);
+      }
+      return surname;
+    }));
 
     if (!kDebugMode) {
-      final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-      analytics.logAppOpen();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
+        if (kIsWeb) {
+          _showWebMessage();
+        }
       });
     }
 
-    if (_appContext.sharedPref.shouldFetchUserImages) {
+    if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
       _appContext.sharedPref.justFetchedUserImages();
     }
 
     _setupCloudOnMessage();
     _removeLocallySavedPosts();
+
+    // setting up the animated scroll aspects
+    // _postsScrollController.addListener(() {
+    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    //     setState(() {
+    //       _bottomBarIsVisible = false;
+    //     });
+    //   }
+
+    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.forward) {
+    //     setState(() {
+    //       _bottomBarIsVisible = true;
+    //     });
+    //   }
+    // });
+
     super.initState();
   }
 
@@ -72,18 +98,43 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
-          body: _buildSelectedBody(appContext),
-          floatingActionButton: _buildFAB(),
-          bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (index) => _onNavigationItemTap(index),
-              unselectedFontSize: 0,
-              selectedFontSize: 0,
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
-                BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
-              ]));
+        body: _buildSelectedBody(appContext),
+        floatingActionButton: _buildFAB(),
+        bottomNavigationBar: BottomNavigationBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            currentIndex: _selectedIndex,
+            onTap: (index) => _onNavigationItemTap(index),
+            unselectedFontSize: 0,
+            selectedFontSize: 0,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+              BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+            ]),
+        // ? Check the bottom out for another time
+        // bottomNavigationBar: SafeArea(
+        //   child: AnimatedContainer(
+        //     duration: const Duration(milliseconds: 300),
+        //     height: _bottomBarIsVisible ? kBottomNavigationBarHeight : 0,
+        //     child: Visibility(
+        //       visible: _bottomBarIsVisible,
+        //       child: BottomNavigationBar(
+        //           backgroundColor: Colors.transparent,
+        //           elevation: 0,
+        //           currentIndex: _selectedIndex,
+        //           onTap: (index) => _onNavigationItemTap(index),
+        //           unselectedFontSize: 0,
+        //           selectedFontSize: 0,
+        //           items: const <BottomNavigationBarItem>[
+        //             BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+        //             BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+        //             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+        //           ]),
+        //     ),
+        //   ),
+        // ),
+      );
     });
   }
 
@@ -141,7 +192,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (appContext.sharedPref.isFirstOpen) {
+    if (appContext.sharedPref.isFirstOpen && !kIsWeb) {
       final MessagingManager messagingManager = MessagingManager();
       await showDialog(
           context: context,
@@ -186,6 +237,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  // not really something that can be tested at the moment. Requires a good amount of posts made
+  // we want to see that post junk is removed when they are no longer being fetched
+  // we should really be clearing up images from the cache directory as well!
   Future<void> _removeLocallySavedPosts() async {
     final LocalDataManager localDataManager = LocalDataManager();
     final List<String> postUIDs = await localDataManager.readPostTrack();
@@ -194,7 +248,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     for (final String postUID in postUIDs) {
       if (!_appContext.eventHeads.any((e) => e.id.compareTo(postUID) == 0)) {
         debugPrint('deleting post id: $postUID');
-        toDelete.add(postUID); // ? I don't think i can modify the list that's beeing for-looped?
+        toDelete.add(postUID);
         localDataManager.deletePostData(postUID);
       }
     }
@@ -203,9 +257,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       postUIDs.removeWhere((e) => toDelete.contains(e));
       localDataManager.writePostTrack(postUIDs);
     }
-
-    // debugPrint('deleting post 1 data for testing');
-    // localDataManager.deletePostData('1');
   }
 
   void _setupCloudOnMessage() {
@@ -286,13 +337,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _openPost(final EventHead thisHead) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ViewEventPage(
-                  eventHead: thisHead,
-                  viewingChild: false,
-                )));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
   }
 
   void _openInformationTeachingPage(final String page) {
@@ -398,5 +443,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _setImageForFile(final File file, final String src) async {
     final response = await http.get(Uri.parse(src));
     file.writeAsBytes(response.bodyBytes);
+  }
+
+  void _showWebMessage() {
+    DialogManager.showAlertDialog(
+        context: context,
+        title: 'CTRIM WebApp',
+        content:
+            "Hi, thanks for checking this page out! This is still a 'Work In Progress'. Please look to install and use the native app (on Android or iOS) instead when it's available\n\nKey feature this webapp doesn't contain are push notifications, media viewing and solid backend optimisation.");
   }
 }

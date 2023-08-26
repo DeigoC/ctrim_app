@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:provider/provider.dart';
+
+import '../../../utility/app_context.dart';
 import '../../../widgets/info/info_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -10,8 +13,12 @@ class FamilyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: 'Topic: Family');
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
+
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
 
     return Scaffold(
         body: CustomScrollView(slivers: [
@@ -19,7 +26,7 @@ class FamilyPage extends StatelessWidget {
       SliverToBoxAdapter(
           child: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
                     const SizedBox(height: 32)

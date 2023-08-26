@@ -1,17 +1,16 @@
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import '../../models/user.dart';
 import '../../pages/events/add_program_role_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_role_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
-import '../user_avatar.dart';
 import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
@@ -30,6 +29,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   static final DateFormat _startFormatAllDay = DateFormat('EEEE d MMM yyyy');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
   late final AppContext _appContext;
+  int? _selectedIndex;
 
   @override
   void initState() {
@@ -47,6 +47,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildBodyWithEventDate() {
+    final bool canEdit = (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
+            widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
+        DateTime.now().isBefore(widget.eventContext.head.eventDate!);
+
     final List<Widget> children = [
       Expanded(
           child: CustomScrollView(slivers: [
@@ -56,7 +60,13 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           itemBuilder: (_, index) {
             return ProgramTile(
               programEntry: widget.eventContext.program.roles[index],
-              onTap: (_) => _showProgramDialog(_),
+              onTap: (_) => _programTap(_, index),
+              selected: _selectedIndex == index,
+              assignedUsers: _appContext.allUsers
+                  .where((e) => (widget.eventContext.program.roles[index]["uids"] as List).contains(e.id))
+                  .toList(),
+              canEdit: canEdit,
+              onEditClick: () => _openEditProgramPage(widget.eventContext.program.roles[index]),
             );
           },
           separatorBuilder: (BuildContext context, int index) {
@@ -66,16 +76,15 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       ]))
     ];
 
-    if (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-        widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) {
+    if (canEdit) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                   onPressed: _openAddProgramPage,
                   icon: const Icon(Icons.edit_calendar),
-                  label: const Text('Add Program')))));
+                  label: const Text('Add Schedule Item')))));
     }
 
     return SafeArea(top: false, child: Column(children: children));
@@ -103,8 +112,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           title: Text(widget.eventContext.head.location),
           subtitle: Text(
             widget.eventContext.program.address,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: null,
           ),
           trailing: _buildLocationTrailingIcon(),
           leading: const Icon(Icons.map)),
@@ -112,7 +120,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     ];
 
     if (widget.eventContext.head.eventDate != null &&
-        DateTime.now().compareTo(widget.eventContext.head.eventDate!) < 0 &&
+        DateTime.now().isBefore(widget.eventContext.head.eventDate!) &&
         !widget.isAddingPost) {
       children.add(Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -124,70 +132,25 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     children.add(const Divider(thickness: 1));
 
     return InkWell(
-        onTap: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ? _onEditPostProgram : null,
+        onTap: _canEditPostProgram() ? _onEditPostProgram : null,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
-  void _showProgramDialog(final Map<String, dynamic> programEntry) {
-    final List<User> assignedUsers =
-        _appContext.allUsers.where((e) => (programEntry["uids"] as List).contains(e.id)).toList();
+  bool _canEditPostProgram() {
+    if (widget.isAddingPost) return true;
+    return DateTime.now()
+            .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
+        widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id);
+  }
 
-    final List<Widget> children = [
-      const SizedBox(height: 16),
-      Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(programEntry['title'], style: const TextStyle(fontSize: 21))),
-      const SizedBox(height: 8),
-      Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text('${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])}',
-              textAlign: TextAlign.start))
-    ];
-
-    if ((programEntry['detail'] as String).isNotEmpty) {
-      children.addAll([
-        const SizedBox(height: 16),
-        Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(programEntry['detail'], style: const TextStyle(fontSize: 16), textAlign: TextAlign.start))
-      ]);
-    }
-
-    if (!programEntry['for_guests']) {
-      children
-          .add(const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('(Do not show for Guests)')));
-    }
-
-    if (assignedUsers.isNotEmpty) {
-      children.addAll([const Divider()]);
-
-      for (final user in assignedUsers) {
-        children.add(ListTile(title: Text(user.fullname), leading: MyUserAvatar(user)));
+  void _programTap(final Map<String, dynamic> programEntry, final int index) {
+    setState(() {
+      if (_selectedIndex != index) {
+        _selectedIndex = index;
+      } else {
+        _selectedIndex = null;
       }
-    }
-
-    if (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-        widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) {
-      children.add(Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton.icon(
-              onPressed: () => _openEditProgramPage(programEntry),
-              icon: const Icon(Icons.edit),
-              label: const Text('Edit'))));
-    } else {
-      children.add(const SizedBox(height: 16));
-    }
-
-    showDialog(
-        context: context,
-        builder: (_) {
-          return Dialog(
-              child: SingleChildScrollView(
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: children)));
-        });
+    });
   }
 
   Widget _buildLocationTrailingIcon() {
@@ -212,7 +175,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   void _openEditProgramPage(Map<String, dynamic> programEntry) {
-    Navigator.of(context).pop();
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -249,13 +211,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           widget.eventContext.program.finishTime ?? widget.eventContext.head.eventDate!.add(const Duration(hours: 1)),
       allDay: widget.eventContext.program.allDay,
     );
-    Add2Calendar.addEvent2Cal(event);
+
+    if (!kIsWeb) {
+      Add2Calendar.addEvent2Cal(event);
+    } else {
+      DialogManager.showAlertDialog(
+          context: context,
+          title: 'Adding to Calendar',
+          content:
+              "Sorry, this feature only works on native mobile apps (iOS or Android), not on WebApps. Please look to install the app when it's available!");
+    }
   }
 
   void _onClickLocationTrailingIcon() {
     final String link =
         widget.eventContext.program.online ? widget.eventContext.program.address : widget.eventContext.program.mapLink;
-    launchUrlString(link).onError((error, stackTrace) async {
+    launchUrlString(link, mode: LaunchMode.externalApplication).onError((error, stackTrace) async {
       debugPrint('error with link: $link');
       DialogManager.showAlertDialog(
           context: context,

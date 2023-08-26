@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:ctrim_app/firebase_options.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -17,7 +21,7 @@ import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -32,7 +36,11 @@ void main() async {
   // SettingsController for changes, then passes it further down to the
   // SettingsView.
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+  } else {
+    await Firebase.initializeApp();
+  }
 
   // * Make sure we connect to the emulator on debug
   // if (kDebugMode) {
@@ -47,8 +55,15 @@ void main() async {
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
   final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-  final String cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
-  final String appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
+  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
+  String? cacheDir, appDir;
+  try {
+    cacheDir = await getTemporaryDirectory().then((dir) => dir.path);
+    appDir = await getApplicationDocumentsDirectory().then((dir) => dir.path);
+  } on Exception catch (e) {
+    debugPrint('-------- error getting directories: $e');
+  } finally {}
 
   // * First up, we log the returning user in, otherwise it's a guest
   final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
@@ -67,7 +82,7 @@ void main() async {
     }
   }
 
-  // user has logged in before, we fetch the data as per usual and open the app from home
+  // user has logged in before, we fetch the data as per usual and open the app to home
   if (authID != null) {
     final UserDBManager userDBManager = UserDBManager();
     currentUser = await userDBManager.fetchUserByAuthID(authID);
@@ -80,9 +95,17 @@ void main() async {
     // this is dumb, we need to move the local data writing logic to it's own class so
     // it can be called anywhere and remove the need to do these weird, hacky things!
     if (currentUser != null) {
+      currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
       allUsers.removeWhere((e) => e.id == currentUser!.id);
       allUsers.add(currentUser);
     }
+
+    // ? Testing purpose:
+    String order = 'order of the heads ID:';
+    for (final head in heads) {
+      order += ' ${head.id},';
+    }
+    debugPrint(order);
 
     // * Create the AppContext, setup the FCM and run the app
     final AppContext appContext = AppContext(
@@ -90,6 +113,7 @@ void main() async {
         allUsers: allUsers,
         prefInstance: prefInstance,
         user: currentUser,
+        analytics: analytics,
         cacheDir: cacheDir,
         appDir: appDir);
     runApp(ChangeNotifierProvider(
@@ -100,9 +124,9 @@ void main() async {
         )));
   }
   // otherwise we open the welcome page! we perform the rest of the fetching at the end of that page
-  // ? this could be because of the authentication not working on the saved creds
   else {
-    final AppContext appContext = AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir);
+    final AppContext appContext =
+        AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir, analytics: analytics);
     runApp(ChangeNotifierProvider(
         create: (_) => appContext,
         child: MyApp(
@@ -117,11 +141,16 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   final LocalDataManager dataManager = LocalDataManager();
   final PackageInfo packageInfo = await PackageInfo.fromPlatform();
   final String version = packageInfo.version;
+  const LineSplitter ls = LineSplitter();
   debugPrint('version is $version');
 
   final String currentID = await trackerDBManager.getCurrentUserID();
-  final usersData = await dataManager.readUsers();
-  final lastUserFetch = await dataManager.readLastUserFetch();
+  final List<String> usersData = kIsWeb ? ls.convert(pref.getString('usersData') ?? '') : await dataManager.readUsers();
+  final DateTime? lastWebUserFetch = pref.getString('lastUserFetch') == null
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(int.parse(pref.getString('lastUserFetch')!));
+
+  final lastUserFetch = kIsWeb ? lastWebUserFetch : await dataManager.readLastUserFetch();
   final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 7;
 
   // only use the local data if the count is the same in the DB and the last time has been multiple days ago (7 days)
@@ -137,7 +166,7 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
   if (shouldReadLocalData) {
     debugPrint('--fetching users from Local Data');
 
-    usersData.removeAt(0); // remove the first line that tells the current ID
+    usersData.removeAt(0);
     const int chunkSize = 8;
     final int numberOfChunks = usersData.length ~/ chunkSize;
 
@@ -181,10 +210,15 @@ Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
-    pref.setBool('fetchUserImages', true); // refresh user image fetch
+    if (kIsWeb) {
+      pref.setString('usersData', allUsersContent);
+      pref.setString('lastUserFetch', DateTime.now().millisecondsSinceEpoch.toString());
+    } else {
+      await dataManager.writeUsersList(allUsersContent);
+      await dataManager.writeLastUsersFetch();
+    }
 
+    pref.setBool('fetchUserImages', true); // refresh user image fetch
     return allUsers;
   }
 }
