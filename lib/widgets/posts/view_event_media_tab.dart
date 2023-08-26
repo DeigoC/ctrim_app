@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../pages/events/edit_gallery_page.dart';
@@ -14,14 +15,16 @@ class ViewEventMediaTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = _getMedia();
+
     final List<Widget> children = [
       Expanded(
           child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-              itemCount: eventContext.media.allMedia.length,
+              itemCount: media.length,
               itemBuilder: (_, index) {
-                final Map<String, String> entry = eventContext.media.allMedia[index];
+                final Map<String, String> entry = media[index];
                 if (entry['type']!.compareTo('img') == 0) {
                   return ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: eventContext.id);
                 }
@@ -29,9 +32,10 @@ class ViewEventMediaTab extends StatelessWidget {
               }))
     ];
 
-    if (eventContext.isCurrentUserAuthor(currentUID) || eventContext.isCurrentUserContributor(currentUID)) {
+    if ((eventContext.isCurrentUserAuthor(currentUID) || eventContext.isCurrentUserContributor(currentUID)) &&
+        !kIsWeb) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: ElevatedButton.icon(
               onPressed: () => _onEditMediaTap(context),
               label: const Text('Edit Media Items'),
@@ -64,5 +68,12 @@ class ViewEventMediaTab extends StatelessWidget {
         MaterialPageRoute(
             builder: (_) =>
                 ViewGalleryPage(media: eventContext.media.allMedia, initialIndex: index, postId: eventContext.id)));
+  }
+
+  List<Map<String, String>> _getMedia() {
+    if (kIsWeb) {
+      return eventContext.media.allMedia.where((e) => e['type'] == 'img').toList();
+    }
+    return eventContext.media.allMedia;
   }
 }

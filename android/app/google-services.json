@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "92089281469-rkgm72ihoquo6pfrsptsf0unmdu8kdkc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ctrim.ctrim_app",
+            "certificate_hash": "6821c66596e0b1ad59f5a4fc6f0e5cb2f685659a"
+          }
+        },
+        {
           "client_id": "92089281469-5gevuko4790dvij8lvm3h7vsu6g5jfsc.apps.googleusercontent.com",
           "client_type": 3
         }

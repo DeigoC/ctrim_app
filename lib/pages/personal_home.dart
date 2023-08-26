@@ -1,18 +1,17 @@
-import 'package:ctrim_app/pages/personal/attending_sunday_info_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-// import '../firebase/functions_manager.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../utility/app_context.dart';
 import '../widgets/user_avatar.dart';
+import 'personal/attending_sunday_info_page.dart';
 import 'personal/current_user_page.dart';
 import 'personal/login_page.dart';
 import 'personal/notification_management_page.dart';
 import 'personal/view_all_users_page.dart';
-import 'personal/view_bookmarked_page.dart';
 import 'personal/view_user_roles_page.dart';
 
 class PersonalHome extends StatefulWidget {
@@ -24,17 +23,17 @@ class PersonalHome extends StatefulWidget {
 }
 
 class _PersonalHomeState extends State<PersonalHome> {
-  // final CloudFunctionManager _functionManager = CloudFunctionManager();
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+
     // ? this may not be needed cause of the Consumer at the page level (home_page)
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final List<Widget> children = [
-        ListTile(
-            leading: const Icon(Icons.bookmarks), title: const Text('Bookmarks'), onTap: _onViewBookmarkedPageClick),
         ListTile(
           leading: const Icon(Icons.church),
           title: const Text('Attending Sunday Service'),
@@ -54,16 +53,19 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const SizedBox(height: 8),
                 ListTile(
                     title: Text('Hi, ${appContext.currentUser.forname}'),
-                    subtitle: const Text('Change your image here!'),
                     leading: MyUserAvatar(appContext.currentUser),
-                    onTap: _onUserProfileClick),
-                const Divider(),
+                    onTap: kIsWeb ? null : _onUserProfileClick),
+                const Divider(indent: 16, endIndent: 16)
               ],
             ));
         children.addAll([
           ListTile(
-            title: const Text('My Assigned Tasks'),
-            leading: const Icon(Icons.task_alt),
+            title: const Text('My Tasks'),
+            leading: const Icon(Icons.checklist),
+            trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
+                ? Text('(${appContext.currentUser.roles!.length.toString()})',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red))
+                : null,
             onTap: _onViewTasksClick,
           ),
           ListTile(
@@ -72,14 +74,30 @@ class _PersonalHomeState extends State<PersonalHome> {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
           ListTile(
             title: const Text('Readme'),
-            leading: const Icon(Icons.info),
+            leading: const Icon(Icons.info_outline),
             onTap: () => launchUrlString(_readmeUrl),
           ),
         ]);
       }
 
-      children
-          .addAll([ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)]);
+      if (kIsWeb) {
+        children.addAll([
+          ListTile(
+            title: const Text('Account Deletion Request'),
+            leading: const Icon(Icons.no_accounts_rounded),
+            onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
+          ),
+        ]);
+      }
+
+      children.addAll([
+        ListTile(
+          title: const Text('Privacy Policy'),
+          leading: const Icon(Icons.privacy_tip),
+          onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+        ),
+        ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)
+      ]);
 
       return CustomScrollView(
         slivers: [
@@ -87,7 +105,9 @@ class _PersonalHomeState extends State<PersonalHome> {
               title: const Text('Personal'),
               centerTitle: false,
               leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
-          SliverList(delegate: SliverChildListDelegate(children))
+          SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+              sliver: SliverList(delegate: SliverChildListDelegate(children)))
         ],
       );
     });
@@ -105,6 +125,7 @@ class _PersonalHomeState extends State<PersonalHome> {
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
               TextButton(
                   onPressed: () {
+                    widget.appContext.analytics.logEvent(name: 'logout');
                     _logout();
                     Navigator.of(context).pop();
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
@@ -129,13 +150,14 @@ class _PersonalHomeState extends State<PersonalHome> {
     await authManager.signOut();
   }
 
-  void _onViewBookmarkedPageClick() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewBookmarksPage()));
-  }
-
   void _onViewTasksClick() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (_) => ViewUserRolesPage(selectedUser: widget.appContext.currentUser)));
+        context,
+        MaterialPageRoute(
+            builder: (_) => ViewUserRolesPage(
+                  selectedUser: widget.appContext.currentUser,
+                  allowPostView: true,
+                )));
   }
 
   void _onNotificationManagerClick() {

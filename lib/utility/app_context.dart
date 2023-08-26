@@ -4,6 +4,7 @@ import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/utility/app_shared_preferences.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,7 +23,8 @@ class AppContext extends ChangeNotifier {
   // no more 'user contact' we will hold the tokens as necessary
   static final Map<String, List<String>> _userTokens = {};
   static late final AppSharedPreferences _sharedPref;
-  static late final String _cacheDir, _appDir;
+  static late final String? _cacheDir, _appDir;
+  static late final FirebaseAnalytics _analytics;
 
   late User _currentUser;
 
@@ -30,14 +32,16 @@ class AppContext extends ChangeNotifier {
 
   AppContext(
       {required SharedPreferences prefInstance,
-      required String cacheDir,
-      required String appDir,
+      required String? cacheDir,
+      required String? appDir,
+      required FirebaseAnalytics analytics,
       List<EventHead>? heads,
       List<User>? allUsers,
       User? user}) {
     _eventHeads = heads ?? List<EventHead>.empty(growable: true);
     _allUsers = allUsers ?? List<User>.empty(growable: true);
     _currentUser = user ?? _guest;
+    _analytics = analytics;
     _sharedPref = AppSharedPreferences(preferences: prefInstance);
     _cacheDir = cacheDir;
     _appDir = appDir;
@@ -48,7 +52,10 @@ class AppContext extends ChangeNotifier {
   EventMetadata? getMetadata(final String id) => _metaData[id];
 
   // * event head related
-  List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
+  List<EventHead> get eventHeads {
+    return UnmodifiableListView(_eventHeads);
+  }
+
   EventHead getPostHead(final String id) => _eventHeads.firstWhere((e) => e.id == id);
 
   void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
@@ -64,10 +71,11 @@ class AppContext extends ChangeNotifier {
     // 0 Recency date descending
     // 1 Event date descending
     // 2 Event date ascending
-    // 3 Recency date ascending
+    // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
       case 0:
         _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
         break;
       case 1:
         _eventHeads.sort((a, b) {
@@ -76,6 +84,7 @@ class AppContext extends ChangeNotifier {
           if (b.eventDate == null) return -1;
           return b.eventDate!.compareTo(a.eventDate!);
         });
+        _analytics.logEvent(name: 'post sort', parameters: {'type': 'upcoming events'});
         break;
       case 2:
         _eventHeads.sort((a, b) {
@@ -84,9 +93,11 @@ class AppContext extends ChangeNotifier {
           if (b.eventDate == null) return -1;
           return a.eventDate!.compareTo(b.eventDate!);
         });
+        _analytics.logEvent(name: 'post sort', parameters: {'type': 'past events'});
         break;
       case 3:
-        _eventHeads.sort((a, b) => a.recentDate.compareTo(b.recentDate));
+        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        _analytics.logEvent(name: 'post sort', parameters: {'type': 'bookmarks'});
         break;
     }
   }
@@ -119,6 +130,8 @@ class AppContext extends ChangeNotifier {
 
   // * other related
   void rebuildPlease() => notifyListeners();
-  String get cacheDir => _cacheDir;
-  String get appDir => _appDir;
+  String? get cacheDir => _cacheDir;
+  String? get appDir => _appDir;
+
+  FirebaseAnalytics get analytics => _analytics;
 }

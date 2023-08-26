@@ -8,19 +8,11 @@ class EveryoneDBManager {
       _auth = 'auth',
       _email = 'email';
 
-  // Future<void> bookmarksWriteTest(List<String> data) async {
-  //   // await _ref.doc('tVV1P736xr9EucuSWlXRudLDra9R').update({'bookmarks': content});
-  //   await _ref
-  //       .doc('dvEtvt8SrmdsZ7MnRrKWa1QQMRx8')
-  //       .collection('supplemental')
-  //       .doc('bookmarks')
-  //       .update({'bookmarks': data});
-  // }
-
-  // Future<void> userWriteTest(bool content) async {
-  //   // await _ref.doc('tVV1P736xr9EucuSWlXRudLDra9R').update({'isUser': content});
-  //   await _ref.doc('dvEtvt8SrmdsZ7MnRrKWa1QQMRx8').update({'isUser': true});
-  // }
+  Future<void> userWriteTest(bool content) async {
+    // await _ref.doc('tVV1P736xr9EucuSWlXRudLDra9R').update({'isUser': content});
+    await _ref.doc('36YOuzlzlBkSi7t68AGGJGA4Zv82').update({'isUser': true});
+    await _ref.doc('PvfOhjYmXhtQYUIwEMIwqntNjQm9').update({'isUser': true});
+  }
 
   Future<void> createUser(final String authID, final String email) async {
     await _ref.doc(authID).set({_email: email});

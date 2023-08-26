@@ -53,8 +53,10 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
           title: 'Unsubscribing to Belfast',
           content: 'You will no longer receive notifications of new posts from Belfast');
       _messagingManager.unsubscribeFromCTRIMBelfast();
+      _appContext.analytics.logEvent(name: 'Notification: Unsubscribe from Belfast');
     } else {
       _messagingManager.subscribeToCTRIMBelfast();
+      _appContext.analytics.logEvent(name: 'Notification: Subscribe from Belfast');
     }
 
     setState(() {

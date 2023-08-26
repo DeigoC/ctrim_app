@@ -1,10 +1,15 @@
+import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/personal/register_user_page.dart';
+import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+// for now it's for all users since they will only be from Belfast
+// we should look to share either this whole page or make it adapt to view
+// locations of people at a time in the future.
 class ViewAllUsersPage extends StatefulWidget {
   const ViewAllUsersPage({super.key});
 
@@ -31,7 +36,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 return ListTile(
                     title: Text(thisUser.fullname),
                     leading: MyUserAvatar(thisUser),
-                    onTap: () => DialogManager.showUserProfile(
+                    onTap: () => _onUserTap(thisUser),
+                    onLongPress: () => DialogManager.showUserProfile(
                         selectedUser: thisUser,
                         context: context,
                         currentUserAdmin: appContext.currentUser.isAreaAdmin));
@@ -45,5 +51,15 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       // ? Is this needed?
       setState(() {});
     });
+  }
+
+  void _onUserTap(final User selectedUser) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => ViewUserRolesPage(
+                  selectedUser: selectedUser,
+                  allowPostView: true,
+                )));
   }
 }

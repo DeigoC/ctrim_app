@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:ctrim_app/firebase/messaging_manager.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,11 +36,13 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
     return WillPopScope(
-      onWillPop: () async => _loggedIn,
+      onWillPop: _onWillPop,
       child: Scaffold(
           appBar: AppBar(title: const Text('Login'), leading: Container()),
-          body: ListView(padding: const EdgeInsets.all(8), children: [
+          body: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8), children: [
             TextField(
                 controller: _tecEmail,
                 keyboardType: TextInputType.emailAddress,
@@ -74,20 +78,25 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _logUserToApp(final String authID) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final String token = appContext.sharedPref.fcmToken;
+    final MessagingManager messagingManager = MessagingManager();
+
+    final String? token = await messagingManager.getToken();
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
 
-    // ! Set this back
-    // if (!kDebugMode) {
-    debugPrint('setting contact token as $token');
+    debugPrint('setting device token as $token');
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
-    // }
+    final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
+
+    if (token != null) {
+      everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platform);
+      appContext.sharedPref.saveFCMToken(token);
+    }
 
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);
     appContext.sharedPref.setLoggedOut(false);
+    appContext.analytics.logLogin(loginMethod: 'in-app login page');
     _loggedIn = true;
   }
 
@@ -96,9 +105,10 @@ class _LoginPageState extends State<LoginPage> {
       final String authID = await _authManager.loginAndReturnAuthID(_tecEmail.text.trim(), _tecPassword.text);
       if (!await _authManager.hasUserVerifiedEmail()) {
         _authManager.signOut().then((_) => DialogManager.showAlertDialog(
-            context: context,
-            title: 'Login Error',
-            content: 'This user has not been verified, please look for your verify email link!'));
+                context: context,
+                title: 'Login Error',
+                content: 'This user has not been verified, please look for your verify email link!')
+            .then((_) => Navigator.of(context).pop()));
       } else {
         return authID;
       }
@@ -162,5 +172,10 @@ class _LoginPageState extends State<LoginPage> {
       content = 'Wrong password, please try again or reset the password if forgotten';
     }
     DialogManager.showAlertDialog(context: context, title: title, content: content);
+  }
+
+  Future<bool> _onWillPop() async {
+    DialogManager.showAlertDialog(context: context, title: 'CTRIM App', content: 'Please login to use the app');
+    return _loggedIn;
   }
 }
