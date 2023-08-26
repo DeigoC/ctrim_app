@@ -112,8 +112,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           title: Text(widget.eventContext.head.location),
           subtitle: Text(
             widget.eventContext.program.address,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: null,
           ),
           trailing: _buildLocationTrailingIcon(),
           leading: const Icon(Icons.map)),

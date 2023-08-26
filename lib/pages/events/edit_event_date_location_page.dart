@@ -260,11 +260,13 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         _isAllDay != _originalAllDay ||
         _tecAddress.text.trim().toLowerCase().compareTo(_originalAddress.toLowerCase()) != 0 ||
         widget.eventContext.program.online != _originalOnline ||
-        widget.eventContext.head.location.compareTo(_originalLocation) != 0) {
+        widget.eventContext.head.location.compareTo(_originalLocation) != 0 ||
+        _originalMapLink.compareTo(_tecMapLink.text.trim()) != 0) {
       widget.eventContext.program.setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
       widget.eventContext.program.setAllDay(_isAllDay);
       widget.eventContext.program.setAddress(_tecAddress.text.trim());
       widget.eventContext.program.setOnline(_online);
+      widget.eventContext.program.setMapLink(_tecMapLink.text.trim());
 
       final String newLocation = _location + (_online ? ' (Online)' : '');
       widget.eventContext.head.setLocation(newLocation);
