@@ -133,12 +133,15 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     children.add(const Divider(thickness: 1));
 
     return InkWell(
-        onTap: DateTime.now()
-                    .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
-                widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id)
-            ? _onEditPostProgram
-            : null,
+        onTap: _canEditPostProgram() ? _onEditPostProgram : null,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
+  }
+
+  bool _canEditPostProgram() {
+    if (widget.isAddingPost) return true;
+    return DateTime.now()
+            .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
+        widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id);
   }
 
   void _programTap(final Map<String, dynamic> programEntry, final int index) {

@@ -210,12 +210,16 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _notifyOfNewPost(newID);
   }
 
-  void _updateParentMetadata(String thisPostID) {
-    if (widget.eventContext.metadata.parentID != null) {
-      debugPrint('updating parent post metadata');
-      final String parentID = widget.eventContext.metadata.parentID!;
-      final metadata = _appContext.getMetadata(parentID)!;
+  void _updateParentMetadata(String thisPostID) async {
+    final String? parentID = widget.eventContext.metadata.parentID;
+
+    if (parentID != null) {
       final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+      final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
+      debugPrint('updating parent post metadata');
+
+      // grab the latest metadata from DB cause we don't know if the meta right now is stale
+      final metadata = await dbManager.fetchMetadata();
 
       metadata.childrenPostIDs.add(thisPostID);
       dbManager.updateMetadata(metadata);
@@ -223,9 +227,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       // add a log and update the head's recentdate so that people can have their parent post instance updated
       final now = DateTime.now();
       dbManager.addLogEntry(
-          logMessage: "Created related post: '${widget.eventContext.head.title}'",
-          uid: _appContext.currentUser.id,
-          ts: now);
+          logMessage: "Created related post: '${_tecTitle.text.trim()}'", uid: _appContext.currentUser.id, ts: now);
+
+      eventHeadDBManager.updateRecentDateForID(parentID, now);
+      _appContext.setMetadata(parentID, metadata);
+      _appContext.getPostHead(parentID).setRecentDate(now);
     }
   }
 

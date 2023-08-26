@@ -36,6 +36,12 @@ class EventHeadDBManager {
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
   }
+
+  Future<void> updateRecentDateForID(final String id, final DateTime recentDate) async {
+    final head = await fetchHead(id);
+    head.setRecentDate(recentDate);
+    await updateHead(head);
+  }
 }
 
 class EventSupplementalDBManager {
