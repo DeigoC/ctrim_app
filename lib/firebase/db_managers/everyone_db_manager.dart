@@ -29,7 +29,6 @@ class EveryoneDBManager {
   }
 
   Future<void> addTokenForAuthID({required String authID, required String token, required String platform}) async {
-    // check it doesn't exist, add it
     final doc = await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).get();
     final deviceTokens = Map<String, String>.from(doc.data()![_deviceTokens]);
     deviceTokens[token] = platform;

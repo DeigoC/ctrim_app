@@ -126,7 +126,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
-        title: 'Opening Prayer',
+        title: 'Intercessory Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 50),
         id: roleID++);
@@ -285,21 +285,21 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
-        title: 'Praise and Worship',
+        title: 'Prayer Exhortation',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 35),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 45),
-        id: roleID++);
-    eventContext.program.addRole(
-        uids: [],
-        title: 'Word of God',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 45),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
-        title: 'Closing Prayer',
+        title: 'Conclusion',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),
         id: roleID++);
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));

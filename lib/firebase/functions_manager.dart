@@ -51,9 +51,9 @@ class CloudFunctionManager {
       debugPrint('------------------------');
     }
 
-    // final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
-    // final result = await callable.call(callParams);
-    // debugPrint(result.data.toString());
+    final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
+    final result = await callable.call(callParams);
+    debugPrint(result.data.toString());
   }
 
   Future<void> sendToTopic(

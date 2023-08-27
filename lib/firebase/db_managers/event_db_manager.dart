@@ -37,6 +37,7 @@ class EventHeadDBManager {
     await _ref.doc(head.id).update(head.toJson());
   }
 
+  // TODO i think i'll delete this
   Future<void> updateRecentDateForID(final String id, final DateTime recentDate) async {
     final head = await fetchHead(id);
     head.setRecentDate(recentDate);

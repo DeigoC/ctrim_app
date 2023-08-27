@@ -645,7 +645,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String body = "You are no longer assigned to '$roleTitle' for ${widget.originalTitle}";
 
       final List<String> tokens = [];
-      for (var thisUID in removalEntry.value) {
+      for (final thisUID in removalEntry.value) {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');

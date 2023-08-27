@@ -88,28 +88,22 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
             onChanged: (_) => _hasAnythingChanged()),
         const Divider(thickness: 1),
         const SizedBox(height: 16),
-        const Text('Assigned Members To Program'),
-        ElevatedButton.icon(
-            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
-        const SizedBox(height: 16),
+        const Text('Assigned To The Program', style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 8),
         InkWell(
             onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
             child: MyAvatarStack(
               users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
               appDir: _appContext.appDir,
             )),
-        const SizedBox(height: 16),
+        TextButton.icon(
+            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
         const Divider(thickness: 1),
         SwitchListTile(
             value: _forGuests,
             onChanged: _onForGuestsChange,
             title: const Text('For Guests'),
             subtitle: const Text('Is this something guests should see?')),
-        ListTile(
-            title: const Text('Priority: 1'),
-            subtitle: const Text('Should this be viewed higher than others of the same start time?'),
-            trailing: const Icon(Icons.edit),
-            onTap: () {}),
         const SizedBox(height: 16),
         ElevatedButton.icon(
             onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Update')),
@@ -257,6 +251,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                   onPressed: () {
                     setState(() {
                       _selectedUsers.removeWhere((element) => element.compareTo(uid) == 0);
+                      widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
                       _hasAnythingChanged();
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();

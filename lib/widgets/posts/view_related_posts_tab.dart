@@ -140,6 +140,12 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   // this is going to be a major method to fetch all the data needed
   // parent post + meta, sibling posts, children posts - all if needed
   Future<bool> _fetchAllRelatedPosts() async {
+    // TODO there's something special to do before that!
+    // We need to make sure that we are using the latest Metadata.
+    // If the metadata doesn't exist in this current instance (via AppContext)
+    // then perform a fetch and set it as so for the whole instance of the app.
+    // TODO this means we have to change how the logs work as well
+
     final String? parentID = widget.eventContext.metadata.parentID;
 
     // fetch parent
