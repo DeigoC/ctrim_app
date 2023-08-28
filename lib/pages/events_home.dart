@@ -157,7 +157,10 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
         leading: Icon(Icons.church),
         // onTap: () {},
       ),
-      const Divider(),
+      const Divider(
+        indent: 16,
+        endIndent: 16,
+      ),
       ListTile(
           title: const Text('Recent Activity'),
           leading: const Icon(Icons.edit_document),
@@ -167,12 +170,12 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
           title: const Text('Upcoming Events'),
           leading: const Icon(Icons.calendar_month),
           selected: _sortIndex == 1,
-          onTap: () => _onSortByEventDateDescending()),
+          onTap: () => _onSortByUpcomingEvents()),
       ListTile(
-          title: const Text('Past Events'),
+          title: const Text('Recent Events'),
           leading: const Icon(Icons.calendar_month_outlined),
           selected: _sortIndex == 2,
-          onTap: () => _onSortByEventDateAscending()),
+          onTap: () => _onSortByRecentEvents()),
       ListTile(
           title: const Text('Bookmarks'),
           leading: const Icon(Icons.bookmarks),
@@ -192,14 +195,14 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
     });
   }
 
-  void _onSortByEventDateDescending() {
+  void _onSortByUpcomingEvents() {
     setState(() {
       widget.descendingEventDate();
       _sortIndex = 1;
     });
   }
 
-  void _onSortByEventDateAscending() {
+  void _onSortByRecentEvents() {
     setState(() {
       widget.ascendingEventDate();
       _sortIndex = 2;
@@ -207,7 +210,7 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
   }
 
   void _onShowBookmarks() {
-    // TODO remember to remove bookmarks of posts that aren't being fetched anymore
+    // ? Do we want to remove bookmarks of posts that aren't being fetched anymore?
     setState(() {
       widget.showBookmarks();
       _sortIndex = 3;

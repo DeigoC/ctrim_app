@@ -52,10 +52,10 @@ class EventContext {
   bool get isBodyUntouched => _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') == 0;
   List<dynamic> get body => _body.decodedJson;
   String get encodedBody => _body.json;
-  bool isSameJson(List<dynamic> json) => _body.compareTo(json) == 0;
+  bool isSameJson(final List<dynamic> json) => _body.compareTo(json) == 0;
 
-  void setBodyJson(List<dynamic> json) => _body.encodeJson(json);
-  void setFetchedBody(String encodedBody) => _body.setJson(encodedBody);
+  void setBodyJson(final List<dynamic> json) => _body.encodeJson(json);
+  void setFetchedBody(final String encodedBody) => _body.setJson(encodedBody);
 
   // * Program Related (and the Event Date)
   EventProgram get program => _program;
@@ -64,18 +64,18 @@ class EventContext {
 
   // * Supplemental - Metadata Related
   EventMetadata get metadata => _metadata;
-  void setFetchedMetadata(EventMetadata data) {
+  void setFetchedMetadata(final EventMetadata data) {
     _metadata = data;
     _initialiseInternalLists();
   }
 
   // * Supplemental - Media Related
   EventMedia get media => _media;
-  void setFetchedMedia(EventMedia media) => _media = media;
+  void setFetchedMedia(final EventMedia media) => _media = media;
 
   // * Logs Related
   EventLog get log => _log;
-  void setFetchedLogs(EventLog log) => _log = log;
+  void setFetchedLogs(final EventLog log) => _log = log;
 
   // * General logic
 
@@ -112,7 +112,7 @@ class EventContext {
     dbManager.addBody(_body.json);
     dbManager.addMedia(_media);
     dbManager.addMetadata(_metadata);
-    dbManager.addLog(_log);
+    dbManager.setLog(_log);
     dbManager.addProgram(_program);
     return newID;
   }
@@ -125,13 +125,12 @@ class EventContext {
     _head.setRecentDate(now);
     metadata.setLastUID(uid);
 
-    _log.addLog({'log': log, 'uid': uid, 'ts': now});
+    dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
 
     await headDBManager.updateHead(_head);
     dbManager.updateBody(_body.decodedJson);
     dbManager.updateMetadata(_metadata);
     dbManager.updateProgram(_program);
-    dbManager.updateLog(_log);
     dbManager.updateMedia(_media);
   }
 
@@ -140,6 +139,7 @@ class EventContext {
       _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
+
   // This one is to be used after update is complete
   void resetSavingOfTheEdit() {
     if (_contributorAdditionUIDs.isNotEmpty) {

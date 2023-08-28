@@ -36,12 +36,6 @@ class EventHeadDBManager {
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
   }
-
-  Future<void> updateRecentDateForID(final String id, final DateTime recentDate) async {
-    final head = await fetchHead(id);
-    head.setRecentDate(recentDate);
-    await updateHead(head);
-  }
 }
 
 class EventSupplementalDBManager {
@@ -120,17 +114,13 @@ class EventSupplementalDBManager {
     return EventLog.fromMap(doc.data() as Map<String, dynamic>);
   }
 
-  Future<void> updateLog(final EventLog log) async {
-    await _colRef.doc('logs').update(log.toJson());
-  }
-
-  Future<void> addLog(final EventLog log) async {
+  Future<void> setLog(final EventLog log) async {
     await _colRef.doc('logs').set(log.toJson());
   }
 
   Future<void> addLogEntry({required String logMessage, required String uid, required DateTime ts}) async {
     final log = await fetchLog();
     log.addLog(Map<String, dynamic>.from({'log': logMessage, 'uid': uid, 'ts': ts}));
-    await updateLog(log);
+    await _colRef.doc('logs').update(log.toJson());
   }
 }

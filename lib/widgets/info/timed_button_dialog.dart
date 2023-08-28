@@ -13,7 +13,7 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 6)).then((_) {
+      Future.delayed(const Duration(seconds: 4)).then((_) {
         setState(() {
           _enabledOk = true;
         });
