@@ -165,7 +165,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8'],
         title: 'Word of God',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 45),
@@ -204,7 +204,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: [],
+        uids: ['9'],
         title: 'Back To Discipleship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
@@ -248,7 +248,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8', '9'],
         title: 'Word of God',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
@@ -260,6 +260,8 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 5),
         id: roleID++);
 
+    eventContext.setFetchedBody(
+        r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 850 3878 6530"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 985767"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
@@ -301,6 +303,8 @@ class SelectPostTemplatePage extends StatelessWidget {
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),
         id: roleID++);
+    eventContext.setFetchedBody(
+        r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 893 7280 5213"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 261513"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
@@ -326,24 +330,27 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8'],
         title: 'Welcome and Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
-        title: 'Closing Prayer',
+        title: 'Praise and Worship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8', '9'],
         title: 'Word of God',
         detail: 'With ministry & prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
         id: roleID++);
+
+    eventContext.setFetchedBody(
+        r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 847 9642 5540"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 786441"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }

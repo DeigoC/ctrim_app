@@ -140,21 +140,20 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   // this is going to be a major method to fetch all the data needed
   // parent post + meta, sibling posts, children posts - all if needed
   Future<bool> _fetchAllRelatedPosts() async {
-    // TODO there's something special to do before that!
-    // We need to make sure that we are using the latest Metadata.
-    // If the metadata doesn't exist in this current instance (via AppContext)
-    // then perform a fetch and set it as so for the whole instance of the app.
-    // TODO this means we have to change how the logs work as well
-
     final String? parentID = widget.eventContext.metadata.parentID;
 
     // fetch parent
     if (parentID != null && !_appContext.eventHeads.any((e) => e.id == parentID)) {
       _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
-    }
+      if (_appContext.getMetadata(parentID) == null) {
+        // fetch the parent metadata
+        final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+        _appContext.setMetadata(parentID, await dbManager.fetchMetadata());
+      }
 
-    // fetch siblings
-    await _getSiblingPostID();
+      // fetch siblings - we know for sure that we have the parent meta
+      await _getSiblingPostID(_appContext.getMetadata(parentID)!);
+    }
 
     // fetch children
     for (final childrenID in widget.eventContext.metadata.childrenPostIDs) {
@@ -166,21 +165,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return true;
   }
 
-  Future<void> _getSiblingPostID() async {
-    final String? parentID = widget.eventContext.metadata.parentID;
-    if (parentID == null) {
-      return;
-    }
-    EventMetadata? parentMeta = _appContext.getMetadata(parentID);
-
-    // make sure the metadata exists
-    if (parentMeta == null) {
-      // fetch from DB. Technically it could also exist in local storage but... screw it!
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-      parentMeta = await dbManager.fetchMetadata();
-      _appContext.setMetadata(parentID, parentMeta);
-    }
-
+  Future<void> _getSiblingPostID(final EventMetadata parentMeta) async {
     for (final siblingID in parentMeta.childrenPostIDs) {
       if (!_appContext.eventHeads.any((e) => e.id == siblingID)) {
         _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(siblingID));

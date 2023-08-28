@@ -91,7 +91,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
                 Tab(icon: Icon(Icons.note), text: 'Info'),
-                Tab(icon: Icon(Icons.calendar_today), text: 'Programme'),
+                Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'),
                 Tab(icon: Icon(Icons.photo_album), text: 'Media')
               ],
             )
