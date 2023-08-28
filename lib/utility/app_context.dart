@@ -82,7 +82,7 @@ class AppContext extends ChangeNotifier {
           if (a.eventDate == null && b.eventDate == null) return 0;
           if (a.eventDate == null) return 1;
           if (b.eventDate == null) return -1;
-          return b.eventDate!.compareTo(a.eventDate!);
+          return a.eventDate!.compareTo(b.eventDate!);
         });
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'upcoming events'});
         break;
@@ -91,7 +91,7 @@ class AppContext extends ChangeNotifier {
           if (a.eventDate == null && b.eventDate == null) return 0;
           if (a.eventDate == null) return 1;
           if (b.eventDate == null) return -1;
-          return a.eventDate!.compareTo(b.eventDate!);
+          return b.eventDate!.compareTo(a.eventDate!);
         });
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'past events'});
         break;

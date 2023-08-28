@@ -43,13 +43,6 @@ class UserDBManager {
   Future<List<Map<String, dynamic>>> fetchUserRoles(final String uid) async {
     final doc = await _ref.doc(uid).collection(_supplemental).doc(_roles).get();
     final roleData = List<Map<String, dynamic>>.from(doc.data()![_roles]);
-
-    // ? We don't need to do this right?
-    // final List<Map<String, dynamic>> result = [];
-    // for (final dataEntry in roleData) {
-    //   result.add({'postID': dataEntry['postID'], 'id': dataEntry['id']});
-    // }
-    // return result;
     return roleData;
   }
 
@@ -61,7 +54,7 @@ class UserDBManager {
 
   Future<void> removeUserRole(final String uid, final int roleID) async {
     final data = await fetchUserRoles(uid);
-    data.removeWhere((e) => e['id'] == roleID);
+    data.removeWhere((e) => e['id'] as int == roleID);
     _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
   }
 
@@ -76,7 +69,7 @@ class UserDBManager {
   // an author or contributor
   Future<List<Map<String, dynamic>>> fetchUserPosts(final String uid) async {
     final doc = await _ref.doc(uid).collection(_supplemental).doc(_posts).get();
-    final postsData = List<Map<String, dynamic>>.from(doc.data()![_roles]);
+    final postsData = List<Map<String, dynamic>>.from(doc.data()![_posts]);
     final List<Map<String, dynamic>> result = [];
     for (final dataEntry in postsData) {
       result.add({'id': dataEntry['id'], 'ownership': dataEntry['ownership']});

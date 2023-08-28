@@ -27,11 +27,10 @@ class MyPhotoViewer extends StatelessWidget {
       child: PhotoView(
         imageProvider: image,
         heroAttributes: PhotoViewHeroAttributes(tag: postID + src),
-        scaleStateChangedCallback: (value) {
-          // debugPrint('zooming: ${value.isScaleStateZooming}');
-        },
-        onScaleEnd: (context, details, controllerValue) {
-          // debugPrint('scale end');
+        errorBuilder: (context, error, stackTrace) {
+          // ? Technically the image media slot will be the one trying to do the fixing.
+          // once that is done, the file should be fixed?
+          return const Center(child: Text('The image is broken, will try to fetch and rebuild later'));
         },
       ),
     );

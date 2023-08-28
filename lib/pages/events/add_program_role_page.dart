@@ -88,16 +88,15 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         ),
         const Divider(thickness: 1),
         const SizedBox(height: 16),
-        const Text('Assigned Members To Program', style: TextStyle(fontSize: 16)),
-        ElevatedButton.icon(
-            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
-        const SizedBox(height: 16),
+        const Text('Assigned To The Program', style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 8),
         InkWell(
             onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
             child: MyAvatarStack(
                 users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
                 appDir: _appContext.appDir)),
-        const SizedBox(height: 16),
+        TextButton.icon(
+            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
         const Divider(thickness: 1),
         SwitchListTile(
           value: _forGuests,

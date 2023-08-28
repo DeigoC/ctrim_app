@@ -213,7 +213,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     );
 
     if (!kIsWeb) {
-      Add2Calendar.addEvent2Cal(event);
+      Add2Calendar.addEvent2Cal(event).then((added) {
+        if (added) {
+          _appContext.analytics.logEvent(
+              name: 'Reminder Added', parameters: {'PostID': widget.eventContext.id, 'DateTime': DateTime.now()});
+        }
+      });
     } else {
       DialogManager.showAlertDialog(
           context: context,

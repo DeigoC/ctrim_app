@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:ctrim_app/firebase/auth_manager.dart';
+import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -68,6 +70,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _setupCloudOnMessage();
     _removeLocallySavedPosts();
 
+    // TODO - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
+    // can be removed for version 0.6.0
+    _saveFCMToken();
+
     // setting up the animated scroll aspects
     // _postsScrollController.addListener(() {
     //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.reverse) {
@@ -97,43 +103,46 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      return Scaffold(
-        body: _buildSelectedBody(appContext),
-        floatingActionButton: _buildFAB(),
-        bottomNavigationBar: BottomNavigationBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            currentIndex: _selectedIndex,
-            onTap: (index) => _onNavigationItemTap(index),
-            unselectedFontSize: 0,
-            selectedFontSize: 0,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
-              BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
-            ]),
-        // ? Check the bottom out for another time
-        // bottomNavigationBar: SafeArea(
-        //   child: AnimatedContainer(
-        //     duration: const Duration(milliseconds: 300),
-        //     height: _bottomBarIsVisible ? kBottomNavigationBarHeight : 0,
-        //     child: Visibility(
-        //       visible: _bottomBarIsVisible,
-        //       child: BottomNavigationBar(
-        //           backgroundColor: Colors.transparent,
-        //           elevation: 0,
-        //           currentIndex: _selectedIndex,
-        //           onTap: (index) => _onNavigationItemTap(index),
-        //           unselectedFontSize: 0,
-        //           selectedFontSize: 0,
-        //           items: const <BottomNavigationBarItem>[
-        //             BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
-        //             BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-        //             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
-        //           ]),
-        //     ),
-        //   ),
-        // ),
+      return WillPopScope(
+        onWillPop: () async => false, // safety for the first session
+        child: Scaffold(
+          body: _buildSelectedBody(appContext),
+          floatingActionButton: _buildFAB(),
+          bottomNavigationBar: BottomNavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              currentIndex: _selectedIndex,
+              onTap: (index) => _onNavigationItemTap(index),
+              unselectedFontSize: 0,
+              selectedFontSize: 0,
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+              ]),
+          // ? Check the bottom out for another time
+          // bottomNavigationBar: SafeArea(
+          //   child: AnimatedContainer(
+          //     duration: const Duration(milliseconds: 300),
+          //     height: _bottomBarIsVisible ? kBottomNavigationBarHeight : 0,
+          //     child: Visibility(
+          //       visible: _bottomBarIsVisible,
+          //       child: BottomNavigationBar(
+          //           backgroundColor: Colors.transparent,
+          //           elevation: 0,
+          //           currentIndex: _selectedIndex,
+          //           onTap: (index) => _onNavigationItemTap(index),
+          //           unselectedFontSize: 0,
+          //           selectedFontSize: 0,
+          //           items: const <BottomNavigationBarItem>[
+          //             BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+          //             BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
+          //             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
+          //           ]),
+          //     ),
+          //   ),
+          // ),
+        ),
       );
     });
   }
@@ -187,6 +196,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       } else if (index == 1) {
         _informationScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
       }
+    }
+  }
+
+  Future<void> _saveFCMToken() async {
+    final MessagingManager messagingManager = MessagingManager();
+    final token = await messagingManager.getToken();
+    if (token != null && _appContext.sharedPref.fcmToken != token) {
+      debugPrint('token to save is $token');
+      final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
+      _appContext.sharedPref.saveFCMToken(token);
+      final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+      final AuthManager authManager = AuthManager();
+      everyoneDBManager.addTokenForAuthID(authID: authManager.currentAuthUID, token: token, platform: platform);
     }
   }
 
@@ -450,6 +472,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         context: context,
         title: 'CTRIM WebApp',
         content:
-            "Hi, thanks for checking this page out! This is still a 'Work In Progress'. Please look to install and use the native app (on Android or iOS) instead when it's available\n\nKey feature this webapp doesn't contain are push notifications, media viewing and solid backend optimisation.");
+            "Hi, thanks for checking this out! This is still a 'Work In Progress'. Please look to install and use the native app (on Android or iOS) instead when it's available\n\nKey feature this webapp doesn't contain are push notifications, media viewing and the remind me button.");
   }
 }

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../../utility/app_context.dart';
-import '../../../widgets/info/info_appbar.dart';
 
 class BibleReadingPage extends StatelessWidget {
   const BibleReadingPage({super.key});
@@ -21,13 +20,14 @@ class BibleReadingPage extends StatelessWidget {
 
     return Scaffold(
         body: CustomScrollView(slivers: [
-      const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
+      // const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
+      const SliverAppBar(floating: true, snap: true),
       SliverToBoxAdapter(
           child: SingleChildScrollView(
               child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
+                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false)),
                     const SizedBox(height: 32)
                   ]))))
     ]));

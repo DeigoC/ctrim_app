@@ -4,12 +4,17 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ImageMediaSlot extends StatelessWidget {
+class ImageMediaSlot extends StatefulWidget {
   const ImageMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postID});
   final Map<String, String> mediaEntry;
   final Function()? onTap;
   final String postID;
 
+  @override
+  State<ImageMediaSlot> createState() => _ImageMediaSlotState();
+}
+
+class _ImageMediaSlotState extends State<ImageMediaSlot> {
   @override
   Widget build(BuildContext context) {
     final String? cacheDir = Provider.of<AppContext>(context, listen: false).cacheDir;
@@ -27,8 +32,20 @@ class ImageMediaSlot extends StatelessWidget {
 
           if (snap.hasData) {
             return InkWell(
-                onTap: onTap,
-                child: Hero(tag: postID + mediaEntry['src']!, child: Image.file(snap.data!, fit: BoxFit.cover)));
+                onTap: widget.onTap,
+                child: Hero(
+                    tag: widget.postID + widget.mediaEntry['src']!,
+                    child: Image.file(
+                      snap.data!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          debugPrint('broken image, will retry on rebuild');
+                          _deleteFile(cacheDir);
+                        });
+                        return const Center(child: Text('The file is broken, will try again later'));
+                      },
+                    )));
           } else if (snap.hasError) {
             debugPrint('image error: ${snap.error}');
             result = const Center(child: Text('Something went wrong!'));
@@ -39,20 +56,31 @@ class ImageMediaSlot extends StatelessWidget {
   }
 
   Widget _buildNetworkImage() {
-    return Image.network(mediaEntry['src']!, fit: BoxFit.cover);
+    return Image.network(widget.mediaEntry['src']!, fit: BoxFit.cover);
   }
 
   Future<File> _fetchFileImage(final String cacheDir) async {
-    final sanitisedFilePath = mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
+    final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
     final fullPath = '$cacheDir/$sanitisedFilePath.png';
     final file = File(fullPath);
 
     if (!await file.exists()) {
       debugPrint('Creating image file for: $fullPath');
-      final response = await http.get(Uri.parse(mediaEntry['src']!));
+      final response = await http.get(Uri.parse(widget.mediaEntry['src']!));
       return await file.writeAsBytes(response.bodyBytes);
     }
     // debugPrint('using existing image file for: ${mediaEntry['src']!}');
     return file;
+  }
+
+  Future<bool> _deleteFile(final String cacheDir) async {
+    final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
+    final fullPath = '$cacheDir/$sanitisedFilePath.png';
+    final file = File(fullPath);
+    if (await file.exists()) {
+      debugPrint('deleting file');
+      await file.delete();
+    }
+    return true;
   }
 }

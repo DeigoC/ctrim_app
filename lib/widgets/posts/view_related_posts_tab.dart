@@ -143,12 +143,21 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     final String? parentID = widget.eventContext.metadata.parentID;
 
     // fetch parent
-    if (parentID != null && !_appContext.eventHeads.any((e) => e.id == parentID)) {
-      _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
-    }
+    if (parentID != null) {
+      if (!_appContext.eventHeads.any((e) => e.id == parentID)) {
+        _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
+      }
 
-    // fetch siblings
-    await _getSiblingPostID();
+      if (_appContext.getMetadata(parentID) == null) {
+        // fetch the parent metadata
+        debugPrint('fetching parent');
+        final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+        _appContext.setMetadata(parentID, await dbManager.fetchMetadata());
+      }
+
+      // fetch siblings - we know for sure that we have the parent meta
+      await _getSiblingPostID(_appContext.getMetadata(parentID)!);
+    }
 
     // fetch children
     for (final childrenID in widget.eventContext.metadata.childrenPostIDs) {
@@ -160,21 +169,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return true;
   }
 
-  Future<void> _getSiblingPostID() async {
-    final String? parentID = widget.eventContext.metadata.parentID;
-    if (parentID == null) {
-      return;
-    }
-    EventMetadata? parentMeta = _appContext.getMetadata(parentID);
-
-    // make sure the metadata exists
-    if (parentMeta == null) {
-      // fetch from DB. Technically it could also exist in local storage but... screw it!
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-      parentMeta = await dbManager.fetchMetadata();
-      _appContext.setMetadata(parentID, parentMeta);
-    }
-
+  Future<void> _getSiblingPostID(final EventMetadata parentMeta) async {
     for (final siblingID in parentMeta.childrenPostIDs) {
       if (!_appContext.eventHeads.any((e) => e.id == siblingID)) {
         _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(siblingID));

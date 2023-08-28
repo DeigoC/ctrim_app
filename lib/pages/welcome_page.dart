@@ -379,16 +379,14 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     });
   }
 
-  void _instantiateTheRest(bool fromRegistration) async {
+  Future<void> _instantiateTheRest(bool fromRegistration) async {
     DialogManager.showProgressDialog(title: 'Success! Loading the rest of the app', context: context);
     _saveCreds(fromRegistration);
 
     if (fromRegistration) {
       await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
-    } else if (!fromRegistration && !_appContext.sharedPref.isFirstOpen) {
-      // save the token again if the user is logging in on an already activated app
-      _saveFCMToken();
     }
+    _saveFCMToken();
     _fetchEssentialData().then((_) {
       debugPrint('opened home page here');
       _appContext.sharedPref.setLoggedOut(false);

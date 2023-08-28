@@ -29,6 +29,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EventHeadDBManager _headDBManager = EventHeadDBManager();
+  final UserDBManager _userDBManager = UserDBManager();
 
   bool _canSave = false;
   // String? _keygraphic;
@@ -66,18 +67,17 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
           Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: ElevatedButton.icon(
-                style: ButtonStyle(
-                    backgroundColor: _canSave
-                        ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-                        : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-                onPressed: _canSave ? _onSaveClick : null,
-                icon: const Icon(Icons.upload),
-                label: const Text('Save')),
-          ),
+              padding: const EdgeInsets.all(4.0),
+              child: ElevatedButton.icon(
+                  style: ButtonStyle(
+                      backgroundColor: _canSave
+                          ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+                          : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+                  onPressed: _canSave ? _onSaveClick : null,
+                  icon: Icon(Icons.upload, color: _canSave ? Colors.white : null),
+                  label: Text('Save', style: TextStyle(color: _canSave ? Colors.white : null)))),
           const SizedBox(width: 8)
         ],
       ),
@@ -91,7 +91,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
                 Tab(icon: Icon(Icons.note), text: 'Info'),
-                Tab(icon: Icon(Icons.calendar_today), text: 'Programme'),
+                Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'),
                 Tab(icon: Icon(Icons.photo_album), text: 'Media')
               ],
             )
@@ -215,11 +215,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
     if (parentID != null) {
       final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-      final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
       debugPrint('updating parent post metadata');
 
-      // grab the latest metadata from DB cause we don't know if the meta right now is stale
-      final metadata = await dbManager.fetchMetadata();
+      // there's no way that the metadata doesn't exist or is stale
+      final metadata = _appContext.getMetadata(parentID)!;
 
       metadata.childrenPostIDs.add(thisPostID);
       dbManager.updateMetadata(metadata);
@@ -228,9 +227,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       final now = DateTime.now();
       dbManager.addLogEntry(
           logMessage: "Created related post: '${_tecTitle.text.trim()}'", uid: _appContext.currentUser.id, ts: now);
-
-      eventHeadDBManager.updateRecentDateForID(parentID, now);
-      _appContext.setMetadata(parentID, metadata);
       _appContext.getPostHead(parentID).setRecentDate(now);
     }
   }
@@ -272,7 +268,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   // TODO: insane! We need to break these mothods down
-  Future<void> _notifyProgramRoleAddtitions(final String newID) async {
+  Future<void> _notifyProgramRoleAddtitions(final String newPostID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
     final String title = "$currentUserName has assinged you to a role!";
@@ -282,7 +278,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       final String body = "You are assigned to '${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
 
       final List<String> tokens = [];
-      for (var thisUID in additionEntry.value) {
+      for (final thisUID in additionEntry.value) {
         if (thisUID != currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             final List<String> tokens =
@@ -292,21 +288,20 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
+        _userDBManager.addUserRole(thisUID, newPostID, additionEntry.key);
       }
       _cloudFunctionManager
-          .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newID});
+          .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newPostID});
     }
   }
 
   Future<void> _updateAllUserPostInvolvement(final String newPostID) async {
-    final UserDBManager userDBManager = UserDBManager();
-
     // first up, the author
-    userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
+    _userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
 
     // then all the contributors
     for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
-      userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
+      _userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
     }
   }
 
