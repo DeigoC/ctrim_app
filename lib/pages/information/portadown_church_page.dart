@@ -5,7 +5,6 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 
 import '../../utility/app_context.dart';
-import '../../widgets/info/info_appbar.dart';
 
 class PortadownChurchPage extends StatelessWidget {
   const PortadownChurchPage({super.key});
@@ -22,7 +21,8 @@ class PortadownChurchPage extends StatelessWidget {
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
 
     return Scaffold(
-        appBar: AppBar(title: const Text('Portadown'), actions: const [InfoAction(json: _json)]),
+        // appBar: AppBar(title: const Text('Portadown'), actions: const [InfoAction(json: _json)]),
+        appBar: AppBar(title: const Text('Portadown')),
         body: SingleChildScrollView(
             child: Padding(
           padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),

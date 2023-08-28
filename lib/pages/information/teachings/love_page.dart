@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../../utility/app_context.dart';
-import '../../../widgets/info/info_appbar.dart';
 
 class LovePage extends StatelessWidget {
   const LovePage({super.key});
@@ -21,7 +20,8 @@ class LovePage extends StatelessWidget {
 
     return Scaffold(
         body: CustomScrollView(slivers: [
-      const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
+// const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
+      const SliverAppBar(floating: true, snap: true),
       SliverToBoxAdapter(
           child: SingleChildScrollView(
               child: Padding(
