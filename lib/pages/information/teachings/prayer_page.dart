@@ -29,7 +29,7 @@ class PrayerPage extends StatelessWidget {
               child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true)),
+                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false)),
                     const SizedBox(height: 32)
                   ]))))
     ]));
