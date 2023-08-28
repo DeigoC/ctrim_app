@@ -143,10 +143,14 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     final String? parentID = widget.eventContext.metadata.parentID;
 
     // fetch parent
-    if (parentID != null && !_appContext.eventHeads.any((e) => e.id == parentID)) {
-      _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
+    if (parentID != null) {
+      if (!_appContext.eventHeads.any((e) => e.id == parentID)) {
+        _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
+      }
+
       if (_appContext.getMetadata(parentID) == null) {
         // fetch the parent metadata
+        debugPrint('fetching parent');
         final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
         _appContext.setMetadata(parentID, await dbManager.fetchMetadata());
       }
