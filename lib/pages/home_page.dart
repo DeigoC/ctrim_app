@@ -202,7 +202,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _saveFCMToken() async {
     final MessagingManager messagingManager = MessagingManager();
     final token = await messagingManager.getToken();
-    if (token != null && _appContext.sharedPref.fcmToken != token) {
+    if (token != null) {
       debugPrint('token to save is $token');
       final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
       _appContext.sharedPref.saveFCMToken(token);
