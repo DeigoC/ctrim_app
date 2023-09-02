@@ -6,7 +6,7 @@ publish_to: 'none'
 
 # version: 0.5.1+9 # iOS
 # version: 0.5.1+8 # Android
-version: 0.5.1+9 # Web
+version: 0.5.2+10 # Web
 
 environment:
   sdk: '>=3.0.2 <4.0.0'

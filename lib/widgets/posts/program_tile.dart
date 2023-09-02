@@ -111,10 +111,13 @@ class ProgramTile extends StatelessWidget {
       leading: Text(_getTimeLeadingText()),
       onTap: () => onTap(programEntry),
       trailing: MyAvatarStack(
-        users: Provider.of<AppContext>(context, listen: false)
-            .allUsers
-            .where((e) => (programEntry['uids'] as List).contains(e.id))
+        users: (programEntry['uids'] as List<String>)
+            .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
             .toList(),
+        // users: Provider.of<AppContext>(context, listen: false)
+        //     .allUsers
+        //     .where((e) => (programEntry['uids'] as List).contains(e.id))
+        //     .toList(),
         appDir: Provider.of<AppContext>(context, listen: false).appDir,
       ),
     );

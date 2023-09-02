@@ -62,9 +62,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               programEntry: widget.eventContext.program.roles[index],
               onTap: (_) => _programTap(_, index),
               selected: _selectedIndex == index,
-              assignedUsers: _appContext.allUsers
-                  .where((e) => (widget.eventContext.program.roles[index]["uids"] as List).contains(e.id))
+              assignedUsers: (widget.eventContext.program.roles[index]["uids"] as List<String>)
+                  .map((e) => _appContext.getUserFromID(e))
                   .toList(),
+              // assignedUsers:   _appContext.allUsers
+              //     .where((e) => (widget.eventContext.program.roles[index]["uids"] as List).contains(e.id))
+              //     .toList(),
               canEdit: canEdit,
               onEditClick: () => _openEditProgramPage(widget.eventContext.program.roles[index]),
             );

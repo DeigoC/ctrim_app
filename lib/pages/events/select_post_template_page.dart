@@ -141,6 +141,31 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
+        uids: ['10', '19'],
+        title: 'Technical',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
+        id: roleID++);
+
+    debugPrint('id is $roleID');
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Ushering',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
+        id: roleID++);
+
+    debugPrint('id is $roleID');
+    eventContext.program.addRole(
+        uids: ['3'],
+        title: 'Media',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
+        forGuests: false,
+        id: roleID++);
+
+    debugPrint('id is $roleID');
+    eventContext.program.addRole(
         uids: [],
         title: 'Welcome and Short Orientation',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0),
