@@ -264,6 +264,13 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.program.addRole(
         uids: [],
+        title: 'Hosting',
+        detail: 'By zone (will be accepting guests)',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 15),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
         title: 'Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
@@ -271,6 +278,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
+        detail: '(Video)',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
         id: roleID++);
@@ -306,6 +314,12 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
+    eventContext.program.addRole(
+        uids: ['21'],
+        title: 'Hosting',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),
+        id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Opening Prayer & Worship Song',
@@ -353,9 +367,10 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.program.addRole(
         uids: [],
-        title: 'Host will accept guests',
+        title: 'Hosting',
+        detail: 'By zone (will be accepting guests)',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 15),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
         id: roleID++);
     eventContext.program.addRole(
         uids: ['8'],
@@ -366,6 +381,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
+        detail: '(Video)',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
         id: roleID++);

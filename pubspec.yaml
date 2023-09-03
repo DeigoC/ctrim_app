@@ -4,8 +4,8 @@ description: A new Flutter project.
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-# version: 0.5.1+9 # iOS
-# version: 0.5.1+8 # Android
+# version: 0.5.2+10 # iOS
+# version: 0.5.2+9 # Android
 version: 0.5.2+10 # Web
 
 environment:
