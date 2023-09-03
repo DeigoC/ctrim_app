@@ -221,7 +221,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       final metadata = _appContext.getMetadata(parentID)!;
 
       metadata.childrenPostIDs.add(thisPostID);
-      dbManager.updateMetadata(metadata);
+
+      // TODO the bottom line isn't required anymore right?
+      // dbManager.updateMetadata(metadata);
 
       // add a log and update the head's recentdate so that people can have their parent post instance updated
       final now = DateTime.now();
