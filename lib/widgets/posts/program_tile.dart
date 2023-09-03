@@ -66,8 +66,7 @@ class ProgramTile extends StatelessWidget {
     }
 
     if (!programEntry['for_guests']) {
-      children
-          .add(const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('(Do not show for Guests)')));
+      children.add(const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('(Not For Guests)')));
     }
 
     if (assignedUsers.isNotEmpty) {
@@ -114,10 +113,6 @@ class ProgramTile extends StatelessWidget {
         users: (programEntry['uids'] as List<String>)
             .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
             .toList(),
-        // users: Provider.of<AppContext>(context, listen: false)
-        //     .allUsers
-        //     .where((e) => (programEntry['uids'] as List).contains(e.id))
-        //     .toList(),
         appDir: Provider.of<AppContext>(context, listen: false).appDir,
       ),
     );

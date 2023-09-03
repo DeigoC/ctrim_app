@@ -51,25 +51,25 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
         DateTime.now().isBefore(widget.eventContext.head.eventDate!);
 
+    final List<Map<String, dynamic>> programRoles = List<Map<String, dynamic>>.from(_appContext.isCurrentUserGuest
+        ? widget.eventContext.program.roles.where((e) => e['for_guests'])
+        : widget.eventContext.program.roles);
+
     final List<Widget> children = [
       Expanded(
           child: CustomScrollView(slivers: [
         SliverToBoxAdapter(child: _buildEventDateSelector()),
         SliverList.separated(
-          itemCount: widget.eventContext.program.roles.length,
+          itemCount: programRoles.length,
           itemBuilder: (_, index) {
             return ProgramTile(
-              programEntry: widget.eventContext.program.roles[index],
+              programEntry: programRoles[index],
               onTap: (_) => _programTap(_, index),
               selected: _selectedIndex == index,
-              assignedUsers: (widget.eventContext.program.roles[index]["uids"] as List<String>)
-                  .map((e) => _appContext.getUserFromID(e))
-                  .toList(),
-              // assignedUsers:   _appContext.allUsers
-              //     .where((e) => (widget.eventContext.program.roles[index]["uids"] as List).contains(e.id))
-              //     .toList(),
+              assignedUsers:
+                  (programRoles[index]["uids"] as List<String>).map((e) => _appContext.getUserFromID(e)).toList(),
               canEdit: canEdit,
-              onEditClick: () => _openEditProgramPage(widget.eventContext.program.roles[index]),
+              onEditClick: () => _openEditProgramPage(programRoles[index]),
             );
           },
           separatorBuilder: (BuildContext context, int index) {
