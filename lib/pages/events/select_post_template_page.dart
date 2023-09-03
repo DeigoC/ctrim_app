@@ -141,14 +141,6 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: ['10', '19'],
-        title: 'Technical',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
-        id: roleID++);
-
-    debugPrint('id is $roleID');
-    eventContext.program.addRole(
         uids: [],
         title: 'Ushering',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 30),
@@ -157,8 +149,17 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: ['3'],
-        title: 'Media',
+        uids: ['10', '19'],
+        title: 'Technical Sound',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
+        forGuests: false,
+        id: roleID++);
+
+    debugPrint('id is $roleID');
+    eventContext.program.addRole(
+        uids: ['3', '26'],
+        title: 'Technical Media',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
         forGuests: false,
@@ -174,7 +175,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: [],
+        uids: ['9'],
         title: 'Scripture Reading & Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 10),
@@ -207,13 +208,14 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Song',
+        detail: 'Lead by the Worship Team',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 55),
         id: roleID++);
 
     debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8'],
         title: 'Closing Prayer & Benediction',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 55),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
@@ -279,7 +281,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8'],
         title: 'Closing Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 5),
@@ -317,13 +319,14 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['21'],
         title: 'Conclusion',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
+        detail: 'Everyone',
         title: 'Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),

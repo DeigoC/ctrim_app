@@ -112,7 +112,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             final size = _tmpFile!.lengthSync();
             final double sizeInKb = size / 1024;
 
-            if (sizeInKb <= 100) {
+            if (sizeInKb <= 512) {
               debugPrint('image size is good: $sizeInKb KB');
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
@@ -131,7 +131,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is 100 KB, so please compress it or use another image!',
+                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is 512 KB, so please compress it or use another image!',
                           textAlign: TextAlign.center),
                       TextButton(
                           onPressed: () => launchUrlString('https://imagecompressor.com'),
