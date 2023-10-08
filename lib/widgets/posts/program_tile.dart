@@ -45,28 +45,26 @@ class ProgramTile extends StatelessWidget {
   }
 
   Widget _buildExtendedView(BuildContext context) {
+    final String timeString = programEntry['for_guests']
+        ? '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])}'
+        : '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} (Not For Guest Eyes 👀)';
+
     final List<Widget> children = [
-      const SizedBox(height: 16),
+      const SizedBox(height: 8),
       Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(programEntry['title'], style: const TextStyle(fontSize: 21))),
       const SizedBox(height: 4),
       Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text('${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])}',
-              textAlign: TextAlign.start))
+          padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Text(timeString, textAlign: TextAlign.start))
     ];
 
     if ((programEntry['detail'] as String).isNotEmpty) {
       children.addAll([
         Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
             child: Text(programEntry['detail'], style: const TextStyle(fontSize: 16), textAlign: TextAlign.start))
       ]);
-    }
-
-    if (!programEntry['for_guests']) {
-      children.add(const Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('(Not For Guests)')));
     }
 
     if (assignedUsers.isNotEmpty) {
@@ -86,7 +84,7 @@ class ProgramTile extends StatelessWidget {
           child: Wrap(
             alignment: WrapAlignment.spaceEvenly,
             children: [
-              TextButton(onPressed: () => onTap(programEntry), child: const Text('Show less')),
+              TextButton(onPressed: () => onTap(programEntry), child: const Text('Show Less')),
               TextButton(onPressed: () => onEditClick(), child: const Text('Edit Task'))
             ],
           )));

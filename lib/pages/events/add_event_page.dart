@@ -25,7 +25,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   // * Required variables
   late final AppContext _appContext;
   late final TabController _tabController;
-  final TextEditingController _tecTitle = TextEditingController(), _tecSubtitle = TextEditingController();
+  late final TextEditingController _tecTitle, _tecSubtitle;
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EventHeadDBManager _headDBManager = EventHeadDBManager();
@@ -38,6 +38,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     _tabController = TabController(length: 4, vsync: this);
+    _tecTitle = TextEditingController(text: widget.eventContext.head.title);
+    _tecSubtitle = TextEditingController(text: widget.eventContext.head.subtitle);
     super.initState();
   }
 
