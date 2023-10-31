@@ -70,13 +70,7 @@ class UserDBManager {
   Future<List<Map<String, dynamic>>> fetchUserPosts(final String uid) async {
     final doc = await _ref.doc(uid).collection(_supplemental).doc(_posts).get();
     final postsData = List<Map<String, dynamic>>.from(doc.data()![_posts]);
-    // final List<Map<String, dynamic>> result = [];
-    // for (final dataEntry in postsData) {
-    //   result.add({'id': dataEntry['id'], 'ownership': dataEntry['ownership']});
-    // }
-
     return postsData;
-    // return result;
   }
 
   Future<void> addPostToUser(final String uid, final String postID, final String ownership) async {
@@ -89,5 +83,9 @@ class UserDBManager {
     final data = await fetchUserPosts(uid);
     data.removeWhere((e) => e['id'] == postID);
     _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
+  }
+
+  Future<void> updatePosts(final User user) async {
+    await _ref.doc(user.id).collection(_supplemental).doc(_posts).update({_posts: user.posts!});
   }
 }

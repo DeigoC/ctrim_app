@@ -241,11 +241,12 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       }
 
       if (parentHead.recentDate.second == 59) {
-        parentHead.recentDate.add(const Duration(seconds: -58));
+        parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: -58)));
       } else {
-        parentHead.recentDate.add(const Duration(seconds: 1));
+        parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: 1)));
       }
       _headDBManager.updateHead(parentHead);
+      _appContext.addOrUpdatePostHead(parentHead);
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/personal/view_my_posts_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -67,6 +68,11 @@ class _PersonalHomeState extends State<PersonalHome> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red))
                 : null,
             onTap: _onViewTasksClick,
+          ),
+          ListTile(
+            title: const Text('My Posts'),
+            leading: const Icon(Icons.list_alt),
+            onTap: _onOpenPostsClick,
           ),
           ListTile(
               title: const Text('Belfast Crew'),
@@ -174,5 +180,9 @@ class _PersonalHomeState extends State<PersonalHome> {
         // update incase user has changed their image
       });
     });
+  }
+
+  void _onOpenPostsClick() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ViewMyPostsPage()));
   }
 }
