@@ -53,19 +53,22 @@ class _EditBodyPageState extends State<EditBodyPage> {
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return Column(
       children: [
         quill.QuillToolbar.basic(
           controller: _controller,
           showAlignmentButtons: true,
           showSubscript: false,
-          showSuperscript: false,
-          showCodeBlock: false,
+          showSuperscript: true,
+          showCodeBlock: true,
           multiRowsDisplay: _showMultirow,
         ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
             child: quill.QuillEditor.basic(
               // embedBuilders: FlutterQuillEmbeds.builders(),
               controller: _controller,

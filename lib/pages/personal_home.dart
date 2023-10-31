@@ -40,11 +40,14 @@ class _PersonalHomeState extends State<PersonalHome> {
           title: const Text('Attending Sunday Service'),
           onTap: _onAttendingSundayServiceClick,
         ),
-        ListTile(
+      ];
+
+      if (!kIsWeb) {
+        children.add(ListTile(
             leading: const Icon(Icons.notifications_active),
             title: const Text('Push Notifications'),
-            onTap: _onNotificationManagerClick),
-      ];
+            onTap: _onNotificationManagerClick));
+      }
 
       if (!appContext.isCurrentUserGuest) {
         children.insert(

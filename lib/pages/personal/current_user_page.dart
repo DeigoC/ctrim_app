@@ -45,8 +45,11 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return ListView(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
       children: [
         ListTile(
             title: Text(_appContext.currentUser.fullname),

@@ -53,14 +53,22 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return WillPopScope(
       onWillPop: () => _onWillPop(),
-      child:
-          Scaffold(body: NestedScrollView(headerSliverBuilder: (_, __) => _buildHeaderSliver(), body: _buildTabBody())),
+      child: Scaffold(
+          body: NestedScrollView(
+              headerSliverBuilder: (_, __) => _buildHeaderSliver(webHorizontalPadding),
+              body: Padding(
+                padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                child: _buildTabBody(),
+              ))),
     );
   }
 
-  List<Widget> _buildHeaderSliver() {
+  List<Widget> _buildHeaderSliver(final double horizontalPadding) {
     final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
 
     return [
@@ -84,7 +92,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         ],
       ),
       SliverPadding(
-          padding: const EdgeInsets.all(8.0),
+          padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: horizontalPadding),
           sliver: SliverList(
               delegate: SliverChildListDelegate([
             TabBar(

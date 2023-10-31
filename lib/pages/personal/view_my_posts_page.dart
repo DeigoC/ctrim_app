@@ -61,7 +61,11 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         .map((e) => e['id'] as String)
         .toList();
 
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         itemCount: postIDs.length,
         itemBuilder: (_, index) {
           final thisHead = _appContext.getPostHead(postIDs[index]);

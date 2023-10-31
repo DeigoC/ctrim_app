@@ -1,6 +1,7 @@
 import 'package:avatar_stack/positions.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -45,9 +46,26 @@ class ProgramTile extends StatelessWidget {
   }
 
   Widget _buildExtendedView(BuildContext context) {
+    final Duration difference = programEntry['end'].difference(programEntry['start']);
+    String diffStr;
+
+    if (difference.inHours > 0) {
+      int hours = difference.inHours;
+      int minutes = difference.inMinutes.remainder(60); // Remaining minutes
+
+      if (minutes == 0) {
+        diffStr = hours == 1 ? '$hours hour' : '$hours hours';
+      } else {
+        diffStr = hours == 1 ? '$hours hour $minutes minutes' : '$hours hours $minutes minutes';
+      }
+    } else {
+      int minutes = difference.inMinutes;
+      diffStr = minutes == 1 ? '$minutes minute' : '$minutes minutes';
+    }
+
     final String timeString = programEntry['for_guests']
-        ? '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])}'
-        : '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} (Not For Guest Eyes 👀)';
+        ? '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} | $diffStr'
+        : '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} | $diffStr | Not For Guest Eyes 👀';
 
     final List<Widget> children = [
       const SizedBox(height: 8),
@@ -100,6 +118,33 @@ class ProgramTile extends StatelessWidget {
   }
 
   Widget _buildTile(BuildContext context) {
+    if (kIsWeb) {
+      return InkWell(
+        onTap: () => onTap(programEntry),
+        child: Row(
+          children: [
+            Flexible(
+              flex: 2,
+              child: ListTile(
+                  title: Text(programEntry['title'], maxLines: 2, overflow: TextOverflow.ellipsis),
+                  subtitle: (programEntry['detail'] as String).isNotEmpty
+                      ? Text(programEntry['detail'], maxLines: 1, overflow: TextOverflow.ellipsis)
+                      : null,
+                  leading: Text(_getTimeLeadingText())),
+            ),
+            Flexible(
+              flex: 1,
+              child: MyAvatarStack(
+                users: (programEntry['uids'] as List<String>)
+                    .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
+                    .toList(),
+                appDir: Provider.of<AppContext>(context, listen: false).appDir,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return ListTile(
       title: Text(programEntry['title'], maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: (programEntry['detail'] as String).isNotEmpty

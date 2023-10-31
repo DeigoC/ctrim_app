@@ -117,10 +117,15 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     sortedPostIDs
         .sort((a, b) => _appContext.getPostHead(a).eventDate!.compareTo(_appContext.getPostHead(b).eventDate!));
     debugPrint('post sort: $sortedPostIDs');
+
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return RefreshIndicator(
       onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
       child: ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
           itemCount: sortedPostIDs.length,
           itemBuilder: (_, index) {
             final postID = sortedPostIDs[index];

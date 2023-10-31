@@ -17,18 +17,24 @@ class AttendingSundayServicePage extends StatelessWidget {
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
 
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return Scaffold(
         body: CustomScrollView(slivers: [
-// const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
       const SliverAppBar(floating: true, snap: true),
-      SliverToBoxAdapter(
-          child: SingleChildScrollView(
-              child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Flexible(child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false)),
-                    const SizedBox(height: 32)
-                  ]))))
+      SliverPadding(
+        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+        sliver: SliverToBoxAdapter(
+            child: SingleChildScrollView(
+                child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Flexible(
+                          child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false)),
+                      const SizedBox(height: 32)
+                    ])))),
+      )
     ]));
   }
 }
