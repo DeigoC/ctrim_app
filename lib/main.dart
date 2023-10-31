@@ -20,8 +20,9 @@ import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+// import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -35,6 +36,7 @@ void main() async {
   // Run the app and pass in the SettingsController. The app listens to the
   // SettingsController for changes, then passes it further down to the
   // SettingsView.
+
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
@@ -43,14 +45,16 @@ void main() async {
   }
 
   // * Make sure we connect to the emulator on debug
-  // if (kDebugMode) {
-  //   try {
-  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  //   } on Exception catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
+  if (kDebugMode) {
+    try {
+      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  // usePathUrlStrategy();
 
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();

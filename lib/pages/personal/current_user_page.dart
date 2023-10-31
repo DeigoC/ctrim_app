@@ -87,7 +87,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
             final file = snap.data!;
             final double sizeInKb = file.lengthSync() / 1024;
 
-            if (sizeInKb <= 100) {
+            if (sizeInKb <= 512) {
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
                   _canSave = true;
@@ -109,7 +109,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'File size is too large at ${sizeInKb.toStringAsFixed(2)} KB (maximum of 100KB). Please compress image or use alternative!',
+                    'File size is too large at ${sizeInKb.toStringAsFixed(2)} KB (maximum of 512KB). Please compress image or use alternative!',
                     textAlign: TextAlign.center,
                   ),
                   TextButton(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../utility/event_context.dart';
 import 'add_event_page.dart';
 
 class SelectPostTemplatePage extends StatelessWidget {
   const SelectPostTemplatePage({super.key, required this.eventContext});
+  static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
 
   final TextStyle _cardTitleStyle = const TextStyle(fontSize: 21), _cardContentStyle = const TextStyle(fontSize: 14);
@@ -118,12 +120,11 @@ class SelectPostTemplatePage extends StatelessWidget {
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0);
     eventContext.head.setEventDate(startTime);
 
-    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 3)));
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 45)));
 
     // add the typical Sunday roles to the program
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Intercessory Prayer',
@@ -131,7 +132,6 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 50),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Sunday School Teachers',
@@ -139,7 +139,22 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
         id: roleID++);
 
-    debugPrint('id is $roleID');
+    eventContext.program.addRole(
+        uids: ['10', '19'],
+        title: 'Technical Sound',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
+        forGuests: false,
+        id: roleID++);
+
+    eventContext.program.addRole(
+        uids: ['3', '26'],
+        title: 'Technical Media',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
+        forGuests: false,
+        id: roleID++);
+
     eventContext.program.addRole(
         uids: [],
         title: 'Welcome and Short Orientation',
@@ -147,15 +162,13 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: [],
+        uids: ['9'],
         title: 'Scripture Reading & Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 10),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
@@ -163,7 +176,6 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: ['8'],
         title: 'Word of God',
@@ -178,23 +190,21 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Closing Song',
+        detail: 'Lead by the Worship Team',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 55),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8'],
         title: 'Closing Prayer & Benediction',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 55),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
         id: roleID++);
 
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Group Picture',
@@ -202,21 +212,32 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
         id: roleID++);
 
-    debugPrint('id is $roleID');
-    eventContext.program.addRole(
-        uids: ['9'],
-        title: 'Back To Discipleship',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        id: roleID++);
-
-    debugPrint('id is $roleID');
     eventContext.program.addRole(
         uids: [],
         title: 'Eating Fellowship',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 14, 00),
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 45),
         id: roleID++);
+
+    eventContext.program.addRole(
+        uids: ['9'],
+        title: 'Back To Discipleship',
+        detail:
+            "Further mentoring on personal & church growth through our 'cell group' lives - optional attendance for guests! 🙂",
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 45),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 13, 30),
+        id: roleID++);
+
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Clean up!',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 13, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 14, 00),
+        detail: "Remember your teams and assignment 🧽 🧻 🧹",
+        forGuests: false,
+        id: roleID++);
+
+    eventContext.head.setTitle('Sunday Worship Service (${_eventDateFormat.format(startTime)})');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
@@ -227,7 +248,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15);
     eventContext.head.setEventDate(startTime);
     eventContext.head
-        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=19WLDp05yeZOtO10p9t26jiFd3-71ynAa');
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1h1ssPjXojrbIHEFi-Hgtnq0d9b0f2trH');
 
     eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1)));
     eventContext.program.setOnline(true);
@@ -237,6 +258,13 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.program.addRole(
         uids: [],
+        title: 'Hosting',
+        detail: 'By zone (will be accepting guests)',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 15),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
         title: 'Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
@@ -244,6 +272,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
+        detail: '(Video)',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
         id: roleID++);
@@ -254,7 +283,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['8'],
         title: 'Closing Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 5),
@@ -262,6 +291,9 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 850 3878 6530"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 985767"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
+
+    eventContext.head.setTitle('Midweek Service (${_eventDateFormat.format(startTime)})');
+
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
@@ -280,6 +312,12 @@ class SelectPostTemplatePage extends StatelessWidget {
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
+        uids: ['21'],
+        title: 'Hosting',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),
+        id: roleID++);
+    eventContext.program.addRole(
         uids: [],
         title: 'Opening Prayer & Worship Song',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30),
@@ -292,13 +330,14 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: ['21'],
         title: 'Conclusion',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
+        detail: 'Everyone',
         title: 'Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),
@@ -306,18 +345,20 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 893 7280 5213"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 261513"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
+    eventContext.head.setTitle('Dawn Watch Prayer Meeting (${_eventDateFormat.format(startTime)})');
+
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
   void _createAndOpenIntentionalDiscipleshipTemplate(final BuildContext context, final DateTime selectedDate) {
     _resetContext();
 
-    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 15);
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 15);
     eventContext.head.setEventDate(startTime);
     eventContext.head
-        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1O3lXV494dVLmpreRiasLN0oOW6kngAy5');
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1crxKmj-5bny5Xd1gOhXdKuII53KY1zUn');
 
-    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 15)));
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 30)));
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/84796425540?pwd=andVVW5FR0t1dkFjRjZUUnpDRWVKdz09');
 
@@ -325,32 +366,36 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.program.addRole(
         uids: [],
-        title: 'Host will accept guests',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 15),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
+        title: 'Hosting',
+        detail: 'By zone (will be accepting guests)',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 45),
         id: roleID++);
     eventContext.program.addRole(
         uids: ['8'],
         title: 'Welcome and Opening Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 35),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
         title: 'Praise and Worship',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
+        detail: '(Video)',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 35),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 19, 05),
         id: roleID++);
     eventContext.program.addRole(
         uids: ['8', '9'],
         title: 'Word of God',
         detail: 'With ministry & prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 50),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 30),
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 19, 05),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 45),
         id: roleID++);
 
     eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 847 9642 5540"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 786441"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
+
+    eventContext.head.setTitle('Intentional Discipleship Training (${_eventDateFormat.format(startTime)})');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }

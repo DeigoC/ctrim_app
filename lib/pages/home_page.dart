@@ -1,9 +1,5 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/auth_manager.dart';
-import 'package:ctrim_app/firebase/db_managers/everyone_db_manager.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/widgets/info/timed_button_dialog.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +11,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
+import '../widgets/info/timed_button_dialog.dart';
 import 'events/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -56,9 +53,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (!kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
-        if (kIsWeb) {
-          _showWebMessage();
-        }
       });
     }
 
@@ -70,9 +64,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _setupCloudOnMessage();
     _removeLocallySavedPosts();
 
-    // TODO - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
-    // can be removed for version 0.6.0
-    _saveFCMToken();
+    // ! - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
+    // can be removed for version 0.6.0 - but I'll leave a comment behind just in case
+    // _saveFCMToken();
 
     // setting up the animated scroll aspects
     // _postsScrollController.addListener(() {
@@ -199,18 +193,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-  Future<void> _saveFCMToken() async {
-    final MessagingManager messagingManager = MessagingManager();
-    final token = await messagingManager.getToken();
-    if (token != null && _appContext.sharedPref.fcmToken != token) {
-      debugPrint('token to save is $token');
-      final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
-      _appContext.sharedPref.saveFCMToken(token);
-      final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-      final AuthManager authManager = AuthManager();
-      everyoneDBManager.addTokenForAuthID(authID: authManager.currentAuthUID, token: token, platform: platform);
-    }
-  }
+  // * Commenting out just in case I need it again in the future
+  // Future<void> _saveFCMToken() async {
+  //   final MessagingManager messagingManager = MessagingManager();
+  //   final token = await messagingManager.getToken();
+  //   if (token != null) {
+  //     debugPrint('token to save is $token');
+  //     final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
+  //     _appContext.sharedPref.saveFCMToken(token);
+  //     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+  //     final AuthManager authManager = AuthManager();
+  //     everyoneDBManager.addTokenForAuthID(authID: authManager.currentAuthUID, token: token, platform: platform);
+  //   }
+  // }
 
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
@@ -465,13 +460,5 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _setImageForFile(final File file, final String src) async {
     final response = await http.get(Uri.parse(src));
     file.writeAsBytes(response.bodyBytes);
-  }
-
-  void _showWebMessage() {
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'CTRIM WebApp',
-        content:
-            "Hi, thanks for checking this out! This is still a 'Work In Progress'. Please look to install and use the native app (on Android or iOS) instead when it's available\n\nKey feature this webapp doesn't contain are push notifications, media viewing and the remind me button.");
   }
 }
