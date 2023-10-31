@@ -65,7 +65,7 @@ class ProgramTile extends StatelessWidget {
 
     final String timeString = programEntry['for_guests']
         ? '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} | $diffStr'
-        : '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} | $diffStr | Not For Guest Eyes 👀';
+        : '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} | $diffStr | Not for guest eyes 👀';
 
     final List<Widget> children = [
       const SizedBox(height: 8),
