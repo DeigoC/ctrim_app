@@ -27,6 +27,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
 
+    // TODO the role cleanup should happen as soon as the app opens
     // pre-emptively cleanup
     if (widget.selectedUser.roles != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
