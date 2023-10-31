@@ -57,16 +57,21 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
           child: _testing ? _buildImageFB() : const Center(child: Text('...')),
         ),
         TextField(
-          controller: _tecImgSrc,
-          textInputAction: TextInputAction.done,
-          maxLines: null,
-          decoration: InputDecoration(
-              label: const Text('Image Source'),
-              hintText: 'https://...',
-              suffixIcon: IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))),
-        ),
-        ElevatedButton(onPressed: _testImageClick, child: const Text('Test Image Link')),
-        ElevatedButton(onPressed: _canSave ? _onSaveChangesClick : null, child: const Text('Save Changes')),
+            controller: _tecImgSrc,
+            textInputAction: TextInputAction.done,
+            maxLines: 1,
+            decoration: InputDecoration(
+                label: const Text('Image Source'),
+                hintText: 'https://...',
+                suffixIcon: IconButton(onPressed: () => _tecImgSrc.clear(), icon: const Icon(Icons.clear)))),
+        Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Align(
+                alignment: Alignment.centerRight,
+                child:
+                    TextButton.icon(onPressed: _onHelpClick, icon: const Icon(Icons.help), label: const Text('Help')))),
+        ElevatedButton(onPressed: _testImageClick, child: const Text('Check New Image')),
+        ElevatedButton(onPressed: _canSave ? _onSaveChangesClick : null, child: const Text('Save Changes'))
       ],
     );
   }
@@ -142,8 +147,9 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
   }
 
   void _onSaveChangesClick() async {
-    UserDBManager userDBManager = UserDBManager();
-    _appContext.currentUser.setImgSrc(_src);
+    final UserDBManager userDBManager = UserDBManager();
+    _appContext.setNewUserImage(_src);
+
     // we need to override the image?
     await _updateLocalImageData();
     userDBManager.updateUser(_appContext.currentUser).then((_) {
@@ -151,14 +157,14 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
         _canSave = false;
         _testing = false;
       });
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Profile Image Updated!',
-          content: "Please bear in mind that this may require a restart of the app to see changes!");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('New Image Saved!'), behavior: SnackBarBehavior.floating));
     });
   }
 
   Future<void> _updateLocalImageData() async {
+    // test 1: https://www.telegraph.co.uk/content/dam/news/2023/10/23/TELEMMGLPICT000354126211_16980823860620_trans_NvBQzQNjv4BqvHgR6FlQBWwWYT9wGhM60kWy_sGK6oioMu5BzggyGUY.jpeg?imwidth=350
+    // test 2: https://image.petmd.com/files/styles/863x625/public/2022-06/lounging-cat.jpg
     final String userImgDir = '${_appContext.appDir}/user_imgs';
     final File imageFile = File('$userImgDir/${_appContext.currentUser.id}.png');
     final response = await http.get(Uri.parse(_src));
@@ -188,6 +194,6 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
         context: context,
         title: 'Adding Media Files',
         content:
-            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here\n\nMax image size is 100 KB');
+            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here\n\nMax image size is 512 KB');
   }
 }

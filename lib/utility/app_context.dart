@@ -29,6 +29,7 @@ class AppContext extends ChangeNotifier {
   late User _currentUser;
 
   int _postSortIndex = 0;
+  bool _useCurrentUserSrc = false;
 
   AppContext(
       {required SharedPreferences prefInstance,
@@ -124,6 +125,12 @@ class AppContext extends ChangeNotifier {
   bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
   void addTokensToUserID(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
   String getAuthIDFromUID(String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
+
+  bool get useUserImageSrc => _useCurrentUserSrc;
+  void setNewUserImage(final String newSrc) {
+    _currentUser.setImgSrc(newSrc);
+    _useCurrentUserSrc = true;
+  }
 
   // * data related
   AppSharedPreferences get sharedPref => _sharedPref;
