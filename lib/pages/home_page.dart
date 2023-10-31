@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -329,6 +330,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (openPage) {
         _openPost(head);
       }
+      _updateUserRoles();
     } else if (message.data.containsKey('InfoPage') && openPage) {
       _openInformationTeachingPage(message.data['InfoPage']);
     }
@@ -341,6 +343,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final String postID = message.data['PostID'];
       final head = await _reloadEventHead(postID);
       if (!hasLoggedOut) {
+        _updateUserRoles();
         _openPost(head);
       }
     } else if (!hasLoggedOut && message.data.containsKey('InfoPage')) {
@@ -435,6 +438,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         });
 
     return result;
+  }
+
+  // in the case that the notification is on a Post Update - receiving word of a role
+  Future<void> _updateUserRoles() async {
+    final UserDBManager userDBManager = UserDBManager();
+    _appContext.currentUser.setRoles(await userDBManager.fetchUserRoles(_appContext.currentUser.id));
   }
 
   // * maintenance work

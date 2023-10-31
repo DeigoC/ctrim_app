@@ -30,9 +30,13 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     // pre-emptively cleanup
     if (widget.selectedUser.roles != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _performRoleCleanupCheck().then((_) {
+        _performRoleCleanupCheck().then((removedOldStuff) {
           setState(() {
             // cleanup complete
+            if (removedOldStuff) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('Cleaned up tasks'), behavior: SnackBarBehavior.floating));
+            }
           });
         });
       });
@@ -183,7 +187,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   // ! Let's leave this alone for now and see if we change our mind about cleaning up or keeping this data
   // ! Btw, this is repeated code, see main
-  Future<void> _performRoleCleanupCheck() async {
+  Future<bool> _performRoleCleanupCheck() async {
     // remove roles set in the past
     final List<String> postsToRemove = [];
     for (final roleEntry in widget.selectedUser.roles!) {
@@ -205,7 +209,9 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       for (final postID in postsToRemove) {
         await _userDBManager.removeUserPostRole(widget.selectedUser.id, postID);
       }
+      return true;
     }
+    return false;
   }
 
   void _onPostTap(EventHead head) =>
