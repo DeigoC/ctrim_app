@@ -5,9 +5,9 @@ class CloudFunctionManager {
   static final _inst = FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   CloudFunctionManager() {
-    // if (kDebugMode) {
-    //   _inst.useFunctionsEmulator('localhost', 5001);
-    // }
+    if (kDebugMode) {
+      _inst.useFunctionsEmulator('localhost', 5001);
+    }
   }
 
   Future<void> sendMessageToSelectedTokens(
