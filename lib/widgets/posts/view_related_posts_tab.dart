@@ -31,10 +31,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     final List<Widget> children = [Expanded(child: _buildBody())];
 
     if (_appContext.currentUser.isLeader) {
-      children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
-          child: ElevatedButton.icon(
-              onPressed: _onCreatePost, icon: const Icon(Icons.post_add), label: const Text('Create Related Post'))));
+      children.add(_buildAddButtons());
     }
     return MediaQuery.removePadding(
       context: context,
@@ -44,6 +41,31 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
       ),
     );
+  }
+
+  Widget _buildAddButtons() {
+    if (widget.eventContext.metadata.hasParent) {
+      return Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        alignment: WrapAlignment.spaceEvenly,
+        children: [
+          ElevatedButton.icon(
+              onPressed: () => _onCreatePost(widget.eventContext.id),
+              icon: const Icon(Icons.post_add),
+              label: const Text('Child Post')),
+          ElevatedButton.icon(
+              onPressed: () => _onCreatePost(widget.eventContext.metadata.parentID!),
+              icon: const Icon(Icons.post_add),
+              label: const Text('Sibling Post'))
+        ],
+      );
+    }
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
+        child: ElevatedButton.icon(
+            onPressed: () => _onCreatePost(widget.eventContext.id),
+            icon: const Icon(Icons.post_add),
+            label: const Text('Child Post')));
   }
 
   Widget _buildBody() {
@@ -124,15 +146,15 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   // * Logic
 
-  void _onCreatePost() {
+  void _onCreatePost(final String parentID) {
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => SelectPostTemplatePage(
-                eventContext: EventContext.adding(
-                    currentUserID: _appContext.currentUser.id, parentID: widget.eventContext.id)))).then((_) {
+            context,
+            MaterialPageRoute(
+                builder: (_) => SelectPostTemplatePage(
+                    eventContext: EventContext.adding(currentUserID: _appContext.currentUser.id, parentID: parentID))))
+        .then((_) {
       setState(() {
-        // rebuild?
+        // rebuild? - will this update when creating sibling posts?
       });
     });
   }
@@ -142,14 +164,15 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   Future<bool> _fetchAllRelatedPosts() async {
     final String? parentID = widget.eventContext.metadata.parentID;
 
-    // fetch parent
+    // fetch parent + siblings
     if (parentID != null) {
+      // fetch parent head
       if (!_appContext.eventHeads.any((e) => e.id == parentID)) {
         _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
       }
 
+      // fetch the parent metadata
       if (_appContext.getMetadata(parentID) == null) {
-        // fetch the parent metadata
         debugPrint('fetching parent');
         final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
         _appContext.setMetadata(parentID, await dbManager.fetchMetadata());

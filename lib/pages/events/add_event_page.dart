@@ -1,12 +1,13 @@
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
+import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
@@ -32,7 +33,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   final UserDBManager _userDBManager = UserDBManager();
 
   bool _canSave = false;
-  // String? _keygraphic;
 
   @override
   void initState() {
@@ -206,32 +206,46 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return newID;
     });
 
+    // notify all that needs this
     _notifyContributorAdditions(newID);
     _notifyProgramRoleAddtitions(newID);
     _updateAllUserPostInvolvement(newID);
     _notifyOfNewPost(newID);
   }
 
-  void _updateParentMetadata(String thisPostID) async {
+  void _updateParentMetadata(final String thisPostID) async {
     final String? parentID = widget.eventContext.metadata.parentID;
 
     if (parentID != null) {
       final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
       debugPrint('updating parent post metadata');
 
-      // there's no way that the metadata doesn't exist or is stale
-      final metadata = _appContext.getMetadata(parentID)!;
-
+      // update parent metadata
+      final metadata = await dbManager.fetchMetadata();
       metadata.childrenPostIDs.add(thisPostID);
+      dbManager.updateMetadata(metadata);
+      _appContext.setMetadata(parentID, metadata);
 
-      // TODO the bottom line isn't required anymore right?
-      // dbManager.updateMetadata(metadata);
-
-      // add a log and update the head's recentdate so that people can have their parent post instance updated
-      final now = DateTime.now();
+      // add parent log
       dbManager.addLogEntry(
-          logMessage: "Created related post: '${_tecTitle.text.trim()}'", uid: _appContext.currentUser.id, ts: now);
-      _appContext.getPostHead(parentID).setRecentDate(now);
+          logMessage: "Created related post: '${_tecTitle.text.trim()}'",
+          uid: _appContext.currentUser.id,
+          ts: DateTime.now());
+
+      // update the parent's recent date
+      EventHead parentHead;
+      if (_appContext.eventHeads.any((e) => e.id == parentID)) {
+        parentHead = _appContext.getPostHead(parentID);
+      } else {
+        parentHead = await _headDBManager.fetchHead(parentID);
+      }
+
+      if (parentHead.recentDate.second == 59) {
+        parentHead.recentDate.add(const Duration(seconds: -58));
+      } else {
+        parentHead.recentDate.add(const Duration(seconds: 1));
+      }
+      _headDBManager.updateHead(parentHead);
     }
   }
 
