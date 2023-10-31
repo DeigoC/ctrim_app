@@ -64,6 +64,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // * Logic
+
   void _onLoginClick() async {
     DialogManager.showProgressDialog(context: context, title: 'Attempting To Login');
     final authID = await _attemptToLogin();
