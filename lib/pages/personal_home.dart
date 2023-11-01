@@ -105,6 +105,11 @@ class _PersonalHomeState extends State<PersonalHome> {
           leading: const Icon(Icons.privacy_tip),
           onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
         ),
+        ListTile(
+          title: const Text('Terms and Conditions'),
+          leading: const Icon(Icons.contact_page),
+          onTap: () => launchUrlString('https://ctrim-terms-and-conditions.web.app'),
+        ),
         ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)
       ]);
 
