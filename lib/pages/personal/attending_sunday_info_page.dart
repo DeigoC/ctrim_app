@@ -29,11 +29,16 @@ class AttendingSundayServicePage extends StatelessWidget {
             child: SingleChildScrollView(
                 child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Flexible(
-                          child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false)),
-                      const SizedBox(height: 32)
-                    ])))),
+                    child: quill.QuillProvider(
+                      configurations: quill.QuillConfigurations(controller: controller),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        Flexible(
+                            child: quill.QuillEditor.basic(
+                          configurations: const quill.QuillEditorConfigurations(readOnly: true),
+                        )),
+                        const SizedBox(height: 32)
+                      ]),
+                    )))),
       )
     ]));
   }

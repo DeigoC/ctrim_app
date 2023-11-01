@@ -33,9 +33,14 @@ class BelfastChurchPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Flexible(
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false))),
+                  child: quill.QuillProvider(
+                      configurations: quill.QuillConfigurations(controller: controller),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: quill.QuillEditor.basic(
+                          configurations: const quill.QuillEditorConfigurations(readOnly: true),
+                        ),
+                      ))),
               const SizedBox(height: 32)
             ],
           ),

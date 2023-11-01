@@ -22,13 +22,18 @@ class _ViewPostBodyState extends State<ViewPostBody> {
     return _buildBodyWithData(controller, context);
   }
 
-  Widget _buildBodyWithData(final quill.QuillController controller, BuildContext context) {
+  Widget _buildBodyWithData(final quill.QuillController controller, final BuildContext context) {
     final List<Widget> children = [
-      Expanded(
-          child: SingleChildScrollView(
-              child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 8),
-                  child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false))))
+      quill.QuillProvider(
+        configurations: quill.QuillConfigurations(controller: controller),
+        child: Expanded(
+            child: SingleChildScrollView(
+                child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 8),
+                    child: quill.QuillEditor.basic(
+                      configurations: const quill.QuillEditorConfigurations(readOnly: true),
+                    )))),
+      )
     ];
 
     if (widget.eventContext.isCurrentUserContributor(widget.currentUID) ||
