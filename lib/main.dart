@@ -20,8 +20,8 @@ import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() async {
@@ -53,8 +53,6 @@ void main() async {
       debugPrint(e.toString());
     }
   }
-
-  // usePathUrlStrategy();
 
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
@@ -95,21 +93,37 @@ void main() async {
     final allUsers = await _fetchAllUsers(prefInstance);
     final heads = await eventHeadDBManager.fetchEventHeads();
 
-    // this is done incase the current user has updated their image
+    // * User Related work
     // this is dumb, we need to move the local data writing logic to it's own class so
     // it can be called anywhere and remove the need to do these weird, hacky things!
     if (currentUser != null) {
+      // sort out the user roles. We first figure out what roles to remove
       currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
+      final List<String> postsToRemove = [];
+      for (final roleEntry in currentUser.roles!) {
+        if (heads.any((e) => e.id == roleEntry['postID'])) {
+          final thisPost = heads.firstWhere((e) => e.id == roleEntry['postID']);
+          if (thisPost.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
+            postsToRemove.add(thisPost.id);
+          }
+        } else {
+          postsToRemove.add(roleEntry['postID']);
+        }
+      }
+
+      // perform the removal if necessary
+      if (postsToRemove.isNotEmpty) {
+        debugPrint('removing the following dated roles: $postsToRemove');
+        currentUser.removeRoles(postsToRemove);
+        for (final postID in postsToRemove) {
+          await userDBManager.removeUserPostRole(currentUser.id, postID);
+        }
+      }
+
+      // after the work on user roles, finish with putting the user in with the rest
       allUsers.removeWhere((e) => e.id == currentUser!.id);
       allUsers.add(currentUser);
     }
-
-    // ? Testing purpose:
-    String order = 'order of the heads ID:';
-    for (final head in heads) {
-      order += ' ${head.id},';
-    }
-    debugPrint(order);
 
     // * Create the AppContext, setup the FCM and run the app
     final AppContext appContext = AppContext(
@@ -140,7 +154,7 @@ void main() async {
   }
 }
 
-Future<List<ctrim.User>> _fetchAllUsers(SharedPreferences pref) async {
+Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
   final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
   final LocalDataManager dataManager = LocalDataManager();
   final PackageInfo packageInfo = await PackageInfo.fromPlatform();

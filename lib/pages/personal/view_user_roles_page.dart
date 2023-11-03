@@ -27,13 +27,16 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
 
-    // TODO the role cleanup should happen as soon as the app opens
     // pre-emptively cleanup
     if (widget.selectedUser.roles != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _performRoleCleanupCheck().then((_) {
+        _performRoleCleanupCheck().then((removedOldStuff) {
           setState(() {
             // cleanup complete
+            if (removedOldStuff) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('Cleaned up tasks'), behavior: SnackBarBehavior.floating));
+            }
           });
         });
       });
@@ -59,8 +62,14 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
           if (snap.hasData) {
             widget.selectedUser.setRoles(snap.data!);
-            _performRoleCleanupCheck();
             result = _buildBodyWithData();
+
+            // in the chance we're looking at some other person's roles
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _performRoleCleanupCheck().then((_) {
+                setState(() {});
+              });
+            });
           } else if (snap.hasError) {
             debugPrint('something with fetching roles: ${snap.error}');
             result = const Center(child: Text('Something went wrong!'));
@@ -108,10 +117,15 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     sortedPostIDs
         .sort((a, b) => _appContext.getPostHead(a).eventDate!.compareTo(_appContext.getPostHead(b).eventDate!));
     debugPrint('post sort: $sortedPostIDs');
+
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return RefreshIndicator(
       onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
       child: ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
           itemCount: sortedPostIDs.length,
           itemBuilder: (_, index) {
             final postID = sortedPostIDs[index];
@@ -164,8 +178,12 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       setState(() {
         _appContext.sharedPref.setRoleRefreshTime();
         widget.selectedUser.setRoles(roles);
-        _performRoleCleanupCheck();
       });
+
+      // do we want to do the cleanup here as well? - doesn't seem correct, check again please
+      // _performRoleCleanupCheck().then((_) {
+      //   setState(() {});
+      // });
     } else {
       debugPrint('Fake Refreshing');
       await Future.delayed(const Duration(seconds: 1));
@@ -173,23 +191,32 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   }
 
   // ! Let's leave this alone for now and see if we change our mind about cleaning up or keeping this data
-  Future<void> _performRoleCleanupCheck() async {
+  // ! Btw, this is repeated code, see main
+  Future<bool> _performRoleCleanupCheck() async {
     // remove roles set in the past
     final List<String> postsToRemove = [];
     for (final roleEntry in widget.selectedUser.roles!) {
-      final post = _appContext.getPostHead(roleEntry['postID']);
-      if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
-        postsToRemove.add(post.id);
+      if (_appContext.eventHeads.any((e) => e.id == roleEntry['postID'])) {
+        final post = _appContext.getPostHead(roleEntry['postID']);
+        if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
+          postsToRemove.add(post.id);
+        }
+      } else {
+        // in the future, the bandwidth of posts might get pretty large where future posts will start to drift away
+        // somthing to be mindful of as the app scales forward
+        postsToRemove.add(roleEntry['postID']);
       }
     }
 
     if (postsToRemove.isNotEmpty) {
       debugPrint('removing the following dated roles: $postsToRemove');
       widget.selectedUser.removeRoles(postsToRemove);
-      for (var postID in postsToRemove) {
+      for (final postID in postsToRemove) {
         await _userDBManager.removeUserPostRole(widget.selectedUser.id, postID);
       }
+      return true;
     }
+    return false;
   }
 
   void _onPostTap(EventHead head) =>

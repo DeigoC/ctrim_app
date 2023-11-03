@@ -47,42 +47,50 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     final List<User> selectedUsers =
         allUsers.where((element) => widget.eventContext.metadata.contributorUIDs.contains(element.id)).toList();
     final bool isAuthor = widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id);
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
 
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          ListTile(title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
-          ListTile(
-              title: const Text('Assigned Contributors'),
-              subtitle: const Text('Able to modify aspects of the post'),
-              trailing: isAuthor
-                  ? IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))
-                  : null),
-          _buildContributors(selectedUsers),
-          const SizedBox(height: 16),
-          const Divider(thickness: 1),
-          // const SizedBox(height: 16),
-          // const Padding(
-          //     padding: EdgeInsets.only(left: 16.0, bottom: 16),
-          //     child: Text('Update Logs', style: TextStyle(fontSize: 16))),
-        ])),
-        SliverList.builder(
-            itemCount: widget.eventContext.log.logs.length,
-            itemBuilder: (_, index) {
-              final thisEntry = widget.eventContext.log.logs[index];
-              final thisU = allUsers.firstWhere((e) => e.id.compareTo(thisEntry['uid']) == 0);
-              return ListTile(
-                title: Text(
-                  thisEntry['log'],
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(_dateFormat.format(thisEntry['ts'])),
-                leading: MyUserAvatar(thisU),
-                onTap: () => _showFullLog(thisEntry),
-              );
-            })
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          sliver: SliverToBoxAdapter(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            ListTile(title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
+            ListTile(
+                title: const Text('Assigned Contributors'),
+                subtitle: const Text('Able to modify aspects of the post'),
+                trailing: isAuthor
+                    ? IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))
+                    : null),
+            _buildContributors(selectedUsers),
+            const SizedBox(height: 16),
+            const Divider(thickness: 1),
+            // const SizedBox(height: 16),
+            // const Padding(
+            //     padding: EdgeInsets.only(left: 16.0, bottom: 16),
+            //     child: Text('Update Logs', style: TextStyle(fontSize: 16))),
+          ])),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          sliver: SliverList.builder(
+              itemCount: widget.eventContext.log.logs.length,
+              itemBuilder: (_, index) {
+                final thisEntry = widget.eventContext.log.logs[index];
+                final thisU = allUsers.firstWhere((e) => e.id.compareTo(thisEntry['uid']) == 0);
+                return ListTile(
+                  title: Text(
+                    thisEntry['log'],
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(_dateFormat.format(thisEntry['ts'])),
+                  leading: MyUserAvatar(thisU),
+                  onTap: () => _showFullLog(thisEntry, webHorizontalPadding),
+                );
+              }),
+        )
       ],
     );
   }
@@ -103,25 +111,28 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   }
 
   // * Logic
-  void _showFullLog(final Map<String, dynamic> entry) {
+  void _showFullLog(final Map<String, dynamic> entry, final double horizontalPadding) {
     final thisU = _appContext.getUserFromID(entry['uid']);
     showDialog(
         context: context,
-        builder: (_) => Dialog(
+        builder: (_) => Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Dialog(
                 child: SingleChildScrollView(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                  ListTile(
-                      title: Text(thisU.fullname),
-                      subtitle: Text(_dateFormat.format(entry['ts'])),
-                      leading: MyUserAvatar(thisU)),
-                  const Divider(),
-                  Padding(
-                      padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0, bottom: 16),
-                      child: Text(entry['log'], style: const TextStyle(fontSize: 16))),
-                ]))));
+                  child:
+                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                    ListTile(
+                        title: Text(thisU.fullname),
+                        subtitle: Text(_dateFormat.format(entry['ts'])),
+                        leading: MyUserAvatar(thisU)),
+                    const Divider(),
+                    Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0, bottom: 16),
+                        child: Text(entry['log'], style: const TextStyle(fontSize: 16))),
+                  ]),
+                ),
+              ),
+            ));
   }
 
   void _showContributors(final List<User> selectedUsers) {

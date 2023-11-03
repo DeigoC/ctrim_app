@@ -53,27 +53,32 @@ class _EditBodyPageState extends State<EditBodyPage> {
   }
 
   Widget _buildBody() {
-    return Column(
-      children: [
-        quill.QuillToolbar.basic(
-          controller: _controller,
-          showAlignmentButtons: true,
-          showSubscript: false,
-          showSuperscript: false,
-          showCodeBlock: false,
-          multiRowsDisplay: _showMultirow,
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16),
-            child: quill.QuillEditor.basic(
-              // embedBuilders: FlutterQuillEmbeds.builders(),
-              controller: _controller,
-              readOnly: false, // true for view only mode
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+
+    return quill.QuillProvider(
+      configurations: quill.QuillConfigurations(controller: _controller),
+      child: Column(
+        children: [
+          quill.QuillToolbar(
+            configurations: quill.QuillToolbarConfigurations(
+              showAlignmentButtons: true,
+              showSubscript: false,
+              showSuperscript: true,
+              showCodeBlock: true,
+              multiRowsDisplay: _showMultirow,
             ),
           ),
-        )
-      ],
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
+              child: quill.QuillEditor.basic(
+                configurations: const quill.QuillEditorConfigurations(),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 

@@ -24,7 +24,11 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
       // debugPrint('building network image');
       return _buildNetworkImage();
     }
+    return _buildFileImage(cacheDir);
+  }
 
+  Widget _buildFileImage(final String cacheDir) {
+    // this is a FB to allow the app to redownload on a broken file
     return FutureBuilder(
         future: _fetchFileImage(cacheDir),
         builder: (_, snap) {
@@ -58,6 +62,8 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
   Widget _buildNetworkImage() {
     return Image.network(widget.mediaEntry['src']!, fit: BoxFit.cover);
   }
+
+  // * Logic
 
   Future<File> _fetchFileImage(final String cacheDir) async {
     final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');

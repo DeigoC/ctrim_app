@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -38,10 +39,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void initState() {
+    // * initial setup of data
     _appContext = Provider.of<AppContext>(context, listen: false);
     _informationTabController = TabController(length: 4, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
-
     _appContext.allUsers.sort(((a, b) {
       final surname = a.surname.compareTo(b.surname);
       if (surname == 0) {
@@ -49,26 +50,27 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       }
       return surname;
     }));
+    _setupCloudOnMessage();
 
+    // * special case where it's the first time opening the app
     if (!kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfFirstOpen();
       });
     }
 
+    // * periodic and non-periodic local maintenance
     if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
       _appContext.sharedPref.justFetchedUserImages();
     }
-
-    _setupCloudOnMessage();
     _removeLocallySavedPosts();
 
     // ! - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
     // can be removed for version 0.6.0 - but I'll leave a comment behind just in case
     // _saveFCMToken();
 
-    // setting up the animated scroll aspects
+    // * setting up the animated scroll aspects - to be looked into another time
     // _postsScrollController.addListener(() {
     //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.reverse) {
     //     setState(() {
@@ -82,7 +84,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     //     });
     //   }
     // });
-
     super.initState();
   }
 
@@ -276,6 +277,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  // * Notification related
+
   void _setupCloudOnMessage() {
     // when the app is opened
     FirebaseMessaging.onMessage.listen((message) {
@@ -327,6 +330,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (openPage) {
         _openPost(head);
       }
+      _updateUserRoles();
     } else if (message.data.containsKey('InfoPage') && openPage) {
       _openInformationTeachingPage(message.data['InfoPage']);
     }
@@ -339,6 +343,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final String postID = message.data['PostID'];
       final head = await _reloadEventHead(postID);
       if (!hasLoggedOut) {
+        _updateUserRoles();
         _openPost(head);
       }
     } else if (!hasLoggedOut && message.data.containsKey('InfoPage')) {
@@ -434,6 +439,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     return result;
   }
+
+  // in the case that the notification is on a Post Update - receiving word of a role
+  Future<void> _updateUserRoles() async {
+    final UserDBManager userDBManager = UserDBManager();
+    _appContext.currentUser.setRoles(await userDBManager.fetchUserRoles(_appContext.currentUser.id));
+  }
+
+  // * maintenance work
 
   void _performLocalUserImgCleanup() async {
     final String userImgDir = '${_appContext.appDir}/user_imgs';

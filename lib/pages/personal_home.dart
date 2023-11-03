@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/personal/view_my_posts_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,11 +40,14 @@ class _PersonalHomeState extends State<PersonalHome> {
           title: const Text('Attending Sunday Service'),
           onTap: _onAttendingSundayServiceClick,
         ),
-        ListTile(
+      ];
+
+      if (!kIsWeb) {
+        children.add(ListTile(
             leading: const Icon(Icons.notifications_active),
             title: const Text('Push Notifications'),
-            onTap: _onNotificationManagerClick),
-      ];
+            onTap: _onNotificationManagerClick));
+      }
 
       if (!appContext.isCurrentUserGuest) {
         children.insert(
@@ -67,6 +71,11 @@ class _PersonalHomeState extends State<PersonalHome> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red))
                 : null,
             onTap: _onViewTasksClick,
+          ),
+          ListTile(
+            title: const Text('My Posts'),
+            leading: const Icon(Icons.list_alt),
+            onTap: _onOpenPostsClick,
           ),
           ListTile(
               title: const Text('Belfast Crew'),
@@ -95,6 +104,11 @@ class _PersonalHomeState extends State<PersonalHome> {
           title: const Text('Privacy Policy'),
           leading: const Icon(Icons.privacy_tip),
           onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+        ),
+        ListTile(
+          title: const Text('Terms and Conditions'),
+          leading: const Icon(Icons.contact_page),
+          onTap: () => launchUrlString('https://ctrim-terms-and-conditions.web.app'),
         ),
         ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)
       ]);
@@ -174,5 +188,9 @@ class _PersonalHomeState extends State<PersonalHome> {
         // update incase user has changed their image
       });
     });
+  }
+
+  void _onOpenPostsClick() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ViewMyPostsPage()));
   }
 }
