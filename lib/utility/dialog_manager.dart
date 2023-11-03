@@ -65,7 +65,7 @@ class DialogManager {
     await showDialog(
         context: context,
         builder: (_) {
-          return AlertDialog(
+          return AlertDialog.adaptive(
               title: const Text('Leave Page'),
               content: const Text('Are you sure you want to discard all changes?'),
               actions: [
@@ -93,7 +93,7 @@ class DialogManager {
     await showDialog(
         context: context,
         barrierDismissible: barrierDismissible,
-        builder: (_) => AlertDialog(title: Text(title), content: Text(content), actions: [
+        builder: (_) => AlertDialog.adaptive(title: Text(title), content: Text(content), actions: [
               TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(cancelText)),
               TextButton(
                   onPressed: () {
@@ -115,7 +115,7 @@ class DialogManager {
     await showDialog(
         context: context,
         barrierDismissible: barrierDismissible,
-        builder: (_) => AlertDialog(
+        builder: (_) => AlertDialog.adaptive(
               scrollable: true,
               title: Text(title),
               content: Text(content),

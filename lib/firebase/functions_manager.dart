@@ -50,10 +50,6 @@ class CloudFunctionManager {
       debugPrint('ios and android image is: ${iOSImage ?? 'null'}');
       debugPrint('------------------------');
     }
-
-    // final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
-    // final result = await callable.call(callParams);
-    // debugPrint(result.data.toString());
   }
 
   Future<void> sendToTopic(
@@ -88,10 +84,6 @@ class CloudFunctionManager {
       debugPrint('ios and android image is: ${iOSImage ?? 'null'}');
       debugPrint('------------------------');
     }
-
-    // final HttpsCallable callable = _inst.httpsCallable('send_to_topic');
-    // final result = await callable.call(callParams);
-    // debugPrint(result.data.toString());
   }
 
   List<String> _convertMapToKeyValueStrings(final Map<String, String> data) {

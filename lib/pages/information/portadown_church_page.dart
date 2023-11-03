@@ -34,10 +34,15 @@ class PortadownChurchPage extends StatelessWidget {
                 height: webHorizontalPadding != 0 ? MediaQuery.of(context).size.height * 0.45 : null,
               ),
               const SizedBox(height: 8),
-              Flexible(
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: quill.QuillEditor.basic(controller: controller, readOnly: true, autoFocus: false))),
+              quill.QuillProvider(
+                configurations: quill.QuillConfigurations(controller: controller),
+                child: Flexible(
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: quill.QuillEditor.basic(
+                          configurations: const quill.QuillEditorConfigurations(readOnly: true),
+                        ))),
+              ),
               const SizedBox(height: 32)
             ],
           ),

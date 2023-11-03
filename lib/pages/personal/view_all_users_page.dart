@@ -20,6 +20,9 @@ class ViewAllUsersPage extends StatefulWidget {
 class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   @override
   Widget build(BuildContext context) {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
           appBar: AppBar(
@@ -30,6 +33,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   icon: const Icon(Icons.person_add), onPressed: _addUserClick, label: const Text('Register User'))
               : null,
           body: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
               itemCount: appContext.allUsers.length,
               itemBuilder: (_, index) {
                 final thisUser = appContext.allUsers[index];

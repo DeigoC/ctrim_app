@@ -17,7 +17,10 @@ class SelectPostTemplatePage extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
-    return ListView(padding: const EdgeInsets.all(8), children: [
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
+    return ListView(padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding), children: [
       InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {

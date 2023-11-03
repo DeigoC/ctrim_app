@@ -4,16 +4,16 @@ description: A new Flutter project.
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-# version: 0.5.3+11 # iOS
-# version: 0.5.3+10 # Android
-version: 0.5.3+11 # Web
+version: 0.6.0+12 # iOS
+# version: 0.6.0+11 # Android
+# version: 0.6.0+12 # Web
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
 
 dependencies:
   # chewie: ^1.5.0
-  add_2_calendar: ^2.2.4
+  add_2_calendar: ^3.0.1
   avatar_stack: ^1.2.0
   cloud_firestore: ^4.9.2
   cloud_functions: ^4.4.1

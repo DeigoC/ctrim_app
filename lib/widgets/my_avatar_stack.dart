@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:ctrim_app/models/user.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class MyAvatarStack extends StatelessWidget {
@@ -28,7 +29,7 @@ class MyAvatarStack extends StatelessWidget {
     // WidgetStack(positions: positions, stackedWidgets: stackedWidgets, buildInfoWidget: buildInfoWidget)
     return AvatarStack(
       height: kToolbarHeight,
-      width: 90,
+      width: kIsWeb ? null : 90,
       avatars: avatars,
     );
   }

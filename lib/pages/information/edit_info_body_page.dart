@@ -52,21 +52,19 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   }
 
   Widget _buildBody() {
-    return Column(children: [
-      quill.QuillToolbar.basic(
-        controller: _controller,
-        showAlignmentButtons: true,
-        showSubscript: false,
-        showSuperscript: false,
-        showCodeBlock: false,
-      ),
-      Expanded(
-          child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: quill.QuillEditor.basic(
-                controller: _controller,
-                readOnly: false,
-              )))
-    ]);
+    return quill.QuillProvider(
+      configurations: quill.QuillConfigurations(controller: _controller),
+      child: Column(children: [
+        const quill.QuillToolbar(
+          configurations: quill.QuillToolbarConfigurations(
+            showAlignmentButtons: true,
+            showSubscript: false,
+            showSuperscript: false,
+            showCodeBlock: false,
+          ),
+        ),
+        Expanded(child: Padding(padding: const EdgeInsets.all(8.0), child: quill.QuillEditor.basic()))
+      ]),
+    );
   }
 }

@@ -54,8 +54,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return ListView(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
       children: [
         ListTile(
           title: Text(_start == null ? 'TBD' : _timeFormat.format(_start!)),

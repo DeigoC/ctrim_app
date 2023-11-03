@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -175,15 +177,45 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                       decoration:
                           const InputDecoration(label: Text('Confirm Password'), prefixIcon: Icon(Icons.password))),
                   const SizedBox(height: 32),
-                  ElevatedButton(onPressed: _registerClick, child: const Text('Send Verification Email')),
-                  const SizedBox(height: 8),
-                  kIsWeb
-                      ? TextButton(
-                          onPressed: () => launchUrlString(
-                              'https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
-                          child: const Text('Privacy Policy'))
-                      : Container()
+                  ElevatedButton(onPressed: _registerClick, child: const Text('Register Account')),
+                  const SizedBox(height: 16),
+                  kIsWeb ? _buildLegalStuffSection() : Container(),
                 ])));
+  }
+
+  Widget _buildLegalStuffSection() {
+    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+    return Center(
+      child: RichText(
+          text: TextSpan(children: <TextSpan>[
+        TextSpan(
+            text: 'By creating an account, I agree to CTRIM App\'s ',
+            style: TextStyle(color: onDark ? Colors.white : Colors.black)),
+        TextSpan(
+          text: 'Terms and Conditions',
+          style: const TextStyle(
+            color: Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              launchUrlString('https://ctrim-terms-and-conditions.web.app');
+            },
+        ),
+        TextSpan(text: ' and ', style: TextStyle(color: onDark ? Colors.white : Colors.black)),
+        TextSpan(
+          text: 'Privacy Policy',
+          style: const TextStyle(
+            color: Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b');
+            },
+        )
+      ])),
+    );
   }
 
   Widget _buildWaitingForVerification() {
@@ -306,7 +338,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
         context: context,
         title: 'Registration',
         content: 'Are you sure you can verify the following email?\n\n${_tecRegistrationEmail.text.trim()}',
-        confirmText: 'Send Verification!');
+        confirmText: 'Send Verification Email');
 
     if (confirmation) {
       await _attemptToRegister().then((canVerifyEmail) {

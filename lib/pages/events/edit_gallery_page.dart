@@ -46,6 +46,9 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+
     return SafeArea(
       top: false,
       child: CustomScrollView(
@@ -55,35 +58,41 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
               floating: true,
               title: const Text('Edit Gallery'),
               actions: [IconButton(onPressed: _onAddMediaTap, icon: const Icon(Icons.add_photo_alternate))]),
-          SliverList(
-              delegate: SliverChildListDelegate([
-            const Divider(thickness: 1),
-            ListTile(
-                title: const Text('Key Media'),
-                leading: const Icon(Icons.star),
-                trailing: IconButton(onPressed: _onKeyMediaHelpClick, icon: const Icon(Icons.help))),
-            const Divider(thickness: 1),
-            const SizedBox(height: 16),
-            for (int i = 0; i < widget.eventContext.head.media.length; i++)
-              Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: _buildMediaBox(widget.eventContext.head.media[i], true)),
-            const SizedBox(height: 8),
-            const Divider(thickness: 1),
-            ListTile(
-                title: const Text('Post Media'),
-                leading: const Icon(Icons.photo_library),
-                trailing: IconButton(onPressed: _onPostMediaHelpClick, icon: const Icon(Icons.help))),
-            const Divider(thickness: 1),
-            const SizedBox(height: 16),
-          ])),
-          SliverList.separated(
-              separatorBuilder: (_, __) => const Divider(),
-              itemCount: widget.eventContext.media.allMedia.length,
-              itemBuilder: (_, index) {
-                final Map<String, String> thisEntry = widget.eventContext.media.allMedia[index];
-                return _buildMediaBox(thisEntry, false);
-              })
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+            sliver: SliverList(
+                delegate: SliverChildListDelegate([
+              const Divider(thickness: 1),
+              ListTile(
+                  title: const Text('Key Media'),
+                  leading: const Icon(Icons.star),
+                  trailing: IconButton(onPressed: _onKeyMediaHelpClick, icon: const Icon(Icons.help))),
+              const Divider(thickness: 1),
+              const SizedBox(height: 16),
+              for (int i = 0; i < widget.eventContext.head.media.length; i++)
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: _buildMediaBox(widget.eventContext.head.media[i], true)),
+              const SizedBox(height: 8),
+              const Divider(thickness: 1),
+              ListTile(
+                  title: const Text('Post Media'),
+                  leading: const Icon(Icons.photo_library),
+                  trailing: IconButton(onPressed: _onPostMediaHelpClick, icon: const Icon(Icons.help))),
+              const Divider(thickness: 1),
+              const SizedBox(height: 16),
+            ])),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+            sliver: SliverList.separated(
+                separatorBuilder: (_, __) => const Divider(),
+                itemCount: widget.eventContext.media.allMedia.length,
+                itemBuilder: (_, index) {
+                  final Map<String, String> thisEntry = widget.eventContext.media.allMedia[index];
+                  return _buildMediaBox(thisEntry, false);
+                }),
+          )
         ],
       ),
     );

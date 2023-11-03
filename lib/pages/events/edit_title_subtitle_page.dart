@@ -45,7 +45,10 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
     return ListView(
+      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
       children: [
         TextField(
           controller: _tecTitle,
