@@ -618,7 +618,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
       final String body = "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
 
       final List<String> tokens = [];
-      for (var thisUID in additionEntry.value) {
+      for (final thisUID in additionEntry.value) {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');

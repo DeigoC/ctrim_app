@@ -47,10 +47,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildBodyWithEventDate() {
-    final bool canEdit = (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-            widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
-        DateTime.now().isBefore(widget.eventContext.head.eventDate!);
-
     final List<Map<String, dynamic>> programRoles = List<Map<String, dynamic>>.from(_appContext.isCurrentUserGuest
         ? widget.eventContext.program.roles.where((e) => e['for_guests'])
         : widget.eventContext.program.roles);
@@ -62,6 +58,11 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         SliverList.separated(
           itemCount: programRoles.length,
           itemBuilder: (_, index) {
+            final DateTime roleStart = programRoles[index]['start'];
+            final bool canEdit = (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
+                    widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
+                DateTime.now().isBefore(roleStart);
+
             return ProgramTile(
               programEntry: programRoles[index],
               onTap: (_) => _programTap(_, index),
@@ -72,14 +73,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               onEditClick: () => _openEditProgramPage(programRoles[index]),
             );
           },
-          separatorBuilder: (BuildContext context, int index) {
-            return const Divider();
-          },
+          separatorBuilder: (BuildContext context, int index) => const Divider(),
         )
       ]))
     ];
 
-    if (canEdit) {
+    if ((widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
+            widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
+        DateTime.now().isBefore(widget.eventContext.head.eventDate!)) {
       children.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
           child: SizedBox(

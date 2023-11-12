@@ -124,7 +124,7 @@ class AppContext extends ChangeNotifier {
   List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
   bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
   void addTokensToUserID(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
-  String getAuthIDFromUID(String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
+  String getAuthIDFromUID(final String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
 
   bool get useUserImageSrc => _useCurrentUserSrc;
   void setNewUserImage(final String newSrc) {
