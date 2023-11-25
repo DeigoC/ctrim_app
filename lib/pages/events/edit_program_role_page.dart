@@ -316,6 +316,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     if (newMembers.isNotEmpty) {
       widget.eventContext.addRoleAdditionNotification(newMembers, widget.programEntry['id']);
     }
+    debugPrint('--------role addition now looks like: ${widget.eventContext.roleAdditions}');
   }
 
   void _onDeleteTap() {

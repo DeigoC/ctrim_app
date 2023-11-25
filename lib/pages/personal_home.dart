@@ -64,7 +64,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             ));
         children.addAll([
           ListTile(
-            title: const Text('My Tasks'),
+            title: const Text('My Schedule'),
             leading: const Icon(Icons.checklist),
             trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
                 ? Text('(${appContext.currentUser.roles!.length.toString()})',
@@ -78,7 +78,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             onTap: _onOpenPostsClick,
           ),
           ListTile(
-              title: const Text('Belfast Crew'),
+              title: const Text('Belfast Church Volunteers'),
               leading: const Icon(Icons.people),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
           ListTile(

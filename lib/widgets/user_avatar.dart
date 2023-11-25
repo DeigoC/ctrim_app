@@ -29,7 +29,7 @@ class MyUserAvatar extends StatelessWidget {
     }
 
     if (appDir != null && (appContext.currentUser.id != _user.id || !appContext.useUserImageSrc)) {
-      debugPrint('using the file for user profile image - ID ${_user.id}');
+      // debugPrint('using the file for user profile image - ID ${_user.id}');
       return _buildFileImage(appDir);
     } else {
       return CircleAvatar(backgroundImage: NetworkImage(_user.imgSrc), radius: radius);

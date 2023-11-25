@@ -315,7 +315,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _userDBManager.addUserRole(thisUID, newPostID, additionEntry.key);
+        await _userDBManager.addUserRole(
+            uid: thisUID,
+            postID: newPostID,
+            roleID: additionEntry.key,
+            millisecondStart: (roleEntry['start'] as DateTime).millisecondsSinceEpoch,
+            millisecondEnd: (roleEntry['end'] as DateTime).millisecondsSinceEpoch,
+            title: roleEntry['title']);
       }
       _cloudFunctionManager
           .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newPostID});

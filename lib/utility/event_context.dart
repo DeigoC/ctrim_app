@@ -420,7 +420,7 @@ class EventContext {
   Map<int, List<String>> get roleRemovalals => UnmodifiableMapView(_roleRemovals);
   String deletedRoleTitle(final int id) => _deletedRoleTitle[id]!;
 
-  void addRoleAdditionNotification(Iterable<String> uids, int id) {
+  void addRoleAdditionNotification(final Iterable<String> uids, final int id) {
     if (_roleAdditions[id] == null) {
       _roleAdditions[id] = <String>[];
     }

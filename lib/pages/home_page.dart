@@ -147,7 +147,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return ViewEventsHome(
           scrollController: _postsScrollController,
           rebuildFunction: () {
-            setState(() {});
+            setState(() {
+              // there's a potential that new posts have been added
+              _appContext.sortPostsByIndex();
+            });
           });
     } else if (_selectedIndex == 1) {
       return InformationHome(

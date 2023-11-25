@@ -26,7 +26,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return Scaffold(
           appBar: AppBar(
-            title: const Text('Belfast Crew'),
+            title: const Text('Belfast Church Volunteers'),
           ),
           floatingActionButton: appContext.currentUser.isAreaAdmin
               ? FloatingActionButton.extended(

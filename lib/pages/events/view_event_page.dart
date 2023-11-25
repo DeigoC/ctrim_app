@@ -475,13 +475,13 @@ class _EventLogDialogState extends State<EventLogDialog> {
                   maxLines: null,
                   onChanged: _onTextChange),
               const SizedBox(height: 8),
-              ElevatedButton.icon(
+              TextButton.icon(
                   onPressed: _canSave ? _saveClick : null,
                   style: ButtonStyle(
                       backgroundColor:
                           _canSave ? MaterialStateProperty.all(Colors.green) : MaterialStateProperty.all(Colors.grey)),
                   icon: const Icon(Icons.cloud_upload, color: Colors.white),
-                  label: const Text('Save!', style: TextStyle(color: Colors.white))),
+                  label: const Text('Save', style: TextStyle(color: Colors.white))),
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))
             ],
           ),
@@ -507,10 +507,10 @@ class _EventLogDialogState extends State<EventLogDialog> {
   void _saveClick() {
     DialogManager.showConfirmationDialog(
             context: context,
-            title: 'Last Chance',
-            content: 'This log will be sent to all who have bookmarked this post',
-            confirmText: 'I understand, save!',
-            cancelText: 'Wait a sec.')
+            title: 'Confirm Save',
+            content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
+            confirmText: 'Save',
+            cancelText: 'Cancel')
         .then((confirmation) {
       if (confirmation) {
         DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
@@ -614,6 +614,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final String title = "$_currentUserName has assinged you to a role!";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
+      debugPrint('----- this addition entry looks like: $additionEntry');
       final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
       final String body = "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
 
@@ -628,7 +629,13 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _userDBManager.addUserRole(thisUID, widget.eventContext.id, additionEntry.key);
+        await _userDBManager.addUserRole(
+            uid: thisUID,
+            postID: widget.eventContext.id,
+            roleID: additionEntry.key,
+            millisecondStart: (roleEntry['start'] as DateTime).millisecondsSinceEpoch,
+            millisecondEnd: (roleEntry['end'] as DateTime).millisecondsSinceEpoch,
+            title: roleEntry['title']);
       }
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -655,7 +662,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _userDBManager.removeUserRole(thisUID, removalEntry.key);
+        await _userDBManager.removeUserRole(thisUID, removalEntry.key);
       }
       await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);

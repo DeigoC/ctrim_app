@@ -21,7 +21,8 @@ class ViewUserRolesPage extends StatefulWidget {
 class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   late final AppContext _appContext;
   final UserDBManager _userDBManager = UserDBManager();
-  static final DateFormat _eventDateFormat = DateFormat('d MMM');
+  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
+  static final DateFormat _timeFormat = DateFormat('HH:mm');
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody(), appBar: AppBar(title: Text("${widget.selectedUser.forname}'s Tasks")));
+    return Scaffold(body: _buildBody(), appBar: AppBar(title: Text("${widget.selectedUser.forname}'s Schedule")));
   }
 
   Widget _buildBody() {
@@ -119,7 +120,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     debugPrint('post sort: $sortedPostIDs');
 
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return RefreshIndicator(
       onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
@@ -161,12 +162,40 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   Widget _buildTileWithData(final String postID, final int roleCount) {
     final postHead = _appContext.eventHeads.firstWhere((e) => e.id == postID);
-    return ListTile(
+    final List<Widget> roleChildren = [];
+
+    final userRoles = widget.selectedUser.roles!.where((e) => e['postID'] == postID).toList();
+    userRoles.sort(((a, b) => (a['startMil'] as int).compareTo(b['startMil'] as int)));
+
+    for (final roleElement in userRoles) {
+      final String timeString =
+          '${_timeFormat.format(DateTime.fromMillisecondsSinceEpoch(roleElement['startMil']))} - ${_timeFormat.format(DateTime.fromMillisecondsSinceEpoch(roleElement['endMil']))}';
+      roleChildren.add(ListTile(
+        title: Text(roleElement['title']),
+        subtitle: Text(timeString),
         leading: const Icon(Icons.event),
-        trailing: Text(_eventDateFormat.format(postHead.eventDate!)),
-        subtitle: Text('$roleCount task${roleCount == 1 ? '' : 's'}'),
-        onTap: widget.allowPostView ? () => _onPostTap(postHead) : null,
-        title: Text(postHead.title, maxLines: 2, overflow: TextOverflow.ellipsis));
+      ));
+    }
+    return Card(
+      child: InkWell(
+        onTap: () => _onPostTap(postHead),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                title: Text(postHead.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                subtitle: Text(_eventDateFormat.format(postHead.eventDate!)),
+              ),
+              const Divider(indent: 8, endIndent: 8),
+              ...roleChildren,
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // * Logic
