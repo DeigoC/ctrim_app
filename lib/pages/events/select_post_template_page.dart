@@ -87,6 +87,22 @@ class SelectPostTemplatePage extends StatelessWidget {
                   ])))),
       const SizedBox(height: 8),
       InkWell(
+          onTap: () => _selectDate(context).then((selectedDate) {
+                if (selectedDate != null) {
+                  _createAndOpenYouthServiceTemplate(context, selectedDate);
+                }
+              }),
+          child: Card(
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                  child:
+                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                    Text('Youth Service', style: _cardTitleStyle),
+                    const Divider(),
+                    Text("Online Friday Youth service. Quick and dirty, it's a fun time!", style: _cardContentStyle)
+                  ])))),
+      const SizedBox(height: 8),
+      InkWell(
           onTap: () => _onEmptyTemplateClick(context),
           child: Card(
               child: Padding(
@@ -400,6 +416,76 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.head.setTitle('Intentional Discipleship Training (${_eventDateFormat.format(startTime)})');
 
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+  }
+
+  void _createAndOpenYouthServiceTemplate(final BuildContext context, final DateTime selectedDate) {
+    _resetContext();
+
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 0);
+    eventContext.head.setEventDate(startTime);
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1KGuJiGCQYns5IzVuZJXK90g3yA5sdyfN');
+
+    eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
+    eventContext.program.setOnline(true);
+    eventContext.program.setAddress('https://us02web.zoom.us/j/89154407463?pwd=bDR3Y3lsL1I3NUl0MHV2SDFrR1pQdz09');
+
+    int roleID = DateTime.now().millisecondsSinceEpoch;
+
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Hosting',
+        detail:
+            'Remind Youth GC of the event, lead the session with the follwing schedule including welcoming and picture taking',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Opening Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 5),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Icebreaker',
+        detail: 'Something quick to loosen up!',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 5),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 15),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Praise or Worship Song',
+        detail: 'Video',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 20),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Word of God',
+        detail: "Of any topic the assigned person wants - devotional, testimony or whatever they really want to share!",
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 20),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 40),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Group Talk',
+        detail: 'Breakout rooms to discuss the Word or other things',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 40),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 50),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Closing Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 55),
+        id: roleID++);
+
+    eventContext.setFetchedBody(
+        r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 891 5440 7463"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 587922"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
+
+    eventContext.head.setTitle('Online Youth Service (${_eventDateFormat.format(startTime)})');
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
