@@ -312,6 +312,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 850 3878 6530"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 985767"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
     eventContext.head.setTitle('Midweek Service (${_eventDateFormat.format(startTime)})');
+    eventContext.head.setLocation('Belfast (Online)');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
@@ -365,6 +366,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 893 7280 5213"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 261513"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
     eventContext.head.setTitle('Dawn Watch Prayer Meeting (${_eventDateFormat.format(startTime)})');
+    eventContext.head.setLocation('Belfast (Online)');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
@@ -415,6 +417,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 847 9642 5540"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 786441"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
     eventContext.head.setTitle('Intentional Discipleship Training (${_eventDateFormat.format(startTime)})');
+    eventContext.head.setLocation('Belfast (Online)');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
@@ -464,14 +467,14 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.addRole(
         uids: [],
         title: 'Word of God',
-        detail: "Of any topic the assigned person wants - devotional, testimony or whatever they really want to share!",
+        detail: "Sharing of their devotional/journal, testimony or whatever they really want to share! ❤️",
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 20),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 40),
         id: roleID++);
     eventContext.program.addRole(
         uids: [],
-        title: 'Group Talk',
-        detail: 'Breakout rooms to discuss the Word or other things',
+        title: 'Group Discussions (Application)',
+        detail: 'Breakout rooms to discuss the Word or other things. Sorted by Host',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 40),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 50),
         id: roleID++);
@@ -486,6 +489,8 @@ class SelectPostTemplatePage extends StatelessWidget {
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 891 5440 7463"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 587922"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
     eventContext.head.setTitle('Online Youth Service (${_eventDateFormat.format(startTime)})');
+    eventContext.head.setLocation('Belfast (Online)');
+
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 

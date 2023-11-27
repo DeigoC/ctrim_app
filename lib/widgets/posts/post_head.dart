@@ -12,7 +12,7 @@ class PostHead extends StatelessWidget {
   final EventHead thisHead;
   final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16, _metaFontSize = 14;
-  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM, HH:mm');
+  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM • HH:mm');
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +54,7 @@ class PostHead extends StatelessWidget {
     // final String timeAgo =
 
     final String finalStr = thisHead.eventDate != null
-        ? '${thisHead.location} • On ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${timeAgo(thisHead.recentDate)}'
+        ? '${thisHead.location} • ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${timeAgo(thisHead.recentDate)}'
         : '${thisHead.location} • Edited ${timeAgo(thisHead.recentDate)}';
 
     return Padding(

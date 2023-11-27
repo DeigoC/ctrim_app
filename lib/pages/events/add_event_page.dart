@@ -206,7 +206,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
             title: _tecTitle.text.trim(),
             subtitle: _tecSubtitle.text.trim(),
             eventDate: widget.eventContext.head.eventDate,
-            uid: _appContext.currentUser.id)
+            uid: _appContext.currentUser.id,
+            location: widget.eventContext.head.location)
         .then((newID) async {
       _updateParentMetadata(newID);
       final newHead = await _headDBManager.fetchHead(newID);

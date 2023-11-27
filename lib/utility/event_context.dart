@@ -83,6 +83,7 @@ class EventContext {
     required String title,
     required String subtitle,
     required String uid,
+    required String location,
     DateTime? eventDate,
   }) async {
     final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
@@ -98,6 +99,7 @@ class EventContext {
     headToUpload.setSubtitle(subtitle);
     headToUpload.setRecentDate(now);
     headToUpload.setEventDate(_head.eventDate);
+    headToUpload.setLocation(location);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }
