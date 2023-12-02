@@ -191,6 +191,6 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   void _onOpenPostsClick() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ViewMyPostsPage()));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ViewMyPostsPage()));
   }
 }
