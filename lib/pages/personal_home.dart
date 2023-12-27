@@ -78,7 +78,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             onTap: _onOpenPostsClick,
           ),
           ListTile(
-              title: const Text('Belfast Church Volunteers'),
+              title: const Text('Belfast Volunteers'),
               leading: const Icon(Icons.people),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
           ListTile(

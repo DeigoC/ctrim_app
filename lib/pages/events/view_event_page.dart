@@ -22,6 +22,8 @@ import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
+import 'add_program_role_page.dart';
+import 'edit_body_page.dart';
 import 'edit_title_subtitle_page.dart';
 
 class ViewEventPage extends StatefulWidget {
@@ -86,7 +88,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   return confirmation;
                 })
             : () async => true,
-        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
+        child: Scaffold(
+            floatingActionButton: _buildSaveFAB(),
+            body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
   }
 
   Widget _buildCheckExistingPostBody() {
@@ -245,24 +249,39 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   List<Widget>? _buildSaveButton() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
-        ElevatedButton.icon(
-            style: ButtonStyle(
-                backgroundColor: _eventContext.canSaveTheEditing
-                    ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-                    : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-            onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
-            icon: Icon(
-              Icons.save,
-              color: _eventContext.canSaveTheEditing ? Colors.white : null,
-            ),
-            label: Text(
-              'Update',
-              style: _eventContext.canSaveTheEditing ? const TextStyle(color: Colors.white) : null,
-            )),
+        CircleAvatar(
+          radius: 26,
+          backgroundColor: Colors.green,
+          child: IconButton(icon: const Icon(Icons.more_vert), onPressed: () => _showSettings()),
+        ),
+        // ElevatedButton.icon(
+        //     style: ButtonStyle(
+        //         backgroundColor: _eventContext.canSaveTheEditing
+        //             ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+        //             : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+        //         shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+        //     onPressed:,
+        //     icon: Icon(
+        //       Icons.save,
+        //       color: _eventContext.canSaveTheEditing ? Colors.white : null,
+        //     ),
+        //     label: Text(
+        //       'Update',
+        //       style: _eventContext.canSaveTheEditing ? const TextStyle(color: Colors.white) : null,
+        //     )),
         const SizedBox(width: 8)
       ];
+    }
+    return null;
+  }
+
+  Widget? _buildSaveFAB() {
+    if (_haveFetchedPost &&
+        (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) &&
+        _eventContext.canSaveTheEditing) {
+      return FloatingActionButton.extended(
+          onPressed: _updateClick, label: const Text('Save'), icon: const Icon(Icons.save));
     }
     return null;
   }
@@ -312,7 +331,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     ));
 
     if (_eventContext.head.eventDate != null || isAuthor) {
-      _bodyTabs.add(ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody));
+      _bodyTabs.add(ViewAllPrograms(
+          // key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+          eventContext: _eventContext,
+          onProgramChanged: _updateWholePostBody));
       _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
     }
@@ -363,6 +385,58 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             updatePage: () {
               setState(() {});
             }));
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+        showDragHandle: true,
+        context: context,
+        builder: (_) => SingleChildScrollView(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Edit About'),
+                      leading: const Icon(Icons.edit),
+                      onTap: _onEditBodyClick,
+                    ),
+                    ListTile(
+                      title: const Text('Add Schedule Item'),
+                      leading: const Icon(Icons.edit_calendar),
+                      onTap: _onAddScheduleItem,
+                    ),
+                    ListTile(
+                      title: const Text('Edit Media Items'),
+                      leading: const Icon(Icons.photo_library),
+                      onTap: () => {},
+                    ),
+                  ],
+                ),
+              ),
+            ));
+  }
+
+  void _onEditBodyClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
+      Navigator.of(context).pop();
+      setState(() {});
+    });
+  }
+
+  // TODO this is a problem, needs to rebuild on schedule addition
+  void _onAddScheduleItem() async {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
+        .then((_) async {
+      _eventContext.program.orderProgramsByStartTime();
+      _tabController.animateTo(2);
+      await Future.delayed(const Duration(milliseconds: 400));
+      _tabController.animateTo(1);
+      // setState(() {
+      //   // rebuild in case of update
+      // });
+    }).then((_) {
+      Navigator.of(context).pop();
+    });
   }
 
   String get _topic => _post + _eventContext.id;

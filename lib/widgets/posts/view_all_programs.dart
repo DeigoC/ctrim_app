@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import '../../pages/events/add_program_role_page.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_role_page.dart';
 import '../../utility/app_context.dart';
@@ -77,19 +76,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         )
       ]))
     ];
-
-    if ((widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-            widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
-        DateTime.now().isBefore(widget.eventContext.head.eventDate!)) {
-      children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
-          child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                  onPressed: _openAddProgramPage,
-                  icon: const Icon(Icons.edit_calendar),
-                  label: const Text('Add Schedule Item')))));
-    }
 
     return SafeArea(top: false, child: Column(children: children));
   }
@@ -165,19 +151,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   // * LOGIC
-  void _openAddProgramPage() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
-        .then((_) {
-      widget.eventContext.program.orderProgramsByStartTime();
-      setState(() {
-        // rebuild in case of update
-      });
-      if (widget.eventContext.canSaveTheEditing) {
-        widget.onProgramChanged();
-      }
-    });
-  }
-
   void _openEditProgramPage(Map<String, dynamic> programEntry) {
     Navigator.push(
         context,
