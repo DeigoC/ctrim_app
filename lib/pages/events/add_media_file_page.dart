@@ -50,7 +50,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding),

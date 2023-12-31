@@ -16,13 +16,30 @@ class PostHead extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget detailSection = InkWell(
+      onLongPress: () {
+        showDialog(
+            context: context,
+            builder: (_) =>
+                Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
+      },
+      onTap: () => _onHeadTap(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTitle(),
+          const SizedBox(height: 2),
+          _buildMetaData(),
+          const SizedBox(height: 16),
+          _buildSubtitle(),
+          const SizedBox(height: 8)
+        ],
+      ),
+    );
+
     final List<Widget> children = [
-      _buildTitle(),
-      const SizedBox(height: 2),
-      _buildMetaData(),
-      const SizedBox(height: 16),
-      _buildSubtitle(),
-      const SizedBox(height: 8)
+      detailSection,
     ];
 
     final List<Map<String, String>> media = _getMedia();
@@ -32,16 +49,17 @@ class PostHead extends StatelessWidget {
       children.insert(0, const SizedBox(height: 8));
     }
 
-    return InkWell(
-        onLongPress: () {
-          showDialog(
-              context: context,
-              builder: (_) =>
-                  Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
-        },
-        onTap: () => _onHeadTap(context),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children);
+    // return InkWell(
+    //     onLongPress: () {
+    //       showDialog(
+    //           context: context,
+    //           builder: (_) =>
+    //               Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
+    //     },
+    //     onTap: () => _onHeadTap(context),
+    //     child:
+    //         Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));
   }
 
   Widget _buildTitle() {

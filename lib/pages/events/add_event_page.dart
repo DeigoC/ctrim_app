@@ -13,6 +13,9 @@ import '../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
+import 'add_program_role_page.dart';
+import 'edit_body_page.dart';
+import 'edit_gallery_page.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -59,6 +62,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     return WillPopScope(
       onWillPop: () => _onWillPop(),
       child: Scaffold(
+          floatingActionButton:
+              _canSave ? FloatingActionButton.extended(onPressed: _onSaveClick, label: const Text('Save')) : null,
           body: NestedScrollView(
               headerSliverBuilder: (_, __) => _buildHeaderSliver(webHorizontalPadding),
               body: Padding(
@@ -76,18 +81,23 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
-          Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: ElevatedButton.icon(
-                  style: ButtonStyle(
-                      backgroundColor: _canSave
-                          ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-                          : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-                  onPressed: _canSave ? _onSaveClick : null,
-                  icon: Icon(Icons.upload, color: _canSave ? Colors.white : null),
-                  label: Text('Save', style: TextStyle(color: _canSave ? Colors.white : null)))),
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: Colors.green,
+            child: IconButton(icon: const Icon(Icons.more_vert), onPressed: () => _showSettings()),
+          ),
+          // Padding(
+          //     padding: const EdgeInsets.all(4.0),
+          //     child: ElevatedButton.icon(
+          //         style: ButtonStyle(
+          //             backgroundColor: _canSave
+          //                 ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
+          //                 : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
+          //             shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          //                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
+          //         onPressed: _canSave ? _onSaveClick : null,
+          //         icon: Icon(Icons.upload, color: _canSave ? Colors.white : null),
+          //         label: Text('Save', style: TextStyle(color: _canSave ? Colors.white : null)))),
           const SizedBox(width: 8)
         ],
       ),
@@ -143,7 +153,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _onRequiredFieldTextChange('');
   }
 
-  void _onRequiredFieldTextChange(String newText) {
+  void _onRequiredFieldTextChange(final String newText) {
     if (_okToSave() && !_canSave) {
       setState(() {
         _canSave = true;
@@ -347,5 +357,66 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
 
     return confirmation;
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+        showDragHandle: true,
+        context: context,
+        builder: (_) => SingleChildScrollView(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Edit About'),
+                      leading: const Icon(Icons.edit),
+                      onTap: _onEditBodyClick,
+                    ),
+                    ListTile(
+                      title: const Text('Add Schedule Item'),
+                      leading: const Icon(Icons.edit_calendar),
+                      onTap: _onAddScheduleItem,
+                    ),
+                    ListTile(
+                      title: const Text('Edit Media Items'),
+                      leading: const Icon(Icons.photo_library),
+                      onTap: _onEditMediaTap,
+                    ),
+                  ],
+                ),
+              ),
+            ));
+  }
+
+  void _onEditBodyClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
+        .then((_) {
+      Navigator.of(context).pop();
+      setState(() {
+        _onRequiredFieldTextChange('');
+      });
+    });
+  }
+
+  void _onAddScheduleItem() async {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
+        .then((_) async {
+      widget.eventContext.program.orderProgramsByStartTime();
+      _tabController.animateTo(2);
+      await Future.delayed(const Duration(milliseconds: 400));
+      _tabController.animateTo(1);
+      // setState(() {
+      //   // rebuild in case of update
+      // });
+    }).then((_) {
+      Navigator.of(context).pop();
+    });
+  }
+
+  void _onEditMediaTap() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
+        .then((_) {
+      setState(() {});
+    });
   }
 }

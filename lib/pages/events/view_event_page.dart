@@ -423,7 +423,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     });
   }
 
-  // TODO this is a problem, needs to rebuild on schedule addition
   void _onAddScheduleItem() async {
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
         .then((_) async {
