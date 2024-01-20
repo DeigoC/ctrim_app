@@ -62,8 +62,15 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     return WillPopScope(
       onWillPop: () => _onWillPop(),
       child: Scaffold(
-          floatingActionButton:
-              _canSave ? FloatingActionButton.extended(onPressed: _onSaveClick, label: const Text('Save')) : null,
+          floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: _canSave
+              ? SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: FloatingActionButton.extended(
+                      onPressed: _onSaveClick, label: const Text('Save New Post'), icon: const Icon(Icons.save)),
+                )
+              : null,
           body: NestedScrollView(
               headerSliverBuilder: (_, __) => _buildHeaderSliver(webHorizontalPadding),
               body: Padding(
@@ -81,23 +88,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: Colors.green,
-            child: IconButton(icon: const Icon(Icons.more_vert), onPressed: () => _showSettings()),
-          ),
-          // Padding(
-          //     padding: const EdgeInsets.all(4.0),
-          //     child: ElevatedButton.icon(
-          //         style: ButtonStyle(
-          //             backgroundColor: _canSave
-          //                 ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-          //                 : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-          //             shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-          //                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-          //         onPressed: _canSave ? _onSaveClick : null,
-          //         icon: Icon(Icons.upload, color: _canSave ? Colors.white : null),
-          //         label: Text('Save', style: TextStyle(color: _canSave ? Colors.white : null)))),
+          ElevatedButton.icon(
+              onPressed: () => _showSettings(),
+              icon: const Icon(Icons.more_horiz, color: Colors.white),
+              label: const Text('Edit', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
           const SizedBox(width: 8)
         ],
       ),
@@ -141,8 +136,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       ViewPostBody(
           eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
       ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
-      ViewEventMediaTab(
-          eventContext: widget.eventContext, onMediaEdit: () => _updateBody(), currentUID: _appContext.currentUser.id)
+      ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)
     ]);
   }
 
@@ -389,9 +383,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   void _onEditBodyClick() {
+    Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
         .then((_) {
-      Navigator.of(context).pop();
       setState(() {
         _onRequiredFieldTextChange('');
       });
@@ -399,21 +393,21 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   void _onAddScheduleItem() async {
+    Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
-      _tabController.animateTo(2);
+      _tabController.animateTo(3);
       await Future.delayed(const Duration(milliseconds: 400));
-      _tabController.animateTo(1);
+      _tabController.animateTo(2);
       // setState(() {
       //   // rebuild in case of update
       // });
-    }).then((_) {
-      Navigator.of(context).pop();
-    });
+    }).then((_) {});
   }
 
   void _onEditMediaTap() {
+    Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {});

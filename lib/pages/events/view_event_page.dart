@@ -24,7 +24,9 @@ import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
 import 'add_program_role_page.dart';
 import 'edit_body_page.dart';
+import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
+import 'select_post_template_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -89,7 +91,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                 })
             : () async => true,
         child: Scaffold(
+            floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
             floatingActionButton: _buildSaveFAB(),
+            floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
             body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
   }
 
@@ -188,7 +192,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       SliverAppBar(
           expandedHeight: _eventContext.head.getKeyGraphic() != null ? MediaQuery.of(context).size.height * 0.33 : null,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-          actions: _buildSaveButton()),
+          actions: _buildEditButton()),
       SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         sliver: SliverList(
@@ -246,30 +250,14 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return TabBarView(controller: _tabController, children: _bodyTabs);
   }
 
-  List<Widget>? _buildSaveButton() {
+  List<Widget>? _buildEditButton() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
-        CircleAvatar(
-          radius: 26,
-          backgroundColor: Colors.green,
-          child: IconButton(icon: const Icon(Icons.more_vert), onPressed: () => _showSettings()),
-        ),
-        // ElevatedButton.icon(
-        //     style: ButtonStyle(
-        //         backgroundColor: _eventContext.canSaveTheEditing
-        //             ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-        //             : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-        //         shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-        //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-        //     onPressed:,
-        //     icon: Icon(
-        //       Icons.save,
-        //       color: _eventContext.canSaveTheEditing ? Colors.white : null,
-        //     ),
-        //     label: Text(
-        //       'Update',
-        //       style: _eventContext.canSaveTheEditing ? const TextStyle(color: Colors.white) : null,
-        //     )),
+        ElevatedButton.icon(
+            onPressed: () => _showSettings(),
+            icon: const Icon(Icons.more_horiz, color: Colors.white),
+            label: const Text('Edit', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
         const SizedBox(width: 8)
       ];
     }
@@ -280,8 +268,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (_haveFetchedPost &&
         (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) &&
         _eventContext.canSaveTheEditing) {
-      return FloatingActionButton.extended(
-          onPressed: _updateClick, label: const Text('Save'), icon: const Icon(Icons.save));
+      return SizedBox(
+        width: MediaQuery.of(context).size.width * 0.7,
+        child: FloatingActionButton.extended(
+            onPressed: _updateClick, label: const Text('Save Changes'), icon: const Icon(Icons.save)),
+      );
     }
     return null;
   }
@@ -339,8 +330,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       length++;
     }
     if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {
-      _bodyTabs.add(
-          ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _updateWholePostBody, currentUID: _currentUID));
+      _bodyTabs.add(ViewEventMediaTab(eventContext: _eventContext, currentUID: _currentUID));
       _appBarTabs.add(const Tab(icon: Icon(Icons.photo_album), text: 'Media'));
       length++;
     }
@@ -388,53 +378,85 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   void _showSettings() {
+    List<Widget> children = [
+      ListTile(
+        title: const Text('Edit About'),
+        leading: const Icon(Icons.edit),
+        onTap: _onEditBodyClick,
+      ),
+      ListTile(
+        title: const Text('Add Schedule'),
+        leading: const Icon(Icons.edit_calendar),
+        onTap: _onAddScheduleItem,
+      )
+    ];
+
+    if (!kIsWeb) {
+      children.add(ListTile(
+        title: const Text('Edit Media'),
+        leading: const Icon(Icons.photo_library),
+        onTap: _onEditMediaClick,
+      ));
+    }
+
+    if (Provider.of<AppContext>(context, listen: false).currentUser.isLeader) {
+      children.addAll([
+        ListTile(
+          title: const Text('Create Sibling Post'),
+          leading: const Icon(Icons.post_add),
+          onTap: () => _onAddPost(_eventContext.metadata.parentID!),
+        ),
+        ListTile(
+          title: const Text('Create Child Post'),
+          leading: const Icon(Icons.post_add),
+          onTap: () => _onAddPost(_eventContext.id),
+        )
+      ]);
+    }
+
     showModalBottomSheet(
         showDragHandle: true,
         context: context,
-        builder: (_) => SingleChildScrollView(
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: const Text('Edit About'),
-                      leading: const Icon(Icons.edit),
-                      onTap: _onEditBodyClick,
-                    ),
-                    ListTile(
-                      title: const Text('Add Schedule Item'),
-                      leading: const Icon(Icons.edit_calendar),
-                      onTap: _onAddScheduleItem,
-                    ),
-                    ListTile(
-                      title: const Text('Edit Media Items'),
-                      leading: const Icon(Icons.photo_library),
-                      onTap: () => {},
-                    ),
-                  ],
-                ),
-              ),
-            ));
+        builder: (_) => SingleChildScrollView(child: SafeArea(child: Column(children: children))));
   }
 
   void _onEditBodyClick() {
+    Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
-      Navigator.of(context).pop();
       setState(() {});
     });
   }
 
-  void _onAddScheduleItem() async {
+  void _onAddScheduleItem() {
+    Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
         .then((_) async {
       _eventContext.program.orderProgramsByStartTime();
       _tabController.animateTo(2);
       await Future.delayed(const Duration(milliseconds: 400));
       _tabController.animateTo(1);
-      // setState(() {
-      //   // rebuild in case of update
-      // });
-    }).then((_) {
-      Navigator.of(context).pop();
+    });
+  }
+
+  void _onEditMediaClick() {
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: _eventContext))).then((_) {
+      setState(() {});
+    });
+  }
+
+  void _onAddPost(final String parentID) {
+    Navigator.of(context).pop();
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => SelectPostTemplatePage(
+                eventContext: EventContext.adding(
+                    currentUserID: Provider.of<AppContext>(context, listen: false).currentUser.id,
+                    parentID: parentID)))).then((_) {
+      setState(() {
+        // rebuild? - will this update when creating sibling posts?
+      });
     });
   }
 
@@ -536,7 +558,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     return Dialog(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -548,14 +570,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
                   maxLines: null,
                   onChanged: _onTextChange),
               const SizedBox(height: 8),
-              TextButton.icon(
-                  onPressed: _canSave ? _saveClick : null,
-                  style: ButtonStyle(
-                      backgroundColor:
-                          _canSave ? MaterialStateProperty.all(Colors.green) : MaterialStateProperty.all(Colors.grey)),
-                  icon: const Icon(Icons.cloud_upload, color: Colors.white),
-                  label: const Text('Save', style: TextStyle(color: Colors.white))),
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))
+              Wrap(
+                alignment: WrapAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                  TextButton.icon(
+                      onPressed: _canSave ? _saveClick : null,
+                      icon: const Icon(Icons.cloud_upload),
+                      label: const Text('Save'))
+                ],
+              ),
             ],
           ),
         ),
@@ -580,9 +604,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
   void _saveClick() {
     DialogManager.showConfirmationDialog(
             context: context,
-            title: 'Confirm Save',
+            title: 'Confirm Save?',
             content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
-            confirmText: 'Save',
+            confirmText: 'Yes',
             cancelText: 'Cancel')
         .then((confirmation) {
       if (confirmation) {

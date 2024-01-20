@@ -18,7 +18,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
   Widget _buildBody(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
 
     return ListView(padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding), children: [
       InkWell(

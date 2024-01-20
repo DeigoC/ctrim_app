@@ -28,44 +28,14 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> children = [Expanded(child: _buildBody())];
-
-    if (_appContext.currentUser.isLeader) {
-      children.add(_buildAddButtons());
-    }
     return MediaQuery.removePadding(
       context: context,
       removeTop: true,
       child: SafeArea(
         top: false,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: _buildBody())]),
       ),
     );
-  }
-
-  Widget _buildAddButtons() {
-    if (widget.eventContext.metadata.hasParent) {
-      return Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        alignment: WrapAlignment.spaceEvenly,
-        children: [
-          ElevatedButton.icon(
-              onPressed: () => _onCreatePost(widget.eventContext.id),
-              icon: const Icon(Icons.post_add),
-              label: const Text('Child Post')),
-          ElevatedButton.icon(
-              onPressed: () => _onCreatePost(widget.eventContext.metadata.parentID!),
-              icon: const Icon(Icons.post_add),
-              label: const Text('Sibling Post'))
-        ],
-      );
-    }
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
-        child: ElevatedButton.icon(
-            onPressed: () => _onCreatePost(widget.eventContext.id),
-            icon: const Icon(Icons.post_add),
-            label: const Text('Child Post')));
   }
 
   Widget _buildBody() {
