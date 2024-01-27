@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
@@ -16,8 +16,7 @@ import '../widgets/info/timed_button_dialog.dart';
 import 'events/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
-import 'information/teachings/bible_reading_page.dart';
-import 'information/teachings/love_page.dart';
+import 'information/simple_info_page.dart';
 import 'information_home.dart';
 import 'personal_home.dart';
 
@@ -365,16 +364,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
   }
 
-  void _openInformationTeachingPage(final String page) {
-    switch (page) {
-      case 'love':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LovePage()));
-        break;
-      case 'bible_reading':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BibleReadingPage()));
-        break;
-      default:
-    }
+  void _openInformationTeachingPage(final String jsonPath) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => SimpleInfoPage(jsonPath: jsonPath)));
   }
 
   // all notifications potentially will be asking to open a page
