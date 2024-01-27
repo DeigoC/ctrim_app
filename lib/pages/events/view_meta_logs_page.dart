@@ -38,7 +38,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           _checkForChangesToContributors();
           return true;
         },
-        child: Scaffold(appBar: AppBar(title: const Text('Change Log')), body: _buildWithData(context)));
+        child: Scaffold(appBar: AppBar(title: const Text('Change History')), body: _buildWithData(context)));
   }
 
   Widget _buildWithData(BuildContext context) {
@@ -58,8 +58,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             ListTile(title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
             ListTile(
-                title: const Text('Assigned Contributors'),
-                subtitle: const Text('Able to modify aspects of the post'),
+                title: const Text('Contributors'),
+                subtitle: const Text('Able to edit the post'),
                 trailing: isAuthor
                     ? IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))
                     : null),
