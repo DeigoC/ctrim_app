@@ -7,7 +7,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class EditInfoBodyPage extends StatefulWidget {
   const EditInfoBodyPage({super.key, required this.json});
-  final String json;
+  final List<dynamic> json;
 
   @override
   State<EditInfoBodyPage> createState() => _EditInfoBodyPageState();
@@ -19,8 +19,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   @override
   void initState() {
     _controller = quill.QuillController(
-        document: quill.Document.fromJson(jsonDecode(widget.json.replaceAll('\n', '\\n'))),
-        selection: const TextSelection.collapsed(offset: 0));
+        document: quill.Document.fromJson(widget.json), selection: const TextSelection.collapsed(offset: 0));
     super.initState();
   }
 

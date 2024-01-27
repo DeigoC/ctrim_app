@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
+import 'edit_info_body_page.dart';
 
 class SimpleInfoPage extends StatelessWidget {
   const SimpleInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
@@ -16,7 +17,6 @@ class SimpleInfoPage extends StatelessWidget {
 
     return Scaffold(
         body: CustomScrollView(slivers: [
-      // const SliverAppBar(actions: [InfoAction(json: _json)], floating: true, snap: true),
       const SliverAppBar(floating: true, snap: true),
       SliverToBoxAdapter(
           child: SingleChildScrollView(
@@ -45,6 +45,11 @@ class SimpleInfoPage extends StatelessWidget {
         child: quill.QuillProvider(
           configurations: quill.QuillConfigurations(controller: controller),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
+            ElevatedButton.icon(
+                onPressed: () =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json['data']))),
+                icon: const Icon(Icons.edit),
+                label: const Text("Edit Body")),
             Flexible(
                 child: quill.QuillEditor.basic(configurations: const quill.QuillEditorConfigurations(readOnly: true))),
             const SizedBox(height: 32)

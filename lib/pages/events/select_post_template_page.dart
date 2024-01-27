@@ -73,22 +73,6 @@ class SelectPostTemplatePage extends StatelessWidget {
       InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {
-                  _createAndOpenDawnWatchTemplate(context, selectedDate);
-                }
-              }),
-          child: Card(
-              child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                  child:
-                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-                    Text('Dawn Watch', style: _cardTitleStyle),
-                    const Divider(),
-                    Text('Early online meeting, includes schedule', style: _cardContentStyle)
-                  ])))),
-      const SizedBox(height: 8),
-      InkWell(
-          onTap: () => _selectDate(context).then((selectedDate) {
-                if (selectedDate != null) {
                   _createAndOpenYouthServiceTemplate(context, selectedDate);
                 }
               }),
@@ -100,6 +84,40 @@ class SelectPostTemplatePage extends StatelessWidget {
                     Text('Youth Service', style: _cardTitleStyle),
                     const Divider(),
                     Text("Online Friday Youth service. Quick and dirty, it's a fun time!", style: _cardContentStyle)
+                  ])))),
+      const SizedBox(height: 8),
+      InkWell(
+          onTap: () => _selectDate(context).then((selectedDate) {
+                if (selectedDate != null) {
+                  _createAndOpenOverNightPrayerTemplate(context, selectedDate);
+                }
+              }),
+          child: Card(
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                  child:
+                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                    Text('Overnight Prayer & Worship', style: _cardTitleStyle),
+                    const Divider(),
+                    Text(
+                        "Monthly onsite prayer event not for the faint of heart. Back to back prayer sessions with multiple praise sections as well",
+                        style: _cardContentStyle)
+                  ])))),
+      const SizedBox(height: 8),
+      InkWell(
+          onTap: () => _selectDate(context).then((selectedDate) {
+                if (selectedDate != null) {
+                  _createAndOpenDawnWatchTemplate(context, selectedDate);
+                }
+              }),
+          child: Card(
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                  child:
+                      Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+                    Text('Dawn Watch', style: _cardTitleStyle),
+                    const Divider(),
+                    Text('Early online meeting, includes schedule', style: _cardContentStyle)
                   ])))),
       const SizedBox(height: 8),
       InkWell(
@@ -176,15 +194,15 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.program.addRole(
         uids: [],
-        title: 'Welcome and Short Orientation',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
+        title: 'Orientation Video and Countdown',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0),
         id: roleID++);
 
     eventContext.program.addRole(
         uids: ['9'],
         title: 'Scripture Reading & Opening Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 5),
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 10),
         id: roleID++);
 
@@ -225,7 +243,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: ['34'],
         title: 'Group Picture',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
@@ -255,6 +273,9 @@ class SelectPostTemplatePage extends StatelessWidget {
         detail: "Remember your teams and assignment 🧽 🧻 🧹",
         forGuests: false,
         id: roleID++);
+
+    eventContext.setFetchedBody(
+        r'[{"insert":"Weekly reminder of the CTRIM WebApp: "},{"insert":"www.ctrim.app","attributes":{"link":"https://ctrim.app"}},{"insert":"\n\nLet’s get everyone on the same level and grow together in the Word of God and in discipleship ❤️\n"}]');
 
     eventContext.head.setTitle('Sunday Worship Service (${_eventDateFormat.format(startTime)})');
 
@@ -490,6 +511,33 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     eventContext.head.setTitle('Online Youth Service (${_eventDateFormat.format(startTime)})');
     eventContext.head.setLocation('Belfast (Online)');
+
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+  }
+
+  void _createAndOpenOverNightPrayerTemplate(final BuildContext context, final DateTime selectedDate) {
+    _resetContext();
+
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0);
+    eventContext.head.setEventDate(startTime);
+
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 6, minutes: 0)));
+
+    // add the typical Sunday roles to the program
+    int roleID = DateTime.now().millisecondsSinceEpoch;
+
+    // TODO program here
+    eventContext.program.addRole(
+        uids: [],
+        title: 'Short Orientation and Opening Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 05),
+        id: roleID++);
+
+    eventContext.setFetchedBody(
+        r'[{"insert":"The onsite, overnight prayer event for all who wants to develop their prayer life! Typically set at the end of the week, this is a test of mental, physical and spiritual strength 😤💪\n\nUsually from "},{"insert":"8pm Friday -> 2am Saturday","attributes":{"underline":true}},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"For more details see the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab just a swipe away! ➡️➡️➡️"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\n(Note: because of some restrictions with the schedule feature, it only covers events up to 23:59 and cannot go to the next day)\n\nHere is the rest of the typical schedule:\n"},{"insert":"23:40 to 00:20","attributes":{"bold":true}},{"insert":" - Word of God (Ptra. Ingrid Valdez)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"00:20 to 00:50","attributes":{"bold":true}},{"insert":" - Corporate Prayer"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"00:50 to 01:05","attributes":{"bold":true}},{"insert":" - Praise and Worship"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:05 to 01:30","attributes":{"bold":true}},{"insert":" - Word of God (Ptr. Deo Valdez)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:30 to 01:50","attributes":{"bold":true}},{"insert":" - Corporate Prayer"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:50 to 01:55","attributes":{"bold":true}},{"insert":" - Closing Prayer and Benediction (Ptr. Deo Valdez)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:55 to 02:00","attributes":{"bold":true}},{"insert":" - Tidying Up (Everyone)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\n"}]');
+
+    eventContext.head.setTitle('Overnight Prayer and Worship (${_eventDateFormat.format(startTime)})');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
