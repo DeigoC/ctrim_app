@@ -368,11 +368,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
                       leading: const Icon(Icons.edit),
                       onTap: _onEditBodyClick,
                     ),
-                    ListTile(
-                      title: const Text('Add Schedule Item'),
-                      leading: const Icon(Icons.edit_calendar),
-                      onTap: _onAddScheduleItem,
-                    ),
+                    widget.eventContext.head.eventDate != null
+                        ? ListTile(
+                            title: const Text('Add Schedule Item'),
+                            leading: const Icon(Icons.edit_calendar),
+                            onTap: _onAddScheduleItem,
+                          )
+                        : Container(),
                     ListTile(
                       title: const Text('Edit Media Items'),
                       leading: const Icon(Icons.photo_library),
@@ -399,12 +401,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
-      _tabController.animateTo(3);
-      await Future.delayed(const Duration(milliseconds: 400));
-      _tabController.animateTo(2);
-      // setState(() {
-      //   // rebuild in case of update
-      // });
+      setState(() {});
     }).then((_) {});
   }
 

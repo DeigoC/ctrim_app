@@ -146,7 +146,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         lastDate: DateTime.now().add(const Duration(days: 60)));
   }
 
-  void _onEmptyTemplateClick(BuildContext context) {
+  void _onEmptyTemplateClick(final BuildContext context) {
     _resetContext();
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
@@ -163,14 +163,14 @@ class SelectPostTemplatePage extends StatelessWidget {
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Intercessory Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 50),
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Sunday School Teachers',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 0),
@@ -193,8 +193,8 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
-        title: 'Orientation Video and Countdown',
+        uids: List.empty(),
+        title: 'Orientation and Countdown Video',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 9, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0),
         id: roleID++);
@@ -207,7 +207,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Praise and Worship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 10),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 35),
@@ -221,14 +221,14 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Tithes & Offerings',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 45),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Closing Song',
         detail: 'Lead by the Worship Team',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 11, 50),
@@ -250,7 +250,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Eating Fellowship',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 12, 45),
@@ -266,7 +266,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Clean up!',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 13, 30),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 14, 00),
@@ -275,7 +275,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.setFetchedBody(
-        r'[{"insert":"Weekly reminder of the CTRIM WebApp: "},{"insert":"www.ctrim.app","attributes":{"link":"https://ctrim.app"}},{"insert":"\n\nLet’s get everyone on the same level and grow together in the Word of God and in discipleship ❤️\n"}]');
+        r'[{"insert":"Weekly reminder of the CTRIM WebApp: "},{"insert":"www.ctrim.app","attributes":{"link":"https://ctrim.app"}},{"insert":"\n\nLet’s get everyone on the same level and grow together in the Word of God through learning and discipleship! ❤️\n"}]');
 
     eventContext.head.setTitle('Sunday Worship Service (${_eventDateFormat.format(startTime)})');
 
@@ -287,44 +287,53 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15);
     eventContext.head.setEventDate(startTime);
-    eventContext.head
-        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1h1ssPjXojrbIHEFi-Hgtnq0d9b0f2trH');
+    eventContext.head.addMediaItem(
+        type: 'img',
+        src:
+            'https://lh3.googleusercontent.com/drive-viewer/AEYmBYSPROxf8rMTNeo-Nz0_nCxu8shmYXU4pJ_tc7eoJqh7VJlTuteZW-JOtUmH3MOdO2oc37qSFxw-XCt1OQIKxykmIyKFVQ=s1600');
 
-    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1)));
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1, minutes: 45)));
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/85038786530?pwd=bmRPaTg4WHhlSVVwek9QcjVPT1RPUT09');
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Hosting',
-        detail: 'By zone (will be accepting guests)',
+        detail: 'By zone (will be accepting guests). Will take group picture',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 15),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 22, 0),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Opening Prayer',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 35),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Praise and Worship',
-        detail: '(Video)',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
+        detail: '(Videos)',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 35),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 50),
         id: roleID++);
     eventContext.program.addRole(
         uids: ['8', '9'],
         title: 'Word of God',
-        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 30),
-        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 30),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Tithes and Offering',
+        detail: 'Usually via Video. Assignee will lead prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 40),
         id: roleID++);
     eventContext.program.addRole(
         uids: ['8'],
-        title: 'Closing Prayer',
+        title: 'Distribution of Prayer Items + Corporate Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 5),
         id: roleID++);
@@ -359,13 +368,13 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 6, 20),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Opening Prayer & Worship Song',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 35),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Prayer Exhortation',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 35),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 50),
@@ -377,7 +386,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         detail: 'Everyone',
         title: 'Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 55),
@@ -397,8 +406,10 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 15);
     eventContext.head.setEventDate(startTime);
-    eventContext.head
-        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1crxKmj-5bny5Xd1gOhXdKuII53KY1zUn');
+    eventContext.head.addMediaItem(
+        type: 'img',
+        src:
+            'https://lh3.googleusercontent.com/drive-viewer/AEYmBYRwpVZ2-6jIT1VcaNhw-NRZCcz-DkcOSqPtnoHEjaMtO8mIEri4-q8V4dvH90tiVlA0RZdwe-UdxmCfBqIIhVbUdHIZig=s1600');
 
     eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 30)));
     eventContext.program.setOnline(true);
@@ -407,7 +418,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Hosting',
         detail: 'By zone (will be accepting guests)',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 15),
@@ -420,7 +431,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 35),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Praise and Worship',
         detail: '(Video)',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 35),
@@ -448,8 +459,10 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 0);
     eventContext.head.setEventDate(startTime);
-    eventContext.head
-        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1KGuJiGCQYns5IzVuZJXK90g3yA5sdyfN');
+    eventContext.head.addMediaItem(
+        type: 'img',
+        src:
+            'https://lh3.googleusercontent.com/drive-viewer/AEYmBYShJmUDR9meJ1HM3xPUFR3TBD9uQydWk8z-E2MY0FKRoXFeFBUaNfHZFe7FIR0I5ObCq8G-VQfkoK3BcS2KuvTn4e2gFA=s1600');
 
     eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
     eventContext.program.setOnline(true);
@@ -458,7 +471,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Hosting',
         detail:
             'Remind Youth GC of the event, lead the session with the follwing schedule including welcoming and picture taking',
@@ -466,41 +479,41 @@ class SelectPostTemplatePage extends StatelessWidget {
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 5),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Icebreaker',
         detail: 'Something quick to loosen up!',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 5),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Praise or Worship Song',
         detail: 'Video',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Word of God',
         detail: "Sharing of their devotional/journal, testimony or whatever they really want to share! ❤️",
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 20),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 40),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Group Discussions (Application)',
         detail: 'Breakout rooms to discuss the Word or other things. Sorted by Host',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 40),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 50),
         id: roleID++);
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Closing Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 50),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 55),
@@ -526,12 +539,59 @@ class SelectPostTemplatePage extends StatelessWidget {
     // add the typical Sunday roles to the program
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
-    // TODO program here
     eventContext.program.addRole(
-        uids: [],
+        uids: List.empty(),
         title: 'Short Orientation and Opening Prayer',
         start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0),
         end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 05),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Praise and Worship',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 5),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 25),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: ['9'],
+        title: 'Word of God',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 25),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Corporate Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 0),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 30),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Praise and Worship',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 30),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 50),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: ['8'],
+        title: 'Word of God',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 21, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 22, 20),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Corporate Prayer',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 22, 20),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 22, 50),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Break',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 22, 50),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 23, 20),
+        id: roleID++);
+    eventContext.program.addRole(
+        uids: List.empty(),
+        title: 'Praise and Worship',
+        start: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 23, 20),
+        end: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 23, 40),
         id: roleID++);
 
     eventContext.setFetchedBody(

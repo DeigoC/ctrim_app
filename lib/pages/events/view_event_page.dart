@@ -77,8 +77,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false,
-        onPopInvoked: (popping) => _canSaveEditing
+        canPop: Provider.of<AppContext>(context, listen: false).isCurrentUserGuest,
+        onPopInvoked: (popping) => !popping
             ? DialogManager.discardChanges(context: context).then((confirmation) {
                 if (confirmation) {
                   widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
@@ -88,7 +88,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   Navigator.of(context).pop();
                 }
               })
-            : true,
+            : null,
         child: Scaffold(
             floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
             floatingActionButton: _buildSaveFAB(),
@@ -421,19 +421,21 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   void _onEditBodyClick() {
     Navigator.of(context).pop();
-    _tabController.animateTo(1);
+    // _tabController.animateTo(1);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
-      _tabController.animateTo(0);
+      setState(() {});
+      // _tabController.animateTo(0);
     });
   }
 
   void _onAddScheduleItem() {
     Navigator.of(context).pop();
-    _tabController.animateTo(2);
+    // _tabController.animateTo(2);
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
         .then((_) {
       _eventContext.program.orderProgramsByStartTime();
-      _tabController.animateTo(1);
+      setState(() {});
+      // _tabController.animateTo(1);
     });
   }
 

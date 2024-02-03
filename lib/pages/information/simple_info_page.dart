@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
-import 'edit_info_body_page.dart';
+// import 'edit_info_body_page.dart';
 
 class SimpleInfoPage extends StatelessWidget {
   const SimpleInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
@@ -43,11 +43,11 @@ class SimpleInfoPage extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        ElevatedButton.icon(
-            onPressed: () =>
-                Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json['data']))),
-            icon: const Icon(Icons.edit),
-            label: const Text("Edit Body")),
+        // ElevatedButton.icon(
+        //     onPressed: () =>
+        //         Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json['data']))),
+        //     icon: const Icon(Icons.edit),
+        //     label: const Text("Edit Body")),
         Flexible(
             child: quill.QuillEditor.basic(
                 configurations: quill.QuillEditorConfigurations(readOnly: true, controller: controller))),
