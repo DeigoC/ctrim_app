@@ -17,16 +17,14 @@ class ViewPostBody extends StatelessWidget {
 
   Widget _buildBodyWithData(final quill.QuillController controller, final BuildContext context) {
     final List<Widget> children = [
-      quill.QuillProvider(
-        configurations: quill.QuillConfigurations(controller: controller),
-        child: Expanded(
-            child: SingleChildScrollView(
-                child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 8),
-                    child: quill.QuillEditor.basic(
-                      configurations: const quill.QuillEditorConfigurations(readOnly: true),
-                    )))),
-      )
+      quill.QuillToolbar.simple(configurations: quill.QuillSimpleToolbarConfigurations(controller: controller)),
+      Expanded(
+          child: SingleChildScrollView(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 8),
+                  child: quill.QuillEditor.basic(
+                    configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true),
+                  )))),
     ];
 
     return SafeArea(top: false, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));

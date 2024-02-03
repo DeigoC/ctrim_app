@@ -5,47 +5,46 @@ description: A new Flutter project.
 publish_to: 'none'
 
 # version: 0.6.1+13 # iOS
-# version: 0.6.1+12 # Android
-version: 0.6.1+13 # Web
+version: 0.6.2+13 # Android
+# version: 0.6.1+13 # Web
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
 
 dependencies:
-  # chewie: ^1.5.0
-  add_2_calendar: ^3.0.1
-  avatar_stack: ^1.2.0
-  cloud_firestore: ^4.9.2
-  cloud_functions: ^4.4.1
-  firebase_analytics: ^10.5.0
-  firebase_auth: ^4.10.0
-  firebase_core: ^2.16.0
-  firebase_messaging: ^14.6.8
-  firebase_messaging_web: ^3.5.7
+  add_2_calendar: 
+  avatar_stack: 
+  cloud_firestore: 
+  cloud_functions: 
+  firebase_analytics: 
+  firebase_auth: 
+  firebase_core: 
+  firebase_messaging: 
+  firebase_messaging_web: 
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  flutter_quill: ^7.4.7
-  flutter_quill_extensions: ^0.4.1
-  http: ^0.13.6
-  intl: ^0.18.0
-  package_info_plus: ^4.1.0
-  path_provider: ^2.1.1
-  photo_view: ^0.14.0
-  provider: ^6.0.5
-  shared_preferences: ^2.2.0
-  url_launcher: ^6.1.14
-  video_player: ^2.7.2
-  video_thumbnail: ^0.5.3
+  flutter_quill: 
+  flutter_quill_extensions:
+  http: 
+  intl: 
+  package_info_plus: 
+  path_provider: 
+  photo_view: 
+  provider:
+  shared_preferences: 
+  url_launcher: 
+  video_player: 
+  video_thumbnail: 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.0
+  flutter_lints:
 
 flutter:
   uses-material-design: true
