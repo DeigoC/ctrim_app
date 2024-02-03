@@ -38,23 +38,22 @@ class SimpleInfoPage extends StatelessWidget {
       final double webHorizontalPadding, final BuildContext context, final Map<String, dynamic> json) {
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(json['data']), selection: const TextSelection.collapsed(offset: 0));
-    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: json['analyticTitle']);
+    Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: json['analyticTitle']);
 
     return Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
-        child: quill.QuillProvider(
-          configurations: quill.QuillConfigurations(controller: controller),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            ElevatedButton.icon(
-                onPressed: () =>
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json['data']))),
-                icon: const Icon(Icons.edit),
-                label: const Text("Edit Body")),
-            Flexible(
-                child: quill.QuillEditor.basic(configurations: const quill.QuillEditorConfigurations(readOnly: true))),
-            const SizedBox(height: 32)
-          ]),
-        ));
+      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        ElevatedButton.icon(
+            onPressed: () =>
+                Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json['data']))),
+            icon: const Icon(Icons.edit),
+            label: const Text("Edit Body")),
+        Flexible(
+            child: quill.QuillEditor.basic(
+                configurations: quill.QuillEditorConfigurations(readOnly: true, controller: controller))),
+        const SizedBox(height: 32)
+      ]),
+    );
   }
 
   Future<dynamic> _loadJson() async {

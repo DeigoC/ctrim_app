@@ -11,7 +11,7 @@ class BelfastChurchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<AppContext>(context, listen: false).analytics.setCurrentScreen(screenName: 'Church Info: Belfast');
+    Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'Church Info: Belfast');
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
 
@@ -48,12 +48,10 @@ class BelfastChurchPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Flexible(
-            child: quill.QuillProvider(
-                configurations: quill.QuillConfigurations(controller: controller),
-                child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: quill.QuillEditor.basic(
-                        configurations: const quill.QuillEditorConfigurations(readOnly: true))))),
+            child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: quill.QuillEditor.basic(
+                    configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true)))),
         const SizedBox(height: 32)
       ],
     );

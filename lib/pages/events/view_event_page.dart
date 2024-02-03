@@ -55,9 +55,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   void initState() {
-    Provider.of<AppContext>(context, listen: false)
-        .analytics
-        .setCurrentScreen(screenName: 'post-${widget.eventHead.id}');
+    Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'post-${widget.eventHead.id}');
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);

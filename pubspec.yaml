@@ -37,8 +37,7 @@ dependencies:
   provider:
   shared_preferences: 
   url_launcher: 
-  video_player: 
-  video_thumbnail: 
+  video_player:
 
 dev_dependencies:
   flutter_test:

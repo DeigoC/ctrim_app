@@ -56,29 +56,26 @@ class _EditBodyPageState extends State<EditBodyPage> {
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
-    return quill.QuillProvider(
-      configurations: quill.QuillConfigurations(controller: _controller),
-      child: Column(
-        children: [
-          quill.QuillToolbar(
-            configurations: quill.QuillToolbarConfigurations(
-              showAlignmentButtons: true,
-              showSubscript: false,
-              showSuperscript: true,
-              showCodeBlock: true,
-              multiRowsDisplay: _showMultirow,
+    return Column(
+      children: [
+        quill.QuillToolbar.simple(
+            configurations: quill.QuillSimpleToolbarConfigurations(
+          controller: _controller,
+          showAlignmentButtons: true,
+          showSubscript: false,
+          showSuperscript: true,
+          showCodeBlock: true,
+          multiRowsDisplay: _showMultirow,
+        )),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
+            child: quill.QuillEditor.basic(
+              configurations: quill.QuillEditorConfigurations(controller: _controller),
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
-              child: quill.QuillEditor.basic(
-                configurations: const quill.QuillEditorConfigurations(),
-              ),
-            ),
-          )
-        ],
-      ),
+        )
+      ],
     );
   }
 
