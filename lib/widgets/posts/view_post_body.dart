@@ -17,7 +17,6 @@ class ViewPostBody extends StatelessWidget {
 
   Widget _buildBodyWithData(final quill.QuillController controller, final BuildContext context) {
     final List<Widget> children = [
-      quill.QuillToolbar.simple(configurations: quill.QuillSimpleToolbarConfigurations(controller: controller)),
       Expanded(
           child: SingleChildScrollView(
               child: Padding(

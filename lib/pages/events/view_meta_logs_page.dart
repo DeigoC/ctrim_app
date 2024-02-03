@@ -26,17 +26,16 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   void initState() {
     _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _appContext.analytics.setCurrentScreen(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
+    _appContext.analytics.logScreenView(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
     widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
+    return PopScope(
+        onPopInvoked: (_) {
           _checkForChangesToContributors();
-          return true;
         },
         child: Scaffold(appBar: AppBar(title: const Text('Change History')), body: _buildWithData(context)));
   }

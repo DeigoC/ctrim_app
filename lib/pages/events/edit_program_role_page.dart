@@ -47,8 +47,12 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) => _isSaved
+          ? null
+          : DialogManager.discardChanges(context: context)
+              .then((popping) => popping ? Navigator.of(context).pop() : null),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Edit Program'),

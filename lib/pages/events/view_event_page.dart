@@ -76,18 +76,19 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: _canSaveEditing
-            ? () => DialogManager.discardChanges(context: context).then((confirmation) {
-                  if (confirmation) {
-                    widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
-                    widget.eventHead.setTitle(_originalTitle);
-                    widget.eventHead.setSubtitle(_originalSubtitle);
-                    widget.eventHead.setEventDate(_originalEventDate);
-                  }
-                  return confirmation;
-                })
-            : () async => true,
+    return PopScope(
+        canPop: false,
+        onPopInvoked: (popping) => _canSaveEditing
+            ? DialogManager.discardChanges(context: context).then((confirmation) {
+                if (confirmation) {
+                  widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
+                  widget.eventHead.setTitle(_originalTitle);
+                  widget.eventHead.setSubtitle(_originalSubtitle);
+                  widget.eventHead.setEventDate(_originalEventDate);
+                  Navigator.of(context).pop();
+                }
+              })
+            : true,
         child: Scaffold(
             floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
             floatingActionButton: _buildSaveFAB(),
@@ -420,26 +421,27 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   void _onEditBodyClick() {
     Navigator.of(context).pop();
+    _tabController.animateTo(1);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
-      setState(() {});
+      _tabController.animateTo(0);
     });
   }
 
   void _onAddScheduleItem() {
     Navigator.of(context).pop();
+    _tabController.animateTo(2);
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
-        .then((_) async {
+        .then((_) {
       _eventContext.program.orderProgramsByStartTime();
-      _tabController.animateTo(2);
-      await Future.delayed(const Duration(milliseconds: 400));
       _tabController.animateTo(1);
     });
   }
 
   void _onEditMediaClick() {
     Navigator.of(context).pop();
+    _tabController.animateTo(0);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: _eventContext))).then((_) {
-      setState(() {});
+      _tabController.animateTo(2);
     });
   }
 

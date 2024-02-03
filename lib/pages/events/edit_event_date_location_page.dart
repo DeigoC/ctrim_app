@@ -60,11 +60,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _checkToUpdate();
-        return true;
-      },
+    return PopScope(
+      onPopInvoked: (popping) => _checkToUpdate(),
       child: Scaffold(
         appBar: AppBar(title: const Text('Edit Date & Location')),
         body: _buildBody(),

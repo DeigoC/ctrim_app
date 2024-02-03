@@ -97,8 +97,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      return WillPopScope(
-        onWillPop: () async => false, // safety for the first session
+      return PopScope(
+        canPop: false, // safety for the first session
         child: Scaffold(
           body: _buildSelectedBody(appContext),
           floatingActionButton: _buildFAB(),

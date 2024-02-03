@@ -33,7 +33,6 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   Widget build(BuildContext context) {
     return PopScope(
       onPopInvoked: (_) {
-        // TODO test this
         DialogManager.showConfirmationDialog(
             context: context, title: 'Leave?', content: 'Make sure you have copied the json!');
       },

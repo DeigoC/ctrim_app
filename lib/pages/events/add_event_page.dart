@@ -59,7 +59,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
 
-    // TODO example of the new popscope thing
     return PopScope(
       canPop: false,
       onPopInvoked: (popping) =>

@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
-// TODO example info page that uses JSON
 class BelfastChurchPage extends StatelessWidget {
   const BelfastChurchPage({super.key});
 

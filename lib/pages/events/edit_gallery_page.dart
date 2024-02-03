@@ -35,12 +35,11 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
+    return PopScope(
+        onPopInvoked: (_) {
           if (!widget.eventContext.canSaveTheEditing) {
             _shouldBeAbleToSave();
           }
-          return true;
         },
         child: Scaffold(body: _buildBody()));
   }
