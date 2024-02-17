@@ -47,7 +47,7 @@ class _InformationHomeState extends State<InformationHome> {
                   ]))
             ],
         body: TabBarView(controller: widget.tabController, children: [
-          _buildAbout(webHorizontalPadding),
+          _buildAbout(webHorizontalPadding == 0 ? webHorizontalPadding + 8 : webHorizontalPadding),
           _buildChurchesTab(),
           _buildTeachingsTab(webHorizontalPadding),
           _buildOneVerseEvangelismTab(webHorizontalPadding)
@@ -62,6 +62,32 @@ class _InformationHomeState extends State<InformationHome> {
     const String visionParagraph = 'Our vision is to become like the early Church in the Book of Acts, effective '
         'and strategic in disciple making. Effective and strategic in harnessing the power of The Holy Spirit, causing '
         'them to multiply rapidly and having the power to turn the world upside down for the Glory of God.';
+
+    const String coreValuesParagraph = """
+1. I Am a True Disciple. Christ-likeness and Multiplying Ministry
+
+2. Caught by the Vision. Understand, Live and Transmit the Vision
+
+3. Committed to Cell Life. Evangelism, Leadership Development and Multiplication
+
+4. Passionate Spirituality Devotional Life, Prayer, Fasting and Holiness
+
+5. Submission to Authority Love, Honour and Respect My Leaders
+
+6. Commitment to Time Management and Invest My Time for the Kingdom of God
+
+7. Lifelong Relationship. Accountable and Responsible
+
+8. I Love Equipping and Training. Training is My Happy Hour
+
+9. I Am a Leader of 7 Disciples. I Am Born to Multiply
+
+10. Accomplishing Church Goal Setting. Support, Help and Fulfil the Goals
+
+11. I Want to See My Church Grow. I Pray, Work and Pay
+
+12. The Importance of Young People. I Will Prepare the Next Generation
+""";
 
     return MediaQuery.removePadding(
         context: context,
@@ -100,7 +126,24 @@ class _InformationHomeState extends State<InformationHome> {
             padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(visionParagraph, textAlign: TextAlign.center, style: TextStyle(fontSize: 18)),
           ),
-          SizedBox(height: 32)
+          SizedBox(height: 32),
+          Divider(thickness: 1),
+          SizedBox(height: 32),
+          Text('OUR CORE VALUES',
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          SizedBox(height: 18),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+                'Core values are the foundation of what is really important to us. It gives us CLARITY about who we are and what we stand for. It gives us the ability to STAY FOCUS on what matters most. It gives us UNITY, MATURITY and HEALTH to grow and multiply. ',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18)),
+          ),
+          SizedBox(height: 18),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(coreValuesParagraph, textAlign: TextAlign.left, style: TextStyle(fontSize: 18)),
+          ),
         ]));
   }
 

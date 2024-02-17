@@ -18,7 +18,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
   Widget _buildBody(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return ListView(padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding), children: [
       InkWell(
@@ -457,7 +457,7 @@ class SelectPostTemplatePage extends StatelessWidget {
   void _createAndOpenYouthServiceTemplate(final BuildContext context, final DateTime selectedDate) {
     _resetContext();
 
-    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 0);
+    final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0);
     eventContext.head.setEventDate(startTime);
     eventContext.head.addMediaItem(
         type: 'img',
