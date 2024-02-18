@@ -1,12 +1,12 @@
 PODS:
   - add_2_calendar (0.0.1):
     - Flutter
-  - cloud_firestore (4.15.3):
+  - cloud_firestore (4.15.4):
     - Firebase/Firestore (= 10.20.0)
     - firebase_core
     - Flutter
     - nanopb (< 2.30910.0, >= 2.30908.0)
-  - cloud_functions (4.6.4):
+  - cloud_functions (4.6.5):
     - Firebase/Functions (= 10.20.0)
     - firebase_core
     - Flutter
@@ -31,18 +31,18 @@ PODS:
   - Firebase/Messaging (10.20.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 10.20.0)
-  - firebase_analytics (10.8.4):
+  - firebase_analytics (10.8.5):
     - Firebase/Analytics (= 10.20.0)
     - firebase_core
     - Flutter
-  - firebase_auth (4.17.3):
+  - firebase_auth (4.17.4):
     - Firebase/Auth (= 10.20.0)
     - firebase_core
     - Flutter
-  - firebase_core (2.25.3):
+  - firebase_core (2.25.4):
     - Firebase/CoreOnly (= 10.20.0)
     - Flutter
-  - firebase_messaging (14.7.14):
+  - firebase_messaging (14.7.15):
     - Firebase/Messaging (= 10.20.0)
     - firebase_core
     - Flutter
@@ -127,11 +127,11 @@ PODS:
   - FirebaseMessagingInterop (10.20.0)
   - FirebaseSharedSwift (10.20.0)
   - Flutter (1.0.0)
-  - flutter_inappwebview_ios (0.0.1):
+  - flutter_inappwebview (0.0.1):
     - Flutter
-    - flutter_inappwebview_ios/Core (= 0.0.1)
+    - flutter_inappwebview/Core (= 0.0.1)
     - OrderedSet (~> 5.0)
-  - flutter_inappwebview_ios/Core (0.0.1):
+  - flutter_inappwebview/Core (0.0.1):
     - Flutter
     - OrderedSet (~> 5.0)
   - flutter_keyboard_visibility (0.0.1):
@@ -240,7 +240,7 @@ DEPENDENCIES:
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - FirebaseFirestore (from `https://github.com/invertase/firestore-ios-sdk-frameworks.git`, tag `10.20.0`)
   - Flutter (from `Flutter`)
-  - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
+  - flutter_inappwebview (from `.symlinks/plugins/flutter_inappwebview/ios`)
   - flutter_keyboard_visibility (from `.symlinks/plugins/flutter_keyboard_visibility/ios`)
   - gal (from `.symlinks/plugins/gal/darwin`)
   - GoogleAnalytics
@@ -308,8 +308,8 @@ EXTERNAL SOURCES:
     :tag: 10.20.0
   Flutter:
     :path: Flutter
-  flutter_inappwebview_ios:
-    :path: ".symlinks/plugins/flutter_inappwebview_ios/ios"
+  flutter_inappwebview:
+    :path: ".symlinks/plugins/flutter_inappwebview/ios"
   flutter_keyboard_visibility:
     :path: ".symlinks/plugins/flutter_keyboard_visibility/ios"
   gal:
@@ -338,14 +338,14 @@ CHECKOUT OPTIONS:
 
 SPEC CHECKSUMS:
   add_2_calendar: 5eee66d5a3b99cd5e1487a7e03abd4e3ac4aff11
-  cloud_firestore: c956777ddc3fba2d5f633e307db2db6337ebb81c
-  cloud_functions: af66260c1e018f461044c58728aff1489c68264c
+  cloud_firestore: ba576bee785a05ff952e4da7fa4e23c196917436
+  cloud_functions: 5974cfe154f4e8a0459c2aa03cd69c7055b6777f
   device_info_plus: c6fb39579d0f423935b0c9ce7ee2f44b71b9fce6
   Firebase: 10c8cb12fb7ad2ae0c09ffc86cd9c1ab392a0031
-  firebase_analytics: 6c4873e8164677423b57f44172fb20c202310d7a
-  firebase_auth: 37eb4a237d7407336d9dc3b739e81153c5077d70
-  firebase_core: 96a734ae596de989b81a66f8a205f54485263555
-  firebase_messaging: 9a5136ff704c8aa1e2a664c6b159c41b3c3778d7
+  firebase_analytics: 2e82fd84ce13f8321aa7b99336d6ee0e6cc7b984
+  firebase_auth: 29a10d4129d53aa690c10dbd838ed1a059ef0c9b
+  firebase_core: a46c312d8bae4defa3d009b2aa7b5b413aeb394e
+  firebase_messaging: 40d7dd2f3e88a6367c7326cf601f84633d477582
   FirebaseAnalytics: a2731bf3670747ce8f65368b118d18aa8e368246
   FirebaseAppCheckInterop: e81bdb1cdb82f8e0cef353ba5018a8402682032c
   FirebaseAuth: 9c5c400d2c3055d8ae3a0284944c86fa95d48dac
@@ -366,7 +366,7 @@ SPEC CHECKSUMS:
   FirebaseMessagingInterop: ffbbd63321f6a1e21dc724d382c22805c95671a0
   FirebaseSharedSwift: 2fbf73618288b7a36b2014b957745dcdd781389e
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_inappwebview_ios: 97215cf7d4677db55df76782dbd2930c5e1c1ea0
+  flutter_inappwebview: 3d32228f1304635e7c028b0d4252937730bbc6cf
   flutter_keyboard_visibility: 0339d06371254c3eb25eeb90ba8d17dca8f9c069
   gal: 61e868295d28fe67ffa297fae6dacebf56fd53e1
   GoogleAnalytics: abbea91ce20faea66c5b2305aa040d3f9992f66a
