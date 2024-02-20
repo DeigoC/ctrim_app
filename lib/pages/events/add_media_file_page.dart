@@ -18,6 +18,8 @@ class AddMediaFilePage extends StatefulWidget {
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController();
   final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
+  final int _maxImageSizeKB = 1536; // 1.5mb
+  final int _maxVideoSizeMB = 128;
   VideoPlayerController? _videoPlayerController;
   bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
@@ -115,7 +117,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             final size = _tmpFile!.lengthSync();
             final double sizeInKb = size / 1024;
 
-            if (sizeInKb <= 512) {
+            if (sizeInKb <= _maxImageSizeKB) {
               debugPrint('image size is good: $sizeInKb KB');
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
@@ -171,7 +173,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             final size = _tmpFile!.lengthSync();
             final double sizeInMb = size / (1024 * 1024);
 
-            if (sizeInMb <= 128) {
+            if (sizeInMb <= _maxVideoSizeMB) {
               debugPrint('video size is good: $sizeInMb MB');
               _videoPlayerController = VideoPlayerController.file(_tmpFile!);
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

@@ -60,20 +60,20 @@ class ImageMediaSlot extends StatelessWidget {
   // * Logic
   Future<File> _fetchFileImage(final String cacheDir) async {
     final sanitisedFilePath = mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/$sanitisedFilePath.png';
+    final fullPath = '$cacheDir/tmpImages/$sanitisedFilePath.png';
     final file = File(fullPath);
 
     if (!await file.exists()) {
       debugPrint('Creating image file for: $fullPath');
       final response = await http.get(Uri.parse(mediaEntry['src']!));
-      return await file.writeAsBytes(response.bodyBytes);
+      return await file.create(recursive: true).then((createdFile) => createdFile.writeAsBytes(response.bodyBytes));
     }
     return file;
   }
 
   Future<bool> _deleteFile(final String cacheDir) async {
     final sanitisedFilePath = mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/$sanitisedFilePath.png';
+    final fullPath = '$cacheDir/tmpImages/$sanitisedFilePath.png';
     final file = File(fullPath);
     if (await file.exists()) {
       debugPrint('deleting file');

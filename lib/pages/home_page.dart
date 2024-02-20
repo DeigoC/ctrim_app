@@ -61,28 +61,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     // * periodic and non-periodic local maintenance
     if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
+      _removeLocallySavedPosts();
       _appContext.sharedPref.justFetchedUserImages();
     }
-    _removeLocallySavedPosts();
 
     // ! - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
     // can be removed for version 0.6.0 - but I'll leave a comment behind just in case
     // _saveFCMToken();
 
-    // * setting up the animated scroll aspects - to be looked into another time
-    // _postsScrollController.addListener(() {
-    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.reverse) {
-    //     setState(() {
-    //       _bottomBarIsVisible = false;
-    //     });
-    //   }
-
-    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.forward) {
-    //     setState(() {
-    //       _bottomBarIsVisible = true;
-    //     });
-    //   }
-    // });
     super.initState();
   }
 
@@ -264,6 +250,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final LocalDataManager localDataManager = LocalDataManager();
     final List<String> postUIDs = await localDataManager.readPostTrack();
     final List<String> toDelete = List<String>.empty(growable: true);
+
+    localDataManager.cleanupCache(_appContext.cacheDir!);
 
     for (final String postUID in postUIDs) {
       if (!_appContext.eventHeads.any((e) => e.id.compareTo(postUID) == 0)) {

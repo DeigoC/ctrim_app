@@ -168,9 +168,9 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
       : DateTime.fromMillisecondsSinceEpoch(int.parse(pref.getString('lastUserFetch')!));
 
   final lastUserFetch = kIsWeb ? lastWebUserFetch : await dataManager.readLastUserFetch();
-  final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 7;
+  final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 21;
 
-  // only use the local data if the count is the same in the DB and the last time has been multiple days ago (7 days)
+  // only use the local data if the count is the same in the DB and the last time has been multiple days ago (21 days)
   bool shouldReadLocalData = false;
   if (usersData.isNotEmpty) {
     // from now on we check that the version is the same as before

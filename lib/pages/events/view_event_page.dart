@@ -71,29 +71,27 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (_haveFetchedPost) {
       _tabController.dispose();
     }
+
+    // ! temporary fix
+    if (_canSaveEditing) {
+      widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
+      widget.eventHead.setTitle(_originalTitle);
+      widget.eventHead.setSubtitle(_originalSubtitle);
+      widget.eventHead.setEventDate(_originalEventDate);
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-        canPop: Provider.of<AppContext>(context, listen: false).isCurrentUserGuest,
-        onPopInvoked: (popping) => !popping
-            ? DialogManager.discardChanges(context: context).then((confirmation) {
-                if (confirmation) {
-                  widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
-                  widget.eventHead.setTitle(_originalTitle);
-                  widget.eventHead.setSubtitle(_originalSubtitle);
-                  widget.eventHead.setEventDate(_originalEventDate);
-                  Navigator.of(context).pop();
-                }
-              })
-            : null,
-        child: Scaffold(
-            floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-            floatingActionButton: _buildSaveFAB(),
-            floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-            body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
+    // TODO somthing terrible has happened! PopScope sucks so bad!
+    // ! This breaks things for the admin, they can make changes and it won't be discarded when returning.
+    // ! This is fine for now but not in the future when more admins come in...
+    return Scaffold(
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+        floatingActionButton: _buildSaveFAB(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody());
   }
 
   Widget _buildCheckExistingPostBody() {
@@ -421,10 +419,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   void _onEditBodyClick() {
     Navigator.of(context).pop();
-    // _tabController.animateTo(1);
+    _tabController.animateTo(1);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
       setState(() {});
-      // _tabController.animateTo(0);
+      _tabController.animateTo(0);
     });
   }
 
@@ -433,8 +431,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     // _tabController.animateTo(2);
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
         .then((_) {
-      _eventContext.program.orderProgramsByStartTime();
       setState(() {});
+      _eventContext.program.orderProgramsByStartTime();
       // _tabController.animateTo(1);
     });
   }
@@ -443,6 +441,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     Navigator.of(context).pop();
     _tabController.animateTo(0);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: _eventContext))).then((_) {
+      setState(() {});
       _tabController.animateTo(2);
     });
   }
