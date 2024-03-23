@@ -136,7 +136,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is 512 KB, so please compress it or use another image!',
+                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is $_maxImageSizeKB KB, so please compress it or use another image!',
                           textAlign: TextAlign.center),
                       TextButton(
                           onPressed: () => launchUrlString('https://imagecompressor.com'),
