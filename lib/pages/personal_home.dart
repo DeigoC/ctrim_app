@@ -25,7 +25,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
+  // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
   Widget build(BuildContext context) {
@@ -81,11 +81,11 @@ class _PersonalHomeState extends State<PersonalHome> {
               title: const Text('Belfast Volunteers'),
               leading: const Icon(Icons.people),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
-          ListTile(
-            title: const Text('Readme'),
-            leading: const Icon(Icons.info_outline),
-            onTap: () => launchUrlString(_readmeUrl),
-          ),
+          // ListTile(
+          //   title: const Text('Readme'),
+          //   leading: const Icon(Icons.info_outline),
+          //   onTap: () => launchUrlString(_readmeUrl),
+          // ),
         ]);
       }
 

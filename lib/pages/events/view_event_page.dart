@@ -72,7 +72,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       _tabController.dispose();
     }
 
-    // ! temporary fix
+    // ! temporary fix for the issue below
     if (_canSaveEditing) {
       widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
       widget.eventHead.setTitle(_originalTitle);
@@ -626,7 +626,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     });
   }
 
-  Future<void> _performUpdate(String uid) async {
+  Future<void> _performUpdate(final String uid) async {
     final LocalDataManager localDataManager = LocalDataManager();
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
