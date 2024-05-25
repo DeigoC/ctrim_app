@@ -17,6 +17,7 @@ class EventContext {
   late final EventMedia _media; // ? doesn't have to be late
   late final String _currentUID;
   final EventBody _body = EventBody();
+  final List<String> _topics = List.empty(growable: true);
 
   bool _canSaveTheEditing = false;
 
@@ -442,4 +443,8 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
+
+  List<String> get topics => UnmodifiableListView(_topics);
+  void addTopic(final String topic) => _topics.add(topic);
+  void clearTopics() => _topics.clear();
 }

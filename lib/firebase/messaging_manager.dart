@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 class MessagingManager {
   static final FirebaseMessaging _instance = FirebaseMessaging.instance;
   static const String _ctrimBelfast = 'ctrim-belfast';
-  // static const String _vapidKey =
-  //     'BCV6Yz5C4xwZlwWt104ss7BFwIcHI8_GVgsRh0S_-sXwPOyskvjifqkaPGMXn9T3zyIdHGnX4w7w9x6cmpTcZq0';
 
   Future<String?> requestPermissionAndToken() async {
     // let's disable requesting for notifications since it's quite broken at the moment

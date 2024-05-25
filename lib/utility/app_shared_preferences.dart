@@ -44,8 +44,13 @@ class AppSharedPreferences {
   bool get loggedOut => _pref.getBool(_loggedOut) ?? true;
   void setLoggedOut(final bool state) => _pref.setBool(_loggedOut, state);
 
+  // Old style notification, needs updating
   bool get subscribedToBelfast => _pref.getBool(_subscribedToBelfast) ?? true;
   void setSubscribedToBelfast(final bool newState) => _pref.setBool(_subscribedToBelfast, newState);
+
+  bool isSubscribedToTopic(final String topic) => _pref.getBool("topic_$topic") ?? false;
+
+  void setSubscribedToTopic(final String topic, final bool state) => _pref.setBool("topic_$topic", state);
 
   // * Post related
   List<String> get bookmarkedPosts => UnmodifiableListView(_pref.getStringList(_bookmarkedPosts) ?? List.empty());

@@ -65,9 +65,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _appContext.sharedPref.justFetchedUserImages();
     }
 
-    // ! - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
-    // can be removed for version 0.6.0 - but I'll leave a comment behind just in case
-    // _saveFCMToken();
+    // TODO new feature for notifications (temporary until future updates)
+    _setNotificationTopicsTemp();
 
     super.initState();
   }
@@ -233,12 +232,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         return token;
       });
 
-      // we don't need to perfrom the token grabbing here anymore
+      // we don't need to perfrom the token grabbing here anymore - done in welcome page
       if (token != null) {
         debugPrint('Token to save is $token');
         appContext.sharedPref.saveFCMToken(token);
       }
+
+      // TODO remove this in the future
       messagingManager.subscribeToCTRIMBelfast();
+      _appContext.sharedPref.setSubscribedToBelfast(true);
+      _setNotificationTopicsTemp();
       appContext.sharedPref.nowOpened();
     }
   }
@@ -455,5 +458,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _setImageForFile(final File file, final String src) async {
     final response = await http.get(Uri.parse(src));
     file.writeAsBytes(response.bodyBytes);
+  }
+
+  void _setNotificationTopicsTemp() {
+    // we have to check if users are subscribed to the old notification topic (belfast)
+    // if so, then subscribe to all the new ones and set old one to false
+    // otherwise, we do not set it it to true
+    if (_appContext.sharedPref.subscribedToBelfast) {
+      // unsubscribe to this and subscribe to everything temporarly available
+      debugPrint('unsubscribing to old Belfast topic and subscribing to everything else');
+      final MessagingManager messagingManager = MessagingManager();
+      messagingManager.unsubscribeFromCTRIMBelfast();
+      _appContext.sharedPref.setSubscribedToBelfast(false);
+
+      _appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
+
+      messagingManager.subscribeToTopic('belfast-sunday-service');
+      messagingManager.subscribeToTopic('belfast-midweek-service');
+      messagingManager.subscribeToTopic('belfast-growth-mentoring');
+      messagingManager.subscribeToTopic('belfast-dawn-watch');
+      messagingManager.subscribeToTopic('belfast-overnight-prayer');
+      messagingManager.subscribeToTopic('belfast-youth-cg');
+    }
   }
 }

@@ -36,11 +36,31 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
     return ListView(
       padding: const EdgeInsets.all(8),
       children: [
+        const Divider(),
+        const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0), child: Text('Belfast', style: TextStyle(fontSize: 24))),
+        // TODO remove this one for the new approach when that's finished
         SwitchListTile(
-            secondary: const Icon(Icons.church),
-            title: const Text('New Belfast Posts'),
-            value: _appContext.sharedPref.subscribedToBelfast,
-            onChanged: _onSubscribedToBelfastClick)
+            title: const Text('Sunday Worship Service'),
+            value: _appContext.sharedPref.isSubscribedToTopic('belfast-sunday-service'),
+            onChanged: (newState) => _onTopicClick('belfast-sunday-service', newState)),
+        SwitchListTile(
+            title: const Text('Midweek Service'),
+            value: _appContext.sharedPref.isSubscribedToTopic('belfast-midweek-service'),
+            onChanged: (newState) => _onTopicClick('belfast-midweek-service', newState)),
+        SwitchListTile(
+            title: const Text('Growth Mentoring'),
+            value: _appContext.sharedPref.isSubscribedToTopic('belfast-growth-mentoring'),
+            onChanged: (newState) => _onTopicClick('belfast-growth-mentoring', newState)),
+        SwitchListTile(
+            title: const Text('Youth Online Caregroup'),
+            value: _appContext.sharedPref.isSubscribedToTopic('belfast-youth-cg'),
+            onChanged: (newState) => _onTopicClick('belfast-youth-cg', newState)),
+        SwitchListTile(
+            title: const Text('Overnight Prayer'),
+            value: _appContext.sharedPref.isSubscribedToTopic('belfast-overnight-prayer'),
+            onChanged: (newState) => _onTopicClick('belfast-overnight-prayer', newState)),
+        const Divider()
       ],
     );
   }
@@ -61,6 +81,23 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
 
     setState(() {
       _appContext.sharedPref.setSubscribedToBelfast(newState);
+    });
+  }
+
+  void _onTopicClick(final String topic, final bool newState) {
+    // update the messaaging manager accordingly, do the same with local storage, update the analytics
+    setState(() {
+      if (newState) {
+        debugPrint('subscribing to: $topic');
+        _messagingManager.subscribeToTopic(topic);
+        _appContext.sharedPref.setSubscribedToTopic(topic, newState);
+        _appContext.analytics.logEvent(name: 'Notification subscribe to: $topic');
+      } else {
+        debugPrint('unsubscribing to: $topic');
+        _messagingManager.unsubscribeFromTopic(topic);
+        _appContext.sharedPref.setSubscribedToTopic(topic, newState);
+        _appContext.analytics.logEvent(name: 'Notification unsubscribe to: $topic');
+      }
     });
   }
 

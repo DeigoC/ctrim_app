@@ -73,7 +73,7 @@ class SelectPostTemplatePage extends StatelessWidget {
       InkWell(
           onTap: () => _selectDate(context).then((selectedDate) {
                 if (selectedDate != null) {
-                  _createAndOpenYouthServiceTemplate(context, selectedDate);
+                  _createAndOpenYouthCGTemplate(context, selectedDate);
                 }
               }),
           child: Card(
@@ -156,8 +156,10 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 10, 0);
     eventContext.head.setEventDate(startTime);
-
     eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 45)));
+
+    // TODO remember to change all of these in the future
+    eventContext.addTopic('belfast-sunday-service');
 
     // add the typical Sunday roles to the program
     int roleID = DateTime.now().millisecondsSinceEpoch;
@@ -287,14 +289,15 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 15);
     eventContext.head.setEventDate(startTime);
+    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1, minutes: 45)));
+
+    eventContext.addTopic('belfast-midweek-service');
+    eventContext.program.setOnline(true);
+    eventContext.program.setAddress('https://us02web.zoom.us/j/85038786530?pwd=bmRPaTg4WHhlSVVwek9QcjVPT1RPUT09');
     eventContext.head.addMediaItem(
         type: 'img',
         src:
             'https://public.curryscloudbackup.co.uk/webservice/accounts/00000000000000000000000000000000/sharing/withme/bppdegjn/images/ed14ecc37d7b4583b3ca1d83e62017e2?preset=previewpng&cacheKey=133556901520000000&width=720&height=720');
-
-    eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1, minutes: 45)));
-    eventContext.program.setOnline(true);
-    eventContext.program.setAddress('https://us02web.zoom.us/j/85038786530?pwd=bmRPaTg4WHhlSVVwek9QcjVPT1RPUT09');
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -360,6 +363,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/89372805213?pwd=WlA4bzhPWlRWcE9CVHZWMXNpTFl6QT09');
+    eventContext.addTopic('belfast-dawn-watch');
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -416,6 +420,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 30)));
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/84796425540?pwd=andVVW5FR0t1dkFjRjZUUnpDRWVKdz09');
+    eventContext.addTopic('belfast-growth-mentoring');
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -456,7 +461,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
-  void _createAndOpenYouthServiceTemplate(final BuildContext context, final DateTime selectedDate) {
+  void _createAndOpenYouthCGTemplate(final BuildContext context, final DateTime selectedDate) {
     _resetContext();
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0);
@@ -469,6 +474,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/89154407463?pwd=bDR3Y3lsL1I3NUl0MHV2SDFrR1pQdz09');
+    eventContext.addTopic('belfast-youth-cg');
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -537,6 +543,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.head.setEventDate(startTime);
 
     eventContext.program.setFinishTime(startTime.add(const Duration(hours: 6, minutes: 0)));
+    eventContext.addTopic('belfast-overnight-prayer');
 
     // add the typical Sunday roles to the program
     int roleID = DateTime.now().millisecondsSinceEpoch;
@@ -619,6 +626,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.program.setAllDay(false);
 
     eventContext.media.clearAllMedia();
+    eventContext.clearTopics();
     eventContext.setFetchedBody(r'[{"insert":"Hello, time to start writing!\n"}]');
 
     eventContext.metadata.contributorUIDs.clear();

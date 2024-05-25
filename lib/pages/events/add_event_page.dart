@@ -225,7 +225,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _notifyContributorAdditions(newID);
     _notifyProgramRoleAddtitions(newID);
     _updateAllUserPostInvolvement(newID);
-    _notifyOfNewPost(newID);
+    for (final String topic in widget.eventContext.topics) {
+      _notifyOfNewPost(newID, topic);
+    }
   }
 
   void _updateParentMetadata(final String thisPostID) async {
@@ -265,13 +267,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
-  void _notifyOfNewPost(final String newID) async {
+  void _notifyOfNewPost(final String newID, final String topic) async {
     _cloudFunctionManager.sendToTopic(
-        topic: 'ctrim-belfast',
+        topic: topic,
         title: _tecTitle.text.trim(),
         body: _tecSubtitle.text.trim(),
         data: {'PostID': newID},
-        iOSImage: widget.eventContext.head.getKeyGraphic(),
+        iOSImage: widget.eventContext.head.getKeyGraphic(), // TODO does this work? Double check please
         androidImage: widget.eventContext.head.getKeyGraphic());
   }
 
