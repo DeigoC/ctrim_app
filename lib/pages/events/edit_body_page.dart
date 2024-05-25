@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:ctrim_app/utility/app_context.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../utility/event_context.dart';
@@ -84,8 +88,11 @@ class _EditBodyPageState extends State<EditBodyPage> {
         context: context,
         showDragHandle: true,
         builder: (_) => SafeArea(
-            child: BodyWritingSettingDialog(
-                initialMultirowViewValue: _showMultirow, onMultiviewClick: _onShowMultirowClick)));
+                child: BodyWritingSettingDialog(
+              initialMultirowViewValue: _showMultirow,
+              onMultiviewClick: _onShowMultirowClick,
+              onCopyClick: _onCopyClick,
+            )));
   }
 
   void _onShowMultirowClick() {
@@ -94,12 +101,21 @@ class _EditBodyPageState extends State<EditBodyPage> {
       Provider.of<AppContext>(context, listen: false).sharedPref.setShowMultirowTools(_showMultirow);
     });
   }
+
+  void _onCopyClick() {
+    final rawJson = _controller.document.toDelta().toJson();
+    final exampleJson = jsonEncode(rawJson);
+    Clipboard.setData(ClipboardData(text: exampleJson));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Copied Json'), behavior: SnackBarBehavior.floating));
+  }
 }
 
 class BodyWritingSettingDialog extends StatefulWidget {
-  const BodyWritingSettingDialog({super.key, required this.initialMultirowViewValue, required this.onMultiviewClick});
+  const BodyWritingSettingDialog(
+      {super.key, required this.initialMultirowViewValue, required this.onMultiviewClick, required this.onCopyClick});
   final bool initialMultirowViewValue;
-  final Function() onMultiviewClick;
+  final Function() onMultiviewClick, onCopyClick;
 
   @override
   State<BodyWritingSettingDialog> createState() => BodyWritingSettingDialogState();
@@ -122,7 +138,8 @@ class BodyWritingSettingDialogState extends State<BodyWritingSettingDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SwitchListTile(
-              title: const Text('Multi-row Toolbar View'), value: _enableMultirowView, onChanged: _multirowViewClick)
+              title: const Text('Multi-row Toolbar View'), value: _enableMultirowView, onChanged: _multirowViewClick),
+          ListTile(title: const Text('Copy JSON Data'), onTap: _copyBodyDataClick)
         ],
       ),
     );
@@ -135,5 +152,9 @@ class BodyWritingSettingDialogState extends State<BodyWritingSettingDialog> {
       _enableMultirowView = newState;
       widget.onMultiviewClick();
     });
+  }
+
+  void _copyBodyDataClick() {
+    widget.onCopyClick();
   }
 }

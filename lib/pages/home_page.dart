@@ -463,7 +463,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _setNotificationTopicsTemp() {
     // we have to check if users are subscribed to the old notification topic (belfast)
     // if so, then subscribe to all the new ones and set old one to false
-    // otherwise, we do not set it it to true
+    // otherwise, we do not set it to true
     if (_appContext.sharedPref.subscribedToBelfast) {
       // unsubscribe to this and subscribe to everything temporarly available
       debugPrint('unsubscribing to old Belfast topic and subscribing to everything else');
@@ -484,6 +484,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       messagingManager.subscribeToTopic('belfast-dawn-watch');
       messagingManager.subscribeToTopic('belfast-overnight-prayer');
       messagingManager.subscribeToTopic('belfast-youth-cg');
+      messagingManager.subscribeToTopic('Belfast'); // hardcode to Belfast for now
     }
   }
 }

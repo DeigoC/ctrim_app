@@ -1,5 +1,7 @@
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../utility/event_context.dart';
 import 'add_event_page.dart';
@@ -148,6 +150,8 @@ class SelectPostTemplatePage extends StatelessWidget {
 
   void _onEmptyTemplateClick(final BuildContext context) {
     _resetContext();
+    final String locationTopic = Provider.of<AppContext>(context).currentUser.location;
+    eventContext.addTopic(locationTopic);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 
@@ -277,7 +281,7 @@ class SelectPostTemplatePage extends StatelessWidget {
         id: roleID++);
 
     eventContext.setFetchedBody(
-        r'[{"insert":"Weekly reminder of the CTRIM WebApp: "},{"insert":"www.ctrim.app","attributes":{"link":"https://ctrim.app"}},{"insert":"\n\nLet’s get everyone on the same level and grow together in the Word of God through learning and discipleship! ❤️\n"}]');
+        r'[{"insert":"Remember to share this CTRIM App! There’a a page in the "},{"insert":"Personal","attributes":{"bold":true}},{"insert":" tab section - "},{"insert":"Share CTRIM App","attributes":{"bold":true}},{"insert":" where you can find the download links \n\nAnd do not forget to do good and to share with others, for with such sacrifices God is pleased."},{"insert":"\n","attributes":{"blockquote":true}},{"insert":"Hebrews 13:16 (NIV)","attributes":{"bold":true}},{"insert":"\n","attributes":{"blockquote":true}},{"insert":"\n"}]');
 
     eventContext.head.setTitle('Sunday Worship Service (${_eventDateFormat.format(startTime)})');
 
@@ -530,7 +534,7 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 891 5440 7463"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 587922"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
-    eventContext.head.setTitle('Online Youth Service (${_eventDateFormat.format(startTime)})');
+    eventContext.head.setTitle('Online Youth Caregroup (${_eventDateFormat.format(startTime)})');
     eventContext.head.setLocation('Belfast (Online)');
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
