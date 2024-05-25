@@ -35,8 +35,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           setState(() {
             // cleanup complete
             if (removedOldStuff) {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text('Cleaned up tasks'), behavior: SnackBarBehavior.floating));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Updated Schedule!'), behavior: SnackBarBehavior.floating));
             }
           });
         });
@@ -67,8 +67,13 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
             // in the chance we're looking at some other person's roles
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _performRoleCleanupCheck().then((_) {
-                setState(() {});
+              _performRoleCleanupCheck().then((removedOldStuff) {
+                if (removedOldStuff) {
+                  setState(() {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Updated Schedule!'), behavior: SnackBarBehavior.floating));
+                  });
+                }
               });
             });
           } else if (snap.hasError) {
@@ -113,21 +118,28 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           ]);
     }
 
+    // grabbing and cleaning up the user roles
     final sortedPostIDs = roleConterPerPost.keys.toList();
     debugPrint('pre sort: $sortedPostIDs');
+    List<String> postsToDelete =
+        sortedPostIDs.where((e) => !_appContext.eventHeads.any((head) => head.id == e)).toList();
+    _removePostsFromUser(postsToDelete);
+    sortedPostIDs.removeWhere((e) => postsToDelete.contains(e));
     sortedPostIDs
         .sort((a, b) => _appContext.getPostHead(a).eventDate!.compareTo(_appContext.getPostHead(b).eventDate!));
     debugPrint('post sort: $sortedPostIDs');
 
+    // finish building
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return RefreshIndicator(
       onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
-      child: ListView.builder(
+      child: ListView.separated(
           padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
           itemCount: sortedPostIDs.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
           itemBuilder: (_, index) {
             final postID = sortedPostIDs[index];
             return _buildTile(postID, roleConterPerPost[postID]!);
@@ -248,10 +260,17 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     return false;
   }
 
-  void _onPostTap(EventHead head) =>
+  void _onPostTap(final EventHead head) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head))).then((_) {
         setState(() {
           // technically a user can edit a post from here! 🥲
         });
       });
+
+  void _removePostsFromUser(final List<String> postsToRemove) async {
+    debugPrint('deleting the following posts from user roles: $postsToRemove');
+    for (final String postId in postsToRemove) {
+      _userDBManager.removeUserPostRole(widget.selectedUser.id, postId);
+    }
+  }
 }
