@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/personal/share_open_beta_page.dart';
 import 'package:ctrim_app/pages/personal/view_my_posts_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -101,6 +102,11 @@ class _PersonalHomeState extends State<PersonalHome> {
 
       children.addAll([
         ListTile(
+          title: const Text('Share CTRIM App'),
+          leading: const Icon(Icons.share),
+          onTap: () => _openShareOpenBetaClick(),
+        ),
+        ListTile(
           title: const Text('Privacy Policy'),
           leading: const Icon(Icons.privacy_tip),
           onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
@@ -192,5 +198,9 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _onOpenPostsClick() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ViewMyPostsPage()));
+  }
+
+  void _openShareOpenBetaClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ShareOpenBetaPage()));
   }
 }
