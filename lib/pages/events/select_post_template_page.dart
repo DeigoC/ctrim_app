@@ -150,7 +150,7 @@ class SelectPostTemplatePage extends StatelessWidget {
 
   void _onEmptyTemplateClick(final BuildContext context) {
     _resetContext();
-    final String locationTopic = Provider.of<AppContext>(context).currentUser.location;
+    final String locationTopic = Provider.of<AppContext>(context, listen: false).currentUser.location;
     eventContext.addTopic(locationTopic);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
   }
