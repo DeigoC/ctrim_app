@@ -38,8 +38,9 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) => _loggedIn ? null : _onWillPop(),
       child: Scaffold(
           appBar: AppBar(title: const Text('Login'), leading: Container()),
           body: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8), children: [

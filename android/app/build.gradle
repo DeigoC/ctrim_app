@@ -36,7 +36,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace "com.ctrim.ctrim_app"
-    compileSdkVersion flutter.compileSdkVersion
+    // compileSdkVersion flutter.compileSdkVersion
+    compileSdkVersion 34
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -61,7 +62,7 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        minSdkVersion 21
+        minSdkVersion 23
         multiDexEnabled true
     }
 

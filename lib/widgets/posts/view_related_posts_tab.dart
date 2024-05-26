@@ -1,9 +1,8 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../pages/events/select_post_template_page.dart';
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../models/event/event_metadata.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import 'post_head.dart';
@@ -28,44 +27,14 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> children = [Expanded(child: _buildBody())];
-
-    if (_appContext.currentUser.isLeader) {
-      children.add(_buildAddButtons());
-    }
     return MediaQuery.removePadding(
       context: context,
       removeTop: true,
       child: SafeArea(
         top: false,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: _buildBody())]),
       ),
     );
-  }
-
-  Widget _buildAddButtons() {
-    if (widget.eventContext.metadata.hasParent) {
-      return Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        alignment: WrapAlignment.spaceEvenly,
-        children: [
-          ElevatedButton.icon(
-              onPressed: () => _onCreatePost(widget.eventContext.id),
-              icon: const Icon(Icons.post_add),
-              label: const Text('Child Post')),
-          ElevatedButton.icon(
-              onPressed: () => _onCreatePost(widget.eventContext.metadata.parentID!),
-              icon: const Icon(Icons.post_add),
-              label: const Text('Sibling Post'))
-        ],
-      );
-    }
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
-        child: ElevatedButton.icon(
-            onPressed: () => _onCreatePost(widget.eventContext.id),
-            icon: const Icon(Icons.post_add),
-            label: const Text('Child Post')));
   }
 
   Widget _buildBody() {
@@ -95,12 +64,11 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   Widget _buildBodyWithData() {
     final List<PostHead> relatedPosts = List.empty(growable: true);
 
-    if (widget.eventContext.metadata.hasParent) {
-      relatedPosts.add(_getParentPostHead());
-      relatedPosts.addAll(_getSiblingPosts());
-    }
-
     relatedPosts.addAll(_buildChildrenPosts());
+    if (widget.eventContext.metadata.hasParent) {
+      relatedPosts.addAll(_getSiblingPosts());
+      relatedPosts.add(_getParentPostHead());
+    }
 
     return ListView.separated(
         separatorBuilder: (context, index) => const Divider(),
@@ -145,19 +113,6 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   }
 
   // * Logic
-
-  void _onCreatePost(final String parentID) {
-    Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => SelectPostTemplatePage(
-                    eventContext: EventContext.adding(currentUserID: _appContext.currentUser.id, parentID: parentID))))
-        .then((_) {
-      setState(() {
-        // rebuild? - will this update when creating sibling posts?
-      });
-    });
-  }
 
   // this is going to be a major method to fetch all the data needed
   // parent post + meta, sibling posts, children posts - all if needed

@@ -4,6 +4,18 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LocalDataManager {
+  // ? Perform cache cleanup - to be run periodically?
+  Future<void> cleanupCache(final String cacheDir) async {
+    if (!kIsWeb) {
+      try {
+        final dir = Directory('$cacheDir/tmpImages');
+        dir.delete(recursive: true);
+      } catch (e) {
+        debugPrint('something went wrong with cleaning up the cache: $e');
+      }
+    }
+  }
+
   // * Users
   Future<void> writeUsersList(final String content) async {
     if (!kIsWeb) {

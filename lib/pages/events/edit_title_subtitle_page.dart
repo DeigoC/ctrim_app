@@ -25,28 +25,27 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
+    return PopScope(
+        canPop: true,
+        onPopInvoked: (_) {
           if (_tecSubtitle.text.trim().isEmpty || _tecTitle.text.trim().isEmpty) {
             DialogManager.showAlertDialog(
                 context: context,
                 title: 'Empty Fields',
                 content: 'Please make sure that the title or subtitle fields are not left empty before leaving');
-            return false;
           } else if (_originalSubtitle.compareTo(_tecSubtitle.text.trim()) != 0 ||
               _originalTitle.compareTo(_tecTitle.text.trim()) != 0) {
             widget.eventContext.head.setTitle(_tecTitle.text.trim());
             widget.eventContext.head.setSubtitle(_tecSubtitle.text.trim());
             widget.eventContext.allowSavingOfTheEdit();
           }
-          return true;
         },
         child: Scaffold(appBar: AppBar(title: const Text('Title and Subtitle')), body: _buildBody()));
   }
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
       children: [

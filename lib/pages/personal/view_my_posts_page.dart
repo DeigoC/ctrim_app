@@ -72,9 +72,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
           return PostHead(
               thisHead: thisHead,
               updatePost: () {
-                setState(() {
-                  // TODO is this how it's used?
-                });
+                setState(() {});
               });
         });
   }

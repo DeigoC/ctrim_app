@@ -7,7 +7,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class EditInfoBodyPage extends StatefulWidget {
   const EditInfoBodyPage({super.key, required this.json});
-  final String json;
+  final List<dynamic> json;
 
   @override
   State<EditInfoBodyPage> createState() => _EditInfoBodyPageState();
@@ -19,8 +19,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   @override
   void initState() {
     _controller = quill.QuillController(
-        document: quill.Document.fromJson(jsonDecode(widget.json.replaceAll('\n', '\\n'))),
-        selection: const TextSelection.collapsed(offset: 0));
+        document: quill.Document.fromJson(widget.json), selection: const TextSelection.collapsed(offset: 0));
     super.initState();
   }
 
@@ -32,9 +31,11 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => DialogManager.showConfirmationDialog(
-          context: context, title: 'Leave?', content: 'Make sure you have copied the json!'),
+    return PopScope(
+      onPopInvoked: (_) {
+        DialogManager.showConfirmationDialog(
+            context: context, title: 'Leave?', content: 'Make sure you have copied the json!');
+      },
       child: Scaffold(
           body: _buildBody(),
           appBar: AppBar(title: const Text('Edit Body'), actions: [
@@ -52,19 +53,19 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   }
 
   Widget _buildBody() {
-    return quill.QuillProvider(
-      configurations: quill.QuillConfigurations(controller: _controller),
-      child: Column(children: [
-        const quill.QuillToolbar(
-          configurations: quill.QuillToolbarConfigurations(
-            showAlignmentButtons: true,
-            showSubscript: false,
-            showSuperscript: false,
-            showCodeBlock: false,
-          ),
-        ),
-        Expanded(child: Padding(padding: const EdgeInsets.all(8.0), child: quill.QuillEditor.basic()))
-      ]),
+    return Column(
+      children: [
+        quill.QuillToolbar.simple(
+            configurations: quill.QuillSimpleToolbarConfigurations(
+                controller: _controller,
+                showAlignmentButtons: true,
+                showSubscript: false,
+                showSuperscript: true,
+                showCodeBlock: true,
+                multiRowsDisplay: true)),
+        Expanded(
+            child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: _controller)))
+      ],
     );
   }
 }

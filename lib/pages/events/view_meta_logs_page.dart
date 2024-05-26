@@ -26,19 +26,18 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   void initState() {
     _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _appContext.analytics.setCurrentScreen(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
+    _appContext.analytics.logScreenView(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
     widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
+    return PopScope(
+        onPopInvoked: (_) {
           _checkForChangesToContributors();
-          return true;
         },
-        child: Scaffold(appBar: AppBar(title: const Text('Change Log')), body: _buildWithData(context)));
+        child: Scaffold(appBar: AppBar(title: const Text('Change History')), body: _buildWithData(context)));
   }
 
   Widget _buildWithData(BuildContext context) {
@@ -58,8 +57,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             ListTile(title: Text(mainAdmin.fullname), subtitle: const Text('Author'), leading: MyUserAvatar(mainAdmin)),
             ListTile(
-                title: const Text('Assigned Contributors'),
-                subtitle: const Text('Able to modify aspects of the post'),
+                title: const Text('Contributors'),
+                subtitle: const Text('Able to edit the post'),
                 trailing: isAuthor
                     ? IconButton(onPressed: _viewPotentialContributorsTap, icon: const Icon(Icons.person_add_alt_1))
                     : null),

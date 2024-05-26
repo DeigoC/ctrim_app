@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/personal/share_open_beta_page.dart';
 import 'package:ctrim_app/pages/personal/view_my_posts_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
+  // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +65,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             ));
         children.addAll([
           ListTile(
-            title: const Text('My Tasks'),
+            title: const Text('My Schedule'),
             leading: const Icon(Icons.checklist),
             trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
                 ? Text('(${appContext.currentUser.roles!.length.toString()})',
@@ -78,14 +79,14 @@ class _PersonalHomeState extends State<PersonalHome> {
             onTap: _onOpenPostsClick,
           ),
           ListTile(
-              title: const Text('Belfast Crew'),
+              title: const Text('Belfast Volunteers'),
               leading: const Icon(Icons.people),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
-          ListTile(
-            title: const Text('Readme'),
-            leading: const Icon(Icons.info_outline),
-            onTap: () => launchUrlString(_readmeUrl),
-          ),
+          // ListTile(
+          //   title: const Text('Readme'),
+          //   leading: const Icon(Icons.info_outline),
+          //   onTap: () => launchUrlString(_readmeUrl),
+          // ),
         ]);
       }
 
@@ -100,6 +101,11 @@ class _PersonalHomeState extends State<PersonalHome> {
       }
 
       children.addAll([
+        ListTile(
+          title: const Text('Share CTRIM App'),
+          leading: const Icon(Icons.share),
+          onTap: () => _openShareOpenBetaClick(),
+        ),
         ListTile(
           title: const Text('Privacy Policy'),
           leading: const Icon(Icons.privacy_tip),
@@ -191,6 +197,10 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   void _onOpenPostsClick() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ViewMyPostsPage()));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ViewMyPostsPage()));
+  }
+
+  void _openShareOpenBetaClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ShareOpenBetaPage()));
   }
 }

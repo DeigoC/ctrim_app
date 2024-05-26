@@ -13,6 +13,9 @@ import '../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
+import 'add_program_role_page.dart';
+import 'edit_body_page.dart';
+import 'edit_gallery_page.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -56,9 +59,20 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
 
-    return WillPopScope(
-      onWillPop: () => _onWillPop(),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (popping) =>
+          !popping ? _onWillPop().then((popping) => popping ? Navigator.of(context).pop() : null) : null,
       child: Scaffold(
+          floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: _canSave
+              ? SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: FloatingActionButton.extended(
+                      onPressed: _onSaveClick, label: const Text('Save New Post'), icon: const Icon(Icons.save)),
+                )
+              : null,
           body: NestedScrollView(
               headerSliverBuilder: (_, __) => _buildHeaderSliver(webHorizontalPadding),
               body: Padding(
@@ -76,18 +90,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         expandedHeight: MediaQuery.of(context).size.height * 0.33,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         actions: [
-          Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: ElevatedButton.icon(
-                  style: ButtonStyle(
-                      backgroundColor: _canSave
-                          ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-                          : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-                  onPressed: _canSave ? _onSaveClick : null,
-                  icon: Icon(Icons.upload, color: _canSave ? Colors.white : null),
-                  label: Text('Save', style: TextStyle(color: _canSave ? Colors.white : null)))),
+          ElevatedButton.icon(
+              onPressed: () => _showSettings(),
+              icon: const Icon(Icons.more_horiz, color: Colors.white),
+              label: const Text('Edit', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
           const SizedBox(width: 8)
         ],
       ),
@@ -131,8 +138,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       ViewPostBody(
           eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
       ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
-      ViewEventMediaTab(
-          eventContext: widget.eventContext, onMediaEdit: () => _updateBody(), currentUID: _appContext.currentUser.id)
+      ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)
     ]);
   }
 
@@ -143,7 +149,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _onRequiredFieldTextChange('');
   }
 
-  void _onRequiredFieldTextChange(String newText) {
+  void _onRequiredFieldTextChange(final String newText) {
     if (_okToSave() && !_canSave) {
       setState(() {
         _canSave = true;
@@ -206,7 +212,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
             title: _tecTitle.text.trim(),
             subtitle: _tecSubtitle.text.trim(),
             eventDate: widget.eventContext.head.eventDate,
-            uid: _appContext.currentUser.id)
+            uid: _appContext.currentUser.id,
+            location: widget.eventContext.head.location)
         .then((newID) async {
       _updateParentMetadata(newID);
       final newHead = await _headDBManager.fetchHead(newID);
@@ -218,7 +225,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _notifyContributorAdditions(newID);
     _notifyProgramRoleAddtitions(newID);
     _updateAllUserPostInvolvement(newID);
-    _notifyOfNewPost(newID);
+    for (final String topic in widget.eventContext.topics) {
+      _notifyOfNewPost(newID, topic);
+    }
   }
 
   void _updateParentMetadata(final String thisPostID) async {
@@ -258,13 +267,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
-  void _notifyOfNewPost(final String newID) async {
+  void _notifyOfNewPost(final String newID, final String topic) async {
     _cloudFunctionManager.sendToTopic(
-        topic: 'ctrim-belfast',
+        topic: topic,
         title: _tecTitle.text.trim(),
         body: _tecSubtitle.text.trim(),
         data: {'PostID': newID},
-        iOSImage: widget.eventContext.head.getKeyGraphic(),
+        iOSImage: widget.eventContext.head.getKeyGraphic(), // TODO does this work? Double check please
         androidImage: widget.eventContext.head.getKeyGraphic());
   }
 
@@ -315,7 +324,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _userDBManager.addUserRole(thisUID, newPostID, additionEntry.key);
+        await _userDBManager.addUserRole(
+            uid: thisUID,
+            postID: newPostID,
+            roleID: additionEntry.key,
+            millisecondStart: (roleEntry['start'] as DateTime).millisecondsSinceEpoch,
+            millisecondEnd: (roleEntry['end'] as DateTime).millisecondsSinceEpoch,
+            title: roleEntry['title']);
       }
       _cloudFunctionManager
           .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newPostID});
@@ -340,5 +355,63 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
 
     return confirmation;
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+        showDragHandle: true,
+        context: context,
+        builder: (_) => SingleChildScrollView(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Edit About'),
+                      leading: const Icon(Icons.edit),
+                      onTap: _onEditBodyClick,
+                    ),
+                    widget.eventContext.head.eventDate != null
+                        ? ListTile(
+                            title: const Text('Add Schedule Item'),
+                            leading: const Icon(Icons.edit_calendar),
+                            onTap: _onAddScheduleItem,
+                          )
+                        : Container(),
+                    ListTile(
+                      title: const Text('Edit Media Items'),
+                      leading: const Icon(Icons.photo_library),
+                      onTap: _onEditMediaTap,
+                    ),
+                  ],
+                ),
+              ),
+            ));
+  }
+
+  void _onEditBodyClick() {
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
+        .then((_) {
+      setState(() {
+        _onRequiredFieldTextChange('');
+      });
+    });
+  }
+
+  void _onAddScheduleItem() async {
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
+        .then((_) async {
+      widget.eventContext.program.orderProgramsByStartTime();
+      setState(() {});
+    }).then((_) {});
+  }
+
+  void _onEditMediaTap() {
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
+        .then((_) {
+      setState(() {});
+    });
   }
 }

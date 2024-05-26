@@ -31,13 +31,10 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
           Container(
               foregroundDecoration: const BoxDecoration(
                   borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                  image: DecorationImage(
-                      image: NetworkImage('https://drive.google.com/uc?id=1M-rFqqlZ4ehm05Z2tnZUwMWFCVv80eK_'),
-                      fit: BoxFit.fill)),
+                  image: DecorationImage(image: AssetImage('assets/info/opening.gif'), fit: BoxFit.fill)),
               child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Image.network(
-                      'https://drive.google.com/uc?id=1M-rFqqlZ4ehm05Z2tnZUwMWFCVv80eK_') // so jank lol! It works though
+                  child: Image.asset('assets/info/opening.gif') // so jank lol! It works though
                   )),
           const SizedBox(height: 16),
           const Padding(

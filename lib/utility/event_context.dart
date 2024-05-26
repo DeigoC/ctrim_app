@@ -17,6 +17,7 @@ class EventContext {
   late final EventMedia _media; // ? doesn't have to be late
   late final String _currentUID;
   final EventBody _body = EventBody();
+  final List<String> _topics = List.empty(growable: true);
 
   bool _canSaveTheEditing = false;
 
@@ -83,6 +84,7 @@ class EventContext {
     required String title,
     required String subtitle,
     required String uid,
+    required String location,
     DateTime? eventDate,
   }) async {
     final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
@@ -98,6 +100,7 @@ class EventContext {
     headToUpload.setSubtitle(subtitle);
     headToUpload.setRecentDate(now);
     headToUpload.setEventDate(_head.eventDate);
+    headToUpload.setLocation(location);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }
@@ -420,7 +423,7 @@ class EventContext {
   Map<int, List<String>> get roleRemovalals => UnmodifiableMapView(_roleRemovals);
   String deletedRoleTitle(final int id) => _deletedRoleTitle[id]!;
 
-  void addRoleAdditionNotification(Iterable<String> uids, int id) {
+  void addRoleAdditionNotification(final Iterable<String> uids, final int id) {
     if (_roleAdditions[id] == null) {
       _roleAdditions[id] = <String>[];
     }
@@ -440,4 +443,8 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
+
+  List<String> get topics => UnmodifiableListView(_topics);
+  void addTopic(final String topic) => _topics.add(topic);
+  void clearTopics() => _topics.clear();
 }
