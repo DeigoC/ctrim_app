@@ -47,8 +47,12 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) => _isSaved
+          ? null
+          : DialogManager.discardChanges(context: context)
+              .then((popping) => popping ? Navigator.of(context).pop() : null),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Edit Program'),
@@ -60,7 +64,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding),
@@ -316,6 +320,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     if (newMembers.isNotEmpty) {
       widget.eventContext.addRoleAdditionNotification(newMembers, widget.programEntry['id']);
     }
+    debugPrint('--------role addition now looks like: ${widget.eventContext.roleAdditions}');
   }
 
   void _onDeleteTap() {

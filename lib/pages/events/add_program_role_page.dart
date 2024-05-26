@@ -42,20 +42,19 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _isSaved ? () async => true : () => DialogManager.discardChanges(context: context),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Add Program'),
-        ),
-        body: _buildBody(),
-      ),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (popping) => _isSaved
+          ? null
+          : DialogManager.discardChanges(context: context)
+              .then((popping) => popping ? Navigator.of(context).pop() : null),
+      child: Scaffold(appBar: AppBar(title: const Text('Add Schedule')), body: _buildBody()),
     );
   }
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),

@@ -4,24 +4,18 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ImageMediaSlot extends StatefulWidget {
+class ImageMediaSlot extends StatelessWidget {
   const ImageMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postID});
   final Map<String, String> mediaEntry;
   final Function()? onTap;
   final String postID;
 
   @override
-  State<ImageMediaSlot> createState() => _ImageMediaSlotState();
-}
-
-class _ImageMediaSlotState extends State<ImageMediaSlot> {
-  @override
   Widget build(BuildContext context) {
     final String? cacheDir = Provider.of<AppContext>(context, listen: false).cacheDir;
 
     // most likely on the webapp
     if (cacheDir == null) {
-      // debugPrint('building network image');
       return _buildNetworkImage();
     }
     return _buildFileImage(cacheDir);
@@ -36,9 +30,9 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
 
           if (snap.hasData) {
             return InkWell(
-                onTap: widget.onTap,
+                onTap: onTap,
                 child: Hero(
-                    tag: widget.postID + widget.mediaEntry['src']!,
+                    tag: postID + mediaEntry['src']!,
                     child: Image.file(
                       snap.data!,
                       fit: BoxFit.cover,
@@ -60,28 +54,26 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
   }
 
   Widget _buildNetworkImage() {
-    return Image.network(widget.mediaEntry['src']!, fit: BoxFit.cover);
+    return Image.network(mediaEntry['src']!, fit: BoxFit.cover);
   }
 
   // * Logic
-
   Future<File> _fetchFileImage(final String cacheDir) async {
-    final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/$sanitisedFilePath.png';
+    final sanitisedFilePath = mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
+    final fullPath = '$cacheDir/tmpImages/$sanitisedFilePath.png';
     final file = File(fullPath);
 
     if (!await file.exists()) {
       debugPrint('Creating image file for: $fullPath');
-      final response = await http.get(Uri.parse(widget.mediaEntry['src']!));
-      return await file.writeAsBytes(response.bodyBytes);
+      final response = await http.get(Uri.parse(mediaEntry['src']!));
+      return await file.create(recursive: true).then((createdFile) => createdFile.writeAsBytes(response.bodyBytes));
     }
-    // debugPrint('using existing image file for: ${mediaEntry['src']!}');
     return file;
   }
 
   Future<bool> _deleteFile(final String cacheDir) async {
-    final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/$sanitisedFilePath.png';
+    final sanitisedFilePath = mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
+    final fullPath = '$cacheDir/tmpImages/$sanitisedFilePath.png';
     final file = File(fullPath);
     if (await file.exists()) {
       debugPrint('deleting file');

@@ -22,7 +22,11 @@ import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
+import 'add_program_role_page.dart';
+import 'edit_body_page.dart';
+import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
+import 'select_post_template_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -51,9 +55,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   void initState() {
-    Provider.of<AppContext>(context, listen: false)
-        .analytics
-        .setCurrentScreen(screenName: 'post-${widget.eventHead.id}');
+    Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'post-${widget.eventHead.id}');
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
     _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
@@ -69,24 +71,27 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (_haveFetchedPost) {
       _tabController.dispose();
     }
+
+    // ! temporary fix for the issue below
+    if (_canSaveEditing) {
+      widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
+      widget.eventHead.setTitle(_originalTitle);
+      widget.eventHead.setSubtitle(_originalSubtitle);
+      widget.eventHead.setEventDate(_originalEventDate);
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: _canSaveEditing
-            ? () => DialogManager.discardChanges(context: context).then((confirmation) {
-                  if (confirmation) {
-                    widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
-                    widget.eventHead.setTitle(_originalTitle);
-                    widget.eventHead.setSubtitle(_originalSubtitle);
-                    widget.eventHead.setEventDate(_originalEventDate);
-                  }
-                  return confirmation;
-                })
-            : () async => true,
-        child: Scaffold(body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody()));
+    // TODO somthing terrible has happened! PopScope sucks so bad!
+    // ! This breaks things for the admin, they can make changes and it won't be discarded when returning.
+    // ! This is fine for now but not in the future when more admins come in...
+    return Scaffold(
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+        floatingActionButton: _buildSaveFAB(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody());
   }
 
   Widget _buildCheckExistingPostBody() {
@@ -184,7 +189,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       SliverAppBar(
           expandedHeight: _eventContext.head.getKeyGraphic() != null ? MediaQuery.of(context).size.height * 0.33 : null,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-          actions: _buildSaveButton()),
+          actions: _buildEditButton()),
       SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         sliver: SliverList(
@@ -242,27 +247,29 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     return TabBarView(controller: _tabController, children: _bodyTabs);
   }
 
-  List<Widget>? _buildSaveButton() {
+  List<Widget>? _buildEditButton() {
     if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
       return [
         ElevatedButton.icon(
-            style: ButtonStyle(
-                backgroundColor: _eventContext.canSaveTheEditing
-                    ? MaterialStatePropertyAll<Color>(Colors.green.withOpacity(0.7))
-                    : MaterialStatePropertyAll<Color>(Colors.grey.withOpacity(0.7)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)))),
-            onPressed: _eventContext.canSaveTheEditing ? _updateClick : null,
-            icon: Icon(
-              Icons.save,
-              color: _eventContext.canSaveTheEditing ? Colors.white : null,
-            ),
-            label: Text(
-              'Update',
-              style: _eventContext.canSaveTheEditing ? const TextStyle(color: Colors.white) : null,
-            )),
+            onPressed: () => _showSettings(),
+            icon: const Icon(Icons.more_horiz, color: Colors.white),
+            label: const Text('Edit', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
         const SizedBox(width: 8)
       ];
+    }
+    return null;
+  }
+
+  Widget? _buildSaveFAB() {
+    if (_haveFetchedPost &&
+        (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) &&
+        _eventContext.canSaveTheEditing) {
+      return SizedBox(
+        width: MediaQuery.of(context).size.width * 0.7,
+        child: FloatingActionButton.extended(
+            onPressed: _updateClick, label: const Text('Save Changes'), icon: const Icon(Icons.save)),
+      );
     }
     return null;
   }
@@ -312,13 +319,15 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     ));
 
     if (_eventContext.head.eventDate != null || isAuthor) {
-      _bodyTabs.add(ViewAllPrograms(eventContext: _eventContext, onProgramChanged: _updateWholePostBody));
+      _bodyTabs.add(ViewAllPrograms(
+          // key: ValueKey(DateTime.now().millisecondsSinceEpoch),
+          eventContext: _eventContext,
+          onProgramChanged: _updateWholePostBody));
       _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
     }
     if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {
-      _bodyTabs.add(
-          ViewEventMediaTab(eventContext: _eventContext, onMediaEdit: _updateWholePostBody, currentUID: _currentUID));
+      _bodyTabs.add(ViewEventMediaTab(eventContext: _eventContext, currentUID: _currentUID));
       _appBarTabs.add(const Tab(icon: Icon(Icons.photo_album), text: 'Media'));
       length++;
     }
@@ -363,6 +372,93 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             updatePage: () {
               setState(() {});
             }));
+  }
+
+  void _showSettings() {
+    List<Widget> children = [
+      ListTile(
+        title: const Text('Edit About'),
+        leading: const Icon(Icons.edit),
+        onTap: _onEditBodyClick,
+      ),
+      ListTile(
+        title: const Text('Add Schedule'),
+        leading: const Icon(Icons.edit_calendar),
+        onTap: _onAddScheduleItem,
+      )
+    ];
+
+    if (!kIsWeb) {
+      children.add(ListTile(
+        title: const Text('Edit Media'),
+        leading: const Icon(Icons.photo_library),
+        onTap: _onEditMediaClick,
+      ));
+    }
+
+    if (Provider.of<AppContext>(context, listen: false).currentUser.isLeader) {
+      children.addAll([
+        ListTile(
+          title: const Text('Create Sibling Post'),
+          leading: const Icon(Icons.post_add),
+          onTap: () => _onAddPost(_eventContext.metadata.parentID!),
+        ),
+        ListTile(
+          title: const Text('Create Child Post'),
+          leading: const Icon(Icons.post_add),
+          onTap: () => _onAddPost(_eventContext.id),
+        )
+      ]);
+    }
+
+    showModalBottomSheet(
+        showDragHandle: true,
+        context: context,
+        builder: (_) => SingleChildScrollView(child: SafeArea(child: Column(children: children))));
+  }
+
+  void _onEditBodyClick() {
+    Navigator.of(context).pop();
+    _tabController.animateTo(1);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
+      setState(() {});
+      _tabController.animateTo(0);
+    });
+  }
+
+  void _onAddScheduleItem() {
+    Navigator.of(context).pop();
+    // _tabController.animateTo(2);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
+        .then((_) {
+      setState(() {});
+      _eventContext.program.orderProgramsByStartTime();
+      // _tabController.animateTo(1);
+    });
+  }
+
+  void _onEditMediaClick() {
+    Navigator.of(context).pop();
+    _tabController.animateTo(0);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: _eventContext))).then((_) {
+      setState(() {});
+      _tabController.animateTo(2);
+    });
+  }
+
+  void _onAddPost(final String parentID) {
+    Navigator.of(context).pop();
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => SelectPostTemplatePage(
+                eventContext: EventContext.adding(
+                    currentUserID: Provider.of<AppContext>(context, listen: false).currentUser.id,
+                    parentID: parentID)))).then((_) {
+      setState(() {
+        // rebuild? - will this update when creating sibling posts?
+      });
+    });
   }
 
   String get _topic => _post + _eventContext.id;
@@ -463,7 +559,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     return Dialog(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -475,14 +571,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
                   maxLines: null,
                   onChanged: _onTextChange),
               const SizedBox(height: 8),
-              ElevatedButton.icon(
-                  onPressed: _canSave ? _saveClick : null,
-                  style: ButtonStyle(
-                      backgroundColor:
-                          _canSave ? MaterialStateProperty.all(Colors.green) : MaterialStateProperty.all(Colors.grey)),
-                  icon: const Icon(Icons.cloud_upload, color: Colors.white),
-                  label: const Text('Save!', style: TextStyle(color: Colors.white))),
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))
+              Wrap(
+                alignment: WrapAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                  TextButton.icon(
+                      onPressed: _canSave ? _saveClick : null,
+                      icon: const Icon(Icons.cloud_upload),
+                      label: const Text('Save'))
+                ],
+              ),
             ],
           ),
         ),
@@ -507,10 +605,10 @@ class _EventLogDialogState extends State<EventLogDialog> {
   void _saveClick() {
     DialogManager.showConfirmationDialog(
             context: context,
-            title: 'Last Chance',
-            content: 'This log will be sent to all who have bookmarked this post',
-            confirmText: 'I understand, save!',
-            cancelText: 'Wait a sec.')
+            title: 'Confirm Save?',
+            content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
+            confirmText: 'Yes',
+            cancelText: 'Cancel')
         .then((confirmation) {
       if (confirmation) {
         DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
@@ -528,7 +626,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     });
   }
 
-  Future<void> _performUpdate(String uid) async {
+  Future<void> _performUpdate(final String uid) async {
     final LocalDataManager localDataManager = LocalDataManager();
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
@@ -614,11 +712,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final String title = "$_currentUserName has assinged you to a role!";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
+      debugPrint('----- this addition entry looks like: $additionEntry');
       final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
       final String body = "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
 
       final List<String> tokens = [];
-      for (var thisUID in additionEntry.value) {
+      for (final thisUID in additionEntry.value) {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
@@ -628,7 +727,13 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _userDBManager.addUserRole(thisUID, widget.eventContext.id, additionEntry.key);
+        await _userDBManager.addUserRole(
+            uid: thisUID,
+            postID: widget.eventContext.id,
+            roleID: additionEntry.key,
+            millisecondStart: (roleEntry['start'] as DateTime).millisecondsSinceEpoch,
+            millisecondEnd: (roleEntry['end'] as DateTime).millisecondsSinceEpoch,
+            title: roleEntry['title']);
       }
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -655,7 +760,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        _userDBManager.removeUserRole(thisUID, removalEntry.key);
+        await _userDBManager.removeUserRole(thisUID, removalEntry.key);
       }
       await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);

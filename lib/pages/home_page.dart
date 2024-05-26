@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../firebase/db_managers/event_db_manager.dart';
+import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
@@ -16,8 +16,7 @@ import '../widgets/info/timed_button_dialog.dart';
 import 'events/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
-import 'information/teachings/bible_reading_page.dart';
-import 'information/teachings/love_page.dart';
+import 'information/simple_info_page.dart';
 import 'information_home.dart';
 import 'personal_home.dart';
 
@@ -62,28 +61,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     // * periodic and non-periodic local maintenance
     if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
+      _removeLocallySavedPosts();
       _appContext.sharedPref.justFetchedUserImages();
     }
-    _removeLocallySavedPosts();
 
-    // ! - so because of a major fumble with 0.5.0, we have to perform this check every time we load in
-    // can be removed for version 0.6.0 - but I'll leave a comment behind just in case
-    // _saveFCMToken();
+    // TODO new feature for notifications (temporary until future updates)
+    _setNotificationTopicsTemp();
 
-    // * setting up the animated scroll aspects - to be looked into another time
-    // _postsScrollController.addListener(() {
-    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.reverse) {
-    //     setState(() {
-    //       _bottomBarIsVisible = false;
-    //     });
-    //   }
-
-    //   if (_postsScrollController.position.userScrollDirection == ScrollDirection.forward) {
-    //     setState(() {
-    //       _bottomBarIsVisible = true;
-    //     });
-    //   }
-    // });
     super.initState();
   }
 
@@ -98,8 +82,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      return WillPopScope(
-        onWillPop: () async => false, // safety for the first session
+      return PopScope(
+        canPop: false, // safety for the first session
         child: Scaffold(
           body: _buildSelectedBody(appContext),
           floatingActionButton: _buildFAB(),
@@ -147,7 +131,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return ViewEventsHome(
           scrollController: _postsScrollController,
           rebuildFunction: () {
-            setState(() {});
+            setState(() {
+              // there's a potential that new posts have been added
+              _appContext.sortPostsByIndex();
+            });
           });
     } else if (_selectedIndex == 1) {
       return InformationHome(
@@ -245,12 +232,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         return token;
       });
 
-      // we don't need to perfrom the token grabbing here anymore
+      // we don't need to perfrom the token grabbing here anymore - done in welcome page
       if (token != null) {
         debugPrint('Token to save is $token');
         appContext.sharedPref.saveFCMToken(token);
       }
+
+      // TODO remove this in the future
       messagingManager.subscribeToCTRIMBelfast();
+      _appContext.sharedPref.setSubscribedToBelfast(true);
+      _setNotificationTopicsTemp();
       appContext.sharedPref.nowOpened();
     }
   }
@@ -262,6 +253,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final LocalDataManager localDataManager = LocalDataManager();
     final List<String> postUIDs = await localDataManager.readPostTrack();
     final List<String> toDelete = List<String>.empty(growable: true);
+
+    localDataManager.cleanupCache(_appContext.cacheDir!);
 
     for (final String postUID in postUIDs) {
       if (!_appContext.eventHeads.any((e) => e.id.compareTo(postUID) == 0)) {
@@ -362,16 +355,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
   }
 
-  void _openInformationTeachingPage(final String page) {
-    switch (page) {
-      case 'love':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LovePage()));
-        break;
-      case 'bible_reading':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BibleReadingPage()));
-        break;
-      default:
-    }
+  void _openInformationTeachingPage(final String jsonPath) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => SimpleInfoPage(jsonPath: jsonPath)));
   }
 
   // all notifications potentially will be asking to open a page
@@ -473,5 +458,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _setImageForFile(final File file, final String src) async {
     final response = await http.get(Uri.parse(src));
     file.writeAsBytes(response.bodyBytes);
+  }
+
+  void _setNotificationTopicsTemp() {
+    // we have to check if users are subscribed to the old notification topic (belfast)
+    // if so, then subscribe to all the new ones and set old one to false
+    // otherwise, we do not set it to true
+    if (_appContext.sharedPref.subscribedToBelfast) {
+      // unsubscribe to this and subscribe to everything temporarly available
+      debugPrint('unsubscribing to old Belfast topic and subscribing to everything else');
+      final MessagingManager messagingManager = MessagingManager();
+      messagingManager.unsubscribeFromCTRIMBelfast();
+      _appContext.sharedPref.setSubscribedToBelfast(false);
+
+      _appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
+      _appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
+
+      messagingManager.subscribeToTopic('belfast-sunday-service');
+      messagingManager.subscribeToTopic('belfast-midweek-service');
+      messagingManager.subscribeToTopic('belfast-growth-mentoring');
+      messagingManager.subscribeToTopic('belfast-dawn-watch');
+      messagingManager.subscribeToTopic('belfast-overnight-prayer');
+      messagingManager.subscribeToTopic('belfast-youth-cg');
+      messagingManager.subscribeToTopic('Belfast'); // hardcode to Belfast for now
+    }
   }
 }

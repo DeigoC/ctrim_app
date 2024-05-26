@@ -13,7 +13,7 @@ class AttendingSundayServicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     Provider.of<AppContext>(context, listen: false)
         .analytics
-        .setCurrentScreen(screenName: 'Personal: Attending Sunday Service');
+        .logScreenView(screenName: 'Personal: Attending Sunday Service');
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
 
@@ -24,22 +24,19 @@ class AttendingSundayServicePage extends StatelessWidget {
         body: CustomScrollView(slivers: [
       const SliverAppBar(floating: true, snap: true),
       SliverPadding(
-        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-        sliver: SliverToBoxAdapter(
-            child: SingleChildScrollView(
-                child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: quill.QuillProvider(
-                      configurations: quill.QuillConfigurations(controller: controller),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Flexible(
-                            child: quill.QuillEditor.basic(
-                          configurations: const quill.QuillEditorConfigurations(readOnly: true),
-                        )),
-                        const SizedBox(height: 32)
-                      ]),
-                    )))),
-      )
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          sliver: SliverToBoxAdapter(
+              child: SingleChildScrollView(
+                  child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Flexible(
+                  child: quill.QuillEditor.basic(
+                configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true),
+              )),
+              const SizedBox(height: 32)
+            ]),
+          )))),
     ]));
   }
 }

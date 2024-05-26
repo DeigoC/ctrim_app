@@ -46,22 +46,28 @@ class UserDBManager {
     return roleData;
   }
 
-  Future<void> addUserRole(final String uid, final String postID, final int roleID) async {
+  Future<void> addUserRole(
+      {required String uid,
+      required String postID,
+      required int roleID,
+      required int millisecondStart,
+      required int millisecondEnd,
+      required String title}) async {
     final data = await fetchUserRoles(uid);
-    data.add({'postID': postID, 'id': roleID});
-    _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+    data.add({'postID': postID, 'id': roleID, 'startMil': millisecondStart, 'endMil': millisecondEnd, 'title': title});
+    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
   }
 
   Future<void> removeUserRole(final String uid, final int roleID) async {
     final data = await fetchUserRoles(uid);
     data.removeWhere((e) => e['id'] as int == roleID);
-    _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
   }
 
   Future<void> removeUserPostRole(final String uid, final String postID) async {
     final data = await fetchUserRoles(uid);
     data.removeWhere((e) => e['postID'] == postID);
-    _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
   }
 
   // User posts

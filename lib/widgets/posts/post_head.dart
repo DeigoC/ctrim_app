@@ -12,17 +12,34 @@ class PostHead extends StatelessWidget {
   final EventHead thisHead;
   final Function() updatePost;
   static const double _titleFontSize = 24, _subtitleFontSize = 16, _metaFontSize = 14;
-  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM, HH:mm');
+  static final DateFormat _eventDateFormat = DateFormat('EEE d MMM • HH:mm');
 
   @override
   Widget build(BuildContext context) {
+    final Widget detailSection = InkWell(
+      onLongPress: () {
+        showDialog(
+            context: context,
+            builder: (_) =>
+                Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
+      },
+      onTap: () => _onHeadTap(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTitle(),
+          const SizedBox(height: 2),
+          _buildMetaData(),
+          const SizedBox(height: 16),
+          _buildSubtitle(),
+          const SizedBox(height: 8)
+        ],
+      ),
+    );
+
     final List<Widget> children = [
-      _buildTitle(),
-      const SizedBox(height: 2),
-      _buildMetaData(),
-      const SizedBox(height: 16),
-      _buildSubtitle(),
-      const SizedBox(height: 8)
+      detailSection,
     ];
 
     final List<Map<String, String>> media = _getMedia();
@@ -32,16 +49,17 @@ class PostHead extends StatelessWidget {
       children.insert(0, const SizedBox(height: 8));
     }
 
-    return InkWell(
-        onLongPress: () {
-          showDialog(
-              context: context,
-              builder: (_) =>
-                  Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
-        },
-        onTap: () => _onHeadTap(context),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children);
+    // return InkWell(
+    //     onLongPress: () {
+    //       showDialog(
+    //           context: context,
+    //           builder: (_) =>
+    //               Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
+    //     },
+    //     onTap: () => _onHeadTap(context),
+    //     child:
+    //         Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));
   }
 
   Widget _buildTitle() {
@@ -54,7 +72,7 @@ class PostHead extends StatelessWidget {
     // final String timeAgo =
 
     final String finalStr = thisHead.eventDate != null
-        ? '${thisHead.location} • On ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${timeAgo(thisHead.recentDate)}'
+        ? '${thisHead.location} • ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${timeAgo(thisHead.recentDate)}'
         : '${thisHead.location} • Edited ${timeAgo(thisHead.recentDate)}';
 
     return Padding(

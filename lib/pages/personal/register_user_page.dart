@@ -43,8 +43,9 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) => _onWillPop(),
       child: Scaffold(
         appBar: AppBar(title: const Text('Register User')),
         body: _buildBody(),
@@ -157,7 +158,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       showDialog(
           context: context,
           builder: (_) {
-            return AlertDialog(
+            return AlertDialog.adaptive(
               title: const Text('Save User'),
               content: const Text('Are you sure all details are finished?'),
               actions: [
@@ -222,7 +223,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     await showDialog(
       context: context,
       builder: (_) {
-        return AlertDialog(
+        return AlertDialog.adaptive(
           title: const Text('Leave Page'),
           content: const Text('Do you want to discard all the changes made?'),
           actions: [
@@ -230,6 +231,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             TextButton(
                 onPressed: () {
                   shouldPop = true;
+                  Navigator.of(context).pop();
                   Navigator.of(context).pop();
                 },
                 child: const Text('Discard')),

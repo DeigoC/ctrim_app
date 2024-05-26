@@ -60,11 +60,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _checkToUpdate();
-        return true;
-      },
+    return PopScope(
+      onPopInvoked: (popping) => _checkToUpdate(),
       child: Scaffold(
         appBar: AppBar(title: const Text('Edit Date & Location')),
         body: _buildBody(),
@@ -74,7 +71,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
@@ -154,7 +151,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     showDatePicker(
             context: context,
             initialDate: _start == null ? DateTime.now().add(const Duration(days: 1)) : _start!,
-            firstDate: DateTime.now().add(const Duration(days: 1)),
+            firstDate: DateTime.now(),
             lastDate: DateTime.now().add(const Duration(days: 122)))
         .then((selectedStartDate) {
       if (selectedStartDate != null) {
@@ -163,7 +160,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     });
   }
 
-  void _onSelectStartTime(DateTime selectedStartDate) {
+  void _onSelectStartTime(final DateTime selectedStartDate) {
     showTimePicker(
             context: context,
             initialTime: TimeOfDay.fromDateTime(selectedStartDate

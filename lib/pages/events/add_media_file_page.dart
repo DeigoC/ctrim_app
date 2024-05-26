@@ -18,6 +18,8 @@ class AddMediaFilePage extends StatefulWidget {
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController();
   final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
+  final int _maxImageSizeKB = 1536; // 1.5mb
+  final int _maxVideoSizeMB = 128;
   VideoPlayerController? _videoPlayerController;
   bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
@@ -50,7 +52,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding),
@@ -115,7 +117,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             final size = _tmpFile!.lengthSync();
             final double sizeInKb = size / 1024;
 
-            if (sizeInKb <= 512) {
+            if (sizeInKb <= _maxImageSizeKB) {
               debugPrint('image size is good: $sizeInKb KB');
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
@@ -134,7 +136,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is 512 KB, so please compress it or use another image!',
+                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is $_maxImageSizeKB KB, so please compress it or use another image!',
                           textAlign: TextAlign.center),
                       TextButton(
                           onPressed: () => launchUrlString('https://imagecompressor.com'),
@@ -171,7 +173,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             final size = _tmpFile!.lengthSync();
             final double sizeInMb = size / (1024 * 1024);
 
-            if (sizeInMb <= 128) {
+            if (sizeInMb <= _maxVideoSizeMB) {
               debugPrint('video size is good: $sizeInMb MB');
               _videoPlayerController = VideoPlayerController.file(_tmpFile!);
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

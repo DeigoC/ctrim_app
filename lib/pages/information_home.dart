@@ -1,17 +1,9 @@
-import 'package:ctrim_app/pages/information/one_verse_evangelism/jerimiah_29_11_page.dart';
-import 'package:ctrim_app/pages/information/one_verse_evangelism/matthew_6_33_page.dart';
-import 'package:ctrim_app/pages/information/one_verse_evangelism/romans_12_2_page.dart';
-import 'package:ctrim_app/pages/information/one_verse_evangelism/romans_6_23_page.dart';
-import 'package:ctrim_app/pages/information/teachings/family_page.dart';
-import 'package:ctrim_app/pages/information/teachings/money_page.dart';
 import 'package:flutter/material.dart';
 
 import 'information/belfast_church_page.dart';
 import 'information/north_coast_church_page.dart';
 import 'information/portadown_church_page.dart';
-import 'information/teachings/bible_reading_page.dart';
-import 'information/teachings/love_page.dart';
-import 'information/teachings/prayer_page.dart';
+import 'information/simple_info_page.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({super.key, required this.tabController, required this.scrollController});
@@ -55,7 +47,7 @@ class _InformationHomeState extends State<InformationHome> {
                   ]))
             ],
         body: TabBarView(controller: widget.tabController, children: [
-          _buildAbout(webHorizontalPadding),
+          _buildAbout(webHorizontalPadding == 0 ? webHorizontalPadding + 8 : webHorizontalPadding),
           _buildChurchesTab(),
           _buildTeachingsTab(webHorizontalPadding),
           _buildOneVerseEvangelismTab(webHorizontalPadding)
@@ -70,6 +62,32 @@ class _InformationHomeState extends State<InformationHome> {
     const String visionParagraph = 'Our vision is to become like the early Church in the Book of Acts, effective '
         'and strategic in disciple making. Effective and strategic in harnessing the power of The Holy Spirit, causing '
         'them to multiply rapidly and having the power to turn the world upside down for the Glory of God.';
+
+    const String coreValuesParagraph = """
+1. I Am a True Disciple. Christ-likeness and Multiplying Ministry
+
+2. Caught by the Vision. Understand, Live and Transmit the Vision
+
+3. Committed to Cell Life. Evangelism, Leadership Development and Multiplication
+
+4. Passionate Spirituality Devotional Life, Prayer, Fasting and Holiness
+
+5. Submission to Authority Love, Honour and Respect My Leaders
+
+6. Commitment to Time Management and Invest My Time for the Kingdom of God
+
+7. Lifelong Relationship. Accountable and Responsible
+
+8. I Love Equipping and Training. Training is My Happy Hour
+
+9. I Am a Leader of 7 Disciples. I Am Born to Multiply
+
+10. Accomplishing Church Goal Setting. Support, Help and Fulfil the Goals
+
+11. I Want to See My Church Grow. I Pray, Work and Pay
+
+12. The Importance of Young People. I Will Prepare the Next Generation
+""";
 
     return MediaQuery.removePadding(
         context: context,
@@ -108,7 +126,24 @@ class _InformationHomeState extends State<InformationHome> {
             padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(visionParagraph, textAlign: TextAlign.center, style: TextStyle(fontSize: 18)),
           ),
-          SizedBox(height: 32)
+          SizedBox(height: 32),
+          Divider(thickness: 1),
+          SizedBox(height: 32),
+          Text('OUR CORE VALUES',
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          SizedBox(height: 18),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+                'Core values are the foundation of what is really important to us. It gives us CLARITY about who we are and what we stand for. It gives us the ability to STAY FOCUS on what matters most. It gives us UNITY, MATURITY and HEALTH to grow and multiply. ',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18)),
+          ),
+          SizedBox(height: 18),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(coreValuesParagraph, textAlign: TextAlign.left, style: TextStyle(fontSize: 18)),
+          ),
         ]));
   }
 
@@ -245,19 +280,24 @@ class _InformationHomeState extends State<InformationHome> {
   void _onTeachingTap(final String teaching) {
     switch (teaching) {
       case 'Prayer':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerPage()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/prayer.json")));
         break;
       case 'Love':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const LovePage()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/love.json")));
         break;
       case 'Reading The Bible':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const BibleReadingPage()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/bible_reading.json")));
         break;
       case 'Family':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const FamilyPage()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/family.json")));
         break;
       case 'Money':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const MoneyPage()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/money.json")));
         break;
       default:
     }
@@ -266,16 +306,30 @@ class _InformationHomeState extends State<InformationHome> {
   void _openVerseEvangelismPage(final String chapter) {
     switch (chapter) {
       case 'Romans 6:23':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const Romans623Page()));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const SimpleInfoPage(
+                      jsonPath: "assets/info/one_verse/romans_6_23.json",
+                    )));
         break;
       case 'Jerimiah 29:11':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const Jerimiah2911Page()));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/jerimiah_29_11.json")));
         break;
       case 'Matthew 6:33':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const Matthew633Page()));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/matthew_6_33.json")));
         break;
       case 'Romans 12:2':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const Romans122Page()));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/romans_12_2.json")));
         break;
     }
   }

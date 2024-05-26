@@ -8,13 +8,13 @@ class EventLog {
   // log - the short string explaining the change
   // ts - timestamp (DateTime) of when it took place - this becomes the recentDate as well!
 
-  EventLog(Map<String, dynamic> fistLog) {
+  EventLog(final Map<String, dynamic> fistLog) {
     _logs.add(fistLog);
   }
 
   final List<Map<String, dynamic>> _logs = List<Map<String, dynamic>>.empty(growable: true);
 
-  EventLog.fromMap(Map<String, dynamic> data) {
+  EventLog.fromMap(final Map<String, dynamic> data) {
     final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(data['Logs']);
     for (final entry in rawData) {
       _logs.add({
@@ -39,6 +39,6 @@ class EventLog {
   }
 
   List<Map<String, dynamic>> get logs => UnmodifiableListView(_logs);
-  void addLog(Map<String, dynamic> log) => _logs.insert(0, log); // TODO make this more fixed
+  void addLog(final Map<String, dynamic> log) => _logs.insert(0, log); // TODO make this more fixed
   void orderLogsBackwards() => _logs.sort(((a, b) => (b['ts']! as DateTime).compareTo((a['ts']! as DateTime))));
 }

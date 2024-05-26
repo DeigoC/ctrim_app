@@ -21,8 +21,7 @@ import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter_web_plugins/url_strategy.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -45,14 +44,14 @@ void main() async {
   }
 
   // * Make sure we connect to the emulator on debug
-  if (kDebugMode) {
-    try {
-      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-    } on Exception catch (e) {
-      debugPrint(e.toString());
-    }
-  }
+  // if (kDebugMode) {
+  //   try {
+  //     await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  //     FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  //   } on Exception catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+  // }
 
   final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
@@ -169,9 +168,9 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
       : DateTime.fromMillisecondsSinceEpoch(int.parse(pref.getString('lastUserFetch')!));
 
   final lastUserFetch = kIsWeb ? lastWebUserFetch : await dataManager.readLastUserFetch();
-  final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 7;
+  final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 21;
 
-  // only use the local data if the count is the same in the DB and the last time has been multiple days ago (7 days)
+  // only use the local data if the count is the same in the DB and the last time has been multiple days ago (21 days)
   bool shouldReadLocalData = false;
   if (usersData.isNotEmpty) {
     // from now on we check that the version is the same as before

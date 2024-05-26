@@ -28,7 +28,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     _pageController = PageController(initialPage: widget.initialIndex);
     Provider.of<AppContext>(context, listen: false)
         .analytics
-        .setCurrentScreen(screenName: 'Post Gallery: ${widget.postId}');
+        .logScreenView(screenName: 'Post Gallery: ${widget.postId}');
 
     for (final entry in widget.media) {
       if (entry['type'] == 'vid') {
