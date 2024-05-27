@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Main Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            /* Stacks content vertically */
+            align-items: center;
+            /* Centers content horizontally */
+        }
+
+        .image-container {
+            width: 48%;
+            /* Sets the width of each column */
+            display: flex;
+            /* Enables flexbox for image and text */
+            flex-direction: column;
+            /* Stacks image and text vertically */
+            margin-bottom: 10px;
+            align-items: center;
+            /* Centers content within each container */
+        }
+
+        .image-container img {
+            width: 100%;
+            /* Makes images fit the container width */
+            margin-bottom: 5px;
+            /* Adds some space between image and text */
+        }
+
+        .image-text {
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CTRIM App (Open Beta)</h1>
+    <div class="image-container">
+        <img src="ios_qr.png" alt="Image 1 Description">
+        <p class="image-text">Download via TestFlight - <a href="https://testflight.apple.com/join/SxS0Mfjj">https://testflight.apple.com/join/SxS0Mfjj</a></p>
+    </div>
+    <div class="image-container">
+        <img src="android_qr.png" alt="Image 2 Description">
+        <p class="image-text">Download via Google Play Store - <a href="https://play.google.com/apps/testing/com.ctrim.ctrim_app">https://play.google.com/apps/testing/com.ctrim.ctrim_app</a></p>
+    </div>
+    <p class="image-text">CTRIM App is continually in development and will receive updates from time to time for the best experience. Please help improve it by taking part. Thank you very much for testing!</p>
+</body>
+
+</html>
