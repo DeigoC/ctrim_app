@@ -298,10 +298,8 @@ class SelectPostTemplatePage extends StatelessWidget {
     eventContext.addTopic('belfast-midweek-service');
     eventContext.program.setOnline(true);
     eventContext.program.setAddress('https://us02web.zoom.us/j/85038786530?pwd=bmRPaTg4WHhlSVVwek9QcjVPT1RPUT09');
-    eventContext.head.addMediaItem(
-        type: 'img',
-        src:
-            'https://public.curryscloudbackup.co.uk/webservice/accounts/00000000000000000000000000000000/sharing/withme/bppdegjn/images/ed14ecc37d7b4583b3ca1d83e62017e2?preset=previewpng&cacheKey=133556901520000000&width=720&height=720');
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1TJtX5Pl0gmXlYJpioDNdFXtYIg2DrGAu');
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -359,10 +357,8 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 5, 30);
     eventContext.head.setEventDate(startTime);
-    eventContext.head.addMediaItem(
-        type: 'img',
-        src:
-            'https://public.curryscloudbackup.co.uk/webservice/accounts/00000000000000000000000000000000/sharing/withme/bppdegjn/images/f76f2d6eb6964dc082a0226cf2649736?preset=previewpng&cacheKey=133556901530000000&width=720&height=720');
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=13-1cDYsCtpgJZ1E0sM02Jrj3ZYWVnziL');
 
     eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
     eventContext.program.setOnline(true);
@@ -416,10 +412,8 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 18, 15);
     eventContext.head.setEventDate(startTime);
-    eventContext.head.addMediaItem(
-        type: 'img',
-        src:
-            'https://public.curryscloudbackup.co.uk/webservice/accounts/00000000000000000000000000000000/sharing/withme/bppdegjn/images/188eb93e376740539d5f99b9d0496fbd?preset=previewpng&cacheKey=133556901510000000&width=720&height=720');
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1_Uw0FIXJkQXOdMydsS0Wu4lB_iqBDmZZ');
 
     eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 30)));
     eventContext.program.setOnline(true);
@@ -470,10 +464,8 @@ class SelectPostTemplatePage extends StatelessWidget {
 
     final DateTime startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 20, 0);
     eventContext.head.setEventDate(startTime);
-    eventContext.head.addMediaItem(
-        type: 'img',
-        src:
-            'https://public.curryscloudbackup.co.uk/webservice/accounts/00000000000000000000000000000000/sharing/withme/bppdegjn/images/2d1931bfbc0345d4b8921f34ca1225ca?preset=previewpng&cacheKey=133556901530000000&width=720&height=720');
+    eventContext.head
+        .addMediaItem(type: 'img', src: 'https://drive.google.com/uc?id=1IMiwkg-6bLxhnMyWNdWVkY0KpdO15NRI');
 
     eventContext.program.setFinishTime(startTime.add(const Duration(minutes: 45)));
     eventContext.program.setOnline(true);
