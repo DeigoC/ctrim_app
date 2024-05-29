@@ -238,8 +238,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         appContext.sharedPref.saveFCMToken(token);
       }
 
-      // TODO remove this in the future
-      messagingManager.subscribeToCTRIMBelfast();
       _appContext.sharedPref.setSubscribedToBelfast(true);
       _setNotificationTopicsTemp();
       appContext.sharedPref.nowOpened();
@@ -484,7 +482,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       messagingManager.subscribeToTopic('belfast-dawn-watch');
       messagingManager.subscribeToTopic('belfast-overnight-prayer');
       messagingManager.subscribeToTopic('belfast-youth-cg');
-      messagingManager.subscribeToTopic('Belfast'); // hardcode to Belfast for now
+      messagingManager.subscribeToTopic('Belfast'); // ! hardcode to Belfast for now
     }
   }
 }
