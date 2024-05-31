@@ -26,7 +26,7 @@ import 'add_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
-import 'select_post_template_page.dart';
+import 'post_templates/select_post_template_page.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});

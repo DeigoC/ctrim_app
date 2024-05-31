@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/events/post_templates/view_templates_page.dart';
 import 'package:ctrim_app/pages/personal/share_open_beta_page.dart';
 import 'package:ctrim_app/pages/personal/view_my_posts_page.dart';
 import 'package:flutter/foundation.dart';
@@ -98,6 +99,11 @@ class _PersonalHomeState extends State<PersonalHome> {
             onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
           ),
         ]);
+      }
+
+      if (widget.appContext.currentUser.isAreaAdmin) {
+        children.add(ListTile(
+            title: const Text("Post Templates"), onTap: _openViewTemplatesClick, leading: const Icon(Icons.list_alt)));
       }
 
       children.addAll([
@@ -202,5 +208,9 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _openShareOpenBetaClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ShareOpenBetaPage()));
+  }
+
+  void _openViewTemplatesClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewTemplatesPage()));
   }
 }

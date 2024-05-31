@@ -13,7 +13,7 @@ import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../widgets/info/timed_button_dialog.dart';
-import 'events/select_post_template_page.dart';
+import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
 import 'information/simple_info_page.dart';

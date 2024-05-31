@@ -140,6 +140,9 @@ class LocalDataManager {
     return File('$path/posts/$id/post_data.txt');
   }
 
+  // TODO start working on reading and writing template data
+  // * Post Templates
+
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;

@@ -17,4 +17,7 @@ class PostTemplate {
   void setDescription(final String description) => _description = description;
   void setHeadTitle(final String headTitle) => _headTitle = headTitle;
   void setBody(final String body) => _body = body;
+
+  // TODO we need a special method that converts all the fields to a json format to be stored locally
+  // TODO likewise, we need to create a special constructor that builds from a json/map
 }
