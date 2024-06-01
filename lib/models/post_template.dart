@@ -1,13 +1,27 @@
 class PostTemplate {
-  late String _title, _description, _headTitle, _body;
+  late String _id, _title, _description, _headTitle, _body;
 
-  PostTemplate({required final String title, required String description, required String headTitle}) {
+  PostTemplate(
+      {required String id, required final String title, required String description, required String headTitle}) {
+    _id = id;
     _title = title;
     _description = description;
     _headTitle = headTitle;
     _body = "TODO: get that default text";
   }
 
+  PostTemplate.fromMap(final String id, final Map<String, dynamic> data)
+      : _id = id,
+        _title = data['Title'],
+        _description = data['Description'],
+        _headTitle = data['HeadTitle'],
+        _body = data['Body'];
+
+  toJson() {
+    return {'Title': _title, 'Description': _description, 'HeadTitle': _headTitle, 'Body': _body};
+  }
+
+  String get id => _id;
   String get title => _title;
   String get description => _description;
   String get headTitle => _headTitle;

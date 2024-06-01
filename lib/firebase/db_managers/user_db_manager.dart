@@ -7,18 +7,18 @@ class UserDBManager {
       fromFirestore: (snap, _) => User.fromMap(snap.id, snap.data()!), toFirestore: (user, _) => user.toJson());
   static const String _supplemental = 'supplemental', _roles = 'roles', _posts = 'posts';
 
-  Future addUser(final User user) async {
+  Future<void> addUser(final User user) async {
     await _ref.doc(user.id).set(user);
     _ref.doc(user.id).collection(_supplemental).doc(_roles).set({_roles: []});
     _ref.doc(user.id).collection(_supplemental).doc(_posts).set({_posts: []});
   }
 
-  Future updateUser(final User user) async {
+  Future<void> updateUser(final User user) async {
     await _ref.doc(user.id).update(user.toJson());
   }
 
   Future<List<User>> fetchAllUsers() async {
-    var collection = await _ref.get();
+    final collection = await _ref.get();
     return List<User>.from(collection.docs.map((doc) => doc.data()).toList());
   }
 

@@ -1,12 +1,15 @@
-import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../utility/app_context.dart';
 import '../../../utility/event_context.dart';
 import '../add_event_page.dart';
 
 class SelectPostTemplatePage extends StatelessWidget {
+  // TODO convert to stateful, we will only perfrom a refresh upon doing a refresh scroll (do the same in editing suite)
+  // TODO we need to perform the check first thing upon logging in the app
+
   const SelectPostTemplatePage({super.key, required this.eventContext});
   static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;

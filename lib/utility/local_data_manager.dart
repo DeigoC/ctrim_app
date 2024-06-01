@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -142,6 +143,14 @@ class LocalDataManager {
 
   // TODO start working on reading and writing template data
   // * Post Templates
+  Future<void> writePostTemplateData(final String location, final PostTemplate template) async {
+    // TODO use the toJson function
+  }
+
+  Future<File> _getPostTemplateJson(final String location, final String filename) async {
+    final path = await _localPath;
+    return File('$path/post_templates/$location/$filename.json');
+  }
 
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
