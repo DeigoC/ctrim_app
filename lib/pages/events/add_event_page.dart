@@ -273,7 +273,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         title: _tecTitle.text.trim(),
         body: _tecSubtitle.text.trim(),
         data: {'PostID': newID},
-        iOSImage: widget.eventContext.head.getKeyGraphic(), // TODO does this work? Double check please
+        iOSImage: widget.eventContext.head.getKeyGraphic(),
         androidImage: widget.eventContext.head.getKeyGraphic());
   }
 

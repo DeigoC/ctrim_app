@@ -141,15 +141,55 @@ class LocalDataManager {
     return File('$path/posts/$id/post_data.txt');
   }
 
-  // TODO start working on reading and writing template data
   // * Post Templates
-  Future<void> writePostTemplateData(final String location, final PostTemplate template) async {
+  Future<void> writePostTemplateData(final PostTemplate template) async {
     // TODO use the toJson function
   }
 
-  Future<File> _getPostTemplateJson(final String location, final String filename) async {
+  Future<List<PostTemplate>> readAllPostTemplates() async {
     final path = await _localPath;
-    return File('$path/post_templates/$location/$filename.json');
+    final Directory dir = Directory('$path/post_templates');
+    final List<FileSystemEntity> entities = await dir.list().toList();
+    entities
+        .removeWhere((element) => element.path.contains('tracking.txt') || element.path.contains('check_tracking.txt'));
+    final List<PostTemplate> results = List.empty(growable: true);
+
+    for (final fileEntity in entities) {
+      debugPrint('reading path: ${fileEntity.path}');
+      final File tmpFile = File(fileEntity.path);
+      final String contents = await tmpFile.readAsString();
+      // TODO read the content as Json
+    }
+
+    return results;
+  }
+
+  Future<int> getLastPostTemplateUpdate() async {
+    final path = await _localPath;
+    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
+    if (await templateTrackingFile.exists()) {
+      final String valStr = await templateTrackingFile.readAsString();
+      return int.parse(valStr);
+    }
+    writeLastPostTemplateUpdate(0);
+    return 0;
+  }
+
+  Future<void> writeLastPostTemplateUpdate(final int value) async {
+    final path = await _localPath;
+    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
+    await templateTrackingFile.writeAsString(value.toString());
+  }
+
+  Future<bool> haveCheckedTemplateUpdates() async {
+    // also updates the date if needed - we'll clumsily just use the day of the week for now...
+    final path = await _localPath;
+    final File templateTrackingFile = File('$path/post_templates/check_tracking.txt');
+    if (await templateTrackingFile.readAsString() == DateTime.now().day.toString()) {
+      return true;
+    }
+    templateTrackingFile.writeAsString(DateTime.now().day.toString());
+    return false;
   }
 
   Future<String> get _localPath async {
