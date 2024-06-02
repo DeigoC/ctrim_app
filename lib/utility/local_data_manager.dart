@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ctrim_app/models/post_template.dart';
@@ -143,7 +144,13 @@ class LocalDataManager {
 
   // * Post Templates
   Future<void> writePostTemplateData(final PostTemplate template) async {
-    // TODO use the toJson function
+    final path = await _localPath;
+    final File thisTemplateFile = File('$path/post_templates/${template.id}.json');
+
+    final Map<String, dynamic> data = template.toJson();
+    data['id'] = template.id;
+    final String encodedJson = jsonEncode(data);
+    await thisTemplateFile.writeAsString(encodedJson);
   }
 
   Future<List<PostTemplate>> readAllPostTemplates() async {
@@ -155,16 +162,17 @@ class LocalDataManager {
     final List<PostTemplate> results = List.empty(growable: true);
 
     for (final fileEntity in entities) {
-      debugPrint('reading path: ${fileEntity.path}');
+      debugPrint('reading PostTemplate path: ${fileEntity.path}');
       final File tmpFile = File(fileEntity.path);
       final String contents = await tmpFile.readAsString();
-      // TODO read the content as Json
+      final Map<String, dynamic> contentJson = jsonDecode(contents);
+      results.add(PostTemplate.fromMap(contentJson['id'], contentJson));
     }
 
     return results;
   }
 
-  Future<int> getLastPostTemplateUpdate() async {
+  Future<int> readLastPostTemplateUpdate() async {
     final path = await _localPath;
     final File templateTrackingFile = File('$path/post_templates/tracking.txt');
     if (await templateTrackingFile.exists()) {
@@ -183,12 +191,20 @@ class LocalDataManager {
 
   Future<bool> haveCheckedTemplateUpdates() async {
     // also updates the date if needed - we'll clumsily just use the day of the week for now...
+
     final path = await _localPath;
-    final File templateTrackingFile = File('$path/post_templates/check_tracking.txt');
-    if (await templateTrackingFile.readAsString() == DateTime.now().day.toString()) {
+    final Directory postTemplateDir = Directory('$path/post_templates');
+    if (!await postTemplateDir.exists()) {
+      postTemplateDir.create();
+    }
+
+    final File checkFile = File('$path/post_templates/check_tracking.txt');
+    if (await checkFile.exists() && await checkFile.readAsString() == DateTime.now().day.toString()) {
+      debugPrint('We have already checked the post templates today');
       return true;
     }
-    templateTrackingFile.writeAsString(DateTime.now().day.toString());
+    debugPrint('We have to check the post templates');
+    checkFile.writeAsString(DateTime.now().day.toString());
     return false;
   }
 

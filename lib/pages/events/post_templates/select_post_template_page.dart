@@ -23,47 +23,34 @@ class SelectPostTemplatePage extends StatefulWidget {
 
 class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   final TextStyle _cardTitleStyle = const TextStyle(fontSize: 21), _cardContentStyle = const TextStyle(fontSize: 14);
-  final LocalDataManager _dataManager = LocalDataManager();
-
-  @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _dataManager.haveCheckedTemplateUpdates().then((checked) {
-        if (!checked) {
-          _checkThenUpdateTemplates();
-        }
-      });
-    });
-
-    super.initState();
-  }
-
-  Future<void> _checkThenUpdateTemplates() async {
-    final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    final int localUpdateValue = await _dataManager.getLastPostTemplateUpdate();
-    final int dbUpdateValue = await postTemplateDBManager.fetchLastUpdateTime();
-
-    if (localUpdateValue == dbUpdateValue) {
-      // perfrom the update
-      final List<PostTemplate> templates = await postTemplateDBManager.fetchAllTemplates();
-      for (final PostTemplate template in templates) {
-        _dataManager.writePostTemplateData(template);
-      }
-
-      final int newUpdateTime = DateTime.now().millisecondsSinceEpoch;
-      postTemplateDBManager.updateLastUpdateTime(newUpdateTime);
-      _dataManager.writeLastPostTemplateUpdate(newUpdateTime);
-    } else {}
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Choose Template')), body: _buildBody(context));
+    return Scaffold(appBar: AppBar(title: const Text('Choose Template')), body: _buildFBBody());
   }
 
-  Widget _buildNewBody() {
-    // return FutureBuilder(future: future, builder: builder)
-    return Container();
+  Widget _buildFBBody() {
+    return FutureBuilder(
+        future: _getTemplates(),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator());
+
+          if (snap.hasData) {
+            result = _buildBodyWithData(snap.data!);
+          } else if (snap.hasError) {
+            result = Center(child: Text('Something went wrong:\n${snap.error}'));
+          }
+          return result;
+        });
+  }
+
+  Widget _buildBodyWithData(final List<PostTemplate> templates) {
+    return ListView.builder(
+        itemCount: templates.length, itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
+  }
+
+  Widget _buildTemplateTile(final PostTemplate template) {
+    return ListTile(title: Text(template.title), subtitle: Text(template.description));
   }
 
   Widget _buildBody(BuildContext context) {
@@ -682,5 +669,38 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(r'[{"insert":"Hello, time to start writing!\n"}]');
 
     widget.eventContext.metadata.contributorUIDs.clear();
+  }
+
+  Future<List<PostTemplate>> _getTemplates() async {
+    final LocalDataManager dataManager = LocalDataManager();
+    final bool checkedToday = await dataManager.haveCheckedTemplateUpdates();
+
+    if (checkedToday) {
+      // read locally
+      return await dataManager.readAllPostTemplates();
+    }
+
+    // check online first...
+    //  if it's been updated: read all and update locally
+    //  otherwise, read locally
+    final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
+    final int localUpdateValue = await dataManager.readLastPostTemplateUpdate();
+    final int dbUpdateValue = await postTemplateDBManager.fetchLastUpdateTime();
+
+    if (localUpdateValue != dbUpdateValue) {
+      debugPrint('values dont match, time to update!');
+      // perfrom the update
+      final List<PostTemplate> templates = await postTemplateDBManager.fetchAllTemplates();
+      for (final PostTemplate template in templates) {
+        dataManager.writePostTemplateData(template);
+      }
+
+      final int newUpdateTime = DateTime.now().millisecondsSinceEpoch;
+      postTemplateDBManager.updateLastUpdateTime(newUpdateTime);
+      dataManager.writeLastPostTemplateUpdate(newUpdateTime);
+      return templates;
+    } else {
+      return await dataManager.readAllPostTemplates();
+    }
   }
 }
