@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
+// TODO make this class more generic to accomodate different churches via json files
 class BelfastChurchPage extends StatelessWidget {
   const BelfastChurchPage({super.key});
 

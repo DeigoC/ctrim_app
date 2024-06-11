@@ -66,23 +66,6 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
   }
 
   // * Logic
-  void _onSubscribedToBelfastClick(final bool newState) {
-    if (!newState) {
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Unsubscribing to Belfast',
-          content: 'You will no longer receive notifications of new posts from Belfast');
-      _messagingManager.unsubscribeFromCTRIMBelfast();
-      _appContext.analytics.logEvent(name: 'Notification: Unsubscribe from Belfast');
-    } else {
-      _messagingManager.subscribeToCTRIMBelfast();
-      _appContext.analytics.logEvent(name: 'Notification: Subscribe from Belfast');
-    }
-
-    setState(() {
-      _appContext.sharedPref.setSubscribedToBelfast(newState);
-    });
-  }
 
   void _onTopicClick(final String topic, final bool newState) {
     // update the messaaging manager accordingly, do the same with local storage, update the analytics

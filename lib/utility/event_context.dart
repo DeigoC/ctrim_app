@@ -410,12 +410,11 @@ class EventContext {
       'uid': firstLog[2]
     });
 
-    for (final logItem in logs) {
-      _log.addLog({
-        'log': logItem[0].replaceAll(r'\n', '\n'),
-        'ts': DateTime.fromMillisecondsSinceEpoch(int.parse(logItem[1])),
-        'uid': logItem[2]
-      });
+    for (final List<String> logItem in logs) {
+      _log.addLog(
+          log: logItem[0].replaceAll(r'\n', '\n'),
+          uid: logItem[2],
+          ts: DateTime.fromMillisecondsSinceEpoch(int.parse(logItem[1])));
     }
   }
 

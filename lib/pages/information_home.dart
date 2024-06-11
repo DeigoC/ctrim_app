@@ -154,7 +154,8 @@ class _InformationHomeState extends State<InformationHome> {
         child: ListView(key: const PageStorageKey<String>('information_churches_tab'), children: [
           _buildChurchSlot('Belfast', 'bel1.png'),
           _buildChurchSlot('Portadown', 'port1.png'),
-          _buildChurchSlot('North Coast', 'northC1.png')
+          _buildChurchSlot('North Coast', 'northC1.png'),
+          _buildChurchSlot('Larne/Carrickfergus', 'northC1.png'),
         ]));
   }
 
@@ -178,6 +179,7 @@ class _InformationHomeState extends State<InformationHome> {
             ])));
   }
 
+  // TODO transform into testimonials
   Widget _buildTeachingsTab(final double webHorizontalPadding) {
     final bool onWideWeb = webHorizontalPadding != 0;
     return MediaQuery.removePadding(
@@ -223,6 +225,7 @@ class _InformationHomeState extends State<InformationHome> {
                 ]))));
   }
 
+  // TODO transform into info section
   Widget _buildOneVerseEvangelismTab(final double webHorizontalPadding) {
     return MediaQuery.removePadding(
       removeTop: true,
