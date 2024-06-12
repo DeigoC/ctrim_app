@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 // import 'edit_info_body_page.dart';
 
-class SimpleInfoPage extends StatelessWidget {
-  const SimpleInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
+class CTRIMInfoPage extends StatelessWidget {
+  const CTRIMInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
   final String _jsonPath;
 
   @override

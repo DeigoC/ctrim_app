@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'information/belfast_church_page.dart';
+import 'information/church_info_page.dart';
 import 'information/north_coast_church_page.dart';
 import 'information/portadown_church_page.dart';
-import 'information/simple_info_page.dart';
+import 'information/ctrim_info_page.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({super.key, required this.tabController, required this.scrollController});
@@ -272,7 +272,7 @@ class _InformationHomeState extends State<InformationHome> {
 
   void _onChurchTap(final String church) {
     if (church == 'Belfast') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const BelfastChurchPage()));
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const ChurchInfoPage()));
     } else if (church == 'Portadown') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const PortadownChurchPage()));
     } else {
@@ -283,24 +283,24 @@ class _InformationHomeState extends State<InformationHome> {
   void _onTeachingTap(final String teaching) {
     switch (teaching) {
       case 'Prayer':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/prayer.json")));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/prayer.json")));
         break;
       case 'Love':
         Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/love.json")));
+            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/love.json")));
         break;
       case 'Reading The Bible':
         Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/bible_reading.json")));
+            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/bible_reading.json")));
         break;
       case 'Family':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/family.json")));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/family.json")));
         break;
       case 'Money':
         Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/money.json")));
+            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/money.json")));
         break;
       default:
     }
@@ -312,7 +312,7 @@ class _InformationHomeState extends State<InformationHome> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(
+                builder: (_) => const CTRIMInfoPage(
                       jsonPath: "assets/info/one_verse/romans_6_23.json",
                     )));
         break;
@@ -320,19 +320,17 @@ class _InformationHomeState extends State<InformationHome> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/jerimiah_29_11.json")));
+                builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/jerimiah_29_11.json")));
         break;
       case 'Matthew 6:33':
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/matthew_6_33.json")));
+                builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/matthew_6_33.json")));
         break;
       case 'Romans 12:2':
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/romans_12_2.json")));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/romans_12_2.json")));
         break;
     }
   }
