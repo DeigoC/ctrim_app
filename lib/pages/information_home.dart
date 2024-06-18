@@ -42,15 +42,15 @@ class _InformationHomeState extends State<InformationHome> {
                   bottom: TabBar(controller: widget.tabController, isScrollable: true, tabs: const [
                     Tab(text: 'About'),
                     Tab(text: 'Churches'),
-                    Tab(text: 'Topics'),
-                    Tab(text: 'One Verse Evangelism')
+                    Tab(text: 'Testimonials'),
+                    Tab(text: 'Information')
                   ]))
             ],
         body: TabBarView(controller: widget.tabController, children: [
           _buildAbout(webHorizontalPadding == 0 ? webHorizontalPadding + 8 : webHorizontalPadding),
           _buildChurchesTab(),
-          _buildTeachingsTab(webHorizontalPadding),
-          _buildOneVerseEvangelismTab(webHorizontalPadding)
+          _buildTestimonials(webHorizontalPadding),
+          _buildCtrimInformationSection(webHorizontalPadding)
         ]));
   }
 
@@ -180,29 +180,23 @@ class _InformationHomeState extends State<InformationHome> {
   }
 
   // TODO transform into testimonials
-  Widget _buildTeachingsTab(final double webHorizontalPadding) {
-    final bool onWideWeb = webHorizontalPadding != 0;
+  Widget _buildTestimonials(final double webHorizontalPadding) {
     return MediaQuery.removePadding(
         removeTop: true,
         context: context,
         child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: [
-          _buildTeachingSlot('Prayer', 'prayer.jpg', onWideWeb),
-          _buildTeachingSlot('Reading The Bible', 'bible_reading.jpg', onWideWeb),
-          _buildTeachingSlot('Love', 'love.jpg', onWideWeb),
-          _buildTeachingSlot('Family', 'family.jpg', onWideWeb),
-          _buildTeachingSlot('Money', 'money.avif', onWideWeb)
+          _buildTestimonialSlot('Maije', 'bible_reading.jpg'),
         ]));
   }
 
-  Widget _buildTeachingSlot(final String teaching, final String img, bool onWideWeb) {
+  Widget _buildTestimonialSlot(final String teaching, final String img) {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
         child: Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
             child: SizedBox(
-                height:
-                    onWideWeb ? MediaQuery.of(context).size.height * 0.55 : MediaQuery.of(context).size.height * 0.4,
+                height: MediaQuery.of(context).size.height * 0.4,
                 width: double.infinity,
                 child: Stack(children: [
                   Positioned.fill(
@@ -215,7 +209,7 @@ class _InformationHomeState extends State<InformationHome> {
                           child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () => _onTeachingTap(teaching),
+                                onTap: () => _onTestimonialTap(teaching),
                               )))),
                   Align(
                       alignment: Alignment.bottomLeft,
@@ -226,7 +220,7 @@ class _InformationHomeState extends State<InformationHome> {
   }
 
   // TODO transform into info section
-  Widget _buildOneVerseEvangelismTab(final double webHorizontalPadding) {
+  Widget _buildCtrimInformationSection(final double webHorizontalPadding) {
     return MediaQuery.removePadding(
       removeTop: true,
       context: context,
@@ -236,18 +230,18 @@ class _InformationHomeState extends State<InformationHome> {
             padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemCount: _oneVerseEvangelism.length,
-            itemBuilder: (_, index) => _buildVerseEvangelismCard(
+            itemBuilder: (_, index) => _buildCtrimInfoCard(
                 _oneVerseEvangelism[_oneVerseEvangelism.keys.elementAt(index)]!,
                 _oneVerseEvangelism.keys.elementAt(index))),
       ),
     );
   }
 
-  Widget _buildVerseEvangelismCard(final String verse, final String chapter) {
+  Widget _buildCtrimInfoCard(final String verse, final String chapter) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: InkWell(
-        onTap: () => _openVerseEvangelismPage(chapter),
+        onTap: () => _openCtrimInfoPage(chapter),
         child: Card(
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -280,7 +274,7 @@ class _InformationHomeState extends State<InformationHome> {
     }
   }
 
-  void _onTeachingTap(final String teaching) {
+  void _onTestimonialTap(final String teaching) {
     switch (teaching) {
       case 'Prayer':
         Navigator.push(
@@ -306,7 +300,7 @@ class _InformationHomeState extends State<InformationHome> {
     }
   }
 
-  void _openVerseEvangelismPage(final String chapter) {
+  void _openCtrimInfoPage(final String chapter) {
     switch (chapter) {
       case 'Romans 6:23':
         Navigator.push(

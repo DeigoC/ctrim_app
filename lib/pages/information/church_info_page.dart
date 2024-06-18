@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
+// TODO make this flexible to accept a ChurchInfo obj (containing a structured info for a Church page)
 class ChurchInfoPage extends StatelessWidget {
   const ChurchInfoPage({super.key});
 
@@ -26,7 +27,7 @@ class ChurchInfoPage extends StatelessWidget {
                     if (snapshot.hasData) {
                       result = _buildBodyWithData(webHorizontalPadding, context, snapshot.data);
                     } else if (snapshot.hasError) {
-                      result = Center(child: Text("Something went wrong: ${snapshot.error}"));
+                      result = Center(child: Text('Something went wrong: ${snapshot.error}'));
                     }
 
                     return result;
