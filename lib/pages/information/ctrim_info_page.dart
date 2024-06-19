@@ -1,10 +1,10 @@
+import 'package:ctrim_app/models/info/ctrim_info.dart';
+import 'package:ctrim_app/pages/information/edit_info_body_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:provider/provider.dart';
-import '../../utility/app_context.dart';
-// import 'edit_info_body_page.dart';
 
 class CTRIMInfoPage extends StatelessWidget {
   const CTRIMInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
@@ -12,9 +12,6 @@ class CTRIMInfoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
-
     return Scaffold(
         body: CustomScrollView(slivers: [
       const SliverAppBar(floating: true, snap: true),
@@ -25,7 +22,7 @@ class CTRIMInfoPage extends StatelessWidget {
                   builder: (_, snapshot) {
                     Widget result = const Center(child: CircularProgressIndicator());
                     if (snapshot.hasData) {
-                      result = _buildBodyWithData(webHorizontalPadding, context, snapshot.data);
+                      result = _buildBodyWithData(context, snapshot.data);
                     } else if (snapshot.hasError) {
                       result = Center(child: Text("Something went wrong: ${snapshot.error}"));
                     }
@@ -34,25 +31,36 @@ class CTRIMInfoPage extends StatelessWidget {
     ]));
   }
 
-  Widget _buildBodyWithData(
-      final double webHorizontalPadding, final BuildContext context, final Map<String, dynamic> json) {
-    final quill.QuillController controller = quill.QuillController(
-        document: quill.Document.fromJson(json['data']), selection: const TextSelection.collapsed(offset: 0));
-    Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: json['analyticTitle']);
+  Widget _buildBodyWithData(final BuildContext context, final Map<String, dynamic> data) {
+    final CtrimInfo ctrimInfo = CtrimInfo(data);
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        // ElevatedButton.icon(
-        //     onPressed: () =>
-        //         Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: json['data']))),
-        //     icon: const Icon(Icons.edit),
-        //     label: const Text("Edit Body")),
-        Flexible(
-            child: quill.QuillEditor.basic(
-                configurations: quill.QuillEditorConfigurations(readOnly: true, controller: controller))),
-        const SizedBox(height: 32)
-      ]),
+    final quill.QuillController controller = quill.QuillController(
+        document: quill.Document.fromJson(ctrimInfo.body), selection: const TextSelection.collapsed(offset: 0));
+
+    List<Widget> children = [
+      Image.asset('assets/images/bel2.jpg'),
+      const SizedBox(height: 8),
+      Flexible(
+          child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: quill.QuillEditor.basic(
+                  configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true)))),
+      const SizedBox(height: 32)
+    ];
+
+    if (kDebugMode) {
+      children.insert(
+          0,
+          ElevatedButton.icon(
+              onPressed: () =>
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: ctrimInfo.body))),
+              icon: const Icon(Icons.edit),
+              label: const Text("Edit Body")));
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: children,
     );
   }
 

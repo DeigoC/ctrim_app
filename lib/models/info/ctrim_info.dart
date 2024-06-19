@@ -1,14 +1,18 @@
 import 'dart:convert';
 
 class CtrimInfo {
-  final String body, church;
+  final String _church;
+  final List<dynamic> _body;
 
-  CtrimInfo(this.church, {required this.body});
+  CtrimInfo(final Map<String, dynamic> data)
+      : _body = data['body'],
+        _church = data['church'];
 
-  // TODO test the encoding of the body below if we can read it well afterwards
   String encode() {
-    Map<String, String> data = {'body': jsonEncode(body), 'church': church};
+    Map<String, dynamic> data = {'body': _body, 'church': _church};
 
     return jsonEncode(data);
   }
+
+  List<dynamic> get body => _body;
 }

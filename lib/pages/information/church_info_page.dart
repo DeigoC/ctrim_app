@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
-// TODO make this flexible to accept a ChurchInfo obj (containing a structured info for a Church page)
 class ChurchInfoPage extends StatelessWidget {
   const ChurchInfoPage({super.key});
 

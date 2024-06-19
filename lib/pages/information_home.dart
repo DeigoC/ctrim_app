@@ -1,3 +1,4 @@
+import 'package:ctrim_app/pages/information/testimonial_info_page.dart';
 import 'package:flutter/material.dart';
 
 import 'information/church_info_page.dart';
@@ -274,27 +275,13 @@ class _InformationHomeState extends State<InformationHome> {
     }
   }
 
-  void _onTestimonialTap(final String teaching) {
-    switch (teaching) {
-      case 'Prayer':
+  void _onTestimonialTap(final String person) {
+    switch (person) {
+      case 'Maije':
         Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/prayer.json")));
-        break;
-      case 'Love':
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/love.json")));
-        break;
-      case 'Reading The Bible':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/bible_reading.json")));
-        break;
-      case 'Family':
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/family.json")));
-        break;
-      case 'Money':
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/topic/money.json")));
+            context,
+            MaterialPageRoute(
+                builder: (_) => const TestimonialInfoPage(jsonPath: "assets/info/testimonials/maije.json")));
         break;
       default:
     }

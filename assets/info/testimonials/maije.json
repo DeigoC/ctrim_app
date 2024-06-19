@@ -1,0 +1,30 @@
+{
+    "analyticTitle":"Topic: Bible Reading",
+    "name":"finish name here",
+    "church":"North Coast",
+    "imgSrc":"some image",
+    "body": [
+        {
+            "insert": "This will be a testimonial!"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "header": 1
+            }
+        },
+        {
+            "insert": "\nReading the Bible is of paramount importance to Christians, and numerous references in the Bible itself emphasize its significance. Here are some of the reasons why reading the Bible is crucial for Christians:\n\n1. God's Word"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "header": 2
+            }
+        },
+        {
+            "insert": "The Bible is considered the Word of God by Christians. It is divinely inspired and serves as the ultimate authority for faith and life (2 Timothy 3:16-17). Reading the Bible enables Christians to understand God's teachings, will, and character.\n\n\n\n"
+        }
+    ]
+}
+
