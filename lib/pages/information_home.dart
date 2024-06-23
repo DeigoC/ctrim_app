@@ -16,14 +16,11 @@ class InformationHome extends StatefulWidget {
 
 class _InformationHomeState extends State<InformationHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const Map<String, String> _oneVerseEvangelism = {
-    'Romans 6:23': 'For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord.',
-    'Jerimiah 29:11':
-        'For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope.',
-    'Matthew 6:33':
-        'But seek first the kingdom of God and his righteousness, and all these things will be added to you.',
-    'Romans 12:2':
-        'Do not be conformed to this world, but be transformed by the renewal of your mind, that by testing you may discern what is the will of God, what is good and acceptable and perfect.',
+  static const Map<String, String> _ctrimInfoTopics = {
+    'Core Values': 'What do we live and work for?',
+    '4XD Acts DNA': 'What is the framework we follow?',
+    'Cell Groups': 'Our core strategy in winning souls and strengthing in each other',
+    'Devotionals': 'How do we take care of our relationship with God?',
   };
 
   @override
@@ -220,7 +217,6 @@ class _InformationHomeState extends State<InformationHome> {
                 ]))));
   }
 
-  // TODO transform into info section
   Widget _buildCtrimInformationSection(final double webHorizontalPadding) {
     return MediaQuery.removePadding(
       removeTop: true,
@@ -230,31 +226,30 @@ class _InformationHomeState extends State<InformationHome> {
         child: ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemCount: _oneVerseEvangelism.length,
+            itemCount: _ctrimInfoTopics.length,
             itemBuilder: (_, index) => _buildCtrimInfoCard(
-                _oneVerseEvangelism[_oneVerseEvangelism.keys.elementAt(index)]!,
-                _oneVerseEvangelism.keys.elementAt(index))),
+                _ctrimInfoTopics[_ctrimInfoTopics.keys.elementAt(index)]!, _ctrimInfoTopics.keys.elementAt(index))),
       ),
     );
   }
 
-  Widget _buildCtrimInfoCard(final String verse, final String chapter) {
+  Widget _buildCtrimInfoCard(final String description, final String topic) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: InkWell(
-        onTap: () => _openCtrimInfoPage(chapter),
+        onTap: () => _openCtrimInfoPage(topic),
         child: Card(
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child:
                     Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Text(
-                    verse,
+                    topic,
                     style: const TextStyle(fontSize: 21),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    chapter,
+                    description,
                     style: const TextStyle(fontSize: 16),
                     textAlign: TextAlign.right,
                   )
@@ -287,29 +282,29 @@ class _InformationHomeState extends State<InformationHome> {
     }
   }
 
-  void _openCtrimInfoPage(final String chapter) {
-    switch (chapter) {
-      case 'Romans 6:23':
+  void _openCtrimInfoPage(final String topic) {
+    switch (topic) {
+      case 'Core Values':
         Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (_) => const CTRIMInfoPage(
-                      jsonPath: "assets/info/one_verse/romans_6_23.json",
+                      jsonPath: "assets/info/ctrim_info/core_values.json",
                     )));
         break;
-      case 'Jerimiah 29:11':
+      case '4XD Acts DNA':
         Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/jerimiah_29_11.json")));
         break;
-      case 'Matthew 6:33':
+      case 'Cell Groups':
         Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/matthew_6_33.json")));
         break;
-      case 'Romans 12:2':
+      case 'Devotionals':
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/romans_12_2.json")));
         break;
