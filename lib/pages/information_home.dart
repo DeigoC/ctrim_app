@@ -2,8 +2,6 @@ import 'package:ctrim_app/pages/information/testimonial_info_page.dart';
 import 'package:flutter/material.dart';
 
 import 'information/church_info_page.dart';
-import 'information/north_coast_church_page.dart';
-import 'information/portadown_church_page.dart';
 import 'information/ctrim_info_page.dart';
 
 class InformationHome extends StatefulWidget {
@@ -262,11 +260,14 @@ class _InformationHomeState extends State<InformationHome> {
 
   void _onChurchTap(final String church) {
     if (church == 'Belfast') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const ChurchInfoPage()));
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/belfast.json')));
     } else if (church == 'Portadown') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const PortadownChurchPage()));
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/portadown.json')));
     } else {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const NorthCoastChurchPage()));
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/nc.json')));
     }
   }
 
