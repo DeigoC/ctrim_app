@@ -2,28 +2,60 @@
     "analyticTitle":"Topic: Bible Reading",
     "name":"finish name here",
     "church":"North Coast",
-    "imgSrc":"some image",
+    "imgSrc":"assets/images/maije.jpg",
     "body": [
         {
-            "insert": "This will be a testimonial!"
+            "insert": "What were you like before CTRIM?",
+            "attributes": {
+                "size": "large",
+                "font": "sans-serif",
+                "italic": true
+            }
         },
         {
             "insert": "\n",
             "attributes": {
-                "header": 1
+                "align": "center",
+                "code-block": true
             }
         },
         {
-            "insert": "\nReading the Bible is of paramount importance to Christians, and numerous references in the Bible itself emphasize its significance. Here are some of the reasons why reading the Bible is crucial for Christians:\n\n1. God's Word"
+            "insert": "\nBefore becoming a Christian and being a part of the CTRIM Church, I used to live in the Philippines. During those times, I have lived day by day having the wrong mindset that I already have a good relationship with God because I know Him and I pray to Him but in spite of this, it still feels like there was something missing. There is something missing that even I myself could not describe. It just felt like I cannot understand why others are happy with their life and I am not. That is how I felt from my childhood years even until I reached young adulthood. In those times, I was living a life without a clear purpose and was following my own will, whatever I think was right or feel right. I was living with so many burdens in my heart that was weighing me down. I had no peace, no joy and I was full of anxiety, worries, fears and I was always dwelling on the past with bitterness, unforgiveness and resentment. It was not just chaos outside but even inside of me, in my heart and in my mind. \n\nNevertheless, a lot of people and circumstances were used by God to plant His seeds in my heart when I was still in the Philippines. I grew up being taught by my parents how to pray and also to attend Church on Sundays. I can also remember that a lot of people had prayed for me, invited me to Christian Church at different stages of my life. My grandmother would bring me to the Christian Church she was attending to when I was still a small child. I was able pray the prayer of acceptance for Jesus as my Lord and Saviour multiple times at different stages but the first time was when my elder cousin lead me into the prayer of acceptance, if I remember it right, it was when I was in grade 4. However, during that time, I had no idea what it truly meant. I was too young to digest what was the true essence of that prayer. There was also a time when I was in High school when my classmate would share the word of God to me. Another classmate of mine also invited me to their house and there were Pastors who prayed for me in there. After finishing my studies, I also worked in a charity hospital as a nurse which was owned by a Christian and also run by Christians, to which even my colleagues at work, some of them were Pastor’s daughters and shares the word of God to me. There was even an instance when one of my patients shared the word of God to me. These are just some of the many countless ways and people to which God used for my life to sow His words in me. I was being pursued by God from the very beginning. He loved me so much that He did not stop pursuing me but still, I was not able to yield and surrender my life to Him in those times. I did not choose Him. \n\nBut all these things, I never realised until I came to the UK and finally and truly understood what it really meant to accept Jesus as my Lord and Saviour. All the ways God had pursued me, it went into my remembrance like a flashback.\n\n"
+        },
+        {
+            "insert": "How did you get to know CTRIM?",
+            "attributes": {
+                "italic": true,
+                "font": "sans-serif",
+                "size": "large"
+            }
         },
         {
             "insert": "\n",
             "attributes": {
-                "header": 2
+                "align": "center",
+                "code-block": true
             }
         },
         {
-            "insert": "The Bible is considered the Word of God by Christians. It is divinely inspired and serves as the ultimate authority for faith and life (2 Timothy 3:16-17). Reading the Bible enables Christians to understand God's teachings, will, and character.\n\n\n\n"
+            "insert": "\nWhen I came in the UK, I did not know anyone, did not know the place and did not know how I would start from scratch but one thing is for sure, I knew that time that I needed the Lord so badly. I came to the UK at almost winter time and it was so depressing. The weather and the atmosphere was so dark and gloomy and I was also dealing with problems during that time. I felt so alone. My soul was crying out for help. I came looking for a church to go to. \n\nAlmost seven months later, one day, I received a call from one of my friends and she told me if I would want to come to their house and join  them for Bible study(caregroup) for there will be Pastors that will be coming to share the word of God. For the first time that someone has invited me for a Bible study, I got really excited. I jumped out of the bed and prepared to go. I knew in my heart that this is the answer for my cry for help. From there, I was introduced to Pastor James and Pastora Nelyn Baccay. They were the ones who shared the word of God in the caregroup and they lead us to pray the prayer of acceptance. I couldn’t help myself from crying when I was praying the prayer of acceptance. It was God’s appointed time. It felt like something was lifted. The burden that I was carrying was lifted. It felt like I was lost for a long time, for all my life and then finally I was found. I knew that it was the start of something new.\n\nSince then, week after week, we would meet up and do the caregroup. I was also able to attend regularly the CTRIM Sunday worship services. My Pastors, brothers and sisters in Christ in the Church became my Spiritual Family in Jesus. Day by day I was making baby steps towards the Christian life and then I also attended the Encounter and finally, my eyes were opened. I was blind but now I see. \nI have also known my true purpose which is to love God and to love people, and my mission here on earth is to make disciples of all nations as the Lord Jesus has commanded (Matthew 22:37-40). \n\nLittle did I know that I needed an encounter with Jesus that will turn my life around, that one encounter with Jesus will change my life. Before, although I would hear that Jesus died for the sins of people as mentioned in John 3:16 and I would look at the cross, I had no deep understanding that it was my sins that He also died for. Having an encounter with Jesus, I realised how sinful I was but at the same time, I understood that my sins were forgiven, that I am loved and every punishment that I was to be given, the Lord Jesus had already taken it for me, that He paid the price in full through the cross so I may be saved. I was saved not by works but by grace through faith in Christ Jesus because He has a great plan for me(Ephesians 2:8-10). I finally understood what grace meant which I would always hear before but have never really understood what it really was. \n\nI have also remembered and realised those times that I was being pursued by God but did not choose Him but still He never gave up on me and still chose me. The Lord had it written in my heart which also became my life verse when He said in John 15:16, You did not choose me, but I chose you and appointed you so that you might go and bear fruit—fruit that will last—and so that whatever you ask in my name the Father will give you.\n\n"
+        },
+        {
+            "insert": "How are you now?",
+            "attributes": {
+                "size": "large",
+                "italic": true
+            }
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "align": "center",
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\nYears have passed and now, looking back from where I have started, walking baby steps into the Christian life with the help of my Pastors as my Spiritual parents and also together with the support of my brothers and sisters in Christ, I can say that there is still more that needs to be changed in me but a lot has also already changed in me. God is still continually changing me from glory to glory and from strength to strength, making me the disciple that He wants me to be. I am still a work in progress and I know I will always be until I see Him face to face. From being the very timid, fearful, anxious and emotionally driven me, I can say that when things gets tough and I am being attacked by the enemy with anxious thoughts, fear, worries and doubts and when problems weigh me down, I do not lean on my own wisdom anymore. I know now how to fight by the help, grace and mercy of God through standing in the promises of the Lord and to battle in the Spiritual realm through prayer and fasting as He had said in the scripture. I now know that the very first thing I have to do is not to resort on doing and relying on myself but relying on the leading of the Holy Spirit, putting my faith and trust in Jesus, seeking God for answers, solutions and for wisdom (Matthew 6:33). In the times that I am too weak to fight, I have also learned to trust the Lord that His grace is sufficient for me and His power is made perfect in my weakness(2 Corinthians 12:9). With these, I experience the peace that surpasses all understanding that guards my heart in Christ Jesus(Philippians 4:6-7).\n\nI thought coming here to the UK was only so I may be able to fulfil the dreams I have for my self and my family, but the Lord had greater plans than I, myself had. He even wrecked the plans I had for myself that later on I have understood that He wrecked those plans because those plans I had for myself were about to wreck me. My dreams for me were only temporal but the Lord’s dreams for me are for eternal purpose that is why He brought me here. He had surpassed more than I have ever prayed for, hoped for and imagined(Ephesians 3:20). Never in my wildest dreams before have I thought that I will be able to do the things I do for Him now. The Lord has given me an opportunity to a new life, my old self is gone and the new is here (2 Corinthians 5:17). \n\nOnly by the grace, help and the mercy of God alone and with His enablement, I have served and serving now in different ministries in the CTRIM Church. The adults caregroup, youth, the kids Sunday school ministry, the worship team \n and also as one of the primary leaders to my loving and caring pastors, Pastor James Paul and Pastora Nelyn Baccay.\n\nThe CTRIM church headed by our Senior Pastor, Pastor Deo Valdez and his wife, our Deputy Pastor, Pastora Ingrid Valdez are so committed into making disciples and doing the commands of the Lord by training us and equipping us for our growth and so we may pass it on also to others continuing the command of God in Matthew 28:19-20 as it says, “Therefore go and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit, and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.”\nThis is to which I am more than blessed to be one of those who had benefit from it. \n\nTo God be all the glory and honour forever!\n"
         }
     ]
 }
