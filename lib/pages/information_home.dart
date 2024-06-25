@@ -294,20 +294,18 @@ class _InformationHomeState extends State<InformationHome> {
                     )));
         break;
       case '4XD Acts DNA':
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/jerimiah_29_11.json")));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/ctrim_info/4xd.json")));
         break;
       case 'Cell Groups':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/ctrim_info/cell_group.json")));
+        break;
+      case 'Devotionals':
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/matthew_6_33.json")));
-        break;
-      case 'Devotionals':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/one_verse/romans_12_2.json")));
+                builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/ctrim_info/devotionals.json")));
         break;
     }
   }
