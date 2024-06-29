@@ -38,6 +38,7 @@ class CTRIMInfoPage extends StatelessWidget {
         document: quill.Document.fromJson(ctrimInfo.body), selection: const TextSelection.collapsed(offset: 0));
 
     List<Widget> children = [
+      const Divider(),
       const SizedBox(height: 8),
       Flexible(
           child: Padding(

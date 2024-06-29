@@ -1,15 +1,14 @@
 {
-    "analyticTitle":"Topic: Bible Reading",
-    "name":"finish name here",
-    "church":"North Coast",
+    "analyticTitle":"Testimonial: Maije Gobaton",
+    "name":"Maije Gobaton",
+    "church":"Northcoast / Derry Londonderry",
     "imgSrc":"assets/images/maije.jpg",
     "body": [
         {
             "insert": "What were you like before CTRIM?",
             "attributes": {
                 "size": "large",
-                "font": "sans-serif",
-                "italic": true
+                "font": "sans-serif"
             }
         },
         {
@@ -25,7 +24,6 @@
         {
             "insert": "How did you get to know CTRIM?",
             "attributes": {
-                "italic": true,
                 "font": "sans-serif",
                 "size": "large"
             }
@@ -43,8 +41,7 @@
         {
             "insert": "How are you now?",
             "attributes": {
-                "size": "large",
-                "italic": true
+                "size": "large"
             }
         },
         {

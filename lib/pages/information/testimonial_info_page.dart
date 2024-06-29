@@ -7,50 +7,66 @@ import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class TestimonialInfoPage extends StatelessWidget {
-  const TestimonialInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
-  final String _jsonPath;
+  const TestimonialInfoPage({super.key, required String jsonPath, required String initialImageSrc})
+      : _jsonPath = jsonPath,
+        _initialImageSrc = initialImageSrc;
+  final String _jsonPath, _initialImageSrc;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: CustomScrollView(slivers: [
-      const SliverAppBar(
-        floating: true,
-        snap: true,
-        title: Text('Testimonial'),
-      ),
+      const SliverAppBar(floating: true, snap: true, title: Text('Testimonial')),
       SliverToBoxAdapter(
           child: SingleChildScrollView(
-              child: FutureBuilder(
-                  future: _loadJson(),
-                  builder: (_, snapshot) {
-                    Widget result = const Center(child: CircularProgressIndicator());
-                    if (snapshot.hasData) {
-                      result = _buildBodyWithData(context, snapshot.data);
-                    } else if (snapshot.hasError) {
-                      result = Center(child: Text("Something went wrong: ${snapshot.error}"));
-                    }
-                    return result;
-                  })))
+              child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Hero(
+            tag: 'initialTestimonialImage_$_initialImageSrc',
+            child: Image.asset(
+              _initialImageSrc,
+              height: MediaQuery.of(context).size.height * 0.4,
+              fit: BoxFit.cover,
+            ),
+          ),
+          FutureBuilder(
+              future: _loadJson(),
+              builder: (_, snapshot) {
+                Widget result = const Center(child: CircularProgressIndicator());
+                if (snapshot.hasData) {
+                  result = _buildBodyWithData(context, snapshot.data);
+                } else if (snapshot.hasError) {
+                  result = Center(child: Text("Something went wrong: ${snapshot.error}"));
+                }
+                return result;
+              }),
+        ],
+      )))
     ]));
   }
 
   Widget _buildBodyWithData(final BuildContext context, final Map<String, dynamic> data) {
     final TestimonialInfo testimonialInfo = TestimonialInfo(data);
 
-    debugPrint('church is ${testimonialInfo.church}');
-
     final quill.QuillController controller = quill.QuillController(
         document: quill.Document.fromJson(testimonialInfo.body), selection: const TextSelection.collapsed(offset: 0));
 
     List<Widget> children = [
-      Image.asset('assets/images/bel2.jpg'),
+      Text(
+        testimonialInfo.name,
+        style: const TextStyle(fontSize: 32),
+      ),
+      Text(
+        testimonialInfo.church,
+        style: const TextStyle(fontSize: 16),
+      ),
+      const SizedBox(height: 8),
+      const Divider(),
       const SizedBox(height: 8),
       Flexible(
-          child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: quill.QuillEditor.basic(
-                  configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true)))),
+          child: quill.QuillEditor.basic(
+              configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true))),
       const SizedBox(height: 32)
     ];
 
@@ -64,9 +80,13 @@ class TestimonialInfoPage extends StatelessWidget {
               label: const Text("Edit Body")));
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: children,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
     );
   }
 

@@ -23,9 +23,6 @@ class _InformationHomeState extends State<InformationHome> {
 
   @override
   Widget build(BuildContext context) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
-
     return NestedScrollView(
         controller: widget.scrollController,
         headerSliverBuilder: (_, __) => [
@@ -42,15 +39,12 @@ class _InformationHomeState extends State<InformationHome> {
                     Tab(text: 'Information')
                   ]))
             ],
-        body: TabBarView(controller: widget.tabController, children: [
-          _buildAbout(webHorizontalPadding == 0 ? webHorizontalPadding + 8 : webHorizontalPadding),
-          _buildChurchesTab(),
-          _buildTestimonials(webHorizontalPadding),
-          _buildCtrimInformationSection(webHorizontalPadding)
-        ]));
+        body: TabBarView(
+            controller: widget.tabController,
+            children: [_buildAbout(), _buildChurchesTab(), _buildTestimonials(), _buildCtrimInformationSection()]));
   }
 
-  Widget _buildAbout(final double webHorizontalPadding) {
+  Widget _buildAbout() {
     const String matthewVerse = '“Therefore go and make disciples of all nations, baptizing them in the '
         'name of the Father and of the Son and of the Holy Spirit, and '
         'teaching them to obey everything I have commanded you. And '
@@ -88,7 +82,7 @@ class _InformationHomeState extends State<InformationHome> {
     return MediaQuery.removePadding(
         context: context,
         removeTop: true,
-        child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: const [
+        child: ListView(padding: const EdgeInsets.symmetric(horizontal: 8), children: const [
           // Image.network('https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'),
           SizedBox(height: 32),
           Padding(
@@ -148,25 +142,21 @@ class _InformationHomeState extends State<InformationHome> {
         removeTop: true,
         context: context,
         child: ListView(key: const PageStorageKey<String>('information_churches_tab'), children: [
-          _buildChurchSlot('Belfast', 'bel1.png'),
-          _buildChurchSlot('Portadown', 'port1.png'),
-          _buildChurchSlot('North Coast', 'northC1.png'),
-          _buildChurchSlot('Larne/Carrickfergus', 'northC1.png'),
+          _buildChurchSlot('Belfast', 'assets/images/bel1.png'),
+          _buildChurchSlot('Portadown', 'assets/images/port1.png'),
+          _buildChurchSlot('North Coast', 'assets/images/northC1.png'),
+          _buildChurchSlot('Larne/Carrickfergus', 'assets/images/northC1.png'),
         ]));
   }
 
   Widget _buildChurchSlot(final String church, final String img) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
-    final bool onWideWeb = webHorizontalPadding != 8;
-
     return InkWell(
         onTap: () => _onChurchTap(church),
         child: SizedBox(
-            height: onWideWeb ? MediaQuery.of(context).size.height * 0.7 : MediaQuery.of(context).size.height * 0.4,
+            height: MediaQuery.of(context).size.height * 0.4,
             width: double.infinity,
             child: Stack(children: [
-              Positioned.fill(child: Image.asset('assets/images/$img', fit: BoxFit.cover)),
+              Positioned.fill(child: Hero(tag: 'initialChurchImage_$img', child: Image.asset(img, fit: BoxFit.cover))),
               Align(
                   alignment: Alignment.bottomLeft,
                   child: Padding(
@@ -175,54 +165,80 @@ class _InformationHomeState extends State<InformationHome> {
             ])));
   }
 
-  // TODO transform into testimonials
-  Widget _buildTestimonials(final double webHorizontalPadding) {
+  Widget _buildTestimonials() {
     return MediaQuery.removePadding(
         removeTop: true,
         context: context,
-        child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: [
-          _buildTestimonialSlot('Maije', 'bible_reading.jpg'),
-        ]));
+        child: ListView(
+            children: [_buildTestimonialSlot('Maije', 'assets/images/maije.jpg'), _buildMoreTestimonialSlot()]));
   }
 
-  Widget _buildTestimonialSlot(final String teaching, final String img) {
+  Widget _buildTestimonialSlot(final String personName, final String img) {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
         child: Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
             child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
+                height: MediaQuery.of(context).size.height * 0.32,
                 width: double.infinity,
                 child: Stack(children: [
                   Positioned.fill(
                       child: ClipRRect(
                           borderRadius: const BorderRadius.all(Radius.circular(32)),
-                          child: Image.asset('assets/images/$img', fit: BoxFit.cover))),
+                          child:
+                              Hero(tag: 'initialTestimonialImage_$img', child: Image.asset(img, fit: BoxFit.cover)))),
                   Positioned.fill(
                       child: ClipRRect(
                           borderRadius: const BorderRadius.all(Radius.circular(32)),
                           child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () => _onTestimonialTap(teaching),
+                                onTap: () => _onTestimonialTap(personName),
                               )))),
                   Align(
                       alignment: Alignment.bottomLeft,
                       child: Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text(teaching, style: const TextStyle(fontSize: 32, color: Colors.white))))
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(personName, style: const TextStyle(fontSize: 32, color: Colors.white)),
+                              const Text(
+                                'Going to add a bit more text just as a tease or something. Might be this long',
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              )
+                            ],
+                          )))
                 ]))));
   }
 
-  Widget _buildCtrimInformationSection(final double webHorizontalPadding) {
+  Widget _buildMoreTestimonialSlot() {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+        child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.10,
+                width: double.infinity,
+                child: const Stack(children: [
+                  Align(
+                      alignment: Alignment.center,
+                      child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text("More on the way...!", style: TextStyle(fontSize: 24))))
+                ]))));
+  }
+
+  Widget _buildCtrimInformationSection() {
     return MediaQuery.removePadding(
       removeTop: true,
       context: context,
       child: Padding(
         padding: const EdgeInsets.only(top: 8.0),
         child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemCount: _ctrimInfoTopics.length,
             itemBuilder: (_, index) => _buildCtrimInfoCard(
@@ -245,12 +261,7 @@ class _InformationHomeState extends State<InformationHome> {
                     topic,
                     style: const TextStyle(fontSize: 21),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: const TextStyle(fontSize: 16),
-                    textAlign: TextAlign.right,
-                  )
+                  Text(description, style: const TextStyle(fontSize: 16))
                 ]))),
       ),
     );
@@ -260,14 +271,25 @@ class _InformationHomeState extends State<InformationHome> {
 
   void _onChurchTap(final String church) {
     if (church == 'Belfast') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/belfast.json')));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ChurchInfoPage(
+                    jsonPath: 'assets/info/churches/belfast.json',
+                    imageSrc: 'assets/images/bel1.png',
+                  )));
     } else if (church == 'Portadown') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/portadown.json')));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ChurchInfoPage(
+                  jsonPath: 'assets/info/churches/portadown.json', imageSrc: 'assets/images/port1.png')));
     } else {
       Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/nc.json')));
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ChurchInfoPage(
+                  jsonPath: 'assets/info/churches/nc.json', imageSrc: 'assets/images/northC1.png')));
     }
   }
 
@@ -277,7 +299,10 @@ class _InformationHomeState extends State<InformationHome> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const TestimonialInfoPage(jsonPath: "assets/info/testimonials/maije.json")));
+                builder: (_) => const TestimonialInfoPage(
+                      jsonPath: 'assets/info/testimonials/maije.json',
+                      initialImageSrc: 'assets/images/maije.jpg',
+                    )));
         break;
       default:
     }

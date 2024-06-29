@@ -9,8 +9,10 @@ import '../../utility/app_context.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class ChurchInfoPage extends StatelessWidget {
-  const ChurchInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
-  final String _jsonPath;
+  const ChurchInfoPage({super.key, required String jsonPath, required String imageSrc})
+      : _jsonPath = jsonPath,
+        _initialImageSrc = imageSrc;
+  final String _jsonPath, _initialImageSrc;
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +21,31 @@ class ChurchInfoPage extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(title: const Text('Belfast')),
         body: SingleChildScrollView(
-            child: FutureBuilder(
-          future: _loadJson(),
-          builder: (context, snapshot) {
-            Widget result = const Center(child: CircularProgressIndicator());
-            if (snapshot.hasData) {
-              result = _buildBodyWithData(context, snapshot.data);
-            } else if (snapshot.hasError) {
-              result = Center(child: Text('Something went wrong: ${snapshot.error}'));
-            }
+            child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Hero(
+              tag: 'initialChurchImage_$_initialImageSrc',
+              child: Image.asset(
+                _initialImageSrc,
+                height: MediaQuery.of(context).size.height * 0.4,
+                fit: BoxFit.cover,
+              ),
+            ),
+            FutureBuilder(
+              future: _loadJson(),
+              builder: (context, snapshot) {
+                Widget result = const Center(child: CircularProgressIndicator());
+                if (snapshot.hasData) {
+                  result = _buildBodyWithData(context, snapshot.data);
+                } else if (snapshot.hasError) {
+                  result = Center(child: Text('Something went wrong: ${snapshot.error}'));
+                }
 
-            return result;
-          },
+                return result;
+              },
+            ),
+          ],
         )));
   }
 
@@ -41,7 +56,6 @@ class ChurchInfoPage extends StatelessWidget {
         document: quill.Document.fromJson(ctrimInfo.body), selection: const TextSelection.collapsed(offset: 0));
 
     List<Widget> children = [
-      Image.asset(ctrimInfo.imgSrc),
       const SizedBox(height: 8),
       Flexible(
           child: Padding(

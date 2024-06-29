@@ -18,4 +18,5 @@ class TestimonialInfo {
 
   List<dynamic> get body => _body;
   String get church => _church;
+  String get name => _name;
 }
