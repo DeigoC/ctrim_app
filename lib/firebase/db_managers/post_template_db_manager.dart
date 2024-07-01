@@ -5,19 +5,19 @@ class PostTemplateDBManager {
   static final CollectionReference _ref = FirebaseFirestore.instance.collection('post_templates');
 
   Future<void> addPostTemplate(final PostTemplate template) async {
-    await _ref.doc(template.id).update(template.toJson());
+    await _ref.doc().set(template.toJson(false));
   }
 
   Future<List<PostTemplate>> fetchAllTemplates() async {
     final collection = await _ref.get();
     return collection.docs
         .where((doc) => doc.id.compareTo('ALastUpdate') != 0)
-        .map((e) => PostTemplate.fromMap(e.id, e.data() as Map<String, dynamic>))
+        .map((e) => PostTemplate.fromMap(false, e.id, e.data() as Map<String, dynamic>))
         .toList();
   }
 
   Future<void> updateTemplate(final PostTemplate template) async {
-    await _ref.doc(template.id).update(template.toJson());
+    await _ref.doc(template.id).update(template.toJson(false));
   }
 
   Future<int> fetchLastUpdateTime() async {

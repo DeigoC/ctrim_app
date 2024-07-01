@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctrim_app/firebase/db_managers/post_template_db_manager.dart';
 import 'package:ctrim_app/models/post_template.dart';
 import 'package:ctrim_app/utility/local_data_manager.dart';
@@ -22,11 +23,23 @@ class SelectPostTemplatePage extends StatefulWidget {
 }
 
 class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
+  final LocalDataManager _localDataManager = LocalDataManager();
+
+  @override
+  void initState() {
+    _localDataManager.readLastPostTemplateUpdate();
+    super.initState();
+  }
+
   final TextStyle _cardTitleStyle = const TextStyle(fontSize: 21), _cardContentStyle = const TextStyle(fontSize: 14);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Choose Template')), body: _buildBody(context));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Choose Template')),
+      body: _buildBody(context),
+      floatingActionButton: _buildTestButton(),
+    );
   }
 
   Widget _buildFBBody() {
@@ -171,6 +184,57 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                         Text('A clean slate', style: _cardContentStyle)
                       ])))),
     ]);
+  }
+
+  Widget _buildTestButton() {
+    return FloatingActionButton.extended(
+        label: const Text('Test here'),
+        onPressed: () async {
+          // create a simple Template for now
+          final Map<String, dynamic> templateData = {
+            'Title': 'here is a title',
+            'Description': 'here is a description',
+            'HeadTitle': 'here is the head title',
+            'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
+            'Location': 'Belfast',
+            'Topics': ['topic1'],
+            'Contributors': ['3'],
+            'AllDay': false,
+            'Online': false,
+            'Address': 'Some address here',
+            'MapLink': 'some link here',
+            'Media': [
+              {'src': 'imgsrc1', 'title': 'title here for image', 'type': 'img'}
+            ],
+            'HeadMedia': List<Map<String, dynamic>>.empty(),
+            'Roles': List<Map<String, dynamic>>.from([
+              {
+                'uids': ['2'],
+                'detail': '',
+                'title': 'An example Title',
+                'start': DateTime.now().millisecondsSinceEpoch,
+                'end': DateTime.now().add(const Duration(minutes: 15)).millisecondsSinceEpoch,
+                'for_guests': true,
+                'id': 123213
+              }
+            ]),
+          };
+          final PostTemplate thisTemplate = PostTemplate.fromMap(true, '1', templateData);
+
+          // try writing to local storage as a Json
+          debugPrint('---- Creating PostTemplate complete, time to write to local storage');
+          await _localDataManager.writePostTemplateData(thisTemplate);
+
+          // then try to read it again
+          debugPrint('---- Time to read in the data');
+          final allTemplates = await _localDataManager.readAllPostTemplates();
+
+          debugPrint('---- Time to save the data over to the DB');
+          PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
+          await postTemplateDBManager.addPostTemplate(allTemplates.first);
+
+          debugPrint('---- Time to save the data over to the DB');
+        });
   }
 
   // * Logic

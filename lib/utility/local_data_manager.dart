@@ -147,7 +147,7 @@ class LocalDataManager {
     final path = await _localPath;
     final File thisTemplateFile = File('$path/post_templates/${template.id}.json');
 
-    final Map<String, dynamic> data = template.toJson();
+    final Map<String, dynamic> data = template.toJson(true);
     data['id'] = template.id;
     final String encodedJson = jsonEncode(data);
     await thisTemplateFile.writeAsString(encodedJson);
@@ -166,7 +166,7 @@ class LocalDataManager {
       final File tmpFile = File(fileEntity.path);
       final String contents = await tmpFile.readAsString();
       final Map<String, dynamic> contentJson = jsonDecode(contents);
-      results.add(PostTemplate.fromMap(contentJson['id'], contentJson));
+      results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
     }
 
     return results;
@@ -174,6 +174,11 @@ class LocalDataManager {
 
   Future<int> readLastPostTemplateUpdate() async {
     final path = await _localPath;
+    final Directory dir = Directory('$path/post_templates');
+    if (!await dir.exists()) {
+      await dir.create();
+    }
+
     final File templateTrackingFile = File('$path/post_templates/tracking.txt');
     if (await templateTrackingFile.exists()) {
       final String valStr = await templateTrackingFile.readAsString();
