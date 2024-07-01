@@ -26,7 +26,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Choose Template')), body: _buildFBBody());
+    return Scaffold(appBar: AppBar(title: const Text('Choose Template')), body: _buildBody(context));
   }
 
   Widget _buildFBBody() {
@@ -668,6 +668,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.clearTopics();
     widget.eventContext.setFetchedBody(r'[{"insert":"Hello, time to start writing!\n"}]');
 
+    widget.eventContext.setNotifyBroadcast(true);
+    widget.eventContext.setNotifyScheduledMembers(true);
     widget.eventContext.metadata.contributorUIDs.clear();
   }
 

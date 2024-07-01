@@ -19,7 +19,7 @@ class EventContext {
   final EventBody _body = EventBody();
   final List<String> _topics = List.empty(growable: true);
 
-  bool _canSaveTheEditing = false;
+  bool _canSaveTheEditing = false, _notifyBroadcast = true, _notifyScheduledMembers = true;
 
   // id (datetime milliseconds) to uids
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
@@ -48,6 +48,10 @@ class EventContext {
 
   // * Head Related
   EventHead get head => _head;
+  bool get notifyBroadcast => _notifyBroadcast;
+  bool get notifyScheduledMembers => _notifyScheduledMembers;
+  void setNotifyBroadcast(final bool newState) => _notifyBroadcast = newState;
+  void setNotifyScheduledMembers(final bool newState) => _notifyScheduledMembers = newState;
 
   // * Body Related
   bool get isBodyUntouched => _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') == 0;
@@ -158,6 +162,8 @@ class EventContext {
       _roleRemovals.clear();
       _deletedRoleTitle.clear();
     }
+    _notifyBroadcast = true;
+    _notifyScheduledMembers = true;
     _canSaveTheEditing = false;
   }
 

@@ -42,11 +42,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   Widget _buildContributorSection() {
     final List<Widget> children = [
       const Divider(),
-      const Text('Select Users who can edit certain details'),
-      const SizedBox(height: 8),
-      ElevatedButton.icon(
+      TextButton.icon(
           onPressed: _onAddContributorClick, icon: const Icon(Icons.person_add), label: const Text('Add Contributor')),
-      const Divider(),
     ];
 
     if (widget.eventContext.metadata.contributorUIDs.isEmpty) {
@@ -63,8 +60,26 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       }
     }
 
+    children.add(const Divider());
+    children.addAll(_buildNotificationControls());
+
     return Column(mainAxisSize: MainAxisSize.min, children: children);
   }
+
+  List<Widget> _buildNotificationControls() {
+    return [
+      CheckboxListTile(
+          title: const Text('Notify Broadcast'),
+          value: widget.eventContext.notifyBroadcast,
+          onChanged: (newState) => _onNotifyBroadcastChange(newState!)),
+      CheckboxListTile(
+          title: const Text('Notify Scheduled Members'),
+          value: widget.eventContext.notifyScheduledMembers,
+          onChanged: (newState) => _onNotifyScheduledMembersChange(newState!)),
+    ];
+  }
+
+  // ? Logic
 
   void _onAddContributorClick() {
     showDialog(
@@ -73,17 +88,29 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             alreadySelectedUIDs: widget.eventContext.metadata.contributorUIDs, onSelected: _onContributorSelected));
   }
 
-  void _onContributorSelected(String id) {
+  void _onContributorSelected(final String id) {
     setState(() {
       widget.eventContext.metadata.contributorUIDs.add(id);
       widget.eventContext.contributorAdditionUIDs.add(id);
     });
   }
 
-  void _onContributorRemoved(String id) {
+  void _onContributorRemoved(final String id) {
     setState(() {
       widget.eventContext.metadata.contributorUIDs.remove(id);
       widget.eventContext.contributorAdditionUIDs.remove(id);
+    });
+  }
+
+  void _onNotifyBroadcastChange(final bool newState) {
+    setState(() {
+      widget.eventContext.setNotifyBroadcast(newState);
+    });
+  }
+
+  void _onNotifyScheduledMembersChange(final bool newState) {
+    setState(() {
+      widget.eventContext.setNotifyScheduledMembers(newState);
     });
   }
 }

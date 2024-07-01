@@ -24,11 +24,7 @@ class TestimonialInfoPage extends StatelessWidget {
         children: [
           Hero(
             tag: 'initialTestimonialImage_$_initialImageSrc',
-            child: Image.asset(
-              _initialImageSrc,
-              height: MediaQuery.of(context).size.height * 0.4,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(_initialImageSrc, height: MediaQuery.of(context).size.height * 0.4, fit: BoxFit.cover),
           ),
           FutureBuilder(
               future: _loadJson(),
@@ -53,14 +49,8 @@ class TestimonialInfoPage extends StatelessWidget {
         document: quill.Document.fromJson(testimonialInfo.body), selection: const TextSelection.collapsed(offset: 0));
 
     List<Widget> children = [
-      Text(
-        testimonialInfo.name,
-        style: const TextStyle(fontSize: 32),
-      ),
-      Text(
-        testimonialInfo.church,
-        style: const TextStyle(fontSize: 16),
-      ),
+      Text(testimonialInfo.name, style: const TextStyle(fontSize: 32)),
+      Text(testimonialInfo.church, style: const TextStyle(fontSize: 16)),
       const SizedBox(height: 8),
       const Divider(),
       const SizedBox(height: 8),
