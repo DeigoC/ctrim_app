@@ -532,6 +532,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         .then((confirmation) {
       if (confirmation) {
         // TODO notify people who have subscribed to listen to these kind of posts... requires a new post field!
+        final List<String> topics = _eventContext.metadata.topics;
+        debugPrint('----- topics during viewing are $topics');
       }
     });
   }

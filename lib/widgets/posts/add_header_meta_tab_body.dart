@@ -104,6 +104,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
 
   void _onNotifyBroadcastChange(final bool newState) {
     setState(() {
+      final List<String> topics = widget.eventContext.metadata.topics;
+      debugPrint('----- topics during adding are $topics');
       widget.eventContext.setNotifyBroadcast(newState);
     });
   }

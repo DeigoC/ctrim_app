@@ -17,7 +17,6 @@ class EventContext {
   late final EventMedia _media; // ? doesn't have to be late
   late final String _currentUID;
   final EventBody _body = EventBody();
-  final List<String> _topics = List.empty(growable: true);
 
   bool _canSaveTheEditing = false, _notifyBroadcast = true, _notifyScheduledMembers = true;
 
@@ -259,6 +258,7 @@ class EventContext {
     result += '\n${_metadata.contributorUIDs}';
     result += '\n${_metadata.parentID ?? 'null'}';
     result += '\n${_metadata.childrenPostIDs}';
+    result += '\n${_metadata.topics}';
     result += '\n----META_END----';
 
     return result;
@@ -318,9 +318,17 @@ class EventContext {
         parentID: lines[metadataStartIndex + 4] == 'null' ? null : lines[metadataStartIndex + 4]);
 
     _metadata.setLastUID(lines[metadataStartIndex + 2]);
+    _metadata.contributorUIDs.addAll(_getListFromData(lines[metadataStartIndex + 3]));
+    _metadata.childrenPostIDs.addAll(_getListFromData(lines[metadataStartIndex + 5]));
 
-    final String contributorLine =
-        lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
+    String rawTopicsData = lines.elementAt(metadataStartIndex + 6);
+    if (!rawTopicsData.contains('----META_END----')) {
+      _metadata.addAllTopics(_getListFromData(rawTopicsData));
+    }
+  }
+
+  List<String> _getListFromData(final String rawData) {
+    final String contributorLine = rawData.replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
     final List<String> contributors = List.empty(growable: true);
     if (contributorLine.isNotEmpty && !contributorLine.contains(',')) {
       contributors.add(contributorLine);
@@ -328,22 +336,7 @@ class EventContext {
       contributors.addAll(contributorLine.split(','));
     }
 
-    for (final contributor in contributors) {
-      _metadata.contributorUIDs.add(contributor);
-    }
-
-    final String childrenLine =
-        lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
-    final List<String> childrenIDs = List.empty(growable: true);
-    if (childrenLine.isNotEmpty && !childrenLine.contains(',')) {
-      childrenIDs.add(childrenLine);
-    } else if (childrenLine.isNotEmpty) {
-      childrenIDs.addAll(childrenLine.split(','));
-    }
-
-    for (final child in childrenIDs) {
-      _metadata.childrenPostIDs.add(child);
-    }
+    return contributors;
   }
 
   void _initialiseProgramRoles(final List<String> data) {
@@ -448,8 +441,4 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
-
-  List<String> get topics => UnmodifiableListView(_topics);
-  void addTopic(final String topic) => _topics.add(topic);
-  void clearTopics() => _topics.clear();
 }

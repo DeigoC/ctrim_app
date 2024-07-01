@@ -226,11 +226,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _notifyContributorAdditions(newID);
 
     if (widget.eventContext.notifyScheduledMembers) {
+      debugPrint('---- NOTIFYING SCHEDULED MEMBERS ----');
       _notifyProgramRoleAddtitions(newID);
     }
 
     if (widget.eventContext.notifyBroadcast) {
-      for (final String topic in widget.eventContext.topics) {
+      debugPrint('---- NOTIFYING BROADCAST TOPICS ----');
+      for (final String topic in widget.eventContext.metadata.topics) {
         _notifyOfNewPost(newID, topic);
       }
     }

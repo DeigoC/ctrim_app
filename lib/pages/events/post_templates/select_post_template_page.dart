@@ -185,7 +185,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   void _onEmptyTemplateClick(final BuildContext context) {
     _resetContext();
     final String locationTopic = Provider.of<AppContext>(context, listen: false).currentUser.location;
-    widget.eventContext.addTopic(locationTopic);
+    widget.eventContext.metadata.addAllTopics([locationTopic]);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
@@ -197,7 +197,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.program.setFinishTime(startTime.add(const Duration(hours: 2, minutes: 45)));
 
     // TODO remember to change all of these in the future
-    widget.eventContext.addTopic('belfast-sunday-service');
+    widget.eventContext.metadata.addAllTopics(['belfast-sunday-service']);
 
     // add the typical Sunday roles to the program
     int roleID = DateTime.now().millisecondsSinceEpoch;
@@ -330,7 +330,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.head.setEventDate(startTime);
     widget.eventContext.program.setFinishTime(startTime.add(const Duration(hours: 1, minutes: 45)));
 
-    widget.eventContext.addTopic('belfast-midweek-service');
+    widget.eventContext.metadata.addAllTopics(['belfast-midweek-service']);
     widget.eventContext.program.setOnline(true);
     widget.eventContext.program
         .setAddress('https://us02web.zoom.us/j/85038786530?pwd=bmRPaTg4WHhlSVVwek9QcjVPT1RPUT09');
@@ -400,7 +400,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.program.setOnline(true);
     widget.eventContext.program
         .setAddress('https://us02web.zoom.us/j/89372805213?pwd=WlA4bzhPWlRWcE9CVHZWMXNpTFl6QT09');
-    widget.eventContext.addTopic('belfast-dawn-watch');
+    widget.eventContext.metadata.addAllTopics(['belfast-dawn-watch']);
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -457,7 +457,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.program.setOnline(true);
     widget.eventContext.program
         .setAddress('https://us02web.zoom.us/j/84796425540?pwd=andVVW5FR0t1dkFjRjZUUnpDRWVKdz09');
-    widget.eventContext.addTopic('belfast-growth-mentoring');
+    widget.eventContext.metadata.addAllTopics(['belfast-growth-mentoring']);
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -511,7 +511,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.program.setOnline(true);
     widget.eventContext.program
         .setAddress('https://us02web.zoom.us/j/89154407463?pwd=bDR3Y3lsL1I3NUl0MHV2SDFrR1pQdz09');
-    widget.eventContext.addTopic('belfast-youth-cg');
+    widget.eventContext.metadata.addAllTopics(['belfast-youth-cg']);
 
     int roleID = DateTime.now().millisecondsSinceEpoch;
 
@@ -581,7 +581,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.head.setEventDate(startTime);
 
     widget.eventContext.program.setFinishTime(startTime.add(const Duration(hours: 6, minutes: 0)));
-    widget.eventContext.addTopic('belfast-overnight-prayer');
+    widget.eventContext.metadata.addAllTopics(['belfast-overnight-prayer']);
 
     // add the typical Sunday roles to the program
     int roleID = DateTime.now().millisecondsSinceEpoch;
@@ -665,12 +665,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.program.setAllDay(false);
 
     widget.eventContext.media.clearAllMedia();
-    widget.eventContext.clearTopics();
     widget.eventContext.setFetchedBody(r'[{"insert":"Hello, time to start writing!\n"}]');
 
     widget.eventContext.setNotifyBroadcast(true);
     widget.eventContext.setNotifyScheduledMembers(true);
     widget.eventContext.metadata.contributorUIDs.clear();
+    widget.eventContext.metadata.clearTopics();
   }
 
   Future<List<PostTemplate>> _getTemplates() async {
