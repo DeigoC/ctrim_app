@@ -35,6 +35,7 @@ class EventMedia {
 
   List<Map<String, String>> get allMedia => UnmodifiableListView(_media);
   void clearAllMedia() => _media.clear();
-  void addMediaFile(Map<String, String> file) => _media.add(file);
-  void removeMediaFile(Map<String, String> file) => _media.remove(file); // test this kind of approach!
+  void addMediaFile(final Map<String, String> file) => _media.add(file);
+  void addAllMediaFiles(final List<Map<String, String>> mediaFiles) => _media.addAll(mediaFiles);
+  void removeMediaFile(final Map<String, String> file) => _media.remove(file); // test this kind of approach!
 }

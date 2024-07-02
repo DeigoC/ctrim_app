@@ -80,6 +80,7 @@ class PostTemplate {
   List<Map<String, String>> get headMedia => _headMedia;
   List<Map<String, String>> get media => _media;
   List<Map<String, dynamic>> get roles => _roles;
+  List<String> get contributors => _contributorUIDs;
 
   // setters
   void setTitle(final String title) => _title = title;

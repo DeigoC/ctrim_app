@@ -370,30 +370,26 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         showDragHandle: true,
         context: context,
         builder: (_) => SingleChildScrollView(
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: const Text('Edit About'),
-                      leading: const Icon(Icons.edit),
-                      onTap: _onEditBodyClick,
-                    ),
-                    widget.eventContext.head.eventDate != null
-                        ? ListTile(
-                            title: const Text('Add Schedule Item'),
-                            leading: const Icon(Icons.edit_calendar),
-                            onTap: _onAddScheduleItem,
-                          )
-                        : Container(),
-                    ListTile(
-                      title: const Text('Edit Media Items'),
-                      leading: const Icon(Icons.photo_library),
-                      onTap: _onEditMediaTap,
-                    ),
-                  ],
-                ),
+                child: SafeArea(
+                    child: Column(children: [
+              ListTile(
+                title: const Text('Edit About'),
+                leading: const Icon(Icons.edit),
+                onTap: _onEditBodyClick,
               ),
-            ));
+              widget.eventContext.head.eventDate != null
+                  ? ListTile(
+                      title: const Text('Add Schedule Item'),
+                      leading: const Icon(Icons.edit_calendar),
+                      onTap: _onAddScheduleItem,
+                    )
+                  : Container(),
+              ListTile(
+                title: const Text('Edit Media Items'),
+                leading: const Icon(Icons.photo_library),
+                onTap: _onEditMediaTap,
+              ),
+            ]))));
   }
 
   void _onEditBodyClick() {

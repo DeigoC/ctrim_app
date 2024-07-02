@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctrim_app/firebase/db_managers/post_template_db_manager.dart';
 import 'package:ctrim_app/models/post_template.dart';
+import 'package:ctrim_app/pages/events/post_templates/edit_template_page.dart';
 import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,9 +11,6 @@ import '../../../utility/event_context.dart';
 import '../add_event_page.dart';
 
 class SelectPostTemplatePage extends StatefulWidget {
-  // TODO convert to stateful, we will only perfrom a refresh upon doing a refresh scroll (do the same in editing suite)
-  // TODO we need to perform the check first thing upon logging in the app
-
   const SelectPostTemplatePage({super.key, required this.eventContext});
   static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
@@ -37,7 +34,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Choose Template')),
-      body: _buildBody(context),
+      body: _buildFBBody(),
+      // body: _buildBody(context),
       floatingActionButton: _buildTestButton(),
     );
   }
@@ -63,7 +61,11 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   Widget _buildTemplateTile(final PostTemplate template) {
-    return ListTile(title: Text(template.title), subtitle: Text(template.description));
+    return ListTile(
+      title: Text(template.title),
+      subtitle: Text(template.description),
+      onTap: () => _onTemplateTap(template),
+    );
   }
 
   Widget _buildBody(BuildContext context) {
@@ -768,5 +770,26 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     } else {
       return await dataManager.readAllPostTemplates();
     }
+  }
+
+  void _onTemplateTap(final PostTemplate postTemplate) {
+    // ! For now we will edit posts here
+    // We will utilise existing framework to edit a 'post'. Meaning to covert it to a EventContext
+    // Then at the end covert that back to a PostTemplate and save it
+    final EventContext eventContext = EventContext.adding(currentUserID: '1');
+    eventContext.head.setEventDate(postTemplate.startTime);
+    eventContext.head.setLocation(postTemplate.location);
+    eventContext.head.setTitle(postTemplate.title);
+    for (final headMediaItem in postTemplate.headMedia) {
+      eventContext.head
+          .addMediaItem(type: headMediaItem['type']!, src: headMediaItem['src']!, title: headMediaItem['title'] ?? '');
+    }
+
+    eventContext.setFetchedBody(postTemplate.body);
+    eventContext.media.addAllMediaFiles(postTemplate.media);
+
+    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
+
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => EditTemplatePage(eventContext: eventContext)));
   }
 }
