@@ -1,5 +1,227 @@
 {
     "analyticTitle": "INFO: Devotional",
     "imgSrc": "TODO",
-    "body": []
+    "body": [
+        {
+            "insert": "Devotionals - What is it?"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "header": 1,
+                "align": "center"
+            }
+        },
+        {
+            "insert": "\nA fundamental practice we should always strive for is developing a consistent relationship with God. This cane be done in many ways but the absolute essential method is in our daily devotionals. This is the act of reading the Bible and journaling in a daily fashion for we cannot develop a relationship if we don't spend the time. You don't develop a deep and loving relationship if you only see the person once a week, right? So let's not leave God just for Sundays and learn how to communicate and change your life one day at a time!\n\n"
+        },
+        {
+            "insert": "Matthew 6:33 KJV",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "blockquote": true
+            }
+        },
+        {
+            "insert": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you."
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "blockquote": true
+            }
+        },
+        {
+            "insert": "\nFirst and foremost part of the day; in the mornings we go to brush our teeth, maybe shower, dress up for the day, get breakfast... but all of these would not be putting God first. Having the time early in the morning to meditate on the Word and in ourselves helps to develop our mood for the day. It is always hard in the beginning but committing to this practice helps to build discipline resulting in an overall stronger character.\n\n"
+        },
+        {
+            "insert": "Isaiah 58:11",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "blockquote": true
+            }
+        },
+        {
+            "insert": "The LORD will guide you always; he will satisfy your needs in a sun-scorched land and will strengthen your frame. You will be like a well-watered garden, like a spring whose waters never fail."
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "blockquote": true
+            }
+        },
+        {
+            "insert": "\nThe bible is known as the manual of life. Just as a phone will come with a user's manual to utilise 100% of its capabilities, we should consult with God's word so that we may reach our 100% capability. Challenges will always befall us, that will never change. But equally so, the Bible will always provide the answers to our everyday trials given we listen carefully and pray.\n\nHow do I get started?"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "header": 1,
+                "align": "center"
+            }
+        },
+        {
+            "insert": "\nWith any new change we try to commit in our lives, the start is always the hardest. Just as one would try to exercise their physical body, they should not go for the hardest exercises, lifting the heaviest weights potentially causing an accident and putting themselves off before the real journey begins. You must start small and ease yourself into it. \n\nRemember that the aim is for daily consistency so aiming for a 10-15 minute session is more than enough at the beginning. You don't need to get going reading full chapters so simple verses can carry you through. Do this in a quiet space such as your bedroom, put away your phone and leave it in silent mode. Write into a book to help get into the groove and track your relationship. \n\nThere is a structure we like to follow so let's walk through it with an example!\n\n"
+        },
+        {
+            "insert": "John 13:34-35",
+            "attributes": {
+                "italic": true,
+                "bold": true
+            }
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "blockquote": true
+            }
+        },
+        {
+            "insert": "“A new command I give you: Love one another. As I have loved you, so you must love one another. By this everyone will know that you are my disciples, if you love one another.”"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "blockquote": true
+            }
+        },
+        {
+            "insert": "\n"
+        },
+        {
+            "insert": "MOG: Message Of God",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": ". What is the general message? In your notebook you could write:\n\t“MOG: Commandment of Loving”"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true,
+                "align": "left"
+            }
+        },
+        {
+            "insert": "\n"
+        },
+        {
+            "insert": "CTO: Commands To Obey.",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": " What does the Word of God tell me to do? This can be as simple as:"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "align": "left"
+            }
+        },
+        {
+            "insert": "\t“CTO: Love one another”"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\n"
+        },
+        {
+            "insert": "STA: Sins to avoid.",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": " What is God warning me? Not all verses may apply to all these points but an example in this case would be:\n“STA: Not loving everyone. To have any bitterness toward others”"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\n"
+        },
+        {
+            "insert": "PTC: Promises To Claim.",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": " What can we hope for from the Word? What is God keeping as a promise from the words you read? Here’s an example for these verses:\n“PTC: Everyone will know that we are disciples of Christ through this commandment. Christ loves all of us”"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\n"
+        },
+        {
+            "insert": "PA: Personal Application.",
+            "attributes": {
+                "bold": true,
+                "italic": true
+            }
+        },
+        {
+            "insert": " How does the Word relate to our current situation? How do we implement it? This is the most personal part of the devotional process, you write to your heart’s content! Here are some short examples:\n\n“PA: Forgive and love people who bug me at school”"
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\n\"PA: Be loving to my family despite their imperfections and harsh expectations for me\""
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\t\n\"PA: Be patient and caring to my co-workers despite whatever attitude they dish out to me\""
+        },
+        {
+            "insert": "\n",
+            "attributes": {
+                "code-block": true
+            }
+        },
+        {
+            "insert": "\nAnd there you have it. We as a church follow the same chapter together independently, taking something different from person to person. Remember to start small and slow and sure enough you will develop a deep and fulfilling relationship.\n"
+        }
+    ]
 }

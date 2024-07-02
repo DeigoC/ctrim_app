@@ -217,7 +217,7 @@ class _InformationHomeState extends State<InformationHome> {
                             children: [
                               Text(personName, style: const TextStyle(fontSize: 32, color: Colors.white)),
                               const Text(
-                                'I needed an encounter with Jesus that will turn my life around',
+                                '"I needed an encounter with Jesus that will turn my life around"',
                                 style: TextStyle(fontSize: 18, color: Colors.white),
                               )
                             ],
