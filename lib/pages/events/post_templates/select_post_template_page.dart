@@ -795,7 +795,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     // ! For now we will edit posts here
     // We will utilise existing framework to edit a 'post'. Meaning to covert it to a EventContext
     // Then at the end covert that back to a PostTemplate and save it
-    final EventContext eventContext = EventContext.adding(currentUserID: '1');
+    final EventContext eventContext = EventContext.adding(currentUserID: '1', id: postTemplate.id);
 
     // head
     eventContext.head.setEventDate(postTemplate.startTime);
@@ -824,6 +824,16 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     eventContext.program.setOnline(postTemplate.online);
     eventContext.program.setFinishTime(postTemplate.finishTime);
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => EditTemplatePage(eventContext: eventContext)));
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+            builder: (_) => EditTemplatePage(
+                  eventContext: eventContext,
+                  oldTemplate: postTemplate,
+                )))
+        .then((_) {
+      setState(() {
+        // update the page in case of changes made
+      });
+    });
   }
 }

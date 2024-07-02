@@ -36,11 +36,11 @@ class EventContext {
     }
   }
 
-  EventContext.adding({required String currentUserID, String? parentID}) {
+  EventContext.adding({required String currentUserID, String? parentID, String? id}) {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
-    _head = EventHead(id: 'X'); // temporary
+    _head = EventHead(id: id ?? 'x'); // temporary
     _currentUID = currentUserID;
     _initialiseInternalLists();
   }

@@ -1,4 +1,8 @@
+import 'package:ctrim_app/firebase/db_managers/post_template_db_manager.dart';
+import 'package:ctrim_app/models/post_template.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
+import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
@@ -13,8 +17,9 @@ import '../edit_body_page.dart';
 import '../edit_gallery_page.dart';
 
 class EditTemplatePage extends StatefulWidget {
-  const EditTemplatePage({super.key, required this.eventContext});
+  const EditTemplatePage({super.key, required this.eventContext, required this.oldTemplate});
   final EventContext eventContext;
+  final PostTemplate oldTemplate;
 
   @override
   State<EditTemplatePage> createState() => _EditTemplatePageState();
@@ -172,11 +177,88 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   }
 
   void _onSavePostTemplateClick() {
-    debugPrint('---- begin saving post template');
+    DialogManager.showConfirmationDialog(
+            context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?')
+        .then((confirm) {
+      if (confirm) {
+        // DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
+        _performTemplateSave().then((_) {
+          // pop progress dialog. pop the settings. pop the page
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        });
+      }
+    });
+  }
+
+  Future<void> _performTemplateSave() async {
+    debugPrint('---- begin converting to post template');
     // Convert to PostTemplate again
+    dynamic startTime = widget.eventContext.head.eventDate;
+    dynamic finishTime = widget.eventContext.program.finishTime;
+    if (startTime != null) {
+      startTime = (startTime as DateTime).millisecondsSinceEpoch;
+    }
+    if (finishTime != null) {
+      finishTime = (finishTime as DateTime).millisecondsSinceEpoch;
+    }
+
+    final Map<String, dynamic> templateData = {
+      'Title': _tecTitle.text.trim(),
+      'Description': widget.oldTemplate.description,
+      'HeadTitle': widget.oldTemplate.headTitle, // unlikely we'll be updating this anytime soon...?
+      'Body': widget.eventContext.encodedBody,
+      'Location': widget.eventContext.head.location,
+      'Topics': widget.oldTemplate.topics,
+      'Contributors': widget.eventContext.metadata.contributorUIDs,
+      'AllDay': widget.eventContext.program.allDay,
+      'Online': widget.eventContext.program.online,
+      'Address': widget.eventContext.program.address,
+      'MapLink': widget.eventContext.program.mapLink,
+      'StartTime': startTime,
+      'FinishTime': finishTime,
+      'Media': widget.eventContext.media.allMedia,
+      'HeadMedia': widget.eventContext.head.media,
+      'Roles': _rolesToJson(),
+    };
+    final PostTemplate updatedTemplate = PostTemplate.fromMap(true, widget.eventContext.id, templateData);
 
     // Save to DB
+    debugPrint('---- begin saving template ID (${updatedTemplate.id}) to DB');
+    final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
+    await postTemplateDBManager.updateTemplate(updatedTemplate);
 
     // Save Locally
+    debugPrint('---- begin saving locally');
+    final LocalDataManager localDataManager = LocalDataManager();
+    localDataManager.clearPostTemplateDir();
+    await localDataManager.writePostTemplateData(updatedTemplate);
+    debugPrint('---- FINISHED UPDATING POST TEMPLATE');
+  }
+
+  List<Map<String, dynamic>> _rolesToJson() {
+    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
+    for (final entry in widget.eventContext.program.roles) {
+      var start = entry['start'];
+      var end = entry['end'];
+      if (start != null) {
+        start = (entry['start'] as DateTime).millisecondsSinceEpoch;
+      }
+      if (end != null) {
+        end = (entry['end'] as DateTime).millisecondsSinceEpoch;
+      }
+
+      result.add({
+        'uids': entry['uids'],
+        'detail': entry['detail'],
+        'title': entry['title'],
+        'start': start,
+        'end': end,
+        'for_guests': entry['for_guests'],
+        'id': entry['id'],
+      });
+    }
+
+    return result;
   }
 }
