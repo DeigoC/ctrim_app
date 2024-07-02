@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:ctrim_app/models/info/church_info.dart';
-import 'package:ctrim_app/pages/information/edit_info_body_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../models/info/church_info.dart';
 import '../../utility/app_context.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+
+import 'edit_info_body_page.dart';
 
 class ChurchInfoPage extends StatelessWidget {
   const ChurchInfoPage({super.key, required String jsonPath, required String imageSrc})
@@ -62,7 +63,9 @@ class ChurchInfoPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: quill.QuillEditor.basic(
                   configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true)))),
-      const SizedBox(height: 32)
+      const SizedBox(height: 16),
+      Image.asset(ctrimInfo.imgSrc),
+      const SizedBox(height: 32),
     ];
 
     if (kDebugMode) {

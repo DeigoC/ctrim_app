@@ -145,7 +145,7 @@ class _InformationHomeState extends State<InformationHome> {
           _buildChurchSlot('Belfast', 'assets/images/bel1.png'),
           _buildChurchSlot('Portadown', 'assets/images/port1.png'),
           _buildChurchSlot('North Coast', 'assets/images/northC1.png'),
-          _buildChurchSlot('Larne/Carrickfergus', 'assets/images/northC1.png'),
+          // _buildChurchSlot('Larne/Carrickfergus', 'assets/images/northC1.png'),
         ]));
   }
 
@@ -161,7 +161,7 @@ class _InformationHomeState extends State<InformationHome> {
                   alignment: Alignment.bottomLeft,
                   child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Text(church, style: const TextStyle(fontSize: 32, color: Colors.white))))
+                      child: Text(church, style: const TextStyle(fontSize: 36, color: Colors.white))))
             ])));
   }
 
@@ -189,6 +189,17 @@ class _InformationHomeState extends State<InformationHome> {
                           child:
                               Hero(tag: 'initialTestimonialImage_$img', child: Image.asset(img, fit: BoxFit.cover)))),
                   Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(Radius.circular(32)),
+                      child: Opacity(
+                        opacity: 0.25,
+                        child: Container(
+                          color: const Color(0xFF000000),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
                       child: ClipRRect(
                           borderRadius: const BorderRadius.all(Radius.circular(32)),
                           child: Material(
@@ -206,8 +217,8 @@ class _InformationHomeState extends State<InformationHome> {
                             children: [
                               Text(personName, style: const TextStyle(fontSize: 32, color: Colors.white)),
                               const Text(
-                                'Going to add a bit more text just as a tease or something. Might be this long',
-                                style: TextStyle(fontSize: 16, color: Colors.white),
+                                'I needed an encounter with Jesus that will turn my life around',
+                                style: TextStyle(fontSize: 18, color: Colors.white),
                               )
                             ],
                           )))
@@ -218,7 +229,7 @@ class _InformationHomeState extends State<InformationHome> {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
         child: Card(
-            elevation: 2,
+            elevation: 0.5,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
             child: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.10,
