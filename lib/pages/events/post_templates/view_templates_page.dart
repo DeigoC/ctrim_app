@@ -36,6 +36,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           Widget result = const Center(child: CircularProgressIndicator());
 
           if (snap.hasData) {
+            final List<PostTemplate> data = snap.data!;
+            data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
             result = _buildBodyWithData(snap.data!);
           } else if (snap.hasError) {
             result = Center(child: Text('Something went wrong:\n${snap.error}'));
