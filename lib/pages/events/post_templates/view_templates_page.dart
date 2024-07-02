@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
+import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import 'edit_template_page.dart';
 
 class ViewTemplatesPage extends StatefulWidget {
   const ViewTemplatesPage({super.key});
@@ -12,16 +14,19 @@ class ViewTemplatesPage extends StatefulWidget {
 }
 
 class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
+  final TextStyle _cardTitleStyle = const TextStyle(fontSize: 21), _cardContentStyle = const TextStyle(fontSize: 14);
+
   @override
   void initState() {
-    // TODO we need to fetch the templates if it's been updated, simply perform a fetch and then rebuild
-    // TODO otherwise, we read the locally saved templates
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('View Templates')), body: _buildFBBody());
+    return Scaffold(
+        appBar: AppBar(title: const Text('View Templates')),
+        body: _buildFBBody(),
+        floatingActionButton: _buildTestButton());
   }
 
   Widget _buildFBBody() {
@@ -40,15 +45,91 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   }
 
   Widget _buildBodyWithData(final List<PostTemplate> templates) {
-    return ListView.builder(
-        itemCount: templates.length, itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
+    return ListView.separated(
+        padding: const EdgeInsets.all(8),
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemCount: templates.length,
+        itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
   }
 
   Widget _buildTemplateTile(final PostTemplate template) {
-    return ListTile(title: Text(template.title), subtitle: Text(template.description));
+    return InkWell(
+        onTap: () => _onTemplateEditTap(template),
+        child: Card(
+            child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(template.title, style: _cardTitleStyle),
+                      const Divider(),
+                      Text(template.description, style: _cardContentStyle)
+                    ]))));
+  }
+
+  Widget _buildTestButton() {
+    return FloatingActionButton.extended(
+        label: const Text('Test here'),
+        onPressed: () {
+          // _createPostTemplate();
+          _clearDir();
+        });
   }
 
   // * LOGIC
+
+  Future<void> _clearDir() async {
+    final LocalDataManager localDataManager = LocalDataManager();
+    localDataManager.clearPostTemplateDir();
+    debugPrint('--------- Post Template Dir is cleared');
+  }
+
+  void _onTemplateEditTap(final PostTemplate postTemplate) {
+    // ! For now we will edit posts here
+    // We will utilise existing framework to edit a 'post'. Meaning to covert it to a EventContext
+    // Then at the end covert that back to a PostTemplate and save it
+    final EventContext eventContext = EventContext.adding(currentUserID: '1', id: postTemplate.id);
+
+    // head
+    eventContext.head.setEventDate(postTemplate.startTime);
+    eventContext.head.setLocation(postTemplate.location);
+    eventContext.head.setTitle(postTemplate.title);
+    for (final headMediaItem in postTemplate.headMedia) {
+      eventContext.head
+          .addMediaItem(type: headMediaItem['type']!, src: headMediaItem['src']!, title: headMediaItem['title'] ?? '');
+    }
+
+    // body and media
+    eventContext.setFetchedBody(postTemplate.body);
+    eventContext.media.addAllMediaFiles(postTemplate.media);
+
+    // meta related
+    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
+
+    // program related
+    for (final role in postTemplate.roles) {
+      eventContext.program
+          .addRole(uids: role['uids'], title: role['title'], start: role['start'], end: role['end'], id: role['id']);
+    }
+    eventContext.program.setAddress(postTemplate.address);
+    eventContext.program.setAllDay(postTemplate.allDay);
+    eventContext.program.setMapLink(postTemplate.mapLink);
+    eventContext.program.setOnline(postTemplate.online);
+    eventContext.program.setFinishTime(postTemplate.finishTime);
+
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+            builder: (_) => EditTemplatePage(
+                  eventContext: eventContext,
+                  oldTemplate: postTemplate,
+                )))
+        .then((_) {
+      setState(() {
+        // update the page in case of changes made
+      });
+    });
+  }
 
   Future<List<PostTemplate>> _getTemplates() async {
     final LocalDataManager dataManager = LocalDataManager();

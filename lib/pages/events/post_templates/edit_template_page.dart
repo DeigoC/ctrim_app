@@ -181,9 +181,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
             context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?')
         .then((confirm) {
       if (confirm) {
-        // DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
+        DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
         _performTemplateSave().then((_) {
           // pop progress dialog. pop the settings. pop the page
+          Navigator.of(context).pop();
           Navigator.of(context).pop();
           Navigator.of(context).pop();
         });

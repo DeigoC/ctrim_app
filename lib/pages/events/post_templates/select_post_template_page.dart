@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctrim_app/firebase/db_managers/post_template_db_manager.dart';
 import 'package:ctrim_app/models/post_template.dart';
 import 'package:ctrim_app/pages/events/post_templates/edit_template_page.dart';
@@ -47,7 +48,9 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           Widget result = const Center(child: CircularProgressIndicator());
 
           if (snap.hasData) {
-            result = _buildBodyWithData(snap.data!);
+            final List<PostTemplate> data = snap.data!;
+            data.add(_createBlankSlate());
+            result = _buildBodyWithData(data);
           } else if (snap.hasError) {
             result = Center(child: Text('Something went wrong:\n${snap.error}'));
           }
@@ -55,17 +58,51 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         });
   }
 
+  PostTemplate _createBlankSlate() {
+    final Map<String, dynamic> templateData = {
+      'Title': 'Blank Template',
+      'Description': "A clean slate. Edit to your heart's content!",
+      'HeadTitle': 'TODO: what do i do with this?',
+      'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
+      'Location': 'Belfast',
+      'Topics': ['Belfast'],
+      'Contributors': [],
+      'AllDay': false,
+      'Online': false,
+      'Address': '',
+      'MapLink': '',
+      'StartTime': null,
+      'FinishTime': null,
+      'Media': [],
+      'HeadMedia': List<Map<String, dynamic>>.empty(),
+      'Roles': List<Map<String, dynamic>>.empty(),
+    };
+
+    return PostTemplate.fromMap(true, 'blank', templateData);
+  }
+
   Widget _buildBodyWithData(final List<PostTemplate> templates) {
-    return ListView.builder(
-        itemCount: templates.length, itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
+    return ListView.separated(
+        padding: const EdgeInsets.all(8),
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemCount: templates.length,
+        itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
   }
 
   Widget _buildTemplateTile(final PostTemplate template) {
-    return ListTile(
-      title: Text(template.title),
-      subtitle: Text(template.description),
-      onTap: () => _onTemplateTap(template),
-    );
+    return InkWell(
+        onTap: () => _onAddPostTap(template),
+        child: Card(
+            child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(template.title, style: _cardTitleStyle),
+                      const Divider(),
+                      Text(template.description, style: _cardContentStyle)
+                    ]))));
   }
 
   Widget _buildBody(BuildContext context) {
@@ -195,60 +232,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           // _createPostTemplate();
           _clearDir();
         });
-  }
-
-  Future<void> _createPostTemplate() async {
-    // create a simple Template for now
-    final Map<String, dynamic> templateData = {
-      'Title': 'here is a title',
-      'Description': 'here is a description',
-      'HeadTitle': 'here is the head title',
-      'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
-      'Location': 'Belfast',
-      'Topics': ['topic1'],
-      'Contributors': ['3'],
-      'AllDay': false,
-      'Online': false,
-      'Address': 'Some address here',
-      'MapLink': 'some link here',
-      'StartTime': DateTime.now().millisecondsSinceEpoch,
-      'FinishTime': DateTime.now().add(const Duration(hours: 2)).millisecondsSinceEpoch,
-      'Media': [
-        {
-          'src':
-              'https://static.wikia.nocookie.net/garfield/images/7/70/Garfield2000.png/revision/latest/scale-to-width/360?cb=20231128184459',
-          'title': 'title here for image',
-          'type': 'img'
-        }
-      ],
-      'HeadMedia': List<Map<String, dynamic>>.empty(),
-      'Roles': List<Map<String, dynamic>>.from([
-        {
-          'uids': ['2'],
-          'detail': '',
-          'title': 'An example Title',
-          'start': DateTime.now().millisecondsSinceEpoch,
-          'end': DateTime.now().add(const Duration(minutes: 15)).millisecondsSinceEpoch,
-          'for_guests': true,
-          'id': 123213
-        }
-      ]),
-    };
-    final PostTemplate thisTemplate = PostTemplate.fromMap(true, 'RnGMzbiXUUDOVTiFh76F', templateData);
-
-    // try writing to local storage as a Json
-    debugPrint('---- Creating PostTemplate complete, time to write to local storage');
-    await _localDataManager.writePostTemplateData(thisTemplate);
-
-    // then try to read it again
-    debugPrint('---- Time to read in the data');
-    final allTemplates = await _localDataManager.readAllPostTemplates();
-
-    debugPrint('---- Time to save the data over to the DB');
-    PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    await postTemplateDBManager.addPostTemplate(allTemplates.first);
-
-    debugPrint('---- Time to save the data over to the DB');
   }
 
   Future<void> _clearDir() async {
@@ -401,10 +384,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(
         r'[{"insert":"Remember to share this CTRIM App! There’a a page in the "},{"insert":"Personal","attributes":{"bold":true}},{"insert":" tab section - "},{"insert":"Share CTRIM App","attributes":{"bold":true}},{"insert":" where you can find the download links \n\nAnd do not forget to do good and to share with others, for with such sacrifices God is pleased."},{"insert":"\n","attributes":{"blockquote":true}},{"insert":"Hebrews 13:16 (NIV)","attributes":{"bold":true}},{"insert":"\n","attributes":{"blockquote":true}},{"insert":"\n"}]');
 
-    widget.eventContext.head
-        .setTitle('Sunday Worship Service (${SelectPostTemplatePage._eventDateFormat.format(startTime)})');
+    widget.eventContext.head.setTitle('Sunday Worship Service');
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
+    debugPrint('----- PERFORMING MAP TO DB ------');
+    _tmpAddEventContextToTemplate(widget.eventContext);
+    debugPrint('----- COMPLETE------');
+    // Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
   void _createAndOpenMidweekServiceTemplate(final BuildContext context, final DateTime selectedDate) {
@@ -466,10 +451,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 850 3878 6530"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 985767"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
-    widget.eventContext.head.setTitle('Midweek Service (${SelectPostTemplatePage._eventDateFormat.format(startTime)})');
+    widget.eventContext.head.setTitle('Midweek Service');
     widget.eventContext.head.setLocation('Belfast (Online)');
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
+    debugPrint('----- PERFORMING MAP TO DB ------');
+    _tmpAddEventContextToTemplate(widget.eventContext);
+    debugPrint('----- COMPLETE------');
+    // Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
   void _createAndOpenDawnWatchTemplate(final BuildContext context, final DateTime selectedDate) {
@@ -522,11 +510,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 893 7280 5213"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 261513"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
-    widget.eventContext.head
-        .setTitle('Dawn Watch Prayer Meeting (${SelectPostTemplatePage._eventDateFormat.format(startTime)})');
+    widget.eventContext.head.setTitle('Dawn Watch Prayer Meeting');
     widget.eventContext.head.setLocation('Belfast (Online)');
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
+    debugPrint('----- PERFORMING MAP TO DB ------');
+    _tmpAddEventContextToTemplate(widget.eventContext);
+    debugPrint('----- COMPLETE------');
+    // Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
   void _createAndOpenIntentionalDiscipleshipTemplate(final BuildContext context, final DateTime selectedDate) {
@@ -576,11 +566,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 847 9642 5540"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 786441"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
-    widget.eventContext.head
-        .setTitle('Intentional Discipleship Training (${SelectPostTemplatePage._eventDateFormat.format(startTime)})');
+    widget.eventContext.head.setTitle('Intentional Discipleship Training');
     widget.eventContext.head.setLocation('Belfast (Online)');
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
+    debugPrint('----- PERFORMING MAP TO DB ------');
+    _tmpAddEventContextToTemplate(widget.eventContext);
+    debugPrint('----- COMPLETE------');
+    // Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
   void _createAndOpenYouthCGTemplate(final BuildContext context, final DateTime selectedDate) {
@@ -651,11 +643,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(
         r'[{"insert":"See the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab for the join link. If that doesn’t work please join via the zoom details:\nMeeting ID: 891 5440 7463"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"Passcode: 587922"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\nSee you there!\n"}]');
 
-    widget.eventContext.head
-        .setTitle('Online Youth Caregroup (${SelectPostTemplatePage._eventDateFormat.format(startTime)})');
+    widget.eventContext.head.setTitle('Online Youth Caregroup');
     widget.eventContext.head.setLocation('Belfast (Online)');
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
+    debugPrint('----- PERFORMING MAP TO DB : DONE ALREADY ------');
+    // _tmpAddEventContextToTemplate(widget.eventContext);
+    debugPrint('----- COMPLETE------');
+    // Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
   void _createAndOpenOverNightPrayerTemplate(final BuildContext context, final DateTime selectedDate) {
@@ -728,10 +722,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     widget.eventContext.setFetchedBody(
         r'[{"insert":"The onsite, overnight prayer event for all who wants to develop their prayer life! Typically set at the end of the week, this is a test of mental, physical and spiritual strength 😤💪\n\nUsually from "},{"insert":"8pm Friday -> 2am Saturday","attributes":{"underline":true}},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"For more details see the "},{"insert":"Schedule","attributes":{"bold":true}},{"insert":" tab just a swipe away! ➡️➡️➡️"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\n(Note: because of some restrictions with the schedule feature, it only covers events up to 23:59 and cannot go to the next day)\n\nHere is the rest of the typical schedule:\n"},{"insert":"23:40 to 00:20","attributes":{"bold":true}},{"insert":" - Word of God (Ptra. Ingrid Valdez)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"00:20 to 00:50","attributes":{"bold":true}},{"insert":" - Corporate Prayer"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"00:50 to 01:05","attributes":{"bold":true}},{"insert":" - Praise and Worship"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:05 to 01:30","attributes":{"bold":true}},{"insert":" - Word of God (Ptr. Deo Valdez)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:30 to 01:50","attributes":{"bold":true}},{"insert":" - Corporate Prayer"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:50 to 01:55","attributes":{"bold":true}},{"insert":" - Closing Prayer and Benediction (Ptr. Deo Valdez)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"01:55 to 02:00","attributes":{"bold":true}},{"insert":" - Tidying Up (Everyone)"},{"insert":"\n","attributes":{"list":"bullet"}},{"insert":"\n"}]');
 
-    widget.eventContext.head
-        .setTitle('Overnight Prayer and Worship (${SelectPostTemplatePage._eventDateFormat.format(startTime)})');
+    widget.eventContext.head.setTitle('Overnight Prayer and Worship');
 
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
+    debugPrint('----- PERFORMING MAP TO DB ------');
+    _tmpAddEventContextToTemplate(widget.eventContext);
+    debugPrint('----- COMPLETE------');
+    // Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: widget.eventContext)));
   }
 
   void _resetContext() {
@@ -791,7 +787,67 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     }
   }
 
-  void _onTemplateTap(final PostTemplate postTemplate) {
+  void _tmpAddEventContextToTemplate(final EventContext eventContext) {
+    dynamic startTime = widget.eventContext.head.eventDate;
+    dynamic finishTime = widget.eventContext.program.finishTime;
+    if (startTime != null) {
+      startTime = Timestamp.fromDate(startTime);
+    }
+    if (finishTime != null) {
+      finishTime = Timestamp.fromDate(finishTime);
+    }
+
+    final Map<String, dynamic> templateData = {
+      'Title': eventContext.head.title,
+      'Description': 'TODO: change this description',
+      'HeadTitle': 'TODO change this head title',
+      'Body': eventContext.encodedBody,
+      'Location': eventContext.head.location,
+      'Topics': eventContext.metadata.topics,
+      'Contributors': eventContext.metadata.contributorUIDs,
+      'AllDay': eventContext.program.allDay,
+      'Online': eventContext.program.online,
+      'Address': eventContext.program.address,
+      'MapLink': eventContext.program.mapLink,
+      'StartTime': startTime,
+      'FinishTime': finishTime,
+      'Media': eventContext.media.allMedia,
+      'HeadMedia': eventContext.head.media,
+      'Roles': _rolesToJson(),
+    };
+    final PostTemplate template = PostTemplate.fromMap(false, widget.eventContext.id, templateData);
+
+    final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
+    postTemplateDBManager.addPostTemplate(template);
+  }
+
+  List<Map<String, dynamic>> _rolesToJson() {
+    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
+    for (final entry in widget.eventContext.program.roles) {
+      var start = entry['start'];
+      var end = entry['end'];
+      if (start != null) {
+        start = Timestamp.fromDate(entry['start']);
+      }
+      if (end != null) {
+        end = Timestamp.fromDate(entry['end']);
+      }
+
+      result.add({
+        'uids': entry['uids'],
+        'detail': entry['detail'],
+        'title': entry['title'],
+        'start': start,
+        'end': end,
+        'for_guests': entry['for_guests'],
+        'id': entry['id'],
+      });
+    }
+
+    return result;
+  }
+
+  void _onTemplateEditTap(final PostTemplate postTemplate) {
     // ! For now we will edit posts here
     // We will utilise existing framework to edit a 'post'. Meaning to covert it to a EventContext
     // Then at the end covert that back to a PostTemplate and save it
@@ -835,5 +891,83 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         // update the page in case of changes made
       });
     });
+  }
+
+  void _onAddPostTap(final PostTemplate postTemplate) {
+    // convert the template to EventContext
+    final EventContext eventContext = _mapTemplateToEventContext(postTemplate);
+
+    if (eventContext.head.eventDate != null) {
+      _selectDate(context).then((selectedDate) {
+        if (selectedDate != null) {
+          _adjustEventProgramToDate(eventContext, selectedDate);
+          eventContext.head
+              .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+        }
+      });
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+    }
+  }
+
+  _adjustEventProgramToDate(final EventContext eventContext, final DateTime selectedDate) {
+    final DateTime newEventDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day,
+        eventContext.head.eventDate!.hour, eventContext.head.eventDate!.minute);
+
+    eventContext.head.setEventDate(newEventDate);
+
+    if (eventContext.program.finishTime != null) {
+      final DateTime oldFinishTime = eventContext.program.finishTime!;
+      final DateTime finishTime =
+          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldFinishTime.hour, oldFinishTime.minute);
+      eventContext.program.setFinishTime(finishTime);
+    }
+
+    for (final scheduleItem in eventContext.program.roles) {
+      final DateTime oldDateStart = scheduleItem['start'];
+      final DateTime oldDateEnd = scheduleItem['end'];
+      final DateTime newDateStart =
+          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldDateStart.hour, oldDateStart.minute);
+      final DateTime newDateEnd =
+          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldDateEnd.hour, oldDateEnd.minute);
+
+      scheduleItem['start'] = newDateStart;
+      scheduleItem['end'] = newDateEnd;
+    }
+  }
+
+  EventContext _mapTemplateToEventContext(final PostTemplate postTemplate) {
+    final EventContext eventContext = EventContext.adding(currentUserID: '1');
+
+    // head
+    eventContext.head.setEventDate(postTemplate.startTime);
+    eventContext.head.setLocation(postTemplate.location);
+    eventContext.head.setTitle(postTemplate.title);
+    for (final headMediaItem in postTemplate.headMedia) {
+      eventContext.head
+          .addMediaItem(type: headMediaItem['type']!, src: headMediaItem['src']!, title: headMediaItem['title'] ?? '');
+    }
+
+    // body and media
+    eventContext.setFetchedBody(postTemplate.body);
+    eventContext.media.addAllMediaFiles(postTemplate.media);
+
+    // meta related
+    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
+    eventContext.metadata.addAllTopics(postTemplate.topics);
+
+    // program related
+    for (final role in postTemplate.roles) {
+      eventContext.program
+          .addRole(uids: role['uids'], title: role['title'], start: role['start'], end: role['end'], id: role['id']);
+    }
+    eventContext.program.setAddress(postTemplate.address);
+    eventContext.program.setAllDay(postTemplate.allDay);
+    eventContext.program.setMapLink(postTemplate.mapLink);
+    eventContext.program.setOnline(postTemplate.online);
+    eventContext.program.setFinishTime(postTemplate.finishTime);
+
+    return eventContext;
   }
 }

@@ -31,12 +31,15 @@ class PostTemplate {
     _address = data['Address'];
     _mapLink = data['MapLink'];
     _roles = _parseRoles(forLocal, List<Map<String, dynamic>>.from(data['Roles']));
+
     if (data['StartTime'] != null) {
       if (forLocal) {
         _startTime = DateTime.fromMillisecondsSinceEpoch(data['StartTime']);
       } else {
         _startTime = (data['StartTime'] as Timestamp).toDate();
       }
+    } else {
+      _startTime = null;
     }
     if (data['FinishTime'] != null) {
       if (forLocal) {
@@ -44,6 +47,8 @@ class PostTemplate {
       } else {
         _finishTime = (data['FinishTime'] as Timestamp).toDate();
       }
+    } else {
+      _finishTime = null;
     }
 
     // media
