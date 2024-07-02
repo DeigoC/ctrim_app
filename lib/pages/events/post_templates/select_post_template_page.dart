@@ -191,52 +191,70 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   Widget _buildTestButton() {
     return FloatingActionButton.extended(
         label: const Text('Test here'),
-        onPressed: () async {
-          // create a simple Template for now
-          final Map<String, dynamic> templateData = {
-            'Title': 'here is a title',
-            'Description': 'here is a description',
-            'HeadTitle': 'here is the head title',
-            'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
-            'Location': 'Belfast',
-            'Topics': ['topic1'],
-            'Contributors': ['3'],
-            'AllDay': false,
-            'Online': false,
-            'Address': 'Some address here',
-            'MapLink': 'some link here',
-            'Media': [
-              {'src': 'imgsrc1', 'title': 'title here for image', 'type': 'img'}
-            ],
-            'HeadMedia': List<Map<String, dynamic>>.empty(),
-            'Roles': List<Map<String, dynamic>>.from([
-              {
-                'uids': ['2'],
-                'detail': '',
-                'title': 'An example Title',
-                'start': DateTime.now().millisecondsSinceEpoch,
-                'end': DateTime.now().add(const Duration(minutes: 15)).millisecondsSinceEpoch,
-                'for_guests': true,
-                'id': 123213
-              }
-            ]),
-          };
-          final PostTemplate thisTemplate = PostTemplate.fromMap(true, '1', templateData);
-
-          // try writing to local storage as a Json
-          debugPrint('---- Creating PostTemplate complete, time to write to local storage');
-          await _localDataManager.writePostTemplateData(thisTemplate);
-
-          // then try to read it again
-          debugPrint('---- Time to read in the data');
-          final allTemplates = await _localDataManager.readAllPostTemplates();
-
-          debugPrint('---- Time to save the data over to the DB');
-          PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-          await postTemplateDBManager.addPostTemplate(allTemplates.first);
-
-          debugPrint('---- Time to save the data over to the DB');
+        onPressed: () {
+          // _createPostTemplate();
+          _clearDir();
         });
+  }
+
+  Future<void> _createPostTemplate() async {
+    // create a simple Template for now
+    final Map<String, dynamic> templateData = {
+      'Title': 'here is a title',
+      'Description': 'here is a description',
+      'HeadTitle': 'here is the head title',
+      'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
+      'Location': 'Belfast',
+      'Topics': ['topic1'],
+      'Contributors': ['3'],
+      'AllDay': false,
+      'Online': false,
+      'Address': 'Some address here',
+      'MapLink': 'some link here',
+      'StartTime': DateTime.now().millisecondsSinceEpoch,
+      'FinishTime': DateTime.now().add(const Duration(hours: 2)).millisecondsSinceEpoch,
+      'Media': [
+        {
+          'src':
+              'https://static.wikia.nocookie.net/garfield/images/7/70/Garfield2000.png/revision/latest/scale-to-width/360?cb=20231128184459',
+          'title': 'title here for image',
+          'type': 'img'
+        }
+      ],
+      'HeadMedia': List<Map<String, dynamic>>.empty(),
+      'Roles': List<Map<String, dynamic>>.from([
+        {
+          'uids': ['2'],
+          'detail': '',
+          'title': 'An example Title',
+          'start': DateTime.now().millisecondsSinceEpoch,
+          'end': DateTime.now().add(const Duration(minutes: 15)).millisecondsSinceEpoch,
+          'for_guests': true,
+          'id': 123213
+        }
+      ]),
+    };
+    final PostTemplate thisTemplate = PostTemplate.fromMap(true, 'RnGMzbiXUUDOVTiFh76F', templateData);
+
+    // try writing to local storage as a Json
+    debugPrint('---- Creating PostTemplate complete, time to write to local storage');
+    await _localDataManager.writePostTemplateData(thisTemplate);
+
+    // then try to read it again
+    debugPrint('---- Time to read in the data');
+    final allTemplates = await _localDataManager.readAllPostTemplates();
+
+    debugPrint('---- Time to save the data over to the DB');
+    PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
+    await postTemplateDBManager.addPostTemplate(allTemplates.first);
+
+    debugPrint('---- Time to save the data over to the DB');
+  }
+
+  Future<void> _clearDir() async {
+    final LocalDataManager localDataManager = LocalDataManager();
+    localDataManager.clearPostTemplateDir();
+    debugPrint('--------- Post Template Dir is cleared');
   }
 
   // * Logic
@@ -760,6 +778,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       // perfrom the update
       final List<PostTemplate> templates = await postTemplateDBManager.fetchAllTemplates();
       for (final PostTemplate template in templates) {
+        debugPrint('writing PostTemplate ID ${template.id}');
         dataManager.writePostTemplateData(template);
       }
 
@@ -777,6 +796,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     // We will utilise existing framework to edit a 'post'. Meaning to covert it to a EventContext
     // Then at the end covert that back to a PostTemplate and save it
     final EventContext eventContext = EventContext.adding(currentUserID: '1');
+
+    // head
     eventContext.head.setEventDate(postTemplate.startTime);
     eventContext.head.setLocation(postTemplate.location);
     eventContext.head.setTitle(postTemplate.title);
@@ -785,10 +806,23 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           .addMediaItem(type: headMediaItem['type']!, src: headMediaItem['src']!, title: headMediaItem['title'] ?? '');
     }
 
+    // body and media
     eventContext.setFetchedBody(postTemplate.body);
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
+    // meta related
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
+
+    // program related
+    for (final role in postTemplate.roles) {
+      eventContext.program
+          .addRole(uids: role['uids'], title: role['title'], start: role['start'], end: role['end'], id: role['id']);
+    }
+    eventContext.program.setAddress(postTemplate.address);
+    eventContext.program.setAllDay(postTemplate.allDay);
+    eventContext.program.setMapLink(postTemplate.mapLink);
+    eventContext.program.setOnline(postTemplate.online);
+    eventContext.program.setFinishTime(postTemplate.finishTime);
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => EditTemplatePage(eventContext: eventContext)));
   }

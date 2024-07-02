@@ -213,6 +213,16 @@ class LocalDataManager {
     return false;
   }
 
+  Future<void> clearPostTemplateDir() async {
+    final path = await _localPath;
+    final Directory dir = Directory('$path/post_templates');
+    final List<FileSystemEntity> entities = await dir.list().toList();
+
+    for (var entity in entities) {
+      await entity.delete();
+    }
+  }
+
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;

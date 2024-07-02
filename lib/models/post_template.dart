@@ -6,7 +6,7 @@ class PostTemplate {
   late List<Map<String, String>> _headMedia, _media;
 
   // * Event Program related
-  late DateTime? _startTime, _endTime;
+  late DateTime? _startTime, _finishTime;
   late String _mapLink, _address;
   late List<Map<String, dynamic>> _roles;
   bool _allDay = false, _online = false;
@@ -32,10 +32,18 @@ class PostTemplate {
     _mapLink = data['MapLink'];
     _roles = _parseRoles(forLocal, List<Map<String, dynamic>>.from(data['Roles']));
     if (data['StartTime'] != null) {
-      _endTime = (data['StartTime'] as Timestamp).toDate();
+      if (forLocal) {
+        _startTime = DateTime.fromMillisecondsSinceEpoch(data['StartTime']);
+      } else {
+        _startTime = (data['StartTime'] as Timestamp).toDate();
+      }
     }
     if (data['FinishTime'] != null) {
-      _endTime = (data['FinishTime'] as Timestamp).toDate();
+      if (forLocal) {
+        _finishTime = DateTime.fromMillisecondsSinceEpoch(data['FinishTime']);
+      } else {
+        _finishTime = (data['FinishTime'] as Timestamp).toDate();
+      }
     }
 
     // media
@@ -44,6 +52,15 @@ class PostTemplate {
   }
 
   toJson(final bool forLocal) {
+    dynamic startTime = _startTime;
+    dynamic endTime = _finishTime;
+    if (_startTime != null) {
+      startTime = forLocal ? _startTime!.millisecondsSinceEpoch : Timestamp.fromDate(_startTime!);
+    }
+    if (_finishTime != null) {
+      endTime = forLocal ? _finishTime!.millisecondsSinceEpoch : Timestamp.fromDate(_finishTime!);
+    }
+
     return {
       'Title': _title,
       'Description': _description,
@@ -58,6 +75,8 @@ class PostTemplate {
       'MapLink': _mapLink,
       'HeadMedia': _headMedia,
       'Media': _media,
+      'StartTime': startTime,
+      'FinishTime': endTime,
       'Roles': _rolesToJson(forLocal),
     };
   }
@@ -75,7 +94,7 @@ class PostTemplate {
   bool get online => _online;
 
   DateTime? get startTime => _startTime;
-  DateTime? get endTime => _endTime;
+  DateTime? get finishTime => _finishTime;
 
   List<Map<String, String>> get headMedia => _headMedia;
   List<Map<String, String>> get media => _media;
@@ -93,7 +112,7 @@ class PostTemplate {
   void setAddress(final String address) => _address = address;
 
   void setStartTime(final DateTime? start) => _startTime = start;
-  void setEndtime(final DateTime? end) => _endTime = end;
+  void setEndtime(final DateTime? end) => _finishTime = end;
 
   // private methods
   List<Map<String, dynamic>> _parseRoles(final bool forLocal, final List<Map<String, dynamic>> rawData) {

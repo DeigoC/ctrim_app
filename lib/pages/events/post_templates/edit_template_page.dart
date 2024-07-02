@@ -44,13 +44,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Edit Template')), body: _buildBody());
+    return Scaffold(body: _buildBody());
   }
 
   Widget _buildBody() {
-    // TODO build this similarly to viewing a regular post... well just create a tab view
-    // in fact it'll mostly be like editing a post... hmm
-    // editing a body, adding media items, adding roles. It's basically a post
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
           return _buildHeaderSliver();
@@ -128,17 +125,19 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 child: SafeArea(
                     child: Column(children: [
               ListTile(title: const Text('Edit About'), leading: const Icon(Icons.edit), onTap: _onEditBodyClick),
-              widget.eventContext.head.eventDate != null
-                  ? ListTile(
-                      title: const Text('Add Schedule Item'),
-                      leading: const Icon(Icons.edit_calendar),
-                      onTap: _onAddScheduleItem,
-                    )
-                  : Container(),
+              ListTile(
+                title: const Text('Add Schedule Item'),
+                leading: const Icon(Icons.edit_calendar),
+                onTap: _onAddScheduleItem,
+              ),
               ListTile(
                   title: const Text('Edit Media Items'),
                   leading: const Icon(Icons.photo_library),
-                  onTap: _onEditMediaTap)
+                  onTap: _onEditMediaTap),
+              ListTile(
+                  title: const Text('Save Post Template'),
+                  leading: const Icon(Icons.save_rounded),
+                  onTap: _onSavePostTemplateClick),
             ]))));
   }
 
@@ -170,5 +169,14 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   void _updateBody() {
     setState(() {});
     // _onRequiredFieldTextChange('');
+  }
+
+  void _onSavePostTemplateClick() {
+    debugPrint('---- begin saving post template');
+    // Convert to PostTemplate again
+
+    // Save to DB
+
+    // Save Locally
   }
 }

@@ -68,7 +68,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               selected: _selectedIndex == index,
               assignedUsers:
                   (programRoles[index]["uids"] as List<String>).map((e) => _appContext.getUserFromID(e)).toList(),
-              canEdit: canEdit,
+              canEdit: _canEditPostProgram() ? true : canEdit,
               onEditClick: () => _openEditProgramPage(programRoles[index]),
             );
           },
