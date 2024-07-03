@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -138,6 +140,87 @@ class LocalDataManager {
   Future<File> _getPostFile(final String id) async {
     final path = await _localPath;
     return File('$path/posts/$id/post_data.txt');
+  }
+
+  // * Post Templates
+  Future<void> writePostTemplateData(final PostTemplate template) async {
+    final path = await _localPath;
+    final File thisTemplateFile = File('$path/post_templates/${template.id}.json');
+
+    final Map<String, dynamic> data = template.toJson(true);
+    data['id'] = template.id;
+    final String encodedJson = jsonEncode(data);
+    await thisTemplateFile.writeAsString(encodedJson);
+  }
+
+  Future<List<PostTemplate>> readAllPostTemplates() async {
+    final path = await _localPath;
+    final Directory dir = Directory('$path/post_templates');
+    final List<FileSystemEntity> entities = await dir.list().toList();
+    entities
+        .removeWhere((element) => element.path.contains('tracking.txt') || element.path.contains('check_tracking.txt'));
+    final List<PostTemplate> results = List.empty(growable: true);
+
+    for (final fileEntity in entities) {
+      debugPrint('reading PostTemplate path: ${fileEntity.path}');
+      final File tmpFile = File(fileEntity.path);
+      final String contents = await tmpFile.readAsString();
+      final Map<String, dynamic> contentJson = jsonDecode(contents);
+      results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+    }
+
+    return results;
+  }
+
+  Future<int> readLastPostTemplateUpdate() async {
+    final path = await _localPath;
+    final Directory dir = Directory('$path/post_templates');
+    if (!await dir.exists()) {
+      await dir.create();
+    }
+
+    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
+    if (await templateTrackingFile.exists()) {
+      final String valStr = await templateTrackingFile.readAsString();
+      return int.parse(valStr);
+    }
+    writeLastPostTemplateUpdate(0);
+    return 0;
+  }
+
+  Future<void> writeLastPostTemplateUpdate(final int value) async {
+    final path = await _localPath;
+    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
+    await templateTrackingFile.writeAsString(value.toString());
+  }
+
+  Future<bool> haveCheckedTemplateUpdates() async {
+    // also updates the date if needed - we'll clumsily just use the day of the week for now...
+
+    final path = await _localPath;
+    final Directory postTemplateDir = Directory('$path/post_templates');
+    if (!await postTemplateDir.exists()) {
+      postTemplateDir.create();
+    }
+
+    final File checkFile = File('$path/post_templates/check_tracking.txt');
+    if (await checkFile.exists() && await checkFile.readAsString() == DateTime.now().day.toString()) {
+      debugPrint('We have already checked the post templates today');
+      return true;
+    }
+    debugPrint('We have to check the post templates');
+    checkFile.writeAsString(DateTime.now().day.toString());
+    return false;
+  }
+
+  Future<void> clearPostTemplateDir() async {
+    final path = await _localPath;
+    final Directory dir = Directory('$path/post_templates');
+    final List<FileSystemEntity> entities = await dir.list().toList();
+
+    for (var entity in entities) {
+      await entity.delete();
+    }
   }
 
   Future<String> get _localPath async {

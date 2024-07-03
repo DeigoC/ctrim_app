@@ -32,20 +32,18 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      onPopInvoked: (_) {
-        DialogManager.showConfirmationDialog(
-            context: context, title: 'Leave?', content: 'Make sure you have copied the json!');
+      onPopInvoked: (_) async {
+        _saveJsonToClipboard().then((_) => DialogManager.showConfirmationDialog(
+            context: context, title: 'Leave?', content: 'Make sure you have copied the json!'));
+        // ! broken dialog below :(
       },
       child: Scaffold(
           body: _buildBody(),
           appBar: AppBar(title: const Text('Edit Body'), actions: [
             IconButton(
                 onPressed: () {
-                  final rawJson = _controller.document.toDelta().toJson();
-                  final exampleJson = jsonEncode(rawJson);
-                  Clipboard.setData(ClipboardData(text: exampleJson)).then(
+                  _saveJsonToClipboard().then(
                       (_) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Json saved!'))));
-                  debugPrint(exampleJson);
                 },
                 icon: const Icon(Icons.copy_all))
           ])),
@@ -67,5 +65,12 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: _controller)))
       ],
     );
+  }
+
+  Future<void> _saveJsonToClipboard() async {
+    final rawJson = _controller.document.toDelta().toJson();
+    final exampleJson = jsonEncode(rawJson);
+    debugPrint(exampleJson);
+    await Clipboard.setData(ClipboardData(text: exampleJson));
   }
 }

@@ -13,10 +13,10 @@ import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../widgets/info/timed_button_dialog.dart';
-import 'events/select_post_template_page.dart';
+import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
-import 'information/simple_info_page.dart';
+import 'information/ctrim_info_page.dart';
 import 'information_home.dart';
 import 'personal_home.dart';
 
@@ -238,8 +238,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         appContext.sharedPref.saveFCMToken(token);
       }
 
-      // TODO remove this in the future
-      messagingManager.subscribeToCTRIMBelfast();
       _appContext.sharedPref.setSubscribedToBelfast(true);
       _setNotificationTopicsTemp();
       appContext.sharedPref.nowOpened();
@@ -356,7 +354,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _openInformationTeachingPage(final String jsonPath) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => SimpleInfoPage(jsonPath: jsonPath)));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => CTRIMInfoPage(jsonPath: jsonPath)));
   }
 
   // all notifications potentially will be asking to open a page
@@ -484,7 +482,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       messagingManager.subscribeToTopic('belfast-dawn-watch');
       messagingManager.subscribeToTopic('belfast-overnight-prayer');
       messagingManager.subscribeToTopic('belfast-youth-cg');
-      messagingManager.subscribeToTopic('Belfast'); // hardcode to Belfast for now
+      messagingManager.subscribeToTopic('Belfast'); // ! hardcode to Belfast for now
     }
   }
 }

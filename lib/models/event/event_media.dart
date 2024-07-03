@@ -11,7 +11,7 @@ class EventMedia {
     _media = List.empty(growable: true);
   }
 
-  EventMedia.fromMap(Map<String, dynamic> data) {
+  EventMedia.fromMap(final Map<String, dynamic> data) {
     _media = _toMedia(List<Map<String, dynamic>>.from(data['Media']));
   }
 
@@ -19,7 +19,7 @@ class EventMedia {
     return {'Media': _media};
   }
 
-  List<Map<String, String>> _toMedia(List<Map<String, dynamic>> data) {
+  List<Map<String, String>> _toMedia(final List<Map<String, dynamic>> data) {
     final List<Map<String, String>> results = List<Map<String, String>>.empty(growable: true);
 
     for (final entry in data) {
@@ -35,6 +35,7 @@ class EventMedia {
 
   List<Map<String, String>> get allMedia => UnmodifiableListView(_media);
   void clearAllMedia() => _media.clear();
-  void addMediaFile(Map<String, String> file) => _media.add(file);
-  void removeMediaFile(Map<String, String> file) => _media.remove(file); // test this kind of approach!
+  void addMediaFile(final Map<String, String> file) => _media.add(file);
+  void addAllMediaFiles(final List<Map<String, String>> mediaFiles) => _media.addAll(mediaFiles);
+  void removeMediaFile(final Map<String, String> file) => _media.remove(file); // test this kind of approach!
 }

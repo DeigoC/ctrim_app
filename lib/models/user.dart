@@ -5,16 +5,15 @@ class User {
   late bool _isAreaAdmin, _isLeader;
   List<Map<String, dynamic>>? _roles, _posts;
 
-  User({
-    required String id,
-    required String forname,
-    required String surname,
-    String imgSrc = '',
-    String location = 'Belfast',
-    bool isAreaAdmin = false,
-    bool isLeader = false,
-    String authID = '',
-  }) {
+  User(
+      {required String id,
+      required String forname,
+      required String surname,
+      String imgSrc = '',
+      String location = 'Belfast',
+      bool isAreaAdmin = false,
+      bool isLeader = false,
+      String authID = ''}) {
     _id = id;
     _forename = forname;
     _surname = surname;
@@ -25,7 +24,7 @@ class User {
     _authID = authID;
   }
 
-  User.fromMap(String id, Map<String, dynamic> data)
+  User.fromMap(final String id, final Map<String, dynamic> data)
       : _id = id,
         _forename = data['Forename'],
         _surname = data['Surname'],
@@ -43,7 +42,7 @@ class User {
       'IsAreaAdmin': _isAreaAdmin,
       'IsLeader': _isLeader,
       'ImgSrc': _imgSrc,
-      'AuthID': _authID,
+      'AuthID': _authID
     };
   }
 

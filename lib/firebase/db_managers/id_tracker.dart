@@ -14,10 +14,10 @@ class IDTrackerDBManager {
     return currentID;
   }
 
-  Future<String> _getAndIncrementIDFromDocument(String doc) async {
+  Future<String> _getAndIncrementIDFromDocument(final String doc) async {
     var data = await _ref.doc(doc).get();
     final String id = data['id'];
-    int newID = int.parse(id) + 1;
+    final int newID = int.parse(id) + 1;
     _ref.doc(doc).set({'id': newID.toString()});
 
     return id;
