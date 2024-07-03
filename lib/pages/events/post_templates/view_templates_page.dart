@@ -24,7 +24,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('View Templates')),
+        appBar: AppBar(title: const Text('Edit Templates')),
         body: _buildFBBody(),
         floatingActionButton: _buildTestButton());
   }
@@ -72,7 +72,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
 
   Widget _buildTestButton() {
     return FloatingActionButton.extended(
-        label: const Text('Test here'),
+        label: const Text('Clear Dir - Test'),
         onPressed: () {
           // _createPostTemplate();
           _clearDir();

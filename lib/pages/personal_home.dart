@@ -103,7 +103,7 @@ class _PersonalHomeState extends State<PersonalHome> {
 
       if (widget.appContext.currentUser.isAreaAdmin) {
         children.add(ListTile(
-            title: const Text("Post Templates"), onTap: _openViewTemplatesClick, leading: const Icon(Icons.list_alt)));
+            title: const Text("Post Templates"), onTap: _openViewTemplatesClick, leading: const Icon(Icons.newspaper)));
       }
 
       children.addAll([

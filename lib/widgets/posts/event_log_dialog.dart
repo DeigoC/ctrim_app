@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
@@ -203,12 +204,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   // sends notifications and handles the user roles document for addition of role
   Future<void> _sortRoleAdditions() async {
-    final String title = "$_currentUserName has assinged you to a role!";
+    final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
+    final String title =
+        "📣 $_currentUserName has assinged you to a task for ${dateFormat.format(widget.eventContext.head.eventDate!)}";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
       debugPrint('----- this addition entry looks like: $additionEntry');
       final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
-      final String body = "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle}";
+      final DateTime start = roleEntry['start'];
+      final String body =
+          "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle} at ${timeFormat.format(start)}";
 
       final List<String> tokens = [];
       for (final thisUID in additionEntry.value) {

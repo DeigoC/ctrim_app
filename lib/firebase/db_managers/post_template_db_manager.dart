@@ -5,6 +5,7 @@ class PostTemplateDBManager {
   static final CollectionReference _ref = FirebaseFirestore.instance.collection('post_templates');
 
   Future<void> addPostTemplate(final PostTemplate template) async {
+    updateLastUpdateTime(DateTime.now().millisecondsSinceEpoch);
     await _ref.doc().set(template.toJson(false));
   }
 
@@ -17,6 +18,7 @@ class PostTemplateDBManager {
   }
 
   Future<void> updateTemplate(final PostTemplate template) async {
+    updateLastUpdateTime(DateTime.now().millisecondsSinceEpoch);
     await _ref.doc(template.id).update(template.toJson(false));
   }
 

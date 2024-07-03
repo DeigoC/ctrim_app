@@ -32,7 +32,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Choose Template')),
       body: _buildFBBody(),
-      floatingActionButton: _buildTestButton(),
     );
   }
 
@@ -99,21 +98,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                       const Divider(),
                       Text(template.description, style: _cardContentStyle)
                     ]))));
-  }
-
-  Widget _buildTestButton() {
-    return FloatingActionButton.extended(
-        label: const Text('Test here'),
-        onPressed: () {
-          // _createPostTemplate();
-          _clearDir();
-        });
-  }
-
-  Future<void> _clearDir() async {
-    final LocalDataManager localDataManager = LocalDataManager();
-    localDataManager.clearPostTemplateDir();
-    debugPrint('--------- Post Template Dir is cleared');
   }
 
   // * Logic
@@ -232,7 +216,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     }
   }
 
-  _adjustEventProgramToDate(final EventContext eventContext, final DateTime selectedDate) {
+  void _adjustEventProgramToDate(final EventContext eventContext, final DateTime selectedDate) {
     final DateTime newEventDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day,
         eventContext.head.eventDate!.hour, eventContext.head.eventDate!.minute);
 
@@ -259,7 +243,9 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   EventContext _mapTemplateToEventContext(final PostTemplate postTemplate) {
-    final EventContext eventContext = EventContext.adding(currentUserID: '1');
+    // ? In the future, remove the EventContext when initialising this page - we just need the parentId
+    final EventContext eventContext =
+        EventContext.adding(currentUserID: '1', parentID: widget.eventContext.metadata.parentID);
 
     // head
     eventContext.head.setEventDate(postTemplate.startTime);
@@ -275,13 +261,23 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
     // meta related
-    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
     eventContext.metadata.addAllTopics(postTemplate.topics);
+    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
+    if (postTemplate.contributors.isNotEmpty) {
+      eventContext.contributorAdditionUIDs.addAll(postTemplate.contributors);
+    }
 
     // program related
+    int roleId = DateTime.now().millisecondsSinceEpoch;
     for (final role in postTemplate.roles) {
+      final List<String> roleUids = List.from(role['uids']);
       eventContext.program
-          .addRole(uids: role['uids'], title: role['title'], start: role['start'], end: role['end'], id: role['id']);
+          .addRole(uids: roleUids, title: role['title'], start: role['start'], end: role['end'], id: roleId);
+
+      if (roleUids.isNotEmpty) {
+        eventContext.addRoleAdditionNotification(roleUids, roleId);
+        roleId++;
+      }
     }
     eventContext.program.setAddress(postTemplate.address);
     eventContext.program.setAllDay(postTemplate.allDay);

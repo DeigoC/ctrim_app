@@ -1,17 +1,20 @@
 import 'dart:io';
 
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
 import '../../widgets/posts/event_log_dialog.dart';
@@ -528,12 +531,24 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     DialogManager.showConfirmationDialog(
             context: context,
             title: 'Notify Broadcast',
-            content: 'This action will send a push notification everyone. Do you wish to continue?')
+            content:
+                'This action will send a push notification to people who subscribed to these notifications. Do you wish to continue?')
         .then((confirmation) {
       if (confirmation) {
-        // TODO notify people who have subscribed to listen to these kind of posts... requires a new post field!
         final List<String> topics = _eventContext.metadata.topics;
-        debugPrint('----- topics during viewing are $topics');
+        final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
+        final String title = _eventContext.head.title;
+        final String subtitle = _eventContext.head.subtitle;
+
+        for (final topic in topics) {
+          cloudFunctionManager.sendToTopic(
+              topic: topic,
+              title: title,
+              body: subtitle,
+              data: {'PostID': _eventContext.id},
+              iOSImage: _eventContext.head.getKeyGraphic(),
+              androidImage: _eventContext.head.getKeyGraphic());
+        }
       }
     });
   }
@@ -545,8 +560,43 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             content: 'This action will send a push notification to people of the schedule. Do you wish to continue?')
         .then((confirmation) {
       if (confirmation) {
-        // this is a bit more complex. I want to notify of the special role people have
+        _sendRoleNotifications();
       }
     });
+  }
+
+  Future<void> _sendRoleNotifications() async {
+    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
+    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
+    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+    final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
+
+    final String currentUID = appContext.currentUser.id;
+    final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
+
+    for (final roleEntry in _eventContext.program.roles) {
+      final DateTime startingTime = roleEntry['start'];
+      final String body =
+          "'${roleEntry['title']!}' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
+      final List<String> tokens = [];
+      final List<String> uids = roleEntry['uids'];
+
+      for (final thisUID in uids) {
+        if (thisUID != currentUID) {
+          if (!appContext.haveTokensForUserID(thisUID)) {
+            final List<String> tokens =
+                await everyoneDBManager.fetchTokensFromAuthID(appContext.getAuthIDFromUID(thisUID));
+            appContext.addTokensToUserID(thisUID, tokens);
+          }
+
+          tokens.addAll(appContext.getTokensFromUserID(thisUID));
+        }
+      }
+
+      if (tokens.isNotEmpty) {
+        cloudFunctionManager
+            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
+      }
+    }
   }
 }

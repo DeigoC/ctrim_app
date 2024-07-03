@@ -315,19 +315,19 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   Future<void> _notifyProgramRoleAddtitions(final String newPostID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
-    final String title = "$currentUserName has assinged you to a role!";
+    final String title = "📣 $currentUserName has assigned you to a task!";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
       final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
-      final String body = "You are assigned to '${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
+      final String body = "'${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
 
       final List<String> tokens = [];
       for (final thisUID in additionEntry.value) {
         if (thisUID != currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
-            final List<String> tokens =
+            final List<String> fetchedTokens =
                 await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, tokens);
+            _appContext.addTokensToUserID(thisUID, fetchedTokens);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
