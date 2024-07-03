@@ -17,7 +17,7 @@ class _InformationHomeState extends State<InformationHome> {
   static const Map<String, String> _ctrimInfoTopics = {
     'Core Values': 'What do we live and work for?',
     '4XD Acts DNA': 'What is the framework we follow?',
-    'Cell Groups': 'Our core strategy in winning souls and strengthing in each other',
+    'Cell Groups': 'Our core strategy in winning souls and strengthing with each other',
     'Devotionals': 'How do we take care of our relationship with God?',
   };
 
