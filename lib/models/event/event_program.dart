@@ -21,7 +21,7 @@ class EventProgram {
 
   EventProgram();
 
-  EventProgram.fromMap(Map<String, dynamic> data) {
+  EventProgram.fromMap(final Map<String, dynamic> data) {
     if (data['FinishTime'] != null) {
       _finishTime = (data['FinishTime'] as Timestamp).toDate();
     }

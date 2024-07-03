@@ -17,9 +17,8 @@ class EventContext {
   late final EventMedia _media; // ? doesn't have to be late
   late final String _currentUID;
   final EventBody _body = EventBody();
-  final List<String> _topics = List.empty(growable: true);
 
-  bool _canSaveTheEditing = false;
+  bool _canSaveTheEditing = false, _notifyBroadcast = true, _notifyScheduledMembers = true;
 
   // id (datetime milliseconds) to uids
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
@@ -37,17 +36,21 @@ class EventContext {
     }
   }
 
-  EventContext.adding({required String currentUserID, String? parentID}) {
+  EventContext.adding({required String currentUserID, String? parentID, String? id}) {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
-    _head = EventHead(id: 'X'); // temporary
+    _head = EventHead(id: id ?? 'x'); // temporary
     _currentUID = currentUserID;
     _initialiseInternalLists();
   }
 
   // * Head Related
   EventHead get head => _head;
+  bool get notifyBroadcast => _notifyBroadcast;
+  bool get notifyScheduledMembers => _notifyScheduledMembers;
+  void setNotifyBroadcast(final bool newState) => _notifyBroadcast = newState;
+  void setNotifyScheduledMembers(final bool newState) => _notifyScheduledMembers = newState;
 
   // * Body Related
   bool get isBodyUntouched => _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') == 0;
@@ -158,6 +161,8 @@ class EventContext {
       _roleRemovals.clear();
       _deletedRoleTitle.clear();
     }
+    _notifyBroadcast = true;
+    _notifyScheduledMembers = true;
     _canSaveTheEditing = false;
   }
 
@@ -253,6 +258,7 @@ class EventContext {
     result += '\n${_metadata.contributorUIDs}';
     result += '\n${_metadata.parentID ?? 'null'}';
     result += '\n${_metadata.childrenPostIDs}';
+    result += '\n${_metadata.topics}';
     result += '\n----META_END----';
 
     return result;
@@ -312,9 +318,17 @@ class EventContext {
         parentID: lines[metadataStartIndex + 4] == 'null' ? null : lines[metadataStartIndex + 4]);
 
     _metadata.setLastUID(lines[metadataStartIndex + 2]);
+    _metadata.contributorUIDs.addAll(_getListFromData(lines[metadataStartIndex + 3]));
+    _metadata.childrenPostIDs.addAll(_getListFromData(lines[metadataStartIndex + 5]));
 
-    final String contributorLine =
-        lines[metadataStartIndex + 3].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
+    String rawTopicsData = lines.elementAt(metadataStartIndex + 6);
+    if (!rawTopicsData.contains('----META_END----')) {
+      _metadata.addAllTopics(_getListFromData(rawTopicsData));
+    }
+  }
+
+  List<String> _getListFromData(final String rawData) {
+    final String contributorLine = rawData.replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
     final List<String> contributors = List.empty(growable: true);
     if (contributorLine.isNotEmpty && !contributorLine.contains(',')) {
       contributors.add(contributorLine);
@@ -322,22 +336,7 @@ class EventContext {
       contributors.addAll(contributorLine.split(','));
     }
 
-    for (final contributor in contributors) {
-      _metadata.contributorUIDs.add(contributor);
-    }
-
-    final String childrenLine =
-        lines[metadataStartIndex + 5].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
-    final List<String> childrenIDs = List.empty(growable: true);
-    if (childrenLine.isNotEmpty && !childrenLine.contains(',')) {
-      childrenIDs.add(childrenLine);
-    } else if (childrenLine.isNotEmpty) {
-      childrenIDs.addAll(childrenLine.split(','));
-    }
-
-    for (final child in childrenIDs) {
-      _metadata.childrenPostIDs.add(child);
-    }
+    return contributors;
   }
 
   void _initialiseProgramRoles(final List<String> data) {
@@ -410,12 +409,11 @@ class EventContext {
       'uid': firstLog[2]
     });
 
-    for (final logItem in logs) {
-      _log.addLog({
-        'log': logItem[0].replaceAll(r'\n', '\n'),
-        'ts': DateTime.fromMillisecondsSinceEpoch(int.parse(logItem[1])),
-        'uid': logItem[2]
-      });
+    for (final List<String> logItem in logs) {
+      _log.addLog(
+          log: logItem[0].replaceAll(r'\n', '\n'),
+          uid: logItem[2],
+          ts: DateTime.fromMillisecondsSinceEpoch(int.parse(logItem[1])));
     }
   }
 
@@ -443,8 +441,4 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
-
-  List<String> get topics => UnmodifiableListView(_topics);
-  void addTopic(final String topic) => _topics.add(topic);
-  void clearTopics() => _topics.clear();
 }

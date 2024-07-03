@@ -1,9 +1,8 @@
+import 'package:ctrim_app/pages/information/testimonial_info_page.dart';
 import 'package:flutter/material.dart';
 
-import 'information/belfast_church_page.dart';
-import 'information/north_coast_church_page.dart';
-import 'information/portadown_church_page.dart';
-import 'information/simple_info_page.dart';
+import 'information/church_info_page.dart';
+import 'information/ctrim_info_page.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({super.key, required this.tabController, required this.scrollController});
@@ -15,21 +14,15 @@ class InformationHome extends StatefulWidget {
 
 class _InformationHomeState extends State<InformationHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const Map<String, String> _oneVerseEvangelism = {
-    'Romans 6:23': 'For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord.',
-    'Jerimiah 29:11':
-        'For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope.',
-    'Matthew 6:33':
-        'But seek first the kingdom of God and his righteousness, and all these things will be added to you.',
-    'Romans 12:2':
-        'Do not be conformed to this world, but be transformed by the renewal of your mind, that by testing you may discern what is the will of God, what is good and acceptable and perfect.',
+  static const Map<String, String> _ctrimInfoTopics = {
+    'Core Values': 'What do we live and work for?',
+    '4XD Acts DNA': 'What is the framework we follow?',
+    'Cell Groups': 'Our core strategy in winning souls and strengthing with each other',
+    'Devotionals': 'How do we take care of our relationship with God?',
   };
 
   @override
   Widget build(BuildContext context) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
-
     return NestedScrollView(
         controller: widget.scrollController,
         headerSliverBuilder: (_, __) => [
@@ -42,19 +35,16 @@ class _InformationHomeState extends State<InformationHome> {
                   bottom: TabBar(controller: widget.tabController, isScrollable: true, tabs: const [
                     Tab(text: 'About'),
                     Tab(text: 'Churches'),
-                    Tab(text: 'Topics'),
-                    Tab(text: 'One Verse Evangelism')
+                    Tab(text: 'Testimonials'),
+                    Tab(text: 'Information')
                   ]))
             ],
-        body: TabBarView(controller: widget.tabController, children: [
-          _buildAbout(webHorizontalPadding == 0 ? webHorizontalPadding + 8 : webHorizontalPadding),
-          _buildChurchesTab(),
-          _buildTeachingsTab(webHorizontalPadding),
-          _buildOneVerseEvangelismTab(webHorizontalPadding)
-        ]));
+        body: TabBarView(
+            controller: widget.tabController,
+            children: [_buildAbout(), _buildChurchesTab(), _buildTestimonials(), _buildCtrimInformationSection()]));
   }
 
-  Widget _buildAbout(final double webHorizontalPadding) {
+  Widget _buildAbout() {
     const String matthewVerse = '“Therefore go and make disciples of all nations, baptizing them in the '
         'name of the Father and of the Son and of the Holy Spirit, and '
         'teaching them to obey everything I have commanded you. And '
@@ -92,7 +82,7 @@ class _InformationHomeState extends State<InformationHome> {
     return MediaQuery.removePadding(
         context: context,
         removeTop: true,
-        child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: const [
+        child: ListView(padding: const EdgeInsets.symmetric(horizontal: 8), children: const [
           // Image.network('https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'),
           SizedBox(height: 32),
           Padding(
@@ -152,114 +142,137 @@ class _InformationHomeState extends State<InformationHome> {
         removeTop: true,
         context: context,
         child: ListView(key: const PageStorageKey<String>('information_churches_tab'), children: [
-          _buildChurchSlot('Belfast', 'bel1.png'),
-          _buildChurchSlot('Portadown', 'port1.png'),
-          _buildChurchSlot('North Coast', 'northC1.png')
+          _buildChurchSlot('Belfast', 'assets/images/bel1.png'),
+          _buildChurchSlot('Portadown', 'assets/images/port1.png'),
+          _buildChurchSlot('North Coast', 'assets/images/northC1.png'),
+          // _buildChurchSlot('Larne/Carrickfergus', 'assets/images/northC1.png'),
         ]));
   }
 
   Widget _buildChurchSlot(final String church, final String img) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 8;
-    final bool onWideWeb = webHorizontalPadding != 8;
-
     return InkWell(
         onTap: () => _onChurchTap(church),
         child: SizedBox(
-            height: onWideWeb ? MediaQuery.of(context).size.height * 0.7 : MediaQuery.of(context).size.height * 0.4,
+            height: MediaQuery.of(context).size.height * 0.4,
             width: double.infinity,
             child: Stack(children: [
-              Positioned.fill(child: Image.asset('assets/images/$img', fit: BoxFit.cover)),
+              Positioned.fill(child: Hero(tag: 'initialChurchImage_$img', child: Image.asset(img, fit: BoxFit.cover))),
               Align(
                   alignment: Alignment.bottomLeft,
                   child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Text(church, style: const TextStyle(fontSize: 32, color: Colors.white))))
+                      child: Text(church, style: const TextStyle(fontSize: 36, color: Colors.white))))
             ])));
   }
 
-  Widget _buildTeachingsTab(final double webHorizontalPadding) {
-    final bool onWideWeb = webHorizontalPadding != 0;
+  Widget _buildTestimonials() {
     return MediaQuery.removePadding(
         removeTop: true,
         context: context,
-        child: ListView(padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding), children: [
-          _buildTeachingSlot('Prayer', 'prayer.jpg', onWideWeb),
-          _buildTeachingSlot('Reading The Bible', 'bible_reading.jpg', onWideWeb),
-          _buildTeachingSlot('Love', 'love.jpg', onWideWeb),
-          _buildTeachingSlot('Family', 'family.jpg', onWideWeb),
-          _buildTeachingSlot('Money', 'money.avif', onWideWeb)
-        ]));
+        child: ListView(
+            children: [_buildTestimonialSlot('Maije', 'assets/images/maije.jpg'), _buildMoreTestimonialSlot()]));
   }
 
-  Widget _buildTeachingSlot(final String teaching, final String img, bool onWideWeb) {
+  Widget _buildTestimonialSlot(final String personName, final String img) {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
         child: Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
             child: SizedBox(
-                height:
-                    onWideWeb ? MediaQuery.of(context).size.height * 0.55 : MediaQuery.of(context).size.height * 0.4,
+                height: MediaQuery.of(context).size.height * 0.32,
                 width: double.infinity,
                 child: Stack(children: [
                   Positioned.fill(
                       child: ClipRRect(
                           borderRadius: const BorderRadius.all(Radius.circular(32)),
-                          child: Image.asset('assets/images/$img', fit: BoxFit.cover))),
+                          child:
+                              Hero(tag: 'initialTestimonialImage_$img', child: Image.asset(img, fit: BoxFit.cover)))),
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(Radius.circular(32)),
+                      child: Opacity(
+                        opacity: 0.25,
+                        child: Container(
+                          color: const Color(0xFF000000),
+                        ),
+                      ),
+                    ),
+                  ),
                   Positioned.fill(
                       child: ClipRRect(
                           borderRadius: const BorderRadius.all(Radius.circular(32)),
                           child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () => _onTeachingTap(teaching),
+                                onTap: () => _onTestimonialTap(personName),
                               )))),
                   Align(
                       alignment: Alignment.bottomLeft,
                       child: Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text(teaching, style: const TextStyle(fontSize: 32, color: Colors.white))))
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(personName, style: const TextStyle(fontSize: 32, color: Colors.white)),
+                              const Text(
+                                '"I needed an encounter with Jesus that will turn my life around"',
+                                style: TextStyle(fontSize: 18, color: Colors.white),
+                              )
+                            ],
+                          )))
                 ]))));
   }
 
-  Widget _buildOneVerseEvangelismTab(final double webHorizontalPadding) {
+  Widget _buildMoreTestimonialSlot() {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+        child: Card(
+            elevation: 0.5,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.10,
+                width: double.infinity,
+                child: const Stack(children: [
+                  Align(
+                      alignment: Alignment.center,
+                      child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text("More on the way...!", style: TextStyle(fontSize: 24))))
+                ]))));
+  }
+
+  Widget _buildCtrimInformationSection() {
     return MediaQuery.removePadding(
       removeTop: true,
       context: context,
       child: Padding(
         padding: const EdgeInsets.only(top: 8.0),
         child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemCount: _oneVerseEvangelism.length,
-            itemBuilder: (_, index) => _buildVerseEvangelismCard(
-                _oneVerseEvangelism[_oneVerseEvangelism.keys.elementAt(index)]!,
-                _oneVerseEvangelism.keys.elementAt(index))),
+            itemCount: _ctrimInfoTopics.length,
+            itemBuilder: (_, index) => _buildCtrimInfoCard(
+                _ctrimInfoTopics[_ctrimInfoTopics.keys.elementAt(index)]!, _ctrimInfoTopics.keys.elementAt(index))),
       ),
     );
   }
 
-  Widget _buildVerseEvangelismCard(final String verse, final String chapter) {
+  Widget _buildCtrimInfoCard(final String description, final String topic) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: InkWell(
-        onTap: () => _openVerseEvangelismPage(chapter),
+        onTap: () => _openCtrimInfoPage(topic),
         child: Card(
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child:
                     Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Text(
-                    verse,
+                    topic,
                     style: const TextStyle(fontSize: 21),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    chapter,
-                    style: const TextStyle(fontSize: 16),
-                    textAlign: TextAlign.right,
-                  )
+                  Text(description, style: const TextStyle(fontSize: 16))
                 ]))),
       ),
     );
@@ -269,67 +282,66 @@ class _InformationHomeState extends State<InformationHome> {
 
   void _onChurchTap(final String church) {
     if (church == 'Belfast') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const BelfastChurchPage()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ChurchInfoPage(
+                    jsonPath: 'assets/info/churches/belfast.json',
+                    imageSrc: 'assets/images/bel1.png',
+                  )));
     } else if (church == 'Portadown') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const PortadownChurchPage()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ChurchInfoPage(
+                  jsonPath: 'assets/info/churches/portadown.json', imageSrc: 'assets/images/port1.png')));
     } else {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const NorthCoastChurchPage()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ChurchInfoPage(
+                  jsonPath: 'assets/info/churches/nc.json', imageSrc: 'assets/images/northC1.png')));
     }
   }
 
-  void _onTeachingTap(final String teaching) {
-    switch (teaching) {
-      case 'Prayer':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/prayer.json")));
-        break;
-      case 'Love':
+  void _onTestimonialTap(final String person) {
+    switch (person) {
+      case 'Maije':
         Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/love.json")));
-        break;
-      case 'Reading The Bible':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/bible_reading.json")));
-        break;
-      case 'Family':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/family.json")));
-        break;
-      case 'Money':
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/topic/money.json")));
+            context,
+            MaterialPageRoute(
+                builder: (_) => const TestimonialInfoPage(
+                      jsonPath: 'assets/info/testimonials/maije.json',
+                      initialImageSrc: 'assets/images/maije.jpg',
+                    )));
         break;
       default:
     }
   }
 
-  void _openVerseEvangelismPage(final String chapter) {
-    switch (chapter) {
-      case 'Romans 6:23':
+  void _openCtrimInfoPage(final String topic) {
+    switch (topic) {
+      case 'Core Values':
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(
-                      jsonPath: "assets/info/one_verse/romans_6_23.json",
+                builder: (_) => const CTRIMInfoPage(
+                      jsonPath: "assets/info/ctrim_info/core_values.json",
                     )));
         break;
-      case 'Jerimiah 29:11':
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/jerimiah_29_11.json")));
+      case '4XD Acts DNA':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/ctrim_info/4xd.json")));
         break;
-      case 'Matthew 6:33':
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/matthew_6_33.json")));
+      case 'Cell Groups':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/ctrim_info/cell_group.json")));
         break;
-      case 'Romans 12:2':
+      case 'Devotionals':
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const SimpleInfoPage(jsonPath: "assets/info/one_verse/romans_12_2.json")));
+                builder: (_) => const CTRIMInfoPage(jsonPath: "assets/info/ctrim_info/devotionals.json")));
         break;
     }
   }

@@ -222,11 +222,19 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     });
 
     // notify all that needs this
-    _notifyContributorAdditions(newID);
-    _notifyProgramRoleAddtitions(newID);
     _updateAllUserPostInvolvement(newID);
-    for (final String topic in widget.eventContext.topics) {
-      _notifyOfNewPost(newID, topic);
+    _notifyContributorAdditions(newID);
+
+    if (widget.eventContext.notifyScheduledMembers) {
+      debugPrint('---- NOTIFYING SCHEDULED MEMBERS ----');
+      _notifyProgramRoleAddtitions(newID);
+    }
+
+    if (widget.eventContext.notifyBroadcast) {
+      debugPrint('---- NOTIFYING BROADCAST TOPICS ----');
+      for (final String topic in widget.eventContext.metadata.topics) {
+        _notifyOfNewPost(newID, topic);
+      }
     }
   }
 
@@ -273,7 +281,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         title: _tecTitle.text.trim(),
         body: _tecSubtitle.text.trim(),
         data: {'PostID': newID},
-        iOSImage: widget.eventContext.head.getKeyGraphic(), // TODO does this work? Double check please
+        iOSImage: widget.eventContext.head.getKeyGraphic(),
         androidImage: widget.eventContext.head.getKeyGraphic());
   }
 
@@ -307,19 +315,19 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   Future<void> _notifyProgramRoleAddtitions(final String newPostID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
-    final String title = "$currentUserName has assinged you to a role!";
+    final String title = "📣 $currentUserName has assigned you to a task!";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
       final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
-      final String body = "You are assigned to '${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
+      final String body = "'${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
 
       final List<String> tokens = [];
       for (final thisUID in additionEntry.value) {
         if (thisUID != currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
-            final List<String> tokens =
+            final List<String> fetchedTokens =
                 await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, tokens);
+            _appContext.addTokensToUserID(thisUID, fetchedTokens);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -362,30 +370,26 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         showDragHandle: true,
         context: context,
         builder: (_) => SingleChildScrollView(
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: const Text('Edit About'),
-                      leading: const Icon(Icons.edit),
-                      onTap: _onEditBodyClick,
-                    ),
-                    widget.eventContext.head.eventDate != null
-                        ? ListTile(
-                            title: const Text('Add Schedule Item'),
-                            leading: const Icon(Icons.edit_calendar),
-                            onTap: _onAddScheduleItem,
-                          )
-                        : Container(),
-                    ListTile(
-                      title: const Text('Edit Media Items'),
-                      leading: const Icon(Icons.photo_library),
-                      onTap: _onEditMediaTap,
-                    ),
-                  ],
-                ),
+                child: SafeArea(
+                    child: Column(children: [
+              ListTile(
+                title: const Text('Edit About'),
+                leading: const Icon(Icons.edit),
+                onTap: _onEditBodyClick,
               ),
-            ));
+              widget.eventContext.head.eventDate != null
+                  ? ListTile(
+                      title: const Text('Add Schedule Item'),
+                      leading: const Icon(Icons.edit_calendar),
+                      onTap: _onAddScheduleItem,
+                    )
+                  : Container(),
+              ListTile(
+                title: const Text('Edit Media Items'),
+                leading: const Icon(Icons.photo_library),
+                onTap: _onEditMediaTap,
+              ),
+            ]))));
   }
 
   void _onEditBodyClick() {

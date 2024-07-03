@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		2EAD3CCB2C3556A100CC706E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2EAD3CCA2C3556A100CC706E /* PrivacyInfo.xcprivacy */; };
+		2EAD3CCD2C355A9A00CC706E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2EAD3CCC2C355A9A00CC706E /* PrivacyInfo.xcprivacy */; };
 		2EDB3F0C2A770C080019BD52 /* NotificationService.m in Sources */ = {isa = PBXBuildFile; fileRef = 2EDB3F0B2A770C080019BD52 /* NotificationService.m */; };
 		2EDB3F102A770C080019BD52 /* ImageNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2EDB3F082A770C080019BD52 /* ImageNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
@@ -67,6 +69,8 @@
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		245F3513C0307E2F83AF8C1D /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		2E4AC0F32A72B74C00F8F900 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		2EAD3CCA2C3556A100CC706E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = ../ImageNotification/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2EAD3CCC2C355A9A00CC706E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2EDB3F082A770C080019BD52 /* ImageNotification.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ImageNotification.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2EDB3F0A2A770C080019BD52 /* NotificationService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NotificationService.h; sourceTree = "<group>"; };
 		2EDB3F0B2A770C080019BD52 /* NotificationService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NotificationService.m; sourceTree = "<group>"; };
@@ -127,6 +131,7 @@
 				2EDB3F0A2A770C080019BD52 /* NotificationService.h */,
 				2EDB3F0B2A770C080019BD52 /* NotificationService.m */,
 				2EDB3F0D2A770C080019BD52 /* Info.plist */,
+				2EAD3CCC2C355A9A00CC706E /* PrivacyInfo.xcprivacy */,
 			);
 			path = ImageNotification;
 			sourceTree = "<group>";
@@ -186,6 +191,7 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
+				2EAD3CCA2C3556A100CC706E /* PrivacyInfo.xcprivacy */,
 				2E4AC0F32A72B74C00F8F900 /* Runner.entitlements */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
@@ -322,6 +328,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2EAD3CCD2C355A9A00CC706E /* PrivacyInfo.xcprivacy in Resources */,
+				2EAD3CCB2C3556A100CC706E /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

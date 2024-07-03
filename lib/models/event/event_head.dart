@@ -79,7 +79,7 @@ class EventHead {
   void removeEventDate() => _eventDate = null;
   void setLocation(final String newLocation) => _location = newLocation;
 
-  bool containsMediaItem(String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
+  bool containsMediaItem(final String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
   void addMediaItem({required String type, required String src, String title = ''}) =>
       _media.add({'type': type, 'src': src, 'title': title});
 

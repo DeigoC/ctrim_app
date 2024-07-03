@@ -134,7 +134,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
   // * Logic
   void _onSearchForAuthIDClick() {
-    // TODO make sure we're not looking for an already existing email in the users collection
+    // ? For improvements: make sure we're not looking for an already existing email in the users collection
     _everyoneDBManager.fetchAuthIDFromEmail(_tecEmail.text.trim()).then((auth) {
       debugPrint('auth is $auth');
       if (auth != null) {
