@@ -30,6 +30,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
         .analytics
         .logScreenView(screenName: 'Post Gallery: ${widget.postId}');
 
+    debugPrint('length is ${widget.media.length}');
     for (final entry in widget.media) {
       if (entry['type'] == 'vid') {
         _videoControllers[entry['src']!] = VideoPlayerController.networkUrl(Uri.parse(entry['src']!));
