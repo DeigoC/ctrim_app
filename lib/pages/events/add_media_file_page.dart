@@ -16,7 +16,7 @@ class AddMediaFilePage extends StatefulWidget {
 }
 
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
-  final TextEditingController _tecSrc = TextEditingController();
+  final TextEditingController _tecSrc = TextEditingController(), _tecThumbnailSrc = TextEditingController();
   final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
   final int _maxImageSizeKB = 1536; // 1.5mb
   final int _maxVideoSizeMB = 128;
@@ -37,6 +37,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       _videoPlayerController!.dispose();
     }
     _tecSrc.dispose();
+    _tecThumbnailSrc.clear();
     super.dispose();
   }
 
@@ -223,8 +224,20 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       _videoPlayerController!.setLooping(true);
     }
 
-    return AspectRatio(
-        aspectRatio: _videoPlayerController!.value.aspectRatio, child: VideoPlayer(_videoPlayerController!));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AspectRatio(
+            aspectRatio: _videoPlayerController!.value.aspectRatio, child: VideoPlayer(_videoPlayerController!)),
+        TextField(
+          controller: _tecThumbnailSrc,
+          decoration: InputDecoration(
+              hintText: 'https://...',
+              label: const Text('Video Thumbnail'),
+              suffixIcon: IconButton(onPressed: _onClearThumbnailSrc, icon: const Icon(Icons.clear))),
+        )
+      ],
+    );
   }
 
   // * Logic
@@ -252,11 +265,26 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     });
   }
 
+  void _onClearThumbnailSrc() {
+    setState(() {
+      _tecThumbnailSrc.clear();
+    });
+  }
+
   void _onSaveClick() {
     DialogManager.showConfirmationDialog(context: context, title: 'Save Media', content: 'Are you sure?')
         .then((confirmation) {
       if (confirmation) {
-        widget.eventContext.media.addMediaFile({'title': '', 'src': _src, 'type': _isVideo ? 'vid' : 'img'});
+        final Map<String, dynamic> data = {
+          'title': '',
+          'src': _src,
+          'type': _isVideo ? 'vid' : 'img',
+        };
+
+        if (_isVideo) {
+          data['thumbnailSrc'] = _tecThumbnailSrc.text;
+        }
+        widget.eventContext.media.addMediaFile(data);
         Navigator.of(context).pop();
       }
     });

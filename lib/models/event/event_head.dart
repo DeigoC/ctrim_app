@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 class EventHead {
   late final String _id;
-  late final List<Map<String, String>> _media;
+  late final List<Map<String, dynamic>> _media;
   late String _title, _subtitle, _location;
   late DateTime _recentDate;
   DateTime? _eventDate;
@@ -34,10 +34,11 @@ class EventHead {
     _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
   }
 
-  List<Map<String, String>> _toMedia(List<Map<String, dynamic>> data) {
-    final List<Map<String, String>> result = List<Map<String, String>>.empty(growable: true);
+  List<Map<String, dynamic>> _toMedia(List<Map<String, dynamic>> data) {
+    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
     for (final entry in data) {
-      result.add({'src': entry['src'], 'type': entry['type'], 'title': entry['title']});
+      result.add(
+          {'src': entry['src'], 'type': entry['type'], 'title': entry['title'], 'thumbnailSrc': entry['thumbnailSrc']});
     }
     return result;
   }
@@ -61,7 +62,7 @@ class EventHead {
   DateTime get recentDate => _recentDate;
   DateTime? get eventDate => _eventDate;
   TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
-  List<Map<String, String>> get media => UnmodifiableListView(_media);
+  List<Map<String, dynamic>> get media => UnmodifiableListView(_media);
 
   String? getKeyGraphic() {
     for (final entry in media) {
@@ -83,8 +84,8 @@ class EventHead {
   void addMediaItem({required String type, required String src, String title = ''}) =>
       _media.add({'type': type, 'src': src, 'title': title});
 
-  void removeMediaItem(final Map<String, String> thisEntry) => _media.remove(thisEntry);
-  void resetMediaWithOriginal(List<Map<String, String>> original) {
+  void removeMediaItem(final Map<String, dynamic> thisEntry) => _media.remove(thisEntry);
+  void resetMediaWithOriginal(List<Map<String, dynamic>> original) {
     _media.clear();
     _media.addAll(original);
   }

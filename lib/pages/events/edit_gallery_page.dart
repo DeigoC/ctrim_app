@@ -88,7 +88,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 separatorBuilder: (_, __) => const Divider(),
                 itemCount: widget.eventContext.media.allMedia.length,
                 itemBuilder: (_, index) {
-                  final Map<String, String> thisEntry = widget.eventContext.media.allMedia[index];
+                  final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
                   return _buildMediaBox(thisEntry, false);
                 }),
           )
@@ -97,7 +97,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     );
   }
 
-  Widget _buildMediaBox(final Map<String, String> thisEntry, final bool isKey) {
+  Widget _buildMediaBox(final Map<String, dynamic> thisEntry, final bool isKey) {
     bool isPartOfHead = !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -118,7 +118,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     ]);
   }
 
-  Widget _buildMediaViewer(final Map<String, String> thisEntry, bool isKey) {
+  Widget _buildMediaViewer(final Map<String, dynamic> thisEntry, final bool isKey) {
     if (thisEntry['type']!.compareTo('img') == 0) {
       return ImageMediaSlot(
         mediaEntry: thisEntry,
@@ -142,7 +142,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     });
   }
 
-  void _showSettingsForMedia(final Map<String, String> thisEntry, final bool isKey) {
+  void _showSettingsForMedia(final Map<String, dynamic> thisEntry, final bool isKey) {
     final List<Widget> children = [
       ListTile(
         title: const Text('Edit Caption'),
@@ -167,16 +167,23 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
               onTap: () => _addMediaAsKeyClick(thisEntry)));
     }
 
+    if (thisEntry['type'] == 'vid') {
+      children.insert(
+          1,
+          ListTile(
+              title: const Text('Edit Thumbnail Src'),
+              trailing: const Icon(Icons.video_file),
+              onTap: () => _onEditVideoThumbnailClick(thisEntry)));
+    }
+
     showModalBottomSheet(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(32.0),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
         context: context,
         showDragHandle: true,
         builder: (_) => SafeArea(child: SingleChildScrollView(child: Column(children: children))));
   }
 
-  bool _canBeKeyMedia(String src) {
+  bool _canBeKeyMedia(final String src) {
     return widget.eventContext.head.media.length < 4 &&
         !widget.eventContext.head.media.map<String>((e) => e['src']!).toList().contains(src);
   }
@@ -213,7 +220,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     }
   }
 
-  void _addMediaAsKeyClick(final Map<String, String> thisEntry) {
+  void _addMediaAsKeyClick(final Map<String, dynamic> thisEntry) {
     setState(() {
       Navigator.of(context).pop();
       widget.eventContext.head
@@ -221,7 +228,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     });
   }
 
-  void _deleteMediaClick(final Map<String, String> thisEntry, final bool isKey) {
+  void _deleteMediaClick(final Map<String, dynamic> thisEntry, final bool isKey) {
     DialogManager.showConfirmationDialog(
             context: context, title: 'Delete Media Item', content: 'Are you sure you want to continue?')
         .then((confirmation) {
@@ -239,7 +246,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     });
   }
 
-  void _onEditMediaEntry(final Map<String, String> thisEntry) {
+  void _onEditMediaEntry(final Map<String, dynamic> thisEntry) {
     showDialog(
         context: context,
         builder: (_) => Dialog(
@@ -278,5 +285,77 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
         context: context,
         title: 'Post Media',
         content: 'Your go-to images and videos for the post. Remember that you can write captions if you wish to.');
+  }
+
+  void _onEditVideoThumbnailClick(final Map<String, dynamic> thisEntry) {
+    debugPrint("current thumbnail is ${thisEntry['thumbnailSrc']}");
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Edit Thumbnail Src',
+        builder: (_) => VideoThumbnailEditDialog(thisEntry: thisEntry)).then((_) {
+      setState(() {
+        debugPrint("new thumbnail src is ${thisEntry['thumbnailSrc']}");
+        // update incase of change
+      });
+    });
+  }
+}
+
+class VideoThumbnailEditDialog extends StatefulWidget {
+  const VideoThumbnailEditDialog({super.key, required this.thisEntry});
+  final Map<String, dynamic> thisEntry;
+
+  @override
+  State<VideoThumbnailEditDialog> createState() => _VideoThumbnailEditDialogState();
+}
+
+class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
+  late final TextEditingController _tecThumbnailSrc;
+
+  @override
+  void initState() {
+    String src = widget.thisEntry['thumbnailSrc'];
+    debugPrint('src at init is $src');
+    _tecThumbnailSrc = TextEditingController(text: widget.thisEntry['thumbnailSrc']);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _tecThumbnailSrc.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+          TextField(
+            controller: _tecThumbnailSrc,
+            decoration: InputDecoration(
+                hintText: 'https://...',
+                label: const Text('Video Thumbnail'),
+                suffixIcon: IconButton(onPressed: _onClearThumbnailSrc, icon: const Icon(Icons.clear))),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
+                // TODO we need to delete the old file in storage that keeps building the old one
+                Navigator.of(context).pop();
+              })
+        ]),
+      ),
+    );
+  }
+
+  void _onClearThumbnailSrc() {
+    setState(() {
+      _tecThumbnailSrc.clear();
+    });
   }
 }

@@ -236,6 +236,7 @@ class EventContext {
       result += '\n${item['type']}';
       result += '\n${item['src']}';
       result += '\n${item['title']}';
+      result += '\n${item['thumbnailSrc']}';
     }
     result += '\n----MEDIA_END----';
 
@@ -386,7 +387,8 @@ class EventContext {
     });
 
     for (final mediaItem in media) {
-      _media.addMediaFile({'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
+      _media.addMediaFile(
+          {'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2], 'thumbnailSrc': mediaItem[3]});
     }
   }
 

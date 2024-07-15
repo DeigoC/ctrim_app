@@ -43,7 +43,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   late final TabController _tabController;
   late final EventContext _eventContext;
-  late final List<Map<String, String>> _originalHeadMedia;
+  late final List<Map<String, dynamic>> _originalHeadMedia;
   late final String _originalTitle, _originalSubtitle, _currentUID;
   late final DateTime? _originalEventDate;
 
@@ -59,7 +59,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'post-${widget.eventHead.id}');
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
-    _originalHeadMedia = List<Map<String, String>>.from(widget.eventHead.media);
+    _originalHeadMedia = List<Map<String, dynamic>>.from(widget.eventHead.media);
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;

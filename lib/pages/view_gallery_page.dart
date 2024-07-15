@@ -9,7 +9,7 @@ import '../widgets/media/my_video_player.dart';
 
 class ViewGalleryPage extends StatefulWidget {
   const ViewGalleryPage({super.key, required this.media, required this.initialIndex, required this.postId});
-  final List<Map<String, String>> media;
+  final List<Map<String, dynamic>> media;
   final int initialIndex;
   final String postId;
 
@@ -113,7 +113,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
   }
 
   Widget _buildMediaBody(int index) {
-    final Map<String, String> thisEntry = widget.media[index];
+    final Map<String, dynamic> thisEntry = widget.media[index];
     final List<Widget> children = [
       Positioned.fill(child: _buildMediaView(thisEntry)),
     ];
@@ -155,7 +155,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     );
   }
 
-  Widget _buildMediaView(final Map<String, String> thisEntry) {
+  Widget _buildMediaView(final Map<String, dynamic> thisEntry) {
     final String thisMediaSrc = thisEntry['src']!;
     final String type = thisEntry['type']!;
 

@@ -22,7 +22,7 @@ class ViewEventMediaTab extends StatelessWidget {
                   crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
               itemCount: media.length,
               itemBuilder: (_, index) {
-                final Map<String, String> entry = media[index];
+                final Map<String, dynamic> entry = media[index];
                 if (entry['type']!.compareTo('img') == 0) {
                   return ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: eventContext.id);
                 }
@@ -52,7 +52,7 @@ class ViewEventMediaTab extends StatelessWidget {
                 ViewGalleryPage(media: eventContext.media.allMedia, initialIndex: index, postId: eventContext.id)));
   }
 
-  List<Map<String, String>> _getMedia() {
+  List<Map<String, dynamic>> _getMedia() {
     if (kIsWeb) {
       return eventContext.media.allMedia.where((e) => e['type'] == 'img').toList();
     }

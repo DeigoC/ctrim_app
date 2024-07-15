@@ -42,7 +42,7 @@ class PostHead extends StatelessWidget {
       detailSection,
     ];
 
-    final List<Map<String, String>> media = _getMedia();
+    final List<Map<String, dynamic>> media = _getMedia();
     if (media.isNotEmpty) {
       children.insert(0, _buildMediaSection(context, media));
     } else {
@@ -86,7 +86,7 @@ class PostHead extends StatelessWidget {
         child: Text(thisHead.subtitle, style: const TextStyle(fontSize: _subtitleFontSize)));
   }
 
-  Widget _buildMediaSection(final BuildContext context, final List<Map<String, String>> media) {
+  Widget _buildMediaSection(final BuildContext context, final List<Map<String, dynamic>> media) {
     final List<Widget> children = [_buildMediaSlot(media.first, 0, context)];
 
     if (media.length == 2) {
@@ -128,7 +128,7 @@ class PostHead extends StatelessWidget {
                 child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: children))));
   }
 
-  Widget _buildMediaSlot(Map<String, String> entry, int index, BuildContext context) {
+  Widget _buildMediaSlot(final Map<String, dynamic> entry, final int index, final BuildContext context) {
     return entry['type']!.compareTo('img') == 0
         ? Expanded(
             child: ImageMediaSlot(
@@ -142,7 +142,7 @@ class PostHead extends StatelessWidget {
 
   // * Logic
 
-  List<Map<String, String>> _getMedia() {
+  List<Map<String, dynamic>> _getMedia() {
     if (kIsWeb) {
       return thisHead.media.where((e) => e['type'] == 'img').toList();
     }

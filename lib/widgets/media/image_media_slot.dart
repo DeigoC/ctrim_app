@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 class ImageMediaSlot extends StatelessWidget {
   const ImageMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postID});
-  final Map<String, String> mediaEntry;
+  final Map<String, dynamic> mediaEntry;
   final Function()? onTap;
   final String postID;
 
