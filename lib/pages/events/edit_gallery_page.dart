@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:ctrim_app/pages/events/add_media_file_page.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/widgets/media/image_media_slot.dart';
 import 'package:ctrim_app/widgets/media/video_media_slot.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 class EditGalleryPage extends StatefulWidget {
   const EditGalleryPage({super.key, required this.eventContext});
@@ -293,18 +296,20 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
         context: context,
         barrierDismissible: false,
         barrierLabel: 'Edit Thumbnail Src',
-        builder: (_) => VideoThumbnailEditDialog(thisEntry: thisEntry)).then((_) {
+        builder: (_) => VideoThumbnailEditDialog(thisEntry: thisEntry, postId: widget.eventContext.id)).then((_) {
       setState(() {
         debugPrint("new thumbnail src is ${thisEntry['thumbnailSrc']}");
-        // update incase of change
+        // ! bear in mind there's that issue where you don't actually see the new image at first
+        widget.eventContext.allowSavingOfTheEdit(); // just blindly allow it for now
       });
     });
   }
 }
 
 class VideoThumbnailEditDialog extends StatefulWidget {
-  const VideoThumbnailEditDialog({super.key, required this.thisEntry});
+  const VideoThumbnailEditDialog({super.key, required this.thisEntry, required this.postId});
   final Map<String, dynamic> thisEntry;
+  final String postId;
 
   @override
   State<VideoThumbnailEditDialog> createState() => _VideoThumbnailEditDialogState();
@@ -315,7 +320,7 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
 
   @override
   void initState() {
-    String src = widget.thisEntry['thumbnailSrc'];
+    final String src = widget.thisEntry['thumbnailSrc'] ?? '';
     debugPrint('src at init is $src');
     _tecThumbnailSrc = TextEditingController(text: widget.thisEntry['thumbnailSrc']);
     super.initState();
@@ -344,9 +349,11 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
           TextButton(
               child: const Text('Close'),
               onPressed: () {
-                widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
-                // TODO we need to delete the old file in storage that keeps building the old one
-                Navigator.of(context).pop();
+                _deleteOldThumbnail().then((_) {
+                  widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                });
               })
         ]),
       ),
@@ -357,5 +364,17 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
     setState(() {
       _tecThumbnailSrc.clear();
     });
+  }
+
+  Future<void> _deleteOldThumbnail() async {
+    final String src = widget.thisEntry['src']!;
+    final String title = src.replaceAll(RegExp(r'[^\w]'), '');
+    final String path = '${(await getApplicationDocumentsDirectory()).path}/posts/${widget.postId}/$title.webp';
+    final File imgFile = File(path);
+
+    if (await imgFile.exists()) {
+      debugPrint('deleting old thumbnail: ${imgFile.path}');
+      await imgFile.delete();
+    }
   }
 }

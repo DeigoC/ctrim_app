@@ -377,7 +377,7 @@ class EventContext {
 
   void _initialiseMedia(final List<String> data) {
     // groups of 3
-    const int chunkSize = 3;
+    const int chunkSize = 4;
     final int numberOfChunks = data.length ~/ chunkSize;
 
     final List<List<String>> media = List<List<String>>.generate(numberOfChunks, (index) {
@@ -387,8 +387,12 @@ class EventContext {
     });
 
     for (final mediaItem in media) {
-      _media.addMediaFile(
-          {'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2], 'thumbnailSrc': mediaItem[3]});
+      if (mediaItem.length == 4) {
+        _media.addMediaFile(
+            {'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2], 'thumbnailSrc': mediaItem[3]});
+      } else {
+        _media.addMediaFile({'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
+      }
     }
   }
 

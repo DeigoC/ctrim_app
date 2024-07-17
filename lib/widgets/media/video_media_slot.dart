@@ -100,7 +100,7 @@ class VideoMediaSlot extends StatelessWidget {
     return null;
   }
 
-  String _removeSpecialCharacters(String webLink) {
+  String _removeSpecialCharacters(final String webLink) {
     return webLink.replaceAll(RegExp(r'[^\w]'), '');
   }
 }
