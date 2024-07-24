@@ -98,8 +98,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.head.setLocation(postTemplate.location);
     eventContext.head.setTitle(postTemplate.title);
     for (final headMediaItem in postTemplate.headMedia) {
-      eventContext.head
-          .addMediaItem(type: headMediaItem['type']!, src: headMediaItem['src']!, title: headMediaItem['title'] ?? '');
+      eventContext.head.addMediaItem(
+          type: headMediaItem['type']!,
+          src: headMediaItem['src']!,
+          title: headMediaItem['title'] ?? '',
+          thumbnail: headMediaItem['thumbnailSrc'] ?? '');
     }
 
     // body and media

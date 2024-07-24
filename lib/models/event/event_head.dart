@@ -20,7 +20,7 @@ class EventHead {
     _title = title;
     _subtitle = subtitle;
     _location = location;
-    _media = List<Map<String, String>>.empty(growable: true);
+    _media = List<Map<String, dynamic>>.empty(growable: true);
     _recentDate = DateTime.now();
   }
 
@@ -81,8 +81,11 @@ class EventHead {
   void setLocation(final String newLocation) => _location = newLocation;
 
   bool containsMediaItem(final String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
-  void addMediaItem({required String type, required String src, String title = ''}) =>
-      _media.add({'type': type, 'src': src, 'title': title});
+  void addMediaItem({required String type, required String src, String title = '', String thumbnail = ''}) {
+    final Map<String, dynamic> item =
+        Map<String, dynamic>.from({'type': type, 'src': src, 'title': title, 'thumbnailSrc': null});
+    _media.add(item);
+  }
 
   void removeMediaItem(final Map<String, dynamic> thisEntry) => _media.remove(thisEntry);
   void resetMediaWithOriginal(List<Map<String, dynamic>> original) {
