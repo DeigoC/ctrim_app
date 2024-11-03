@@ -43,8 +43,7 @@ class CTRIMInfoPage extends StatelessWidget {
       Flexible(
           child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: quill.QuillEditor.basic(
-                  configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true)))),
+              child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: controller)))),
       const SizedBox(height: 32)
     ];
 

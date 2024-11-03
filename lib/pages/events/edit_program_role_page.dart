@@ -165,11 +165,11 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
-        await DialogManager.showAlertDialog(
-            context: context,
-            title: 'Finish Time',
-            content: 'Now please select when this program is expected to complete',
-            barrierDismissible: false);
+        // await DialogManager.showAlertDialog(
+        //     context: context,
+        //     title: 'Finish Time',
+        //     content: 'Now please select when this program is expected to complete',
+        //     barrierDismissible: false);
         _hasAnythingChanged();
         _onEndTimeTap();
       }

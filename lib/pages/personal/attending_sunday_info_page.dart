@@ -32,7 +32,7 @@ class AttendingSundayServicePage extends StatelessWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Flexible(
                   child: quill.QuillEditor.basic(
-                configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true),
+                configurations: quill.QuillEditorConfigurations(controller: controller),
               )),
               const SizedBox(height: 32)
             ]),

@@ -22,7 +22,7 @@ class ViewPostBody extends StatelessWidget {
               child: Padding(
                   padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 8),
                   child: quill.QuillEditor.basic(
-                    configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true),
+                    configurations: quill.QuillEditorConfigurations(controller: controller),
                   )))),
     ];
 
