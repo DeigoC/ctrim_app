@@ -274,8 +274,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     int roleId = DateTime.now().millisecondsSinceEpoch;
     for (final role in postTemplate.roles) {
       final List<String> roleUids = List.from(role['uids']);
-      eventContext.program
-          .addRole(uids: roleUids, title: role['title'], start: role['start'], end: role['end'], id: roleId);
+      eventContext.program.addRole(
+          detail: role['detail'] ?? "",
+          uids: roleUids,
+          title: role['title'],
+          start: role['start'],
+          end: role['end'],
+          id: roleId);
 
       if (roleUids.isNotEmpty) {
         eventContext.addRoleAdditionNotification(roleUids, roleId);

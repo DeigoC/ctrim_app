@@ -165,11 +165,6 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
-        // await DialogManager.showAlertDialog(
-        //     context: context,
-        //     title: 'Finish Time',
-        //     content: 'Now please select when this program is expected to complete',
-        //     barrierDismissible: false);
         _hasAnythingChanged();
         _onEndTimeTap();
       }
@@ -177,6 +172,68 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   void _onEndTimeTap() {
+    // select from a range of pre-set durations
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Dialog(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: ListView(
+                  children: [
+                    ListTile(
+                      title: Text("5 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(5),
+                    ),
+                    ListTile(
+                      title: Text("10 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(10),
+                    ),
+                    ListTile(
+                      title: Text("15 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(15),
+                    ),
+                    ListTile(
+                      title: Text("20 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(20),
+                    ),
+                    ListTile(
+                      title: Text("25 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(25),
+                    ),
+                    ListTile(
+                      title: Text("30 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(30),
+                    ),
+                    ListTile(
+                      title: Text("45 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(45),
+                    ),
+                    ListTile(
+                      title: Text("60 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(60),
+                    ),
+                    ListTile(
+                      title: Text("1 hour 30 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(90),
+                    ),
+                    ListTile(
+                      title: Text("2 hours"),
+                      onTap: () => _setPresetDurationForEndTime(120),
+                    ),
+                    ListTile(
+                      title: Text("Custom finish time"),
+                      onTap: () => _selectCustomTimeForEndTime(),
+                    ),
+                  ],
+                ),
+              ),
+            ));
+  }
+
+  void _selectCustomTimeForEndTime() {
+    Navigator.of(context).pop();
+
     showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_end),
@@ -192,7 +249,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     });
   }
 
-  bool _isEndTimeValid(TimeOfDay end) {
+  void _setPresetDurationForEndTime(final int minutes) {
+    Navigator.of(context).pop();
+    setState(() {
+      _end = _start.add(Duration(minutes: minutes));
+    });
+    _hasAnythingChanged();
+  }
+
+  bool _isEndTimeValid(final TimeOfDay end) {
     if (end.hour.compareTo(_start.hour) > 0 ||
         (end.hour.compareTo(_start.hour) == 0 && end.minute.compareTo(_start.minute) > 0)) {
       return true;
