@@ -106,12 +106,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           title: const Text('For Guests'),
           subtitle: const Text('Is this something guests should see?'),
         ),
-        // ListTile(
-        //   title: const Text('Priority: 1'),
-        //   subtitle: const Text('Should this be viewed higher than others of the same start time?'),
-        //   trailing: const Icon(Icons.edit),
-        //   onTap: () {},
-        // ),
         const SizedBox(height: 16),
         const Divider(),
         ElevatedButton.icon(
@@ -160,7 +154,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         });
   }
 
-  void _onRemoveUserFromRole(String uid) {
+  void _onRemoveUserFromRole(final String uid) {
     showDialog(
         context: context,
         builder: (_) {
@@ -186,13 +180,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         });
   }
 
-  void _onForGuestsChange(bool newState) {
+  void _onForGuestsChange(final bool newState) {
     setState(() {
       _forGuests = newState;
     });
   }
 
-  void _onRequirementsChange(String _) {
+  void _onRequirementsChange(final String _) {
     if (_tecTitle.text.trim().isEmpty || _start == null || _end == null && _canSave) {
       setState(() {
         _canSave = false;
@@ -215,20 +209,85 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
-        await DialogManager.showAlertDialog(
-            context: context,
-            title: 'Finish Time',
-            content: 'Now please select when this program is expected to complete',
-            barrierDismissible: false);
         _onEndTimeTap();
       }
     });
   }
 
   void _onEndTimeTap() {
+    // select from a range of pre-set durations
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Dialog(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: ListView(
+                  children: [
+                    ListTile(
+                      title: Text("5 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(5),
+                    ),
+                    ListTile(
+                      title: Text("10 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(10),
+                    ),
+                    ListTile(
+                      title: Text("15 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(15),
+                    ),
+                    ListTile(
+                      title: Text("20 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(20),
+                    ),
+                    ListTile(
+                      title: Text("25 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(25),
+                    ),
+                    ListTile(
+                      title: Text("30 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(30),
+                    ),
+                    ListTile(
+                      title: Text("45 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(45),
+                    ),
+                    ListTile(
+                      title: Text("60 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(60),
+                    ),
+                    ListTile(
+                      title: Text("1 hour 30 minutes"),
+                      onTap: () => _setPresetDurationForEndTime(90),
+                    ),
+                    ListTile(
+                      title: Text("2 hours"),
+                      onTap: () => _setPresetDurationForEndTime(120),
+                    ),
+                    ListTile(
+                      title: Text("Custom finish time"),
+                      onTap: () => _selectCustomTimeForEndTime(),
+                    ),
+                  ],
+                ),
+              ),
+            ));
+  }
+
+  void _setPresetDurationForEndTime(final int minutes) {
+    Navigator.of(context).pop();
+    setState(() {
+      _end = _start!.add(Duration(minutes: minutes));
+    });
+    _onRequirementsChange("");
+  }
+
+  void _selectCustomTimeForEndTime() {
+    Navigator.of(context).pop();
+
     showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_start!.add(const Duration(hours: 1))),
+      initialTime: TimeOfDay.fromDateTime(_start!.add(Duration(hours: 1))),
       helpText: 'When does the role finish?',
     ).then((selectedEndTime) {
       if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
@@ -236,7 +295,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedEndTime.hour, selectedEndTime.minute);
         });
-        _onRequirementsChange('');
+        _onRequirementsChange("");
       }
     });
   }
@@ -264,7 +323,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         });
   }
 
-  bool _isEndTimeValid(TimeOfDay end) {
+  bool _isEndTimeValid(final TimeOfDay end) {
     if (end.hour.compareTo(_start!.hour) > 0 ||
         (end.hour.compareTo(_start!.hour) == 0 && end.minute.compareTo(_start!.minute) > 0)) {
       return true;

@@ -126,7 +126,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   // * Logic
-  void _onForGuestsChange(bool newState) {
+  void _onForGuestsChange(final bool newState) {
     setState(() {
       _forGuests = newState;
     });
@@ -307,7 +307,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                 })));
   }
 
-  void _onRemoveUserFromRole(String uid) {
+  void _onRemoveUserFromRole(final String uid) {
     showDialog(
         context: context,
         builder: (_) {
