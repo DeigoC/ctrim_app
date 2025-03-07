@@ -69,13 +69,23 @@ class AppContext extends ChangeNotifier {
   }
 
   void sortPostsByIndex() {
-    // 0 Recency date descending
+    // 0 Relevant activity
     // 1 Event date descending
     // 2 Event date ascending
     // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
       case 0:
-        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        // get like 3 upcoming events first then sort by recent date
+        final List<EventHead> upcomingEvents =
+            _eventHeads.where((e) => e.eventDate != null && e.eventDate!.isAfter(DateTime.now())).toList();
+        upcomingEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+        final List<EventHead> recentEvents =
+            _eventHeads.where((e) => e.eventDate == null || e.eventDate!.isBefore(DateTime.now())).toList();
+        _eventHeads.clear();
+        _eventHeads.addAll(upcomingEvents.take(3));
+        _eventHeads.addAll(recentEvents);
+        _eventHeads.addAll(upcomingEvents.skip(3));
+        // _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate)); // this is the old way
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
         break;
       case 1:

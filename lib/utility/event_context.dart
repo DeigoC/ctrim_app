@@ -18,7 +18,7 @@ class EventContext {
   late final String _currentUID;
   final EventBody _body = EventBody();
 
-  bool _canSaveTheEditing = false, _notifyBroadcast = true, _notifyScheduledMembers = true;
+  bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
 
   // id (datetime milliseconds) to uids
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
@@ -26,7 +26,8 @@ class EventContext {
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
 
   // for viewing and editing
-  EventContext.viewing({required EventHead eventHead, required String currentUID, List<String>? data}) {
+  EventContext.viewing(
+      {required final EventHead eventHead, required final String currentUID, final List<String>? data}) {
     _head = eventHead;
     _canSaveTheEditing = false;
     _currentUID = currentUID;
@@ -36,7 +37,7 @@ class EventContext {
     }
   }
 
-  EventContext.adding({required String currentUserID, String? parentID, String? id}) {
+  EventContext.adding({required final String currentUserID, final String? parentID, final String? id}) {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
@@ -141,7 +142,7 @@ class EventContext {
   }
 
   String get id => _head.id;
-  bool isUserAdminOfPost(String currentUID) =>
+  bool isUserAdminOfPost(final String currentUID) =>
       _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
@@ -168,8 +169,8 @@ class EventContext {
 
   bool get canSaveTheEditing => _canSaveTheEditing;
 
-  bool isCurrentUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
-  bool isCurrentUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+  bool isUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
+  bool isUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
 
   void _initialiseInternalLists() {
     if (_metadata.authorUID == _currentUID) {

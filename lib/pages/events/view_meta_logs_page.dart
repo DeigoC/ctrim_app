@@ -45,7 +45,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
     final List<User> selectedUsers =
         allUsers.where((element) => widget.eventContext.metadata.contributorUIDs.contains(element.id)).toList();
-    final bool isAuthor = widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id);
+    final bool isAuthor = widget.eventContext.isUserAuthor(_appContext.currentUser.id);
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
 
@@ -149,7 +149,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           title: Text(thisU.fullname),
                           leading: MyUserAvatar(thisU),
                           subtitle: Text(thisU.location),
-                          trailing: widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id)
+                          trailing: widget.eventContext.isUserAuthor(_appContext.currentUser.id)
                               ? IconButton(
                                   icon: const Icon(Icons.remove), onPressed: () => _onRemoveContributorClick(thisU))
                               : null,

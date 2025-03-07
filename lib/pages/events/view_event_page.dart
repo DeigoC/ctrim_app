@@ -181,7 +181,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
     final List<Widget> metaChildren = [PostMetadataSection(eventContext: _eventContext, update: _updateWholePostBody)];
 
-    if (!_eventContext.isCurrentUserAuthor(_currentUID) && !_eventContext.isCurrentUserContributor(_currentUID)) {
+    if (!_eventContext.isUserAuthor(_currentUID) && !_eventContext.isUserContributor(_currentUID)) {
       metaChildren.insert(0, _buildBookmarkButton());
     }
     final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
@@ -214,7 +214,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget _buildTitle() {
     return InkWell(
-        onTap: _eventContext.isCurrentUserAuthor(_currentUID) ? _onTitleTap : null,
+        onTap: _eventContext.isUserAuthor(_currentUID) ? _onTitleTap : null,
         child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28), textAlign: TextAlign.left));
   }
 
@@ -249,7 +249,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   List<Widget>? _buildEditButton() {
-    if (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) {
+    if (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID)) {
       return [
         ElevatedButton.icon(
             onPressed: () => _showSettings(),
@@ -264,7 +264,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget? _buildSaveFAB() {
     if (_haveFetchedPost &&
-        (_eventContext.isCurrentUserAuthor(_currentUID) || _eventContext.isCurrentUserContributor(_currentUID)) &&
+        (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID)) &&
         _eventContext.canSaveTheEditing) {
       return SizedBox(
         width: MediaQuery.of(context).size.width * 0.7,
@@ -276,7 +276,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
-  Future<File> _fetchImage(String src) async {
+  Future<File> _fetchImage(final String src) async {
     final dir = await getTemporaryDirectory();
     final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
     final fullPath = '${dir.path}/$sanitisedFilePath.png';

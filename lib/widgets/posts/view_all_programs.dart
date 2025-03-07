@@ -58,8 +58,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           itemCount: programRoles.length,
           itemBuilder: (_, index) {
             final DateTime roleStart = programRoles[index]['start'];
-            final bool canEdit = (widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id) ||
-                    widget.eventContext.isCurrentUserContributor(_appContext.currentUser.id)) &&
+            final bool canEdit = (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
+                    widget.eventContext.isUserContributor(_appContext.currentUser.id)) &&
                 DateTime.now().isBefore(roleStart);
 
             return ProgramTile(
@@ -126,13 +126,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
-  bool _canEditPostProgram() {
-    if (widget.isAddingPost) return true;
-    return DateTime.now()
-            .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
-        widget.eventContext.isCurrentUserAuthor(_appContext.currentUser.id);
-  }
-
   void _programTap(final Map<String, dynamic> programEntry, final int index) {
     setState(() {
       if (_selectedIndex != index) {
@@ -151,7 +144,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   // * LOGIC
-  void _openEditProgramPage(Map<String, dynamic> programEntry) {
+  bool _canEditPostProgram() {
+    if (widget.isAddingPost || widget.eventContext.isUserAuthor(_appContext.currentUser.id)) return true;
+    return DateTime.now()
+            .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
+        widget.eventContext.isUserAuthor(_appContext.currentUser.id);
+  }
+
+  void _openEditProgramPage(final Map<String, dynamic> programEntry) {
     Navigator.push(
         context,
         MaterialPageRoute(
