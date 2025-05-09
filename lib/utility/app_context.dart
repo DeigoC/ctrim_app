@@ -75,17 +75,21 @@ class AppContext extends ChangeNotifier {
     // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
       case 0:
-        // get like 3 upcoming events first then sort by recent date
-        final List<EventHead> upcomingEvents =
-            _eventHeads.where((e) => e.eventDate != null && e.eventDate!.isAfter(DateTime.now())).toList();
+        // Get upcoming events including those with dates set for today
+        final List<EventHead> upcomingEvents = _eventHeads
+            .where((e) => e.eventDate != null && (e.eventDate!.isAfter(DateTime.now()) || isAtSameDayAs(e.eventDate!)))
+            .toList();
         upcomingEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+
+        // Get recent events (past or no date)
         final List<EventHead> recentEvents =
             _eventHeads.where((e) => e.eventDate == null || e.eventDate!.isBefore(DateTime.now())).toList();
+
         _eventHeads.clear();
         _eventHeads.addAll(upcomingEvents.take(3));
         _eventHeads.addAll(recentEvents);
         _eventHeads.addAll(upcomingEvents.skip(3));
-        // _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate)); // this is the old way
+
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
         break;
       case 1:
@@ -120,6 +124,15 @@ class AppContext extends ChangeNotifier {
     _eventHeads.clear();
     _eventHeads.addAll(heads);
     sortPostsByIndex();
+  }
+
+  bool isAtSameDayAs(thisDate) {
+    if (thisDate is DateTime) {
+      return thisDate.year == DateTime.now().year &&
+          thisDate.month == DateTime.now().month &&
+          thisDate.day == DateTime.now().day;
+    }
+    return false;
   }
 
   // * user related
