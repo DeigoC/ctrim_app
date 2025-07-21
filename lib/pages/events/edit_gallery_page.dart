@@ -1,12 +1,13 @@
 import 'dart:io';
 
-import 'package:ctrim_app/pages/events/add_media_file_page.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/widgets/media/image_media_slot.dart';
-import 'package:ctrim_app/widgets/media/video_media_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../../utility/dialog_manager.dart';
+import '../../utility/event_context.dart';
+import '../../widgets/media/image_media_slot.dart';
+import '../../widgets/media/video_media_slot.dart';
+import 'add_media_file_page.dart';
 
 class EditGalleryPage extends StatefulWidget {
   const EditGalleryPage({super.key, required this.eventContext});
@@ -44,7 +45,14 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             _shouldBeAbleToSave();
           }
         },
-        child: Scaffold(body: _buildBody()));
+        child: Scaffold(
+          body: _buildBody(),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _onAddMediaTap,
+            label: const Text('Add Media'),
+            icon: const Icon(Icons.add),
+          ),
+        ));
   }
 
   Widget _buildBody() {
@@ -55,40 +63,30 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
       top: false,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar(
-              snap: true,
-              floating: true,
-              title: const Text('Edit Gallery'),
-              actions: [IconButton(onPressed: _onAddMediaTap, icon: const Icon(Icons.add_photo_alternate))]),
+          SliverAppBar(snap: true, floating: true, title: const Text('Edit Gallery')),
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             sliver: SliverList(
                 delegate: SliverChildListDelegate([
-              const Divider(thickness: 1),
               ListTile(
                   title: const Text('Key Media'),
                   leading: const Icon(Icons.star),
                   trailing: IconButton(onPressed: _onKeyMediaHelpClick, icon: const Icon(Icons.help))),
               const Divider(thickness: 1),
-              const SizedBox(height: 16),
               for (int i = 0; i < widget.eventContext.head.media.length; i++)
-                Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: _buildMediaBox(widget.eventContext.head.media[i], true)),
-              const SizedBox(height: 8),
-              const Divider(thickness: 1),
+                _buildMediaBox(widget.eventContext.head.media[i], true),
+              const SizedBox(height: 32),
               ListTile(
                   title: const Text('Post Media'),
                   leading: const Icon(Icons.photo_library),
                   trailing: IconButton(onPressed: _onPostMediaHelpClick, icon: const Icon(Icons.help))),
               const Divider(thickness: 1),
-              const SizedBox(height: 16),
             ])),
           ),
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
             sliver: SliverList.separated(
-                separatorBuilder: (_, __) => const Divider(),
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemCount: widget.eventContext.media.allMedia.length,
                 itemBuilder: (_, index) {
                   final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
@@ -101,24 +99,82 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   Widget _buildMediaBox(final Map<String, dynamic> thisEntry, final bool isKey) {
-    bool isPartOfHead = !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
+    final bool isPartOfHead = !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SizedBox(height: 8),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: _buildMediaViewer(thisEntry, isKey),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      elevation: 2,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12.0)),
+                child: _buildMediaViewer(thisEntry, isKey),
+              ),
+            ),
+            // Quick action buttons overlay
+            Positioned(
+              top: 8,
+              right: 8,
+              child: _buildQuickActions(thisEntry, isKey),
+            ),
+          ],
         ),
-      ),
-      ListTile(
-          title: Text(thisEntry['title']!),
-          subtitle: Text(thisEntry['src']!, maxLines: 1, overflow: TextOverflow.ellipsis),
-          leading: isPartOfHead ? const Icon(Icons.star) : null,
-          trailing:
-              IconButton(onPressed: () => _showSettingsForMedia(thisEntry, isKey), icon: const Icon(Icons.more_vert)))
-    ]);
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (isPartOfHead || isKey)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amber),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star, size: 14, color: Colors.amber[700]),
+                          const SizedBox(width: 4),
+                          Text('Key Media', style: TextStyle(fontSize: 12, color: Colors.amber[700])),
+                        ],
+                      ),
+                    ),
+                  const Spacer(),
+                  // Quick caption edit
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    onPressed: () => _onEditMediaEntry(thisEntry),
+                    tooltip: 'Edit Caption',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                thisEntry['title']!.isEmpty ? 'No caption' : thisEntry['title']!,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontStyle: thisEntry['title']!.isEmpty ? FontStyle.italic : FontStyle.normal,
+                      color: thisEntry['title']!.isEmpty ? Colors.grey : null,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                thisEntry['src']!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      ]),
+    );
   }
 
   Widget _buildMediaViewer(final Map<String, dynamic> thisEntry, final bool isKey) {
@@ -132,6 +188,51 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     return VideoMediaSlot(postId: widget.eventContext.id, mediaEntry: thisEntry, onTap: null);
   }
 
+  Widget _buildQuickActions(final Map<String, dynamic> thisEntry, final bool isKey) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Star/Unstar action for non-key media
+          if (!isKey && _canBeKeyMedia(thisEntry['src']!))
+            IconButton(
+              icon: const Icon(Icons.star_border, color: Colors.white, size: 20),
+              onPressed: () => _addMediaAsKeyClick(thisEntry),
+              tooltip: 'Set as Key Media',
+            ),
+
+          // Remove from key media (for key media items)
+          if (isKey)
+            IconButton(
+              icon: const Icon(Icons.star, color: Colors.amber, size: 20),
+              onPressed: () => _deleteMediaClick(thisEntry, isKey),
+              tooltip: 'Remove Key Media',
+            ),
+
+          // Video thumbnail edit (for videos only)
+          if (thisEntry['type'] == 'vid')
+            IconButton(
+              icon: const Icon(Icons.video_settings, color: Colors.white, size: 20),
+              onPressed: () => _onEditVideoThumbnailClick(thisEntry),
+              tooltip: 'Edit Thumbnail',
+            ),
+
+          // Delete action
+          if (!isKey)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+              onPressed: () => _deleteMediaClick(thisEntry, isKey),
+              tooltip: 'Delete',
+            ),
+        ],
+      ),
+    );
+  }
+
   // * Logic
 
   void _onAddMediaTap() {
@@ -143,47 +244,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 ))).then((_) {
       setState(() {});
     });
-  }
-
-  void _showSettingsForMedia(final Map<String, dynamic> thisEntry, final bool isKey) {
-    final List<Widget> children = [
-      ListTile(
-        title: const Text('Edit Caption'),
-        trailing: const Icon(Icons.edit),
-        onTap: () => _onEditMediaEntry(thisEntry),
-      ),
-      ListTile(
-          title: isKey ? const Text('Remove Key Media') : const Text('Delete'),
-          onTap: () => _deleteMediaClick(thisEntry, isKey),
-          trailing: const Icon(
-            Icons.delete,
-            color: Colors.red,
-          ))
-    ];
-
-    if (!isKey && _canBeKeyMedia(thisEntry['src']!)) {
-      children.insert(
-          0,
-          ListTile(
-              title: const Text('Set as key media'),
-              trailing: const Icon(Icons.star),
-              onTap: () => _addMediaAsKeyClick(thisEntry)));
-    }
-
-    if (thisEntry['type'] == 'vid') {
-      children.insert(
-          1,
-          ListTile(
-              title: const Text('Edit Thumbnail Src'),
-              trailing: const Icon(Icons.video_file),
-              onTap: () => _onEditVideoThumbnailClick(thisEntry)));
-    }
-
-    showModalBottomSheet(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
-        context: context,
-        showDragHandle: true,
-        builder: (_) => SafeArea(child: SingleChildScrollView(child: Column(children: children))));
   }
 
   bool _canBeKeyMedia(final String src) {
@@ -225,7 +285,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   void _addMediaAsKeyClick(final Map<String, dynamic> thisEntry) {
     setState(() {
-      Navigator.of(context).pop();
       widget.eventContext.head
           .addMediaItem(type: thisEntry['type']!, src: thisEntry['src']!, title: thisEntry['title']!);
     });
@@ -242,8 +301,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           } else {
             widget.eventContext.media.removeMediaFile(thisEntry);
           }
-
-          Navigator.of(context).pop();
         });
       }
     });
@@ -270,7 +327,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 ),
               ),
             )).then((_) {
-      Navigator.of(context).pop();
       setState(() {});
     });
   }
