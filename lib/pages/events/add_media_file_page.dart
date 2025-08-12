@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
+
+import '../../utility/event_context.dart';
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({super.key, required this.eventContext});
@@ -53,106 +53,548 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
 
-    return ListView(
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: webHorizontalPadding),
-      children: [
-        _buildMediaTestSlot(),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _tecSrc,
-          onChanged: _onSrcTextChange,
-          decoration: InputDecoration(
-              hintText: 'https://...',
-              label: const Text('Media web source'),
-              suffixIcon: IconButton(onPressed: _onClearMediaSrc, icon: const Icon(Icons.clear))),
-        ),
-        const SizedBox(height: 16),
-        SwitchListTile(
-            value: _isVideo,
-            onChanged: _onIsVideoChange,
-            subtitle: const Text('Large videos can take a while to load!'),
-            title: const Text('Video File')),
-        const Divider(),
-        _buildTestSrcButton(),
-        _buildSaveButton(),
-      ],
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Media Preview Card
+          Card(
+            elevation: 2,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.3,
+              child: _buildMediaTestSlot(),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // URL Input Card
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.link, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Media Source',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _tecSrc,
+                    onChanged: _onSrcTextChange,
+                    decoration: InputDecoration(
+                      hintText: 'https://example.com/media.jpg',
+                      label: const Text('Media URL*'),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: Icon(_isVideo ? Icons.videocam : Icons.image),
+                      suffixIcon: _tecSrc.text.isNotEmpty
+                          ? IconButton(
+                              onPressed: _onClearMediaSrc,
+                              icon: const Icon(Icons.clear),
+                              tooltip: 'Clear URL',
+                            )
+                          : _isValidUrl(_tecSrc.text)
+                              ? const Icon(Icons.check_circle, color: Colors.green)
+                              : null,
+                    ),
+                    keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.done,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildUrlValidationMessage(),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Media Type Card
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.category, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Media Type',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMediaTypeOption(
+                          icon: Icons.image,
+                          label: 'Image',
+                          isSelected: !_isVideo,
+                          onTap: () => _onIsVideoChange(false),
+                          subtitle: 'Max $_maxImageSizeKB KB',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildMediaTypeOption(
+                          icon: Icons.videocam,
+                          label: 'Video',
+                          isSelected: _isVideo,
+                          onTap: () => _onIsVideoChange(true),
+                          subtitle: 'Max $_maxVideoSizeMB MB',
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isVideo) ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _tecThumbnailSrc,
+                      decoration: InputDecoration(
+                        hintText: 'https://example.com/thumbnail.jpg',
+                        label: const Text('Video Thumbnail URL (Optional)'),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.image),
+                        suffixIcon: _tecThumbnailSrc.text.isNotEmpty
+                            ? IconButton(
+                                onPressed: _onClearThumbnailSrc,
+                                icon: const Icon(Icons.clear),
+                                tooltip: 'Clear thumbnail URL',
+                              )
+                            : null,
+                      ),
+                      keyboardType: TextInputType.url,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Action Buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _canTestSrc && !_isTesting ? _onTestSrcClick : null,
+                  icon: _isTesting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.preview),
+                  label: Text(_isTesting ? 'Testing...' : 'Test & Preview'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _canSave ? _onSaveClick : null,
+            icon: const Icon(Icons.save),
+            label: const Text('Save Media'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 
-  Widget _buildTestSrcButton() {
-    return ElevatedButton(onPressed: _canTestSrc ? _onTestSrcClick : null, child: const Text('Test Source'));
+  Widget _buildMediaTypeOption({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+              : Theme.of(context).colorScheme.surface,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildSaveButton() {
-    return ElevatedButton(onPressed: _canSave ? _onSaveClick : null, child: const Text('Save'));
+  Widget _buildUrlValidationMessage() {
+    if (_tecSrc.text.trim().isEmpty) return const SizedBox.shrink();
+
+    final bool isValid = _isValidUrl(_tecSrc.text);
+    final bool isGoogleDrive = _driveRegExp.hasMatch(_tecSrc.text);
+
+    if (isGoogleDrive) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info, color: Colors.blue, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Google Drive link detected - will be automatically converted to direct link',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!isValid) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.red, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Please enter a valid URL starting with https://',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildLoadingState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: Colors.red.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.red.shade700,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuccessState(String message) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.check_circle_outline,
+            size: 48,
+            color: Colors.green.shade600,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Ready!',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.green.shade700,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileSizeError(String title, String subtitle, String url, String buttonText) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.warning_amber,
+            size: 48,
+            color: Colors.orange.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'File Too Large',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.orange.shade700,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: () => launchUrlString(url),
+            icon: const Icon(Icons.open_in_new),
+            label: Text(buttonText),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildMediaTestSlot() {
-    Widget child = const Center(
-        child: Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Text('Awaiting File...'),
-    ));
-    if (_isTesting) {
-      child = _isVideo ? _buildVideoPlayerTest() : _buildImageTest();
+    if (!_isTesting) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _isVideo ? Icons.videocam_outlined : Icons.image_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Media Preview',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add a URL and test to see preview',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    return child;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surface,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: _isVideo ? _buildVideoPlayerTest() : _buildImageTest(),
+      ),
+    );
   }
 
   Widget _buildImageTest() {
     if (_tmpFile != null && _canSave) {
-      return Image.network(_src);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          _src,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return _buildErrorState('Failed to load image');
+          },
+        ),
+      );
     }
 
     return FutureBuilder(
-        future: _fetchFile(true),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
+      future: _fetchFile(true),
+      builder: (_, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return _buildLoadingState('Checking image...');
+        }
 
-          if (snap.hasData) {
-            _canTestSrc = true;
-            _tmpFile = snap.data!;
-            final size = _tmpFile!.lengthSync();
-            final double sizeInKb = size / 1024;
+        if (snap.hasData) {
+          _canTestSrc = true;
+          _tmpFile = snap.data!;
+          final size = _tmpFile!.lengthSync();
+          final double sizeInKb = size / 1024;
 
-            if (sizeInKb <= _maxImageSizeKB) {
-              debugPrint('image size is good: $sizeInKb KB');
-              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                setState(() {
-                  _canSave = true;
-                });
+          if (sizeInKb <= _maxImageSizeKB) {
+            debugPrint('image size is good: $sizeInKb KB');
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              setState(() {
+                _canSave = true;
               });
-            } else {
-              _canSave = false;
-              _canTestSrc = true;
-              result = Container(
-                  height: MediaQuery.of(context).size.height * 0.3,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  alignment: Alignment.center,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                          'This file is too large (${sizeInKb.toStringAsFixed(2)} KB)! Maximum image file size is $_maxImageSizeKB KB, so please compress it or use another image!',
-                          textAlign: TextAlign.center),
-                      TextButton(
-                          onPressed: () => launchUrlString('https://imagecompressor.com'),
-                          child: const Text('Online Image Compressor'))
-                    ],
-                  ));
-            }
-          } else if (snap.hasError) {
+            });
+            return _buildSuccessState('Image is ready! Size: ${sizeInKb.toStringAsFixed(1)} KB');
+          } else {
+            _canSave = false;
             _canTestSrc = true;
-            debugPrint('something with fetching the file: ${snap.error}');
-            result = const Center(child: Text('Something went wrong'));
+            return _buildFileSizeError(
+              'Image too large: ${sizeInKb.toStringAsFixed(1)} KB',
+              'Maximum size is $_maxImageSizeKB KB. Please compress the image.',
+              'https://imagecompressor.com',
+              'Compress Image Online',
+            );
           }
+        }
 
-          return result;
-        });
+        if (snap.hasError) {
+          _canTestSrc = true;
+          debugPrint('Error fetching image: ${snap.error}');
+          return _buildErrorState('Failed to load image: ${snap.error}');
+        }
+
+        return _buildLoadingState('Preparing...');
+      },
+    );
   }
 
   Widget _buildVideoPlayerTest() {
@@ -161,101 +603,148 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     }
 
     return FutureBuilder(
-        future: _fetchFile(false),
-        builder: (_, snap) {
-          Widget result = const Padding(
-            padding: EdgeInsets.only(top: 32.0),
-            child: Center(child: CircularProgressIndicator()),
-          );
+      future: _fetchFile(false),
+      builder: (_, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return _buildLoadingState('Checking video...');
+        }
 
-          if (snap.hasData) {
-            _canTestSrc = true;
-            _tmpFile = snap.data!;
-            final size = _tmpFile!.lengthSync();
-            final double sizeInMb = size / (1024 * 1024);
+        if (snap.hasData) {
+          _canTestSrc = true;
+          _tmpFile = snap.data!;
+          final size = _tmpFile!.lengthSync();
+          final double sizeInMb = size / (1024 * 1024);
 
-            if (sizeInMb <= _maxVideoSizeMB) {
-              debugPrint('video size is good: $sizeInMb MB');
-              _videoPlayerController = VideoPlayerController.file(_tmpFile!);
-              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                _videoPlayerController!.initialize().then((_) {
-                  setState(() {
-                    _canSave = true;
-                    _videoPlayerController!.play();
-                  });
+          if (sizeInMb <= _maxVideoSizeMB) {
+            debugPrint('video size is good: $sizeInMb MB');
+            _videoPlayerController = VideoPlayerController.file(_tmpFile!);
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              _videoPlayerController!.initialize().then((_) {
+                setState(() {
+                  _canSave = true;
+                  _videoPlayerController!.play();
                 });
               });
+            });
 
-              // we don't actually build a widget here, continue the spinner until the video is ready
-            } else {
-              _canTestSrc = true;
-              _canSave = false;
-              result = Container(
-                  height: MediaQuery.of(context).size.height * 0.3,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  alignment: Alignment.center,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                          'This file is too large (${sizeInMb.toStringAsFixed(2)} KB)! Maximum video file size is 128 MB, so please compress it!',
-                          textAlign: TextAlign.center),
-                      TextButton(
-                          onPressed: () => launchUrlString('https://www.freeconvert.com/video-compressor'),
-                          child: const Text('Online Video Compressor'))
-                    ],
-                  ));
-            }
-          } else if (snap.hasError) {
+            return _buildLoadingState('Initializing video player...');
+          } else {
             _canTestSrc = true;
-            debugPrint('something with fetching the file: ${snap.error}');
-            result = const Center(child: Text('Something went wrong!'));
+            _canSave = false;
+            return _buildFileSizeError(
+              'Video too large: ${sizeInMb.toStringAsFixed(1)} MB',
+              'Maximum size is $_maxVideoSizeMB MB. Please compress the video.',
+              'https://www.freeconvert.com/video-compressor',
+              'Compress Video Online',
+            );
           }
+        }
 
-          return result;
-        });
+        if (snap.hasError) {
+          _canTestSrc = true;
+          debugPrint('Error fetching video: ${snap.error}');
+          return _buildErrorState('Failed to load video: ${snap.error}');
+        }
+
+        return _buildLoadingState('Preparing...');
+      },
+    );
   }
 
   Widget _buildVideoPlayer() {
-    if (_videoPlayerController!.value.isInitialized) {
-      debugPrint('We are initialised!');
-      _videoPlayerController!.play();
-      _videoPlayerController!.setLooping(true);
+    if (!_videoPlayerController!.value.isInitialized) {
+      return _buildLoadingState('Initializing video...');
     }
 
+    debugPrint('Video player initialized!');
+    _videoPlayerController!.play();
+    _videoPlayerController!.setLooping(true);
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AspectRatio(
-            aspectRatio: _videoPlayerController!.value.aspectRatio, child: VideoPlayer(_videoPlayerController!)),
-        TextField(
-          controller: _tecThumbnailSrc,
-          decoration: InputDecoration(
-              hintText: 'https://...',
-              label: const Text('Video Thumbnail'),
-              suffixIcon: IconButton(onPressed: _onClearThumbnailSrc, icon: const Icon(Icons.clear))),
-        )
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.black,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: _videoPlayerController!.value.aspectRatio,
+                child: VideoPlayer(_videoPlayerController!),
+              ),
+            ),
+          ),
+        ),
+        if (_isVideo) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Video is ready! You can add a thumbnail URL above for better preview.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 
   // * Logic
 
-  Future<File> _fetchFile(final bool isImage) async {
-    final dir = await getTemporaryDirectory();
-    _src = _sanitiseSrc();
-    debugPrint('src is $_src');
-    final String type = isImage ? '.png' : '.mp4';
-    final String tmpPath = '${dir.path}/tmp$type';
-    final File tmp = File(tmpPath);
-    if (await tmp.exists()) {
-      debugPrint('this file exists and will now be deleted?');
-      await tmp.delete();
+  bool _isValidUrl(String url) {
+    if (url.trim().isEmpty) return false;
+    try {
+      final uri = Uri.parse(url.trim());
+      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https') && uri.hasAuthority;
+    } catch (e) {
+      return false;
     }
+  }
 
-    final response = await http.get(Uri.parse(_src));
-    return await tmp.writeAsBytes(response.bodyBytes);
+  Future<File> _fetchFile(final bool isImage) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      _src = _sanitiseSrc();
+      debugPrint('Fetching from: $_src');
+
+      final String type = isImage ? '.png' : '.mp4';
+      final String tmpPath = '${dir.path}/tmp$type';
+      final File tmp = File(tmpPath);
+
+      if (await tmp.exists()) {
+        debugPrint('Removing existing temp file');
+        await tmp.delete();
+      }
+
+      final response = await http.get(
+        Uri.parse(_src),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Media-Fetcher/1.0)',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return await tmp.writeAsBytes(response.bodyBytes);
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Failed to fetch media file');
+      }
+    } catch (e) {
+      debugPrint('Error fetching file: $e');
+      rethrow;
+    }
   }
 
   void _onClearMediaSrc() {
@@ -272,22 +761,89 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   void _onSaveClick() {
-    DialogManager.showConfirmationDialog(context: context, title: 'Save Media', content: 'Are you sure?')
-        .then((confirmation) {
-      if (confirmation) {
-        final Map<String, dynamic> data = {
-          'title': '',
-          'src': _src,
-          'type': _isVideo ? 'vid' : 'img',
-        };
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.save, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Save Media'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Save this ${_isVideo ? 'video' : 'image'} to the event media?'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        _isVideo ? Icons.videocam : Icons.image,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Type: ${_isVideo ? 'Video' : 'Image'}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Source: ${_src.length > 50 ? '${_src.substring(0, 47)}...' : _src}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final Map<String, dynamic> data = {
+                'title': '',
+                'src': _src,
+                'type': _isVideo ? 'vid' : 'img',
+              };
 
-        if (_isVideo) {
-          data['thumbnailSrc'] = _tecThumbnailSrc.text;
-        }
-        widget.eventContext.media.addMediaFile(data);
-        Navigator.of(context).pop();
-      }
-    });
+              if (_isVideo && _tecThumbnailSrc.text.trim().isNotEmpty) {
+                data['thumbnailSrc'] = _tecThumbnailSrc.text.trim();
+              }
+
+              widget.eventContext.media.addMediaFile(data);
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close page
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onTestSrcClick() {
@@ -305,15 +861,26 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   void _onSrcTextChange(String newText) {
-    if (_canTestSrc && newText.trim().isEmpty) {
-      setState(() {
+    setState(() {
+      final trimmedText = newText.trim();
+
+      if (trimmedText.isEmpty) {
         _canTestSrc = false;
-      });
-    } else if (!_canTestSrc) {
-      setState(() {
-        _canTestSrc = true;
-      });
-    }
+      } else {
+        _canTestSrc = _isValidUrl(trimmedText) || _driveRegExp.hasMatch(trimmedText);
+      }
+
+      // Reset states when URL changes
+      if (_isTesting) {
+        _isTesting = false;
+        _canSave = false;
+        _tmpFile = null;
+        if (_videoPlayerController != null) {
+          _videoPlayerController!.dispose();
+          _videoPlayerController = null;
+        }
+      }
+    });
   }
 
   void _onIsVideoChange(bool newState) {
@@ -333,10 +900,94 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   void _showHelp() {
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Adding Media Files',
-        content:
-            'Please provide web links to the media file you want.\n\nWhen providing specific/personal media file please upload these to your Google Drive, change the access to public (anyone with the link), and paste that link here\n\nMax image size is 100 KB and 128 MB for videos');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.help_outline, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Adding Media Files'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHelpSection(
+                'Supported Sources',
+                '• Direct HTTPS URLs to images/videos\n• Google Drive public links\n• Any publicly accessible media URL',
+                Icons.link,
+              ),
+              const SizedBox(height: 16),
+              _buildHelpSection(
+                'File Size Limits',
+                '• Images: Maximum $_maxImageSizeKB KB\n• Videos: Maximum $_maxVideoSizeMB MB',
+                Icons.storage,
+              ),
+              const SizedBox(height: 16),
+              _buildHelpSection(
+                'Google Drive Setup',
+                '1. Upload file to Google Drive\n2. Right-click → Share\n3. Change access to "Anyone with the link"\n4. Copy and paste the share link',
+                Icons.cloud,
+              ),
+              const SizedBox(height: 16),
+              _buildHelpSection(
+                'Tips',
+                '• Test your URL before saving\n• For videos, add a thumbnail for better preview\n• Compress large files using the suggested tools',
+                Icons.tips_and_updates,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(String title, String content, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primaryContainer,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

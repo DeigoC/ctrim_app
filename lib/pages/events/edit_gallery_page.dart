@@ -50,49 +50,261 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           floatingActionButton: FloatingActionButton.extended(
             onPressed: _onAddMediaTap,
             label: const Text('Add Media'),
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_photo_alternate),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            elevation: 4,
           ),
         ));
   }
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
 
     return SafeArea(
       top: false,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar(snap: true, floating: true, title: const Text('Edit Gallery')),
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-            sliver: SliverList(
-                delegate: SliverChildListDelegate([
-              ListTile(
-                  title: const Text('Key Media'),
-                  leading: const Icon(Icons.star),
-                  trailing: IconButton(onPressed: _onKeyMediaHelpClick, icon: const Icon(Icons.help))),
-              const Divider(thickness: 1),
-              for (int i = 0; i < widget.eventContext.head.media.length; i++)
-                _buildMediaBox(widget.eventContext.head.media[i], true),
-              const SizedBox(height: 32),
-              ListTile(
-                  title: const Text('Post Media'),
-                  leading: const Icon(Icons.photo_library),
-                  trailing: IconButton(onPressed: _onPostMediaHelpClick, icon: const Icon(Icons.help))),
-              const Divider(thickness: 1),
-            ])),
+          SliverAppBar(
+            snap: true,
+            floating: true,
+            title: const Text('Edit Gallery'),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
           ),
           SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-            sliver: SliverList.separated(
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemCount: widget.eventContext.media.allMedia.length,
-                itemBuilder: (_, index) {
-                  final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
-                  return _buildMediaBox(thisEntry, false);
-                }),
-          )
+            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Key Media Section
+                Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.star,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Key Media',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    '${widget.eventContext.head.media.length}/4 items',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _onKeyMediaHelpClick,
+                              icon: Icon(
+                                Icons.help_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              tooltip: 'Learn about Key Media',
+                            ),
+                          ],
+                        ),
+                        if (widget.eventContext.head.media.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          ...widget.eventContext.head.media.asMap().entries.map(
+                                (entry) => Padding(
+                                  padding: EdgeInsets.only(
+                                      bottom: entry.key < widget.eventContext.head.media.length - 1 ? 12 : 0),
+                                  child: _buildMediaBox(entry.value, true),
+                                ),
+                              ),
+                        ] else ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              color: Theme.of(context).colorScheme.surface,
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.star_border,
+                                  size: 48,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No Key Media Yet',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Add media files and mark them as key media',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Post Media Section
+                Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.secondaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.photo_library,
+                                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Post Media',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    '${widget.eventContext.media.allMedia.length} items',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _onPostMediaHelpClick,
+                              icon: Icon(
+                                Icons.help_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              tooltip: 'Learn about Post Media',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+          // Post Media Grid
+          widget.eventContext.media.allMedia.isEmpty
+              ? SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                  sliver: SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No Media Files Yet',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap the + button to add your first image or video',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton.icon(
+                            onPressed: _onAddMediaTap,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add First Media'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                  sliver: SliverList.separated(
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemCount: widget.eventContext.media.allMedia.length,
+                    itemBuilder: (_, index) {
+                      final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
+                      return _buildMediaBox(thisEntry, false);
+                    },
+                  ),
+                ),
+          // Bottom padding for FAB
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ),
         ],
       ),
     );
@@ -102,78 +314,163 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     final bool isPartOfHead = !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      elevation: 2,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Stack(
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12.0)),
-                child: _buildMediaViewer(thisEntry, isKey),
-              ),
-            ),
-            // Quick action buttons overlay
-            Positioned(
-              top: 8,
-              right: 8,
-              child: _buildQuickActions(thisEntry, isKey),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      margin: EdgeInsets.zero,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Stack(
             children: [
-              Row(
-                children: [
-                  if (isPartOfHead || isKey)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.amber),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.star, size: 14, color: Colors.amber[700]),
-                          const SizedBox(width: 4),
-                          Text('Key Media', style: TextStyle(fontSize: 12, color: Colors.amber[700])),
-                        ],
-                      ),
-                    ),
-                  const Spacer(),
-                  // Quick caption edit
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    onPressed: () => _onEditMediaEntry(thisEntry),
-                    tooltip: 'Edit Caption',
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
                   ),
-                ],
+                  child: _buildMediaViewer(thisEntry, isKey),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                thisEntry['title']!.isEmpty ? 'No caption' : thisEntry['title']!,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontStyle: thisEntry['title']!.isEmpty ? FontStyle.italic : FontStyle.normal,
-                      color: thisEntry['title']!.isEmpty ? Colors.grey : null,
+              // Gradient overlay for better button visibility
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.center,
+                      colors: [
+                        Colors.black.withOpacity(0.6),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.7],
                     ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                thisEntry['src']!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+              // Quick action buttons overlay
+              Positioned(
+                top: 12,
+                right: 12,
+                child: _buildQuickActions(thisEntry, isKey),
+              ),
+              // Media type indicator
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        thisEntry['type'] == 'vid' ? Icons.videocam : Icons.image,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        thisEntry['type'] == 'vid' ? 'Video' : 'Image',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-      ]),
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (isPartOfHead || isKey)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Key Media',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const Spacer(),
+                    // Quick caption edit
+                    IconButton(
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      onPressed: () => _onEditMediaEntry(thisEntry),
+                      tooltip: 'Edit Caption',
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(32, 32),
+                        padding: const EdgeInsets.all(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  thisEntry['title']!.isEmpty ? 'No caption added' : thisEntry['title']!,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontStyle: thisEntry['title']!.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: thisEntry['title']!.isEmpty
+                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                            : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: thisEntry['title']!.isEmpty ? FontWeight.normal : FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    thisEntry['src']!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontFamily: 'monospace',
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -189,46 +486,92 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   Widget _buildQuickActions(final Map<String, dynamic> thisEntry, final bool isKey) {
+    final List<Widget> actions = [];
+
+    // Star/Unstar action for non-key media
+    if (!isKey && _canBeKeyMedia(thisEntry['src']!)) {
+      actions.add(
+        _buildActionButton(
+          icon: Icons.star_border,
+          color: Colors.amber,
+          onPressed: () => _addMediaAsKeyClick(thisEntry),
+          tooltip: 'Set as Key Media',
+        ),
+      );
+    }
+
+    // Remove from key media (for key media items)
+    if (isKey) {
+      actions.add(
+        _buildActionButton(
+          icon: Icons.star,
+          color: Colors.amber,
+          onPressed: () => _deleteMediaClick(thisEntry, isKey),
+          tooltip: 'Remove from Key Media',
+        ),
+      );
+    }
+
+    // Video thumbnail edit (for videos only)
+    if (thisEntry['type'] == 'vid') {
+      actions.add(
+        _buildActionButton(
+          icon: Icons.video_settings,
+          color: Colors.blue,
+          onPressed: () => _onEditVideoThumbnailClick(thisEntry),
+          tooltip: 'Edit Video Thumbnail',
+        ),
+      );
+    }
+
+    // Delete action
+    if (!isKey) {
+      actions.add(
+        _buildActionButton(
+          icon: Icons.delete_outline,
+          color: Colors.red,
+          onPressed: () => _deleteMediaClick(thisEntry, isKey),
+          tooltip: 'Delete Media',
+        ),
+      );
+    }
+
+    if (actions.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: actions
+          .map((action) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: action,
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
+        color: Colors.black.withOpacity(0.7),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Star/Unstar action for non-key media
-          if (!isKey && _canBeKeyMedia(thisEntry['src']!))
-            IconButton(
-              icon: const Icon(Icons.star_border, color: Colors.white, size: 20),
-              onPressed: () => _addMediaAsKeyClick(thisEntry),
-              tooltip: 'Set as Key Media',
-            ),
-
-          // Remove from key media (for key media items)
-          if (isKey)
-            IconButton(
-              icon: const Icon(Icons.star, color: Colors.amber, size: 20),
-              onPressed: () => _deleteMediaClick(thisEntry, isKey),
-              tooltip: 'Remove Key Media',
-            ),
-
-          // Video thumbnail edit (for videos only)
-          if (thisEntry['type'] == 'vid')
-            IconButton(
-              icon: const Icon(Icons.video_settings, color: Colors.white, size: 20),
-              onPressed: () => _onEditVideoThumbnailClick(thisEntry),
-              tooltip: 'Edit Thumbnail',
-            ),
-
-          // Delete action
-          if (!isKey)
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-              onPressed: () => _deleteMediaClick(thisEntry, isKey),
-              tooltip: 'Delete',
-            ),
-        ],
+      child: IconButton(
+        icon: Icon(icon, color: color, size: 18),
+        onPressed: onPressed,
+        tooltip: tooltip,
+        constraints: const BoxConstraints(
+          minWidth: 36,
+          minHeight: 36,
+        ),
+        padding: const EdgeInsets.all(6),
       ),
     );
   }
@@ -307,43 +650,228 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   void _onEditMediaEntry(final Map<String, dynamic> thisEntry) {
+    final TextEditingController captionController = TextEditingController(text: thisEntry['title']);
+
     showDialog(
-        context: context,
-        builder: (_) => Dialog(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        decoration: const InputDecoration(label: Text('Caption'), hintText: 'Optional...'),
-                        maxLength: 32,
-                        controller: TextEditingController(text: thisEntry['title']),
-                        onChanged: (newText) => thisEntry['title'] = newText,
-                      )
-                    ],
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.edit,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Text('Edit Caption'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Add a caption to describe this ${thisEntry['type'] == 'vid' ? 'video' : 'image'}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
-                ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: captionController,
+              decoration: const InputDecoration(
+                label: Text('Caption'),
+                hintText: 'Enter a descriptive caption...',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.title),
               ),
-            )).then((_) {
-      setState(() {});
+              maxLength: 32,
+              maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (newText) => thisEntry['title'] = newText,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              thisEntry['title'] = captionController.text.trim();
+              Navigator.of(context).pop();
+              setState(() {});
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      captionController.dispose();
     });
   }
 
   void _onKeyMediaHelpClick() {
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Key Media',
-        content:
-            'First image will be set as the key graphic for the post. These will also be displayed for the post thumnbnail.');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.star,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Key Media'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Key media are the most important images and videos for your event.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Features:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• First image becomes the event thumbnail\n• Displayed prominently in event previews\n• Maximum of 4 key media items\n• Can be images or videos',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onPostMediaHelpClick() {
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Post Media',
-        content: 'Your go-to images and videos for the post. Remember that you can write captions if you wish to.');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.photo_library,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Post Media'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'All images and videos associated with your event.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.tips_and_updates,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tips:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Add captions to describe your media\n• Mark important items as key media\n• Videos can have custom thumbnails\n• Organize your media gallery',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onEditVideoThumbnailClick(final Map<String, dynamic> thisEntry) {
