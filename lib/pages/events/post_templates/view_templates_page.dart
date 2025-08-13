@@ -40,6 +40,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
             data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
             result = _buildBodyWithData(snap.data!);
           } else if (snap.hasError) {
+            debugPrint('Error: ${snap.error}');
             result = Center(child: Text('Something went wrong:\n${snap.error}'));
           }
           return result;
@@ -98,8 +99,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.head.setLocation(postTemplate.location);
     eventContext.head.setTitle(postTemplate.title);
     for (final headMediaItem in postTemplate.headMedia) {
-      eventContext.head
-          .addMediaItem(type: headMediaItem['type']!, src: headMediaItem['src']!, title: headMediaItem['title'] ?? '');
+      eventContext.head.addMediaItem(
+          type: headMediaItem['type']!,
+          src: headMediaItem['src']!,
+          title: headMediaItem['title'] ?? '',
+          thumbnail: headMediaItem['thumbnailSrc'] ?? '');
     }
 
     // body and media
@@ -111,8 +115,13 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
 
     // program related
     for (final role in postTemplate.roles) {
-      eventContext.program
-          .addRole(uids: role['uids'], title: role['title'], start: role['start'], end: role['end'], id: role['id']);
+      eventContext.program.addRole(
+          detail: role['detail'],
+          uids: role['uids'],
+          title: role['title'],
+          start: role['start'],
+          end: role['end'],
+          id: role['id']);
     }
     eventContext.program.setAddress(postTemplate.address);
     eventContext.program.setAllDay(postTemplate.allDay);

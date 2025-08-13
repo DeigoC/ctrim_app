@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
   late List<String> _topics, _contributorUIDs;
-  late List<Map<String, String>> _headMedia, _media;
+  late List<Map<String, dynamic>> _headMedia, _media;
 
   // * Event Program related
   late DateTime? _startTime, _finishTime;
@@ -101,8 +101,8 @@ class PostTemplate {
   DateTime? get startTime => _startTime;
   DateTime? get finishTime => _finishTime;
 
-  List<Map<String, String>> get headMedia => _headMedia;
-  List<Map<String, String>> get media => _media;
+  List<Map<String, dynamic>> get headMedia => _headMedia;
+  List<Map<String, dynamic>> get media => _media;
   List<Map<String, dynamic>> get roles => _roles;
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
@@ -147,15 +147,12 @@ class PostTemplate {
     return result;
   }
 
-  List<Map<String, String>> _parseMedia(final List<Map<String, dynamic>> data) {
-    final List<Map<String, String>> results = List<Map<String, String>>.empty(growable: true);
+  List<Map<String, dynamic>> _parseMedia(final List<Map<String, dynamic>> data) {
+    final List<Map<String, dynamic>> results = List<Map<String, dynamic>>.empty(growable: true);
 
     for (final entry in data) {
-      results.add({
-        'title': entry['title'],
-        'src': entry['src'],
-        'type': entry['type'],
-      });
+      results.add(
+          {'title': entry['title'], 'src': entry['src'], 'type': entry['type'], 'thumbnailSrc': entry['thumbnailSrc']});
     }
 
     return results;

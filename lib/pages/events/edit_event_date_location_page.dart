@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
@@ -63,7 +62,13 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     return PopScope(
       onPopInvoked: (popping) => _checkToUpdate(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Edit Date & Location')),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        appBar: AppBar(
+          title: const Text('Edit Date & Location'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          elevation: 0,
+        ),
         body: _buildBody(),
       ),
     );
@@ -71,77 +76,463 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
 
-    return ListView(
-      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
-      children: _start == null ? _buildJustDateSelector() : _buildEverything(),
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _start == null ? _buildJustDateSelector() : _buildEverything(),
+      ),
     );
   }
 
   List<Widget> _buildJustDateSelector() {
     return [
-      ListTile(
-        title: const Text('TBD'),
-        subtitle: const Text('Event Date and Time'),
-        onTap: _onSelectStartDateClick,
+      Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.event_available,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Set Event Date',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose when your event will take place',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _onSelectStartDateClick,
+                icon: const Icon(Icons.calendar_today),
+                label: const Text('Select Date & Time'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ];
   }
 
   List<Widget> _buildEverything() {
     final List<Widget> children = [
-      ListTile(
-        title: Text(_startFormat.format(_start!)),
-        subtitle: const Text('Event Date and Time'),
-        leading: const Icon(Icons.calendar_today),
-        trailing: IconButton(onPressed: _onDeleteStartTimeClick, icon: const Icon(Icons.delete)),
-        onTap: _onSelectStartDateClick,
+      // Date & Time Section
+      Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.schedule,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Date & Time',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Start Date/Time
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  title: Text(
+                    _startFormat.format(_start!),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  subtitle: Text(
+                    'Event starts',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                  ),
+                  leading: Icon(
+                    Icons.play_arrow,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: _onSelectStartDateClick,
+                        icon: Icon(
+                          Icons.edit,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        tooltip: 'Edit start time',
+                      ),
+                      IconButton(
+                        onPressed: _onDeleteStartTimeClick,
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        tooltip: 'Remove date',
+                      ),
+                    ],
+                  ),
+                  onTap: _onSelectStartDateClick,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // End Time
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  title: Text(
+                    _end == null ? 'Not set' : _endFormat.format(_end!),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: _end == null ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : null,
+                        ),
+                  ),
+                  subtitle: Text(
+                    'Event ends',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                  ),
+                  leading: Icon(
+                    Icons.stop,
+                    color: _end == null
+                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                        : Theme.of(context).colorScheme.secondary,
+                  ),
+                  trailing: Icon(
+                    Icons.edit,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onTap: _onSelectEndTimeClick,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // All Day Switch
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.today,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'All Day Event',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    ),
+                    Switch(
+                      value: _isAllDay,
+                      onChanged: _onAllDaySwitchTap,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      ListTile(
-        title: Text(_end == null ? 'TBD' : _endFormat.format(_end!)),
-        subtitle: const Text('Finish Time'),
-        onTap: _onSelectEndTimeClick,
-      ),
-      const Divider(thickness: 1),
-      const SizedBox(height: 8),
-      SwitchListTile(value: _isAllDay, onChanged: _onAllDaySwitchTap, title: const Text('All Day')),
-      const SizedBox(height: 8),
-      const Divider(thickness: 1),
-      const SizedBox(height: 8),
-      ListTile(
-        title: Text(_location),
-        subtitle: const Text('Location (fixed for now!)'),
-        leading: const Icon(Icons.map),
-        onTap: _onSelectLocationClick,
-        trailing: const Icon(Icons.edit),
-      ),
-      SwitchListTile(value: _online, onChanged: _onOnlineSwitchTap, title: const Text('Online')),
-      const SizedBox(height: 8),
-      const Divider(thickness: 1),
-      const SizedBox(height: 8),
-      TextField(
-        controller: _tecAddress,
-        maxLines: null,
-        decoration: InputDecoration(
-            hintText: _online ? 'https://...' : '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
-            label: _online ? const Text('Online Meeting Link') : const Text('Address'),
-            suffixIcon:
-                _online ? IconButton(onPressed: _onOnlineMeetingLinkHelpClick, icon: const Icon(Icons.help)) : null),
+      const SizedBox(height: 16),
+      // Location Section
+      Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.location_on,
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Location',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Location Selector
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  title: Text(
+                    _location,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  subtitle: Text(
+                    'Event location (currently fixed)',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                  ),
+                  leading: Icon(
+                    Icons.place,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                  trailing: Icon(
+                    Icons.lock,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    size: 20,
+                  ),
+                  onTap: _onSelectLocationClick,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Online Switch
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.videocam,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Online Event',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          Text(
+                            'Event will be held online',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _online,
+                      onChanged: _onOnlineSwitchTap,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Address/Link Field
+              TextFormField(
+                controller: _tecAddress,
+                maxLines: null,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  hintText:
+                      _online ? 'https://zoom.us/j/...' : '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
+                  labelText: _online ? 'Online Meeting Link' : 'Physical Address',
+                  prefixIcon: Icon(
+                    _online ? Icons.link : Icons.location_on,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  suffixIcon: IconButton(
+                    onPressed: _online ? _onOnlineMeetingLinkHelpClick : null,
+                    icon: Icon(
+                      Icons.help_outline,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    tooltip: 'Help',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ];
 
     if (!_online) {
-      children.add(TextField(
-        controller: _tecMapLink,
-        maxLines: null,
-        decoration: InputDecoration(
-            hintText: 'https://...',
-            label: const Text('Map Link'),
-            suffixIcon: IconButton(onPressed: _mapLinkHelpClick, icon: const Icon(Icons.help))),
-      ));
+      children.add(
+        const SizedBox(height: 16),
+      );
+      children.add(
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.map,
+                        color: Theme.of(context).colorScheme.onTertiaryContainer,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Map Link',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Provide a link to help attendees find the location',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _tecMapLink,
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                    hintText: 'https://maps.google.com/...',
+                    labelText: 'Google Maps Link (Optional)',
+                    prefixIcon: Icon(
+                      Icons.map_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed: _mapLinkHelpClick,
+                      icon: Icon(
+                        Icons.help_outline,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      tooltip: 'How to get map link',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
+    children.add(const SizedBox(height: 24));
     return children;
   }
 
@@ -175,23 +566,81 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
             context: context,
             barrierDismissible: false,
             builder: (_) => AlertDialog(
-                    title: const Text('Finish Time'),
-                    content: const Text('Does the event last all day or finishes at a time?'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.schedule,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Event Duration'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'How long will your event last?',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Choose whether this is an all-day event or has a specific end time.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     actions: [
-                      TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            setState(() {
-                              _isAllDay = true;
-                            });
-                          },
-                          child: const Text('All Day')),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _onSelectEndTimeClick();
-                          },
-                          child: const Text('On a Time'))
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          setState(() {
+                            _isAllDay = true;
+                          });
+                        },
+                        icon: const Icon(Icons.today),
+                        label: const Text('All Day'),
+                      ),
+                      FilledButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _onSelectEndTimeClick();
+                        },
+                        icon: const Icon(Icons.schedule),
+                        label: const Text('Set End Time'),
+                      ),
                     ]));
       }
     });
@@ -277,15 +726,164 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   void _mapLinkHelpClick() {
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Map Link',
-        content:
-            'Link to open the maps app (google maps seems to be a solid pick) for the address. \n\nTo get the link from google maps, enter the address of the location then create a share link. Paste that link here.');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.map,
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Map Link Help'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Help attendees find your event location with a direct map link.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'How to get a Google Maps link:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '1. Go to Google Maps\n2. Search for your event address\n3. Click the "Share" button\n4. Copy the link and paste it here',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onOnlineMeetingLinkHelpClick() {
-    DialogManager.showAlertDialog(
-        context: context, title: 'Online Link', content: 'Insert the meeting link here, typically for Zoom meetings!');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.videocam,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Online Meeting Link'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Provide the link where attendees can join your online event.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.video_call,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Examples:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Zoom meeting links\n• Microsoft Teams links\n• Google Meet links\n• YouTube live streams',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -54,70 +54,319 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
 
-    return ListView(
-      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
-      children: [
-        ListTile(
-          title: Text(_start == null ? 'TBD' : _timeFormat.format(_start!)),
-          subtitle: const Text('Start Time*'),
-          leading: const Icon(Icons.punch_clock),
-          trailing: _start == null ? const Icon(Icons.warning_amber, color: Colors.amber) : const Icon(Icons.edit),
-          onTap: _onStartTimeTap,
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Time Selection Card
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.schedule, color: Theme.of(context).primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Schedule Time',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTimeSelector(
+                          label: 'Start Time',
+                          time: _start,
+                          isRequired: true,
+                          onTap: _onStartTimeTap,
+                          icon: Icons.play_arrow,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTimeSelector(
+                          label: 'End Time',
+                          time: _end,
+                          isRequired: true,
+                          onTap: _start == null ? null : _onEndTimeTap,
+                          icon: Icons.stop,
+                          isEnabled: _start != null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Program Details Card
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.description, color: Theme.of(context).primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Program Details',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _tecTitle,
+                    maxLength: 48,
+                    decoration: InputDecoration(
+                      label: const Text('Title*'),
+                      hintText: 'What is this program about?',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.title),
+                      suffixIcon: _tecTitle.text.trim().isEmpty
+                          ? const Icon(Icons.warning_amber, color: Colors.amber)
+                          : const Icon(Icons.check_circle, color: Colors.green),
+                    ),
+                    onChanged: _onRequirementsChange,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _tecDetail,
+                    maxLines: 3,
+                    maxLength: 128,
+                    decoration: const InputDecoration(
+                      label: Text('Additional Details'),
+                      hintText: 'Provide more information about this program...',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.notes),
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Team Assignment Card
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.group, color: Theme.of(context).primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Team Assignment',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Theme.of(context).colorScheme.outline),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                    child: Column(
+                      children: [
+                        if (_selectedUsers.isEmpty)
+                          Column(
+                            children: [
+                              Icon(Icons.person_add_alt_1,
+                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No team members assigned',
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                              ),
+                            ],
+                          )
+                        else
+                          InkWell(
+                            onTap: _onViewAssignedMembersTap,
+                            child: Column(
+                              children: [
+                                MyAvatarStack(
+                                  users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
+                                  appDir: _appContext.appDir,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${_selectedUsers.length} member${_selectedUsers.length == 1 ? '' : 's'} assigned',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: _onSelectMembersTap,
+                          icon: const Icon(Icons.person_add),
+                          label: Text(_selectedUsers.isEmpty ? 'Assign Members' : 'Add More Members'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Settings Card
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.settings, color: Theme.of(context).primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Visibility Settings',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    value: _forGuests,
+                    onChanged: _onForGuestsChange,
+                    title: const Text('Visible to Guests'),
+                    subtitle: const Text('Allow guests to see this program item'),
+                    secondary: Icon(
+                      _forGuests ? Icons.visibility : Icons.visibility_off,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Save Button
+          FilledButton.icon(
+            onPressed: _canSave ? _onSaveClick : null,
+            icon: const Icon(Icons.save),
+            label: const Text('Save Program'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSelector({
+    required String label,
+    required DateTime? time,
+    required bool isRequired,
+    required VoidCallback? onTap,
+    required IconData icon,
+    bool isEnabled = true,
+  }) {
+    final bool hasTime = time != null;
+    final bool showWarning = isRequired && !hasTime;
+
+    return GestureDetector(
+      onTap: isEnabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: showWarning
+                ? Colors.amber
+                : isEnabled
+                    ? Theme.of(context).colorScheme.outline
+                    : Theme.of(context).colorScheme.outline.withOpacity(0.5),
+            width: showWarning ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: isEnabled
+              ? Theme.of(context).colorScheme.surface
+              : Theme.of(context).colorScheme.surface.withOpacity(0.5),
         ),
-        ListTile(
-          title: Text(_end == null ? 'TBD' : _timeFormat.format(_end!)),
-          subtitle: const Text('Finish Time*'),
-          leading: const Icon(Icons.punch_clock),
-          trailing: _end == null ? const Icon(Icons.warning_amber, color: Colors.amber) : const Icon(Icons.edit),
-          onTap: _start == null ? null : _onEndTimeTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isEnabled
+                      ? (showWarning ? Colors.amber : Theme.of(context).colorScheme.primary)
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label + (isRequired ? '*' : ''),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isEnabled
+                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (showWarning) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.warning_amber, size: 14, color: Colors.amber),
+                ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasTime ? _timeFormat.format(time) : 'Tap to set',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isEnabled
+                    ? (hasTime
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.7))
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+          ],
         ),
-        TextField(
-          controller: _tecTitle,
-          maxLength: 48,
-          decoration: InputDecoration(
-              label: const Text('Title*'),
-              hintText: 'What is this?',
-              suffixIcon: _tecTitle.text.trim().isEmpty ? const Icon(Icons.warning_amber, color: Colors.amber) : null),
-          onChanged: _onRequirementsChange,
-        ),
-        TextField(
-          controller: _tecDetail,
-          maxLines: null,
-          maxLength: 128,
-          decoration: const InputDecoration(label: Text('Detail'), hintText: 'Go into more detail'),
-        ),
-        const Divider(thickness: 1),
-        const SizedBox(height: 16),
-        const Text('Assigned To The Program', style: TextStyle(fontSize: 16)),
-        const SizedBox(height: 8),
-        InkWell(
-            onTap: _selectedUsers.isNotEmpty ? _onViewAssignedMembersTap : null,
-            child: MyAvatarStack(
-                users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
-                appDir: _appContext.appDir)),
-        TextButton.icon(
-            onPressed: _onSelectMembersTap, icon: const Icon(Icons.person_add), label: const Text('Assign Members')),
-        const Divider(thickness: 1),
-        SwitchListTile(
-          value: _forGuests,
-          onChanged: _onForGuestsChange,
-          title: const Text('For Guests'),
-          subtitle: const Text('Is this something guests should see?'),
-        ),
-        // ListTile(
-        //   title: const Text('Priority: 1'),
-        //   subtitle: const Text('Should this be viewed higher than others of the same start time?'),
-        //   trailing: const Icon(Icons.edit),
-        //   onTap: () {},
-        // ),
-        const SizedBox(height: 16),
-        const Divider(),
-        ElevatedButton.icon(
-            onPressed: _canSave ? _onSaveClick : null, icon: const Icon(Icons.save), label: const Text('Save')),
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 
@@ -137,30 +386,96 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
 
   void _onViewAssignedMembersTap() {
     showDialog(
-        context: context,
-        builder: (_) {
-          return Dialog(
-            child: SizedBox(
-              height: MediaQuery.of(_).size.height * 0.5,
-              child: ListView.builder(
-                  itemCount: _selectedUsers.length,
-                  itemBuilder: (_, index) {
-                    final thisUser =
-                        _appContext.allUsers.firstWhere((element) => element.id.compareTo(_selectedUsers[index]) == 0);
-                    return ListTile(
-                      title: Text(thisUser.fullname),
-                      subtitle: Text(thisUser.location),
-                      leading: MyUserAvatar(thisUser),
-                      trailing: IconButton(
-                          onPressed: () => _onRemoveUserFromRole(thisUser.id), icon: const Icon(Icons.remove_circle)),
-                    );
-                  }),
+      context: context,
+      builder: (_) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(_).size.height * 0.6,
+              maxWidth: 400,
             ),
-          );
-        });
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.group, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Assigned Members (${_selectedUsers.length})',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: _selectedUsers.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Column(
+                            children: [
+                              Icon(Icons.person_off, size: 48, color: Colors.grey),
+                              SizedBox(height: 16),
+                              Text('No members assigned'),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _selectedUsers.length,
+                          itemBuilder: (_, index) {
+                            final thisUser = _appContext.allUsers
+                                .firstWhere((element) => element.id.compareTo(_selectedUsers[index]) == 0);
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                              child: ListTile(
+                                title: Text(thisUser.fullname),
+                                subtitle: Text(thisUser.location),
+                                leading: MyUserAvatar(thisUser),
+                                trailing: IconButton(
+                                  onPressed: () => _onRemoveUserFromRole(thisUser.id),
+                                  icon: const Icon(Icons.remove_circle, color: Colors.red),
+                                  tooltip: 'Remove from assignment',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
-  void _onRemoveUserFromRole(String uid) {
+  void _onRemoveUserFromRole(final String uid) {
     showDialog(
         context: context,
         builder: (_) {
@@ -186,13 +501,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         });
   }
 
-  void _onForGuestsChange(bool newState) {
+  void _onForGuestsChange(final bool newState) {
     setState(() {
       _forGuests = newState;
     });
   }
 
-  void _onRequirementsChange(String _) {
+  void _onRequirementsChange(final String _) {
     if (_tecTitle.text.trim().isEmpty || _start == null || _end == null && _canSave) {
       setState(() {
         _canSave = false;
@@ -215,20 +530,125 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
         });
-        await DialogManager.showAlertDialog(
-            context: context,
-            title: 'Finish Time',
-            content: 'Now please select when this program is expected to complete',
-            barrierDismissible: false);
         _onEndTimeTap();
       }
     });
   }
 
   void _onEndTimeTap() {
+    // select from a range of pre-set durations
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+            maxWidth: 400,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Select Duration',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.all(8),
+                  children: [
+                    _buildDurationOption("5 minutes", 5, Icons.timer),
+                    _buildDurationOption("10 minutes", 10, Icons.timer_10),
+                    _buildDurationOption("15 minutes", 15, Icons.schedule),
+                    _buildDurationOption("20 minutes", 20, Icons.schedule),
+                    _buildDurationOption("25 minutes", 25, Icons.schedule),
+                    _buildDurationOption("30 minutes", 30, Icons.schedule),
+                    _buildDurationOption("45 minutes", 45, Icons.schedule),
+                    _buildDurationOption("1 hour", 60, Icons.timer_outlined),
+                    _buildDurationOption("1 hour 30 minutes", 90, Icons.timer_outlined),
+                    _buildDurationOption("2 hours", 120, Icons.timer_outlined),
+                    const Divider(),
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        child: Icon(Icons.edit_calendar, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                      ),
+                      title: const Text("Custom finish time"),
+                      subtitle: const Text("Set a specific end time"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () => _selectCustomTimeForEndTime(),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDurationOption(String title, int minutes, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: Icon(icon, color: Theme.of(context).colorScheme.onPrimaryContainer),
+        ),
+        title: Text(title),
+        subtitle: Text("Ends at ${_timeFormat.format(_start!.add(Duration(minutes: minutes)))}"),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () => _setPresetDurationForEndTime(minutes),
+      ),
+    );
+  }
+
+  void _setPresetDurationForEndTime(final int minutes) {
+    Navigator.of(context).pop();
+    setState(() {
+      _end = _start!.add(Duration(minutes: minutes));
+    });
+    _onRequirementsChange("");
+  }
+
+  void _selectCustomTimeForEndTime() {
+    Navigator.of(context).pop();
+
     showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_start!.add(const Duration(hours: 1))),
+      initialTime: TimeOfDay.fromDateTime(_start!.add(Duration(hours: 1))),
       helpText: 'When does the role finish?',
     ).then((selectedEndTime) {
       if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
@@ -236,7 +656,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedEndTime.hour, selectedEndTime.minute);
         });
-        _onRequirementsChange('');
+        _onRequirementsChange("");
       }
     });
   }
@@ -264,7 +684,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         });
   }
 
-  bool _isEndTimeValid(TimeOfDay end) {
+  bool _isEndTimeValid(final TimeOfDay end) {
     if (end.hour.compareTo(_start!.hour) > 0 ||
         (end.hour.compareTo(_start!.hour) == 0 && end.minute.compareTo(_start!.minute) > 0)) {
       return true;

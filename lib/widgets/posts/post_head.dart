@@ -42,7 +42,7 @@ class PostHead extends StatelessWidget {
       detailSection,
     ];
 
-    final List<Map<String, String>> media = _getMedia();
+    final List<Map<String, dynamic>> media = _getMedia();
     if (media.isNotEmpty) {
       children.insert(0, _buildMediaSection(context, media));
     } else {
@@ -72,8 +72,8 @@ class PostHead extends StatelessWidget {
     // final String timeAgo =
 
     final String finalStr = thisHead.eventDate != null
-        ? '${thisHead.location} • ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${timeAgo(thisHead.recentDate)}'
-        : '${thisHead.location} • Edited ${timeAgo(thisHead.recentDate)}';
+        ? '${thisHead.location} • ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${_timeAgo(thisHead.recentDate)}'
+        : '${thisHead.location} • Edited ${_timeAgo(thisHead.recentDate)}';
 
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -86,7 +86,7 @@ class PostHead extends StatelessWidget {
         child: Text(thisHead.subtitle, style: const TextStyle(fontSize: _subtitleFontSize)));
   }
 
-  Widget _buildMediaSection(final BuildContext context, final List<Map<String, String>> media) {
+  Widget _buildMediaSection(final BuildContext context, final List<Map<String, dynamic>> media) {
     final List<Widget> children = [_buildMediaSlot(media.first, 0, context)];
 
     if (media.length == 2) {
@@ -128,7 +128,7 @@ class PostHead extends StatelessWidget {
                 child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: children))));
   }
 
-  Widget _buildMediaSlot(Map<String, String> entry, int index, BuildContext context) {
+  Widget _buildMediaSlot(final Map<String, dynamic> entry, final int index, final BuildContext context) {
     return entry['type']!.compareTo('img') == 0
         ? Expanded(
             child: ImageMediaSlot(
@@ -142,14 +142,14 @@ class PostHead extends StatelessWidget {
 
   // * Logic
 
-  List<Map<String, String>> _getMedia() {
+  List<Map<String, dynamic>> _getMedia() {
     if (kIsWeb) {
       return thisHead.media.where((e) => e['type'] == 'img').toList();
     }
     return thisHead.media;
   }
 
-  void _onHeadTap(BuildContext context) {
+  void _onHeadTap(final BuildContext context) {
     // ! If this becomes an issue in the future, we should try to add some logic
     // ! to pop the screen instead of opening another page to an already opened page
     // ! to stop the deep viewing of related posts
@@ -157,7 +157,7 @@ class PostHead extends StatelessWidget {
         .then((_) => updatePost());
   }
 
-  void _onMediaTap(int index, BuildContext context) {
+  void _onMediaTap(final int index, final BuildContext context) {
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -168,13 +168,13 @@ class PostHead extends StatelessWidget {
                 )));
   }
 
-  String timeAgo(DateTime dateTime) {
+  String _timeAgo(final DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
     if (difference.inSeconds < 5) {
       return "a few seconds ago";
-    } else if (difference.inMinutes < 1) {
+    } else if (difference.inMinutes < 5) {
       return "a few minutes ago";
     } else if (difference.inHours < 1) {
       final minutes = difference.inMinutes;
@@ -182,9 +182,18 @@ class PostHead extends StatelessWidget {
     } else if (difference.inDays < 1) {
       final hours = difference.inHours;
       return "$hours ${(hours == 1) ? 'hour' : 'hours'} ago";
-    } else {
+    } else if (difference.inDays < 7) {
       final days = difference.inDays;
       return "$days ${(days == 1) ? 'day' : 'days'} ago";
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return "$weeks ${(weeks == 1) ? 'week' : 'weeks'} ago";
+    } else if (difference.inDays < 365) {
+      final months = (difference.inDays / 30).floor();
+      return "$months ${(months == 1) ? 'month' : 'months'} ago";
+    } else {
+      final years = (difference.inDays / 365).floor();
+      return "$years ${(years == 1) ? 'year' : 'years'} ago";
     }
   }
 }

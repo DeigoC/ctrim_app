@@ -18,7 +18,7 @@ class EventContext {
   late final String _currentUID;
   final EventBody _body = EventBody();
 
-  bool _canSaveTheEditing = false, _notifyBroadcast = true, _notifyScheduledMembers = true;
+  bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
 
   // id (datetime milliseconds) to uids
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
@@ -26,7 +26,8 @@ class EventContext {
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
 
   // for viewing and editing
-  EventContext.viewing({required EventHead eventHead, required String currentUID, List<String>? data}) {
+  EventContext.viewing(
+      {required final EventHead eventHead, required final String currentUID, final List<String>? data}) {
     _head = eventHead;
     _canSaveTheEditing = false;
     _currentUID = currentUID;
@@ -36,7 +37,7 @@ class EventContext {
     }
   }
 
-  EventContext.adding({required String currentUserID, String? parentID, String? id}) {
+  EventContext.adding({required final String currentUserID, final String? parentID, final String? id}) {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _program = EventProgram();
     _media = EventMedia();
@@ -141,7 +142,7 @@ class EventContext {
   }
 
   String get id => _head.id;
-  bool isUserAdminOfPost(String currentUID) =>
+  bool isUserAdminOfPost(final String currentUID) =>
       _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
@@ -168,8 +169,8 @@ class EventContext {
 
   bool get canSaveTheEditing => _canSaveTheEditing;
 
-  bool isCurrentUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
-  bool isCurrentUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+  bool isUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
+  bool isUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
 
   void _initialiseInternalLists() {
     if (_metadata.authorUID == _currentUID) {
@@ -236,6 +237,7 @@ class EventContext {
       result += '\n${item['type']}';
       result += '\n${item['src']}';
       result += '\n${item['title']}';
+      result += '\n${item['thumbnailSrc']}';
     }
     result += '\n----MEDIA_END----';
 
@@ -376,7 +378,7 @@ class EventContext {
 
   void _initialiseMedia(final List<String> data) {
     // groups of 3
-    const int chunkSize = 3;
+    const int chunkSize = 4;
     final int numberOfChunks = data.length ~/ chunkSize;
 
     final List<List<String>> media = List<List<String>>.generate(numberOfChunks, (index) {
@@ -386,7 +388,12 @@ class EventContext {
     });
 
     for (final mediaItem in media) {
-      _media.addMediaFile({'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
+      if (mediaItem.length == 4) {
+        _media.addMediaFile(
+            {'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2], 'thumbnailSrc': mediaItem[3]});
+      } else {
+        _media.addMediaFile({'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
+      }
     }
   }
 
