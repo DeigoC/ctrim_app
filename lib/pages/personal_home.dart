@@ -1,20 +1,22 @@
-import 'package:ctrim_app/pages/events/post_templates/view_templates_page.dart';
-import 'package:ctrim_app/pages/personal/share_open_beta_page.dart';
-import 'package:ctrim_app/pages/personal/view_my_posts_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../utility/app_context.dart';
+import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
+import 'events/post_templates/view_templates_page.dart';
 import 'personal/attending_sunday_info_page.dart';
 import 'personal/current_user_page.dart';
 import 'personal/login_page.dart';
 import 'personal/notification_management_page.dart';
+import 'personal/share_open_beta_page.dart';
 import 'personal/view_all_users_page.dart';
+import 'personal/view_my_posts_page.dart';
 import 'personal/view_user_roles_page.dart';
 
 class PersonalHome extends StatefulWidget {
@@ -31,137 +33,562 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   @override
   Widget build(BuildContext context) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final size = MediaQuery.of(context).size;
 
-    // ? this may not be needed cause of the Consumer at the page level (home_page)
-    return Consumer<AppContext>(builder: (context, appContext, _) {
-      final List<Widget> children = [
-        ListTile(
-          leading: const Icon(Icons.church),
-          title: const Text('Attending Sunday Service'),
-          onTap: _onAttendingSundayServiceClick,
-        ),
-      ];
+    // Responsive padding
+    final double horizontalPadding = size.width >= 768 ? size.width / 6 : 16.0;
 
-      if (!kIsWeb) {
-        children.add(ListTile(
-            leading: const Icon(Icons.notifications_active),
-            title: const Text('Push Notifications'),
-            onTap: _onNotificationManagerClick));
-      }
-
-      if (!appContext.isCurrentUserGuest) {
-        children.insert(
-            0,
-            Column(
-              children: [
-                const SizedBox(height: 8),
-                ListTile(
-                    title: Text('Hi, ${appContext.currentUser.forname}'),
-                    leading: MyUserAvatar(appContext.currentUser),
-                    onTap: kIsWeb ? null : _onUserProfileClick),
-                const Divider(indent: 16, endIndent: 16)
-              ],
-            ));
-        children.addAll([
-          ListTile(
-            title: const Text('My Schedule'),
-            leading: const Icon(Icons.checklist),
-            trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
-                ? Text('(${appContext.currentUser.roles!.length.toString()})',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red))
-                : null,
-            onTap: _onViewTasksClick,
-          ),
-          ListTile(
-            title: const Text('My Posts'),
-            leading: const Icon(Icons.list_alt),
-            onTap: _onOpenPostsClick,
-          ),
-          ListTile(
-              title: const Text('Belfast Volunteers'),
-              leading: const Icon(Icons.people),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage()))),
-          // ListTile(
-          //   title: const Text('Readme'),
-          //   leading: const Icon(Icons.info_outline),
-          //   onTap: () => launchUrlString(_readmeUrl),
-          // ),
-        ]);
-      }
-
-      if (kIsWeb) {
-        children.addAll([
-          ListTile(
-            title: const Text('Account Deletion Request'),
-            leading: const Icon(Icons.no_accounts_rounded),
-            onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
-          ),
-        ]);
-      }
-
-      if (widget.appContext.currentUser.isAreaAdmin) {
-        children.add(ListTile(
-            title: const Text("Post Templates"), onTap: _openViewTemplatesClick, leading: const Icon(Icons.newspaper)));
-      }
-
-      children.addAll([
-        ListTile(
-          title: const Text('Share CTRIM App'),
-          leading: const Icon(Icons.share),
-          onTap: () => _openShareOpenBetaClick(),
-        ),
-        ListTile(
-          title: const Text('Privacy Policy'),
-          leading: const Icon(Icons.privacy_tip),
-          onTap: () => launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
-        ),
-        ListTile(
-          title: const Text('Terms and Conditions'),
-          leading: const Icon(Icons.contact_page),
-          onTap: () => launchUrlString('https://ctrim-terms-and-conditions.web.app'),
-        ),
-        ListTile(title: const Text('Log out'), leading: const Icon(Icons.logout), onTap: _onLogoutClick)
-      ]);
-
-      return CustomScrollView(
-        slivers: [
-          SliverAppBar(
-              title: const Text('Personal'),
+    return Consumer<AppContext>(
+      builder: (context, appContext, _) {
+        return CustomScrollView(
+          slivers: [
+            // Modern App Bar
+            SliverAppBar.large(
+              title: Text(
+                'Personal',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               centerTitle: false,
-              leading: Image.asset(_ctrimLogo, fit: BoxFit.contain, height: kToolbarHeight)),
-          SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-              sliver: SliverList(delegate: SliverChildListDelegate(children)))
-        ],
-      );
-    });
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    _ctrimLogo,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.church_rounded,
+                        color: colorScheme.primary,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            // Content
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const SizedBox(height: 16),
+
+                  // User Profile Section (if not guest)
+                  if (!appContext.isCurrentUserGuest) ...[
+                    _buildUserProfileCard(appContext, theme, colorScheme),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Main Actions Section
+                  _buildMainActionsSection(appContext, theme, colorScheme),
+
+                  const SizedBox(height: 24),
+
+                  // Admin Section (if admin)
+                  if (appContext.currentUser.isAreaAdmin) ...[
+                    _buildAdminSection(appContext, theme, colorScheme),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // App & Legal Section
+                  _buildAppLegalSection(theme, colorScheme),
+
+                  const SizedBox(height: 24),
+
+                  // Logout Section
+                  _buildLogoutSection(theme, colorScheme),
+
+                  const SizedBox(height: 32),
+                ]),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // * UI Components
+
+  Widget _buildUserProfileCard(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: colorScheme.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: kIsWeb ? null : _onUserProfileClick,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              // User Avatar
+              Hero(
+                tag: 'user_avatar_${appContext.currentUser.id}',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: MyUserAvatar(
+                    appContext.currentUser,
+                    radius: 28,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hi, ${appContext.currentUser.forname}! 👋',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      appContext.currentUser.location,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (appContext.currentUser.isAreaAdmin) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Admin',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              if (!kIsWeb)
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainActionsSection(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'Quick Actions',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Sunday Service
+              _buildModernListTile(
+                icon: Icons.church_rounded,
+                title: 'Attending Sunday Service',
+                subtitle: 'Manage your attendance',
+                onTap: _onAttendingSundayServiceClick,
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.primary,
+                isFirst: true,
+              ),
+
+              // Push Notifications (non-web only)
+              if (!kIsWeb) ...[
+                const Divider(height: 1, indent: 72),
+                _buildModernListTile(
+                  icon: Icons.notifications_active_rounded,
+                  title: 'Push Notifications',
+                  subtitle: 'Manage notification settings',
+                  onTap: _onNotificationManagerClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.secondary,
+                ),
+              ],
+
+              // User-specific actions
+              if (!appContext.isCurrentUserGuest) ...[
+                const Divider(height: 1, indent: 72),
+                _buildModernListTile(
+                  icon: Icons.checklist_rounded,
+                  title: 'My Schedule',
+                  subtitle: 'View your tasks and roles',
+                  trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${appContext.currentUser.roles!.length}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onErrorContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : null,
+                  onTap: _onViewTasksClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.tertiary,
+                ),
+                const Divider(height: 1, indent: 72),
+                _buildModernListTile(
+                  icon: Icons.article_rounded,
+                  title: 'My Posts',
+                  subtitle: 'View your created posts',
+                  onTap: _onOpenPostsClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.primary,
+                ),
+                const Divider(height: 1, indent: 72),
+                _buildModernListTile(
+                  icon: Icons.people_rounded,
+                  title: 'Belfast Volunteers',
+                  subtitle: 'View community members',
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.secondary,
+                  isLast: !kIsWeb,
+                ),
+              ],
+
+              // Web-specific actions
+              if (kIsWeb) ...[
+                const Divider(height: 1, indent: 72),
+                _buildModernListTile(
+                  icon: Icons.no_accounts_rounded,
+                  title: 'Account Deletion Request',
+                  subtitle: 'Request account removal',
+                  onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.error,
+                  isLast: true,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdminSection(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                Icons.admin_panel_settings_rounded,
+                size: 20,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Admin Tools',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: _buildModernListTile(
+            icon: Icons.newspaper_rounded,
+            title: 'Post Templates',
+            subtitle: 'Manage post templates',
+            onTap: _openViewTemplatesClick,
+            theme: theme,
+            colorScheme: colorScheme,
+            iconColor: colorScheme.primary,
+            isFirst: true,
+            isLast: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAppLegalSection(ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'App & Legal',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              _buildModernListTile(
+                icon: Icons.share_rounded,
+                title: 'Share CTRIM App',
+                subtitle: 'Invite others to join',
+                onTap: () => _openShareOpenBetaClick(),
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.tertiary,
+                isFirst: true,
+              ),
+              const Divider(height: 1, indent: 72),
+              _buildModernListTile(
+                icon: Icons.privacy_tip_rounded,
+                title: 'Privacy Policy',
+                subtitle: 'View our privacy policy',
+                onTap: () =>
+                    launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.secondary,
+              ),
+              const Divider(height: 1, indent: 72),
+              _buildModernListTile(
+                icon: Icons.contact_page_rounded,
+                title: 'Terms and Conditions',
+                subtitle: 'View terms and conditions',
+                onTap: () => launchUrlString('https://ctrim-terms-and-conditions.web.app'),
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.primary,
+                isLast: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogoutSection(ThemeData theme, ColorScheme colorScheme) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: colorScheme.errorContainer,
+          width: 1,
+        ),
+      ),
+      child: _buildModernListTile(
+        icon: Icons.logout_rounded,
+        title: 'Sign Out',
+        subtitle: 'Sign out of your account',
+        onTap: _onLogoutClick,
+        theme: theme,
+        colorScheme: colorScheme,
+        iconColor: colorScheme.error,
+        isFirst: true,
+        isLast: true,
+      ),
+    );
+  }
+
+  Widget _buildModernListTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required Color iconColor,
+    Widget? trailing,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(16) : Radius.zero,
+          bottom: isLast ? const Radius.circular(16) : Radius.zero,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Trailing
+              if (trailing != null) ...[
+                const SizedBox(width: 8),
+                trailing,
+              ] else ...[
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // * Logic
-  void _onLogoutClick() {
-    showDialog(
+  void _onLogoutClick() async {
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Sign Out',
+      content: 'Are you sure you want to sign out of your account?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      icon: Icons.logout_rounded,
+      isDestructive: true,
+    );
+
+    if (confirmed) {
+      // Show loading while signing out
+      DialogManager.showProgressDialog(
         context: context,
-        builder: (logcontext) {
-          return AlertDialog(
-            title: const Text('Sign out'),
-            content: const Text('Are you sure you want to continue?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () {
-                    widget.appContext.analytics.logEvent(name: 'logout');
-                    _logout();
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
-                      setState(() {});
-                    });
-                  },
-                  child: const Text('Sign out')),
-            ],
-          );
+        title: 'Signing Out',
+        subtitle: 'Please wait...',
+      );
+
+      widget.appContext.analytics.logEvent(name: 'logout');
+      await _logout();
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Close progress dialog
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
+          setState(() {});
         });
+      }
+    }
   }
 
   Future<void> _logout() async {
