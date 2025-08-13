@@ -4,8 +4,8 @@ description: A new Flutter project.
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-# version: 0.7.1+19 # iOS
-version: 0.7.1+17 # Android
+version: 0.8.0+27 # iOS
+# version: 0.8.0+24 # Android
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -26,7 +26,7 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  flutter_quill: 9.2.14
+  flutter_quill:
   http: 
   intl: 
   package_info_plus: 
@@ -36,7 +36,6 @@ dependencies:
   shared_preferences: 
   url_launcher: 
   video_player:
-  flutter_inappwebview: 6.0.0
   gal: ^2.3.0
   gal_linux: ^0.1.0
 

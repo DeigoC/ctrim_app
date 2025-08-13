@@ -78,7 +78,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     });
   }
 
-  void _showFilterModel(BuildContext context) {
+  void _showFilterModel(final BuildContext context) {
     showModalBottomSheet(
         showDragHandle: true,
         context: context,
@@ -88,7 +88,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
         builder: (_) => SafeArea(
                 child: BulletinSettingSheet(
               sortIndex: _appContext.postSortIndex,
-              descendingRecentDate: () => _onSortPosts(0),
+              relevancySort: () => _onSortPosts(0),
               descendingEventDate: () => _onSortPosts(1),
               ascendingEventDate: () => _onSortPosts(2),
               showBookmarks: () => _onSortPosts(3),
@@ -129,12 +129,12 @@ class BulletinSettingSheet extends StatefulWidget {
   const BulletinSettingSheet(
       {super.key,
       required this.sortIndex,
-      required this.descendingRecentDate,
+      required this.relevancySort,
       required this.descendingEventDate,
       required this.ascendingEventDate,
       required this.showBookmarks});
   final int sortIndex;
-  final void Function() descendingRecentDate, descendingEventDate, ascendingEventDate, showBookmarks;
+  final void Function() relevancySort, descendingEventDate, ascendingEventDate, showBookmarks;
 
   @override
   State<BulletinSettingSheet> createState() => _BulletinSettingSheetState();
@@ -153,67 +153,59 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
     return SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
       const ListTile(
-        title: Text('Location: Belfast'),
-        leading: Icon(Icons.church),
-        // onTap: () {},
+        title: Text('Sort by...'),
+        leading: Icon(Icons.sort),
       ),
-      const Divider(
-        indent: 16,
-        endIndent: 16,
-      ),
+      const Divider(indent: 16, endIndent: 16),
       ListTile(
-          title: const Text('Recent Activity'),
-          leading: const Icon(Icons.edit_document),
+          title: const Text('Relevancy'),
+          leading: const Icon(Icons.star),
+          subtitle: const Text('See the most relevant posts first'),
           selected: _sortIndex == 0,
-          onTap: () => _onSortByRecentDateDescending()),
+          onTap: () => _onSortClick(0)),
       ListTile(
           title: const Text('Upcoming Events'),
           leading: const Icon(Icons.calendar_month),
+          subtitle: const Text('Exciting events happening soon'),
           selected: _sortIndex == 1,
-          onTap: () => _onSortByUpcomingEvents()),
+          onTap: () => _onSortClick(1)),
       ListTile(
           title: const Text('Recent Events'),
+          subtitle: const Text('See what you missed'),
           leading: const Icon(Icons.calendar_month_outlined),
           selected: _sortIndex == 2,
-          onTap: () => _onSortByRecentEvents()),
+          onTap: () => _onSortClick(2)),
       ListTile(
           title: const Text('Bookmarks'),
           leading: const Icon(Icons.bookmarks),
+          subtitle: const Text('Posts you want to keep track of'),
           selected: _sortIndex == 3,
           trailing: IconButton(
             icon: const Icon(Icons.help),
             onPressed: _onBookmarkedHelp,
           ),
-          onTap: () => _onShowBookmarks()),
+          onTap: () => _onSortClick(3)),
     ]));
   }
 
-  void _onSortByRecentDateDescending() {
+  void _onSortClick(final int sortIndex) {
+    Navigator.pop(context); // close the modal
     setState(() {
-      widget.descendingRecentDate();
-      _sortIndex = 0;
-    });
-  }
-
-  void _onSortByUpcomingEvents() {
-    setState(() {
-      widget.descendingEventDate();
-      _sortIndex = 1;
-    });
-  }
-
-  void _onSortByRecentEvents() {
-    setState(() {
-      widget.ascendingEventDate();
-      _sortIndex = 2;
-    });
-  }
-
-  void _onShowBookmarks() {
-    // ? Do we want to remove bookmarks of posts that aren't being fetched anymore?
-    setState(() {
-      widget.showBookmarks();
-      _sortIndex = 3;
+      _sortIndex = sortIndex;
+      switch (sortIndex) {
+        case 0:
+          widget.relevancySort();
+          break;
+        case 1:
+          widget.descendingEventDate();
+          break;
+        case 2:
+          widget.ascendingEventDate();
+          break;
+        case 3:
+          widget.showBookmarks();
+          break;
+      }
     });
   }
 

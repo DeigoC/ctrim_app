@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
-  Widget _buildSelectedBody(AppContext appContext) {
+  Widget _buildSelectedBody(final AppContext appContext) {
     if (_selectedIndex == 0) {
       return ViewEventsHome(
           scrollController: _postsScrollController,

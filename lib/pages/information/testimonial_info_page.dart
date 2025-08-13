@@ -54,9 +54,7 @@ class TestimonialInfoPage extends StatelessWidget {
       const SizedBox(height: 8),
       const Divider(),
       const SizedBox(height: 8),
-      Flexible(
-          child: quill.QuillEditor.basic(
-              configurations: quill.QuillEditorConfigurations(controller: controller, readOnly: true))),
+      Flexible(child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: controller))),
       const SizedBox(height: 32)
     ];
 
