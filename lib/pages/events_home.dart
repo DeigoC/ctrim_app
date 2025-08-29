@@ -506,7 +506,7 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
       {
         'index': 0,
         'title': 'Relevancy',
-        'subtitle': 'See the most relevant posts first',
+        'subtitle': 'Recently edited and new posts first',
         'icon': Icons.star_rounded,
         'color': Colors.amber,
       },

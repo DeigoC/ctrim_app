@@ -69,26 +69,15 @@ class AppContext extends ChangeNotifier {
   }
 
   void sortPostsByIndex() {
-    // 0 Relevant activity
+    // 0 Relevant activity - Sort by recently edited posts
     // 1 Event date descending
     // 2 Event date ascending
     // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
       case 0:
-        // Get upcoming events including those with dates set for today
-        final List<EventHead> upcomingEvents = _eventHeads
-            .where((e) => e.eventDate != null && (e.eventDate!.isAfter(DateTime.now()) || isAtSameDayAs(e.eventDate!)))
-            .toList();
-        upcomingEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-
-        // Get recent events (past or no date)
-        final List<EventHead> recentEvents =
-            _eventHeads.where((e) => e.eventDate == null || e.eventDate!.isBefore(DateTime.now())).toList();
-
-        _eventHeads.clear();
-        _eventHeads.addAll(upcomingEvents.take(3));
-        _eventHeads.addAll(recentEvents);
-        _eventHeads.addAll(upcomingEvents.skip(3));
+        // Sort all posts by recentDate to show most recently edited posts first
+        // This will highlight newly added posts and recently updated content
+        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
 
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
         break;
