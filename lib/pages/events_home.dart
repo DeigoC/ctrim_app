@@ -174,11 +174,15 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     ),
                   ),
                 ),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(4),
-                  child: _buildFilterIndicator(appContext, colorScheme),
-                ),
               ),
+              // Filter Indicator as separate sliver
+              if (appContext.postSortIndex != 0)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: _buildFilterIndicator(appContext, colorScheme),
+                  ),
+                ),
               SliverPadding(
                 padding: EdgeInsets.symmetric(
                   horizontal: webHorizontalPadding + 8,
@@ -229,7 +233,6 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: (info['color'] as Color).withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
