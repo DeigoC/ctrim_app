@@ -69,15 +69,46 @@ class AppContext extends ChangeNotifier {
   }
 
   void sortPostsByIndex() {
-    // 0 Relevant activity - Sort by recently edited posts
+    // 0 Relevant activity - Mixed smart sorting
     // 1 Event date descending
     // 2 Event date ascending
     // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
       case 0:
-        // Sort all posts by recentDate to show most recently edited posts first
-        // This will highlight newly added posts and recently updated content
-        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        // Smart relevancy sorting: mix recent events, upcoming events, and recently edited posts
+        final DateTime now = DateTime.now();
+        final DateTime oneWeekAgo = now.subtract(const Duration(days: 7));
+
+        // Work with a copy of the original list to avoid modification issues
+        final List<EventHead> originalHeads = List.from(_eventHeads);
+
+        // 1. Events that happened within the last week (sorted by event date, newest first)
+        final List<EventHead> recentEvents = originalHeads
+            .where((e) => e.eventDate != null && e.eventDate!.isAfter(oneWeekAgo) && e.eventDate!.isBefore(now))
+            .toList();
+        recentEvents.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
+
+        // 2. Upcoming events (next 3, sorted by event date)
+        final List<EventHead> upcomingEvents = originalHeads
+            .where((e) => e.eventDate != null && (e.eventDate!.isAfter(now) || isAtSameDayAs(e.eventDate!)))
+            .toList();
+        upcomingEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+        final List<EventHead> nextThreeUpcoming = upcomingEvents.take(3).toList();
+
+        // 3. Recently edited posts (excluding those already in the above categories)
+        final Set<String> alreadyIncludedIds = {
+          ...recentEvents.map((e) => e.id),
+          ...nextThreeUpcoming.map((e) => e.id),
+        };
+        final List<EventHead> recentlyEditedPosts =
+            originalHeads.where((e) => !alreadyIncludedIds.contains(e.id)).toList();
+        recentlyEditedPosts.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+
+        // Combine all lists in priority order
+        _eventHeads.clear();
+        _eventHeads.addAll(recentEvents);
+        _eventHeads.addAll(nextThreeUpcoming);
+        _eventHeads.addAll(recentlyEditedPosts);
 
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
         break;

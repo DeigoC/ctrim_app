@@ -70,7 +70,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
           MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
 
       return RefreshIndicator(
-        edgeOffset: (kToolbarHeight * 2) - 8,
+        edgeOffset: kToolbarHeight + 20,
         backgroundColor: colorScheme.surface,
         color: colorScheme.primary,
         onRefresh: () => _onRefresh().then((value) {
@@ -99,7 +99,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             controller: widget.scrollController,
             key: const PageStorageKey<String>('events_page'),
             slivers: [
-              SliverAppBar.large(
+              SliverAppBar(
                 title: Row(
                   children: [
                     Icon(
@@ -120,6 +120,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                 centerTitle: false,
                 floating: true,
                 snap: true,
+                expandedHeight: 100,
                 backgroundColor: colorScheme.surface,
                 surfaceTintColor: colorScheme.surfaceTint,
                 actions: [
@@ -509,7 +510,7 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
       {
         'index': 0,
         'title': 'Relevancy',
-        'subtitle': 'Recently edited and new posts first',
+        'subtitle': 'Recent events, upcoming highlights, and fresh content',
         'icon': Icons.star_rounded,
         'color': Colors.amber,
       },

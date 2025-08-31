@@ -18,6 +18,11 @@ class SelectPostTemplatePage extends StatefulWidget {
 
 class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   final LocalDataManager _localDataManager = LocalDataManager();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+  List<PostTemplate> _allTemplates = [];
+  List<PostTemplate> _filteredTemplates = [];
 
   @override
   void initState() {
@@ -25,13 +30,135 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     super.initState();
   }
 
-  final TextStyle _cardTitleStyle = const TextStyle(fontSize: 21), _cardContentStyle = const TextStyle(fontSize: 14);
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  final TextStyle _cardTitleStyle = const TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.15,
+  );
+
+  final TextStyle _cardContentStyle = const TextStyle(
+    fontSize: 14,
+    height: 1.4,
+  );
+
+  final TextStyle _cardMetaStyle = const TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+  );
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose Template')),
-      body: _buildFBBody(),
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Choose Template'),
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
+      body: Column(
+        children: [
+          _buildSearchAndFilters(colorScheme),
+          Expanded(child: _buildFBBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilters(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outlineVariant,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Search Bar
+          TextField(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Search templates...',
+              prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant),
+                      onPressed: _clearSearch,
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Category Filter
+          if (_allTemplates.isNotEmpty) _buildCategoryFilter(colorScheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilter(ColorScheme colorScheme) {
+    final categories = _getAvailableCategories();
+
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = _selectedCategory == category;
+
+          return FilterChip(
+            label: Text(category),
+            selected: isSelected,
+            onSelected: (selected) => _onCategoryChanged(category),
+            backgroundColor: colorScheme.surfaceContainerHighest,
+            selectedColor: colorScheme.primaryContainer,
+            checkmarkColor: colorScheme.onPrimaryContainer,
+            labelStyle: TextStyle(
+              color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
+            side: BorderSide(
+              color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -39,18 +166,125 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     return FutureBuilder(
         future: _getTemplates(),
         builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
+          if (snap.connectionState == ConnectionState.waiting) {
+            return _buildLoadingState();
+          }
+
+          if (snap.hasError) {
+            return _buildErrorState(snap.error.toString());
+          }
 
           if (snap.hasData) {
             final List<PostTemplate> data = snap.data!;
             data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
             data.add(_createBlankSlate());
-            result = _buildBodyWithData(data);
-          } else if (snap.hasError) {
-            result = Center(child: Text('Something went wrong:\n${snap.error}'));
+
+            _allTemplates = data;
+            _filteredTemplates = _getFilteredTemplates(data);
+
+            if (_filteredTemplates.isEmpty) {
+              return _buildEmptyState();
+            }
+
+            return _buildBodyWithData(_filteredTemplates);
           }
-          return result;
+
+          return _buildLoadingState();
         });
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text(
+            'Loading templates...',
+            style: TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => setState(() {}),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No templates found',
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _searchQuery.isNotEmpty ? 'Try adjusting your search or filters' : 'No templates available at the moment',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            if (_searchQuery.isNotEmpty || _selectedCategory != 'All') ...[
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: _clearFilters,
+                icon: const Icon(Icons.clear_all),
+                label: const Text('Clear Filters'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   PostTemplate _createBlankSlate() {
@@ -78,29 +312,286 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
   Widget _buildBodyWithData(final List<PostTemplate> templates) {
     return ListView.separated(
-        padding: const EdgeInsets.all(8),
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        padding: const EdgeInsets.all(16),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemCount: templates.length,
         itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
   }
 
   Widget _buildTemplateTile(final PostTemplate template) {
-    return InkWell(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isBlankTemplate = template.id == 'blank';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isBlankTemplate ? colorScheme.primary.withOpacity(0.5) : colorScheme.outlineVariant,
+          width: isBlankTemplate ? 2 : 1,
+        ),
+      ),
+      color: isBlankTemplate ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surfaceContainerLow,
+      child: InkWell(
         onTap: () => _onAddPostTap(template),
-        child: Card(
-            child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(template.title, style: _cardTitleStyle),
-                      const Divider(),
-                      Text(template.description, style: _cardContentStyle)
-                    ]))));
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Template Icon
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isBlankTemplate ? colorScheme.primary.withOpacity(0.2) : colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isBlankTemplate ? Icons.edit_note : Icons.description,
+                      color: isBlankTemplate ? colorScheme.primary : colorScheme.onSecondaryContainer,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Title and Actions
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                template.title,
+                                style: _cardTitleStyle.copyWith(
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            if (isBlankTemplate)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'BLANK',
+                                  style: TextStyle(
+                                    color: colorScheme.onPrimary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          template.description,
+                          style: _cardContentStyle.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              if (!isBlankTemplate) ...[
+                const SizedBox(height: 16),
+                // Template Details
+                _buildTemplateDetails(template, colorScheme),
+              ],
+
+              const SizedBox(height: 16),
+              // Action Row
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _onAddPostTap(template),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: isBlankTemplate ? colorScheme.primary : colorScheme.secondaryContainer,
+                        foregroundColor: isBlankTemplate ? colorScheme.onPrimary : colorScheme.onSecondaryContainer,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: Icon(
+                        isBlankTemplate ? Icons.create : Icons.add_circle_outline,
+                        size: 18,
+                      ),
+                      label: Text(
+                        isBlankTemplate ? 'Start from Blank' : 'Use Template',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemplateDetails(PostTemplate template, ColorScheme colorScheme) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      children: [
+        // Location
+        if (template.location.isNotEmpty)
+          _buildDetailChip(
+            Icons.location_on_outlined,
+            template.location,
+            colorScheme,
+          ),
+
+        // Time info
+        if (template.startTime != null)
+          _buildDetailChip(
+            template.allDay ? Icons.event : Icons.access_time,
+            template.allDay ? 'All Day' : DateFormat.jm().format(template.startTime!),
+            colorScheme,
+          ),
+
+        // Online indicator
+        if (template.online)
+          _buildDetailChip(
+            Icons.videocam,
+            'Online',
+            colorScheme,
+          ),
+
+        // Topics (first 2)
+        ...template.topics.take(2).map(
+              (topic) => _buildDetailChip(
+                Icons.tag,
+                topic,
+                colorScheme,
+              ),
+            ),
+
+        // More topics indicator
+        if (template.topics.length > 2)
+          _buildDetailChip(
+            Icons.more_horiz,
+            '+${template.topics.length - 2} more',
+            colorScheme,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDetailChip(IconData icon, String label, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: _cardMetaStyle.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // * Logic
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+    });
+  }
+
+  void _onCategoryChanged(String category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+  }
+
+  void _clearFilters() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _selectedCategory = 'All';
+    });
+  }
+
+  List<String> _getAvailableCategories() {
+    final Set<String> categories = {'All'};
+
+    for (final template in _allTemplates) {
+      categories.addAll(template.topics);
+    }
+
+    return categories.toList()..sort();
+  }
+
+  List<PostTemplate> _getFilteredTemplates(List<PostTemplate> templates) {
+    return templates.where((template) {
+      // Search filter
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final matchesSearch = template.title.toLowerCase().contains(query) ||
+            template.description.toLowerCase().contains(query) ||
+            template.location.toLowerCase().contains(query) ||
+            template.topics.any((topic) => topic.toLowerCase().contains(query));
+
+        if (!matchesSearch) return false;
+      }
+
+      // Category filter
+      if (_selectedCategory != 'All') {
+        if (!template.topics.contains(_selectedCategory)) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
   Future<DateTime?> _selectDate(final BuildContext context) async {
     return await showDatePicker(
         context: context,
