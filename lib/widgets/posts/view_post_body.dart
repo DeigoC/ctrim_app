@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:share_plus/share_plus.dart';
 import '../../utility/event_context.dart';
 
 class ViewPostBody extends StatelessWidget {
@@ -24,15 +25,7 @@ class ViewPostBody extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            FilledButton.tonalIcon(
-              onPressed: () => _copyPostContent(controller, context),
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                textStyle: const TextStyle(fontSize: 12),
-              ),
-            ),
+            _buildShareButton(context, controller.document.toPlainText()),
           ],
         ),
       ),
@@ -48,20 +41,24 @@ class ViewPostBody extends StatelessWidget {
     return SafeArea(top: false, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
-  void _copyPostContent(quill.QuillController controller, BuildContext context) {
-    // Extract plain text from the QuillController
-    final String plainText = controller.document.toPlainText();
-
-    // Copy to clipboard
-    Clipboard.setData(ClipboardData(text: plainText));
-
-    // Show confirmation snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Post content copied to clipboard'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
+  Widget _buildShareButton(BuildContext context, String plainText) {
+    return FilledButton.tonalIcon(
+      onPressed: () => _onShare(context, plainText),
+      icon: const Icon(Icons.save_alt, size: 16),
+      label: const Text('Save Content'),
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(fontSize: 12),
       ),
     );
+  }
+
+  void _onShare(BuildContext context, String plainText) async {
+    final box = context.findRenderObject() as RenderBox?;
+
+    await SharePlus.instance.share(ShareParams(
+      text: plainText,
+      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+    ));
   }
 }
