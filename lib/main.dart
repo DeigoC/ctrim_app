@@ -40,7 +40,7 @@ void main() async {
   if (kIsWeb) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   } else {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
 
   // * Make sure we connect to the emulator on debug
