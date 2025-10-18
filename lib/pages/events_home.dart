@@ -510,7 +510,7 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
       {
         'index': 0,
         'title': 'Relevancy',
-        'subtitle': 'Recent events, upcoming highlights, and fresh content',
+        'subtitle': 'Today\'s events, recent posts, and what\'s coming up',
         'icon': Icons.star_rounded,
         'color': Colors.amber,
       },

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -179,25 +178,35 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final List<Widget> metaChildren = [PostMetadataSection(eventContext: _eventContext, update: _updateWholePostBody)];
 
     if (!_eventContext.isUserAuthor(_currentUID) && !_eventContext.isUserContributor(_currentUID)) {
       metaChildren.insert(0, _buildBookmarkButton());
     }
-    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
 
     return [
       SliverAppBar(
           expandedHeight: _eventContext.head.getKeyGraphic() != null ? MediaQuery.of(context).size.height * 0.33 : null,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           actions: _buildEditButton()),
       SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         sliver: SliverList(
             delegate: SliverChildListDelegate([
-          Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
+          Padding(padding: const EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 8.0), child: _buildTitle()),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
-          TabBar(labelColor: onDark ? Colors.white : Colors.black, controller: _tabController, tabs: _appBarTabs)
+          const SizedBox(height: 8),
+          TabBar(
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              indicatorColor: colorScheme.primary,
+              indicatorWeight: 3,
+              controller: _tabController,
+              tabs: _appBarTabs)
         ])),
       )
     ];
@@ -213,9 +222,17 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildTitle() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return InkWell(
         onTap: _eventContext.isUserAuthor(_currentUID) ? _onTitleTap : null,
-        child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28), textAlign: TextAlign.left));
+        child: Text(widget.eventHead.title,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.left));
   }
 
   Widget? _buildAppBarBackground() {
@@ -250,12 +267,16 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   List<Widget>? _buildEditButton() {
     if (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID)) {
+      final colorScheme = Theme.of(context).colorScheme;
       return [
-        ElevatedButton.icon(
+        FilledButton.tonalIcon(
             onPressed: () => _showSettings(),
-            icon: const Icon(Icons.more_horiz, color: Colors.white),
-            label: const Text('Edit', style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Edit'),
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.primaryContainer.withOpacity(0.8),
+              foregroundColor: colorScheme.onPrimaryContainer,
+            )),
         const SizedBox(width: 8)
       ];
     }

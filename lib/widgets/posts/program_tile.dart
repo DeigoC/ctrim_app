@@ -46,6 +46,8 @@ class ProgramTile extends StatelessWidget {
   }
 
   Widget _buildExtendedView(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final Duration difference = programEntry['end'].difference(programEntry['start']);
     String diffStr;
 
@@ -68,13 +70,32 @@ class ProgramTile extends StatelessWidget {
         : '${_timeFormat.format(programEntry['start'])} - ${_timeFormat.format(programEntry['end'])} | $diffStr | Not for guest eyes 👀';
 
     final List<Widget> children = [
+      const SizedBox(height: 12),
+      Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(programEntry['title'],
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ))),
       const SizedBox(height: 8),
       Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(programEntry['title'], style: const TextStyle(fontSize: 21))),
-      const SizedBox(height: 4),
-      Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Text(timeString, textAlign: TextAlign.start))
+          child: Row(
+            children: [
+              Icon(Icons.schedule, size: 16, color: colorScheme.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  timeString,
+                  textAlign: TextAlign.start,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ))
     ];
 
     debugPrint('Program entry is: $programEntry');
@@ -99,19 +120,52 @@ class ProgramTile extends StatelessWidget {
 
     if (canEdit) {
       children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Wrap(
-            alignment: WrapAlignment.spaceEvenly,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              TextButton(onPressed: () => onTap(programEntry), child: const Text('Show Less')),
-              TextButton(onPressed: () => onEditClick(), child: const Text('Edit Task'))
+              FilledButton.tonal(
+                onPressed: () => onTap(programEntry),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.expand_less, size: 18),
+                    SizedBox(width: 4),
+                    Text('Show Less'),
+                  ],
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: () => onEditClick(),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.edit, size: 18),
+                    SizedBox(width: 4),
+                    Text('Edit Task'),
+                  ],
+                ),
+              ),
             ],
           )));
     } else {
       children.add(
         Align(
             alignment: Alignment.center,
-            child: TextButton(onPressed: () => onTap(programEntry), child: const Text('Show less'))),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: FilledButton.tonal(
+                onPressed: () => onTap(programEntry),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.expand_less, size: 18),
+                    SizedBox(width: 4),
+                    Text('Show Less'),
+                  ],
+                ),
+              ),
+            )),
       );
     }
 
@@ -119,39 +173,91 @@ class ProgramTile extends StatelessWidget {
   }
 
   Widget _buildTile(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (kIsWeb) {
       return InkWell(
         onTap: () => onTap(programEntry),
-        child: Row(
-          children: [
-            Flexible(
-              flex: 2,
-              child: ListTile(
-                  title: Text(programEntry['title'], maxLines: 2, overflow: TextOverflow.ellipsis),
-                  subtitle: (programEntry['detail'] as String).isNotEmpty
-                      ? Text(programEntry['detail'], maxLines: 1, overflow: TextOverflow.ellipsis)
-                      : null,
-                  leading: Text(_getTimeLeadingText())),
-            ),
-            Flexible(
-              flex: 1,
-              child: MyAvatarStack(
-                users: (programEntry['uids'] as List<String>)
-                    .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
-                    .toList(),
-                appDir: Provider.of<AppContext>(context, listen: false).appDir,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            children: [
+              Flexible(
+                flex: 2,
+                child: ListTile(
+                    title: Text(
+                      programEntry['title'],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: (programEntry['detail'] as String).isNotEmpty
+                        ? Text(
+                            programEntry['detail'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                          )
+                        : null,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _getTimeLeadingText(),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )),
               ),
-            ),
-          ],
+              Flexible(
+                flex: 1,
+                child: MyAvatarStack(
+                  users: (programEntry['uids'] as List<String>)
+                      .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
+                      .toList(),
+                  appDir: Provider.of<AppContext>(context, listen: false).appDir,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
     return ListTile(
-      title: Text(programEntry['title'], maxLines: 2, overflow: TextOverflow.ellipsis),
+      title: Text(
+        programEntry['title'],
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
       subtitle: (programEntry['detail'] as String).isNotEmpty
-          ? Text(programEntry['detail'], maxLines: 1, overflow: TextOverflow.ellipsis)
+          ? Text(
+              programEntry['detail'],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            )
           : null,
-      leading: Text(_getTimeLeadingText()),
+      leading: Container(
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          _getTimeLeadingText(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: colorScheme.onPrimaryContainer,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       onTap: () => onTap(programEntry),
       trailing: MyAvatarStack(
         users: (programEntry['uids'] as List<String>)

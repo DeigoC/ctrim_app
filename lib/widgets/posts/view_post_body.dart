@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:share_plus/share_plus.dart';
 import '../../utility/event_context.dart';
@@ -18,38 +17,81 @@ class ViewPostBody extends StatelessWidget {
   }
 
   Widget _buildBodyWithData(final quill.QuillController controller, final BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final List<Widget> children = [
-      // Copy button
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            _buildShareButton(context, controller.document.toPlainText()),
-          ],
-        ),
-      ),
       Expanded(
           child: SingleChildScrollView(
-              child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16, top: 0),
-                  child: quill.QuillEditor.basic(
-                    configurations: quill.QuillEditorConfigurations(controller: controller),
-                  )))),
+              child: Card(
+        elevation: 1,
+        margin: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header with share button
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant.withOpacity(0.3),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.article_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Post Content',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildShareButton(context, controller.document.toPlainText()),
+                ],
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: quill.QuillEditor.basic(
+                configurations: quill.QuillEditorConfigurations(
+                  controller: controller,
+                  sharedConfigurations: quill.QuillSharedConfigurations(
+                    locale: const Locale('en'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ))),
     ];
 
     return SafeArea(top: false, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
   Widget _buildShareButton(BuildContext context, String plainText) {
-    return FilledButton.tonalIcon(
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return IconButton.filledTonal(
       onPressed: () => _onShare(context, plainText),
-      icon: const Icon(Icons.save_alt, size: 16),
-      label: const Text('Save Content'),
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(fontSize: 12),
+      icon: const Icon(Icons.share, size: 18),
+      tooltip: 'Save content',
+      style: IconButton.styleFrom(
+        backgroundColor: colorScheme.surfaceVariant.withOpacity(0.5),
+        foregroundColor: colorScheme.onSurfaceVariant,
+        padding: const EdgeInsets.all(8),
       ),
+      iconSize: 18,
     );
   }
 
