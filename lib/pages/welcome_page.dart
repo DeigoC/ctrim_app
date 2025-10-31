@@ -171,88 +171,103 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Widget _buildMainContent(ThemeData theme, ColorScheme colorScheme, double horizontalPadding) {
-    return Column(
-      children: [
-        // Hero Header Section
-        _buildHeroHeader(theme, colorScheme),
+    return NestedScrollView(
+      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+        return [
+          // Hero Header Section - Collapsible
+          SliverToBoxAdapter(
+            child: _buildHeroHeader(theme, colorScheme),
+          ),
 
-        // Tab Bar
-        AnimatedBuilder(
-          animation: _contentFadeAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _contentFadeAnimation.value,
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: TabBar(
+          // Tab Bar - Sticky
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabBarDelegate(
+              child: AnimatedBuilder(
+                animation: _contentFadeAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _contentFadeAnimation.value,
+                    child: Container(
+                      color: colorScheme.surface,
+                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceVariant.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TabBar(
+                          controller: _tabController,
+                          indicator: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          labelColor: colorScheme.onPrimary,
+                          unselectedLabelColor: colorScheme.onSurfaceVariant,
+                          labelStyle: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          unselectedLabelStyle: theme.textTheme.titleMedium,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          labelPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          tabs: const [
+                            Tab(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                child: Text('Sign Up'),
+                              ),
+                            ),
+                            Tab(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                child: Text('Sign In'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ];
+      },
+      body: AnimatedBuilder(
+        animation: _contentSlideAnimation,
+        builder: (context, child) {
+          return SlideTransition(
+            position: _contentSlideAnimation,
+            child: FadeTransition(
+              opacity: _contentFadeAnimation,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: TabBarView(
                   controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  labelColor: colorScheme.onPrimary,
-                  unselectedLabelColor: colorScheme.onSurfaceVariant,
-                  labelStyle: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelStyle: theme.textTheme.titleMedium,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  tabs: const [
-                    Tab(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Text('Sign Up'),
-                      ),
-                    ),
-                    Tab(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Text('Sign In'),
-                      ),
-                    ),
+                  children: [
+                    _buildRegistrationTab(theme, colorScheme),
+                    _buildLoginTab(theme, colorScheme),
                   ],
                 ),
               ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 24),
-
-        // Tab Content
-        Expanded(
-          child: AnimatedBuilder(
-            animation: _contentSlideAnimation,
-            builder: (context, child) {
-              return SlideTransition(
-                position: _contentSlideAnimation,
-                child: FadeTransition(
-                  opacity: _contentFadeAnimation,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildRegistrationTab(theme, colorScheme),
-                        _buildLoginTab(theme, colorScheme),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildHeroHeader(ThemeData theme, ColorScheme colorScheme) {
+    // Get text scale factor to adjust sizes for accessibility
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final isLargeText = textScaleFactor > 1.2;
+
+    // Adjust sizes based on text scaling for better accessibility
+    final logoSize = isLargeText ? 80.0 : 120.0;
+    final logoPadding = isLargeText ? 16.0 : 32.0;
+    final spacing = isLargeText ? 12.0 : 24.0;
+
     return AnimatedBuilder(
       animation: _heroFadeAnimation,
       builder: (context, child) {
@@ -261,16 +276,16 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
           child: Opacity(
             opacity: _heroFadeAnimation.value,
             child: Container(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(logoPadding),
               child: Column(
                 children: [
                   // App Logo
                   Container(
-                    width: 120,
-                    height: 120,
+                    width: logoSize,
+                    height: logoSize,
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: BorderRadius.circular(isLargeText ? 24 : 32),
                       boxShadow: [
                         BoxShadow(
                           color: colorScheme.primary.withOpacity(0.3),
@@ -280,14 +295,14 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: BorderRadius.circular(isLargeText ? 24 : 32),
                       child: Image.asset(
                         'assets/images/ctrim_logo.png',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(
                             Icons.church_rounded,
-                            size: 64,
+                            size: logoSize * 0.5,
                             color: colorScheme.onPrimaryContainer,
                           );
                         },
@@ -295,7 +310,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: spacing),
 
                   // Welcome Text
                   Text(
@@ -304,9 +319,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,
                     ),
+                    textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 8),
+                  SizedBox(height: spacing / 3),
 
                   Text(
                     'Connect, grow, and thrive in faith',
@@ -1298,5 +1314,28 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       debugPrint('Creds to save are: ${_tecLoginEmail.text.trim()} with password ${_tecLoginPassword.text}');
       _appContext.sharedPref.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
     }
+  }
+}
+
+// Sticky Tab Bar Delegate for persistent header
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _StickyTabBarDelegate({required this.child});
+
+  @override
+  double get minExtent => 72.0;
+
+  @override
+  double get maxExtent => 72.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return false;
   }
 }

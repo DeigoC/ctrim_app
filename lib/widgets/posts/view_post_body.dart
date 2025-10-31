@@ -55,7 +55,7 @@ class ViewPostBody extends StatelessWidget {
                       ),
                     ],
                   ),
-                  _buildShareButton(context, controller.document.toPlainText()),
+                  _buildShareButton(context, eventContext.head.title, controller.document.toPlainText()),
                 ],
               ),
             ),
@@ -79,11 +79,11 @@ class ViewPostBody extends StatelessWidget {
     return SafeArea(top: false, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
   }
 
-  Widget _buildShareButton(BuildContext context, String plainText) {
+  Widget _buildShareButton(BuildContext context, String title, String plainText) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return IconButton.filledTonal(
-      onPressed: () => _onShare(context, plainText),
+      onPressed: () => _onShare(context, title, plainText),
       icon: const Icon(Icons.share, size: 18),
       tooltip: 'Save content',
       style: IconButton.styleFrom(
@@ -95,11 +95,14 @@ class ViewPostBody extends StatelessWidget {
     );
   }
 
-  void _onShare(BuildContext context, String plainText) async {
+  void _onShare(BuildContext context, String title, String plainText) async {
     final box = context.findRenderObject() as RenderBox?;
 
+    // Prepend the title to the body text
+    final String shareContent = title.isNotEmpty ? '$title\n\n$plainText' : plainText;
+
     await SharePlus.instance.share(ShareParams(
-      text: plainText,
+      text: shareContent,
       sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
     ));
   }
