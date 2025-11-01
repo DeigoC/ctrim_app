@@ -1,12 +1,13 @@
 import 'dart:collection';
 
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/models/event/event_metadata.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/app_shared_preferences.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/event/event_head.dart';
+import '../models/event/event_metadata.dart';
+import '../models/user.dart';
+import 'app_shared_preferences.dart';
 
 // handles some highlevel behaviours (like notifications) and persistant data for network optimisation
 class AppContext extends ChangeNotifier {
