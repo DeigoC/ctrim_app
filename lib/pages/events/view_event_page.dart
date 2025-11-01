@@ -595,29 +595,69 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final String currentUID = appContext.currentUser.id;
     final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
 
+    int successCount = 0;
+    int errorCount = 0;
+
     for (final roleEntry in _eventContext.program.roles) {
-      final DateTime startingTime = roleEntry['start'];
-      final String body =
-          "'${roleEntry['title']!}' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
-      final List<String> tokens = [];
-      final List<String> uids = roleEntry['uids'];
+      try {
+        final DateTime startingTime = roleEntry['start'];
+        final String body =
+            "'${roleEntry['title']!}' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
+        final List<String> tokens = [];
+        final List<String> uids = roleEntry['uids'];
 
-      for (final thisUID in uids) {
-        if (thisUID != currentUID) {
-          if (!appContext.haveTokensForUserID(thisUID)) {
-            final List<String> tokens =
-                await everyoneDBManager.fetchTokensFromAuthID(appContext.getAuthIDFromUID(thisUID));
-            appContext.addTokensToUserID(thisUID, tokens);
+        for (final thisUID in uids) {
+          if (thisUID != currentUID) {
+            try {
+              if (!appContext.haveTokensForUserID(thisUID)) {
+                final String? authID = appContext.getAuthIDFromUID(thisUID);
+                if (authID != null && authID.isNotEmpty) {
+                  final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
+                  appContext.addTokensToUserID(thisUID, fetchedTokens);
+                  tokens.addAll(fetchedTokens);
+                } else {
+                  debugPrint('Warning: Could not get authID for user $thisUID, skipping...');
+                }
+              } else {
+                tokens.addAll(appContext.getTokensFromUserID(thisUID));
+              }
+            } catch (e) {
+              debugPrint('Error fetching tokens for user $thisUID: $e');
+              errorCount++;
+              // Continue to next user despite error
+              continue;
+            }
           }
-
-          tokens.addAll(appContext.getTokensFromUserID(thisUID));
         }
-      }
 
-      if (tokens.isNotEmpty) {
-        cloudFunctionManager
-            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
+        if (tokens.isNotEmpty) {
+          try {
+            await cloudFunctionManager.sendMessageToSelectedTokens(
+                tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
+            successCount++;
+          } catch (e) {
+            debugPrint('Error sending notification for role "${roleEntry['title']}": $e');
+            errorCount++;
+          }
+        }
+      } catch (e) {
+        debugPrint('Error processing role entry: $e');
+        errorCount++;
+        // Continue to next role despite error
+        continue;
       }
+    }
+
+    // Show summary of results
+    if (mounted) {
+      final String message = errorCount > 0
+          ? 'Notifications sent: $successCount successful${errorCount > 0 ? ', $errorCount failed' : ''}'
+          : 'Successfully sent $successCount notification${successCount != 1 ? 's' : ''}';
+
+      DialogManager.showSnackBar(
+        context: context,
+        message: message,
+      );
     }
   }
 }
