@@ -742,6 +742,16 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     eventContext.head.setEventDate(postTemplate.startTime);
     eventContext.head.setLocation(postTemplate.location);
     eventContext.head.setTitle(postTemplate.title);
+    
+    // subtitle - auto-select random if available
+    if (postTemplate.subtitles.isNotEmpty) {
+      final randomSubtitle = postTemplate.getRandomSubtitle();
+      if (randomSubtitle != null) {
+        eventContext.head.setSubtitle(randomSubtitle);
+      }
+      // Store subtitles list for later use in AddEventPage
+      eventContext.setTemplateSubtitles(List<String>.from(postTemplate.subtitles));
+    }
     for (final headMediaItem in postTemplate.headMedia) {
       eventContext.head.addMediaItem(
           type: headMediaItem['type']!,
