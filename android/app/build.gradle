@@ -35,7 +35,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace "com.ctrim.ctrim_app"
     // compileSdkVersion flutter.compileSdkVersion
-    compileSdkVersion 34
+    compileSdkVersion 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -60,8 +60,8 @@ android {
         applicationId "com.ctrim.ctrim_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion localProperties.getProperty('flutter.minSdkVersion').toInteger()
-        targetSdkVersion localProperties.getProperty('flutter.targetSdkVersion').toInteger()
+        minSdkVersion 24
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
