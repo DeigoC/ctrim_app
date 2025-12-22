@@ -1,13 +1,8 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
-
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
-
-pod 'Firebase/Core'
-pod 'GoogleAnalytics'
-pod 'GoogleUtilities', :modular_headers => true
 
 project 'Runner', {
   'Debug' => :debug,
@@ -33,11 +28,22 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.2.0'
+  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '12.6.0'
   use_frameworks!
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  # Force modular headers for Firebase
+  pod 'Firebase/Core', :modular_headers => true
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+end
+
+target 'ImageNotification' do
+  use_frameworks!
+  use_modular_headers!
+  pod 'Firebase/Messaging', :modular_headers => true
 end
 
 post_install do |installer|
@@ -45,29 +51,25 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
 
     target.build_configurations.each do |config|
+      # Set deployment target
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      
+      # Audio session configuration
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
         'AUDIO_SESSION_MICROPHONE=0'
       ]
+      
+      # Enable modular headers
+      config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
 
-    # I think the following below should be out of the indentation for the audio thing above
+      # Toolchain fix
       xcconfig_path = config.base_configuration_reference.real_path
       xcconfig = File.read(xcconfig_path)
       xcconfig_mod = xcconfig.gsub(/DT_TOOLCHAIN_DIR/, "TOOLCHAIN_DIR")
       File.open(xcconfig_path, "w") { |file| file << xcconfig_mod }
     end
   end
-   installer.pods_project.targets.each do |target|
-      flutter_additional_ios_build_settings(target)
-      target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
-      end
-  end
-end
-
-target 'ImageNotification' do
-  use_frameworks!
-  pod 'Firebase/Messaging'
 end
 
 post_integrate do |installer|
