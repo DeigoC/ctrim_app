@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/info/church_info.dart';
 import '../../utility/app_context.dart';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 
+import '../../widgets/quill_editor_wrapper.dart';
 import 'edit_info_body_page.dart';
 
 class ChurchInfoPage extends StatelessWidget {
@@ -53,15 +53,12 @@ class ChurchInfoPage extends StatelessWidget {
   Widget _buildBodyWithData(final BuildContext context, final Map<String, dynamic> data) {
     final ChurchInfo ctrimInfo = ChurchInfo(data);
 
-    final quill.QuillController controller = quill.QuillController(
-        document: quill.Document.fromJson(ctrimInfo.body), selection: const TextSelection.collapsed(offset: 0));
-
     List<Widget> children = [
       const SizedBox(height: 8),
       Flexible(
           child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: controller)))),
+              child: QuillViewerWidget(jsonContent: ctrimInfo.body))),
       const SizedBox(height: 16),
       Image.asset(ctrimInfo.imgSrc),
       const SizedBox(height: 32),

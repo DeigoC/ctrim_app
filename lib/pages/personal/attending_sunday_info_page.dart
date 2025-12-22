@@ -1,6 +1,6 @@
+import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 
@@ -14,8 +14,6 @@ class AttendingSundayServicePage extends StatelessWidget {
     Provider.of<AppContext>(context, listen: false)
         .analytics
         .logScreenView(screenName: 'Personal: Attending Sunday Service');
-    final quill.QuillController controller = quill.QuillController(
-        document: quill.Document.fromJson(jsonDecode(_json)), selection: const TextSelection.collapsed(offset: 0));
 
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
@@ -31,8 +29,8 @@ class AttendingSundayServicePage extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Flexible(
-                  child: quill.QuillEditor.basic(
-                configurations: quill.QuillEditorConfigurations(controller: controller),
+                  child: QuillViewerWidget(
+                jsonContent: jsonDecode(_json),
               )),
               const SizedBox(height: 32)
             ]),
