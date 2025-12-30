@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:universal_html/html.dart' as html;
 
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_role_page.dart';
@@ -236,12 +238,82 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         }
       });
     } else {
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Adding to Calendar',
-          content:
-              "Sorry, this feature only works on native mobile apps (iOS or Android), not on WebApps. Please look to install the app when it's available!");
+      // Web: Generate and download .ics file
+      _downloadICSFile(event);
+      _appContext.analytics.logEvent(
+          name: 'Reminder Added',
+          parameters: {'PostID': widget.eventContext.id, 'DateTime': DateTime.now(), 'Platform': 'Web'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Calendar event downloaded! Open the file to add to your calendar.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
     }
+  }
+
+  /// Generate and download .ics calendar file for web
+  void _downloadICSFile(Event event) {
+    final String icsContent = _generateICSContent(event);
+
+    // Create blob and download
+    final bytes = utf8.encode(icsContent);
+    final blob = html.Blob([bytes], 'text/calendar');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    html.AnchorElement(href: url)
+      ..setAttribute('download', '${event.title.replaceAll(' ', '_')}.ics')
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
+  }
+
+  /// Generate iCalendar (.ics) format content
+  String _generateICSContent(Event event) {
+    final dtFormat = DateFormat("yyyyMMdd'T'HHmmss");
+    final dateFormat = DateFormat('yyyyMMdd');
+
+    String dtStart;
+    String dtEnd;
+
+    if (event.allDay) {
+      dtStart = 'DTSTART;VALUE=DATE:${dateFormat.format(event.startDate)}';
+      dtEnd = 'DTEND;VALUE=DATE:${dateFormat.format(event.endDate.add(const Duration(days: 1)))}';
+    } else {
+      dtStart = 'DTSTART:${dtFormat.format(event.startDate)}Z';
+      dtEnd = 'DTEND:${dtFormat.format(event.endDate)}Z';
+    }
+
+    final now = dtFormat.format(DateTime.now());
+
+    return '''BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//CTRIM App//Event Reminder//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${DateTime.now().millisecondsSinceEpoch}@ctrim.app
+DTSTAMP:${now}Z
+$dtStart
+$dtEnd
+SUMMARY:${_escapeICSText(event.title)}
+DESCRIPTION:${_escapeICSText(event.description ?? '')}
+LOCATION:${_escapeICSText(event.location ?? '')}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR''';
+  }
+
+  /// Escape special characters for ICS format
+  String _escapeICSText(String text) {
+    return text.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll(';', '\\;').replaceAll('\n', '\\n');
   }
 
   void _onClickLocationTrailingIcon() {

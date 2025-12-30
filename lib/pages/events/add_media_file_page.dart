@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -24,6 +25,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
   String _src = '';
   File? _tmpFile;
+  int? _mediaFileSizeBytes;
 
   // * Test data
   // Image: https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg
@@ -528,7 +530,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildImageTest() {
-    if (_tmpFile != null && _canSave) {
+    if (_canSave) {
+      // On web or when ready, show the image from URL
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.network(
@@ -560,20 +563,23 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           return _buildLoadingState('Checking image...');
         }
 
-        if (snap.hasData) {
+        if (snap.hasData || (kIsWeb && _mediaFileSizeBytes != null)) {
           _canTestSrc = true;
-          _tmpFile = snap.data!;
-          final size = _tmpFile!.lengthSync();
+          _tmpFile = snap.data;
+
+          final size = _mediaFileSizeBytes ?? (_tmpFile?.lengthSync() ?? 0);
           final double sizeInKb = size / 1024;
 
-          if (sizeInKb <= _maxImageSizeKB) {
+          if (sizeInKb <= _maxImageSizeKB || _mediaFileSizeBytes == 0) {
             debugPrint('image size is good: $sizeInKb KB');
             WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
               setState(() {
                 _canSave = true;
               });
             });
-            return _buildSuccessState('Image is ready! Size: ${sizeInKb.toStringAsFixed(1)} KB');
+            return _buildSuccessState(_mediaFileSizeBytes == 0
+                ? 'Image is ready! (Size validation skipped on web)'
+                : 'Image is ready! Size: ${sizeInKb.toStringAsFixed(1)} KB');
           } else {
             _canSave = false;
             _canTestSrc = true;
@@ -598,7 +604,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildVideoPlayerTest() {
-    if (_tmpFile != null && _canSave) {
+    if (_canSave) {
+      // On web, use network video player
+      if (kIsWeb) {
+        return _buildVideoPlayer();
+      }
+      // On native, use cached file
       return _buildVideoPlayer();
     }
 
@@ -609,20 +620,33 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           return _buildLoadingState('Checking video...');
         }
 
-        if (snap.hasData) {
+        if (snap.hasData || (kIsWeb && _mediaFileSizeBytes != null)) {
           _canTestSrc = true;
-          _tmpFile = snap.data!;
-          final size = _tmpFile!.lengthSync();
+          _tmpFile = snap.data;
+
+          final size = _mediaFileSizeBytes ?? (_tmpFile?.lengthSync() ?? 0);
           final double sizeInMb = size / (1024 * 1024);
 
-          if (sizeInMb <= _maxVideoSizeMB) {
+          if (sizeInMb <= _maxVideoSizeMB || _mediaFileSizeBytes == 0) {
             debugPrint('video size is good: $sizeInMb MB');
-            _videoPlayerController = VideoPlayerController.file(_tmpFile!);
+
+            // Initialize video player
+            if (kIsWeb) {
+              _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(_src));
+            } else {
+              _videoPlayerController = VideoPlayerController.file(_tmpFile!);
+            }
+
             WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
               _videoPlayerController!.initialize().then((_) {
                 setState(() {
                   _canSave = true;
                   _videoPlayerController!.play();
+                });
+              }).catchError((error) {
+                debugPrint('Error initializing video player: $error');
+                setState(() {
+                  _canTestSrc = true;
                 });
               });
             });
@@ -714,7 +738,13 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     }
   }
 
-  Future<File> _fetchFile(final bool isImage) async {
+  Future<File?> _fetchFile(final bool isImage) async {
+    if (kIsWeb) {
+      // On web, just validate the URL and check file size via HEAD request
+      return await _validateMediaOnWeb(isImage);
+    }
+
+    // Native platforms: download and cache
     try {
       final dir = await getTemporaryDirectory();
       _src = _sanitiseSrc();
@@ -737,12 +767,47 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
+        _mediaFileSizeBytes = response.bodyBytes.length;
         return await tmp.writeAsBytes(response.bodyBytes);
       } else {
         throw Exception('HTTP ${response.statusCode}: Failed to fetch media file');
       }
     } catch (e) {
       debugPrint('Error fetching file: $e');
+      rethrow;
+    }
+  }
+
+  /// Validate media on web without downloading (use HEAD request)
+  Future<File?> _validateMediaOnWeb(bool isImage) async {
+    try {
+      _src = _sanitiseSrc();
+      debugPrint('Validating web media from: $_src');
+
+      // Use HEAD request to get content length without downloading
+      final response = await http.head(
+        Uri.parse(_src),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Media-Fetcher/1.0)',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final contentLength = response.headers['content-length'];
+        if (contentLength != null) {
+          _mediaFileSizeBytes = int.parse(contentLength);
+          debugPrint('Media size on web: $_mediaFileSizeBytes bytes');
+        } else {
+          // Fallback: If no content-length, do a range request for first byte
+          _mediaFileSizeBytes = 0; // Will allow saving but can't validate size
+          debugPrint('Warning: Could not determine file size on web');
+        }
+        return null; // Return null to indicate web mode (no file caching)
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Failed to validate media');
+      }
+    } catch (e) {
+      debugPrint('Error validating media on web: $e');
       rethrow;
     }
   }
@@ -830,7 +895,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                 'src': _src,
                 'type': _isVideo ? 'vid' : 'img',
               };
-
               if (_isVideo && _tecThumbnailSrc.text.trim().isNotEmpty) {
                 data['thumbnailSrc'] = _tecThumbnailSrc.text.trim();
               }
@@ -850,11 +914,13 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     setState(() {
       if (_videoPlayerController != null) {
         _videoPlayerController!.pause();
+        _videoPlayerController!.dispose();
         _videoPlayerController = null;
       }
       _src = '';
       _canSave = false;
       _tmpFile = null;
+      _mediaFileSizeBytes = null;
       _isTesting = true;
       _canTestSrc = false;
     });
@@ -875,6 +941,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         _isTesting = false;
         _canSave = false;
         _tmpFile = null;
+        _mediaFileSizeBytes = null;
         if (_videoPlayerController != null) {
           _videoPlayerController!.dispose();
           _videoPlayerController = null;

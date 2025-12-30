@@ -36,9 +36,8 @@ dependencies:
   share_plus: ^11.1.0
   shared_preferences: 
   url_launcher: 
+  universal_html: ^2.2.4
   video_player:
-  gal: ^2.3.0
-  gal_linux: ^0.1.0
 
 dev_dependencies:
   flutter_test:

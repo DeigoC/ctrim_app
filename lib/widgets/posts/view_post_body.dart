@@ -1,7 +1,9 @@
-import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utility/event_context.dart';
+import '../quill_editor_wrapper.dart';
 
 class ViewPostBody extends StatelessWidget {
   const ViewPostBody({super.key, required this.eventContext, required this.updateBody, required this.currentUID});
@@ -87,15 +89,118 @@ class ViewPostBody extends StatelessWidget {
   }
 
   void _onShare(BuildContext context) async {
-    final box = context.findRenderObject() as RenderBox?;
+    // Prepare share content with title and subtitle
+    final StringBuffer shareContent = StringBuffer();
+    shareContent.writeln(eventContext.head.title);
 
-    // Prepend the title to the body text
-    // Note: Plain text would require controller access. Using title only for now.
-    final String shareContent = eventContext.head.title;
+    if (eventContext.head.subtitle.isNotEmpty) {
+      shareContent.writeln();
+      shareContent.writeln(eventContext.head.subtitle);
+    }
 
-    await SharePlus.instance.share(ShareParams(
-      text: shareContent,
-      sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
-    ));
+    // Add event details if available
+    if (eventContext.head.eventDate != null) {
+      shareContent.writeln();
+      shareContent.writeln('📅 ${eventContext.head.eventDate}');
+    }
+
+    if (eventContext.head.location.isNotEmpty) {
+      shareContent.writeln('📍 ${eventContext.head.location}');
+    }
+
+    final String finalContent = shareContent.toString();
+
+    if (kIsWeb) {
+      // Web: Try native share API, fallback to clipboard
+      await _shareOnWeb(context, finalContent);
+    } else {
+      // Mobile: Use native share sheet with positioning
+      final box = context.findRenderObject() as RenderBox?;
+      await Share.share(
+        finalContent,
+        sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+      );
+    }
+  }
+
+  /// Handle sharing on web platform with fallback
+  Future<void> _shareOnWeb(BuildContext context, String content) async {
+    try {
+      // Try Web Share API first (works on Chrome, Edge, mobile browsers)
+      final result = await Share.share(content);
+
+      // If share was dismissed or failed, offer clipboard option
+      if (result.status == ShareResultStatus.dismissed || result.status == ShareResultStatus.unavailable) {
+        await _showCopyDialog(context, content);
+      }
+    } catch (e) {
+      // Web Share API not supported, show copy dialog
+      await _showCopyDialog(context, content);
+    }
+  }
+
+  /// Show dialog with copy to clipboard option
+  Future<void> _showCopyDialog(BuildContext context, String content) async {
+    final theme = Theme.of(context);
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.share),
+        title: const Text('Share Post'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your browser doesn\'t support native sharing.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                content,
+                style: theme.textTheme.bodySmall,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: content));
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Copied to clipboard!'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.copy, size: 18),
+            label: const Text('Copy to Clipboard'),
+          ),
+        ],
+      ),
+    );
   }
 }
