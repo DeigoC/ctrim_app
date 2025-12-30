@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
@@ -401,10 +401,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     debugPrint('setting device token as $token');
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    final String platform = kIsWeb ? 'Web' : Platform.operatingSystem;
+    final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
 
     if (token != null) {
-      everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platform);
+      everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platformName);
       appContext.sharedPref.saveFCMToken(token);
     }
 

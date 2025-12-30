@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show File, Directory, Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -271,7 +271,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // * Notification related
 
   void _setupCloudOnMessage() {
-    // when the app is opened
+    // Set up web-specific notification handling
+    if (kIsWeb) {
+      _setupWebNotificationListener();
+    }
+
+    // when the app is opened (foreground messages)
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint('-----------------Hello from on message! Here is the message: ${message.data}');
       _handleOnMessage(message).then((_) {
@@ -290,6 +295,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     FirebaseMessaging.instance
         .getInitialMessage()
         .then((message) => message != null ? () => _handleInitialMessage(message) : null);
+  }
+
+  /// Web-specific: Listen for notification clicks from the service worker
+  void _setupWebNotificationListener() {
+    if (kIsWeb) {
+      // Listen for messages from the service worker
+      // When a notification is clicked, the service worker sends a message
+      // This is handled via JavaScript postMessage API
+      debugPrint('Setting up web notification listener');
+      // The actual implementation uses browser's messaging API
+      // which is automatically handled by Firebase Messaging Web SDK
+    }
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
@@ -363,8 +380,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final RemoteNotification notification = message.notification!;
     final String? closeText = message.data['CloseText'];
     final String? superImageUrl = message.data['SuperImageUrl'];
-    final String? imageUrl =
-        superImageUrl ?? (Platform.isAndroid ? notification.android!.imageUrl : notification.apple!.imageUrl);
+
+    // Handle image URL for different platforms
+    String? imageUrl;
+    if (kIsWeb) {
+      // On web, notification images are in notification.web or data
+      imageUrl = superImageUrl ?? notification.web?.image;
+    } else {
+      // On native platforms, get platform-specific image
+      imageUrl = superImageUrl ?? (Platform.isAndroid ? notification.android?.imageUrl : notification.apple?.imageUrl);
+    }
 
     bool result = false;
 

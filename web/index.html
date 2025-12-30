@@ -26,11 +26,26 @@
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
   
+  <!-- Firebase SDK for Web -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+  
   <!-- Solution for some issue? -->
   <script type="application/javascript" src="/assets/packages/flutter_inappwebview_web/assets/web/web_support.js" defer></script>
 </head>
 <body>
   <script>
+    // Register Firebase Messaging Service Worker for push notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Firebase Messaging Service Worker registered:', registration);
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
+
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({
