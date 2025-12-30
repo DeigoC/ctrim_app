@@ -94,22 +94,6 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
         ]));
   }
 
-  Widget _buildDefaultThumbnailLook() {
-    return InkWell(
-        onTap: widget.onTap,
-        child: Stack(alignment: Alignment.center, children: [
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.7),
-              child: const Center(
-                child: Icon(Icons.videocam, color: Colors.white54, size: 48),
-              ),
-            ),
-          ),
-          const Icon(Icons.play_circle_filled, color: Colors.white, size: 48),
-        ]));
-  }
-
   Widget _buildLoadingState() {
     return Container(
       color: Colors.black.withOpacity(0.5),
