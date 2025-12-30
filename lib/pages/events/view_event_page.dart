@@ -84,9 +84,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    // TODO somthing terrible has happened! PopScope sucks so bad!
-    // ! This breaks things for the admin, they can make changes and it won't be discarded when returning.
-    // ! This is fine for now but not in the future when more admins come in...
     return Scaffold(
         floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
         floatingActionButton: _buildSaveFAB(),
@@ -587,77 +584,93 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Future<void> _sendRoleNotifications() async {
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
-    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
+    try {
+      final AppContext appContext = Provider.of<AppContext>(context, listen: false);
+      final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
+      final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+      final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
 
-    final String currentUID = appContext.currentUser.id;
-    final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
+      final String currentUID = appContext.currentUser.id;
+      final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
 
-    int successCount = 0;
-    int errorCount = 0;
+      int successCount = 0;
+      int errorCount = 0;
 
-    for (final roleEntry in _eventContext.program.roles) {
-      try {
-        final DateTime startingTime = roleEntry['start'];
-        final String body =
-            "'${roleEntry['title']!}' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
-        final List<String> tokens = [];
-        final List<String> uids = roleEntry['uids'];
+      for (final roleEntry in _eventContext.program.roles) {
+        try {
+          final DateTime? startingTime = roleEntry['start'];
+          if (startingTime == null) {
+            debugPrint('Warning: Role entry missing start time, skipping...');
+            continue;
+          }
 
-        for (final thisUID in uids) {
-          if (thisUID != currentUID) {
-            try {
-              if (!appContext.haveTokensForUserID(thisUID)) {
-                final String? authID = appContext.getAuthIDFromUID(thisUID);
-                if (authID != null && authID.isNotEmpty) {
-                  final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
-                  appContext.addTokensToUserID(thisUID, fetchedTokens);
-                  tokens.addAll(fetchedTokens);
+          final String roleTitle = roleEntry['title'] ?? 'Untitled Role';
+          final String body =
+              "'$roleTitle' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
+          final List<String> tokens = [];
+          final List<dynamic> uidsRaw = roleEntry['uids'] ?? [];
+          final List<String> uids = uidsRaw.whereType<String>().toList();
+
+          for (final thisUID in uids) {
+            if (thisUID != currentUID) {
+              try {
+                if (!appContext.haveTokensForUserID(thisUID)) {
+                  final String? authID = appContext.getAuthIDFromUID(thisUID);
+                  if (authID != null && authID.isNotEmpty) {
+                    final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
+                    if (fetchedTokens.isNotEmpty) {
+                      appContext.addTokensToUserID(thisUID, fetchedTokens);
+                      tokens.addAll(fetchedTokens);
+                    }
+                  } else {
+                    debugPrint('Warning: Could not get authID for user $thisUID, skipping...');
+                  }
                 } else {
-                  debugPrint('Warning: Could not get authID for user $thisUID, skipping...');
+                  tokens.addAll(appContext.getTokensFromUserID(thisUID));
                 }
-              } else {
-                tokens.addAll(appContext.getTokensFromUserID(thisUID));
+              } catch (e) {
+                debugPrint('Error fetching tokens for user $thisUID: $e');
+                errorCount++;
+                continue;
               }
-            } catch (e) {
-              debugPrint('Error fetching tokens for user $thisUID: $e');
-              errorCount++;
-              // Continue to next user despite error
-              continue;
             }
           }
-        }
 
-        if (tokens.isNotEmpty) {
-          try {
-            await cloudFunctionManager.sendMessageToSelectedTokens(
-                tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
-            successCount++;
-          } catch (e) {
-            debugPrint('Error sending notification for role "${roleEntry['title']}": $e');
-            errorCount++;
+          if (tokens.isNotEmpty) {
+            try {
+              await cloudFunctionManager.sendMessageToSelectedTokens(
+                  tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
+              successCount++;
+            } catch (e) {
+              debugPrint('Error sending notification for role "$roleTitle": $e');
+              errorCount++;
+            }
           }
+        } catch (e) {
+          debugPrint('Error processing role entry: $e');
+          errorCount++;
+          continue;
         }
-      } catch (e) {
-        debugPrint('Error processing role entry: $e');
-        errorCount++;
-        // Continue to next role despite error
-        continue;
       }
-    }
 
-    // Show summary of results
-    if (mounted) {
-      final String message = errorCount > 0
-          ? 'Notifications sent: $successCount successful${errorCount > 0 ? ', $errorCount failed' : ''}'
-          : 'Successfully sent $successCount notification${successCount != 1 ? 's' : ''}';
+      if (mounted) {
+        final String message = errorCount > 0
+            ? 'Notifications sent: $successCount successful, $errorCount failed'
+            : 'Successfully sent $successCount notification${successCount != 1 ? 's' : ''}';
 
-      DialogManager.showSnackBar(
-        context: context,
-        message: message,
-      );
+        DialogManager.showSnackBar(
+          context: context,
+          message: message,
+        );
+      }
+    } catch (e) {
+      debugPrint('Critical error in _sendRoleNotifications: $e');
+      if (mounted) {
+        DialogManager.showSnackBar(
+          context: context,
+          message: 'Failed to send notifications: $e',
+        );
+      }
     }
   }
 }
