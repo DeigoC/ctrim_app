@@ -76,9 +76,9 @@ class MessagingManager {
         'lastUpdated': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      debugPrint('Web token registered in centralized collection');
+      debugPrint('✅ Web token registered in centralized collection');
     } catch (e) {
-      debugPrint('Error registering web token: $e');
+      debugPrint('❌ Error registering web token: $e');
     }
   }
 
@@ -91,9 +91,9 @@ class MessagingManager {
         'tokens': FieldValue.arrayRemove([token]),
       });
 
-      debugPrint('Web token removed from centralized collection');
+      debugPrint('🗑️ Web token removed from centralized collection');
     } catch (e) {
-      debugPrint('Error removing web token: $e');
+      debugPrint('❌ Error removing web token: $e');
     }
   }
 
@@ -101,22 +101,23 @@ class MessagingManager {
   /// Note: Topic subscriptions are not supported on web, tokens must be managed server-side
   Future<void> subscribeToCTRIMBelfast() async {
     if (kIsWeb) {
-      debugPrint('Topic subscriptions are not supported on web. Using token-based notifications instead.');
-      // Web tokens are automatically registered, no additional action needed
+      debugPrint('ℹ️ Web platform detected - using token-based notifications (topic subscriptions not supported)');
+      // Web tokens are automatically registered in _registerWebToken()
+      // Do NOT call removeWebToken here!
       return;
     }
     try {
       await _instance.subscribeToTopic(_ctrimBelfast);
-      debugPrint('Subscribed to topic: $_ctrimBelfast');
+      debugPrint('✅ Subscribed to topic: $_ctrimBelfast');
     } catch (e) {
-      debugPrint('Error subscribing to topic: $e');
+      debugPrint('❌ Error subscribing to topic: $e');
     }
   }
 
   /// Unsubscribe from the main CTRIM Belfast topic
   Future<void> unsubscribeFromCTRIMBelfast() async {
     if (kIsWeb) {
-      debugPrint('Topic subscriptions are not supported on web.');
+      debugPrint('ℹ️ Unsubscribing from web notifications');
       // Remove web token from collection
       final token = await getToken();
       if (token != null) {
@@ -126,44 +127,44 @@ class MessagingManager {
     }
     try {
       await _instance.unsubscribeFromTopic(_ctrimBelfast);
-      debugPrint('Unsubscribed from topic: $_ctrimBelfast');
+      debugPrint('✅ Unsubscribed from topic: $_ctrimBelfast');
     } catch (e) {
-      debugPrint('Error unsubscribing from topic: $e');
+      debugPrint('❌ Error unsubscribing from topic: $e');
     }
   }
 
   /// Subscribe to a custom topic
   Future<void> subscribeToTopic(final String topic) async {
     if (kIsWeb) {
-      debugPrint('Topic subscriptions are not supported on web. Use token-based notifications instead.');
+      debugPrint('ℹ️ Topic subscriptions are not supported on web. Use token-based notifications instead.');
       return;
     }
     try {
       await _instance.subscribeToTopic(topic);
-      debugPrint('Subscribed to topic: $topic');
+      debugPrint('✅ Subscribed to topic: $topic');
     } catch (e) {
-      debugPrint('Error subscribing to topic: $e');
+      debugPrint('❌ Error subscribing to topic: $e');
     }
   }
 
   /// Unsubscribe from a custom topic
   Future<void> unsubscribeFromTopic(final String topic) async {
     if (kIsWeb) {
-      debugPrint('Topic subscriptions are not supported on web.');
+      debugPrint('ℹ️ Topic subscriptions are not supported on web.');
       return;
     }
     try {
       await _instance.unsubscribeFromTopic(topic);
-      debugPrint('Unsubscribed from topic: $topic');
+      debugPrint('✅ Unsubscribed from topic: $topic');
     } catch (e) {
-      debugPrint('Error unsubscribing from topic: $e');
+      debugPrint('❌ Error unsubscribing from topic: $e');
     }
   }
 
   /// Listen for token refresh (important for maintaining valid tokens)
   void onTokenRefresh(Function(String) callback) {
     _instance.onTokenRefresh.listen((newToken) {
-      debugPrint('FCM Token refreshed: $newToken');
+      debugPrint('🔄 FCM Token refreshed: $newToken');
 
       // Update web token in Firestore
       if (kIsWeb) {
@@ -181,13 +182,13 @@ class MessagingManager {
 
       if (doc.exists && doc.data() != null) {
         final tokens = List<String>.from(doc.data()!['tokens'] ?? []);
-        debugPrint('Retrieved ${tokens.length} web tokens');
+        debugPrint('📱 Retrieved ${tokens.length} web tokens');
         return tokens;
       }
 
       return [];
     } catch (e) {
-      debugPrint('Error getting web tokens: $e');
+      debugPrint('❌ Error getting web tokens: $e');
       return [];
     }
   }
