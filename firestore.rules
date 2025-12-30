@@ -49,5 +49,13 @@ service cloud.firestore {
       // only leaders can create and edit post templates
       allow create, write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;
     }
+
+    // Allow authenticated users to add their web tokens
+    match /notification_tokens/web_tokens {
+      allow read: if request.auth != null && 
+                     (request.auth.token.isLeader == true || 
+                      request.auth.token.isAreaAdmin == true);
+      allow write: if request.auth != null;
+    }
   }
 }
