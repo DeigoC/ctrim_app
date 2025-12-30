@@ -83,8 +83,10 @@ class AppSharedPreferences {
   void setShowMultirowTools(final bool newState) => _pref.setBool(_showMultirowTools, newState);
 
   // * Local data related
-  bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;
-  void justFetchedUserImages() => _pref.setBool(_fetchUserImgs, false);
+  bool get canRefreshUserImages => _pref.getInt(_fetchUserImgs) == null
+      ? true
+      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_fetchUserImgs)!)).inDays >= 7;
+  void setUserImageRefreshTime() => _pref.setInt(_fetchUserImgs, DateTime.now().millisecondsSinceEpoch);
 
   // * For WebApp - use localdata manager for native apps!
 

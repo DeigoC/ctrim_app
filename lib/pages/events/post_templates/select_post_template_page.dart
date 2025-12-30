@@ -596,7 +596,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     return await showDatePicker(
         context: context,
         initialDate: DateTime.now(),
-        firstDate: DateTime.now(),
+        firstDate: DateTime.now().subtract(const Duration(days: 30)),
         lastDate: DateTime.now().add(const Duration(days: 60)));
   }
 
@@ -742,7 +742,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     eventContext.head.setEventDate(postTemplate.startTime);
     eventContext.head.setLocation(postTemplate.location);
     eventContext.head.setTitle(postTemplate.title);
-    
+
     // subtitle - auto-select random if available
     if (postTemplate.subtitles.isNotEmpty) {
       final randomSubtitle = postTemplate.getRandomSubtitle();

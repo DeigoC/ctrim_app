@@ -59,10 +59,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     // * periodic and non-periodic local maintenance
-    if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
+    if (_appContext.sharedPref.canRefreshUserImages && !kIsWeb) {
       _performLocalUserImgCleanup();
       _removeLocallySavedPosts();
-      _appContext.sharedPref.justFetchedUserImages();
+      _appContext.sharedPref.setUserImageRefreshTime();
     }
 
     // TODO new feature for notifications (temporary until future updates)
