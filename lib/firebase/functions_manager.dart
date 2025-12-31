@@ -79,12 +79,19 @@ class CloudFunctionManager {
       final topicResult = await topicCallable.call(callParams);
       debugPrint('Topic notification sent: ${topicResult.data}');
 
-      // Get web tokens and send to them as well
+      // Get web tokens for general notifications
       final webTokens = await MessagingManager.getWebTokens();
-      if (webTokens.isNotEmpty) {
-        debugPrint('Sending to ${webTokens.length} web tokens...');
+
+      // Get web tokens subscribed to this specific topic
+      final webTopicTokens = await MessagingManager.getWebTokensForTopic(topic);
+
+      // Combine and deduplicate tokens
+      final allWebTokens = {...webTokens, ...webTopicTokens}.toList();
+
+      if (allWebTokens.isNotEmpty) {
+        debugPrint('Sending to ${allWebTokens.length} web tokens (${webTopicTokens.length} topic-specific)...');
         await sendMessageToSelectedTokens(
-          tokens: webTokens,
+          tokens: allWebTokens,
           title: title,
           body: body,
           data: data,

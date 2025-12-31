@@ -136,7 +136,18 @@ class MessagingManager {
   /// Subscribe to a custom topic
   Future<void> subscribeToTopic(final String topic) async {
     if (kIsWeb) {
-      debugPrint('ℹ️ Topic subscriptions are not supported on web. Use token-based notifications instead.');
+      // For web, store the token in a topic-specific collection
+      final token = await getToken();
+      if (token != null) {
+        try {
+          await _firestore.collection('notification_tokens').doc('web_topics').set({
+            topic: FieldValue.arrayUnion([token]),
+          }, SetOptions(merge: true));
+          debugPrint('✅ Web user subscribed to topic: $topic');
+        } catch (e) {
+          debugPrint('❌ Error subscribing to web topic: $e');
+        }
+      }
       return;
     }
     try {
@@ -150,7 +161,18 @@ class MessagingManager {
   /// Unsubscribe from a custom topic
   Future<void> unsubscribeFromTopic(final String topic) async {
     if (kIsWeb) {
-      debugPrint('ℹ️ Topic subscriptions are not supported on web.');
+      // For web, remove the token from the topic-specific collection
+      final token = await getToken();
+      if (token != null) {
+        try {
+          await _firestore.collection('notification_tokens').doc('web_topics').update({
+            topic: FieldValue.arrayRemove([token]),
+          });
+          debugPrint('✅ Web user unsubscribed from topic: $topic');
+        } catch (e) {
+          debugPrint('❌ Error unsubscribing from web topic: $e');
+        }
+      }
       return;
     }
     try {
@@ -189,6 +211,24 @@ class MessagingManager {
       return [];
     } catch (e) {
       debugPrint('❌ Error getting web tokens: $e');
+      return [];
+    }
+  }
+
+  /// Get web tokens subscribed to a specific topic (used by admin/cloud functions)
+  static Future<List<String>> getWebTokensForTopic(String topic) async {
+    try {
+      final doc = await _firestore.collection('notification_tokens').doc('web_topics').get();
+
+      if (doc.exists && doc.data() != null) {
+        final tokens = List<String>.from(doc.data()![topic] ?? []);
+        debugPrint('📱 Retrieved ${tokens.length} web tokens for topic: $topic');
+        return tokens;
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error getting web tokens for topic: $e');
       return [];
     }
   }
