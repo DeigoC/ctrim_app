@@ -6,7 +6,9 @@ class ShareOpenBetaPage extends StatelessWidget {
   const ShareOpenBetaPage({super.key});
 
   static const String _iosLink = 'https://testflight.apple.com/join/SxS0Mfjj';
-  static const String _androidLink = 'https://play.google.com/apps/testing/com.ctrim.ctrim_app';
+  // ? Android removed for now
+  // static const String _androidLink = 'https://play.google.com/apps/testing/com.ctrim.ctrim_app';
+  static const String _webAppLink = 'https://ctrim.app';
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +76,8 @@ class ShareOpenBetaPage extends StatelessWidget {
 
       const SizedBox(height: 24),
 
-      // Android Section
-      _buildAndroidSection(context),
+      // Web App Section
+      _buildWebAppSection(context),
 
       const SizedBox(height: 32),
     ]);
@@ -199,7 +201,7 @@ class ShareOpenBetaPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAndroidSection(final BuildContext context) {
+  Widget _buildWebAppSection(final BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -213,10 +215,10 @@ class ShareOpenBetaPage extends StatelessWidget {
             // Platform Header
             Row(
               children: [
-                Icon(Icons.android, size: 32, color: colorScheme.primary),
+                Icon(Icons.language, size: 32, color: colorScheme.primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Android',
+                  'Web App',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -230,22 +232,22 @@ class ShareOpenBetaPage extends StatelessWidget {
             _buildInstructionStep(
               context,
               '1',
-              'Use Google Play Store',
-              'You\'ll use the regular Google Play Store app (already on your device).',
+              'Open in Browser',
+              'Access the web app directly from any modern browser on your computer or mobile device.',
             ),
             const SizedBox(height: 12),
             _buildInstructionStep(
               context,
               '2',
               'Scan QR Code or Use Link',
-              'Scan the QR code below or tap the link to open the beta program.',
+              'Scan the QR code below or tap the link to open the web app.',
             ),
             const SizedBox(height: 12),
             _buildInstructionStep(
               context,
               '3',
-              'Join & Install',
-              'Tap "Become a tester", then install or update the app from the Play Store.',
+              'Install as PWA (Optional)',
+              'Add to home screen for an app-like experience with offline support.',
             ),
 
             const SizedBox(height: 24),
@@ -266,7 +268,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                   ],
                 ),
                 child: Image.asset(
-                  'assets/personal/android_qr.png',
+                  'assets/personal/webapp_qr.png',
                   width: 200,
                   height: 200,
                   errorBuilder: (context, error, stackTrace) {
@@ -292,9 +294,9 @@ class ShareOpenBetaPage extends StatelessWidget {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => _onOpenLink(_androidLink),
+                    onPressed: () => _onOpenLink(_webAppLink),
                     icon: const Icon(Icons.open_in_new, size: 18),
-                    label: const Text('Open Play Store'),
+                    label: const Text('Open Web App'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -302,7 +304,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 FilledButton.tonalIcon(
-                  onPressed: () => _onLinkCopyClick(_androidLink, context),
+                  onPressed: () => _onLinkCopyClick(_webAppLink, context),
                   icon: const Icon(Icons.copy, size: 18),
                   label: const Text('Copy Link'),
                   style: FilledButton.styleFrom(
