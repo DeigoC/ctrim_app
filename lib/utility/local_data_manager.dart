@@ -66,9 +66,18 @@ class LocalDataManager {
 
   Future<DateTime?> readLastUserFetch() async {
     final box = Hive.box(_metadataBox);
-    final int? timestamp = box.get('last_user_fetch');
-    if (timestamp != null) {
-      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final dynamic value = box.get('last_user_fetch');
+    if (value != null) {
+      // Handle both int and string (for old SharedPreferences data)
+      if (value is int) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      } else if (value is String) {
+        try {
+          return DateTime.fromMillisecondsSinceEpoch(int.parse(value));
+        } catch (e) {
+          debugPrint('Error parsing last_user_fetch: $e');
+        }
+      }
     }
     return null;
   }
@@ -137,9 +146,18 @@ class LocalDataManager {
 
   Future<int> readLastPostTemplateUpdate() async {
     final box = Hive.box(_templatesBox);
-    final int? value = box.get('last_update');
+    final dynamic value = box.get('last_update');
     if (value != null) {
-      return value;
+      // Handle both int and string (for old file-based data)
+      if (value is int) {
+        return value;
+      } else if (value is String) {
+        try {
+          return int.parse(value);
+        } catch (e) {
+          debugPrint('Error parsing last_update: $e');
+        }
+      }
     }
     await writeLastPostTemplateUpdate(0);
     return 0;
@@ -153,12 +171,26 @@ class LocalDataManager {
   Future<bool> haveCheckedTemplateUpdates() async {
     // also updates the date if needed - we'll clumsily just use the day of the week for now...
     final box = Hive.box(_templatesBox);
-    final int? checkDay = box.get('check_date');
+    final dynamic checkDay = box.get('check_date');
     final int today = DateTime.now().day;
 
-    if (checkDay != null && checkDay == today) {
-      debugPrint('We have already checked the post templates today');
-      return true;
+    if (checkDay != null) {
+      // Handle both int and string (for old file-based data)
+      int? dayValue;
+      if (checkDay is int) {
+        dayValue = checkDay;
+      } else if (checkDay is String) {
+        try {
+          dayValue = int.parse(checkDay);
+        } catch (e) {
+          debugPrint('Error parsing check_date: $e');
+        }
+      }
+
+      if (dayValue == today) {
+        debugPrint('We have already checked the post templates today');
+        return true;
+      }
     }
 
     debugPrint('We have to check the post templates');

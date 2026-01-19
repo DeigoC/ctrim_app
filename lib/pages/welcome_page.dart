@@ -1295,13 +1295,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    if (kIsWeb) {
-      _appContext.sharedPref.setUsersData(allUsersContent);
-      _appContext.sharedPref.setLastUsersFetch();
-    } else {
-      await dataManager.writeUsersList(allUsersContent);
-      await dataManager.writeLastUsersFetch();
-    }
+    await dataManager.writeUsersList(allUsersContent);
+    await dataManager.writeLastUsersFetch();
     return allUsers;
   }
 

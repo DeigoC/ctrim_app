@@ -497,11 +497,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Future<List<String>> _attemptToGetExistingPostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final List<String> content = kIsWeb
-        ? appContext.sharedPref.getPostData(widget.eventHead.id)
-        : await localDataManager.readPostData(widget.eventHead.id);
+    final List<String> content = await localDataManager.readPostData(widget.eventHead.id);
 
     bool canUseLocalContent = false;
     if (content.isNotEmpty) {
@@ -520,20 +517,14 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Future<void> _savePostDataToLocalStorage() async {
     final LocalDataManager localDataManager = LocalDataManager();
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final String content = _eventContext.transformPostToTxtFile(packageInfo.version);
 
-    if (kIsWeb) {
-      appContext.sharedPref.writePostData(_eventContext.id, content);
-      appContext.sharedPref.addPostTrackID(_eventContext.id);
-    } else {
-      localDataManager.writePostData(_eventContext.id, content);
-      final postTrack = await localDataManager.readPostTrack();
-      if (!postTrack.contains(_eventContext.id)) {
-        postTrack.add(_eventContext.id);
-        localDataManager.writePostTrack(postTrack);
-      }
+    await localDataManager.writePostData(_eventContext.id, content);
+    final postTrack = await localDataManager.readPostTrack();
+    if (!postTrack.contains(_eventContext.id)) {
+      postTrack.add(_eventContext.id);
+      await localDataManager.writePostTrack(postTrack);
     }
   }
 
