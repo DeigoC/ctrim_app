@@ -1,4 +1,3 @@
-import 'package:ctrim_app/firebase_options.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -12,6 +11,7 @@ import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
 import 'firebase/db_managers/id_tracker.dart';
 import 'firebase/db_managers/user_db_manager.dart';
+import 'firebase_options.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';

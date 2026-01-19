@@ -1,15 +1,16 @@
 import 'dart:typed_data';
 
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/local_data_manager.dart';
-import 'package:ctrim_app/utility/network_image_helper.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+
+import '../../firebase/db_managers/user_db_manager.dart';
+import '../../models/user.dart';
+import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
+import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
+import '../../widgets/user_avatar.dart';
 
 class EditUserPage extends StatefulWidget {
   const EditUserPage({super.key, required this.user});
@@ -78,9 +79,6 @@ class _EditUserPageState extends State<EditUserPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit User'),
@@ -93,184 +91,206 @@ class _EditUserPageState extends State<EditUserPage> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Profile Picture Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Profile Picture',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: _testing
-                          ? FutureBuilder(
-                              future: _fetchFile(),
-                              builder: (_, snap) {
-                                if (snap.hasData) {
-                                  return CircleAvatar(
-                                    radius: 60,
-                                    backgroundImage: FileImage(snap.data!),
-                                  );
-                                }
-                                return const CircularProgressIndicator();
-                              })
-                          : MyUserAvatar(
-                              widget.user,
-                              radius: 60,
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _tecImgSrc,
-                      decoration: InputDecoration(
-                        labelText: 'Image URL',
-                        hintText: 'Enter image URL or Google Drive link',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          onPressed: _onHelpClick,
-                          icon: const Icon(Icons.help_outline),
-                        ),
-                      ),
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: _testImageClick,
-                          child: const Text('Test Image'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+      body: _buildBody(),
+    );
+  }
 
-            // User Details Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'User Details',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _tecForename,
-                      decoration: const InputDecoration(
-                        labelText: 'Forename*',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _tecSurname,
-                      decoration: const InputDecoration(
-                        labelText: 'Surname*',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _tecLocation,
-                      decoration: const InputDecoration(
-                        labelText: 'Location*',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+  Widget _buildBody() {
+    final double webHorizontalPadding =
+        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
 
-            // Permissions Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Permissions',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Profile Picture Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  const Text(
+                    'Profile Picture',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: _testing
+                        ? FutureBuilder<Uint8List>(
+                            future: _fetchFile(),
+                            builder: (_, snap) {
+                              if (snap.hasData) {
+                                return CircleAvatar(
+                                  radius: 60,
+                                  backgroundImage: MemoryImage(snap.data!),
+                                );
+                              } else if (snap.hasError) {
+                                return const Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.error, color: Colors.red, size: 40),
+                                    SizedBox(height: 8),
+                                    Text('Failed to load image', style: TextStyle(fontSize: 12)),
+                                  ],
+                                );
+                              }
+                              return const CircularProgressIndicator();
+                            })
+                        : MyUserAvatar(
+                            widget.user,
+                            radius: 60,
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _tecImgSrc,
+                    decoration: InputDecoration(
+                      labelText: 'Image URL',
+                      hintText: 'Enter image URL or Google Drive link',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        onPressed: _onHelpClick,
+                        icon: const Icon(Icons.help_outline),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: const Text('Area Admin'),
-                      subtitle: const Text('Can manage users and access admin features'),
-                      value: _isAreaAdmin,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAreaAdmin = value;
-                          _onFieldChanged();
-                        });
-                      },
-                    ),
-                    SwitchListTile(
-                      title: const Text('Leader'),
-                      subtitle: const Text('Has leadership privileges in the app'),
-                      value: _isLeader,
-                      onChanged: (value) {
-                        setState(() {
-                          _isLeader = value;
-                          _onFieldChanged();
-                        });
-                      },
-                    ),
-                  ],
-                ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: _testImageClick,
+                        child: const Text('Test Image'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 16),
 
-            // User ID Info
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'User Information',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          // User Details Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'User Details',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _tecForename,
+                    decoration: const InputDecoration(
+                      labelText: 'Forename*',
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      title: const Text('User ID'),
-                      subtitle: Text(widget.user.id),
-                      dense: true,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _tecSurname,
+                    decoration: const InputDecoration(
+                      labelText: 'Surname*',
+                      border: OutlineInputBorder(),
                     ),
-                    ListTile(
-                      title: const Text('Auth ID'),
-                      subtitle: Text(widget.user.authID),
-                      dense: true,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _tecLocation,
+                    decoration: const InputDecoration(
+                      labelText: 'Location*',
+                      border: OutlineInputBorder(),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+
+          // Permissions Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Permissions',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    title: const Text('Area Admin'),
+                    subtitle: const Text('Can manage users and access admin features'),
+                    value: _isAreaAdmin,
+                    onChanged: (value) {
+                      setState(() {
+                        _isAreaAdmin = value;
+                        _onFieldChanged();
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    title: const Text('Leader'),
+                    subtitle: const Text('Has leadership privileges in the app'),
+                    value: _isLeader,
+                    onChanged: (value) {
+                      setState(() {
+                        _isLeader = value;
+                        _onFieldChanged();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // User ID Info
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'User Information',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    title: const Text('User ID'),
+                    subtitle: Text(widget.user.id),
+                    dense: true,
+                  ),
+                  ListTile(
+                    title: const Text('Auth ID'),
+                    subtitle: Text(widget.user.authID),
+                    dense: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   // * Logic
+
+  Future<Uint8List> _fetchFile() async {
+    final imageUrl = NetworkImageHelper.getImageUrl(_src);
+    final response = await http.get(Uri.parse(imageUrl));
+    return response.bodyBytes;
+  }
 
   Future<void> _testImageClick() async {
     setState(() {

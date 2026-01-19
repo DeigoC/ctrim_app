@@ -470,7 +470,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         // User has image URL but not cached - download and cache it
         debugPrint('Caching user profile pic for ${user.forname} ID ${user.id}');
         try {
-          final response = await http.get(Uri.parse(user.imgSrc));
+          final String imageUrl = NetworkImageHelper.getImageUrl(user.imgSrc);
+          final response = await http.get(Uri.parse(imageUrl));
           if (response.statusCode == 200) {
             await localDataManager.writeUserImage(user.id, response.bodyBytes);
           }
