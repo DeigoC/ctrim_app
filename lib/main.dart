@@ -38,6 +38,10 @@ void main() async {
   // SettingsView.
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive for local caching (works on all platforms including web)
+  await LocalDataManager.initialize();
+
   if (kIsWeb) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   } else {

@@ -3,9 +3,35 @@ import 'dart:io';
 
 import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalDataManager {
+  static bool _initialized = false;
+  static const String _usersBox = 'users_cache';
+  static const String _postTrackBox = 'post_track';
+  static const String _postDataBox = 'post_data';
+  static const String _templatesBox = 'templates';
+  static const String _metadataBox = 'metadata';
+
+  /// Initialize Hive - call this once at app startup
+  static Future<void> initialize() async {
+    if (_initialized) return;
+
+    await Hive.initFlutter();
+
+    // Open all required boxes
+    await Future.wait([
+      Hive.openBox(_usersBox),
+      Hive.openBox(_postTrackBox),
+      Hive.openBox(_postDataBox),
+      Hive.openBox(_templatesBox),
+      Hive.openBox(_metadataBox),
+    ]);
+
+    _initialized = true;
+    debugPrint('LocalDataManager: Hive initialized');
+  }
+
   // ? Perform cache cleanup - to be run periodically?
   Future<void> cleanupCache(final String cacheDir) async {
     if (!kIsWeb) {
@@ -20,211 +46,128 @@ class LocalDataManager {
 
   // * Users
   Future<void> writeUsersList(final String content) async {
-    if (!kIsWeb) {
-      final file = await _getUsersFile();
-      await file.writeAsString(content);
-    }
+    final box = Hive.box(_usersBox);
+    await box.put('users_data', content);
   }
 
   Future<List<String>> readUsers() async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getUsersFile();
-        final content = await file.readAsLines();
-        return content;
-      } catch (e) {
-        debugPrint('users file does not exist yet');
-      }
+    final box = Hive.box(_usersBox);
+    final String? content = box.get('users_data');
+    if (content != null) {
+      return LineSplitter().convert(content);
     }
     return List<String>.empty(growable: true);
   }
 
-  Future<File> _getUsersFile() async {
-    final path = await _localPath;
-    return File('$path/users.txt');
-  }
-
   Future<void> writeLastUsersFetch() async {
-    if (!kIsWeb) {
-      final file = await _getLastUsersFetch();
-      file.writeAsString(DateTime.now().millisecondsSinceEpoch.toString());
-    }
+    final box = Hive.box(_metadataBox);
+    await box.put('last_user_fetch', DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<DateTime?> readLastUserFetch() async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getLastUsersFetch();
-        final content = await file.readAsString();
-        return DateTime.fromMillisecondsSinceEpoch(int.parse(content));
-      } catch (e) {
-        debugPrint('last user fetch file does not exist yet');
-      }
+    final box = Hive.box(_metadataBox);
+    final int? timestamp = box.get('last_user_fetch');
+    if (timestamp != null) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
     }
     return null;
   }
 
-  Future<File> _getLastUsersFetch() async {
-    final path = await _localPath;
-    return File('$path/last_user_fetch.txt');
-  }
-
   // * Post Tracking
   Future<void> writePostTrack(final List<String> postTrack) async {
-    if (!kIsWeb) {
-      final file = await _getPostTrackerFile();
-      await file.writeAsString(postTrack.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', ''));
-    }
+    final box = Hive.box(_postTrackBox);
+    await box.put('post_track', postTrack);
   }
 
   Future<List<String>> readPostTrack() async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getPostTrackerFile();
-        final content = await file.readAsString();
-        return content.split(',');
-      } catch (e) {
-        debugPrint('post track file does not exist yet');
-      }
+    final box = Hive.box(_postTrackBox);
+    final dynamic content = box.get('post_track');
+    if (content != null && content is List) {
+      return content.cast<String>();
     }
     return List<String>.empty(growable: true);
-  }
-
-  Future<File> _getPostTrackerFile() async {
-    final path = await _localPath;
-    return File('$path/post_track.txt');
   }
 
   // * Post Data
   Future<void> writePostData(final String id, final String postData) async {
     debugPrint('writing post data for ID: $id');
-    if (!kIsWeb) {
-      final file = await _getPostFile(id);
-      if (!await file.exists()) {
-        file.create(recursive: true).then((createdFile) async => await createdFile.writeAsString(postData));
-      } else {
-        await file.writeAsString(postData);
-      }
-    }
+    final box = Hive.box(_postDataBox);
+    await box.put(id, postData);
   }
 
   Future<List<String>> readPostData(final String id) async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getPostFile(id);
-        return await file.readAsLines();
-      } catch (e) {
-        debugPrint('file for post $id does not exist yet');
-      }
+    final box = Hive.box(_postDataBox);
+    final String? content = box.get(id);
+    if (content != null) {
+      return LineSplitter().convert(content);
     }
     return List<String>.empty();
   }
 
   // delete the post data and the saved video thumbnails
   Future<void> deletePostData(final String id) async {
-    if (!kIsWeb) {
-      try {
-        final dir = await _getPostDirectory(id);
-        dir.delete(recursive: true);
-      } catch (e) {
-        debugPrint('file for post $id does not exist yet');
-      }
-    }
-  }
-
-  Future<Directory> _getPostDirectory(String id) async {
-    final path = await _localPath;
-    return Directory('$path/posts/$id');
-  }
-
-  Future<File> _getPostFile(final String id) async {
-    final path = await _localPath;
-    return File('$path/posts/$id/post_data.txt');
+    final box = Hive.box(_postDataBox);
+    await box.delete(id);
   }
 
   // * Post Templates
   Future<void> writePostTemplateData(final PostTemplate template) async {
-    final path = await _localPath;
-    final File thisTemplateFile = File('$path/post_templates/${template.id}.json');
-
+    final box = Hive.box(_templatesBox);
     final Map<String, dynamic> data = template.toJson(true);
     data['id'] = template.id;
-    final String encodedJson = jsonEncode(data);
-    await thisTemplateFile.writeAsString(encodedJson);
+    await box.put(template.id, data);
   }
 
   Future<List<PostTemplate>> readAllPostTemplates() async {
-    final path = await _localPath;
-    final Directory dir = Directory('$path/post_templates');
-    final List<FileSystemEntity> entities = await dir.list().toList();
-    entities
-        .removeWhere((element) => element.path.contains('tracking.txt') || element.path.contains('check_tracking.txt'));
+    final box = Hive.box(_templatesBox);
     final List<PostTemplate> results = List.empty(growable: true);
 
-    for (final fileEntity in entities) {
-      debugPrint('reading PostTemplate path: ${fileEntity.path}');
-      final File tmpFile = File(fileEntity.path);
-      final String contents = await tmpFile.readAsString();
-      final Map<String, dynamic> contentJson = jsonDecode(contents);
-      results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+    for (final key in box.keys) {
+      if (key != 'last_update' && key != 'check_date') {
+        final dynamic data = box.get(key);
+        if (data != null && data is Map) {
+          final Map<String, dynamic> contentJson = Map<String, dynamic>.from(data);
+          results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+        }
+      }
     }
 
     return results;
   }
 
   Future<int> readLastPostTemplateUpdate() async {
-    final path = await _localPath;
-    final Directory dir = Directory('$path/post_templates');
-    if (!await dir.exists()) {
-      await dir.create();
+    final box = Hive.box(_templatesBox);
+    final int? value = box.get('last_update');
+    if (value != null) {
+      return value;
     }
-
-    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
-    if (await templateTrackingFile.exists()) {
-      final String valStr = await templateTrackingFile.readAsString();
-      return int.parse(valStr);
-    }
-    writeLastPostTemplateUpdate(0);
+    await writeLastPostTemplateUpdate(0);
     return 0;
   }
 
   Future<void> writeLastPostTemplateUpdate(final int value) async {
-    final path = await _localPath;
-    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
-    await templateTrackingFile.writeAsString(value.toString());
+    final box = Hive.box(_templatesBox);
+    await box.put('last_update', value);
   }
 
   Future<bool> haveCheckedTemplateUpdates() async {
     // also updates the date if needed - we'll clumsily just use the day of the week for now...
+    final box = Hive.box(_templatesBox);
+    final int? checkDay = box.get('check_date');
+    final int today = DateTime.now().day;
 
-    final path = await _localPath;
-    final Directory postTemplateDir = Directory('$path/post_templates');
-    if (!await postTemplateDir.exists()) {
-      postTemplateDir.create();
-    }
-
-    final File checkFile = File('$path/post_templates/check_tracking.txt');
-    if (await checkFile.exists() && await checkFile.readAsString() == DateTime.now().day.toString()) {
+    if (checkDay != null && checkDay == today) {
       debugPrint('We have already checked the post templates today');
       return true;
     }
+
     debugPrint('We have to check the post templates');
-    checkFile.writeAsString(DateTime.now().day.toString());
+    await box.put('check_date', today);
     return false;
   }
 
   Future<void> clearPostTemplateDir() async {
-    final path = await _localPath;
-    final Directory dir = Directory('$path/post_templates');
-    final List<FileSystemEntity> entities = await dir.list().toList();
-
-    for (var entity in entities) {
-      await entity.delete();
-    }
-  }
-
-  Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
+    final box = Hive.box(_templatesBox);
+    await box.clear();
   }
 }
