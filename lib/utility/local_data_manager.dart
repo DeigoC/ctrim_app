@@ -12,6 +12,7 @@ class LocalDataManager {
   static const String _postDataBox = 'post_data';
   static const String _templatesBox = 'templates';
   static const String _metadataBox = 'metadata';
+  static const String _imagesCacheBox = 'images_cache';
 
   /// Initialize Hive - call this once at app startup
   static Future<void> initialize() async {
@@ -26,6 +27,7 @@ class LocalDataManager {
       Hive.openBox(_postDataBox),
       Hive.openBox(_templatesBox),
       Hive.openBox(_metadataBox),
+      Hive.openBox(_imagesCacheBox),
     ]);
 
     _initialized = true;
@@ -201,5 +203,98 @@ class LocalDataManager {
   Future<void> clearPostTemplateDir() async {
     final box = Hive.box(_templatesBox);
     await box.clear();
+  }
+
+  // * User Profile Images (cross-platform)
+  /// Save user profile image bytes to cache
+  Future<void> writeUserImage(final String userId, final Uint8List imageBytes) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.put('user_$userId', imageBytes);
+  }
+
+  /// Read user profile image bytes from cache
+  Future<Uint8List?> readUserImage(final String userId) async {
+    final box = Hive.box(_imagesCacheBox);
+    final dynamic data = box.get('user_$userId');
+    if (data != null && data is Uint8List) {
+      return data;
+    }
+    return null;
+  }
+
+  /// Delete user profile image from cache
+  Future<void> deleteUserImage(final String userId) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.delete('user_$userId');
+  }
+
+  /// Check if user profile image exists in cache
+  Future<bool> hasUserImage(final String userId) async {
+    final box = Hive.box(_imagesCacheBox);
+    return box.containsKey('user_$userId');
+  }
+
+  /// Clear all cached images
+  Future<void> clearAllImages() async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.clear();
+  }
+
+  // * Media Images Cache
+  /// Save media image bytes to cache
+  Future<void> writeMediaImage(final String mediaKey, final Uint8List imageBytes) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.put('media_$mediaKey', imageBytes);
+  }
+
+  /// Read media image bytes from cache
+  Future<Uint8List?> readMediaImage(final String mediaKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    final dynamic data = box.get('media_$mediaKey');
+    if (data != null && data is Uint8List) {
+      return data;
+    }
+    return null;
+  }
+
+  /// Delete media image from cache
+  Future<void> deleteMediaImage(final String mediaKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.delete('media_$mediaKey');
+  }
+
+  /// Check if media image exists in cache
+  Future<bool> hasMediaImage(final String mediaKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    return box.containsKey('media_$mediaKey');
+  }
+
+  // * Video Thumbnails Cache
+  /// Save video thumbnail bytes to cache
+  Future<void> writeVideoThumbnail(final String postId, final String videoKey, final Uint8List imageBytes) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.put('video_${postId}_$videoKey', imageBytes);
+  }
+
+  /// Read video thumbnail bytes from cache
+  Future<Uint8List?> readVideoThumbnail(final String postId, final String videoKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    final dynamic data = box.get('video_${postId}_$videoKey');
+    if (data != null && data is Uint8List) {
+      return data;
+    }
+    return null;
+  }
+
+  /// Delete video thumbnail from cache
+  Future<void> deleteVideoThumbnail(final String postId, final String videoKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.delete('video_${postId}_$videoKey');
+  }
+
+  /// Check if video thumbnail exists in cache
+  Future<bool> hasVideoThumbnail(final String postId, final String videoKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    return box.containsKey('video_${postId}_$videoKey');
   }
 }

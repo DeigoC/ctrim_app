@@ -1,4 +1,4 @@
-import 'dart:io' show File, Directory, Platform;
+import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -60,8 +60,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     // * periodic and non-periodic local maintenance
-    if (_appContext.sharedPref.canRefreshUserImages && !kIsWeb) {
-      _performLocalUserImgCleanup();
+    if (_appContext.sharedPref.canRefreshUserImages) {
+      _performUserImageCache();
       _removeLocallySavedPosts();
       _appContext.sharedPref.setUserImageRefreshTime();
     }
@@ -459,32 +459,34 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   // * maintenance work
 
-  void _performLocalUserImgCleanup() async {
-    final String userImgDir = '${_appContext.appDir}/user_imgs';
-    final dir = Directory(userImgDir);
-    if (!await dir.exists()) {
-      debugPrint('creating user_img directory!');
-      await dir.create();
-    }
+  /// Cache user profile images using Hive (works on all platforms including web)
+  Future<void> _performUserImageCache() async {
+    final LocalDataManager localDataManager = LocalDataManager();
 
     for (final user in _appContext.allUsers) {
-      final File potentialUserImg = File('$userImgDir/${user.id}.png');
-      if (user.imgSrc.isNotEmpty) {
-        debugPrint('Creating user profile pic for ${user.forname} ID ${user.id}');
-        _setImageForFile(potentialUserImg, user.imgSrc);
-      } else if (user.imgSrc.isEmpty && await potentialUserImg.exists()) {
-        debugPrint('Deleting user profile pic for ${user.forname} ID ${user.id}');
-        potentialUserImg.delete();
-      } else {
-        debugPrint('doing nothing, no need to create/delete profile pics');
+      final bool hasImage = await localDataManager.hasUserImage(user.id);
+
+      if (user.imgSrc.isNotEmpty && !hasImage) {
+        // User has image URL but not cached - download and cache it
+        debugPrint('Caching user profile pic for ${user.forname} ID ${user.id}');
+        try {
+          final response = await http.get(Uri.parse(user.imgSrc));
+          if (response.statusCode == 200) {
+            await localDataManager.writeUserImage(user.id, response.bodyBytes);
+          }
+        } catch (e) {
+          debugPrint('Error caching image for ${user.forname}: $e');
+        }
+      } else if (user.imgSrc.isEmpty && hasImage) {
+        // User removed image but it's still cached - delete it
+        debugPrint('Deleting cached profile pic for ${user.forname} ID ${user.id}');
+        await localDataManager.deleteUserImage(user.id);
       }
     }
   }
 
-  Future<void> _setImageForFile(final File file, final String src) async {
-    final response = await http.get(Uri.parse(src));
-    file.writeAsBytes(response.bodyBytes);
-  }
+  // Legacy methods removed - now using Hive-based image caching
+  // See _performUserImageCache() above for cross-platform implementation
 
   void _setNotificationTopicsTemp() {
     // we have to check if users are subscribed to the old notification topic (belfast)

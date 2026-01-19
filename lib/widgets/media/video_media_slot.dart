@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+
+import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
 
 class VideoMediaSlot extends StatefulWidget {
   const VideoMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postId});
@@ -25,7 +28,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
       return _buildErrorState();
     }
 
-    return FutureBuilder(
+    return FutureBuilder<Uint8List>(
         future: _attemptToGetOrFetchThumbnail(),
         builder: (_, snap) {
           if (snap.hasData) {
@@ -55,12 +58,12 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
         });
   }
 
-  Widget _buildExistingThumbnail(final File thumbnail) {
+  Widget _buildExistingThumbnail(final Uint8List thumbnail) {
     return InkWell(
         onTap: widget.onTap,
         child: Stack(alignment: Alignment.center, children: [
           Positioned.fill(
-            child: Image.file(
+            child: Image.memory(
               thumbnail,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
@@ -68,7 +71,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
                 if (_retryCount < _maxRetries) {
                   WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    await _deleteThumbnailFile();
+                    await _deleteThumbnailCache();
                     if (mounted) {
                       setState(() {
                         _retryCount++;
@@ -157,21 +160,15 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
   }
 
   // * Logic
-  Future<File> _attemptToGetOrFetchThumbnail() async {
-    final String title = _removeSpecialCharacters(widget.mediaEntry['src']!);
-    final String path = '${(await getApplicationDocumentsDirectory()).path}/posts/${widget.postId}/$title.webp';
-    final File imgFile = File(path);
+  Future<Uint8List> _attemptToGetOrFetchThumbnail() async {
+    final localDataManager = LocalDataManager();
+    final String videoKey = _removeSpecialCharacters(widget.mediaEntry['src']!);
 
-    // Check if thumbnail exists and is valid
-    if (await imgFile.exists()) {
-      final fileSize = await imgFile.length();
-      if (fileSize > 0) {
-        debugPrint('Using existing video thumbnail: $path');
-        return imgFile;
-      } else {
-        debugPrint('Existing thumbnail is empty, deleting and re-downloading');
-        await imgFile.delete();
-      }
+    // Check if thumbnail exists in cache
+    final cachedThumbnail = await localDataManager.readVideoThumbnail(widget.postId, videoKey);
+    if (cachedThumbnail != null && cachedThumbnail.isNotEmpty) {
+      debugPrint('Using cached video thumbnail for: ${widget.postId}/$videoKey');
+      return cachedThumbnail;
     }
 
     // Fetch thumbnail
@@ -184,8 +181,9 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
     debugPrint('Downloading video thumbnail: $thumbSrc');
 
     try {
+      final thumbnailUrl = NetworkImageHelper.getImageUrl(thumbSrc);
       final response = await http.get(
-        Uri.parse(thumbSrc),
+        Uri.parse(thumbnailUrl),
         headers: {'Accept': 'image/*'},
       ).timeout(
         const Duration(seconds: 30),
@@ -198,32 +196,30 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
         throw HttpException('Failed to download thumbnail: HTTP ${response.statusCode}');
       }
 
-      // Ensure directory exists
-      await imgFile.parent.create(recursive: true);
+      final thumbnailBytes = response.bodyBytes;
 
-      await imgFile.writeAsBytes(response.bodyBytes);
-      debugPrint('Saved video thumbnail to: $path');
+      if (thumbnailBytes.isEmpty) {
+        throw Exception('Downloaded thumbnail is empty');
+      }
 
-      return imgFile;
+      // Cache the thumbnail
+      await localDataManager.writeVideoThumbnail(widget.postId, videoKey, thumbnailBytes);
+      debugPrint('Cached video thumbnail for: ${widget.postId}/$videoKey');
+
+      return thumbnailBytes;
     } catch (e) {
       debugPrint('Error downloading video thumbnail: $e');
-      // Clean up partial file if it exists
-      if (await imgFile.exists()) {
-        await imgFile.delete();
-      }
+      // Clean up partial cache if it exists
+      await localDataManager.deleteVideoThumbnail(widget.postId, videoKey);
       rethrow;
     }
   }
 
-  Future<void> _deleteThumbnailFile() async {
-    final String title = _removeSpecialCharacters(widget.mediaEntry['src']!);
-    final String path = '${(await getApplicationDocumentsDirectory()).path}/posts/${widget.postId}/$title.webp';
-    final File file = File(path);
-
-    if (await file.exists()) {
-      debugPrint('Deleting corrupted video thumbnail: $path');
-      await file.delete();
-    }
+  Future<void> _deleteThumbnailCache() async {
+    final localDataManager = LocalDataManager();
+    final String videoKey = _removeSpecialCharacters(widget.mediaEntry['src']!);
+    debugPrint('Deleting corrupted video thumbnail: ${widget.postId}/$videoKey');
+    await localDataManager.deleteVideoThumbnail(widget.postId, videoKey);
   }
 
   String _removeSpecialCharacters(final String webLink) {

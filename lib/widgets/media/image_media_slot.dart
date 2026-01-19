@@ -1,9 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../../utility/app_context.dart';
+import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 
 class ImageMediaSlot extends StatefulWidget {
@@ -23,22 +22,16 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
 
   @override
   Widget build(BuildContext context) {
-    final String? cacheDir = Provider.of<AppContext>(context, listen: false).cacheDir;
-
-    // most likely on the webapp
-    if (cacheDir == null) {
-      return _buildNetworkImage();
-    }
-    return _buildFileImage(cacheDir);
+    return _buildCachedImage();
   }
 
-  Widget _buildFileImage(final String cacheDir) {
+  Widget _buildCachedImage() {
     if (_hasError && _retryCount >= _maxRetries) {
       return _buildErrorState();
     }
 
-    return FutureBuilder(
-        future: _fetchFileImage(cacheDir),
+    return FutureBuilder<Uint8List>(
+        future: _fetchCachedImage(),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
@@ -47,16 +40,16 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
                 onTap: widget.onTap,
                 child: Hero(
                     tag: widget.postID + widget.mediaEntry['src']!,
-                    child: Image.file(
+                    child: Image.memory(
                       snap.data!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        debugPrint('Broken image file detected: ${error.toString()}');
+                        debugPrint('Broken image data detected: ${error.toString()}');
 
                         // Only retry if we haven't exceeded max retries
                         if (_retryCount < _maxRetries) {
                           WidgetsBinding.instance.addPostFrameCallback((_) async {
-                            await _deleteFile(cacheDir);
+                            await _deleteCachedImage();
                             if (mounted) {
                               setState(() {
                                 _retryCount++;
@@ -102,24 +95,6 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
 
           return result;
         });
-  }
-
-  Widget _buildNetworkImage() {
-    return InkWell(
-      onTap: widget.onTap,
-      child: Image.network(
-        NetworkImageHelper.getImageUrl(widget.mediaEntry['src']!),
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return _buildLoadingState();
-        },
-        errorBuilder: (context, error, stackTrace) {
-          debugPrint('Network image error: ${error.toString()}');
-          return _buildErrorState();
-        },
-      ),
-    );
   }
 
   Widget _buildLoadingState() {
@@ -182,62 +157,59 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
   }
 
   // * Logic
-  Future<File> _fetchFileImage(final String cacheDir) async {
-    final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/tmpImages/$sanitisedFilePath.png';
-    final file = File(fullPath);
+  Future<Uint8List> _fetchCachedImage() async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
 
-    if (!await file.exists()) {
-      debugPrint('Creating image file for: $fullPath');
+    // Check if image exists in cache
+    final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
+    if (cachedImage != null && cachedImage.isNotEmpty) {
+      debugPrint('Using cached image for: $sanitisedKey');
+      return cachedImage;
+    }
 
-      try {
-        final response = await http.get(
-          Uri.parse(widget.mediaEntry['src']!),
-          headers: {'Accept': 'image/*'},
-        ).timeout(
-          const Duration(seconds: 30),
-          onTimeout: () {
-            throw TimeoutException('Image download timed out after 30 seconds');
-          },
-        );
+    // Download and cache the image
+    debugPrint('Downloading image for: $sanitisedKey');
+    try {
+      final imageUrl = NetworkImageHelper.getImageUrl(widget.mediaEntry['src']!);
+      final response = await http.get(
+        Uri.parse(imageUrl),
+        headers: {'Accept': 'image/*'},
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw TimeoutException('Image download timed out after 30 seconds');
+        },
+      );
 
-        if (response.statusCode != 200) {
-          throw HttpException('Failed to download image: HTTP ${response.statusCode}');
-        }
-
-        // Ensure directory exists
-        await file.parent.create(recursive: true);
-
-        return await file.writeAsBytes(response.bodyBytes);
-      } catch (e) {
-        debugPrint('Error downloading image: $e');
-        // Clean up partial file if it exists
-        if (await file.exists()) {
-          await file.delete();
-        }
-        rethrow;
+      if (response.statusCode != 200) {
+        throw HttpException('Failed to download image: HTTP ${response.statusCode}');
       }
-    }
 
-    // Verify file is valid before returning
-    if (await file.length() == 0) {
-      debugPrint('Image file is empty, deleting and re-downloading');
-      await file.delete();
-      throw Exception('Cached image file was empty');
-    }
+      final imageBytes = response.bodyBytes;
 
-    return file;
+      if (imageBytes.isEmpty) {
+        throw Exception('Downloaded image is empty');
+      }
+
+      // Cache the image
+      await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
+      debugPrint('Cached image for: $sanitisedKey');
+
+      return imageBytes;
+    } catch (e) {
+      debugPrint('Error downloading image: $e');
+      // Clean up partial cache if it exists
+      await localDataManager.deleteMediaImage(sanitisedKey);
+      rethrow;
+    }
   }
 
-  Future<bool> _deleteFile(final String cacheDir) async {
-    final sanitisedFilePath = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/tmpImages/$sanitisedFilePath.png';
-    final file = File(fullPath);
-    if (await file.exists()) {
-      debugPrint('Deleting corrupted/broken image file: $fullPath');
-      await file.delete();
-    }
-    return true;
+  Future<void> _deleteCachedImage() async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
+    debugPrint('Deleting corrupted/broken cached image: $sanitisedKey');
+    await localDataManager.deleteMediaImage(sanitisedKey);
   }
 }
 
