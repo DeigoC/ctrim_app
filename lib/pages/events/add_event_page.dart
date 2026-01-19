@@ -9,6 +9,7 @@ import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/network_image_helper.dart';
 import '../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
@@ -123,7 +124,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
     return Stack(
       alignment: Alignment.bottomRight,
-      children: [Positioned.fill(child: Image.network(widget.eventContext.head.getKeyGraphic()!, fit: BoxFit.cover))],
+      children: [
+        Positioned.fill(
+            child: Image.network(NetworkImageHelper.getImageUrl(widget.eventContext.head.getKeyGraphic()!),
+                fit: BoxFit.cover))
+      ],
     );
   }
 

@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../utility/event_context.dart';
+import '../../utility/network_image_helper.dart';
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({super.key, required this.eventContext});
@@ -535,7 +536,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.network(
-          _src,
+          NetworkImageHelper.getImageUrl(_src),
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,

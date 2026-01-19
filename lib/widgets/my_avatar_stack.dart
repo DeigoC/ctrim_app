@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/utility/network_image_helper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -19,7 +20,7 @@ class MyAvatarStack extends StatelessWidget {
         final path = '$appDir/user_imgs/${thisU.id}.png';
         avatars.add(FileImage(File(path)));
       } else if (thisU.imgSrc.isNotEmpty) {
-        avatars.add(NetworkImage(thisU.imgSrc));
+        avatars.add(NetworkImage(NetworkImageHelper.getImageUrl(thisU.imgSrc)));
       } else {
         avatars.add(const AssetImage('assets/images/Generic-Profile.jpg'));
       }

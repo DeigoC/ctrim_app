@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../utility/app_context.dart';
+import '../../utility/network_image_helper.dart';
 
 class ImageMediaSlot extends StatefulWidget {
   const ImageMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postID});
@@ -107,7 +108,7 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
     return InkWell(
       onTap: widget.onTap,
       child: Image.network(
-        widget.mediaEntry['src']!,
+        NetworkImageHelper.getImageUrl(widget.mediaEntry['src']!),
         fit: BoxFit.cover,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;

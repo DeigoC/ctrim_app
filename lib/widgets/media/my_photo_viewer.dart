@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/network_image_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,8 @@ class MyPhotoViewer extends StatelessWidget {
     final fullPath = '$cacheDir/$sanitisedFilePath.png';
     final file = File(fullPath);
 
-    final ImageProvider image = (file.existsSync() ? FileImage(file) : NetworkImage(src)) as ImageProvider;
+    final ImageProvider image =
+        (file.existsSync() ? FileImage(file) : NetworkImage(NetworkImageHelper.getImageUrl(src))) as ImageProvider;
     return InkWell(
       onTap: () {
         // debugPrint('tap once');

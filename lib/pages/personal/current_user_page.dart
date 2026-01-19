@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/network_image_helper.dart';
 import '../../widgets/user_avatar.dart';
 
 class CurrentUserPage extends StatefulWidget {
@@ -82,7 +83,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
   Widget _buildImageFB() {
     if (_canSave) {
       return Image.network(
-        _src,
+        NetworkImageHelper.getImageUrl(_src),
         fit: BoxFit.contain,
       );
     }

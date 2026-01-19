@@ -16,6 +16,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
@@ -252,7 +253,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           },
         );
       } else {
-        return Image.network(keyGraphicSrc, fit: BoxFit.cover);
+        return Image.network(NetworkImageHelper.getImageUrl(keyGraphicSrc), fit: BoxFit.cover);
       }
     }
     return null;

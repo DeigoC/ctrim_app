@@ -12,6 +12,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
+import '../utility/network_image_helper.dart';
 import '../widgets/info/timed_button_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
@@ -422,10 +423,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         foregroundDecoration: BoxDecoration(
                             borderRadius:
                                 const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                            image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.fill)),
+                            image: DecorationImage(
+                                image: NetworkImage(NetworkImageHelper.getImageUrl(imageUrl)), fit: BoxFit.fill)),
                         child: Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Image.network(imageUrl) // so jank lol! It works though
+                            child:
+                                Image.network(NetworkImageHelper.getImageUrl(imageUrl)) // so jank lol! It works though
                             ))
                     : Container(),
                 imageUrl != null ? const SizedBox(height: 16) : const SizedBox(height: 24),

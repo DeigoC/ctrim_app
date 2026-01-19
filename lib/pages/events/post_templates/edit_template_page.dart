@@ -3,6 +3,7 @@ import 'package:ctrim_app/models/post_template.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/local_data_manager.dart';
+import 'package:ctrim_app/utility/network_image_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
@@ -109,7 +110,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
             const SizedBox(height: 8),
             Text(
               'Add multiple subtitles that can be randomly or manually selected when creating posts from this template.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             if (_subtitles.isEmpty)
@@ -318,7 +322,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     }
     return Stack(
       alignment: Alignment.bottomRight,
-      children: [Positioned.fill(child: Image.network(widget.eventContext.head.getKeyGraphic()!, fit: BoxFit.cover))],
+      children: [
+        Positioned.fill(
+            child: Image.network(NetworkImageHelper.getImageUrl(widget.eventContext.head.getKeyGraphic()!),
+                fit: BoxFit.cover))
+      ],
     );
   }
 

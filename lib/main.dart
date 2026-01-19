@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:ctrim_app/firebase_options.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -42,6 +43,10 @@ void main() async {
   } else {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
+
+  // Initialize Firebase App Check for DDoS/abuse protection
+  await FirebaseAppCheck.instance
+      .activate(providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'));
 
   // * Make sure we connect to the emulator on debug
   // if (kDebugMode) {
