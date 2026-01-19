@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
@@ -238,23 +238,17 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
 
     if (keyGraphicSrc != null) {
-      if (!kIsWeb) {
-        return FutureBuilder(
-          future: _fetchImage(keyGraphicSrc),
-          builder: (_, snapshot) {
-            Widget result = const Center(child: CircularProgressIndicator());
-            if (snapshot.hasData) {
-              return Image.file(snapshot.data!, fit: BoxFit.cover);
-            } else if (snapshot.hasError) {
-              return const Center(child: Text('Something went wrong trying to get the image'));
-            }
-
-            return result;
-          },
-        );
-      } else {
-        return Image.network(NetworkImageHelper.getImageUrl(keyGraphicSrc), fit: BoxFit.cover);
-      }
+      return FutureBuilder<Uint8List?>(
+        future: _fetchImage(keyGraphicSrc),
+        builder: (_, snapshot) {
+          if (snapshot.hasData && snapshot.data != null) {
+            return Image.memory(snapshot.data!, fit: BoxFit.cover);
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong trying to get the image'));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
     }
     return null;
   }
@@ -295,18 +289,52 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
-  Future<File> _fetchImage(final String src) async {
-    final dir = await getTemporaryDirectory();
-    final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '${dir.path}/$sanitisedFilePath.png';
-    final file = File(fullPath);
+  Future<Uint8List> _fetchImage(final String src) async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = src.replaceAll(RegExp(r'[^\w]'), '');
 
-    if (!await file.exists()) {
-      debugPrint('Creating image file for: $fullPath');
-      final response = await http.get(Uri.parse(src));
-      return await file.writeAsBytes(response.bodyBytes);
+    // Check if image exists in cache
+    final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
+    if (cachedImage != null && cachedImage.isNotEmpty) {
+      debugPrint('Using cached key graphic for: $sanitisedKey');
+      return cachedImage;
     }
-    return file;
+
+    // Download and cache the image
+    debugPrint('Downloading key graphic for: $sanitisedKey');
+    try {
+      final imageUrl = NetworkImageHelper.getImageUrl(src);
+      final response = await http.get(
+        Uri.parse(imageUrl),
+        headers: {'Accept': 'image/*'},
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw TimeoutException('Image download timed out after 30 seconds');
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw HttpException('Failed to download image: HTTP ${response.statusCode}');
+      }
+
+      final imageBytes = response.bodyBytes;
+
+      if (imageBytes.isEmpty) {
+        throw Exception('Downloaded image is empty');
+      }
+
+      // Cache the image
+      await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
+      debugPrint('Cached key graphic for: $sanitisedKey');
+
+      return imageBytes;
+    } catch (e) {
+      debugPrint('Error downloading key graphic: $e');
+      // Clean up partial cache if it exists
+      await localDataManager.deleteMediaImage(sanitisedKey);
+      rethrow;
+    }
   }
 
   Future<bool> _fetchEssentialPostData() async {

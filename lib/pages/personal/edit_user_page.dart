@@ -1,13 +1,14 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/utility/local_data_manager.dart';
+import 'package:ctrim_app/utility/network_image_helper.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 class EditUserPage extends StatefulWidget {
@@ -279,11 +280,20 @@ class _EditUserPageState extends State<EditUserPage> {
     });
 
     try {
-      // Test if the image is accessible
-      await _fetchFile();
-      setState(() {
-        _canSave = true;
-      });
+      // Test if the image is accessible via HEAD request
+      final imageUrl = NetworkImageHelper.getImageUrl(_src);
+      final response = await http.head(
+        Uri.parse(imageUrl),
+        headers: {'User-Agent': 'Mozilla/5.0 (compatible; Image-Validator/1.0)'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _canSave = true;
+        });
+      } else {
+        throw Exception('HTTP ${response.statusCode}');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -371,18 +381,11 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Future<void> _updateLocalImageData() async {
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final String userImgDir = '${appContext.appDir}/user_imgs';
-
-    // Create directory if it doesn't exist
-    final dir = Directory(userImgDir);
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-
-    final File imageFile = File('$userImgDir/${widget.user.id}.png');
-    final response = await http.get(Uri.parse(_src));
-    await imageFile.writeAsBytes(response.bodyBytes);
+    final localDataManager = LocalDataManager();
+    final imageUrl = NetworkImageHelper.getImageUrl(_src);
+    final response = await http.get(Uri.parse(imageUrl));
+    await localDataManager.writeUserImage(widget.user.id, response.bodyBytes);
+    debugPrint('Cached updated user image for: ${widget.user.id}');
   }
 
   String _sanitiseSrc() {
@@ -393,14 +396,6 @@ class _EditUserPageState extends State<EditUserPage> {
       return 'https://drive.google.com/uc?id=$id';
     }
     return _tecImgSrc.text.trim();
-  }
-
-  Future<File> _fetchFile() async {
-    final dir = await getTemporaryDirectory();
-    final String tmpPath = '${dir.path}/tmp_user_edit.png';
-    final File tmp = File(tmpPath);
-    final response = await http.get(Uri.parse(_src));
-    return await tmp.writeAsBytes(response.bodyBytes);
   }
 
   void _onHelpClick() {

@@ -749,7 +749,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     try {
       final dir = await getTemporaryDirectory();
       _src = _sanitiseSrc();
-      debugPrint('Fetching from: $_src');
+      final srcUrl = NetworkImageHelper.getImageUrl(_src);
+      debugPrint('Fetching from: $srcUrl');
 
       final String type = isImage ? '.png' : '.mp4';
       final String tmpPath = '${dir.path}/tmp$type';
@@ -761,7 +762,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       }
 
       final response = await http.get(
-        Uri.parse(_src),
+        Uri.parse(srcUrl),
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Media-Fetcher/1.0)',
         },
@@ -783,11 +784,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   Future<File?> _validateMediaOnWeb(bool isImage) async {
     try {
       _src = _sanitiseSrc();
-      debugPrint('Validating web media from: $_src');
+      final srcUrl = NetworkImageHelper.getImageUrl(_src);
+      debugPrint('Validating web media from: $srcUrl');
 
       // Use HEAD request to get content length without downloading
       final response = await http.head(
-        Uri.parse(_src),
+        Uri.parse(srcUrl),
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Media-Fetcher/1.0)',
         },

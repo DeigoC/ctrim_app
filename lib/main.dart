@@ -229,13 +229,8 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    if (kIsWeb) {
-      pref.setString('usersData', allUsersContent);
-      pref.setString('lastUserFetch', DateTime.now().millisecondsSinceEpoch.toString());
-    } else {
-      await dataManager.writeUsersList(allUsersContent);
-      await dataManager.writeLastUsersFetch();
-    }
+    await dataManager.writeUsersList(allUsersContent);
+    await dataManager.writeLastUsersFetch();
 
     pref.setBool('fetchUserImages', true); // refresh user image fetch
     return allUsers;
