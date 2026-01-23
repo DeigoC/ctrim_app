@@ -6,6 +6,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/posts/post_head.dart';
+import '../widgets/bulletin/bulletin_first_time_dialog.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -34,6 +35,13 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     _refreshAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _refreshAnimationController, curve: Curves.easeOut),
     );
+
+    // Show first-time dialog if user hasn't seen it
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_appContext.sharedPref.hasSeenBulletinDialog) {
+        _showBulletinFirstTimeDialog();
+      }
+    });
 
     super.initState();
   }
@@ -338,6 +346,16 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   }
 
   // * Logic
+  void _showBulletinFirstTimeDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const BulletinFirstTimeDialog(),
+    ).then((_) {
+      _appContext.sharedPref.setHasSeenBulletinDialog();
+    });
+  }
+
   Future<void> _onRefresh() async {
     if (_appContext.sharedPref.canRefreshPosts) {
       debugPrint('refreshing now!');

@@ -73,90 +73,101 @@ void main() async {
     debugPrint('-------- error getting directories: $e');
   } finally {}
 
-  // * First up, we log the returning user in, otherwise it's a guest
+  // * Always start as guest, then silently upgrade if credentials exist
   final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
 
-  String? authID;
-  ctrim.User? currentUser;
+  // Create initial guest context and run app immediately
+  final AppContext guestContext =
+      AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir, analytics: analytics);
 
-  if (email != null && email != '' && pass != null && pass != '') {
-    debugPrint('email is $email and pass is $pass');
-    try {
-      authID =
-          await authManager.loginAndReturnAuthID(prefInstance.getString('email')!, prefInstance.getString('password')!);
-    } on FirebaseAuthException catch (e) {
-      // means that there was no user
-      debugPrint('error on attempting to sign in: $e');
-    }
-  }
+  runApp(ChangeNotifierProvider(
+      create: (_) => guestContext,
+      child: MyApp(
+        settingsController: settingsController,
+      )));
 
-  // user has logged in before, we fetch the data as per usual and open the app to home
-  if (authID != null) {
-    final UserDBManager userDBManager = UserDBManager();
-    currentUser = await userDBManager.fetchUserByAuthID(authID);
+  // Fetch essential data in background for all users (guests and authenticated)
+  _fetchEssentialDataInBackground(guestContext, prefInstance, authManager, eventHeadDBManager, email, pass);
+}
 
-    // * Then fetch the rest of the important data
-    final allUsers = await _fetchAllUsers(prefInstance);
+Future<void> _fetchEssentialDataInBackground(
+  AppContext guestContext,
+  SharedPreferences prefInstance,
+  AuthManager authManager,
+  EventHeadDBManager eventHeadDBManager,
+  String? email,
+  String? pass,
+) async {
+  // First, fetch event heads for guest users (or anyone) - this makes content visible immediately
+  try {
     final heads = await eventHeadDBManager.fetchEventHeads();
+    final allUsers = await _fetchAllUsers(prefInstance);
 
-    // * User Related work
-    // this is dumb, we need to move the local data writing logic to it's own class so
-    // it can be called anywhere and remove the need to do these weird, hacky things!
-    if (currentUser != null) {
-      // sort out the user roles. We first figure out what roles to remove
-      currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
-      final List<String> postsToRemove = [];
-      for (final roleEntry in currentUser.roles!) {
-        if (heads.any((e) => e.id == roleEntry['postID'])) {
-          final thisPost = heads.firstWhere((e) => e.id == roleEntry['postID']);
-          if (thisPost.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
-            postsToRemove.add(thisPost.id);
-          }
-        } else {
-          postsToRemove.add(roleEntry['postID']);
-        }
-      }
+    // Update guest context with initial data
+    guestContext.addAllEventHeads(heads);
+    guestContext.allUsers.addAll(allUsers);
+    guestContext.sortPostsByIndex();
+    guestContext.rebuildPlease();
 
-      // perform the removal if necessary
-      if (postsToRemove.isNotEmpty) {
-        debugPrint('removing the following dated roles: $postsToRemove');
-        currentUser.removeRoles(postsToRemove);
-        for (final postID in postsToRemove) {
-          await userDBManager.removeUserPostRole(currentUser.id, postID);
-        }
-      }
-
-      // after the work on user roles, finish with putting the user in with the rest
-      allUsers.removeWhere((e) => e.id == currentUser!.id);
-      allUsers.add(currentUser);
-    }
-
-    // * Create the AppContext, setup the FCM and run the app
-    final AppContext appContext = AppContext(
-        heads: heads,
-        allUsers: allUsers,
-        prefInstance: prefInstance,
-        user: currentUser,
-        analytics: analytics,
-        cacheDir: cacheDir,
-        appDir: appDir);
-    runApp(ChangeNotifierProvider(
-        create: (_) => appContext,
-        child: MyApp(
-          settingsController: settingsController,
-          openWelcomePage: false,
-        )));
+    debugPrint('Successfully loaded ${heads.length} posts for guest user');
+  } catch (e) {
+    debugPrint('Error fetching initial data for guest: $e');
   }
-  // otherwise we open the welcome page! we perform the rest of the fetching at the end of that page
-  else {
-    final AppContext appContext =
-        AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir, analytics: analytics);
-    runApp(ChangeNotifierProvider(
-        create: (_) => appContext,
-        child: MyApp(
-          settingsController: settingsController,
-          openWelcomePage: true,
-        )));
+
+  // Then try to upgrade to authenticated user if credentials exist
+  if (email != null && email != '' && pass != null && pass != '') {
+    debugPrint('Found stored credentials, attempting background login...');
+    try {
+      final authID = await authManager.loginAndReturnAuthID(email, pass);
+
+      final UserDBManager userDBManager = UserDBManager();
+      final currentUser = await userDBManager.fetchUserByAuthID(authID);
+
+      if (currentUser != null) {
+        // Fetch fresh data for authenticated user
+        final allUsers = await _fetchAllUsers(prefInstance);
+        final heads = await eventHeadDBManager.fetchEventHeads();
+
+        // User roles cleanup
+        currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
+        final List<String> postsToRemove = [];
+        for (final roleEntry in currentUser.roles!) {
+          if (heads.any((e) => e.id == roleEntry['postID'])) {
+            final thisPost = heads.firstWhere((e) => e.id == roleEntry['postID']);
+            if (thisPost.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
+              postsToRemove.add(thisPost.id);
+            }
+          } else {
+            postsToRemove.add(roleEntry['postID']);
+          }
+        }
+
+        // Perform role removal if necessary
+        if (postsToRemove.isNotEmpty) {
+          debugPrint('removing the following dated roles: $postsToRemove');
+          currentUser.removeRoles(postsToRemove);
+          for (final postID in postsToRemove) {
+            await userDBManager.removeUserPostRole(currentUser.id, postID);
+          }
+        }
+
+        // Add current user to all users list
+        allUsers.removeWhere((e) => e.id == currentUser.id);
+        allUsers.add(currentUser);
+
+        // Update the context with authenticated user data (this will refresh the UI with user-specific data)
+        guestContext.upgradeToAuthenticatedUser(
+          user: currentUser,
+          heads: heads,
+          allUsers: allUsers,
+        );
+
+        debugPrint('Successfully upgraded guest to authenticated user: ${currentUser.forname}');
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Background login failed: $e');
+      // Stay as guest with already-loaded data
+    }
   }
 }
 
