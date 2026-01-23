@@ -3,9 +3,37 @@ import 'dart:io';
 
 import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalDataManager {
+  static bool _initialized = false;
+  static const String _usersBox = 'users_cache';
+  static const String _postTrackBox = 'post_track';
+  static const String _postDataBox = 'post_data';
+  static const String _templatesBox = 'templates';
+  static const String _metadataBox = 'metadata';
+  static const String _imagesCacheBox = 'images_cache';
+
+  /// Initialize Hive - call this once at app startup
+  static Future<void> initialize() async {
+    if (_initialized) return;
+
+    await Hive.initFlutter();
+
+    // Open all required boxes
+    await Future.wait([
+      Hive.openBox(_usersBox),
+      Hive.openBox(_postTrackBox),
+      Hive.openBox(_postDataBox),
+      Hive.openBox(_templatesBox),
+      Hive.openBox(_metadataBox),
+      Hive.openBox(_imagesCacheBox),
+    ]);
+
+    _initialized = true;
+    debugPrint('LocalDataManager: Hive initialized');
+  }
+
   // ? Perform cache cleanup - to be run periodically?
   Future<void> cleanupCache(final String cacheDir) async {
     if (!kIsWeb) {
@@ -20,211 +48,253 @@ class LocalDataManager {
 
   // * Users
   Future<void> writeUsersList(final String content) async {
-    if (!kIsWeb) {
-      final file = await _getUsersFile();
-      await file.writeAsString(content);
-    }
+    final box = Hive.box(_usersBox);
+    await box.put('users_data', content);
   }
 
   Future<List<String>> readUsers() async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getUsersFile();
-        final content = await file.readAsLines();
-        return content;
-      } catch (e) {
-        debugPrint('users file does not exist yet');
-      }
+    final box = Hive.box(_usersBox);
+    final String? content = box.get('users_data');
+    if (content != null) {
+      return LineSplitter().convert(content);
     }
     return List<String>.empty(growable: true);
   }
 
-  Future<File> _getUsersFile() async {
-    final path = await _localPath;
-    return File('$path/users.txt');
-  }
-
   Future<void> writeLastUsersFetch() async {
-    if (!kIsWeb) {
-      final file = await _getLastUsersFetch();
-      file.writeAsString(DateTime.now().millisecondsSinceEpoch.toString());
-    }
+    final box = Hive.box(_metadataBox);
+    await box.put('last_user_fetch', DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<DateTime?> readLastUserFetch() async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getLastUsersFetch();
-        final content = await file.readAsString();
-        return DateTime.fromMillisecondsSinceEpoch(int.parse(content));
-      } catch (e) {
-        debugPrint('last user fetch file does not exist yet');
+    final box = Hive.box(_metadataBox);
+    final dynamic value = box.get('last_user_fetch');
+    if (value != null) {
+      // Handle both int and string (for old SharedPreferences data)
+      if (value is int) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      } else if (value is String) {
+        try {
+          return DateTime.fromMillisecondsSinceEpoch(int.parse(value));
+        } catch (e) {
+          debugPrint('Error parsing last_user_fetch: $e');
+        }
       }
     }
     return null;
   }
 
-  Future<File> _getLastUsersFetch() async {
-    final path = await _localPath;
-    return File('$path/last_user_fetch.txt');
-  }
-
   // * Post Tracking
   Future<void> writePostTrack(final List<String> postTrack) async {
-    if (!kIsWeb) {
-      final file = await _getPostTrackerFile();
-      await file.writeAsString(postTrack.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', ''));
-    }
+    final box = Hive.box(_postTrackBox);
+    await box.put('post_track', postTrack);
   }
 
   Future<List<String>> readPostTrack() async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getPostTrackerFile();
-        final content = await file.readAsString();
-        return content.split(',');
-      } catch (e) {
-        debugPrint('post track file does not exist yet');
-      }
+    final box = Hive.box(_postTrackBox);
+    final dynamic content = box.get('post_track');
+    if (content != null && content is List) {
+      return content.cast<String>();
     }
     return List<String>.empty(growable: true);
-  }
-
-  Future<File> _getPostTrackerFile() async {
-    final path = await _localPath;
-    return File('$path/post_track.txt');
   }
 
   // * Post Data
   Future<void> writePostData(final String id, final String postData) async {
     debugPrint('writing post data for ID: $id');
-    if (!kIsWeb) {
-      final file = await _getPostFile(id);
-      if (!await file.exists()) {
-        file.create(recursive: true).then((createdFile) async => await createdFile.writeAsString(postData));
-      } else {
-        await file.writeAsString(postData);
-      }
-    }
+    final box = Hive.box(_postDataBox);
+    await box.put(id, postData);
   }
 
   Future<List<String>> readPostData(final String id) async {
-    if (!kIsWeb) {
-      try {
-        final file = await _getPostFile(id);
-        return await file.readAsLines();
-      } catch (e) {
-        debugPrint('file for post $id does not exist yet');
-      }
+    final box = Hive.box(_postDataBox);
+    final String? content = box.get(id);
+    if (content != null) {
+      return LineSplitter().convert(content);
     }
     return List<String>.empty();
   }
 
   // delete the post data and the saved video thumbnails
   Future<void> deletePostData(final String id) async {
-    if (!kIsWeb) {
-      try {
-        final dir = await _getPostDirectory(id);
-        dir.delete(recursive: true);
-      } catch (e) {
-        debugPrint('file for post $id does not exist yet');
-      }
-    }
-  }
-
-  Future<Directory> _getPostDirectory(String id) async {
-    final path = await _localPath;
-    return Directory('$path/posts/$id');
-  }
-
-  Future<File> _getPostFile(final String id) async {
-    final path = await _localPath;
-    return File('$path/posts/$id/post_data.txt');
+    final box = Hive.box(_postDataBox);
+    await box.delete(id);
   }
 
   // * Post Templates
   Future<void> writePostTemplateData(final PostTemplate template) async {
-    final path = await _localPath;
-    final File thisTemplateFile = File('$path/post_templates/${template.id}.json');
-
+    final box = Hive.box(_templatesBox);
     final Map<String, dynamic> data = template.toJson(true);
     data['id'] = template.id;
-    final String encodedJson = jsonEncode(data);
-    await thisTemplateFile.writeAsString(encodedJson);
+    await box.put(template.id, data);
   }
 
   Future<List<PostTemplate>> readAllPostTemplates() async {
-    final path = await _localPath;
-    final Directory dir = Directory('$path/post_templates');
-    final List<FileSystemEntity> entities = await dir.list().toList();
-    entities
-        .removeWhere((element) => element.path.contains('tracking.txt') || element.path.contains('check_tracking.txt'));
+    final box = Hive.box(_templatesBox);
     final List<PostTemplate> results = List.empty(growable: true);
 
-    for (final fileEntity in entities) {
-      debugPrint('reading PostTemplate path: ${fileEntity.path}');
-      final File tmpFile = File(fileEntity.path);
-      final String contents = await tmpFile.readAsString();
-      final Map<String, dynamic> contentJson = jsonDecode(contents);
-      results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+    for (final key in box.keys) {
+      if (key != 'last_update' && key != 'check_date') {
+        final dynamic data = box.get(key);
+        if (data != null && data is Map) {
+          final Map<String, dynamic> contentJson = Map<String, dynamic>.from(data);
+          results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+        }
+      }
     }
 
     return results;
   }
 
   Future<int> readLastPostTemplateUpdate() async {
-    final path = await _localPath;
-    final Directory dir = Directory('$path/post_templates');
-    if (!await dir.exists()) {
-      await dir.create();
+    final box = Hive.box(_templatesBox);
+    final dynamic value = box.get('last_update');
+    if (value != null) {
+      // Handle both int and string (for old file-based data)
+      if (value is int) {
+        return value;
+      } else if (value is String) {
+        try {
+          return int.parse(value);
+        } catch (e) {
+          debugPrint('Error parsing last_update: $e');
+        }
+      }
     }
-
-    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
-    if (await templateTrackingFile.exists()) {
-      final String valStr = await templateTrackingFile.readAsString();
-      return int.parse(valStr);
-    }
-    writeLastPostTemplateUpdate(0);
+    await writeLastPostTemplateUpdate(0);
     return 0;
   }
 
   Future<void> writeLastPostTemplateUpdate(final int value) async {
-    final path = await _localPath;
-    final File templateTrackingFile = File('$path/post_templates/tracking.txt');
-    await templateTrackingFile.writeAsString(value.toString());
+    final box = Hive.box(_templatesBox);
+    await box.put('last_update', value);
   }
 
   Future<bool> haveCheckedTemplateUpdates() async {
     // also updates the date if needed - we'll clumsily just use the day of the week for now...
+    final box = Hive.box(_templatesBox);
+    final dynamic checkDay = box.get('check_date');
+    final int today = DateTime.now().day;
 
-    final path = await _localPath;
-    final Directory postTemplateDir = Directory('$path/post_templates');
-    if (!await postTemplateDir.exists()) {
-      postTemplateDir.create();
+    if (checkDay != null) {
+      // Handle both int and string (for old file-based data)
+      int? dayValue;
+      if (checkDay is int) {
+        dayValue = checkDay;
+      } else if (checkDay is String) {
+        try {
+          dayValue = int.parse(checkDay);
+        } catch (e) {
+          debugPrint('Error parsing check_date: $e');
+        }
+      }
+
+      if (dayValue == today) {
+        debugPrint('We have already checked the post templates today');
+        return true;
+      }
     }
 
-    final File checkFile = File('$path/post_templates/check_tracking.txt');
-    if (await checkFile.exists() && await checkFile.readAsString() == DateTime.now().day.toString()) {
-      debugPrint('We have already checked the post templates today');
-      return true;
-    }
     debugPrint('We have to check the post templates');
-    checkFile.writeAsString(DateTime.now().day.toString());
+    await box.put('check_date', today);
     return false;
   }
 
   Future<void> clearPostTemplateDir() async {
-    final path = await _localPath;
-    final Directory dir = Directory('$path/post_templates');
-    final List<FileSystemEntity> entities = await dir.list().toList();
-
-    for (var entity in entities) {
-      await entity.delete();
-    }
+    final box = Hive.box(_templatesBox);
+    await box.clear();
   }
 
-  Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
+  // * User Profile Images (cross-platform)
+  /// Save user profile image bytes to cache
+  Future<void> writeUserImage(final String userId, final Uint8List imageBytes) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.put('user_$userId', imageBytes);
+  }
+
+  /// Read user profile image bytes from cache
+  Future<Uint8List?> readUserImage(final String userId) async {
+    final box = Hive.box(_imagesCacheBox);
+    final dynamic data = box.get('user_$userId');
+    if (data != null && data is Uint8List) {
+      return data;
+    }
+    return null;
+  }
+
+  /// Delete user profile image from cache
+  Future<void> deleteUserImage(final String userId) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.delete('user_$userId');
+  }
+
+  /// Check if user profile image exists in cache
+  Future<bool> hasUserImage(final String userId) async {
+    final box = Hive.box(_imagesCacheBox);
+    return box.containsKey('user_$userId');
+  }
+
+  /// Clear all cached images
+  Future<void> clearAllImages() async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.clear();
+  }
+
+  // * Media Images Cache
+  /// Save media image bytes to cache
+  Future<void> writeMediaImage(final String mediaKey, final Uint8List imageBytes) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.put('media_$mediaKey', imageBytes);
+  }
+
+  /// Read media image bytes from cache
+  Future<Uint8List?> readMediaImage(final String mediaKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    final dynamic data = box.get('media_$mediaKey');
+    if (data != null && data is Uint8List) {
+      return data;
+    }
+    return null;
+  }
+
+  /// Delete media image from cache
+  Future<void> deleteMediaImage(final String mediaKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.delete('media_$mediaKey');
+  }
+
+  /// Check if media image exists in cache
+  Future<bool> hasMediaImage(final String mediaKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    return box.containsKey('media_$mediaKey');
+  }
+
+  // * Video Thumbnails Cache
+  /// Save video thumbnail bytes to cache
+  Future<void> writeVideoThumbnail(final String postId, final String videoKey, final Uint8List imageBytes) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.put('video_${postId}_$videoKey', imageBytes);
+  }
+
+  /// Read video thumbnail bytes from cache
+  Future<Uint8List?> readVideoThumbnail(final String postId, final String videoKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    final dynamic data = box.get('video_${postId}_$videoKey');
+    if (data != null && data is Uint8List) {
+      return data;
+    }
+    return null;
+  }
+
+  /// Delete video thumbnail from cache
+  Future<void> deleteVideoThumbnail(final String postId, final String videoKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    await box.delete('video_${postId}_$videoKey');
+  }
+
+  /// Check if video thumbnail exists in cache
+  Future<bool> hasVideoThumbnail(final String postId, final String videoKey) async {
+    final box = Hive.box(_imagesCacheBox);
+    return box.containsKey('video_${postId}_$videoKey');
   }
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
+import 'messaging_manager.dart';
 
 class CloudFunctionManager {
   static final _inst = FirebaseFunctions.instanceFor(region: 'europe-west1');
@@ -52,6 +53,8 @@ class CloudFunctionManager {
     }
   }
 
+  /// Send notification to topic and also to all web tokens
+  /// This ensures web users receive topic notifications too
   Future<void> sendToTopic(
       {required String topic,
       required String title,
@@ -71,9 +74,31 @@ class CloudFunctionManager {
     };
 
     if (!kDebugMode) {
-      final HttpsCallable callable = _inst.httpsCallable('send_to_topic');
-      final result = await callable.call(callParams);
-      debugPrint(result.data.toString());
+      // Send to topic (iOS/Android)
+      final HttpsCallable topicCallable = _inst.httpsCallable('send_to_topic');
+      final topicResult = await topicCallable.call(callParams);
+      debugPrint('Topic notification sent: ${topicResult.data}');
+
+      // Get web tokens for general notifications
+      final webTokens = await MessagingManager.getWebTokens();
+
+      // Get web tokens subscribed to this specific topic
+      final webTopicTokens = await MessagingManager.getWebTokensForTopic(topic);
+
+      // Combine and deduplicate tokens
+      final allWebTokens = {...webTokens, ...webTopicTokens}.toList();
+
+      if (allWebTokens.isNotEmpty) {
+        debugPrint('Sending to ${allWebTokens.length} web tokens (${webTopicTokens.length} topic-specific)...');
+        await sendMessageToSelectedTokens(
+          tokens: allWebTokens,
+          title: title,
+          body: body,
+          data: data,
+          androidImage: androidImage,
+          iOSImage: iOSImage,
+        );
+      }
     } else {
       debugPrint('------------------------');
       debugPrint('in debug - send_to_topic was meant to be called. The following are the details to be sent:');

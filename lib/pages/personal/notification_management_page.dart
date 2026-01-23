@@ -39,7 +39,6 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
         const Divider(),
         const Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0), child: Text('Belfast', style: TextStyle(fontSize: 24))),
-        // TODO remove this one for the new approach when that's finished
         SwitchListTile(
             title: const Text('Sunday Worship Service'),
             value: _appContext.sharedPref.isSubscribedToTopic('belfast-sunday-service'),

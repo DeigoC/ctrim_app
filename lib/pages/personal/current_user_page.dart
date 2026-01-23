@@ -1,14 +1,13 @@
-import 'dart:io';
-
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../firebase/db_managers/user_db_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
 import '../../widgets/user_avatar.dart';
 
 class CurrentUserPage extends StatefulWidget {
@@ -80,36 +79,33 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
   }
 
   Widget _buildImageFB() {
-    if (_canSave) {
-      return Image.network(
-        _src,
-        fit: BoxFit.contain,
-      );
-    }
     return FutureBuilder(
-        future: _fetchFile(),
+        future: _validateAndFetchImage(),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
           if (snap.hasData) {
-            final file = snap.data!;
-            final double sizeInKb = file.lengthSync() / 1024;
+            final imageSizeKb = snap.data!;
 
-            if (sizeInKb <= 512) {
+            if (imageSizeKb <= 512) {
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
                   _canSave = true;
                 });
               });
 
-              result = Image.file(file, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) {
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  setState(() {
-                    _canSave = false;
+              result = Image.network(
+                NetworkImageHelper.getImageUrl(_src),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                    setState(() {
+                      _canSave = false;
+                    });
                   });
-                });
-                return const Text('Could not load image!');
-              });
+                  return const Text('Could not load image!');
+                },
+              );
             } else {
               result = Center(
                   child: Column(
@@ -117,7 +113,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'File size is too large at ${sizeInKb.toStringAsFixed(2)} KB (maximum of 512KB). Please compress image or use alternative!',
+                    'File size is too large at ${imageSizeKb.toStringAsFixed(2)} KB (maximum of 512KB). Please compress image or use alternative!',
                     textAlign: TextAlign.center,
                   ),
                   TextButton(
@@ -166,12 +162,12 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
   }
 
   Future<void> _updateLocalImageData() async {
-    // test 1: https://www.telegraph.co.uk/content/dam/news/2023/10/23/TELEMMGLPICT000354126211_16980823860620_trans_NvBQzQNjv4BqvHgR6FlQBWwWYT9wGhM60kWy_sGK6oioMu5BzggyGUY.jpeg?imwidth=350
-    // test 2: https://image.petmd.com/files/styles/863x625/public/2022-06/lounging-cat.jpg
-    final String userImgDir = '${_appContext.appDir}/user_imgs';
-    final File imageFile = File('$userImgDir/${_appContext.currentUser.id}.png');
-    final response = await http.get(Uri.parse(_src));
-    await imageFile.writeAsBytes(response.bodyBytes);
+    // Download and cache the user's new profile image
+    final localDataManager = LocalDataManager();
+    final imageUrl = NetworkImageHelper.getImageUrl(_src);
+    final response = await http.get(Uri.parse(imageUrl));
+    await localDataManager.writeUserImage(_appContext.currentUser.id, response.bodyBytes);
+    debugPrint('Cached new user image for: ${_appContext.currentUser.id}');
   }
 
   String _sanitiseSrc() {
@@ -184,12 +180,32 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
     return _tecImgSrc.text.trim();
   }
 
-  Future<File> _fetchFile() async {
-    final dir = await getTemporaryDirectory();
-    final String tmpPath = '${dir.path}/tmp.png';
-    final File tmp = File(tmpPath);
-    final response = await http.get(Uri.parse(_src));
-    return await tmp.writeAsBytes(response.bodyBytes);
+  Future<double> _validateAndFetchImage() async {
+    final imageUrl = NetworkImageHelper.getImageUrl(_src);
+
+    try {
+      // Use HEAD request to get file size without downloading
+      final response = await http.head(
+        Uri.parse(imageUrl),
+        headers: {'User-Agent': 'Mozilla/5.0 (compatible; Image-Validator/1.0)'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final contentLength = response.headers['content-length'];
+        if (contentLength != null) {
+          final sizeInBytes = int.parse(contentLength);
+          return sizeInBytes / 1024; // Return size in KB
+        } else {
+          debugPrint('Warning: Could not determine file size');
+          return 0; // Will allow validation but skip size check
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Failed to validate image');
+      }
+    } catch (e) {
+      debugPrint('Error validating image: $e');
+      rethrow;
+    }
   }
 
   void _onHelpClick() {

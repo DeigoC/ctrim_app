@@ -17,17 +17,26 @@ class ViewEventMediaTab extends StatelessWidget {
 
     final List<Widget> children = [
       Expanded(
-          child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-              itemCount: media.length,
-              itemBuilder: (_, index) {
-                final Map<String, dynamic> entry = media[index];
-                if (entry['type']!.compareTo('img') == 0) {
-                  return ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: eventContext.id);
-                }
-                return VideoMediaSlot(mediaEntry: entry, postId: eventContext.id, onTap: () => _onMediaTap(index, _));
-              }))
+          child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
+            itemCount: media.length,
+            itemBuilder: (_, index) {
+              final Map<String, dynamic> entry = media[index];
+              if (entry['type']!.compareTo('img') == 0) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: ImageMediaSlot(mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: eventContext.id),
+                );
+              }
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: VideoMediaSlot(mediaEntry: entry, postId: eventContext.id, onTap: () => _onMediaTap(index, _)),
+              );
+            }),
+      ))
     ];
 
     return MediaQuery.removePadding(

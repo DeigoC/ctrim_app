@@ -1,10 +1,9 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../utility/app_context.dart';
+import '../../utility/local_data_manager.dart';
 
 class MyVideoPlayer extends StatefulWidget {
   const MyVideoPlayer(
@@ -115,20 +114,38 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> with SingleTickerProvider
   }
 
   Widget _buildThumbnailLoader() {
-    final String? cacheDir = Provider.of<AppContext>(context, listen: false).appDir;
-    final sanitisedFilePath = widget.src.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '$cacheDir/posts/${widget.postID}/$sanitisedFilePath.webp';
-    final file = File(fullPath);
+    return FutureBuilder<Uint8List?>(
+      future: _getCachedThumbnail(),
+      builder: (context, snapshot) {
+        final List<Widget> children = [const CircularProgressIndicator()];
 
-    final List<Widget> children = [const CircularProgressIndicator()];
-    if (file.existsSync()) {
-      children.insert(0, Positioned.fill(child: Hero(tag: widget.postID + widget.src, child: Image.file(file))));
-    }
+        if (snapshot.hasData && snapshot.data != null) {
+          children.insert(
+            0,
+            Positioned.fill(
+              child: Hero(
+                tag: widget.postID + widget.src,
+                child: Image.memory(
+                  snapshot.data!,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [Expanded(child: Stack(alignment: Alignment.center, children: children))],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [Expanded(child: Stack(alignment: Alignment.center, children: children))],
+        );
+      },
     );
+  }
+
+  Future<Uint8List?> _getCachedThumbnail() async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = widget.src.replaceAll(RegExp(r'[^\w]'), '');
+    return await localDataManager.readVideoThumbnail(widget.postID, sanitisedKey);
   }
 
   void _onIconClick() {

@@ -1,7 +1,5 @@
-import 'dart:convert';
-
-import 'package:ctrim_app/firebase_options.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -13,6 +11,7 @@ import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
 import 'firebase/db_managers/id_tracker.dart';
 import 'firebase/db_managers/user_db_manager.dart';
+import 'firebase_options.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
@@ -37,11 +36,19 @@ void main() async {
   // SettingsView.
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive for local caching (works on all platforms including web)
+  await LocalDataManager.initialize();
+
   if (kIsWeb) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   } else {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
+
+  // Initialize Firebase App Check for DDoS/abuse protection
+  await FirebaseAppCheck.instance
+      .activate(providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'));
 
   // * Make sure we connect to the emulator on debug
   // if (kDebugMode) {
@@ -158,16 +165,11 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
   final LocalDataManager dataManager = LocalDataManager();
   final PackageInfo packageInfo = await PackageInfo.fromPlatform();
   final String version = packageInfo.version;
-  const LineSplitter ls = LineSplitter();
   debugPrint('version is $version');
 
   final String currentID = await trackerDBManager.getCurrentUserID();
-  final List<String> usersData = kIsWeb ? ls.convert(pref.getString('usersData') ?? '') : await dataManager.readUsers();
-  final DateTime? lastWebUserFetch = pref.getString('lastUserFetch') == null
-      ? null
-      : DateTime.fromMillisecondsSinceEpoch(int.parse(pref.getString('lastUserFetch')!));
-
-  final lastUserFetch = kIsWeb ? lastWebUserFetch : await dataManager.readLastUserFetch();
+  final List<String> usersData = await dataManager.readUsers();
+  final DateTime? lastUserFetch = await dataManager.readLastUserFetch();
   final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 21;
 
   // only use the local data if the count is the same in the DB and the last time has been multiple days ago (21 days)
@@ -227,13 +229,8 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
 
     debugPrint('--writing users from DB');
     // this write thing should be updated when we register users
-    if (kIsWeb) {
-      pref.setString('usersData', allUsersContent);
-      pref.setString('lastUserFetch', DateTime.now().millisecondsSinceEpoch.toString());
-    } else {
-      await dataManager.writeUsersList(allUsersContent);
-      await dataManager.writeLastUsersFetch();
-    }
+    await dataManager.writeUsersList(allUsersContent);
+    await dataManager.writeLastUsersFetch();
 
     pref.setBool('fetchUserImages', true); // refresh user image fetch
     return allUsers;
