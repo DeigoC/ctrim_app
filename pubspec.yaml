@@ -4,8 +4,8 @@ description: A new Flutter project.
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-version: 0.8.0+27 # iOS
-# version: 0.8.0+24 # Android
+version: 0.8.3+30 # iOS
+# version: 0.8.3+27 # Android
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -16,12 +16,15 @@ dependencies:
   cloud_firestore: 
   cloud_functions: 
   firebase_analytics: 
+  firebase_app_check: 
   firebase_auth: 
   firebase_core: 
   firebase_messaging: 
   firebase_messaging_web: 
   flutter:
     sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   flutter_localizations:
     sdk: flutter
   flutter_web_plugins:
@@ -33,11 +36,11 @@ dependencies:
   path_provider: 
   photo_view: 
   provider:
+  share_plus: ^11.1.0
   shared_preferences: 
   url_launcher: 
+  universal_html: ^2.2.4
   video_player:
-  gal: ^2.3.0
-  gal_linux: ^0.1.0
 
 dev_dependencies:
   flutter_test:

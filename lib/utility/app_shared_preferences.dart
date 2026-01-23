@@ -1,6 +1,5 @@
 // This will utilse both approaches - SharedPref and File read/writing
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -83,42 +82,11 @@ class AppSharedPreferences {
   void setShowMultirowTools(final bool newState) => _pref.setBool(_showMultirowTools, newState);
 
   // * Local data related
-  bool get shouldFetchUserImages => _pref.getBool(_fetchUserImgs) ?? true;
-  void justFetchedUserImages() => _pref.setBool(_fetchUserImgs, false);
+  bool get canRefreshUserImages => _pref.getInt(_fetchUserImgs) == null
+      ? true
+      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_fetchUserImgs)!)).inDays >= 7;
+  void setUserImageRefreshTime() => _pref.setInt(_fetchUserImgs, DateTime.now().millisecondsSinceEpoch);
 
-  // * For WebApp - use localdata manager for native apps!
-
-  List<String> getPostData(final String id) {
-    final data = _pref.getString('postData-$id');
-    if (data == null) {
-      return List.empty();
-    }
-    const LineSplitter ls = LineSplitter();
-    return ls.convert(data);
-  }
-
-  void writePostData(final String id, final String content) => _pref.setString('postData-$id', content);
-
-  List<String> getPostTrack() => _pref.getStringList('postTrack') ?? [];
-
-  void addPostTrackID(final String id) {
-    final data = getPostTrack();
-    if (!data.contains(id)) {
-      data.add(id);
-      _pref.setStringList('postTrack', data);
-    }
-  }
-
-  List<String> getUsersData() {
-    final data = _pref.getString('usersData');
-    if (data == null) {
-      return List.empty();
-    }
-    const LineSplitter ls = LineSplitter();
-    return ls.convert(data);
-  }
-
-  void setUsersData(final String data) => _pref.setString('usersData', data);
-
-  void setLastUsersFetch() => _pref.setString('lastUserFetch', DateTime.now().millisecondsSinceEpoch.toString());
+  // Note: Post data, post tracking, and user data caching is now handled by
+  // LocalDataManager which uses Hive and works across all platforms (web, mobile, desktop)
 }

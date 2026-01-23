@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
-  late List<String> _topics, _contributorUIDs;
+  late List<String> _topics, _contributorUIDs, _subtitles;
   late List<Map<String, dynamic>> _headMedia, _media;
 
   // * Event Program related
@@ -20,6 +20,7 @@ class PostTemplate {
     _headTitle = data['HeadTitle'];
     _topics = List.from(data['Topics']);
     _contributorUIDs = List.from(data['Contributors']);
+    _subtitles = data['Subtitles'] != null ? List<String>.from(data['Subtitles']) : <String>[];
     _location = data['Location'];
 
     // body
@@ -74,6 +75,7 @@ class PostTemplate {
       'Location': _location,
       'Topics': _topics,
       'Contributors': _contributorUIDs,
+      'Subtitles': _subtitles,
       'AllDay': _allDay,
       'Online': _online,
       'Address': _address,
@@ -106,6 +108,7 @@ class PostTemplate {
   List<Map<String, dynamic>> get roles => _roles;
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
+  List<String> get subtitles => _subtitles;
 
   // setters
   void setTitle(final String title) => _title = title;
@@ -119,6 +122,23 @@ class PostTemplate {
 
   void setStartTime(final DateTime? start) => _startTime = start;
   void setEndtime(final DateTime? end) => _finishTime = end;
+
+  // subtitle list management
+  void addSubtitle(final String subtitle) {
+    if (!_subtitles.contains(subtitle)) {
+      _subtitles.add(subtitle);
+    }
+  }
+
+  void removeSubtitle(final String subtitle) => _subtitles.remove(subtitle);
+
+  void setSubtitles(final List<String> subtitles) => _subtitles = List<String>.from(subtitles);
+
+  String? getRandomSubtitle() {
+    if (_subtitles.isEmpty) return null;
+    final random = DateTime.now().millisecondsSinceEpoch % _subtitles.length;
+    return _subtitles[random];
+  }
 
   // private methods
   List<Map<String, dynamic>> _parseRoles(final bool forLocal, final List<Map<String, dynamic>> rawData) {

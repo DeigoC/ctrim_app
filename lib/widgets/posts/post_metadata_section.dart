@@ -14,12 +14,39 @@ class PostMetadataSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final String recentDateStr = _recentDateFormat.format(eventContext.head.recentDate);
     final String recentU = Provider.of<AppContext>(context, listen: false)
         .allUsers
         .firstWhere((e) => e.id.compareTo(eventContext.metadata.lastUID) == 0)
         .forname;
-    return TextButton(onPressed: () => _onMetaTap(context), child: Text('Updated $recentDateStr by $recentU'));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: InkWell(
+        onTap: () => _onMetaTap(context),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.history, size: 16, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Updated $recentDateStr by $recentU',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // * Logic

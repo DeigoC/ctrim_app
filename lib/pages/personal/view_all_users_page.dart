@@ -1,8 +1,8 @@
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/pages/personal/edit_user_page.dart';
 import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,34 +18,86 @@ class ViewAllUsersPage extends StatefulWidget {
 }
 
 class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
+      final filteredUsers = _searchQuery.isEmpty
+          ? appContext.allUsers
+          : appContext.allUsers
+              .where((user) => user.fullname.toLowerCase().contains(_searchQuery.toLowerCase()))
+              .toList();
+
       return Scaffold(
           appBar: AppBar(
-            title: const Text('Belfast Volunteers'),
+            title: _isSearching
+                ? TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Search users...',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                    ),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  )
+                : const Text('Belfast Volunteers'),
+            actions: [
+              IconButton(
+                icon: Icon(_isSearching ? Icons.close : Icons.search),
+                onPressed: () {
+                  setState(() {
+                    if (_isSearching) {
+                      _isSearching = false;
+                      _searchQuery = '';
+                      _searchController.clear();
+                    } else {
+                      _isSearching = true;
+                    }
+                  });
+                },
+              ),
+            ],
           ),
           floatingActionButton: appContext.currentUser.isAreaAdmin
               ? FloatingActionButton.extended(
                   icon: const Icon(Icons.person_add), onPressed: _addUserClick, label: const Text('Register User'))
               : null,
-          body: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-              itemCount: appContext.allUsers.length,
-              itemBuilder: (_, index) {
-                final thisUser = appContext.allUsers[index];
-                return ListTile(
-                    title: Text(thisUser.fullname),
-                    leading: MyUserAvatar(thisUser),
-                    onTap: () => _onUserTap(thisUser),
-                    onLongPress: () => DialogManager.showUserProfile(
-                        selectedUser: thisUser,
-                        context: context,
-                        currentUserAdmin: appContext.currentUser.isAreaAdmin));
-              }));
+          body: filteredUsers.isEmpty
+              ? Center(
+                  child: Text(
+                    _searchQuery.isEmpty ? 'No users found' : 'No users match "${_searchQuery}"',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                  itemCount: filteredUsers.length,
+                  itemBuilder: (_, index) {
+                    final thisUser = filteredUsers[index];
+                    return ListTile(
+                        title: Text(thisUser.fullname),
+                        leading: MyUserAvatar(thisUser),
+                        onTap: () => _onUserTap(thisUser),
+                        onLongPress: appContext.currentUser.isAreaAdmin ? () => _navigateToEditUser(thisUser) : null);
+                  }));
     });
   }
 
@@ -65,5 +117,19 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   selectedUser: selectedUser,
                   allowPostView: true,
                 )));
+  }
+
+  void _navigateToEditUser(final User selectedUser) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditUserPage(user: selectedUser),
+      ),
+    );
+
+    // Refresh the list if the user was updated
+    if (result == true) {
+      setState(() {});
+    }
   }
 }

@@ -34,7 +34,7 @@ class User {
         _authID = data['AuthID'],
         _imgSrc = data['ImgSrc'];
 
-  toJson() {
+  dynamic toJson() {
     return {
       'Forename': _forename,
       'Surname': _surname,

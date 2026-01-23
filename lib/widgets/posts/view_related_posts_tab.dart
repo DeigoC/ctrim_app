@@ -15,9 +15,12 @@ class ViewRelatedPostsTab extends StatefulWidget {
   State<ViewRelatedPostsTab> createState() => _ViewRelatedPostsTabState();
 }
 
+enum RelatedPostFilter { all, parent, siblings, children }
+
 class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   late final AppContext _appContext;
   final EventHeadDBManager _headDbManager = EventHeadDBManager();
+  RelatedPostFilter _currentFilter = RelatedPostFilter.all;
 
   @override
   void initState() {
@@ -32,7 +35,10 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
       removeTop: true,
       child: SafeArea(
         top: false,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: _buildBody())]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) _buildFilterSection(),
+          Expanded(child: _buildBody())
+        ]),
       ),
     );
   }
@@ -41,7 +47,27 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) {
       return _buildRelatedFB();
     }
-    return const Center(child: Text('No related posts'));
+
+    // Empty state with better design
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.library_books_outlined,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No related posts',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildRelatedFB() {
@@ -61,7 +87,132 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
         });
   }
 
+  Widget _buildFilterSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildFilterChip(
+              label: 'All',
+              icon: Icons.view_list,
+              filter: RelatedPostFilter.all,
+              colorScheme: colorScheme,
+            ),
+            if (widget.eventContext.metadata.hasParent) ...[
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                label: 'Parent',
+                icon: Icons.arrow_upward,
+                filter: RelatedPostFilter.parent,
+                colorScheme: colorScheme,
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                label: 'Siblings',
+                icon: Icons.compare_arrows,
+                filter: RelatedPostFilter.siblings,
+                colorScheme: colorScheme,
+              ),
+            ],
+            if (widget.eventContext.metadata.hasChildren) ...[
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                label: 'Children',
+                icon: Icons.arrow_downward,
+                filter: RelatedPostFilter.children,
+                colorScheme: colorScheme,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required RelatedPostFilter filter,
+    required ColorScheme colorScheme,
+  }) {
+    final bool isSelected = _currentFilter == filter;
+
+    return FilterChip(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 6),
+          Text(label),
+        ],
+      ),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          _currentFilter = filter;
+        });
+      },
+      selectedColor: colorScheme.primaryContainer,
+      checkmarkColor: colorScheme.primary,
+      backgroundColor: colorScheme.surface,
+      side: BorderSide(
+        color: isSelected ? colorScheme.primary : colorScheme.outline,
+        width: 1,
+      ),
+    );
+  }
+
   Widget _buildBodyWithData() {
+    final List<PostHead> relatedPosts = _getFilteredPosts();
+
+    if (relatedPosts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.filter_list_off,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No posts in this category',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+        separatorBuilder: (context, index) => const Divider(),
+        itemCount: relatedPosts.length,
+        itemBuilder: (_, index) => relatedPosts[index]);
+  }
+
+  List<PostHead> _getFilteredPosts() {
+    switch (_currentFilter) {
+      case RelatedPostFilter.all:
+        return _getAllPosts();
+      case RelatedPostFilter.parent:
+        return widget.eventContext.metadata.hasParent ? [_getParentPostHead()] : [];
+      case RelatedPostFilter.siblings:
+        return _getSiblingPosts();
+      case RelatedPostFilter.children:
+        return _buildChildrenPosts();
+    }
+  }
+
+  List<PostHead> _getAllPosts() {
     final List<PostHead> relatedPosts = List.empty(growable: true);
 
     relatedPosts.addAll(_buildChildrenPosts());
@@ -70,10 +221,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
       relatedPosts.add(_getParentPostHead());
     }
 
-    return ListView.separated(
-        separatorBuilder: (context, index) => const Divider(),
-        itemCount: relatedPosts.length,
-        itemBuilder: (_, index) => relatedPosts[index]);
+    return relatedPosts;
   }
 
   PostHead _getParentPostHead() {

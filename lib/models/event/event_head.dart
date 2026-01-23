@@ -94,4 +94,49 @@ class EventHead {
   }
 
   void clearMedia() => _media.clear();
+
+  // UI Helper Methods
+  bool get isUpcoming => _eventDate != null && _eventDate!.isAfter(DateTime.now());
+  bool get isRecent => _eventDate != null && _eventDate!.isBefore(DateTime.now());
+  bool get hasEventDate => _eventDate != null;
+  bool get hasMedia => _media.isNotEmpty;
+
+  String get eventStatusText {
+    if (_eventDate == null) return 'No date set';
+    if (isUpcoming) return 'Upcoming';
+    if (isRecent) return 'Recent';
+    return 'Today';
+  }
+
+  Color get eventStatusColor {
+    if (_eventDate == null) return Colors.grey;
+    if (isUpcoming) return Colors.green;
+    if (isRecent) return Colors.orange;
+    return Colors.blue;
+  }
+
+  Duration? get timeUntilEvent {
+    if (_eventDate == null) return null;
+    return _eventDate!.difference(DateTime.now());
+  }
+
+  String get formattedTimeUntilEvent {
+    final duration = timeUntilEvent;
+    if (duration == null) return '';
+
+    if (duration.isNegative) {
+      final absD = duration.abs();
+      if (absD.inDays > 0) return '${absD.inDays} days ago';
+      if (absD.inHours > 0) return '${absD.inHours} hours ago';
+      return '${absD.inMinutes} minutes ago';
+    } else {
+      if (duration.inDays > 0) return 'In ${duration.inDays} days';
+      if (duration.inHours > 0) return 'In ${duration.inHours} hours';
+      return 'In ${duration.inMinutes} minutes';
+    }
+  }
+
+  int get mediaCount => _media.length;
+  int get imageCount => _media.where((m) => m['type'] == 'img').length;
+  int get videoCount => _media.where((m) => m['type'] == 'video').length;
 }

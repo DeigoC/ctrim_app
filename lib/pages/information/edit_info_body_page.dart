@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class EditInfoBodyPage extends StatefulWidget {
   const EditInfoBodyPage({super.key, required this.json});
@@ -14,19 +14,11 @@ class EditInfoBodyPage extends StatefulWidget {
 }
 
 class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
-  late final quill.QuillController _controller;
+  final GlobalKey<QuillEditorWidgetState> _editorKey = GlobalKey();
 
   @override
   void initState() {
-    _controller = quill.QuillController(
-        document: quill.Document.fromJson(widget.json), selection: const TextSelection.collapsed(offset: 0));
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
@@ -51,24 +43,19 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   }
 
   Widget _buildBody() {
-    return Column(
-      children: [
-        quill.QuillToolbar.simple(
-            configurations: quill.QuillSimpleToolbarConfigurations(
-                controller: _controller,
-                showAlignmentButtons: true,
-                showSubscript: false,
-                showSuperscript: true,
-                showCodeBlock: true,
-                multiRowsDisplay: true)),
-        Expanded(
-            child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: _controller)))
-      ],
+    return QuillEditorWidget(
+      key: _editorKey,
+      jsonContent: widget.json,
+      showAlignmentButtons: true,
+      showSubscript: false,
+      showSuperscript: true,
+      showCodeBlock: true,
+      multiRowsDisplay: true,
     );
   }
 
   Future<void> _saveJsonToClipboard() async {
-    final rawJson = _controller.document.toDelta().toJson();
+    final rawJson = _editorKey.currentState?.getDocumentJson() ?? widget.json;
     final exampleJson = jsonEncode(rawJson);
     debugPrint(exampleJson);
     await Clipboard.setData(ClipboardData(text: exampleJson));

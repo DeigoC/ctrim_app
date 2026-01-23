@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
 import 'add_media_file_page.dart';
@@ -951,14 +949,11 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
   }
 
   Future<void> _deleteOldThumbnail() async {
+    final localDataManager = LocalDataManager();
     final String src = widget.thisEntry['src']!;
-    final String title = src.replaceAll(RegExp(r'[^\w]'), '');
-    final String path = '${(await getApplicationDocumentsDirectory()).path}/posts/${widget.postId}/$title.webp';
-    final File imgFile = File(path);
+    final String videoKey = src.replaceAll(RegExp(r'[^\w]'), '');
 
-    if (await imgFile.exists()) {
-      debugPrint('deleting old thumbnail: ${imgFile.path}');
-      await imgFile.delete();
-    }
+    debugPrint('Deleting old video thumbnail for: ${widget.postId}/$videoKey');
+    await localDataManager.deleteVideoThumbnail(widget.postId, videoKey);
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
+import '../../widgets/quill_editor_wrapper.dart';
 
 class CTRIMInfoPage extends StatelessWidget {
   const CTRIMInfoPage({super.key, required String jsonPath}) : _jsonPath = jsonPath;
@@ -34,16 +34,21 @@ class CTRIMInfoPage extends StatelessWidget {
   Widget _buildBodyWithData(final BuildContext context, final Map<String, dynamic> data) {
     final CtrimInfo ctrimInfo = CtrimInfo(data);
 
-    final quill.QuillController controller = quill.QuillController(
-        document: quill.Document.fromJson(ctrimInfo.body), selection: const TextSelection.collapsed(offset: 0));
-
     List<Widget> children = [
       const Divider(),
       const SizedBox(height: 8),
       Flexible(
           child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: quill.QuillEditor.basic(configurations: quill.QuillEditorConfigurations(controller: controller)))),
+              child: QuillEditorWidget(
+                jsonContent: ctrimInfo.body,
+                showAlignmentButtons: true,
+                showSubscript: false,
+                showSuperscript: true,
+                showCodeBlock: true,
+                multiRowsDisplay: false,
+                editorPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              ))),
       const SizedBox(height: 32)
     ];
 

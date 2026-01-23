@@ -24,6 +24,9 @@ class EventContext {
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
   late final Map<int, String> _deletedRoleTitle;
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
+  
+  // template subtitles list (for posts created from templates)
+  List<String>? _templateSubtitles;
 
   // for viewing and editing
   EventContext.viewing(
@@ -448,4 +451,8 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
+  
+  // template subtitles
+  List<String>? get templateSubtitles => _templateSubtitles;
+  void setTemplateSubtitles(final List<String>? subtitles) => _templateSubtitles = subtitles;
 }
