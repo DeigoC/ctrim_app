@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
@@ -21,49 +22,429 @@ class AddEventHeadMeta extends StatefulWidget {
 }
 
 class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
+  String? _selectedSubtitle;
+
   @override
   Widget build(BuildContext context) {
-    return ListView(padding: const EdgeInsets.symmetric(horizontal: 8), children: [
-      TextField(
-          controller: widget.tecTitle,
-          decoration: const InputDecoration(label: Text('Title'), hintText: 'Make it snappy!'),
-          onChanged: widget.onRequiredFieldChange,
-          maxLength: 64),
-      TextField(
-          controller: widget.tecSubtitle,
-          onChanged: widget.onRequiredFieldChange,
-          maxLength: 128,
-          maxLines: null,
-          decoration: const InputDecoration(label: Text('Subtitle'), hintText: 'The synopsis of the post')),
-      _buildContributorSection()
-    ]);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final availableSubtitles = widget.eventContext.templateSubtitles;
+    final hasSubtitles = availableSubtitles != null && availableSubtitles.isNotEmpty;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Title Section
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.title, size: 18, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Post Title',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: widget.tecTitle,
+                    decoration: const InputDecoration(
+                      hintText: 'Make it snappy!',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: widget.onRequiredFieldChange,
+                    maxLength: 64,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Subtitle Selector Section (if available)
+          if (hasSubtitles)
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceVariant.withOpacity(0.3),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.format_quote, size: 18, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Template Subtitles',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildSubtitleSelectorContent(availableSubtitles),
+                  ),
+                ],
+              ),
+            ),
+
+          // Subtitle Section
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.subtitles, size: 18, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Post Subtitle',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: widget.tecSubtitle,
+                    onChanged: widget.onRequiredFieldChange,
+                    maxLength: 128,
+                    maxLines: null,
+                    decoration: const InputDecoration(
+                      hintText: 'The synopsis of the post',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Contributors Section
+          _buildContributorSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubtitleSelectorContent(List<String> availableSubtitles) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use a more flexible layout that adapts to screen size
+        if (constraints.maxWidth < 400) {
+          // Stack vertically on small screens
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DropdownButtonFormField<String>(
+                value: _selectedSubtitle,
+                decoration: const InputDecoration(
+                  labelText: 'Select a subtitle',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                isExpanded: true,
+                selectedItemBuilder: (BuildContext context) {
+                  return availableSubtitles.map<Widget>((String subtitle) {
+                    return Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14),
+                    );
+                  }).toList();
+                },
+                items: availableSubtitles.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final subtitle = entry.value;
+                  final isLast = index == availableSubtitles.length - 1;
+                  return DropdownMenuItem<String>(
+                    value: subtitle,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      decoration: BoxDecoration(
+                        border: isLast
+                            ? null
+                            : Border(
+                                bottom: BorderSide(
+                                  color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                                  width: 1,
+                                ),
+                              ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.format_quote,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14, height: 1.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedSubtitle = value;
+                      widget.tecSubtitle.text = value;
+                      widget.onRequiredFieldChange(value);
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    final random = Random();
+                    final randomSubtitle = availableSubtitles[random.nextInt(availableSubtitles.length)];
+                    setState(() {
+                      _selectedSubtitle = randomSubtitle;
+                      widget.tecSubtitle.text = randomSubtitle;
+                      widget.onRequiredFieldChange(randomSubtitle);
+                    });
+                  },
+                  icon: const Icon(Icons.shuffle, size: 18),
+                  label: const Text('Random'),
+                ),
+              ),
+            ],
+          );
+        } else {
+          // Use horizontal layout on larger screens
+          return Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _selectedSubtitle,
+                  decoration: const InputDecoration(
+                    labelText: 'Select a subtitle',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  isExpanded: true,
+                  selectedItemBuilder: (BuildContext context) {
+                    return availableSubtitles.map<Widget>((String subtitle) {
+                      return Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      );
+                    }).toList();
+                  },
+                  items: availableSubtitles.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final subtitle = entry.value;
+                    final isLast = index == availableSubtitles.length - 1;
+                    return DropdownMenuItem<String>(
+                      value: subtitle,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                        decoration: BoxDecoration(
+                          border: isLast
+                              ? null
+                              : Border(
+                                  bottom: BorderSide(
+                                    color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.format_quote,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                subtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 14, height: 1.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedSubtitle = value;
+                        widget.tecSubtitle.text = value;
+                        widget.onRequiredFieldChange(value);
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.shuffle),
+                tooltip: 'Random',
+                onPressed: () {
+                  final random = Random();
+                  final randomSubtitle = availableSubtitles[random.nextInt(availableSubtitles.length)];
+                  setState(() {
+                    _selectedSubtitle = randomSubtitle;
+                    widget.tecSubtitle.text = randomSubtitle;
+                    widget.onRequiredFieldChange(randomSubtitle);
+                  });
+                },
+              ),
+            ],
+          );
+        }
+      },
+    );
   }
 
   Widget _buildContributorSection() {
-    final List<Widget> children = [
-      const Divider(),
-      TextButton.icon(
-          onPressed: _onAddContributorClick, icon: const Icon(Icons.person_add), label: const Text('Add Contributor')),
-    ];
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appContext = Provider.of<AppContext>(context, listen: false);
 
-    if (widget.eventContext.metadata.contributorUIDs.isEmpty) {
-      children.add(const Text('No one selected.'));
-    } else {
-      final appContext = Provider.of<AppContext>(context, listen: false);
-      for (final uid in widget.eventContext.metadata.contributorUIDs) {
-        final thisU = appContext.allUsers.firstWhere((e) => e.id.compareTo(uid) == 0);
-        children.add(ListTile(
-            title: Text(thisU.fullname),
-            leading: MyUserAvatar(thisU),
-            trailing: IconButton(
-                onPressed: () => _onContributorRemoved(uid), icon: const Icon(Icons.delete, color: Colors.red))));
-      }
-    }
-
-    children.add(const Divider());
-    children.addAll(_buildNotificationControls());
-
-    return Column(mainAxisSize: MainAxisSize.min, children: children);
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceVariant.withOpacity(0.3),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.people_outline, size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  'Contributors',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _onAddContributorClick,
+                  icon: const Icon(Icons.person_add, size: 18),
+                  label: const Text('Add Contributor'),
+                ),
+                const SizedBox(height: 16),
+                if (widget.eventContext.metadata.contributorUIDs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'No contributors added yet',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else
+                  ...widget.eventContext.metadata.contributorUIDs.map((uid) {
+                    final thisU = appContext.allUsers.firstWhere((e) => e.id.compareTo(uid) == 0);
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      elevation: 0,
+                      color: colorScheme.surfaceContainerHighest,
+                      child: ListTile(
+                        title: Text(thisU.fullname),
+                        leading: MyUserAvatar(thisU),
+                        trailing: IconButton(
+                          onPressed: () => _onContributorRemoved(uid),
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          tooltip: 'Remove contributor',
+                        ),
+                      ),
+                    );
+                  }),
+                const Divider(height: 32),
+                ..._buildNotificationControls(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Widget> _buildNotificationControls() {

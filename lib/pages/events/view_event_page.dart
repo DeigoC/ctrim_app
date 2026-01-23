@@ -1,11 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
@@ -17,6 +16,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
@@ -85,9 +85,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    // TODO somthing terrible has happened! PopScope sucks so bad!
-    // ! This breaks things for the admin, they can make changes and it won't be discarded when returning.
-    // ! This is fine for now but not in the future when more admins come in...
     return Scaffold(
         floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
         floatingActionButton: _buildSaveFAB(),
@@ -179,25 +176,35 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final List<Widget> metaChildren = [PostMetadataSection(eventContext: _eventContext, update: _updateWholePostBody)];
 
     if (!_eventContext.isUserAuthor(_currentUID) && !_eventContext.isUserContributor(_currentUID)) {
       metaChildren.insert(0, _buildBookmarkButton());
     }
-    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
 
     return [
       SliverAppBar(
           expandedHeight: _eventContext.head.getKeyGraphic() != null ? MediaQuery.of(context).size.height * 0.33 : null,
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           actions: _buildEditButton()),
       SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         sliver: SliverList(
             delegate: SliverChildListDelegate([
-          Padding(padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0), child: _buildTitle()),
+          Padding(padding: const EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 8.0), child: _buildTitle()),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
-          TabBar(labelColor: onDark ? Colors.white : Colors.black, controller: _tabController, tabs: _appBarTabs)
+          const SizedBox(height: 8),
+          TabBar(
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              indicatorColor: colorScheme.primary,
+              indicatorWeight: 3,
+              controller: _tabController,
+              tabs: _appBarTabs)
         ])),
       )
     ];
@@ -213,9 +220,17 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildTitle() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return InkWell(
         onTap: _eventContext.isUserAuthor(_currentUID) ? _onTitleTap : null,
-        child: Text(widget.eventHead.title, style: const TextStyle(fontSize: 28), textAlign: TextAlign.left));
+        child: Text(widget.eventHead.title,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.left));
   }
 
   Widget? _buildAppBarBackground() {
@@ -223,23 +238,17 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
 
     if (keyGraphicSrc != null) {
-      if (!kIsWeb) {
-        return FutureBuilder(
-          future: _fetchImage(keyGraphicSrc),
-          builder: (_, snapshot) {
-            Widget result = const Center(child: CircularProgressIndicator());
-            if (snapshot.hasData) {
-              return Image.file(snapshot.data!, fit: BoxFit.cover);
-            } else if (snapshot.hasError) {
-              return const Center(child: Text('Something went wrong trying to get the image'));
-            }
-
-            return result;
-          },
-        );
-      } else {
-        return Image.network(keyGraphicSrc, fit: BoxFit.cover);
-      }
+      return FutureBuilder<Uint8List?>(
+        future: _fetchImage(keyGraphicSrc),
+        builder: (_, snapshot) {
+          if (snapshot.hasData && snapshot.data != null) {
+            return Image.memory(snapshot.data!, fit: BoxFit.cover);
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong trying to get the image'));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
     }
     return null;
   }
@@ -250,12 +259,16 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   List<Widget>? _buildEditButton() {
     if (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID)) {
+      final colorScheme = Theme.of(context).colorScheme;
       return [
-        ElevatedButton.icon(
+        FilledButton.tonalIcon(
             onPressed: () => _showSettings(),
-            icon: const Icon(Icons.more_horiz, color: Colors.white),
-            label: const Text('Edit', style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Edit'),
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.primaryContainer.withOpacity(0.8),
+              foregroundColor: colorScheme.onPrimaryContainer,
+            )),
         const SizedBox(width: 8)
       ];
     }
@@ -276,18 +289,52 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   // * Logic
-  Future<File> _fetchImage(final String src) async {
-    final dir = await getTemporaryDirectory();
-    final sanitisedFilePath = src.replaceAll(RegExp(r'[^\w]'), '');
-    final fullPath = '${dir.path}/$sanitisedFilePath.png';
-    final file = File(fullPath);
+  Future<Uint8List> _fetchImage(final String src) async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = src.replaceAll(RegExp(r'[^\w]'), '');
 
-    if (!await file.exists()) {
-      debugPrint('Creating image file for: $fullPath');
-      final response = await http.get(Uri.parse(src));
-      return await file.writeAsBytes(response.bodyBytes);
+    // Check if image exists in cache
+    final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
+    if (cachedImage != null && cachedImage.isNotEmpty) {
+      debugPrint('Using cached key graphic for: $sanitisedKey');
+      return cachedImage;
     }
-    return file;
+
+    // Download and cache the image
+    debugPrint('Downloading key graphic for: $sanitisedKey');
+    try {
+      final imageUrl = NetworkImageHelper.getImageUrl(src);
+      final response = await http.get(
+        Uri.parse(imageUrl),
+        headers: {'Accept': 'image/*'},
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw TimeoutException('Image download timed out after 30 seconds');
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw HttpException('Failed to download image: HTTP ${response.statusCode}');
+      }
+
+      final imageBytes = response.bodyBytes;
+
+      if (imageBytes.isEmpty) {
+        throw Exception('Downloaded image is empty');
+      }
+
+      // Cache the image
+      await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
+      debugPrint('Cached key graphic for: $sanitisedKey');
+
+      return imageBytes;
+    } catch (e) {
+      debugPrint('Error downloading key graphic: $e');
+      // Clean up partial cache if it exists
+      await localDataManager.deleteMediaImage(sanitisedKey);
+      rethrow;
+    }
   }
 
   Future<bool> _fetchEssentialPostData() async {
@@ -478,11 +525,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Future<List<String>> _attemptToGetExistingPostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final List<String> content = kIsWeb
-        ? appContext.sharedPref.getPostData(widget.eventHead.id)
-        : await localDataManager.readPostData(widget.eventHead.id);
+    final List<String> content = await localDataManager.readPostData(widget.eventHead.id);
 
     bool canUseLocalContent = false;
     if (content.isNotEmpty) {
@@ -501,20 +545,14 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Future<void> _savePostDataToLocalStorage() async {
     final LocalDataManager localDataManager = LocalDataManager();
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final String content = _eventContext.transformPostToTxtFile(packageInfo.version);
 
-    if (kIsWeb) {
-      appContext.sharedPref.writePostData(_eventContext.id, content);
-      appContext.sharedPref.addPostTrackID(_eventContext.id);
-    } else {
-      localDataManager.writePostData(_eventContext.id, content);
-      final postTrack = await localDataManager.readPostTrack();
-      if (!postTrack.contains(_eventContext.id)) {
-        postTrack.add(_eventContext.id);
-        localDataManager.writePostTrack(postTrack);
-      }
+    await localDataManager.writePostData(_eventContext.id, content);
+    final postTrack = await localDataManager.readPostTrack();
+    if (!postTrack.contains(_eventContext.id)) {
+      postTrack.add(_eventContext.id);
+      await localDataManager.writePostTrack(postTrack);
     }
   }
 
@@ -566,36 +604,92 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Future<void> _sendRoleNotifications() async {
-    final AppContext appContext = Provider.of<AppContext>(context, listen: false);
-    final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
+    try {
+      final AppContext appContext = Provider.of<AppContext>(context, listen: false);
+      final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
+      final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+      final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
 
-    final String currentUID = appContext.currentUser.id;
-    final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
+      final String currentUID = appContext.currentUser.id;
+      final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
 
-    for (final roleEntry in _eventContext.program.roles) {
-      final DateTime startingTime = roleEntry['start'];
-      final String body =
-          "'${roleEntry['title']!}' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
-      final List<String> tokens = [];
-      final List<String> uids = roleEntry['uids'];
+      int successCount = 0;
+      int errorCount = 0;
 
-      for (final thisUID in uids) {
-        if (thisUID != currentUID) {
-          if (!appContext.haveTokensForUserID(thisUID)) {
-            final List<String> tokens =
-                await everyoneDBManager.fetchTokensFromAuthID(appContext.getAuthIDFromUID(thisUID));
-            appContext.addTokensToUserID(thisUID, tokens);
+      for (final roleEntry in _eventContext.program.roles) {
+        try {
+          final DateTime? startingTime = roleEntry['start'];
+          if (startingTime == null) {
+            debugPrint('Warning: Role entry missing start time, skipping...');
+            continue;
           }
 
-          tokens.addAll(appContext.getTokensFromUserID(thisUID));
+          final String roleTitle = roleEntry['title'] ?? 'Untitled Role';
+          final String body =
+              "'$roleTitle' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
+          final List<String> tokens = [];
+          final List<dynamic> uidsRaw = roleEntry['uids'] ?? [];
+          final List<String> uids = uidsRaw.whereType<String>().toList();
+
+          for (final thisUID in uids) {
+            if (thisUID != currentUID) {
+              try {
+                if (!appContext.haveTokensForUserID(thisUID)) {
+                  final String? authID = appContext.getAuthIDFromUID(thisUID);
+                  if (authID != null && authID.isNotEmpty) {
+                    final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
+                    if (fetchedTokens.isNotEmpty) {
+                      appContext.addTokensToUserID(thisUID, fetchedTokens);
+                      tokens.addAll(fetchedTokens);
+                    }
+                  } else {
+                    debugPrint('Warning: Could not get authID for user $thisUID, skipping...');
+                  }
+                } else {
+                  tokens.addAll(appContext.getTokensFromUserID(thisUID));
+                }
+              } catch (e) {
+                debugPrint('Error fetching tokens for user $thisUID: $e');
+                errorCount++;
+                continue;
+              }
+            }
+          }
+
+          if (tokens.isNotEmpty) {
+            try {
+              await cloudFunctionManager.sendMessageToSelectedTokens(
+                  tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
+              successCount++;
+            } catch (e) {
+              debugPrint('Error sending notification for role "$roleTitle": $e');
+              errorCount++;
+            }
+          }
+        } catch (e) {
+          debugPrint('Error processing role entry: $e');
+          errorCount++;
+          continue;
         }
       }
 
-      if (tokens.isNotEmpty) {
-        cloudFunctionManager
-            .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
+      if (mounted) {
+        final String message = errorCount > 0
+            ? 'Notifications sent: $successCount successful, $errorCount failed'
+            : 'Successfully sent $successCount notification${successCount != 1 ? 's' : ''}';
+
+        DialogManager.showSnackBar(
+          context: context,
+          message: message,
+        );
+      }
+    } catch (e) {
+      debugPrint('Critical error in _sendRoleNotifications: $e');
+      if (mounted) {
+        DialogManager.showSnackBar(
+          context: context,
+          message: 'Failed to send notifications: $e',
+        );
       }
     }
   }

@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../utility/event_context.dart';
 
@@ -17,22 +17,13 @@ class EditBodyPage extends StatefulWidget {
 }
 
 class _EditBodyPageState extends State<EditBodyPage> {
-  late final quill.QuillController _controller;
+  final GlobalKey<QuillEditorWidgetState> _editorKey = GlobalKey();
 
   bool _showMultirow = false;
 
   @override
   void initState() {
-    // String sanitisedExample = _exampleJson.replaceAll('\n', '\\n');
-    // var thisJson = jsonDecode(sanitisedExample);
-    // _controller = quill.QuillController(
-    //     document: quill.Document.fromJson(thisJson), selection: const TextSelection.collapsed(offset: 0));
-    _controller = quill.QuillController(
-        document: quill.Document.fromJson(widget.eventContext.body),
-        selection: const TextSelection.collapsed(offset: 0));
-
     _showMultirow = Provider.of<AppContext>(context, listen: false).sharedPref.showMultirowTools;
-
     super.initState();
   }
 
@@ -41,8 +32,9 @@ class _EditBodyPageState extends State<EditBodyPage> {
     return PopScope(
         onPopInvoked: (popped) {
           // ! This isn't perfect? Remember that the user can add empty lines
-          if (!widget.eventContext.isSameJson(_controller.document.toDelta().toJson())) {
-            widget.eventContext.setBodyJson(_controller.document.toDelta().toJson());
+          final currentJson = _editorKey.currentState?.getDocumentJson();
+          if (currentJson != null && !widget.eventContext.isSameJson(currentJson)) {
+            widget.eventContext.setBodyJson(currentJson);
             widget.eventContext.allowSavingOfTheEdit();
           }
         },
@@ -58,26 +50,15 @@ class _EditBodyPageState extends State<EditBodyPage> {
     final double webHorizontalPadding =
         MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
 
-    return Column(
-      children: [
-        quill.QuillToolbar.simple(
-            configurations: quill.QuillSimpleToolbarConfigurations(
-          controller: _controller,
-          showAlignmentButtons: true,
-          showSubscript: false,
-          showSuperscript: true,
-          showCodeBlock: true,
-          multiRowsDisplay: _showMultirow,
-        )),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
-            child: quill.QuillEditor.basic(
-              configurations: quill.QuillEditorConfigurations(controller: _controller),
-            ),
-          ),
-        )
-      ],
+    return QuillEditorWidget(
+      key: _editorKey,
+      jsonContent: widget.eventContext.body,
+      showAlignmentButtons: true,
+      showSubscript: false,
+      showSuperscript: true,
+      showCodeBlock: true,
+      multiRowsDisplay: _showMultirow,
+      editorPadding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
     );
   }
 
@@ -103,7 +84,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
   }
 
   void _onCopyClick() {
-    final rawJson = _controller.document.toDelta().toJson();
+    final rawJson = _editorKey.currentState?.getDocumentJson() ?? widget.eventContext.body;
     final exampleJson = jsonEncode(rawJson);
     Clipboard.setData(ClipboardData(text: exampleJson));
     ScaffoldMessenger.of(context)

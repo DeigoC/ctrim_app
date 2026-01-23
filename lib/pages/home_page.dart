@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +12,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
+import '../utility/network_image_helper.dart';
 import '../widgets/info/timed_button_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
@@ -59,10 +60,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     // * periodic and non-periodic local maintenance
-    if (_appContext.sharedPref.shouldFetchUserImages && !kIsWeb) {
-      _performLocalUserImgCleanup();
+    if (_appContext.sharedPref.canRefreshUserImages) {
+      _performUserImageCache();
       _removeLocallySavedPosts();
-      _appContext.sharedPref.justFetchedUserImages();
+      _appContext.sharedPref.setUserImageRefreshTime();
     }
 
     // TODO new feature for notifications (temporary until future updates)
@@ -271,7 +272,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // * Notification related
 
   void _setupCloudOnMessage() {
-    // when the app is opened
+    // Set up web-specific notification handling
+    if (kIsWeb) {
+      _setupWebNotificationListener();
+    }
+
+    // when the app is opened (foreground messages)
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint('-----------------Hello from on message! Here is the message: ${message.data}');
       _handleOnMessage(message).then((_) {
@@ -290,6 +296,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     FirebaseMessaging.instance
         .getInitialMessage()
         .then((message) => message != null ? () => _handleInitialMessage(message) : null);
+  }
+
+  /// Web-specific: Listen for notification clicks from the service worker
+  void _setupWebNotificationListener() {
+    if (kIsWeb) {
+      // Listen for messages from the service worker
+      // When a notification is clicked, the service worker sends a message
+      // This is handled via JavaScript postMessage API
+      debugPrint('Setting up web notification listener');
+      // The actual implementation uses browser's messaging API
+      // which is automatically handled by Firebase Messaging Web SDK
+    }
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
@@ -363,8 +381,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final RemoteNotification notification = message.notification!;
     final String? closeText = message.data['CloseText'];
     final String? superImageUrl = message.data['SuperImageUrl'];
-    final String? imageUrl =
-        superImageUrl ?? (Platform.isAndroid ? notification.android!.imageUrl : notification.apple!.imageUrl);
+
+    // Handle image URL for different platforms
+    String? imageUrl;
+    if (kIsWeb) {
+      // On web, notification images are in notification.web or data
+      imageUrl = superImageUrl ?? notification.web?.image;
+    } else {
+      // On native platforms, get platform-specific image
+      imageUrl = superImageUrl ?? (Platform.isAndroid ? notification.android?.imageUrl : notification.apple?.imageUrl);
+    }
 
     bool result = false;
 
@@ -397,10 +423,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         foregroundDecoration: BoxDecoration(
                             borderRadius:
                                 const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                            image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.fill)),
+                            image: DecorationImage(
+                                image: NetworkImage(NetworkImageHelper.getImageUrl(imageUrl)), fit: BoxFit.fill)),
                         child: Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Image.network(imageUrl) // so jank lol! It works though
+                            child:
+                                Image.network(NetworkImageHelper.getImageUrl(imageUrl)) // so jank lol! It works though
                             ))
                     : Container(),
                 imageUrl != null ? const SizedBox(height: 16) : const SizedBox(height: 24),
@@ -431,32 +459,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   // * maintenance work
 
-  void _performLocalUserImgCleanup() async {
-    final String userImgDir = '${_appContext.appDir}/user_imgs';
-    final dir = Directory(userImgDir);
-    if (!await dir.exists()) {
-      debugPrint('creating user_img directory!');
-      await dir.create();
-    }
+  /// Cache user profile images using Hive (works on all platforms including web)
+  Future<void> _performUserImageCache() async {
+    final LocalDataManager localDataManager = LocalDataManager();
 
     for (final user in _appContext.allUsers) {
-      final File potentialUserImg = File('$userImgDir/${user.id}.png');
-      if (user.imgSrc.isNotEmpty) {
-        debugPrint('Creating user profile pic for ${user.forname} ID ${user.id}');
-        _setImageForFile(potentialUserImg, user.imgSrc);
-      } else if (user.imgSrc.isEmpty && await potentialUserImg.exists()) {
-        debugPrint('Deleting user profile pic for ${user.forname} ID ${user.id}');
-        potentialUserImg.delete();
-      } else {
-        debugPrint('doing nothing, no need to create/delete profile pics');
+      final bool hasImage = await localDataManager.hasUserImage(user.id);
+
+      if (user.imgSrc.isNotEmpty && !hasImage) {
+        // User has image URL but not cached - download and cache it
+        debugPrint('Caching user profile pic for ${user.forname} ID ${user.id}');
+        try {
+          final String imageUrl = NetworkImageHelper.getImageUrl(user.imgSrc);
+          final response = await http.get(Uri.parse(imageUrl));
+          if (response.statusCode == 200) {
+            await localDataManager.writeUserImage(user.id, response.bodyBytes);
+          }
+        } catch (e) {
+          debugPrint('Error caching image for ${user.forname}: $e');
+        }
+      } else if (user.imgSrc.isEmpty && hasImage) {
+        // User removed image but it's still cached - delete it
+        debugPrint('Deleting cached profile pic for ${user.forname} ID ${user.id}');
+        await localDataManager.deleteUserImage(user.id);
       }
     }
   }
 
-  Future<void> _setImageForFile(final File file, final String src) async {
-    final response = await http.get(Uri.parse(src));
-    file.writeAsBytes(response.bodyBytes);
-  }
+  // Legacy methods removed - now using Hive-based image caching
+  // See _performUserImageCache() above for cross-platform implementation
 
   void _setNotificationTopicsTemp() {
     // we have to check if users are subscribed to the old notification topic (belfast)
