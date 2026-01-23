@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class TimedButtonDialog extends StatefulWidget {
-  const TimedButtonDialog({super.key});
+class BulletinFirstTimeDialog extends StatefulWidget {
+  const BulletinFirstTimeDialog({super.key});
 
   @override
-  State<TimedButtonDialog> createState() => TimedButtonDialogState();
+  State<BulletinFirstTimeDialog> createState() => _BulletinFirstTimeDialogState();
 }
 
-class TimedButtonDialogState extends State<TimedButtonDialog> {
+class _BulletinFirstTimeDialogState extends State<BulletinFirstTimeDialog> {
   bool _enabledOk = false;
 
   @override
@@ -47,7 +47,7 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.explore_rounded,
+                    Icons.campaign_rounded,
                     size: 48,
                     color: colorScheme.onPrimaryContainer,
                   ),
@@ -58,7 +58,7 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
 
               // Welcome Title
               Text(
-                'Welcome to CTRIM! 🎉',
+                'Welcome to the Bulletin! 📢',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -69,7 +69,7 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
 
               // Introduction
               Text(
-                'You\'re all set! Here\'s what you can explore:',
+                'Stay connected with everything happening in our community:',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -79,9 +79,9 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
 
               // Feature List
               _buildFeatureItem(
-                icon: Icons.library_books_rounded,
-                title: 'Events & Posts',
-                description: 'View upcoming events, services, and community updates. Tap any post to see full details.',
+                icon: Icons.event_rounded,
+                title: 'Upcoming Events',
+                description: 'View all scheduled services, meetings, and special events with dates and times.',
                 colorScheme: colorScheme,
                 theme: theme,
               ),
@@ -89,9 +89,9 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
               const SizedBox(height: 16),
 
               _buildFeatureItem(
-                icon: Icons.church_rounded,
-                title: 'CTRIM Information',
-                description: 'Learn about our churches, read testimonials, and explore ministry information.',
+                icon: Icons.article_rounded,
+                title: 'Community Posts',
+                description: 'Read announcements, updates, and important messages from church leadership.',
                 colorScheme: colorScheme,
                 theme: theme,
               ),
@@ -99,9 +99,19 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
               const SizedBox(height: 16),
 
               _buildFeatureItem(
-                icon: Icons.person_rounded,
-                title: 'Personal Hub',
-                description: 'Create an account to stay connected. Staff features are granted by administrators.',
+                icon: Icons.bookmark_rounded,
+                title: 'Bookmark & Filter',
+                description: 'Save important posts and sort by upcoming events, recent updates, or your bookmarks.',
+                colorScheme: colorScheme,
+                theme: theme,
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildFeatureItem(
+                icon: Icons.refresh_rounded,
+                title: 'Pull to Refresh',
+                description: 'Swipe down to check for the latest posts and stay up to date.',
                 colorScheme: colorScheme,
                 theme: theme,
               ),
@@ -118,14 +128,14 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.info_outline_rounded,
+                      Icons.tips_and_updates_rounded,
                       size: 20,
                       color: colorScheme.onSecondaryContainer,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'You\'re browsing as a guest. Visit the Personal tab to create an account anytime.',
+                        'Tap and hold any post to bookmark it for quick access later.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSecondaryContainer,
                         ),
@@ -142,7 +152,7 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   onPressed: _enabledOk ? () => Navigator.of(context).pop() : null,
-                  child: const Text('Get Started'),
+                  child: const Text('Got It'),
                 ),
               ),
             ],
@@ -191,6 +201,7 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
                 description,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
+                  height: 1.4,
                 ),
               ),
             ],

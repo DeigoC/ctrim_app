@@ -30,7 +30,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late final TabController _informationTabController;
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   late final AppContext _appContext;
   final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
@@ -41,6 +41,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     // * initial setup of data
     _appContext = Provider.of<AppContext>(context, listen: false);
+
+    // Set startup tab based on user preference (default to 1 = Information home)
+    _selectedIndex = _appContext.sharedPref.preferredStartupTab;
+
     _informationTabController = TabController(length: 4, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) {
@@ -52,12 +56,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }));
     _setupCloudOnMessage();
 
-    // * special case where it's the first time opening the app
-    if (!kDebugMode) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkIfFirstOpen();
-      });
-    }
+    // * Check for first open and request notification permissions for all users (guests and authenticated)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkIfFirstOpen();
+    });
 
     // * periodic and non-periodic local maintenance
     if (_appContext.sharedPref.canRefreshUserImages) {
@@ -198,49 +200,60 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (appContext.sharedPref.isFirstOpen && !kIsWeb) {
-      final MessagingManager messagingManager = MessagingManager();
-      await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => Dialog(
-              child: SingleChildScrollView(
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Text('Welcome! 👋',
-                                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.start)),
-                        const SizedBox(height: 16),
-                        const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Text('Please allow notifications to keep up with the latest from CTRIM!',
-                                textAlign: TextAlign.start, style: TextStyle(fontSize: 16))),
-                        const SizedBox(height: 8),
-                        Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: TextButton(
-                                    onPressed: () => Navigator.pop(_),
-                                    child: const Text('Ok', style: TextStyle(fontSize: 16)))))
-                      ])))));
+    if (appContext.sharedPref.isFirstOpen) {
+      // Show notification permission dialog for all users (guests and authenticated)
+      if (!kIsWeb) {
+        final MessagingManager messagingManager = MessagingManager();
+        await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => Dialog(
+                child: SingleChildScrollView(
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Text('Welcome! 👋',
+                                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.start)),
+                          const SizedBox(height: 16),
+                          const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Text('Please allow notifications to keep up with the latest from CTRIM!',
+                                  textAlign: TextAlign.start, style: TextStyle(fontSize: 16))),
+                          const SizedBox(height: 8),
+                          Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                  padding: const EdgeInsets.only(right: 16.0),
+                                  child: TextButton(
+                                      onPressed: () => Navigator.pop(_),
+                                      child: const Text('Ok', style: TextStyle(fontSize: 16)))))
+                        ])))));
 
-      final String? token = await messagingManager.requestPermissionAndToken().then((token) {
-        showDialog(context: context, builder: (_) => const TimedButtonDialog());
-        return token;
-      });
+        final String? token = await messagingManager.requestPermissionAndToken().then((token) {
+          showDialog(context: context, builder: (_) => const TimedButtonDialog());
+          return token;
+        });
 
-      // we don't need to perfrom the token grabbing here anymore - done in welcome page
-      if (token != null) {
-        debugPrint('Token to save is $token');
-        appContext.sharedPref.saveFCMToken(token);
+        if (token != null) {
+          debugPrint('Token to save is $token');
+
+          // Store token based on user type
+          if (appContext.isCurrentUserGuest) {
+            // Guest user - store token locally
+            appContext.sharedPref.saveGuestFCMToken(token);
+          } else {
+            // Authenticated user - store normally
+            appContext.sharedPref.saveFCMToken(token);
+          }
+        }
+
+        _appContext.sharedPref.setSubscribedToBelfast(true);
+        _setNotificationTopicsTemp();
       }
 
-      _appContext.sharedPref.setSubscribedToBelfast(true);
-      _setNotificationTopicsTemp();
       appContext.sharedPref.nowOpened();
     }
   }

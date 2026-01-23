@@ -16,7 +16,12 @@ class AppSharedPreferences {
       _loggedOut = 'loggedOut',
       _subscribedToBelfast = 'subscribedToBelfast',
       _lastRoleRefresh = 'lastRoleRefresh',
-      _showMultirowTools = 'showMultirowTools';
+      _showMultirowTools = 'showMultirowTools',
+      _preferredStartupTab = 'preferredStartupTab',
+      _dismissedGuestBanner = 'dismissedGuestBanner',
+      _guestFcmToken = 'guestFcmToken',
+      _hasSeenBulletinDialog = 'hasSeenBulletinDialog',
+      _hasSeenPersonalDialog = 'hasSeenPersonalDialog';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -81,11 +86,30 @@ class AppSharedPreferences {
   bool get showMultirowTools => _pref.getBool(_showMultirowTools) ?? false;
   void setShowMultirowTools(final bool newState) => _pref.setBool(_showMultirowTools, newState);
 
+  // * Startup tab preference (0 = Events, 1 = Information)
+  int get preferredStartupTab => _pref.getInt(_preferredStartupTab) ?? 1;
+  void setPreferredStartupTab(final int tabIndex) => _pref.setInt(_preferredStartupTab, tabIndex);
+
+  // * Guest related
+  bool get dismissedGuestBanner => _pref.getBool(_dismissedGuestBanner) ?? false;
+  void setDismissedGuestBanner(final bool dismissed) => _pref.setBool(_dismissedGuestBanner, dismissed);
+
+  String get guestFcmToken => _pref.getString(_guestFcmToken) ?? '';
+  void saveGuestFCMToken(final String token) => _pref.setString(_guestFcmToken, token);
+  void clearGuestFCMToken() => _pref.setString(_guestFcmToken, _clear);
+
   // * Local data related
   bool get canRefreshUserImages => _pref.getInt(_fetchUserImgs) == null
       ? true
       : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_fetchUserImgs)!)).inDays >= 7;
   void setUserImageRefreshTime() => _pref.setInt(_fetchUserImgs, DateTime.now().millisecondsSinceEpoch);
+
+  // * First-time dialog tracking
+  bool get hasSeenBulletinDialog => _pref.getBool(_hasSeenBulletinDialog) ?? false;
+  void setHasSeenBulletinDialog() => _pref.setBool(_hasSeenBulletinDialog, true);
+
+  bool get hasSeenPersonalDialog => _pref.getBool(_hasSeenPersonalDialog) ?? false;
+  void setHasSeenPersonalDialog() => _pref.setBool(_hasSeenPersonalDialog, true);
 
   // Note: Post data, post tracking, and user data caching is now handled by
   // LocalDataManager which uses Hive and works across all platforms (web, mobile, desktop)
