@@ -542,7 +542,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     showDatePicker(
             context: context,
             initialDate: _start == null ? DateTime.now().add(const Duration(days: 1)) : _start!,
-            firstDate: DateTime.now(),
+            firstDate: DateTime.now().subtract(const Duration(days: 30)),
             lastDate: DateTime.now().add(const Duration(days: 122)))
         .then((selectedStartDate) {
       if (selectedStartDate != null) {

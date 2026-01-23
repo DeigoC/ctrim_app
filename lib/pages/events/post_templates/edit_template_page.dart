@@ -3,6 +3,7 @@ import 'package:ctrim_app/models/post_template.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/local_data_manager.dart';
+import 'package:ctrim_app/utility/network_image_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +30,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   late final AppContext _appContext;
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
+  late final List<String> _subtitles;
 
   @override
   void initState() {
@@ -36,6 +38,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     _tabController = TabController(length: 4, vsync: this);
     _tecTitle = TextEditingController(text: widget.eventContext.head.title);
     _tecSubtitle = TextEditingController(text: widget.eventContext.head.subtitle);
+    _subtitles = List<String>.from(widget.oldTemplate.subtitles);
     super.initState();
   }
 
@@ -62,17 +65,220 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
 
   Widget _buildTabBody() {
     return TabBarView(controller: _tabController, children: [
-      AddEventHeadMeta(
-        tecTitle: _tecTitle,
-        tecSubtitle: _tecSubtitle,
-        onRequiredFieldChange: (_) => null,
-        eventContext: widget.eventContext,
-      ),
+      _buildHeaderTab(),
       ViewPostBody(
           eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
       ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
       ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)
     ]);
+  }
+
+  Widget _buildHeaderTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      children: [
+        AddEventHeadMeta(
+          tecTitle: _tecTitle,
+          tecSubtitle: _tecSubtitle,
+          onRequiredFieldChange: (_) => null,
+          eventContext: widget.eventContext,
+        ),
+        const Divider(height: 32),
+        _buildSubtitleListEditor(),
+      ],
+    );
+  }
+
+  Widget _buildSubtitleListEditor() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.format_list_bulleted, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Template Subtitles',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add multiple subtitles that can be randomly or manually selected when creating posts from this template.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            if (_subtitles.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: Text(
+                    'No subtitles added yet',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+              )
+            else
+              ..._subtitles.asMap().entries.map((entry) {
+                final index = entry.key;
+                final subtitle = entry.value;
+                return _buildSubtitleItem(index, subtitle);
+              }),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _onAddSubtitle,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add Subtitle'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubtitleItem(int index, String subtitle) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: ListTile(
+        title: Text(
+          subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => _onEditSubtitle(index, subtitle),
+              tooltip: 'Edit',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20),
+              color: Theme.of(context).colorScheme.error,
+              onPressed: () => _onRemoveSubtitle(index),
+              tooltip: 'Delete',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onAddSubtitle() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Subtitle'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Subtitle text',
+            hintText: 'Enter subtitle text...',
+          ),
+          maxLines: 2,
+          maxLength: 128,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isNotEmpty) {
+                setState(() {
+                  _subtitles.add(text);
+                });
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onEditSubtitle(int index, String currentSubtitle) {
+    final controller = TextEditingController(text: currentSubtitle);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Subtitle'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Subtitle text',
+            hintText: 'Enter subtitle text...',
+          ),
+          maxLines: 2,
+          maxLength: 128,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isNotEmpty) {
+                setState(() {
+                  _subtitles[index] = text;
+                });
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onRemoveSubtitle(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Subtitle'),
+        content: Text('Are you sure you want to delete "${_subtitles[index]}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              setState(() {
+                _subtitles.removeAt(index);
+              });
+              Navigator.of(context).pop();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Widget> _buildHeaderSliver() {
@@ -116,7 +322,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     }
     return Stack(
       alignment: Alignment.bottomRight,
-      children: [Positioned.fill(child: Image.network(widget.eventContext.head.getKeyGraphic()!, fit: BoxFit.cover))],
+      children: [
+        Positioned.fill(
+            child: Image.network(NetworkImageHelper.getImageUrl(widget.eventContext.head.getKeyGraphic()!),
+                fit: BoxFit.cover))
+      ],
     );
   }
 
@@ -212,6 +422,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'Location': widget.eventContext.head.location,
       'Topics': widget.oldTemplate.topics,
       'Contributors': widget.eventContext.metadata.contributorUIDs,
+      'Subtitles': _subtitles,
       'AllDay': widget.eventContext.program.allDay,
       'Online': widget.eventContext.program.online,
       'Address': widget.eventContext.program.address,

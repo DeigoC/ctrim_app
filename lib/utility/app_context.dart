@@ -1,12 +1,13 @@
 import 'dart:collection';
 
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/models/event/event_metadata.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/app_shared_preferences.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/event/event_head.dart';
+import '../models/event/event_metadata.dart';
+import '../models/user.dart';
+import 'app_shared_preferences.dart';
 
 // handles some highlevel behaviours (like notifications) and persistant data for network optimisation
 class AppContext extends ChangeNotifier {
@@ -69,30 +70,67 @@ class AppContext extends ChangeNotifier {
   }
 
   void sortPostsByIndex() {
-    // 0 Relevant activity
+    // 0 Relevant activity - Mixed smart sorting
     // 1 Event date descending
     // 2 Event date ascending
     // 3 is for bookmarks. For now we default to the same as 0
     switch (_postSortIndex) {
       case 0:
-        // Get upcoming events including those with dates set for today
-        final List<EventHead> upcomingEvents = _eventHeads
-            .where((e) => e.eventDate != null && (e.eventDate!.isAfter(DateTime.now()) || isAtSameDayAs(e.eventDate!)))
+        // Smart relevancy sorting: current event, recent posts, and upcoming events
+        final DateTime now = DateTime.now();
+        final DateTime threeDaysAgo = now.subtract(const Duration(days: 3));
+
+        // Work with a copy and remove duplicates first
+        final Map<String, EventHead> uniqueHeadsMap = {};
+        for (var head in _eventHeads) {
+          uniqueHeadsMap[head.id] = head;
+        }
+        final List<EventHead> originalHeads = uniqueHeadsMap.values.toList();
+
+        // 1. Today's event (highest priority - event happening today)
+        final List<EventHead> todayEvents =
+            originalHeads.where((e) => e.eventDate != null && isAtSameDayAs(e.eventDate!)).toList();
+        todayEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+
+        // 2. Recent posts (last 3 days, excluding today's events)
+        final Set<String> alreadyIncludedIds = {...todayEvents.map((e) => e.id)};
+        final List<EventHead> recentPosts = originalHeads
+            .where((e) => !alreadyIncludedIds.contains(e.id) && e.recentDate.isAfter(threeDaysAgo))
+            .toList();
+        recentPosts.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+        final List<EventHead> topRecentPosts = recentPosts.take(2).toList();
+
+        // 3. Upcoming events (next few events after today)
+        alreadyIncludedIds.addAll(topRecentPosts.map((e) => e.id));
+        final List<EventHead> upcomingEvents = originalHeads
+            .where((e) => !alreadyIncludedIds.contains(e.id) && e.eventDate != null && e.eventDate!.isAfter(now))
             .toList();
         upcomingEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+        final List<EventHead> nextUpcoming = upcomingEvents.take(3).toList();
 
-        // Get recent events (past or no date)
-        final List<EventHead> recentEvents =
-            _eventHeads.where((e) => e.eventDate == null || e.eventDate!.isBefore(DateTime.now())).toList();
+        // 4. Everything else sorted by recent date
+        alreadyIncludedIds.addAll(nextUpcoming.map((e) => e.id));
+        final List<EventHead> remainingPosts = originalHeads.where((e) => !alreadyIncludedIds.contains(e.id)).toList();
+        remainingPosts.sort((a, b) => b.recentDate.compareTo(a.recentDate));
 
+        // Combine all lists in priority order
         _eventHeads.clear();
-        _eventHeads.addAll(upcomingEvents.take(3));
-        _eventHeads.addAll(recentEvents);
-        _eventHeads.addAll(upcomingEvents.skip(3));
+        _eventHeads.addAll(todayEvents); // Today's events first
+        _eventHeads.addAll(topRecentPosts); // Recent activity (2 posts)
+        _eventHeads.addAll(nextUpcoming); // Upcoming events (3 posts)
+        _eventHeads.addAll(remainingPosts); // Everything else
 
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
         break;
       case 1:
+        // Remove duplicates first
+        final Map<String, EventHead> uniqueHeads1 = {};
+        for (var head in _eventHeads) {
+          uniqueHeads1[head.id] = head;
+        }
+        _eventHeads.clear();
+        _eventHeads.addAll(uniqueHeads1.values);
+
         _eventHeads.sort((a, b) {
           if (a.eventDate == null && b.eventDate == null) return 0;
           if (a.eventDate == null) return 1;
@@ -102,6 +140,14 @@ class AppContext extends ChangeNotifier {
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'upcoming events'});
         break;
       case 2:
+        // Remove duplicates first
+        final Map<String, EventHead> uniqueHeads2 = {};
+        for (var head in _eventHeads) {
+          uniqueHeads2[head.id] = head;
+        }
+        _eventHeads.clear();
+        _eventHeads.addAll(uniqueHeads2.values);
+
         _eventHeads.sort((a, b) {
           if (a.eventDate == null && b.eventDate == null) return 0;
           if (a.eventDate == null) return 1;
@@ -111,6 +157,14 @@ class AppContext extends ChangeNotifier {
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'past events'});
         break;
       case 3:
+        // Remove duplicates first
+        final Map<String, EventHead> uniqueHeads3 = {};
+        for (var head in _eventHeads) {
+          uniqueHeads3[head.id] = head;
+        }
+        _eventHeads.clear();
+        _eventHeads.addAll(uniqueHeads3.values);
+
         _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
         _analytics.logEvent(name: 'post sort', parameters: {'type': 'bookmarks'});
         break;

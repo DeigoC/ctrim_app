@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:universal_html/html.dart' as html;
 
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_role_page.dart';
@@ -81,6 +83,9 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   Widget _buildEventDateSelector() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     String dateStr = "No Date Selected";
     String timeStr = '';
     if (widget.eventContext.head.eventDate != null) {
@@ -94,18 +99,28 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     }
 
     final List<Widget> children = [
-      ListTile(
-          title: Text(dateStr),
-          subtitle: timeStr.isNotEmpty ? Text(timeStr) : null,
-          leading: const Icon(Icons.calendar_month)),
-      ListTile(
-          title: Text(widget.eventContext.head.location),
-          subtitle: Text(
-            widget.eventContext.program.address,
-            maxLines: null,
-          ),
-          trailing: _buildLocationTrailingIcon(),
-          leading: const Icon(Icons.map)),
+      Card(
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            ListTile(
+                title: Text(dateStr, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                subtitle: timeStr.isNotEmpty ? Text(timeStr) : null,
+                leading: Icon(Icons.calendar_month, color: colorScheme.primary)),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            ListTile(
+                title: Text(widget.eventContext.head.location,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  widget.eventContext.program.address,
+                  maxLines: null,
+                ),
+                trailing: _buildLocationTrailingIcon(),
+                leading: Icon(Icons.map, color: colorScheme.primary)),
+          ],
+        ),
+      ),
       const SizedBox(height: 8),
     ];
 
@@ -113,12 +128,18 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         DateTime.now().isBefore(widget.eventContext.head.eventDate!) &&
         !widget.isAddingPost) {
       children.add(Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: ElevatedButton.icon(
-            onPressed: _onRemindEventClick, icon: const Icon(Icons.calendar_month), label: const Text('Remind me')),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
+        child: FilledButton.tonalIcon(
+            onPressed: _onRemindEventClick,
+            icon: const Icon(Icons.notifications_active, size: 18),
+            label: const Text('Remind me'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            )),
       ));
     }
 
+    children.add(const SizedBox(height: 8));
     children.add(const Divider(thickness: 1));
 
     return InkWell(
@@ -138,9 +159,29 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   Widget _buildLocationTrailingIcon() {
     if (widget.eventContext.program.online) {
-      return TextButton(onPressed: _onClickLocationTrailingIcon, child: const Text('Join'));
+      return FilledButton.tonal(
+        onPressed: _onClickLocationTrailingIcon,
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.videocam, size: 16),
+            SizedBox(width: 4),
+            Text('Join'),
+          ],
+        ),
+      );
     }
-    return TextButton(onPressed: _onClickLocationTrailingIcon, child: const Text('Maps'));
+    return FilledButton.tonal(
+      onPressed: _onClickLocationTrailingIcon,
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.map, size: 16),
+          SizedBox(width: 4),
+          Text('Maps'),
+        ],
+      ),
+    );
   }
 
   // * LOGIC
@@ -197,12 +238,82 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         }
       });
     } else {
-      DialogManager.showAlertDialog(
-          context: context,
-          title: 'Adding to Calendar',
-          content:
-              "Sorry, this feature only works on native mobile apps (iOS or Android), not on WebApps. Please look to install the app when it's available!");
+      // Web: Generate and download .ics file
+      _downloadICSFile(event);
+      _appContext.analytics.logEvent(
+          name: 'Reminder Added',
+          parameters: {'PostID': widget.eventContext.id, 'DateTime': DateTime.now(), 'Platform': 'Web'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Calendar event downloaded! Open the file to add to your calendar.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
     }
+  }
+
+  /// Generate and download .ics calendar file for web
+  void _downloadICSFile(Event event) {
+    final String icsContent = _generateICSContent(event);
+
+    // Create blob and download
+    final bytes = utf8.encode(icsContent);
+    final blob = html.Blob([bytes], 'text/calendar');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    html.AnchorElement(href: url)
+      ..setAttribute('download', '${event.title.replaceAll(' ', '_')}.ics')
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
+  }
+
+  /// Generate iCalendar (.ics) format content
+  String _generateICSContent(Event event) {
+    final dtFormat = DateFormat("yyyyMMdd'T'HHmmss");
+    final dateFormat = DateFormat('yyyyMMdd');
+
+    String dtStart;
+    String dtEnd;
+
+    if (event.allDay) {
+      dtStart = 'DTSTART;VALUE=DATE:${dateFormat.format(event.startDate)}';
+      dtEnd = 'DTEND;VALUE=DATE:${dateFormat.format(event.endDate.add(const Duration(days: 1)))}';
+    } else {
+      dtStart = 'DTSTART:${dtFormat.format(event.startDate)}Z';
+      dtEnd = 'DTEND:${dtFormat.format(event.endDate)}Z';
+    }
+
+    final now = dtFormat.format(DateTime.now());
+
+    return '''BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//CTRIM App//Event Reminder//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${DateTime.now().millisecondsSinceEpoch}@ctrim.app
+DTSTAMP:${now}Z
+$dtStart
+$dtEnd
+SUMMARY:${_escapeICSText(event.title)}
+DESCRIPTION:${_escapeICSText(event.description ?? '')}
+LOCATION:${_escapeICSText(event.location ?? '')}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR''';
+  }
+
+  /// Escape special characters for ICS format
+  String _escapeICSText(String text) {
+    return text.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll(';', '\\;').replaceAll('\n', '\\n');
   }
 
   void _onClickLocationTrailingIcon() {

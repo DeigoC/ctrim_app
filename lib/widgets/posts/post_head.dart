@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../models/event/event_head.dart';
 import '../../pages/events/view_event_page.dart';
@@ -7,168 +8,400 @@ import '../../pages/view_gallery_page.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
 
-class PostHead extends StatelessWidget {
-  const PostHead({super.key, required this.thisHead, required this.updatePost});
+class PostHead extends StatefulWidget {
   final EventHead thisHead;
-  final Function() updatePost;
-  static const double _titleFontSize = 24, _subtitleFontSize = 16, _metaFontSize = 14;
+  final VoidCallback updatePost;
+
+  const PostHead({
+    super.key,
+    required this.thisHead,
+    required this.updatePost,
+  });
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _PostHeadState createState() => _PostHeadState();
+}
+
+class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin {
+  static const double _titleFontSize = 22, _subtitleFontSize = 15;
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM • HH:mm');
+
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final Widget detailSection = InkWell(
-      onLongPress: () {
-        showDialog(
-            context: context,
-            builder: (_) =>
-                Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: GestureDetector(
+            onTapDown: (_) {
+              HapticFeedback.lightImpact();
+              _animationController.forward();
+            },
+            onTapUp: (_) {
+              _animationController.reverse();
+              _onHeadTap(context);
+            },
+            onTapCancel: () {
+              _animationController.reverse();
+            },
+            child: Material(
+              elevation: 4,
+              shadowColor: colorScheme.shadow.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header with info button
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16, right: 8, top: 12),
+                      child: Row(
+                        children: [
+                          Expanded(child: _buildStatusRow(theme, colorScheme)),
+                          IconButton(
+                            icon: Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            onPressed: () => _showPostInfo(context),
+                            tooltip: 'Post Info',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Content Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTitle(theme, colorScheme),
+                          const SizedBox(height: 8),
+                          if (widget.thisHead.subtitle.isNotEmpty) ...[
+                            _buildSubtitle(theme, colorScheme),
+                            const SizedBox(height: 12),
+                          ],
+                          _buildActionRow(theme, colorScheme),
+                        ],
+                      ),
+                    ),
+
+                    // Media Section
+                    if (widget.thisHead.hasMedia) ...[
+                      const SizedBox(height: 12),
+                      _buildMediaGrid(context),
+                    ],
+
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
       },
-      onTap: () => _onHeadTap(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTitle(),
-          const SizedBox(height: 2),
-          _buildMetaData(),
-          const SizedBox(height: 16),
-          _buildSubtitle(),
-          const SizedBox(height: 8)
-        ],
+    );
+  }
+
+  Widget _buildMediaGrid(BuildContext context) {
+    final List<Map<String, dynamic>> media = _getMedia();
+
+    if (media.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: _buildMediaLayout(media, context),
       ),
     );
-
-    final List<Widget> children = [
-      detailSection,
-    ];
-
-    final List<Map<String, dynamic>> media = _getMedia();
-    if (media.isNotEmpty) {
-      children.insert(0, _buildMediaSection(context, media));
-    } else {
-      children.insert(0, const SizedBox(height: 8));
-    }
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children);
-    // return InkWell(
-    //     onLongPress: () {
-    //       showDialog(
-    //           context: context,
-    //           builder: (_) =>
-    //               Dialog(child: ListTile(title: Text('Post ID: ${thisHead.id}'), leading: const Icon(Icons.storage))));
-    //     },
-    //     onTap: () => _onHeadTap(context),
-    //     child:
-    //         Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: children));
   }
 
-  Widget _buildTitle() {
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Text(thisHead.title, style: const TextStyle(fontSize: _titleFontSize)));
-  }
-
-  Widget _buildMetaData() {
-    // final String timeAgo =
-
-    final String finalStr = thisHead.eventDate != null
-        ? '${thisHead.location} • ${_eventDateFormat.format(thisHead.eventDate!)} • Edited ${_timeAgo(thisHead.recentDate)}'
-        : '${thisHead.location} • Edited ${_timeAgo(thisHead.recentDate)}';
-
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Text(finalStr, style: TextStyle(fontSize: _metaFontSize, color: Colors.grey.shade600)));
-  }
-
-  Widget _buildSubtitle() {
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Text(thisHead.subtitle, style: const TextStyle(fontSize: _subtitleFontSize)));
-  }
-
-  Widget _buildMediaSection(final BuildContext context, final List<Map<String, dynamic>> media) {
-    final List<Widget> children = [_buildMediaSlot(media.first, 0, context)];
-
-    if (media.length == 2) {
-      children.addAll([const SizedBox(width: 2), _buildMediaSlot(media[1], 1, context)]);
+  Widget _buildMediaLayout(List<Map<String, dynamic>> media, BuildContext context) {
+    if (media.length == 1) {
+      return _buildMediaSlot(media.first, 0, context);
+    } else if (media.length == 2) {
+      return Row(
+        children: [
+          Expanded(child: _buildMediaSlot(media[0], 0, context)),
+          const SizedBox(width: 2),
+          Expanded(child: _buildMediaSlot(media[1], 1, context)),
+        ],
+      );
     } else if (media.length == 3) {
-      children.addAll([
-        const SizedBox(width: 2),
-        Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _buildMediaSlot(media[1], 1, context),
-          const SizedBox(height: 2),
-          _buildMediaSlot(media[2], 2, context),
-        ]))
-      ]);
-    } else if (media.length == 4) {
-      children[0] = Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _buildMediaSlot(media[0], 0, context),
-        const SizedBox(height: 2),
-        _buildMediaSlot(media[2], 2, context),
-      ]));
-      children.addAll([
-        const SizedBox(width: 2),
-        Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _buildMediaSlot(media[1], 1, context),
-          const SizedBox(height: 2),
-          _buildMediaSlot(media[3], 3, context),
-        ]))
-      ]);
+      return Row(
+        children: [
+          Expanded(child: _buildMediaSlot(media[0], 0, context)),
+          const SizedBox(width: 2),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: _buildMediaSlot(media[1], 1, context)),
+                const SizedBox(height: 2),
+                Expanded(child: _buildMediaSlot(media[2], 2, context)),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      // 4+ media items
+      return Row(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: _buildMediaSlot(media[0], 0, context)),
+                const SizedBox(height: 2),
+                Expanded(child: _buildMediaSlot(media[2], 2, context)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 2),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: _buildMediaSlot(media[1], 1, context)),
+                const SizedBox(height: 2),
+                Expanded(child: _buildMediaSlot(media[3], 3, context)),
+              ],
+            ),
+          ),
+        ],
+      );
     }
-
-    return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: children))));
   }
 
-  Widget _buildMediaSlot(final Map<String, dynamic> entry, final int index, final BuildContext context) {
+  Widget _buildStatusRow(ThemeData theme, ColorScheme colorScheme) {
+    return Row(
+      children: [
+        // Event Status Badge
+        if (widget.thisHead.hasEventDate)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: widget.thisHead.eventStatusColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.thisHead.eventStatusColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.thisHead.isUpcoming ? Icons.upcoming : Icons.history,
+                  size: 12,
+                  color: widget.thisHead.eventStatusColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.thisHead.eventStatusText,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: widget.thisHead.eventStatusColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        const Spacer(),
+
+        // Location & Time Info
+        Row(
+          children: [
+            Icon(
+              Icons.location_on,
+              size: 14,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              widget.thisHead.location,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTitle(ThemeData theme, ColorScheme colorScheme) {
+    return Text(
+      widget.thisHead.title,
+      style: theme.textTheme.titleLarge?.copyWith(
+        fontSize: _titleFontSize,
+        fontWeight: FontWeight.bold,
+        color: colorScheme.onSurface,
+        height: 1.2,
+      ),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildSubtitle(ThemeData theme, ColorScheme colorScheme) {
+    return Text(
+      widget.thisHead.subtitle,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        fontSize: _subtitleFontSize,
+        color: colorScheme.onSurfaceVariant,
+        height: 1.4,
+      ),
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildActionRow(ThemeData theme, ColorScheme colorScheme) {
+    return Row(
+      children: [
+        // Event Date/Time
+        if (widget.thisHead.hasEventDate) ...[
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _eventDateFormat.format(widget.thisHead.eventDate!),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+
+        // Media Count (if any)
+        if (widget.thisHead.hasMedia)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceVariant.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.thisHead.imageCount > 0 ? Icons.image : Icons.play_circle,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.thisHead.mediaCount}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        const Spacer(),
+
+        // Last Updated
+        Text(
+          'Updated ${_timeAgo(widget.thisHead.recentDate)}',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMediaSlot(Map<String, dynamic> entry, int index, BuildContext context) {
     return entry['type']!.compareTo('img') == 0
-        ? Expanded(
-            child: ImageMediaSlot(
+        ? ImageMediaSlot(
             mediaEntry: entry,
             onTap: () => _onMediaTap(index, context),
-            postID: thisHead.id,
-          ))
-        : Expanded(
-            child: VideoMediaSlot(mediaEntry: entry, postId: thisHead.id, onTap: () => _onMediaTap(index, context)));
+            postID: widget.thisHead.id,
+          )
+        : VideoMediaSlot(
+            mediaEntry: entry,
+            postId: widget.thisHead.id,
+            onTap: () => _onMediaTap(index, context),
+          );
   }
 
-  // * Logic
+  // * Helper Methods
 
   List<Map<String, dynamic>> _getMedia() {
     if (kIsWeb) {
-      return thisHead.media.where((e) => e['type'] == 'img').toList();
+      return widget.thisHead.media.where((e) => e['type'] == 'img').toList();
     }
-    return thisHead.media;
+    return widget.thisHead.media;
   }
 
-  void _onHeadTap(final BuildContext context) {
-    // ! If this becomes an issue in the future, we should try to add some logic
-    // ! to pop the screen instead of opening another page to an already opened page
-    // ! to stop the deep viewing of related posts
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)))
-        .then((_) => updatePost());
-  }
-
-  void _onMediaTap(final int index, final BuildContext context) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ViewGalleryPage(
-                  media: thisHead.media,
-                  initialIndex: index,
-                  postId: thisHead.id,
-                )));
-  }
-
-  String _timeAgo(final DateTime dateTime) {
+  String _timeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
@@ -195,5 +428,94 @@ class PostHead extends StatelessWidget {
       final years = (difference.inDays / 365).floor();
       return "$years ${(years == 1) ? 'year' : 'years'} ago";
     }
+  }
+
+  // * Event Handlers
+
+  void _onHeadTap(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: widget.thisHead)),
+    ).then((_) => widget.updatePost());
+  }
+
+  void _onMediaTap(int index, BuildContext context) {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewGalleryPage(
+          media: widget.thisHead.media,
+          initialIndex: index,
+          postId: widget.thisHead.id,
+        ),
+      ),
+    );
+  }
+
+  void _showPostInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Text('Post Details'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoRow('Post ID', widget.thisHead.id, context),
+            const SizedBox(height: 8),
+            _buildInfoRow('Location', widget.thisHead.location, context),
+            const SizedBox(height: 8),
+            _buildInfoRow('Media Count', '${widget.thisHead.mediaCount}', context),
+            if (widget.thisHead.hasEventDate) ...[
+              const SizedBox(height: 8),
+              _buildInfoRow('Event Status', widget.thisHead.eventStatusText, context),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            '$label:',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+          ),
+        ),
+      ],
+    );
   }
 }

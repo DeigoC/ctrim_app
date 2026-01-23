@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../utility/app_context.dart';
+import '../utility/network_image_helper.dart';
 
 class MyUserAvatar extends StatelessWidget {
   const MyUserAvatar(this._user, {super.key, this.radius, this.tmpImageSrc});
@@ -25,14 +26,14 @@ class MyUserAvatar extends StatelessWidget {
     final String? appDir = appContext.appDir;
 
     if (tmpImageSrc != null) {
-      return CircleAvatar(backgroundImage: NetworkImage(tmpImageSrc!), radius: radius);
+      return CircleAvatar(backgroundImage: NetworkImage(NetworkImageHelper.getImageUrl(tmpImageSrc!)), radius: radius);
     }
 
     if (appDir != null && (appContext.currentUser.id != _user.id || !appContext.useUserImageSrc)) {
       // debugPrint('using the file for user profile image - ID ${_user.id}');
       return _buildFileImage(appDir);
     } else {
-      return CircleAvatar(backgroundImage: NetworkImage(_user.imgSrc), radius: radius);
+      return CircleAvatar(backgroundImage: NetworkImage(NetworkImageHelper.getImageUrl(_user.imgSrc)), radius: radius);
     }
   }
 
