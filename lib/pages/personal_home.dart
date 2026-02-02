@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
+import '../firebase/messaging_manager.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
@@ -304,6 +305,19 @@ class _PersonalHomeState extends State<PersonalHome> {
                   colorScheme: colorScheme,
                   iconColor: colorScheme.secondary,
                 ),
+                // Show enable notifications option if not yet enabled
+                if (!appContext.sharedPref.isFirstOpen && appContext.sharedPref.fcmToken.isEmpty) ...[
+                  const Divider(height: 1, indent: 72),
+                  _buildModernListTile(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'Enable Notifications',
+                    subtitle: 'Get updates from CTRIM',
+                    onTap: () => _onEnableNotificationsClick(appContext),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.tertiary,
+                  ),
+                ],
               ],
 
               // User-specific actions
@@ -835,5 +849,92 @@ class _PersonalHomeState extends State<PersonalHome> {
         setState(() {});
       }
     });
+  }
+
+  void _onEnableNotificationsClick(AppContext appContext) async {
+    if (kIsWeb) return;
+
+    final MessagingManager messagingManager = MessagingManager();
+
+    // Show explanation dialog
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        title: const Text('Enable Notifications'),
+        content: const Text(
+          'Get notified about important updates, events, and announcements from CTRIM. You can manage your notification preferences anytime.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Not Now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed != true) return;
+
+    // Request permission and get token
+    final String? token = await messagingManager.requestPermissionAndToken();
+
+    if (token != null) {
+      debugPrint('Token to save is $token');
+
+      // Store token based on user type
+      if (appContext.isCurrentUserGuest) {
+        // Guest user - store token locally
+        appContext.sharedPref.saveGuestFCMToken(token);
+      } else {
+        // Authenticated user - store normally
+        appContext.sharedPref.saveFCMToken(token);
+      }
+
+      // Subscribe to Belfast topics
+      appContext.sharedPref.setSubscribedToBelfast(true);
+
+      // Subscribe to all available topics
+      appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
+
+      messagingManager.subscribeToTopic('belfast-sunday-service');
+      messagingManager.subscribeToTopic('belfast-midweek-service');
+      messagingManager.subscribeToTopic('belfast-growth-mentoring');
+      messagingManager.subscribeToTopic('belfast-dawn-watch');
+      messagingManager.subscribeToTopic('belfast-overnight-prayer');
+      messagingManager.subscribeToTopic('belfast-youth-cg');
+      messagingManager.subscribeToTopic('Belfast');
+
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Notifications enabled successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        setState(() {}); // Refresh to hide the enable button
+      }
+    } else {
+      if (mounted) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not enable notifications. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }

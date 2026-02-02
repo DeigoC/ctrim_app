@@ -7,13 +7,11 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
-import '../firebase/messaging_manager.dart';
 import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
-import '../widgets/info/timed_button_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -67,9 +65,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _removeLocallySavedPosts();
       _appContext.sharedPref.setUserImageRefreshTime();
     }
-
-    // TODO new feature for notifications (temporary until future updates)
-    _setNotificationTopicsTemp();
 
     super.initState();
   }
@@ -201,59 +196,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
     if (appContext.sharedPref.isFirstOpen) {
-      // Show notification permission dialog for all users (guests and authenticated)
-      if (!kIsWeb) {
-        final MessagingManager messagingManager = MessagingManager();
-        await showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => Dialog(
-                child: SingleChildScrollView(
-                    child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                          const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.0),
-                              child: Text('Welcome! 👋',
-                                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
-                                  textAlign: TextAlign.start)),
-                          const SizedBox(height: 16),
-                          const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.0),
-                              child: Text('Please allow notifications to keep up with the latest from CTRIM!',
-                                  textAlign: TextAlign.start, style: TextStyle(fontSize: 16))),
-                          const SizedBox(height: 8),
-                          Align(
-                              alignment: Alignment.centerRight,
-                              child: Padding(
-                                  padding: const EdgeInsets.only(right: 16.0),
-                                  child: TextButton(
-                                      onPressed: () => Navigator.pop(_),
-                                      child: const Text('Ok', style: TextStyle(fontSize: 16)))))
-                        ])))));
-
-        final String? token = await messagingManager.requestPermissionAndToken().then((token) {
-          showDialog(context: context, builder: (_) => const TimedButtonDialog());
-          return token;
-        });
-
-        if (token != null) {
-          debugPrint('Token to save is $token');
-
-          // Store token based on user type
-          if (appContext.isCurrentUserGuest) {
-            // Guest user - store token locally
-            appContext.sharedPref.saveGuestFCMToken(token);
-          } else {
-            // Authenticated user - store normally
-            appContext.sharedPref.saveFCMToken(token);
-          }
-        }
-
-        _appContext.sharedPref.setSubscribedToBelfast(true);
-        _setNotificationTopicsTemp();
-      }
-
       appContext.sharedPref.nowOpened();
     }
   }
@@ -496,37 +438,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         debugPrint('Deleting cached profile pic for ${user.forname} ID ${user.id}');
         await localDataManager.deleteUserImage(user.id);
       }
-    }
-  }
-
-  // Legacy methods removed - now using Hive-based image caching
-  // See _performUserImageCache() above for cross-platform implementation
-
-  void _setNotificationTopicsTemp() {
-    // we have to check if users are subscribed to the old notification topic (belfast)
-    // if so, then subscribe to all the new ones and set old one to false
-    // otherwise, we do not set it to true
-    if (_appContext.sharedPref.subscribedToBelfast) {
-      // unsubscribe to this and subscribe to everything temporarly available
-      debugPrint('unsubscribing to old Belfast topic and subscribing to everything else');
-      final MessagingManager messagingManager = MessagingManager();
-      messagingManager.unsubscribeFromCTRIMBelfast();
-      _appContext.sharedPref.setSubscribedToBelfast(false);
-
-      _appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
-
-      messagingManager.subscribeToTopic('belfast-sunday-service');
-      messagingManager.subscribeToTopic('belfast-midweek-service');
-      messagingManager.subscribeToTopic('belfast-growth-mentoring');
-      messagingManager.subscribeToTopic('belfast-dawn-watch');
-      messagingManager.subscribeToTopic('belfast-overnight-prayer');
-      messagingManager.subscribeToTopic('belfast-youth-cg');
-      messagingManager.subscribeToTopic('Belfast'); // ! hardcode to Belfast for now
     }
   }
 }
