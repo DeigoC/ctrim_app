@@ -1,9 +1,10 @@
 import 'package:ctrim_app/models/info/ctrim_info.dart';
-import 'package:ctrim_app/pages/information/edit_info_body_page.dart';
+import 'package:ctrim_app/utility/app_context.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'package:provider/provider.dart';
 import '../../widgets/quill_editor_wrapper.dart';
 
 class CTRIMInfoPage extends StatelessWidget {
@@ -33,38 +34,34 @@ class CTRIMInfoPage extends StatelessWidget {
 
   Widget _buildBodyWithData(final BuildContext context, final Map<String, dynamic> data) {
     final CtrimInfo ctrimInfo = CtrimInfo(data);
-
-    List<Widget> children = [
-      const Divider(),
-      const SizedBox(height: 8),
-      Flexible(
-          child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: QuillEditorWidget(
-                jsonContent: ctrimInfo.body,
-                showAlignmentButtons: true,
-                showSubscript: false,
-                showSuperscript: true,
-                showCodeBlock: true,
-                multiRowsDisplay: false,
-                editorPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              ))),
-      const SizedBox(height: 32)
-    ];
-
-    if (kDebugMode) {
-      children.insert(
-          0,
-          ElevatedButton.icon(
-              onPressed: () =>
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => EditInfoBodyPage(json: ctrimInfo.body))),
-              icon: const Icon(Icons.edit),
-              label: const Text("Edit Body")));
-    }
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final bool isAdmin = appContext.currentUser.isAreaAdmin;
+    final bool canEdit = kDebugMode && isAdmin;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: children,
+      children: [
+        const Divider(),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: canEdit
+              ? QuillEditorWidget(
+                  jsonContent: ctrimInfo.body,
+                  showAlignmentButtons: true,
+                  showSubscript: false,
+                  showSuperscript: true,
+                  showCodeBlock: true,
+                  multiRowsDisplay: false,
+                  editorPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                )
+              : QuillViewerWidget(
+                  jsonContent: ctrimInfo.body,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                ),
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
 

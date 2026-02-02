@@ -196,6 +196,37 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
     if (appContext.sharedPref.isFirstOpen) {
+      // Show welcome dialog without notification pressure
+      await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => Dialog(
+              child: SingleChildScrollView(
+                  child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Text('Welcome! 👋',
+                                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.start)),
+                        const SizedBox(height: 16),
+                        const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Text(
+                                'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
+                                textAlign: TextAlign.start,
+                                style: TextStyle(fontSize: 16))),
+                        const SizedBox(height: 8),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                                padding: const EdgeInsets.only(right: 16.0),
+                                child: TextButton(
+                                    onPressed: () => Navigator.pop(_),
+                                    child: const Text('Get Started', style: TextStyle(fontSize: 16)))))
+                      ])))));
+
       appContext.sharedPref.nowOpened();
     }
   }
