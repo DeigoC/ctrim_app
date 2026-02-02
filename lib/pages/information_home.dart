@@ -22,6 +22,25 @@ class _InformationHomeState extends State<InformationHome> {
     'Devotionals': 'How do we take care of our relationship with God?',
   };
 
+  // Responsive breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 900;
+  static const double _desktopBreakpoint = 1200;
+
+  bool _isMobile(double width) => width < _mobileBreakpoint;
+
+  int _getCrossAxisCount(double width) {
+    if (width >= _desktopBreakpoint) return 3;
+    if (width >= _tabletBreakpoint) return 2;
+    return 1;
+  }
+
+  double _getMaxContentWidth(double width) {
+    if (width >= _desktopBreakpoint) return 1400;
+    if (width >= _tabletBreakpoint) return 1000;
+    return width;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -137,194 +156,494 @@ class _InformationHomeState extends State<InformationHome> {
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Hero Introduction Card
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colorScheme.primaryContainer,
-                  colorScheme.secondaryContainer.withOpacity(0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.church,
-                  size: 48,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Christ the Redeemer International Ministries',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Dedicated and committed to making true disciples who will passionately advance the Kingdom of God.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final maxWidth = _getMaxContentWidth(screenWidth);
+        final horizontalPadding = _isMobile(screenWidth) ? 16.0 : 32.0;
+        final isWideScreen = screenWidth >= _tabletBreakpoint;
 
-          const SizedBox(height: 24),
-
-          // Mission Section
-          _buildSectionCard(
-            icon: Icons.flag,
-            title: 'OUR MISSION',
-            subtitle: 'To Win Souls and Make Disciples.',
-            content: Column(
-              children: [
-                Text(
-                  'Matthew 28:19-20',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: colorScheme.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: colorScheme.outline.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Text(
-                    matthewVerse,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontStyle: FontStyle.italic,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
-
-          const SizedBox(height: 20),
-
-          // Vision Section
-          _buildSectionCard(
-            icon: Icons.visibility,
-            title: 'OUR VISION',
-            subtitle: 'To become an effective and strategic disciple-making church.',
-            content: Text(
-              visionParagraph,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.4,
-              ),
-            ),
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
-
-          const SizedBox(height: 20),
-
-          // Core Values Section
-          _buildSectionCard(
-            icon: Icons.favorite,
-            title: 'OUR CORE VALUES',
-            subtitle: 'The foundation of what is really important to us',
-            content: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Core values are the foundation of what is really important to us. It gives us CLARITY about who we are and what we stand for. It gives us the ability to STAY FOCUS on what matters most. It gives us UNITY, MATURITY and HEALTH to grow and multiply.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.4,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...coreValues.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final value = entry.value;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Column(
+                children: [
+                  // Hero Introduction Card
+                  Container(
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.2),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colorScheme.primaryContainer,
+                          colorScheme.secondaryContainer.withOpacity(0.7),
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
                       children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        Icon(
+                          Icons.church,
+                          size: 48,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Christ the Redeemer International Ministries',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            value,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              height: 1.3,
-                            ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Dedicated and committed to making true disciples who will passionately advance the Kingdom of God.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
                           ),
                         ),
                       ],
                     ),
-                  );
-                }).toList(),
-              ],
-            ),
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
+                  ),
 
-          const SizedBox(height: 24),
-        ],
-      ),
+                  const SizedBox(height: 24),
+
+                  // TODO: Add image showcasing community/fellowship
+                  // Image should depict: Group of church members in fellowship, cell groups meeting,
+                  // or community gathering. Recommended size: 16:9 aspect ratio, warm and welcoming feel.
+                  Container(
+                    height: isWideScreen ? 250 : 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceVariant.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.outline.withOpacity(0.2),
+                        width: 2,
+                        style: BorderStyle.solid,
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Community Fellowship Image',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Mission and Vision Sections - Responsive Layout
+                  if (isWideScreen)
+                    // Wide screen: Side-by-side layout
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Mission Section
+                        Expanded(
+                          child: _buildSectionCard(
+                            icon: Icons.flag,
+                            title: 'OUR MISSION',
+                            subtitle: 'To Win Souls and Make Disciples.',
+                            content: Column(
+                              children: [
+                                Text(
+                                  'Matthew 28:19-20',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: colorScheme.primary,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: colorScheme.outline.withOpacity(0.2),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    matthewVerse,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontStyle: FontStyle.italic,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // TODO: Add image related to evangelism/missions
+                                // Image should depict: Baptism ceremony, street evangelism, missions work,
+                                // or discipleship training. Recommended size: 16:9 aspect ratio.
+                                Container(
+                                  height: 180,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: colorScheme.outline.withOpacity(0.2),
+                                      width: 2,
+                                      style: BorderStyle.solid,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.image,
+                                            size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Mission & Evangelism Image',
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        // Vision Section
+                        Expanded(
+                          child: _buildSectionCard(
+                            icon: Icons.visibility,
+                            title: 'OUR VISION',
+                            subtitle: 'To become an effective and strategic disciple-making church.',
+                            content: Column(
+                              children: [
+                                Text(
+                                  visionParagraph,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // TODO: Add image showing church growth/multiplication
+                                // Image should depict: Church service with raised hands in worship,
+                                // dynamic church planting, or thriving church community.
+                                // Recommended: High-energy, inspiring image, 16:9 aspect ratio.
+                                Container(
+                                  height: 180,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: colorScheme.outline.withOpacity(0.2),
+                                      width: 2,
+                                      style: BorderStyle.solid,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.image,
+                                            size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Church Vision & Growth Image',
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    // Mobile: Stacked layout
+                    Column(
+                      children: [
+                        // Mission Section
+                        _buildSectionCard(
+                          icon: Icons.flag,
+                          title: 'OUR MISSION',
+                          subtitle: 'To Win Souls and Make Disciples.',
+                          content: Column(
+                            children: [
+                              Text(
+                                'Matthew 28:19-20',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Text(
+                                  matthewVerse,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // TODO: Add image related to evangelism/missions
+                              // Image should depict: Baptism ceremony, street evangelism, missions work,
+                              // or discipleship training. Recommended size: 16:9 aspect ratio.
+                              Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: colorScheme.outline.withOpacity(0.2),
+                                    width: 2,
+                                    style: BorderStyle.solid,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.image, size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Mission & Evangelism Image',
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                        ),
+                        const SizedBox(height: 20),
+                        // Vision Section
+                        _buildSectionCard(
+                          icon: Icons.visibility,
+                          title: 'OUR VISION',
+                          subtitle: 'To become an effective and strategic disciple-making church.',
+                          content: Column(
+                            children: [
+                              Text(
+                                visionParagraph,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // TODO: Add image showing church growth/multiplication
+                              // Image should depict: Church service with raised hands in worship,
+                              // dynamic church planting, or thriving church community.
+                              // Recommended: High-energy, inspiring image, 16:9 aspect ratio.
+                              Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: colorScheme.outline.withOpacity(0.2),
+                                    width: 2,
+                                    style: BorderStyle.solid,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.image, size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Church Vision & Growth Image',
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
+                    ),
+
+                  const SizedBox(height: 20),
+
+                  // Core Values Section
+                  _buildSectionCard(
+                    icon: Icons.favorite,
+                    title: 'OUR CORE VALUES',
+                    subtitle: 'The foundation of what is really important to us',
+                    content: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceVariant.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Core values are the foundation of what is really important to us. It gives us CLARITY about who we are and what we stand for. It gives us the ability to STAY FOCUS on what matters most. It gives us UNITY, MATURITY and HEALTH to grow and multiply.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // TODO: Add image grid showcasing core values in action
+                        // Images should depict: Prayer meetings, training sessions, cell group activities,
+                        // youth ministry, servant leadership, etc. Consider a 2x2 or 3x2 grid layout.
+                        // Each image should represent different core values visually.
+                        Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceVariant.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.outline.withOpacity(0.2),
+                              width: 2,
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.image, size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Core Values Image Grid',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '(Prayer, Training, Fellowship, Youth)',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...coreValues.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final value = entry.value;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: colorScheme.outline.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: colorScheme.onPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    value,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -393,15 +712,91 @@ class _InformationHomeState extends State<InformationHome> {
   }
 
   Widget _buildChurchesTab() {
-    return MediaQuery.removePadding(
-        removeTop: true,
-        context: context,
-        child: ListView(key: const PageStorageKey<String>('information_churches_tab'), children: [
-          _buildChurchSlot('Belfast', 'assets/images/bel1.png'),
-          _buildChurchSlot('Portadown', 'assets/images/port1.png'),
-          _buildChurchSlot('North Coast', 'assets/images/northC1.png'),
-          // _buildChurchSlot('Larne/Carrickfergus', 'assets/images/northC1.png'),
-        ]));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final crossAxisCount = _getCrossAxisCount(screenWidth);
+        final isWideScreen = screenWidth >= _tabletBreakpoint;
+
+        final churches = [
+          {'name': 'Belfast', 'image': 'assets/images/bel1.png'},
+          {'name': 'Portadown', 'image': 'assets/images/port1.png'},
+          {'name': 'North Coast', 'image': 'assets/images/northC1.png'},
+        ];
+
+        if (isWideScreen) {
+          return GridView.builder(
+            key: const PageStorageKey<String>('information_churches_tab'),
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: 16 / 9,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: churches.length,
+            itemBuilder: (context, index) {
+              final church = churches[index];
+              return _buildChurchCard(church['name']!, church['image']!);
+            },
+          );
+        }
+
+        return MediaQuery.removePadding(
+          removeTop: true,
+          context: context,
+          child: ListView(
+            key: const PageStorageKey<String>('information_churches_tab'),
+            children: [
+              _buildChurchSlot('Belfast', 'assets/images/bel1.png'),
+              _buildChurchSlot('Portadown', 'assets/images/port1.png'),
+              _buildChurchSlot('North Coast', 'assets/images/northC1.png'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChurchCard(String church, String img) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () => _onChurchTap(church),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Hero(
+              tag: 'initialChurchImage_$img',
+              child: Image.asset(img, fit: BoxFit.cover),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  church,
+                  style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildChurchSlot(final String church, final String img) {
@@ -421,10 +816,119 @@ class _InformationHomeState extends State<InformationHome> {
   }
 
   Widget _buildTestimonials() {
-    return MediaQuery.removePadding(
-        removeTop: true,
-        context: context,
-        child: ListView(children: [_buildTestimonialSlot('Maije', 'assets/images/maije.jpg'), _buildMoreComingSoon()]));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final crossAxisCount = _getCrossAxisCount(screenWidth);
+        final isWideScreen = screenWidth >= _tabletBreakpoint;
+
+        if (isWideScreen) {
+          return GridView.count(
+            padding: const EdgeInsets.all(16),
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 16 / 9,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            children: [
+              _buildTestimonialCard('Maije', 'assets/images/maije.jpg'),
+              _buildMoreComingSoonCard(),
+            ],
+          );
+        }
+
+        return MediaQuery.removePadding(
+          removeTop: true,
+          context: context,
+          child: ListView(
+            children: [
+              _buildTestimonialSlot('Maije', 'assets/images/maije.jpg'),
+              _buildMoreComingSoon(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTestimonialCard(String personName, String img) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () => _onTestimonialTap(personName),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Hero(
+              tag: 'initialTestimonialImage_$img',
+              child: Image.asset(img, fit: BoxFit.cover),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.person, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        personName,
+                        style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Tap to read more...',
+                    style: TextStyle(fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreComingSoonCard() {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.grey.shade300,
+              Colors.grey.shade500,
+            ],
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            'More Coming Soon...',
+            style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildMoreComingSoon() {
@@ -545,19 +1049,54 @@ class _InformationHomeState extends State<InformationHome> {
   // }
 
   Widget _buildCtrimInformationSection() {
-    return MediaQuery.removePadding(
-        context: context,
-        removeTop: true,
-        child: ListView(children: [
-          const SizedBox(height: 16),
-          ..._ctrimInfoTopics.entries.map((entry) => _buildCtrimInfoSlot(entry.key, entry.value)).toList(),
-          const SizedBox(height: 32)
-        ]));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final crossAxisCount = screenWidth >= _desktopBreakpoint ? 3 : (screenWidth >= _tabletBreakpoint ? 2 : 1);
+        final isWideScreen = screenWidth >= _tabletBreakpoint;
+
+        if (isWideScreen) {
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: 3.5,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: _ctrimInfoTopics.length,
+            itemBuilder: (context, index) {
+              final entry = _ctrimInfoTopics.entries.elementAt(index);
+              return _buildCtrimInfoSlot(entry.key, entry.value);
+            },
+          );
+        }
+
+        return MediaQuery.removePadding(
+          context: context,
+          removeTop: true,
+          child: ListView(
+            children: [
+              const SizedBox(height: 16),
+              ..._ctrimInfoTopics.entries.map((entry) => _buildCtrimInfoSlot(entry.key, entry.value)).toList(),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildCtrimInfoSlot(final String topic, final String description) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    // TODO: Add topic-specific images for each CTRIM info card
+    // Core Values: Image of people embodying values (serving, praying, studying)
+    // 4XD Acts DNA: Diagram or visual representation of the 4XD framework
+    // Cell Groups: Small group meeting, intimate fellowship setting
+    // Devotionals: Person reading Bible, prayer journal, quiet time setting
+    // Recommended: Thumbnail size 80x80 or 100x100, rounded corners
 
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
@@ -570,6 +1109,8 @@ class _InformationHomeState extends State<InformationHome> {
                 child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(children: [
+                      // TODO: Replace this icon container with actual image
+                      // Container with ClipRRect and Image.asset for rounded image thumbnail
                       Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
