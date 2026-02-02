@@ -73,21 +73,48 @@ class AppSharedPreferences {
     _pref.setStringList(_bookmarkedPosts, bookmarked);
   }
 
-  bool get canRefreshPosts => _pref.getInt(_lastPostRefresh) == null
-      ? true
-      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >= 2;
+  bool get canRefreshPosts {
+    try {
+      return _pref.getInt(_lastPostRefresh) == null
+          ? true
+          : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >=
+              2;
+    } catch (e) {
+      _pref.remove(_lastPostRefresh);
+      return true;
+    }
+  }
+
   void setPostRefreshTime() => _pref.setInt(_lastPostRefresh, DateTime.now().millisecondsSinceEpoch);
 
-  bool get canRefreshRoles => _pref.getInt(_lastRoleRefresh) == null
-      ? true
-      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastRoleRefresh)!)).inMinutes >= 2;
+  bool get canRefreshRoles {
+    try {
+      return _pref.getInt(_lastRoleRefresh) == null
+          ? true
+          : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastRoleRefresh)!)).inMinutes >=
+              2;
+    } catch (e) {
+      _pref.remove(_lastRoleRefresh);
+      return true;
+    }
+  }
+
   void setRoleRefreshTime() => _pref.setInt(_lastRoleRefresh, DateTime.now().millisecondsSinceEpoch);
 
   bool get showMultirowTools => _pref.getBool(_showMultirowTools) ?? false;
   void setShowMultirowTools(final bool newState) => _pref.setBool(_showMultirowTools, newState);
 
   // * Startup tab preference (0 = Events, 1 = Information)
-  int get preferredStartupTab => _pref.getInt(_preferredStartupTab) ?? 1;
+  int get preferredStartupTab {
+    // Handle corrupted data - if wrong type is stored, remove it and return default
+    try {
+      return _pref.getInt(_preferredStartupTab) ?? 1;
+    } catch (e) {
+      _pref.remove(_preferredStartupTab);
+      return 1;
+    }
+  }
+
   void setPreferredStartupTab(final int tabIndex) => _pref.setInt(_preferredStartupTab, tabIndex);
 
   // * Guest related
@@ -99,9 +126,17 @@ class AppSharedPreferences {
   void clearGuestFCMToken() => _pref.setString(_guestFcmToken, _clear);
 
   // * Local data related
-  bool get canRefreshUserImages => _pref.getInt(_fetchUserImgs) == null
-      ? true
-      : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_fetchUserImgs)!)).inDays >= 7;
+  bool get canRefreshUserImages {
+    try {
+      return _pref.getInt(_fetchUserImgs) == null
+          ? true
+          : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_fetchUserImgs)!)).inDays >= 7;
+    } catch (e) {
+      _pref.remove(_fetchUserImgs);
+      return true;
+    }
+  }
+
   void setUserImageRefreshTime() => _pref.setInt(_fetchUserImgs, DateTime.now().millisecondsSinceEpoch);
 
   // * First-time dialog tracking

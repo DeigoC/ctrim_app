@@ -47,8 +47,8 @@ service cloud.firestore {
     }
 
     match /id_tracker/{documents=**}{
-      // Only authenticated users can read tracker (for internal use)
-      allow read: if request.auth != null;
+      // Allow anyone to read tracker (needed for guest user caching)
+      allow read: if true;
       
       allow create: if false;
 

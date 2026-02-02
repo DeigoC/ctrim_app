@@ -91,7 +91,7 @@ class _PersonalFirstTimeDialogState extends State<PersonalFirstTimeDialog> {
               _buildFeatureItem(
                 icon: Icons.church_rounded,
                 title: 'Sunday Service Attendance',
-                description: 'Indicate when you\'ll be attending Sunday services to help with planning.',
+                description: 'Learn about checking in for Sunday services and what to expect.',
                 colorScheme: colorScheme,
                 theme: theme,
               ),
@@ -111,7 +111,8 @@ class _PersonalFirstTimeDialogState extends State<PersonalFirstTimeDialog> {
               _buildFeatureItem(
                 icon: Icons.settings_rounded,
                 title: 'App Preferences',
-                description: 'Customize your startup tab, manage bookmarks, and view your schedule.',
+                description:
+                    'Customize your startup tab, manage bookmarks, and adjust other settings to suit your needs.',
                 colorScheme: colorScheme,
                 theme: theme,
               ),
@@ -135,7 +136,7 @@ class _PersonalFirstTimeDialogState extends State<PersonalFirstTimeDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'You can browse as a guest or create an account to unlock personalized features.',
+                        'You can browse as a guest or create an account later in Settings.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSecondaryContainer,
                         ),

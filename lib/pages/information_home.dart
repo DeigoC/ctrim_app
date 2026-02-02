@@ -424,8 +424,40 @@ class _InformationHomeState extends State<InformationHome> {
     return MediaQuery.removePadding(
         removeTop: true,
         context: context,
-        child: ListView(
-            children: [_buildTestimonialSlot('Maije', 'assets/images/maije.jpg'), _buildMoreTestimonialSlot()]));
+        child: ListView(children: [_buildTestimonialSlot('Maije', 'assets/images/maije.jpg'), _buildMoreComingSoon()]));
+  }
+
+  Widget _buildMoreComingSoon() {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+        child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.32,
+                width: double.infinity,
+                child: Stack(children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(Radius.circular(32)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.7),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Center(
+                      child: Text('More Coming Soon...',
+                          style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)))
+                ]))));
   }
 
   Widget _buildTestimonialSlot(final String personName, final String img) {
@@ -480,36 +512,37 @@ class _InformationHomeState extends State<InformationHome> {
                     ])))));
   }
 
-  Widget _buildMoreTestimonialSlot() {
-    final colorScheme = Theme.of(context).colorScheme;
+  // TODO: should only be for admin
+  // Widget _buildMoreTestimonialSlot() {
+  //   final colorScheme = Theme.of(context).colorScheme;
 
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-        child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-            child: InkWell(
-                onTap: () => _onMoreTestimonialsTap(),
-                borderRadius: const BorderRadius.all(Radius.circular(32)),
-                child: Container(
-                    height: MediaQuery.of(context).size.height * 0.32,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.all(Radius.circular(32)),
-                        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [
-                          colorScheme.primary.withOpacity(0.8),
-                          colorScheme.secondary.withOpacity(0.8),
-                        ])),
-                    child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.add, color: Colors.white, size: 48),
-                      SizedBox(height: 16),
-                      Text('More Testimonials',
-                          style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8),
-                      Text('Tap to see more testimonials...',
-                          style: TextStyle(fontSize: 16, color: Colors.white70, fontStyle: FontStyle.italic))
-                    ])))));
-  }
+  //   return Padding(
+  //       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+  //       child: Card(
+  //           elevation: 2,
+  //           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+  //           child: InkWell(
+  //               onTap: () => _onMoreTestimonialsTap(),
+  //               borderRadius: const BorderRadius.all(Radius.circular(32)),
+  //               child: Container(
+  //                   height: MediaQuery.of(context).size.height * 0.32,
+  //                   width: double.infinity,
+  //                   decoration: BoxDecoration(
+  //                       borderRadius: const BorderRadius.all(Radius.circular(32)),
+  //                       gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [
+  //                         colorScheme.primary.withOpacity(0.8),
+  //                         colorScheme.secondary.withOpacity(0.8),
+  //                       ])),
+  //                   child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+  //                     Icon(Icons.add, color: Colors.white, size: 48),
+  //                     SizedBox(height: 16),
+  //                     Text('More Testimonials',
+  //                         style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
+  //                     SizedBox(height: 8),
+  //                     Text('Tap to see more testimonials...',
+  //                         style: TextStyle(fontSize: 16, color: Colors.white70, fontStyle: FontStyle.italic))
+  //                   ])))));
+  // }
 
   Widget _buildCtrimInformationSection() {
     return MediaQuery.removePadding(
@@ -601,11 +634,6 @@ class _InformationHomeState extends State<InformationHome> {
         break;
       default:
     }
-  }
-
-  void _onMoreTestimonialsTap() {
-    HapticFeedback.lightImpact();
-    // Navigate to more testimonials or implement additional functionality
   }
 
   void _onCtrimInfoTap(final String topic) {
