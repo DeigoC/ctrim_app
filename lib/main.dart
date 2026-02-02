@@ -1,5 +1,4 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -46,9 +45,26 @@ void main() async {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
 
-  // Initialize Firebase App Check for DDoS/abuse protection
-  await FirebaseAppCheck.instance
-      .activate(providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'));
+  // Initialize Firebase App Check for DDoS/abuse protection.
+  // if (kDebugMode && kIsWeb) {
+  //   // For web debug mode, we need to set the debug token
+  //   // The debug token will be printed in the browser console on first run
+  //   debugPrint('🔧 Running in DEBUG mode - Firebase App Check will generate a debug token');
+  //   debugPrint('📋 Check your browser console for: "Firebase App Check debug token:"');
+  //   debugPrint('🔗 Add the token at: https://console.firebase.google.com/project/_/appcheck/apps');
+
+  //   await FirebaseAppCheck.instance.activate(
+  //     providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'),
+  //   );
+
+  //   // Enable auto token refresh
+  //   await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+  // } else {
+  //   // Production mode - use reCAPTCHA verification
+  //   await FirebaseAppCheck.instance.activate(
+  //     providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'),
+  //   );
+  // }
 
   // * Make sure we connect to the emulator on debug
   // if (kDebugMode) {
@@ -85,6 +101,12 @@ void main() async {
       child: MyApp(
         settingsController: settingsController,
       )));
+
+  // Wait a moment for App Check to fully initialize before fetching data
+  if (kIsWeb && kDebugMode) {
+    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint('✅ App Check should be ready, starting data fetch...');
+  }
 
   // Fetch essential data in background for all users (guests and authenticated)
   _fetchEssentialDataInBackground(guestContext, prefInstance, authManager, eventHeadDBManager, email, pass);

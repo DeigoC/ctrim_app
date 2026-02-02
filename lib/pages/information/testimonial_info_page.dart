@@ -1,10 +1,11 @@
-import 'package:ctrim_app/models/info/testimonial_into.dart';
-import 'package:ctrim_app/pages/information/edit_info_body_page.dart';
-import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+
+import '../../models/info/testimonial_into.dart';
+import '../../widgets/quill_editor_wrapper.dart';
+import 'edit_info_body_page.dart';
 
 class TestimonialInfoPage extends StatelessWidget {
   const TestimonialInfoPage({super.key, required String jsonPath, required String initialImageSrc})

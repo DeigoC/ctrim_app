@@ -135,7 +135,7 @@ class _BulletinFirstTimeDialogState extends State<BulletinFirstTimeDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Tap and hold any post to bookmark it for quick access later.',
+                        'Bookmark posts to easily find them later in the Bookmarks tab.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSecondaryContainer,
                         ),
