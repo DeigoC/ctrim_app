@@ -24,10 +24,8 @@ class TestimonialInfoPage extends StatelessWidget {
               child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // TODO: Replace with actual image URL from backend
-          // Original asset reference: _initialImageSrc (e.g., 'assets/images/maije.jpg')
           CachedImageWidget(
-            imageUrl: _initialImageSrc, // TODO: Replace with actual download URL
+            imageUrl: _initialImageSrc,
             height: MediaQuery.of(context).size.height * 0.4,
             fit: BoxFit.cover,
             heroTag: 'initialTestimonialImage_$_initialImageSrc',
