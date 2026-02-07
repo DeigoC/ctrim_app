@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:share_plus/share_plus.dart';
 import '../../utility/event_context.dart';
 import '../quill_editor_wrapper.dart';
@@ -93,19 +94,18 @@ class ViewPostBody extends StatelessWidget {
     final StringBuffer shareContent = StringBuffer();
     shareContent.writeln(eventContext.head.title);
 
-    if (eventContext.head.subtitle.isNotEmpty) {
-      shareContent.writeln();
-      shareContent.writeln(eventContext.head.subtitle);
-    }
+    // Add event body content as plain text
+    shareContent.writeln('---');
+    shareContent.writeln();
 
-    // Add event details if available
-    if (eventContext.head.eventDate != null) {
-      shareContent.writeln();
-      shareContent.writeln('📅 ${eventContext.head.eventDate}');
-    }
-
-    if (eventContext.head.location.isNotEmpty) {
-      shareContent.writeln('📍 ${eventContext.head.location}');
+    // Convert Quill JSON to plain text
+    try {
+      final document = quill.Document.fromJson(eventContext.body);
+      final plainText = document.toPlainText();
+      shareContent.write(plainText.trim());
+    } catch (e) {
+      // Fallback if conversion fails
+      shareContent.write('Unable to extract post content');
     }
 
     final String finalContent = shareContent.toString();
@@ -153,7 +153,7 @@ class ViewPostBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your browser doesn\'t support native sharing.',
+              'Your browser doesn\'t support native sharing but you can still copy the content to your clipboard:',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
