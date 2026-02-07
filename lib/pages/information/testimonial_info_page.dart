@@ -55,7 +55,7 @@ class TestimonialInfoPage extends StatelessWidget {
       const SizedBox(height: 8),
       const Divider(),
       const SizedBox(height: 8),
-      Flexible(child: QuillViewerWidget(jsonContent: testimonialInfo.body)),
+      QuillViewerWidget(jsonContent: testimonialInfo.body),
       const SizedBox(height: 32)
     ];
 
