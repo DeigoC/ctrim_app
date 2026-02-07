@@ -28,19 +28,34 @@ class _InformationHomeState extends State<InformationHome> {
   static const double _tabletBreakpoint = 900;
   static const double _desktopBreakpoint = 1200;
 
-  // Images
+  // Images - Churches
   static const String _bel1 = 'https://drive.google.com/uc?id=1yb7QD69yvUBdBxdtIHTbcdPQFfFWCFuj';
   static const String _port1 = 'https://drive.google.com/uc?id=165KdT-ldkD_hOq9LxsNvvfvlyAIC24HQ';
   static const String _northC1 = 'https://drive.google.com/uc?id=1o3Zoot7i99_0OFQcEna5BC84Z-2VXVXX';
+
+  // Images - Testimonials
   static const String _maije = 'https://drive.google.com/uc?id=1Ble52s0pPk9em4Xhhr7fULqP5EPSkabr';
   static const String _ching = 'https://drive.google.com/uc?id=1AdMQ35g2hDXDuka_DwBTGutq3fZYvGRU';
   static const String _allen = 'https://drive.google.com/uc?id=1LF2aHii5ZcH1-Eo-uvepLbnA81cVWNEA';
   static const String _clement = 'https://drive.google.com/uc?id=10asayDlBozgIZoAWbxpcpmv_VZ230Wwm';
   static const String _cherry = 'https://drive.google.com/uc?id=1y8e1dtqQezw2-C0qVvRmo8cbqApUZriu';
 
+  // Images - Information
+  static const String _mission = 'https://drive.google.com/uc?id=1RWa_4vx6vo1dXCP3SNc6WglxYTBoRY9T';
+  static const String _vision = 'https://drive.google.com/uc?id=1J7ZOPtjkb6iietVPyOdFMMIU29XwfjUX';
+  static const String _community = 'https://drive.google.com/uc?id=1bxbAq9RDwUPcf8yAzOAu6Ah-OG3YC1BI';
+  static const String _coreValues = 'https://drive.google.com/uc?id=1v4_0sABmlwLCvahonbVMs5GOLO8iWDzX';
+
   // Locations
   static const String _belfast = 'Belfast';
-  static const String _portadown = 'Portadown';
+  static const String _northcoast = 'Northcoast Derry/Londonderry';
+
+  // Testimonial names
+  static const String _maijeName = 'Maije';
+  static const String _chingName = 'Ching';
+  static const String _allenName = 'Allen';
+  static const String _clementName = 'Clement';
+  static const String _cherryName = 'Cherry';
 
   bool _isMobile(double width) => width < _mobileBreakpoint;
 
@@ -230,35 +245,14 @@ class _InformationHomeState extends State<InformationHome> {
 
                   const SizedBox(height: 24),
 
-                  // TODO: Add image showcasing community/fellowship
-                  // Image should depict: Group of church members in fellowship, cell groups meeting,
-                  // or community gathering. Recommended size: 16:9 aspect ratio, warm and welcoming feel.
-                  Container(
-                    height: isWideScreen ? 250 : 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.2),
-                        width: 2,
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Community Fellowship Image',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
+                  // Community Fellowship Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: CachedImageWidget(
+                      imageUrl: _community,
+                      height: isWideScreen ? 250 : 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                     ),
                   ),
 
@@ -307,36 +301,14 @@ class _InformationHomeState extends State<InformationHome> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                // TODO: Add image related to evangelism/missions
-                                // Image should depict: Baptism ceremony, street evangelism, missions work,
-                                // or discipleship training. Recommended size: 16:9 aspect ratio.
-                                Container(
-                                  height: 180,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceVariant.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: colorScheme.outline.withOpacity(0.2),
-                                      width: 2,
-                                      style: BorderStyle.solid,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.image,
-                                            size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Mission & Evangelism Image',
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                // Mission & Evangelism Image
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: CachedImageWidget(
+                                    imageUrl: _mission,
+                                    height: 180,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ],
@@ -362,37 +334,14 @@ class _InformationHomeState extends State<InformationHome> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                // TODO: Add image showing church growth/multiplication
-                                // Image should depict: Church service with raised hands in worship,
-                                // dynamic church planting, or thriving church community.
-                                // Recommended: High-energy, inspiring image, 16:9 aspect ratio.
-                                Container(
-                                  height: 180,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceVariant.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: colorScheme.outline.withOpacity(0.2),
-                                      width: 2,
-                                      style: BorderStyle.solid,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.image,
-                                            size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Church Vision & Growth Image',
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                // Church Vision & Growth Image
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: CachedImageWidget(
+                                    imageUrl: _vision,
+                                    height: 180,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ],
@@ -443,35 +392,14 @@ class _InformationHomeState extends State<InformationHome> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              // TODO: Add image related to evangelism/missions
-                              // Image should depict: Baptism ceremony, street evangelism, missions work,
-                              // or discipleship training. Recommended size: 16:9 aspect ratio.
-                              Container(
-                                height: 180,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceVariant.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: colorScheme.outline.withOpacity(0.2),
-                                    width: 2,
-                                    style: BorderStyle.solid,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.image, size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Mission & Evangelism Image',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              // Mission & Evangelism Image
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: CachedImageWidget(
+                                  imageUrl: _mission,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ],
@@ -495,36 +423,14 @@ class _InformationHomeState extends State<InformationHome> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              // TODO: Add image showing church growth/multiplication
-                              // Image should depict: Church service with raised hands in worship,
-                              // dynamic church planting, or thriving church community.
-                              // Recommended: High-energy, inspiring image, 16:9 aspect ratio.
-                              Container(
-                                height: 180,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceVariant.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: colorScheme.outline.withOpacity(0.2),
-                                    width: 2,
-                                    style: BorderStyle.solid,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.image, size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Church Vision & Growth Image',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              // Church Vision & Growth Image
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: CachedImageWidget(
+                                  imageUrl: _vision,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ],
@@ -560,43 +466,14 @@ class _InformationHomeState extends State<InformationHome> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // TODO: Add image grid showcasing core values in action
-                        // Images should depict: Prayer meetings, training sessions, cell group activities,
-                        // youth ministry, servant leadership, etc. Consider a 2x2 or 3x2 grid layout.
-                        // Each image should represent different core values visually.
-                        Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: colorScheme.outline.withOpacity(0.2),
-                              width: 2,
-                              style: BorderStyle.solid,
-                            ),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.image, size: 40, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Core Values Image Grid',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '(Prayer, Training, Fellowship, Youth)',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        // Core Values Image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedImageWidget(
+                            imageUrl: _coreValues,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -852,7 +729,7 @@ class _InformationHomeState extends State<InformationHome> {
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
             children: [
-              _buildTestimonialCard('Maije', _maije, _portadown),
+              _buildTestimonialCard('Maije', _maije, _northcoast),
               _buildTestimonialCard('Ching', _ching, _belfast),
               _buildTestimonialCard('Allen', _allen, _belfast),
               _buildTestimonialCard('Clement', _clement, _belfast),
@@ -867,7 +744,7 @@ class _InformationHomeState extends State<InformationHome> {
           context: context,
           child: ListView(
             children: [
-              _buildTestimonialSlot('Maije', _maije, _portadown),
+              _buildTestimonialSlot('Maije', _maije, _northcoast),
               _buildTestimonialSlot('Ching', _ching, _belfast),
               _buildTestimonialSlot('Allen', _allen, _belfast),
               _buildTestimonialSlot('Clement', _clement, _belfast),
@@ -1193,15 +1070,32 @@ class _InformationHomeState extends State<InformationHome> {
 
   void _onTestimonialTap(final String person) {
     HapticFeedback.lightImpact();
+
+    void navigateToTestimonialPage(final String jsonPath, final String imageSrc) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => TestimonialInfoPage(
+                    jsonPath: jsonPath,
+                    initialImageSrc: imageSrc,
+                  )));
+    }
+
     switch (person) {
-      case 'Maije':
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const TestimonialInfoPage(
-                      jsonPath: 'assets/info/testimonials/maije.json',
-                      initialImageSrc: _maije,
-                    )));
+      case _maijeName:
+        navigateToTestimonialPage('assets/info/testimonials/maije.json', _maije);
+        break;
+      case _chingName:
+        navigateToTestimonialPage('assets/info/testimonials/ching.json', _ching);
+        break;
+      case _allenName:
+        navigateToTestimonialPage('assets/info/testimonials/allen.json', _allen);
+        break;
+      case _clementName:
+        navigateToTestimonialPage('assets/info/testimonials/clement.json', _clement);
+        break;
+      case _cherryName:
+        navigateToTestimonialPage('assets/info/testimonials/cherry.json', _cherry);
         break;
       default:
     }

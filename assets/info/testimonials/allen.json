@@ -1,0 +1,17 @@
+{
+    "analyticTitle": "Testimonial: Allen",
+    "name": "Allen Dy",
+    "church": "Belfast",
+    "imgSrc": "https://drive.google.com/uc?id=1LF2aHii5ZcH1-Eo-uvepLbnA81cVWNEA",
+        "body": [
+            {
+                "insert": "🚧 Testimonial coming soon…! 🚧 "
+            },
+            {
+                "insert": "\n",
+                "attributes": {
+                    "align": "center"
+                }
+            }
+        ]
+}

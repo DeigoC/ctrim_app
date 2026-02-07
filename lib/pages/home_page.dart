@@ -90,10 +90,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               elevation: 0,
               currentIndex: _selectedIndex,
               onTap: (index) => _onNavigationItemTap(index),
-              unselectedFontSize: 0,
-              selectedFontSize: 0,
+              unselectedFontSize: 8,
+              selectedFontSize: 12,
               items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Bulletin'),
                 BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
                 BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
               ]),
