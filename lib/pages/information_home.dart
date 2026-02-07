@@ -1,9 +1,10 @@
-import 'package:ctrim_app/pages/information/testimonial_info_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../widgets/media/cached_image_widget.dart';
 import 'information/church_info_page.dart';
 import 'information/ctrim_info_page.dart';
+import 'information/testimonial_info_page.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({super.key, required this.tabController, required this.scrollController});
@@ -26,6 +27,12 @@ class _InformationHomeState extends State<InformationHome> {
   static const double _mobileBreakpoint = 600;
   static const double _tabletBreakpoint = 900;
   static const double _desktopBreakpoint = 1200;
+
+  // Images
+  static const String _bel1 = 'https://drive.google.com/uc?id=1yb7QD69yvUBdBxdtIHTbcdPQFfFWCFuj';
+  static const String _port1 = 'https://drive.google.com/uc?id=165KdT-ldkD_hOq9LxsNvvfvlyAIC24HQ';
+  static const String _northC1 = 'https://drive.google.com/uc?id=1o3Zoot7i99_0OFQcEna5BC84Z-2VXVXX';
+  static const String _maije = 'https://drive.google.com/uc?id=1Ble52s0pPk9em4Xhhr7fULqP5EPSkabr';
 
   bool _isMobile(double width) => width < _mobileBreakpoint;
 
@@ -714,14 +721,14 @@ class _InformationHomeState extends State<InformationHome> {
   Widget _buildChurchesTab() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final screenWidth = constraints.maxWidth;
-        final crossAxisCount = _getCrossAxisCount(screenWidth);
-        final isWideScreen = screenWidth >= _tabletBreakpoint;
+        final double screenWidth = constraints.maxWidth;
+        final int crossAxisCount = _getCrossAxisCount(screenWidth);
+        final bool isWideScreen = screenWidth >= _tabletBreakpoint;
 
         final churches = [
-          {'name': 'Belfast', 'image': 'assets/images/bel1.png'},
-          {'name': 'Portadown', 'image': 'assets/images/port1.png'},
-          {'name': 'North Coast', 'image': 'assets/images/northC1.png'},
+          {'name': 'Belfast', 'image': _bel1},
+          {'name': 'Portadown', 'image': _port1},
+          {'name': 'North Coast', 'image': _northC1},
         ];
 
         if (isWideScreen) {
@@ -748,9 +755,9 @@ class _InformationHomeState extends State<InformationHome> {
           child: ListView(
             key: const PageStorageKey<String>('information_churches_tab'),
             children: [
-              _buildChurchSlot('Belfast', 'assets/images/bel1.png'),
-              _buildChurchSlot('Portadown', 'assets/images/port1.png'),
-              _buildChurchSlot('North Coast', 'assets/images/northC1.png'),
+              _buildChurchSlot('Belfast', _bel1),
+              _buildChurchSlot('Portadown', _port1),
+              _buildChurchSlot('North Coast', _northC1),
             ],
           ),
         );
@@ -767,9 +774,10 @@ class _InformationHomeState extends State<InformationHome> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Hero(
-              tag: 'initialChurchImage_$img',
-              child: Image.asset(img, fit: BoxFit.cover),
+            CachedImageWidget(
+              imageUrl: img,
+              fit: BoxFit.cover,
+              heroTag: 'initialChurchImage_$img',
             ),
             Container(
               decoration: BoxDecoration(
@@ -806,7 +814,13 @@ class _InformationHomeState extends State<InformationHome> {
             height: MediaQuery.of(context).size.height * 0.4,
             width: double.infinity,
             child: Stack(children: [
-              Positioned.fill(child: Hero(tag: 'initialChurchImage_$img', child: Image.asset(img, fit: BoxFit.cover))),
+              Positioned.fill(
+                child: CachedImageWidget(
+                  imageUrl: img,
+                  fit: BoxFit.cover,
+                  heroTag: 'initialChurchImage_$img',
+                ),
+              ),
               Align(
                   alignment: Alignment.bottomLeft,
                   child: Padding(
@@ -830,7 +844,7 @@ class _InformationHomeState extends State<InformationHome> {
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
             children: [
-              _buildTestimonialCard('Maije', 'assets/images/maije.jpg'),
+              _buildTestimonialCard('Maije', _maije),
               _buildMoreComingSoonCard(),
             ],
           );
@@ -841,7 +855,7 @@ class _InformationHomeState extends State<InformationHome> {
           context: context,
           child: ListView(
             children: [
-              _buildTestimonialSlot('Maije', 'assets/images/maije.jpg'),
+              _buildTestimonialSlot('Maije', _maije),
               _buildMoreComingSoon(),
             ],
           ),
@@ -859,9 +873,10 @@ class _InformationHomeState extends State<InformationHome> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Hero(
-              tag: 'initialTestimonialImage_$img',
-              child: Image.asset(img, fit: BoxFit.cover),
+            CachedImageWidget(
+              imageUrl: img,
+              fit: BoxFit.cover,
+              heroTag: 'initialTestimonialImage_$img',
             ),
             Container(
               decoration: BoxDecoration(
@@ -978,10 +993,15 @@ class _InformationHomeState extends State<InformationHome> {
                     width: double.infinity,
                     child: Stack(children: [
                       Positioned.fill(
-                          child: ClipRRect(
-                              borderRadius: const BorderRadius.all(Radius.circular(32)),
-                              child: Hero(
-                                  tag: 'initialTestimonialImage_$img', child: Image.asset(img, fit: BoxFit.cover)))),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(32)),
+                          child: CachedImageWidget(
+                            imageUrl: img,
+                            fit: BoxFit.cover,
+                            heroTag: 'initialTestimonialImage_$img',
+                          ),
+                        ),
+                      ),
                       Positioned.fill(
                         child: ClipRRect(
                           borderRadius: const BorderRadius.all(Radius.circular(32)),
@@ -1144,20 +1164,18 @@ class _InformationHomeState extends State<InformationHome> {
           MaterialPageRoute(
               builder: (_) => const ChurchInfoPage(
                     jsonPath: 'assets/info/churches/belfast.json',
-                    imageSrc: 'assets/images/bel1.png',
+                    imageSrc: _bel1,
                   )));
     } else if (church == 'Portadown') {
       Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (_) => const ChurchInfoPage(
-                  jsonPath: 'assets/info/churches/portadown.json', imageSrc: 'assets/images/port1.png')));
+              builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/portadown.json', imageSrc: _port1)));
     } else {
       Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (_) => const ChurchInfoPage(
-                  jsonPath: 'assets/info/churches/nc.json', imageSrc: 'assets/images/northC1.png')));
+              builder: (_) => const ChurchInfoPage(jsonPath: 'assets/info/churches/nc.json', imageSrc: _northC1)));
     }
   }
 
@@ -1170,7 +1188,7 @@ class _InformationHomeState extends State<InformationHome> {
             MaterialPageRoute(
                 builder: (_) => const TestimonialInfoPage(
                       jsonPath: 'assets/info/testimonials/maije.json',
-                      initialImageSrc: 'assets/images/maije.jpg',
+                      initialImageSrc: _maije,
                     )));
         break;
       default:

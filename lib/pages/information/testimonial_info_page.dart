@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 
 import '../../models/info/testimonial_into.dart';
+import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/quill_editor_wrapper.dart';
 import 'edit_info_body_page.dart';
 
@@ -23,9 +24,13 @@ class TestimonialInfoPage extends StatelessWidget {
               child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Hero(
-            tag: 'initialTestimonialImage_$_initialImageSrc',
-            child: Image.asset(_initialImageSrc, height: MediaQuery.of(context).size.height * 0.4, fit: BoxFit.cover),
+          // TODO: Replace with actual image URL from backend
+          // Original asset reference: _initialImageSrc (e.g., 'assets/images/maije.jpg')
+          CachedImageWidget(
+            imageUrl: _initialImageSrc, // TODO: Replace with actual download URL
+            height: MediaQuery.of(context).size.height * 0.4,
+            fit: BoxFit.cover,
+            heroTag: 'initialTestimonialImage_$_initialImageSrc',
           ),
           FutureBuilder(
               future: _loadJson(),
