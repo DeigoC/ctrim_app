@@ -26,10 +26,8 @@ class ChurchInfoPage extends StatelessWidget {
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // TODO: Replace with actual image URL from backend
-            // Original asset reference: _initialImageSrc (e.g., 'assets/images/bel1.png', 'assets/images/port1.png', 'assets/images/northC1.png')
             CachedImageWidget(
-              imageUrl: _initialImageSrc, // TODO: Replace with actual download URL
+              imageUrl: _initialImageSrc,
               height: MediaQuery.of(context).size.height * 0.4,
               fit: BoxFit.cover,
               heroTag: 'initialChurchImage_$_initialImageSrc',

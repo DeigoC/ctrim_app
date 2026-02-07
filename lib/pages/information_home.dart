@@ -33,6 +33,14 @@ class _InformationHomeState extends State<InformationHome> {
   static const String _port1 = 'https://drive.google.com/uc?id=165KdT-ldkD_hOq9LxsNvvfvlyAIC24HQ';
   static const String _northC1 = 'https://drive.google.com/uc?id=1o3Zoot7i99_0OFQcEna5BC84Z-2VXVXX';
   static const String _maije = 'https://drive.google.com/uc?id=1Ble52s0pPk9em4Xhhr7fULqP5EPSkabr';
+  static const String _ching = 'https://drive.google.com/uc?id=1AdMQ35g2hDXDuka_DwBTGutq3fZYvGRU';
+  static const String _allen = 'https://drive.google.com/uc?id=1LF2aHii5ZcH1-Eo-uvepLbnA81cVWNEA';
+  static const String _clement = 'https://drive.google.com/uc?id=10asayDlBozgIZoAWbxpcpmv_VZ230Wwm';
+  static const String _cherry = 'https://drive.google.com/uc?id=1y8e1dtqQezw2-C0qVvRmo8cbqApUZriu';
+
+  // Locations
+  static const String _belfast = 'Belfast';
+  static const String _portadown = 'Portadown';
 
   bool _isMobile(double width) => width < _mobileBreakpoint;
 
@@ -844,7 +852,11 @@ class _InformationHomeState extends State<InformationHome> {
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
             children: [
-              _buildTestimonialCard('Maije', _maije),
+              _buildTestimonialCard('Maije', _maije, _portadown),
+              _buildTestimonialCard('Ching', _ching, _belfast),
+              _buildTestimonialCard('Allen', _allen, _belfast),
+              _buildTestimonialCard('Clement', _clement, _belfast),
+              _buildTestimonialCard('Cherry', _cherry, _belfast),
               _buildMoreComingSoonCard(),
             ],
           );
@@ -855,7 +867,11 @@ class _InformationHomeState extends State<InformationHome> {
           context: context,
           child: ListView(
             children: [
-              _buildTestimonialSlot('Maije', _maije),
+              _buildTestimonialSlot('Maije', _maije, _portadown),
+              _buildTestimonialSlot('Ching', _ching, _belfast),
+              _buildTestimonialSlot('Allen', _allen, _belfast),
+              _buildTestimonialSlot('Clement', _clement, _belfast),
+              _buildTestimonialSlot('Cherry', _cherry, _belfast),
               _buildMoreComingSoon(),
             ],
           ),
@@ -864,7 +880,7 @@ class _InformationHomeState extends State<InformationHome> {
     );
   }
 
-  Widget _buildTestimonialCard(String personName, String img) {
+  Widget _buildTestimonialCard(final String personName, final String img, final String location) {
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -908,10 +924,7 @@ class _InformationHomeState extends State<InformationHome> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Tap to read more...',
-                    style: TextStyle(fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic),
-                  ),
+                  Text(location, style: const TextStyle(fontSize: 14, color: Colors.white70))
                 ],
               ),
             ),
@@ -979,7 +992,7 @@ class _InformationHomeState extends State<InformationHome> {
                 ]))));
   }
 
-  Widget _buildTestimonialSlot(final String personName, final String img) {
+  Widget _buildTestimonialSlot(final String personName, final String img, final String location) {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
         child: Card(
@@ -1030,8 +1043,7 @@ class _InformationHomeState extends State<InformationHome> {
                               Text(personName, style: const TextStyle(fontSize: 24, color: Colors.white))
                             ]),
                             const SizedBox(height: 4),
-                            const Text('Tap to read more...',
-                                style: TextStyle(fontSize: 16, color: Colors.white70, fontStyle: FontStyle.italic))
+                            Text(location, style: const TextStyle(fontSize: 16, color: Colors.white70))
                           ]))
                     ])))));
   }
