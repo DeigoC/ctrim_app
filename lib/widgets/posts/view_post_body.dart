@@ -153,7 +153,7 @@ class ViewPostBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your browser doesn\'t support native sharing but you can still copy the content to your clipboard:',
+              'Your browser may not support native sharing but you can still copy the content to your clipboard:',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
