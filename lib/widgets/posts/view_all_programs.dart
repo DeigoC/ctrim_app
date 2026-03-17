@@ -167,10 +167,13 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   // * LOGIC
   bool _canEditPostProgram() {
-    if (widget.isAddingPost || widget.eventContext.isUserAuthor(_appContext.currentUser.id)) return true;
+    if (widget.isAddingPost ||
+        widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
+        widget.eventContext.isUserContributor(_appContext.currentUser.id)) return true;
     return DateTime.now()
             .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
-        widget.eventContext.isUserAuthor(_appContext.currentUser.id);
+        (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
+            widget.eventContext.isUserContributor(_appContext.currentUser.id));
   }
 
   void _openEditProgramPage(final Map<String, dynamic> programEntry) {
