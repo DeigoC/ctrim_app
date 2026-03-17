@@ -4,6 +4,11 @@ platform :ios, '15.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Enable deterministic UUIDs and deduplicate targets
+install! 'cocoapods', 
+  :deterministic_uuids => false,
+  :generate_multiple_pod_projects => false
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -28,7 +33,7 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '12.6.0'
+  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '12.8.0'
   use_frameworks!
   use_modular_headers!
 
@@ -38,10 +43,16 @@ target 'Runner' do
   pod 'Firebase/Core', :modular_headers => true
   pod 'FirebaseCore', :modular_headers => true
   pod 'GoogleUtilities', :modular_headers => true
+end
+
+target 'ImageNotification' do
+  use_frameworks!
+  use_modular_headers!
   
-  target 'ImageNotification' do
-    inherit! :complete
-  end
+  # Only include what the extension needs - NOT inheriting from Runner
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'Firebase/Messaging', :modular_headers => true
 end
 
 post_install do |installer|
@@ -63,7 +74,11 @@ post_install do |installer|
       
       # Fix for duplicate framework builds during archiving
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
-      config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      
+      # Ensure single architecture for archiving  
+      if config.name == 'Release' || config.name == 'Profile'
+        config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      end
 
       # Toolchain fix
       xcconfig_path = config.base_configuration_reference.real_path
@@ -73,21 +88,16 @@ post_install do |installer|
     end
   end
   
-  # Prevent duplicate outputs for extension targets
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ""
-      config.build_settings['CODE_SIGNING_REQUIRED'] = "NO"
-      config.build_settings['CODE_SIGNING_ALLOWED'] = "NO"
-    end
-  end
-  
-  # Remove duplicate GoogleUtilities targets
+  # Remove duplicate framework copy phases to prevent "Multiple commands produce" errors
   installer.aggregate_targets.each do |aggregate_target|
-    aggregate_target.user_build_configurations.keys.each do |config_name|
-      # Force all targets to use the same GoogleUtilities
-      aggregate_target.xcconfigs[config_name].attributes.delete('FRAMEWORK_SEARCH_PATHS')
-      aggregate_target.xcconfigs[config_name].attributes.delete('OTHER_LDFLAGS')
+    aggregate_target.xcconfigs.each do |config_name, config_file|
+      xcconfig_path = aggregate_target.xcconfig_path(config_name)
+      if xcconfig_path.exist?
+        config_content = File.read(xcconfig_path)
+        # Deduplicate framework search paths
+        config_content.gsub!(/(\$\(inherited\).*?GoogleUtilities.*?)\1+/, '\1')
+        File.write(xcconfig_path, config_content)
+      end
     end
   end
 end
