@@ -198,6 +198,21 @@ class AppContext extends ChangeNotifier {
   void setCurrentUser(final User? user) => _currentUser = user ?? _guest;
   User getUserFromID(final String id) => _allUsers.firstWhere((e) => e.id == id);
 
+  // Upgrade from guest to authenticated user (used during background login)
+  void upgradeToAuthenticatedUser({
+    required User user,
+    required List<EventHead> heads,
+    required List<User> allUsers,
+  }) {
+    _currentUser = user;
+    _eventHeads.clear();
+    _eventHeads.addAll(heads);
+    _allUsers.clear();
+    _allUsers.addAll(allUsers);
+    sortPostsByIndex();
+    notifyListeners();
+  }
+
   List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
   bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
   void addTokensToUserID(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;

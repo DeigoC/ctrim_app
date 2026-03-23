@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/info/church_info.dart';
 import '../../utility/app_context.dart';
+import '../../widgets/media/cached_image_widget.dart';
 
 import '../../widgets/quill_editor_wrapper.dart';
 import 'edit_info_body_page.dart';
@@ -25,13 +26,11 @@ class ChurchInfoPage extends StatelessWidget {
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Hero(
-              tag: 'initialChurchImage_$_initialImageSrc',
-              child: Image.asset(
-                _initialImageSrc,
-                height: MediaQuery.of(context).size.height * 0.4,
-                fit: BoxFit.cover,
-              ),
+            CachedImageWidget(
+              imageUrl: _initialImageSrc,
+              height: MediaQuery.of(context).size.height * 0.4,
+              fit: BoxFit.cover,
+              heroTag: 'initialChurchImage_$_initialImageSrc',
             ),
             FutureBuilder(
               future: _loadJson(),
@@ -60,7 +59,13 @@ class ChurchInfoPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: QuillViewerWidget(jsonContent: ctrimInfo.body))),
       const SizedBox(height: 16),
-      Image.asset(ctrimInfo.imgSrc),
+      // TODO: Replace with actual image URL from backend
+      // Original asset reference: ctrimInfo.imgSrc
+      CachedImageWidget(
+        imageUrl: ctrimInfo.imgSrc, // TODO: Replace with actual download URL
+        width: double.infinity,
+        fit: BoxFit.cover,
+      ),
       const SizedBox(height: 32),
     ];
 

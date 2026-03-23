@@ -13,6 +13,12 @@ class LocalDataManager {
   static const String _templatesBox = 'templates';
   static const String _metadataBox = 'metadata';
   static const String _imagesCacheBox = 'images_cache';
+  static const String _cacheTimestampsBox = 'cache_timestamps';
+
+  // Cache size limits (in bytes)
+  static const int maxCacheSizeBytes = 50 * 1024 * 1024; // 50MB
+  static const int warningCacheSizeBytes = 40 * 1024 * 1024; // 40MB
+  static const double evictionPercentage = 0.25; // Remove 25% when limit hit
 
   /// Initialize Hive - call this once at app startup
   static Future<void> initialize() async {
@@ -28,6 +34,7 @@ class LocalDataManager {
       Hive.openBox(_templatesBox),
       Hive.openBox(_metadataBox),
       Hive.openBox(_imagesCacheBox),
+      Hive.openBox(_cacheTimestampsBox),
     ]);
 
     _initialized = true;
@@ -208,15 +215,18 @@ class LocalDataManager {
   // * User Profile Images (cross-platform)
   /// Save user profile image bytes to cache
   Future<void> writeUserImage(final String userId, final Uint8List imageBytes) async {
-    final box = Hive.box(_imagesCacheBox);
-    await box.put('user_$userId', imageBytes);
+    final key = 'user_$userId';
+    await _writeCachedImage(key, imageBytes);
   }
 
   /// Read user profile image bytes from cache
   Future<Uint8List?> readUserImage(final String userId) async {
+    final key = 'user_$userId';
     final box = Hive.box(_imagesCacheBox);
-    final dynamic data = box.get('user_$userId');
+    final dynamic data = box.get(key);
     if (data != null && data is Uint8List) {
+      // Update timestamp for LRU
+      await _updateAccessTimestamp(key);
       return data;
     }
     return null;
@@ -243,15 +253,18 @@ class LocalDataManager {
   // * Media Images Cache
   /// Save media image bytes to cache
   Future<void> writeMediaImage(final String mediaKey, final Uint8List imageBytes) async {
-    final box = Hive.box(_imagesCacheBox);
-    await box.put('media_$mediaKey', imageBytes);
+    final key = 'media_$mediaKey';
+    await _writeCachedImage(key, imageBytes);
   }
 
   /// Read media image bytes from cache
   Future<Uint8List?> readMediaImage(final String mediaKey) async {
+    final key = 'media_$mediaKey';
     final box = Hive.box(_imagesCacheBox);
-    final dynamic data = box.get('media_$mediaKey');
+    final dynamic data = box.get(key);
     if (data != null && data is Uint8List) {
+      // Update timestamp for LRU
+      await _updateAccessTimestamp(key);
       return data;
     }
     return null;
@@ -272,15 +285,18 @@ class LocalDataManager {
   // * Video Thumbnails Cache
   /// Save video thumbnail bytes to cache
   Future<void> writeVideoThumbnail(final String postId, final String videoKey, final Uint8List imageBytes) async {
-    final box = Hive.box(_imagesCacheBox);
-    await box.put('video_${postId}_$videoKey', imageBytes);
+    final key = 'video_${postId}_$videoKey';
+    await _writeCachedImage(key, imageBytes);
   }
 
   /// Read video thumbnail bytes from cache
   Future<Uint8List?> readVideoThumbnail(final String postId, final String videoKey) async {
+    final key = 'video_${postId}_$videoKey';
     final box = Hive.box(_imagesCacheBox);
-    final dynamic data = box.get('video_${postId}_$videoKey');
+    final dynamic data = box.get(key);
     if (data != null && data is Uint8List) {
+      // Update timestamp for LRU
+      await _updateAccessTimestamp(key);
       return data;
     }
     return null;
@@ -296,5 +312,170 @@ class LocalDataManager {
   Future<bool> hasVideoThumbnail(final String postId, final String videoKey) async {
     final box = Hive.box(_imagesCacheBox);
     return box.containsKey('video_${postId}_$videoKey');
+  }
+
+  // * Cache Management & LRU Implementation
+
+  /// Internal method to write cached image with quota management
+  Future<void> _writeCachedImage(String key, Uint8List imageBytes) async {
+    try {
+      // Check cache size before writing
+      final currentSize = await getCurrentCacheSize();
+      final newItemSize = imageBytes.length;
+
+      // If adding this would exceed limit, evict old entries
+      if (currentSize + newItemSize > maxCacheSizeBytes) {
+        debugPrint(
+            'Cache size would exceed limit (${(currentSize + newItemSize) / 1024 / 1024}MB). Evicting old entries...');
+        await _evictLeastRecentlyUsed();
+      }
+
+      final box = Hive.box(_imagesCacheBox);
+      await box.put(key, imageBytes);
+      await _updateAccessTimestamp(key);
+    } catch (e) {
+      // Handle QuotaExceededError on web
+      if (e.toString().contains('QuotaExceeded') ||
+          e.toString().contains('quota') ||
+          e.toString().contains('storage')) {
+        debugPrint('Storage quota exceeded! Clearing cache and retrying...');
+        await _evictLeastRecentlyUsed(forceEviction: true);
+
+        // Retry once after eviction
+        try {
+          final box = Hive.box(_imagesCacheBox);
+          await box.put(key, imageBytes);
+          await _updateAccessTimestamp(key);
+        } catch (retryError) {
+          debugPrint('Failed to write cache even after eviction: $retryError');
+          rethrow;
+        }
+      } else {
+        debugPrint('Error writing cached image: $e');
+        rethrow;
+      }
+    }
+  }
+
+  /// Update the access timestamp for LRU tracking
+  Future<void> _updateAccessTimestamp(String key) async {
+    final timestampsBox = Hive.box(_cacheTimestampsBox);
+    await timestampsBox.put(key, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Evict least recently used cache entries
+  Future<void> _evictLeastRecentlyUsed({bool forceEviction = false}) async {
+    final box = Hive.box(_imagesCacheBox);
+    final timestampsBox = Hive.box(_cacheTimestampsBox);
+
+    if (box.isEmpty) return;
+
+    // Get all keys with their timestamps
+    final Map<String, int> keyTimestamps = {};
+    for (final key in box.keys) {
+      final timestamp = timestampsBox.get(key);
+      if (timestamp != null && timestamp is int) {
+        keyTimestamps[key.toString()] = timestamp;
+      } else {
+        // If no timestamp, consider it very old
+        keyTimestamps[key.toString()] = 0;
+      }
+    }
+
+    // Sort by timestamp (oldest first)
+    final sortedKeys = keyTimestamps.keys.toList()..sort((a, b) => keyTimestamps[a]!.compareTo(keyTimestamps[b]!));
+
+    // Calculate how many to remove
+    int numToRemove;
+    if (forceEviction) {
+      // Remove 50% when forced (quota exceeded)
+      numToRemove = (sortedKeys.length * 0.5).ceil();
+    } else {
+      // Remove configured percentage
+      numToRemove = (sortedKeys.length * evictionPercentage).ceil();
+    }
+
+    numToRemove = numToRemove.clamp(1, sortedKeys.length);
+
+    final keysToRemove = sortedKeys.take(numToRemove).toList();
+
+    debugPrint('Evicting $numToRemove cache entries (${forceEviction ? "forced" : "normal"})');
+
+    // Remove from both boxes
+    await box.deleteAll(keysToRemove);
+    await timestampsBox.deleteAll(keysToRemove);
+
+    final newSize = await getCurrentCacheSize();
+    debugPrint('Cache size after eviction: ${(newSize / 1024 / 1024).toStringAsFixed(2)}MB');
+  }
+
+  /// Get current cache size in bytes
+  Future<int> getCurrentCacheSize() async {
+    final box = Hive.box(_imagesCacheBox);
+    int totalSize = 0;
+
+    for (final key in box.keys) {
+      final data = box.get(key);
+      if (data != null && data is Uint8List) {
+        totalSize += data.length;
+      }
+    }
+
+    return totalSize;
+  }
+
+  /// Get cache statistics
+  Future<Map<String, dynamic>> getCacheStats() async {
+    final box = Hive.box(_imagesCacheBox);
+    final timestampsBox = Hive.box(_cacheTimestampsBox);
+
+    final totalSize = await getCurrentCacheSize();
+    final itemCount = box.length;
+
+    // Count by type
+    int userImages = 0;
+    int mediaImages = 0;
+    int videoThumbnails = 0;
+
+    for (final key in box.keys) {
+      final keyStr = key.toString();
+      if (keyStr.startsWith('user_'))
+        userImages++;
+      else if (keyStr.startsWith('media_'))
+        mediaImages++;
+      else if (keyStr.startsWith('video_')) videoThumbnails++;
+    }
+
+    return {
+      'totalSizeBytes': totalSize,
+      'totalSizeMB': totalSize / 1024 / 1024,
+      'itemCount': itemCount,
+      'userImages': userImages,
+      'mediaImages': mediaImages,
+      'videoThumbnails': videoThumbnails,
+      'maxSizeMB': maxCacheSizeBytes / 1024 / 1024,
+      'percentageUsed': (totalSize / maxCacheSizeBytes) * 100,
+      'timestampTracking': timestampsBox.length,
+    };
+  }
+
+  /// Clear all cached images and timestamps
+  Future<void> clearImageCache() async {
+    final box = Hive.box(_imagesCacheBox);
+    final timestampsBox = Hive.box(_cacheTimestampsBox);
+    await box.clear();
+    await timestampsBox.clear();
+    debugPrint('Image cache cleared');
+  }
+
+  /// Remove old entries if cache is getting close to limit
+  Future<void> performCacheMaintenance() async {
+    final currentSize = await getCurrentCacheSize();
+
+    if (currentSize > warningCacheSizeBytes) {
+      debugPrint(
+          'Cache size approaching limit (${(currentSize / 1024 / 1024).toStringAsFixed(2)}MB). Performing maintenance...');
+      await _evictLeastRecentlyUsed();
+    }
   }
 }

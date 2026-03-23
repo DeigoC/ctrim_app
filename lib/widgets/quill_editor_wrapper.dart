@@ -92,6 +92,7 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         quill.QuillSimpleToolbar(
           controller: _controller,
@@ -103,14 +104,12 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
             multiRowsDisplay: widget.multiRowsDisplay,
           ),
         ),
-        Expanded(
-          child: widget.editorPadding != null
-              ? Padding(
-                  padding: widget.editorPadding!,
-                  child: quill.QuillEditor.basic(controller: _controller),
-                )
-              : quill.QuillEditor.basic(controller: _controller),
-        ),
+        widget.editorPadding != null
+            ? Padding(
+                padding: widget.editorPadding!,
+                child: quill.QuillEditor.basic(controller: _controller),
+              )
+            : quill.QuillEditor.basic(controller: _controller),
       ],
     );
   }

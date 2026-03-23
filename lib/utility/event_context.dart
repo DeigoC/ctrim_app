@@ -24,7 +24,7 @@ class EventContext {
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
   late final Map<int, String> _deletedRoleTitle;
   late final List<String> _contributorAdditionUIDs, _contributorRemovalUIDs;
-  
+
   // template subtitles list (for posts created from templates)
   List<String>? _templateSubtitles;
 
@@ -176,7 +176,7 @@ class EventContext {
   bool isUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
 
   void _initialiseInternalLists() {
-    if (_metadata.authorUID == _currentUID) {
+    if (_metadata.authorUID == _currentUID || _metadata.contributorUIDs.contains(_currentUID)) {
       _contributorAdditionUIDs = List<String>.empty(growable: true);
       _contributorRemovalUIDs = List<String>.empty(growable: true);
     } else {
@@ -451,7 +451,7 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
-  
+
   // template subtitles
   List<String>? get templateSubtitles => _templateSubtitles;
   void setTemplateSubtitles(final List<String>? subtitles) => _templateSubtitles = subtitles;

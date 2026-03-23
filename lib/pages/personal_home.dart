@@ -6,10 +6,13 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
+import '../firebase/messaging_manager.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/personal/personal_first_time_dialog.dart';
 import 'events/post_templates/view_templates_page.dart';
+import 'personal/guest_registration_page.dart';
 import 'personal/attending_sunday_info_page.dart';
 import 'personal/current_user_page.dart';
 import 'personal/login_page.dart';
@@ -30,6 +33,17 @@ class PersonalHome extends StatefulWidget {
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
+
+  @override
+  void initState() {
+    super.initState();
+    // Show first-time dialog if user hasn't seen it
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!widget.appContext.sharedPref.hasSeenPersonalDialog) {
+        _showPersonalFirstTimeDialog();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +266,21 @@ class _PersonalHomeState extends State<PersonalHome> {
           ),
           child: Column(
             children: [
+              // Register Account (guests only)
+              if (appContext.isCurrentUserGuest) ...[
+                _buildModernListTile(
+                  icon: Icons.person_add_rounded,
+                  title: 'Create Account',
+                  subtitle: 'Sign up or sign in',
+                  onTap: _onRegisterAccountClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.primary,
+                  isFirst: true,
+                ),
+                const Divider(height: 1, indent: 72),
+              ],
+
               // Sunday Service
               _buildModernListTile(
                 icon: Icons.church_rounded,
@@ -261,7 +290,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                 theme: theme,
                 colorScheme: colorScheme,
                 iconColor: colorScheme.primary,
-                isFirst: true,
+                isFirst: !appContext.isCurrentUserGuest,
               ),
 
               // Push Notifications (non-web only)
@@ -276,6 +305,19 @@ class _PersonalHomeState extends State<PersonalHome> {
                   colorScheme: colorScheme,
                   iconColor: colorScheme.secondary,
                 ),
+                // Show enable notifications option if not yet enabled
+                if (!appContext.sharedPref.isFirstOpen && appContext.sharedPref.fcmToken.isEmpty) ...[
+                  const Divider(height: 1, indent: 72),
+                  _buildModernListTile(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'Enable Notifications',
+                    subtitle: 'Get updates from CTRIM',
+                    onTap: () => _onEnableNotificationsClick(appContext),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.tertiary,
+                  ),
+                ],
               ],
 
               // User-specific actions
@@ -401,67 +443,195 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   Widget _buildAppLegalSection(ThemeData theme, ColorScheme colorScheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text(
-            'App & Legal',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
+    return Consumer<AppContext>(
+      builder: (context, appContext, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Text(
+                'App & Legal',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: colorScheme.outlineVariant,
-              width: 1,
+            const SizedBox(height: 8),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: colorScheme.outlineVariant,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Startup Tab Preference (authenticated users only)
+                  if (!appContext.isCurrentUserGuest) ...[
+                    _buildStartupTabPreference(appContext, theme, colorScheme),
+                    const Divider(height: 1, indent: 72),
+                  ],
+                  _buildModernListTile(
+                    icon: Icons.share_rounded,
+                    title: 'Share CTRIM App',
+                    subtitle: 'Invite others to join',
+                    onTap: () => _openShareOpenBetaClick(),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.tertiary,
+                    isFirst: appContext.isCurrentUserGuest,
+                  ),
+                  const Divider(height: 1, indent: 72),
+                  _buildModernListTile(
+                    icon: Icons.privacy_tip_rounded,
+                    title: 'Privacy Policy',
+                    subtitle: 'View our privacy policy',
+                    onTap: () =>
+                        launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.secondary,
+                  ),
+                  const Divider(height: 1, indent: 72),
+                  _buildModernListTile(
+                    icon: Icons.contact_page_rounded,
+                    title: 'Terms and Conditions',
+                    subtitle: 'View terms and conditions',
+                    onTap: () => launchUrlString('https://ctrim-terms-and-conditions.web.app'),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.primary,
+                    isLast: true,
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Column(
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStartupTabPreference(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    final currentTab = appContext.sharedPref.preferredStartupTab;
+    final tabName = currentTab == 0 ? 'Events' : 'Information';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _showStartupTabDialog(appContext, theme, colorScheme);
+        },
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
             children: [
-              _buildModernListTile(
-                icon: Icons.share_rounded,
-                title: 'Share CTRIM App',
-                subtitle: 'Invite others to join',
-                onTap: () => _openShareOpenBetaClick(),
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.tertiary,
-                isFirst: true,
+              // Icon
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorScheme.tertiary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.home_rounded,
+                  color: colorScheme.tertiary,
+                  size: 20,
+                ),
               ),
-              const Divider(height: 1, indent: 72),
-              _buildModernListTile(
-                icon: Icons.privacy_tip_rounded,
-                title: 'Privacy Policy',
-                subtitle: 'View our privacy policy',
-                onTap: () =>
-                    launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.secondary,
+
+              const SizedBox(width: 16),
+
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Startup Tab',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Opens to: $tabName',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const Divider(height: 1, indent: 72),
-              _buildModernListTile(
-                icon: Icons.contact_page_rounded,
-                title: 'Terms and Conditions',
-                subtitle: 'View terms and conditions',
-                onTap: () => launchUrlString('https://ctrim-terms-and-conditions.web.app'),
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.primary,
-                isLast: true,
+
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
               ),
             ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  void _showStartupTabDialog(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    final currentTab = appContext.sharedPref.preferredStartupTab;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Choose Startup Tab'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<int>(
+                title: const Text('Events'),
+                subtitle: const Text('Open to the Posts/Bulletin tab'),
+                value: 0,
+                groupValue: currentTab,
+                onChanged: (value) {
+                  if (value != null) {
+                    appContext.sharedPref.setPreferredStartupTab(value);
+                    appContext.rebuildPlease();
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              RadioListTile<int>(
+                title: const Text('Information'),
+                subtitle: const Text('Open to the CTRIM Information tab'),
+                value: 1,
+                groupValue: currentTab,
+                onChanged: (value) {
+                  if (value != null) {
+                    appContext.sharedPref.setPreferredStartupTab(value);
+                    appContext.rebuildPlease();
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -576,6 +746,16 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   // * Logic
+  void _showPersonalFirstTimeDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PersonalFirstTimeDialog(),
+    ).then((_) {
+      widget.appContext.sharedPref.setHasSeenPersonalDialog();
+    });
+  }
+
   void _onLogoutClick() async {
     final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
@@ -655,5 +835,106 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _openViewTemplatesClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewTemplatesPage()));
+  }
+
+  void _onRegisterAccountClick() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const GuestRegistrationPage(),
+      ),
+    ).then((_) {
+      // Refresh the page in case user registered
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void _onEnableNotificationsClick(AppContext appContext) async {
+    if (kIsWeb) return;
+
+    final MessagingManager messagingManager = MessagingManager();
+
+    // Show explanation dialog
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        title: const Text('Enable Notifications'),
+        content: const Text(
+          'Get notified about important updates, events, and announcements from CTRIM. You can manage your notification preferences anytime.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Not Now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed != true) return;
+
+    // Request permission and get token
+    final String? token = await messagingManager.requestPermissionAndToken();
+
+    if (token != null) {
+      debugPrint('Token to save is $token');
+
+      // Store token based on user type
+      if (appContext.isCurrentUserGuest) {
+        // Guest user - store token locally
+        appContext.sharedPref.saveGuestFCMToken(token);
+      } else {
+        // Authenticated user - store normally
+        appContext.sharedPref.saveFCMToken(token);
+      }
+
+      // Subscribe to Belfast topics
+      appContext.sharedPref.setSubscribedToBelfast(true);
+
+      // Subscribe to all available topics
+      appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
+      appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
+
+      messagingManager.subscribeToTopic('belfast-sunday-service');
+      messagingManager.subscribeToTopic('belfast-midweek-service');
+      messagingManager.subscribeToTopic('belfast-growth-mentoring');
+      messagingManager.subscribeToTopic('belfast-dawn-watch');
+      messagingManager.subscribeToTopic('belfast-overnight-prayer');
+      messagingManager.subscribeToTopic('belfast-youth-cg');
+      messagingManager.subscribeToTopic('Belfast');
+
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Notifications enabled successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        setState(() {}); // Refresh to hide the enable button
+      }
+    } else {
+      if (mounted) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not enable notifications. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }
