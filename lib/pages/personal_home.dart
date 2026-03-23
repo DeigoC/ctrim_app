@@ -13,7 +13,6 @@ import '../widgets/user_avatar.dart';
 import '../widgets/personal/personal_first_time_dialog.dart';
 import 'events/post_templates/view_templates_page.dart';
 import 'personal/guest_registration_page.dart';
-import 'personal/attending_sunday_info_page.dart';
 import 'personal/current_user_page.dart';
 import 'personal/login_page.dart';
 import 'personal/notification_management_page.dart';
@@ -32,6 +31,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  static const String _powerpointGeneratorUrl = 'https://ctrim-powerpoint-generator.streamlit.app';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
@@ -281,21 +281,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const Divider(height: 1, indent: 72),
               ],
 
-              // Sunday Service
-              _buildModernListTile(
-                icon: Icons.church_rounded,
-                title: 'Attending Sunday Service',
-                subtitle: 'Manage your attendance',
-                onTap: _onAttendingSundayServiceClick,
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.primary,
-                isFirst: !appContext.isCurrentUserGuest,
-              ),
-
               // Push Notifications (non-web only)
               if (!kIsWeb) ...[
-                const Divider(height: 1, indent: 72),
+                if (appContext.isCurrentUserGuest) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.notifications_active_rounded,
                   title: 'Push Notifications',
@@ -304,6 +292,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   theme: theme,
                   colorScheme: colorScheme,
                   iconColor: colorScheme.secondary,
+                  isFirst: !appContext.isCurrentUserGuest,
                 ),
                 // Show enable notifications option if not yet enabled
                 if (!appContext.sharedPref.isFirstOpen && appContext.sharedPref.fcmToken.isEmpty) ...[
@@ -322,7 +311,7 @@ class _PersonalHomeState extends State<PersonalHome> {
 
               // User-specific actions
               if (!appContext.isCurrentUserGuest) ...[
-                const Divider(height: 1, indent: 72),
+                if (!kIsWeb) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.checklist_rounded,
                   title: 'My Schedule',
@@ -347,6 +336,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   theme: theme,
                   colorScheme: colorScheme,
                   iconColor: colorScheme.tertiary,
+                  isFirst: kIsWeb,
                 ),
                 const Divider(height: 1, indent: 72),
                 _buildModernListTile(
@@ -484,6 +474,16 @@ class _PersonalHomeState extends State<PersonalHome> {
                     colorScheme: colorScheme,
                     iconColor: colorScheme.tertiary,
                     isFirst: appContext.isCurrentUserGuest,
+                  ),
+                  const Divider(height: 1, indent: 72),
+                  _buildModernListTile(
+                    icon: Icons.build_rounded,
+                    title: 'PowerPoint Generator',
+                    subtitle: 'Create service slides easily',
+                    onTap: () => launchUrlString(_powerpointGeneratorUrl),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.primary,
                   ),
                   const Divider(height: 1, indent: 72),
                   _buildModernListTile(
@@ -811,10 +811,6 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _onNotificationManagerClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationManagementPage()));
-  }
-
-  void _onAttendingSundayServiceClick() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendingSundayServicePage()));
   }
 
   void _onUserProfileClick() {
