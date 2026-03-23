@@ -14,6 +14,7 @@ class CachedImageWidget extends StatefulWidget {
     this.height,
     this.width,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
     this.heroTag,
   });
 
@@ -22,6 +23,7 @@ class CachedImageWidget extends StatefulWidget {
   final double? height;
   final double? width;
   final BoxFit fit;
+  final Alignment alignment;
   final String? heroTag;
 
   @override
@@ -54,6 +56,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
             height: widget.height,
             width: widget.width,
             fit: widget.fit,
+            alignment: widget.alignment,
             errorBuilder: (context, error, stackTrace) {
               debugPrint('Broken image data detected: ${error.toString()}');
 

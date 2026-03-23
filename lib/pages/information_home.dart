@@ -725,7 +725,7 @@ class _InformationHomeState extends State<InformationHome> {
           return GridView.count(
             padding: const EdgeInsets.all(16),
             crossAxisCount: crossAxisCount,
-            childAspectRatio: 16 / 9,
+            childAspectRatio: 3 / 4,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
             children: [
@@ -769,6 +769,7 @@ class _InformationHomeState extends State<InformationHome> {
             CachedImageWidget(
               imageUrl: img,
               fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
               heroTag: 'initialTestimonialImage_$img',
             ),
             Container(
@@ -888,6 +889,7 @@ class _InformationHomeState extends State<InformationHome> {
                           child: CachedImageWidget(
                             imageUrl: img,
                             fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
                             heroTag: 'initialTestimonialImage_$img',
                           ),
                         ),
