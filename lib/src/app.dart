@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 // import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 import '../pages/home_page.dart';
-import '../pages/welcome_page.dart';
 import 'settings/settings_controller.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({
     super.key,
     required this.settingsController,
-    required this.openWelcomePage,
   });
 
-  final bool openWelcomePage;
   final SettingsController settingsController;
 
   @override
@@ -29,6 +27,7 @@ class MyApp extends StatelessWidget {
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
+            FlutterQuillLocalizations.delegate,
           ],
           supportedLocales: const [
             Locale('en', ''),
@@ -37,7 +36,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
           darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true, colorSchemeSeed: Colors.blue),
           themeMode: settingsController.themeMode,
-          home: openWelcomePage ? const WelcomePage() : const HomePage(),
+          home: const HomePage(),
         );
       },
     );

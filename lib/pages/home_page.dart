@@ -7,13 +7,11 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
-import '../firebase/messaging_manager.dart';
 import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
-import '../widgets/info/timed_button_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -30,7 +28,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late final TabController _informationTabController;
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   late final AppContext _appContext;
   final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
@@ -41,6 +39,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     // * initial setup of data
     _appContext = Provider.of<AppContext>(context, listen: false);
+
+    // Set startup tab based on user preference (default to 1 = Information home)
+    _selectedIndex = _appContext.sharedPref.preferredStartupTab;
+
     _informationTabController = TabController(length: 4, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) {
@@ -52,12 +54,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }));
     _setupCloudOnMessage();
 
-    // * special case where it's the first time opening the app
-    if (!kDebugMode) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkIfFirstOpen();
-      });
-    }
+    // * Check for first open and request notification permissions for all users (guests and authenticated)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkIfFirstOpen();
+    });
 
     // * periodic and non-periodic local maintenance
     if (_appContext.sharedPref.canRefreshUserImages) {
@@ -65,9 +65,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _removeLocallySavedPosts();
       _appContext.sharedPref.setUserImageRefreshTime();
     }
-
-    // TODO new feature for notifications (temporary until future updates)
-    _setNotificationTopicsTemp();
 
     super.initState();
   }
@@ -93,10 +90,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               elevation: 0,
               currentIndex: _selectedIndex,
               onTap: (index) => _onNavigationItemTap(index),
-              unselectedFontSize: 0,
-              selectedFontSize: 0,
+              unselectedFontSize: 8,
+              selectedFontSize: 12,
               items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
+                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Bulletin'),
                 BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
                 BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
               ]),
@@ -198,8 +195,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   void _checkIfFirstOpen() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (appContext.sharedPref.isFirstOpen && !kIsWeb) {
-      final MessagingManager messagingManager = MessagingManager();
+    if (appContext.sharedPref.isFirstOpen) {
+      // Show welcome dialog without notification pressure
       await showDialog(
           context: context,
           barrierDismissible: false,
@@ -216,8 +213,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         const SizedBox(height: 16),
                         const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Text('Please allow notifications to keep up with the latest from CTRIM!',
-                                textAlign: TextAlign.start, style: TextStyle(fontSize: 16))),
+                            child: Text(
+                                'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
+                                textAlign: TextAlign.start,
+                                style: TextStyle(fontSize: 16))),
                         const SizedBox(height: 8),
                         Align(
                             alignment: Alignment.centerRight,
@@ -225,22 +224,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                 padding: const EdgeInsets.only(right: 16.0),
                                 child: TextButton(
                                     onPressed: () => Navigator.pop(_),
-                                    child: const Text('Ok', style: TextStyle(fontSize: 16)))))
+                                    child: const Text('Get Started', style: TextStyle(fontSize: 16)))))
                       ])))));
 
-      final String? token = await messagingManager.requestPermissionAndToken().then((token) {
-        showDialog(context: context, builder: (_) => const TimedButtonDialog());
-        return token;
-      });
-
-      // we don't need to perfrom the token grabbing here anymore - done in welcome page
-      if (token != null) {
-        debugPrint('Token to save is $token');
-        appContext.sharedPref.saveFCMToken(token);
-      }
-
-      _appContext.sharedPref.setSubscribedToBelfast(true);
-      _setNotificationTopicsTemp();
       appContext.sharedPref.nowOpened();
     }
   }
@@ -483,37 +469,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         debugPrint('Deleting cached profile pic for ${user.forname} ID ${user.id}');
         await localDataManager.deleteUserImage(user.id);
       }
-    }
-  }
-
-  // Legacy methods removed - now using Hive-based image caching
-  // See _performUserImageCache() above for cross-platform implementation
-
-  void _setNotificationTopicsTemp() {
-    // we have to check if users are subscribed to the old notification topic (belfast)
-    // if so, then subscribe to all the new ones and set old one to false
-    // otherwise, we do not set it to true
-    if (_appContext.sharedPref.subscribedToBelfast) {
-      // unsubscribe to this and subscribe to everything temporarly available
-      debugPrint('unsubscribing to old Belfast topic and subscribing to everything else');
-      final MessagingManager messagingManager = MessagingManager();
-      messagingManager.unsubscribeFromCTRIMBelfast();
-      _appContext.sharedPref.setSubscribedToBelfast(false);
-
-      _appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
-      _appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
-
-      messagingManager.subscribeToTopic('belfast-sunday-service');
-      messagingManager.subscribeToTopic('belfast-midweek-service');
-      messagingManager.subscribeToTopic('belfast-growth-mentoring');
-      messagingManager.subscribeToTopic('belfast-dawn-watch');
-      messagingManager.subscribeToTopic('belfast-overnight-prayer');
-      messagingManager.subscribeToTopic('belfast-youth-cg');
-      messagingManager.subscribeToTopic('Belfast'); // ! hardcode to Belfast for now
     }
   }
 }

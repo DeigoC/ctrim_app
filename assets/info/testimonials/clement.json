@@ -1,0 +1,17 @@
+{
+    "analyticTitle": "Testimonial: Clement",
+    "name": "Clement",
+    "church": "Belfast",
+    "imgSrc": "https://drive.google.com/uc?id=10asayDlBozgIZoAWbxpcpmv_VZ230Wwm",
+        "body": [
+            {
+                "insert": "🚧 Testimonial coming soon…! 🚧 "
+            },
+            {
+                "insert": "\n",
+                "attributes": {
+                    "align": "center"
+                }
+            }
+        ]
+}

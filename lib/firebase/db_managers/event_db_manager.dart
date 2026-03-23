@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctrim_app/models/event/event_log.dart';
-import 'package:ctrim_app/models/event/event_media.dart';
-import 'package:ctrim_app/models/event/event_metadata.dart';
-import 'package:ctrim_app/models/event/event_program.dart';
 
 import '../../models/event/event_head.dart';
+import '../../models/event/event_log.dart';
+import '../../models/event/event_media.dart';
+import '../../models/event/event_metadata.dart';
+import '../../models/event/event_program.dart';
 
 class EventHeadDBManager {
   static final CollectionReference _ref = FirebaseFirestore.instance.collection('events').withConverter<EventHead>(

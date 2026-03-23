@@ -224,7 +224,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final colorScheme = theme.colorScheme;
 
     return InkWell(
-        onTap: _eventContext.isUserAuthor(_currentUID) ? _onTitleTap : null,
+        onTap: (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID))
+            ? _onTitleTap
+            : null,
         child: Text(widget.eventHead.title,
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
