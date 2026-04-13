@@ -98,27 +98,34 @@ class _EventLogDialogState extends State<EventLogDialog> {
     }
   }
 
-  void _saveClick() {
-    DialogManager.showConfirmationDialog(
-            context: context,
-            title: 'Confirm Save?',
-            content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
-            confirmText: 'Yes',
-            cancelText: 'Cancel')
-        .then((confirmation) {
-      if (confirmation) {
-        DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
-        _performUpdate(_appContext.currentUser.id).then((_) {
-          _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
-          widget.eventContext.resetSavingOfTheEdit();
-          widget.updatePage();
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
-        });
-      }
-    });
+  void _saveClick() async {
+    final confirmation = await DialogManager.showConfirmationDialog(
+        context: context,
+        title: 'Confirm Save?',
+        content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
+        confirmText: 'Yes',
+        cancelText: 'Cancel');
+
+    if (!confirmation || !mounted) return;
+
+    DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
+    try {
+      await _performUpdate(_appContext.currentUser.id);
+      if (!mounted) return;
+      _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+      widget.eventContext.resetSavingOfTheEdit();
+      widget.updatePage();
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
+    } catch (e) {
+      debugPrint('Error saving post: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save changes: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _performUpdate(final String uid) async {
@@ -128,13 +135,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
+    final List<Future<void>> tasks = [
+      _sendContributorAdditionNotificaitons(),
+      _sendContributorRemovalNotificaitons(),
+      _updateAllUserPostInvolvement(),
+    ];
     if (widget.eventContext.head.eventDate != null) {
-      await _sortRoleAdditions();
-      await _sendRoleRemovals();
+      tasks.add(_sortRoleAdditions());
+      tasks.add(_sendRoleRemovals());
     }
-    await _sendContributorAdditionNotificaitons();
-    await _sendContributorRemovalNotificaitons();
-    await _updateAllUserPostInvolvement();
+    await Future.wait(tasks);
     _sendPostNotification();
   }
 

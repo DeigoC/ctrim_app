@@ -379,10 +379,22 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final authID = await _attemptToLogin();
 
     if (authID != null) {
-      await _logUserToApp(authID);
-      if (mounted) {
-        Navigator.of(context).pop(); // Close progress dialog
-        Navigator.of(context).pop(); // Close login page
+      try {
+        await _logUserToApp(authID);
+        if (mounted) {
+          Navigator.of(context).pop(); // Close progress dialog
+          Navigator.of(context).pop(); // Close login page
+        }
+      } catch (e) {
+        debugPrint('Error logging in user: $e');
+        if (mounted) {
+          Navigator.of(context).pop(); // dismiss progress dialog
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to complete login: $e'), behavior: SnackBarBehavior.floating));
+        }
       }
     } else {
       setState(() {

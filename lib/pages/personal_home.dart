@@ -775,14 +775,23 @@ class _PersonalHomeState extends State<PersonalHome> {
         subtitle: 'Please wait...',
       );
 
-      widget.appContext.analytics.logEvent(name: 'logout');
-      await _logout();
+      try {
+        widget.appContext.analytics.logEvent(name: 'logout');
+        await _logout();
 
-      if (mounted) {
-        Navigator.of(context).pop(); // Close progress dialog
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
-          setState(() {});
-        });
+        if (mounted) {
+          Navigator.of(context).pop(); // Close progress dialog
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
+            setState(() {});
+          });
+        }
+      } catch (e) {
+        debugPrint('Error signing out: $e');
+        if (mounted) {
+          Navigator.of(context).pop(); // dismiss progress dialog
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Failed to sign out: $e'), behavior: SnackBarBehavior.floating));
+        }
       }
     }
   }

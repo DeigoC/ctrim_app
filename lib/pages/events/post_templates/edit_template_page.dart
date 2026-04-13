@@ -386,20 +386,26 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     // _onRequiredFieldTextChange('');
   }
 
-  void _onSavePostTemplateClick() {
-    DialogManager.showConfirmationDialog(
-            context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?')
-        .then((confirm) {
-      if (confirm) {
-        DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
-        _performTemplateSave().then((_) {
-          // pop progress dialog. pop the settings. pop the page
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-        });
-      }
-    });
+  void _onSavePostTemplateClick() async {
+    final confirm = await DialogManager.showConfirmationDialog(
+        context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?');
+    if (!confirm || !mounted) return;
+
+    DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
+    try {
+      await _performTemplateSave();
+      if (!mounted) return;
+      // pop progress dialog. pop the settings. pop the page
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    } catch (e) {
+      debugPrint('Error saving template: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save template: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _performTemplateSave() async {

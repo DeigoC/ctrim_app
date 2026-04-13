@@ -1209,7 +1209,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       subtitle: 'Please wait...',
     );
 
-    await _authManager.hasUserVerifiedEmail().then((verified) {
+    try {
+      final verified = await _authManager.hasUserVerifiedEmail();
+      if (!mounted) return;
+
       if (!verified) {
         Navigator.of(context).pop();
         DialogManager.showAlertDialog(
@@ -1229,7 +1232,16 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
         Navigator.of(context).pop();
         _instantiateTheRest(true);
       }
-    });
+    } catch (e) {
+      debugPrint('Error checking verification: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Verification check failed: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _instantiateTheRest(bool fromRegistration) async {
@@ -1238,19 +1250,29 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       subtitle: 'Setting up your experience...',
       context: context,
     );
-    _saveCreds(fromRegistration);
 
-    if (fromRegistration) {
-      await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
-    }
-    _saveFCMToken();
-    _fetchEssentialData().then((_) {
+    try {
+      _saveCreds(fromRegistration);
+
+      if (fromRegistration) {
+        await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+      }
+      _saveFCMToken();
+      await _fetchEssentialData();
+
+      if (!mounted) return;
       debugPrint('opened home page here');
       _appContext.sharedPref.setLoggedOut(false);
       Navigator.of(context).pop(); // pop the progress dialog
       Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
       Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
-    });
+    } catch (e) {
+      debugPrint('Error setting up: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to complete setup: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _fetchEssentialData() async {
