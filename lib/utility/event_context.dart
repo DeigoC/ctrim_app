@@ -455,4 +455,14 @@ class EventContext {
   // template subtitles
   List<String>? get templateSubtitles => _templateSubtitles;
   void setTemplateSubtitles(final List<String>? subtitles) => _templateSubtitles = subtitles;
+
+  // template media pools
+  List<Map<String, dynamic>>? _templateHeadMediaPool;
+  List<Map<String, dynamic>>? _templateBodyMediaPool;
+
+  List<Map<String, dynamic>>? get templateHeadMediaPool => _templateHeadMediaPool;
+  void setTemplateHeadMediaPool(final List<Map<String, dynamic>>? pool) => _templateHeadMediaPool = pool;
+
+  List<Map<String, dynamic>>? get templateBodyMediaPool => _templateBodyMediaPool;
+  void setTemplateBodyMediaPool(final List<Map<String, dynamic>>? pool) => _templateBodyMediaPool = pool;
 }

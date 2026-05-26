@@ -6,11 +6,13 @@ import '../../../models/post_template.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
 import '../add_event_page.dart';
+import '../bulk_create_posts_page.dart';
 
 class SelectPostTemplatePage extends StatefulWidget {
-  const SelectPostTemplatePage({super.key, required this.eventContext});
+  const SelectPostTemplatePage({super.key, required this.eventContext, this.bulkMode = false});
   static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
+  final bool bulkMode;
 
   @override
   State<SelectPostTemplatePage> createState() => _SelectPostTemplatePageState();
@@ -60,7 +62,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Choose Template'),
+        title: Text(widget.bulkMode ? 'Bulk Create Posts' : 'Choose Template'),
         backgroundColor: colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -177,7 +179,11 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           if (snap.hasData) {
             final List<PostTemplate> data = snap.data!;
             data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
-            data.add(_createBlankSlate());
+            if (!widget.bulkMode) {
+              data.add(_createBlankSlate());
+            } else {
+              data.removeWhere((t) => t.defaultDayOfWeek == null);
+            }
 
             _allTemplates = data;
             _filteredTemplates = _getFilteredTemplates(data);
@@ -334,7 +340,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       ),
       color: isBlankTemplate ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surfaceContainerLow,
       child: InkWell(
-        onTap: () => _onAddPostTap(template),
+        onTap: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -424,7 +430,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                 children: [
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () => _onAddPostTap(template),
+                      onPressed: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
                       style: FilledButton.styleFrom(
                         backgroundColor: isBlankTemplate ? colorScheme.primary : colorScheme.secondaryContainer,
                         foregroundColor: isBlankTemplate ? colorScheme.onPrimary : colorScheme.onSecondaryContainer,
@@ -434,11 +440,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       icon: Icon(
-                        isBlankTemplate ? Icons.create : Icons.add_circle_outline,
+                        widget.bulkMode
+                            ? Icons.calendar_month
+                            : (isBlankTemplate ? Icons.create : Icons.add_circle_outline),
                         size: 18,
                       ),
                       label: Text(
-                        isBlankTemplate ? 'Start from Blank' : 'Use Template',
+                        widget.bulkMode ? 'Bulk Create' : (isBlankTemplate ? 'Start from Blank' : 'Use Template'),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -689,6 +697,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   //   return result;
   // }
 
+  void _onBulkAddPostTap(final PostTemplate template) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => BulkCreatePostsPage(template: template)),
+    );
+  }
+
   void _onAddPostTap(final PostTemplate postTemplate) {
     // convert the template to EventContext
     final EventContext eventContext = _mapTemplateToEventContext(postTemplate);
@@ -752,12 +766,31 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       // Store subtitles list for later use in AddEventPage
       eventContext.setTemplateSubtitles(List<String>.from(postTemplate.subtitles));
     }
-    for (final headMediaItem in postTemplate.headMedia) {
-      eventContext.head.addMediaItem(
-          type: headMediaItem['type']!,
-          src: headMediaItem['src']!,
-          title: headMediaItem['title'] ?? '',
-          thumbnail: headMediaItem['thumbnailSrc'] ?? '');
+
+    // head media pool - auto-select one random item if pool exists, otherwise use fixed headMedia
+    if (postTemplate.headMediaPool.isNotEmpty) {
+      final randomHeadMedia = postTemplate.getRandomHeadMediaPoolItem();
+      if (randomHeadMedia != null) {
+        eventContext.head.addMediaItem(
+            type: randomHeadMedia['type']!,
+            src: randomHeadMedia['src']!,
+            title: randomHeadMedia['title'] ?? '',
+            thumbnail: randomHeadMedia['thumbnailSrc'] ?? '');
+      }
+      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(postTemplate.headMediaPool));
+    } else {
+      for (final headMediaItem in postTemplate.headMedia) {
+        eventContext.head.addMediaItem(
+            type: headMediaItem['type']!,
+            src: headMediaItem['src']!,
+            title: headMediaItem['title'] ?? '',
+            thumbnail: headMediaItem['thumbnailSrc'] ?? '');
+      }
+    }
+
+    // body media pool - store for manual/random selection in media tab
+    if (postTemplate.bodyMediaPool.isNotEmpty) {
+      eventContext.setTemplateBodyMediaPool(List<Map<String, dynamic>>.from(postTemplate.bodyMediaPool));
     }
 
     // body and media

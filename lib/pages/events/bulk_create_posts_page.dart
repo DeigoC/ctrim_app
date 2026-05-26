@@ -1,0 +1,276 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../../models/post_template.dart';
+import '../../utility/app_context.dart';
+import '../../utility/post_template_mapper.dart';
+
+class BulkCreatePostsPage extends StatefulWidget {
+  const BulkCreatePostsPage({super.key, required this.template});
+  final PostTemplate template;
+
+  @override
+  State<BulkCreatePostsPage> createState() => _BulkCreatePostsPageState();
+}
+
+class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
+  static const _dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  static final _previewDateFormat = DateFormat('EEE d MMM');
+
+  int _selectedWeeks = 4;
+  List<_PostPreview> _previews = [];
+  bool _isCreating = false;
+  int _createdCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _regeneratePreviews();
+  }
+
+  void _regeneratePreviews() {
+    final int? dayOfWeek = widget.template.defaultDayOfWeek;
+    if (dayOfWeek == null) return;
+
+    final dates = _computeDates(dayOfWeek, _selectedWeeks);
+    setState(() {
+      _previews = dates.map((date) {
+        final subtitle = widget.template.subtitles.isNotEmpty ? (widget.template.getRandomSubtitle() ?? '') : '';
+        final titleDate = DateFormat('d MMM').format(date);
+        final baseTitle = widget.template.headTitle.isNotEmpty ? widget.template.headTitle : widget.template.title;
+        final title = '$baseTitle – $titleDate';
+        return _PostPreview(title: title, subtitle: subtitle, date: date);
+      }).toList();
+    });
+  }
+
+  List<DateTime> _computeDates(int dayOfWeek, int weeks) {
+    final base = DateTime.now().add(const Duration(days: 1));
+    int daysUntil = (dayOfWeek - base.weekday + 7) % 7;
+    final firstDate = base.add(Duration(days: daysUntil));
+    return List.generate(weeks, (i) => firstDate.add(Duration(days: 7 * i)));
+  }
+
+  void _shuffleSubtitle(int index) {
+    final next = widget.template.getRandomSubtitle();
+    if (next == null) return;
+    setState(() {
+      _previews[index].subtitle = next;
+    });
+  }
+
+  Future<void> _createAllPosts() async {
+    setState(() {
+      _isCreating = true;
+      _createdCount = 0;
+    });
+
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final uid = appContext.currentUser.id;
+    final location = widget.template.location;
+
+    try {
+      for (int i = 0; i < _previews.length; i++) {
+        final preview = _previews[i];
+        final eventContext = PostTemplateMapper.mapTemplateToEventContext(
+          template: widget.template,
+          currentUserID: uid,
+        );
+        PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
+
+        await eventContext.addNewPost(
+          title: preview.title,
+          subtitle: preview.subtitle,
+          uid: uid,
+          location: location,
+          eventDate: preview.date,
+        );
+
+        setState(() {
+          _createdCount = i + 1;
+        });
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_previews.length} posts created successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCreating = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating posts: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final int? dayOfWeek = widget.template.defaultDayOfWeek;
+    final dayName = dayOfWeek != null ? _dayNames[dayOfWeek - 1] : 'Unknown';
+
+    if (_isCreating) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Bulk Create Posts')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 24),
+              Text('Creating $_createdCount of ${_previews.length} posts…',
+                  style: Theme.of(context).textTheme.bodyLarge),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Bulk Create Posts'),
+        backgroundColor: colorScheme.surface,
+      ),
+      floatingActionButton: _previews.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _createAllPosts,
+              icon: const Icon(Icons.check),
+              label: Text('Create ${_previews.length} Posts'),
+            ),
+      body: Column(
+        children: [
+          // Template header
+          Container(
+            width: double.infinity,
+            color: colorScheme.surfaceContainerLow,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.description_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.template.headTitle.isNotEmpty ? widget.template.headTitle : widget.template.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      Text('Every $dayName',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Weeks selector
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$_selectedWeeks ${_selectedWeeks == 1 ? 'week' : 'weeks'} • ${_previews.length} ${_previews.length == 1 ? 'post' : 'posts'}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                Slider(
+                  value: _selectedWeeks.toDouble(),
+                  min: 1,
+                  max: 12,
+                  divisions: 11,
+                  label: '$_selectedWeeks weeks',
+                  onChanged: (value) {
+                    _selectedWeeks = value.round();
+                    _regeneratePreviews();
+                  },
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // Preview list
+          Expanded(
+            child: _previews.isEmpty
+                ? Center(
+                    child: Text(
+                      'No upcoming dates found.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
+                    itemCount: _previews.length,
+                    itemBuilder: (context, index) {
+                      final preview = _previews[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _previewDateFormat.format(preview.date),
+                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                        color: colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(preview.title,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(fontWeight: FontWeight.w600)),
+                                    if (preview.subtitle.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(preview.subtitle, style: Theme.of(context).textTheme.bodySmall),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (widget.template.subtitles.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.shuffle, size: 18),
+                                  tooltip: 'Randomise subtitle',
+                                  onPressed: () => _shuffleSubtitle(index),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PostPreview {
+  String title;
+  String subtitle;
+  final DateTime date;
+
+  _PostPreview({required this.title, required this.subtitle, required this.date});
+}
