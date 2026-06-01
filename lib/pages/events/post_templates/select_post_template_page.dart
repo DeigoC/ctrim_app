@@ -173,6 +173,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           }
 
           if (snap.hasError) {
+            debugPrint('Error fetching templates: ${snap.error}');
             return _buildErrorState(snap.error.toString());
           }
 
@@ -612,7 +613,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
     if (checkedToday) {
       // read locally
-      return await dataManager.readAllPostTemplates();
+      final List<PostTemplate> cachedTemplates = await dataManager.readAllPostTemplates();
+      // If cache is empty but we've checked today, something went wrong - force refresh
+      if (cachedTemplates.isEmpty) {
+        debugPrint('Cache returned empty, forcing refresh...');
+        await dataManager.clearPostTemplateDir();
+        return _getTemplates(); // Retry which will fetch from Firestore
+      }
+      return cachedTemplates;
     }
 
     final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
@@ -697,7 +705,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
   void _onBulkAddPostTap(final PostTemplate template) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => BulkCreatePostsPage(template: template)),
+      MaterialPageRoute(
+        builder: (_) => BulkCreatePostsPage(
+          template: template,
+          parentID: widget.eventContext.metadata.parentID,
+        ),
+      ),
     );
   }
 

@@ -144,8 +144,13 @@ class LocalDataManager {
       if (key != 'last_update' && key != 'check_date') {
         final dynamic data = box.get(key);
         if (data != null && data is Map) {
-          final Map<String, dynamic> contentJson = Map<String, dynamic>.from(data);
-          results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+          try {
+            final Map<String, dynamic> contentJson = Map<String, dynamic>.from(data);
+            results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+          } catch (e) {
+            debugPrint('Error deserializing template $key: $e - skipping');
+            // Skip corrupted/outdated cached templates
+          }
         }
       }
     }

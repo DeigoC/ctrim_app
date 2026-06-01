@@ -62,7 +62,7 @@ class PostTemplate {
     _bodyMediaPool = data['BodyMediaPool'] != null
         ? _parseMedia(List<Map<String, dynamic>>.from(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
-    _defaultDayOfWeek = data['DefaultDayOfWeek'] as int?;
+    _defaultDayOfWeek = data['DefaultDayOfWeek'] != null ? data['DefaultDayOfWeek'] as int? : null;
   }
 
   toJson(final bool forLocal) {

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -7,8 +9,9 @@ import '../../utility/app_context.dart';
 import '../../utility/post_template_mapper.dart';
 
 class BulkCreatePostsPage extends StatefulWidget {
-  const BulkCreatePostsPage({super.key, required this.template});
+  const BulkCreatePostsPage({super.key, required this.template, this.parentID});
   final PostTemplate template;
+  final String? parentID;
 
   @override
   State<BulkCreatePostsPage> createState() => _BulkCreatePostsPageState();
@@ -17,6 +20,7 @@ class BulkCreatePostsPage extends StatefulWidget {
 class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   static const _dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   static final _previewDateFormat = DateFormat('EEE d MMM');
+  final _random = Random();
 
   int _selectedWeeks = 4;
   int? _selectedDayOfWeek;
@@ -38,13 +42,16 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
     final dates = _computeDates(_selectedDayOfWeek!, _selectedWeeks);
     setState(() {
-      _previews = dates.map((date) {
-        final subtitle = widget.template.subtitles.isNotEmpty ? (widget.template.getRandomSubtitle() ?? '') : '';
+      _previews = [];
+      for (final date in dates) {
+        final subtitle = widget.template.subtitles.isNotEmpty
+            ? widget.template.subtitles[_random.nextInt(widget.template.subtitles.length)]
+            : '';
         final titleDate = DateFormat('d MMM').format(date);
-        final baseTitle = widget.template.headTitle.isNotEmpty ? widget.template.headTitle : widget.template.title;
+        final baseTitle = widget.template.title;
         final title = '$baseTitle – $titleDate';
-        return _PostPreview(title: title, subtitle: subtitle, date: date);
-      }).toList();
+        _previews.add(_PostPreview(title: title, subtitle: subtitle, date: date));
+      }
     });
   }
 
@@ -56,10 +63,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   }
 
   void _shuffleSubtitle(int index) {
-    final next = widget.template.getRandomSubtitle();
-    if (next == null) return;
+    if (widget.template.subtitles.isEmpty) return;
     setState(() {
-      _previews[index].subtitle = next;
+      _previews[index].subtitle = widget.template.subtitles[_random.nextInt(widget.template.subtitles.length)];
     });
   }
 
@@ -79,6 +85,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         final eventContext = PostTemplateMapper.mapTemplateToEventContext(
           template: widget.template,
           currentUserID: uid,
+          parentID: widget.parentID,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
 
@@ -165,7 +172,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.template.headTitle.isNotEmpty ? widget.template.headTitle : widget.template.title,
+                        widget.template.title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       if (_selectedDayOfWeek != null)

@@ -145,42 +145,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Widget? _buildFAB() {
     if (_selectedIndex == 0 && _appContext.currentUser.isLeader) {
-      final String uid = _appContext.currentUser.id;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.small(
-            heroTag: 'bulk_create',
-            tooltip: 'Bulk Create Posts',
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => SelectPostTemplatePage(
-                          eventContext: EventContext.adding(currentUserID: uid), bulkMode: true))).then((_) {
-                setState(() {});
-              });
-            },
-            child: const Icon(Icons.calendar_month),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton.extended(
-            heroTag: 'add_post',
-            icon: const Icon(Icons.post_add),
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) =>
-                          SelectPostTemplatePage(eventContext: EventContext.adding(currentUserID: uid)))).then((_) {
-                setState(() {});
-              });
-            },
-            label: const Text('Add Post'),
-          ),
-        ],
-      );
+      return FloatingActionButton.extended(
+          icon: const Icon(Icons.post_add),
+          onPressed: () {
+            final String uid = _appContext.currentUser.id;
+            Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => SelectPostTemplatePage(eventContext: EventContext.adding(currentUserID: uid))))
+                .then((_) {
+              setState(() {});
+            });
+          },
+          label: const Text('Add Post'));
     }
     return null;
   }

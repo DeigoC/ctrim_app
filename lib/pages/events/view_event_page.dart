@@ -457,6 +457,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           leading: const Icon(Icons.post_add),
           onTap: () => _onAddPost(_eventContext.id),
         ),
+        ListTile(
+          title: const Text('Bulk Create Child Posts'),
+          leading: const Icon(Icons.calendar_month),
+          onTap: _onBulkCreateChildPosts,
+        ),
         const Divider(indent: 16, endIndent: 16),
         ListTile(
           title: const Text('Notify: Broadcast'),
@@ -518,6 +523,20 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       setState(() {
         // rebuild? - will this update when creating sibling posts?
       });
+    });
+  }
+
+  void _onBulkCreateChildPosts() {
+    Navigator.of(context).pop();
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => SelectPostTemplatePage(
+                eventContext: EventContext.adding(
+                    currentUserID: Provider.of<AppContext>(context, listen: false).currentUser.id,
+                    parentID: _eventContext.id),
+                bulkMode: true))).then((_) {
+      setState(() {});
     });
   }
 
