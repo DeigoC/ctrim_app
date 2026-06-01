@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final double horizontalPadding = size.width >= 768 ? size.width / 7 : 24.0;
 
     return PopScope(
-      canPop: false,
+      canPop: _loggedIn,
       onPopInvoked: (_) => _loggedIn ? null : _onWillPop(),
       child: Scaffold(
         backgroundColor: colorScheme.surface,

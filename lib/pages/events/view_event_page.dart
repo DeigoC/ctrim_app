@@ -438,13 +438,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       )
     ];
 
-    if (!kIsWeb) {
-      children.add(ListTile(
-        title: const Text('Edit Media'),
-        leading: const Icon(Icons.photo_library),
-        onTap: _onEditMediaClick,
-      ));
-    }
+    children.add(ListTile(
+      title: const Text('Edit Media'),
+      leading: const Icon(Icons.photo_library),
+      onTap: _onEditMediaClick,
+    ));
 
     if (Provider.of<AppContext>(context, listen: false).currentUser.isLeader) {
       children.addAll([

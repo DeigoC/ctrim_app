@@ -19,6 +19,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   static final _previewDateFormat = DateFormat('EEE d MMM');
 
   int _selectedWeeks = 4;
+  int? _selectedDayOfWeek;
   List<_PostPreview> _previews = [];
   bool _isCreating = false;
   int _createdCount = 0;
@@ -26,14 +27,16 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   @override
   void initState() {
     super.initState();
-    _regeneratePreviews();
+    _selectedDayOfWeek = widget.template.defaultDayOfWeek;
+    if (_selectedDayOfWeek != null) {
+      _regeneratePreviews();
+    }
   }
 
   void _regeneratePreviews() {
-    final int? dayOfWeek = widget.template.defaultDayOfWeek;
-    if (dayOfWeek == null) return;
+    if (_selectedDayOfWeek == null) return;
 
-    final dates = _computeDates(dayOfWeek, _selectedWeeks);
+    final dates = _computeDates(_selectedDayOfWeek!, _selectedWeeks);
     setState(() {
       _previews = dates.map((date) {
         final subtitle = widget.template.subtitles.isNotEmpty ? (widget.template.getRandomSubtitle() ?? '') : '';
@@ -113,8 +116,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final int? dayOfWeek = widget.template.defaultDayOfWeek;
-    final dayName = dayOfWeek != null ? _dayNames[dayOfWeek - 1] : 'Unknown';
+    final dayName = _selectedDayOfWeek != null ? _dayNames[_selectedDayOfWeek! - 1] : 'Not set';
 
     if (_isCreating) {
       return Scaffold(
@@ -147,6 +149,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             ),
       body: Column(
         children: [
+          // Day picker (if template has no default)
+          if (_selectedDayOfWeek == null) _buildDayPicker(colorScheme),
           // Template header
           Container(
             width: double.infinity,
@@ -164,8 +168,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                         widget.template.headTitle.isNotEmpty ? widget.template.headTitle : widget.template.title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                       ),
-                      Text('Every $dayName',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
+                      if (_selectedDayOfWeek != null)
+                        Text('Every $dayName',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
                     ],
                   ),
                 ),
@@ -260,6 +265,54 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       );
                     },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayPicker(ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      color: colorScheme.secondaryContainer,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.onSecondaryContainer, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Select day of week',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSecondaryContainer,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This template doesn\'t have a default day. Choose which day of the week to create posts for:',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSecondaryContainer),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: List.generate(7, (i) {
+              final day = i + 1;
+              return FilterChip(
+                label: Text(_dayNames[i]),
+                selected: false,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedDayOfWeek = day;
+                    _regeneratePreviews();
+                  });
+                },
+              );
+            }),
           ),
         ],
       ),

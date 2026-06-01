@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ctrim_app (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "ctrim_app (Web Server)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "web-server",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

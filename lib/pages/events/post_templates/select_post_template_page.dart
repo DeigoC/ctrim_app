@@ -181,8 +181,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
             data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
             if (!widget.bulkMode) {
               data.add(_createBlankSlate());
-            } else {
-              data.removeWhere((t) => t.defaultDayOfWeek == null);
             }
 
             _allTemplates = data;
