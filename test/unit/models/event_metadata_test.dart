@@ -1,0 +1,132 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:ctrim_app/models/event/event_metadata.dart';
+
+void main() {
+  group('EventMetadata', () {
+    group('constructor', () {
+      test('creates with required authorUID', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+
+        expect(meta.authorUID, 'user-1');
+        expect(meta.lastUID, 'user-1');
+        expect(meta.parentID, isNull);
+        expect(meta.hasParent, false);
+        expect(meta.hasChildren, false);
+        expect(meta.contributorUIDs, isEmpty);
+        expect(meta.childrenPostIDs, isEmpty);
+        expect(meta.topics, isEmpty);
+      });
+
+      test('creates with optional parentID', () {
+        final meta = EventMetadata(authorUID: 'user-1', parentID: 'parent-post');
+
+        expect(meta.parentID, 'parent-post');
+        expect(meta.hasParent, true);
+      });
+    });
+
+    group('fromMap', () {
+      test('creates from a complete map', () {
+        final map = {
+          'AuthorUID': 'user-1',
+          'LastUID': 'user-2',
+          'ParentID': null,
+          'ContributorUIDs': ['user-2', 'user-3'],
+          'ChildrenIDs': ['child-1'],
+          'Topics': ['youth', 'music'],
+        };
+
+        final meta = EventMetadata.fromMap(map);
+
+        expect(meta.authorUID, 'user-1');
+        expect(meta.lastUID, 'user-2');
+        expect(meta.parentID, isNull);
+        expect(meta.hasParent, false);
+        expect(meta.hasChildren, true);
+        expect(meta.contributorUIDs, ['user-2', 'user-3']);
+        expect(meta.childrenPostIDs, ['child-1']);
+        expect(meta.topics, ['youth', 'music']);
+      });
+
+      test('creates from a map without Topics key (backwards compat)', () {
+        final map = {
+          'AuthorUID': 'user-1',
+          'LastUID': 'user-1',
+          'ParentID': null,
+          'ContributorUIDs': <String>[],
+          'ChildrenIDs': <String>[],
+        };
+
+        final meta = EventMetadata.fromMap(map);
+
+        expect(meta.topics, isEmpty);
+      });
+    });
+
+    group('toJson', () {
+      test('serialises all fields correctly', () {
+        final meta = EventMetadata(authorUID: 'user-1', parentID: 'parent-1');
+        meta.addAllTopics(['youth', 'mission']);
+        meta.setLastUID('user-2');
+
+        final json = meta.toJson() as Map<String, dynamic>;
+
+        expect(json['AuthorUID'], 'user-1');
+        expect(json['LastUID'], 'user-2');
+        expect(json['ParentID'], 'parent-1');
+        expect(json['Topics'], ['youth', 'mission']);
+        expect(json['ContributorUIDs'], isEmpty);
+        expect(json['ChildrenIDs'], isEmpty);
+      });
+    });
+
+    group('hasChildren', () {
+      test('returns false when childrenPostIDs is empty', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        expect(meta.hasChildren, false);
+      });
+
+      test('returns true when childrenPostIDs has entries', () {
+        final meta = EventMetadata.fromMap({
+          'AuthorUID': 'user-1',
+          'LastUID': 'user-1',
+          'ParentID': null,
+          'ContributorUIDs': <String>[],
+          'ChildrenIDs': ['child-1'],
+          'Topics': <String>[],
+        });
+        expect(meta.hasChildren, true);
+      });
+    });
+
+    group('setLastUID', () {
+      test('updates lastUID', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.setLastUID('user-99');
+        expect(meta.lastUID, 'user-99');
+      });
+    });
+
+    group('topics management', () {
+      test('addAllTopics adds topics', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addAllTopics(['prayer', 'worship']);
+        expect(meta.topics, ['prayer', 'worship']);
+      });
+
+      test('clearTopics removes all topics', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addAllTopics(['prayer', 'worship']);
+        meta.clearTopics();
+        expect(meta.topics, isEmpty);
+      });
+
+      test('topics getter returns an unmodifiable view', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addAllTopics(['prayer']);
+        expect(() => meta.topics.add('fail'), throwsUnsupportedError);
+      });
+    });
+  });
+}
