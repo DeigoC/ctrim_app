@@ -223,7 +223,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             child: Padding(
                                 padding: const EdgeInsets.only(right: 16.0),
                                 child: TextButton(
-                                    onPressed: () => Navigator.pop(_),
+                                    onPressed: () => Navigator.pop(context),
                                     child: const Text('Get Started', style: TextStyle(fontSize: 16)))))
                       ])))));
 
@@ -358,7 +358,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _openInformationTeachingPage(final String jsonPath) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => CTRIMInfoPage(jsonPath: jsonPath)));
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CTRIMInfoPage(documentId: _resolveInfoDocumentId(jsonPath))));
+  }
+
+  String _resolveInfoDocumentId(final String rawValue) {
+    switch (rawValue) {
+      case 'assets/info/ctrim_info/core_values.json':
+        return 'core_values';
+      case 'assets/info/ctrim_info/4xd.json':
+        return '4xd';
+      case 'assets/info/ctrim_info/cell_group.json':
+        return 'cell_group';
+      case 'assets/info/ctrim_info/devotionals.json':
+        return 'devotionals';
+      default:
+        return rawValue;
+    }
   }
 
   // all notifications potentially will be asking to open a page

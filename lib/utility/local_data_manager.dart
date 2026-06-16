@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ctrim_app/models/info/church_info.dart';
+import 'package:ctrim_app/models/info/ctrim_info.dart';
+import 'package:ctrim_app/models/info/testimonial_into.dart';
 import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -11,6 +14,9 @@ class LocalDataManager {
   static const String _postTrackBox = 'post_track';
   static const String _postDataBox = 'post_data';
   static const String _templatesBox = 'templates';
+  static const String _churchInfoBox = 'church_info';
+  static const String _ctrimInfoBox = 'ctrim_info';
+  static const String _testimonialInfoBox = 'testimonial_info';
   static const String _metadataBox = 'metadata';
   static const String _imagesCacheBox = 'images_cache';
   static const String _cacheTimestampsBox = 'cache_timestamps';
@@ -32,6 +38,9 @@ class LocalDataManager {
       Hive.openBox(_postTrackBox),
       Hive.openBox(_postDataBox),
       Hive.openBox(_templatesBox),
+      Hive.openBox(_churchInfoBox),
+      Hive.openBox(_ctrimInfoBox),
+      Hive.openBox(_testimonialInfoBox),
       Hive.openBox(_metadataBox),
       Hive.openBox(_imagesCacheBox),
       Hive.openBox(_cacheTimestampsBox),
@@ -215,6 +224,116 @@ class LocalDataManager {
   Future<void> clearPostTemplateDir() async {
     final box = Hive.box(_templatesBox);
     await box.clear();
+  }
+
+  // * Information content cache
+  Future<void> writeChurchInfoData(final ChurchInfo info) async {
+    final box = Hive.box(_churchInfoBox);
+    await box.put(info.id, info.toCacheJson());
+  }
+
+  Future<ChurchInfo?> readChurchInfo(final String id) async {
+    final box = Hive.box(_churchInfoBox);
+    final dynamic data = box.get(id);
+    if (data is Map) {
+      return ChurchInfo.fromMap(id, Map<String, dynamic>.from(data));
+    }
+    return null;
+  }
+
+  Future<List<ChurchInfo>> readAllChurchInfo() async {
+    final box = Hive.box(_churchInfoBox);
+    return _readAllInfoRecords<ChurchInfo>(box, (id, data) => ChurchInfo.fromMap(id, data));
+  }
+
+  Future<void> clearChurchInfo() async {
+    final box = Hive.box(_churchInfoBox);
+    await box.clear();
+  }
+
+  Future<void> writeCtrimInfoData(final CtrimInfo info) async {
+    final box = Hive.box(_ctrimInfoBox);
+    await box.put(info.id, info.toCacheJson());
+  }
+
+  Future<CtrimInfo?> readCtrimInfo(final String id) async {
+    final box = Hive.box(_ctrimInfoBox);
+    final dynamic data = box.get(id);
+    if (data is Map) {
+      return CtrimInfo.fromMap(id, Map<String, dynamic>.from(data));
+    }
+    return null;
+  }
+
+  Future<List<CtrimInfo>> readAllCtrimInfo() async {
+    final box = Hive.box(_ctrimInfoBox);
+    return _readAllInfoRecords<CtrimInfo>(box, (id, data) => CtrimInfo.fromMap(id, data));
+  }
+
+  Future<void> clearCtrimInfo() async {
+    final box = Hive.box(_ctrimInfoBox);
+    await box.clear();
+  }
+
+  Future<void> writeTestimonialInfoData(final TestimonialInfo info) async {
+    final box = Hive.box(_testimonialInfoBox);
+    await box.put(info.id, info.toCacheJson());
+  }
+
+  Future<TestimonialInfo?> readTestimonialInfo(final String id) async {
+    final box = Hive.box(_testimonialInfoBox);
+    final dynamic data = box.get(id);
+    if (data is Map) {
+      return TestimonialInfo.fromMap(id, Map<String, dynamic>.from(data));
+    }
+    return null;
+  }
+
+  Future<List<TestimonialInfo>> readAllTestimonialInfo() async {
+    final box = Hive.box(_testimonialInfoBox);
+    return _readAllInfoRecords<TestimonialInfo>(box, (id, data) => TestimonialInfo.fromMap(id, data));
+  }
+
+  Future<void> clearTestimonialInfo() async {
+    final box = Hive.box(_testimonialInfoBox);
+    await box.clear();
+  }
+
+  Future<int> readInfoCollectionLastUpdate(final String sectionKey) async {
+    final box = Hive.box(_metadataBox);
+    final dynamic value = box.get('${sectionKey}_last_update');
+    if (value is int) {
+      return value;
+    }
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+    return 0;
+  }
+
+  Future<void> writeInfoCollectionLastUpdate(final String sectionKey, final int value) async {
+    final box = Hive.box(_metadataBox);
+    await box.put('${sectionKey}_last_update', value);
+  }
+
+  Future<bool> haveCheckedInfoCollectionUpdates(final String sectionKey) async {
+    final box = Hive.box(_metadataBox);
+    final dynamic checkDay = box.get('${sectionKey}_check_date');
+    final int today = DateTime.now().day;
+
+    if (checkDay is int && checkDay == today) {
+      return true;
+    }
+
+    if (checkDay is String && int.tryParse(checkDay) == today) {
+      return true;
+    }
+
+    await box.put('${sectionKey}_check_date', today);
+    return false;
   }
 
   // * User Profile Images (cross-platform)
@@ -444,11 +563,13 @@ class LocalDataManager {
 
     for (final key in box.keys) {
       final keyStr = key.toString();
-      if (keyStr.startsWith('user_'))
+      if (keyStr.startsWith('user_')) {
         userImages++;
-      else if (keyStr.startsWith('media_'))
+      } else if (keyStr.startsWith('media_')) {
         mediaImages++;
-      else if (keyStr.startsWith('video_')) videoThumbnails++;
+      } else if (keyStr.startsWith('video_')) {
+        videoThumbnails++;
+      }
     }
 
     return {
@@ -482,5 +603,23 @@ class LocalDataManager {
           'Cache size approaching limit (${(currentSize / 1024 / 1024).toStringAsFixed(2)}MB). Performing maintenance...');
       await _evictLeastRecentlyUsed();
     }
+  }
+
+  List<T> _readAllInfoRecords<T>(
+      final Box<dynamic> box, final T Function(String id, Map<String, dynamic> data) fromMap) {
+    final List<T> results = <T>[];
+
+    for (final key in box.keys) {
+      final dynamic data = box.get(key);
+      if (data is Map) {
+        try {
+          results.add(fromMap(key.toString(), Map<String, dynamic>.from(data)));
+        } catch (e) {
+          debugPrint('Error deserializing info cache entry $key: $e');
+        }
+      }
+    }
+
+    return results;
   }
 }

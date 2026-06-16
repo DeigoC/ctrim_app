@@ -65,6 +65,24 @@ service cloud.firestore {
       allow create, write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;
     }
 
+    match /information/{sectionId} {
+      allow read: if true;
+      allow create, write: if request.auth != null &&
+        (request.auth.token.isAreaAdmin == true ||
+         request.auth.token.isAdmin == true ||
+         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true ||
+         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true);
+
+      match /items/{documentId} {
+        allow read: if true;
+        allow create, write: if request.auth != null &&
+          (request.auth.token.isAreaAdmin == true ||
+           request.auth.token.isAdmin == true ||
+           get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true ||
+           get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true);
+      }
+    }
+
     // Allow authenticated users to add their web tokens
     match /notification_tokens/web_tokens {
       allow read: if request.auth != null && 

@@ -7,6 +7,12 @@
       "type": "dart",
       "program": "lib/main.dart",
       "deviceId": "chrome",
+      "toolArgs": [
+        "--web-hostname",
+        "localhost",
+        "--web-port",
+        "7357"
+      ],
       "cwd": "${workspaceFolder}"
     },
     {
@@ -15,6 +21,12 @@
       "type": "dart",
       "program": "lib/main.dart",
       "deviceId": "web-server",
+      "toolArgs": [
+        "--web-hostname",
+        "localhost",
+        "--web-port",
+        "7357"
+      ],
       "cwd": "${workspaceFolder}"
     }
   ]
