@@ -51,5 +51,50 @@ void main() {
       expect(json['updatedAt'], isA<Timestamp>());
       expect(json['displayOrder'], 4);
     });
+
+    test('fromMap removes invalid empty insert operations', () {
+      final info = CtrimInfo.fromMap('bad_delta', {
+        'title': 'Bad Delta',
+        'description': 'desc',
+        'analyticTitle': 'Bad Delta',
+        'body': const [
+          {'insert': ''}
+        ],
+      });
+
+      expect(info.body, [
+        {'insert': '\n'}
+      ]);
+    });
+
+    test('fromMap parses double-encoded JSON body strings', () {
+      final info = CtrimInfo.fromMap('double_encoded', {
+        'title': 'Double',
+        'description': 'desc',
+        'analyticTitle': 'Double',
+        'body': '"[{\\"insert\\":\\"Legacy text\\n\\"}]"',
+      });
+
+      expect(info.body, [
+        {'insert': 'Legacy text\n'}
+      ]);
+    });
+
+    test('fromMap parses quill document map with ops', () {
+      final info = CtrimInfo.fromMap('ops_map', {
+        'title': 'Ops',
+        'description': 'desc',
+        'analyticTitle': 'Ops',
+        'body': {
+          'ops': [
+            {'insert': 'From ops\n'}
+          ]
+        },
+      });
+
+      expect(info.body, [
+        {'insert': 'From ops\n'}
+      ]);
+    });
   });
 }

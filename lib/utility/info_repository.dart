@@ -138,12 +138,7 @@ class InfoRepository {
     required Future<int> Function() fetchRemoteLastUpdate,
     required List<T> Function(List<T>) sortRecords,
   }) async {
-    final bool checkedToday = await _localDataManager.haveCheckedInfoCollectionUpdates(sectionKey);
     final List<T> cachedRecords = await readLocal();
-
-    if (!forceRefresh && checkedToday && cachedRecords.isNotEmpty) {
-      return sortRecords(cachedRecords);
-    }
 
     int remoteLastUpdate;
     try {

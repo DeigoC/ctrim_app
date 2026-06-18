@@ -67,5 +67,29 @@ void main() {
 
       expect(() => info.imageSources.add('https://example.com/b.png'), throwsUnsupportedError);
     });
+
+    test('fromMap normalizes empty body payloads to a valid quill delta', () {
+      final info = ChurchInfo.fromMap('empty_body', {
+        'title': 'Empty',
+        'analyticTitle': 'Empty',
+        'body': const [],
+      });
+
+      expect(info.body, [
+        {'insert': '\n'}
+      ]);
+    });
+
+    test('fromMap falls back to plain text delta when body string is not JSON', () {
+      final info = ChurchInfo.fromMap('legacy_plain_text', {
+        'title': 'Legacy',
+        'analyticTitle': 'Legacy',
+        'body': 'This is legacy text body',
+      });
+
+      expect(info.body, [
+        {'insert': 'This is legacy text body\n'}
+      ]);
+    });
   });
 }

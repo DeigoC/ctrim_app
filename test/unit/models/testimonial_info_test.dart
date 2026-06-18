@@ -49,5 +49,33 @@ void main() {
       expect(json['updatedAt'], isA<Timestamp>());
       expect(json['displayOrder'], 2);
     });
+
+    test('fromMap falls back to valid quill delta for invalid string body', () {
+      final info = TestimonialInfo.fromMap('bad_string_body', {
+        'name': 'Bad Body',
+        'church': 'Belfast',
+        'body': '',
+      });
+
+      expect(info.body, [
+        {'insert': '\n'}
+      ]);
+    });
+
+    test('fromMap parses map body with ops field', () {
+      final info = TestimonialInfo.fromMap('ops_body', {
+        'name': 'Ops',
+        'church': 'Belfast',
+        'body': {
+          'ops': [
+            {'insert': 'Mapped ops\n'}
+          ]
+        },
+      });
+
+      expect(info.body, [
+        {'insert': 'Mapped ops\n'}
+      ]);
+    });
   });
 }

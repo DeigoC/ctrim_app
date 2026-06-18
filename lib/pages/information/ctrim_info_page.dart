@@ -111,8 +111,7 @@ class _CTRIMInfoPageState extends State<CTRIMInfoPage> {
   }
 
   Widget _buildBodyWithData(final BuildContext context, final CtrimInfo ctrimInfo) {
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final bool canEdit = appContext.currentUser.isAreaAdmin;
+    debugPrint('Body is ${ctrimInfo.body}');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -126,20 +125,10 @@ class _CTRIMInfoPageState extends State<CTRIMInfoPage> {
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: canEdit
-              ? QuillEditorWidget(
-                  jsonContent: ctrimInfo.body,
-                  showAlignmentButtons: true,
-                  showSubscript: false,
-                  showSuperscript: true,
-                  showCodeBlock: true,
-                  multiRowsDisplay: false,
-                  editorPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                )
-              : QuillViewerWidget(
-                  jsonContent: ctrimInfo.body,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                ),
+          child: QuillViewerWidget(
+            jsonContent: ctrimInfo.body,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+          ),
         ),
         const SizedBox(height: 32),
       ],
