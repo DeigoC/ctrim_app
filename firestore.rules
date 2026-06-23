@@ -9,8 +9,11 @@ service cloud.firestore {
     }
 
     match /everyone/{auth_id}{
-      // Only authenticated users can read their own auth document
-      allow read: if request.auth != null && auth_id == request.auth.uid;
+      // Only authenticated users can read their own auth document, or admins can read any
+      allow read: if request.auth != null && (
+        auth_id == request.auth.uid ||
+        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true
+      );
       
       // allow authenticated users to create their own document 
       allow create: if request.auth != null && auth_id == request.auth.uid && request.resource.data.keys().hasOnly(['email']);
