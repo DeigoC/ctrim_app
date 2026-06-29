@@ -28,6 +28,7 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -163,7 +164,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget _buildBodyWithData() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return NestedScrollView(
         headerSliverBuilder: (_, __) {

@@ -1,5 +1,7 @@
 # Copilot Instructions — ctrim_app
 
+> Cursor users: see `AGENTS.md` and `.cursor/rules/` for the same conventions, auto-loaded in Cursor Agent.
+
 This is a Flutter application built with Firebase (Firestore, Auth, Analytics, Messaging, App Check, Cloud Functions).
 It serves a church/community organisation and includes event management, information pages, a personal section, and a bulletin board.
 
@@ -64,7 +66,7 @@ test/
 ### UI / Pages
 - Pages are under `lib/pages/`. Each major section (events, information, personal) has its own subdirectory.
 - Use `flutter_localizations` / `intl` for any user-visible strings that may need translation.
-- Rich text editing uses `flutter_quill`; wrap it in `QuillEditorWrapper`.
+- Rich text editing uses `flutter_quill`; use `QuillEditorWidget` / `QuillViewerWidget` from `lib/widgets/quill_editor_wrapper.dart`.
 - Media display uses `photo_view` for images and `video_player` for video.
 
 ### Assets
@@ -82,7 +84,7 @@ test/
 - **Always add or update tests** when adding or modifying a model class.
 - Test groups mirror the model's public API: `constructor`, `fromMap`, `toJson`, getters, setters, collection management.
 - Prefer real objects over mocks for pure Dart models.
-- Use `mocktail` (already a dev dependency) for mocking Firebase-dependent classes.
+- No mock library in pubspec yet; add `mockito` or `mocktail` to dev_dependencies only when Firebase mocking is needed.
 - Run tests with: `flutter test test/unit/`
 - Run the linter with: `flutter analyze`
 

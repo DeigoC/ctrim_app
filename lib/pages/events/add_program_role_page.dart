@@ -8,6 +8,7 @@ import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
+import '../../utility/responsive_layout.dart';
 
 class AddEventProgramPage extends StatefulWidget {
   const AddEventProgramPage({super.key, required this.eventContext});
@@ -54,7 +55,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),

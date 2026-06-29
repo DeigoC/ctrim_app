@@ -6,6 +6,7 @@ import '../../utility/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
 import 'add_media_file_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditGalleryPage extends StatefulWidget {
   const EditGalleryPage({super.key, required this.eventContext});
@@ -58,7 +59,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SafeArea(
       top: false,

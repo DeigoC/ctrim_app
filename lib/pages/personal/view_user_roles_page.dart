@@ -8,6 +8,7 @@ import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../events/view_event_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
   const ViewUserRolesPage({super.key, required this.selectedUser, this.allowPostView = false});
@@ -131,7 +132,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
     // finish building
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
 
     return RefreshIndicator(
       onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)

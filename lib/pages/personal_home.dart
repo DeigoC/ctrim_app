@@ -20,6 +20,7 @@ import 'personal/share_open_beta_page.dart';
 import 'personal/view_all_users_page.dart';
 import 'personal/view_my_posts_page.dart';
 import 'personal/view_user_roles_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
   const PersonalHome({super.key, required this.appContext});
@@ -52,7 +53,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = size.width >= 768 ? size.width / 6 : 16.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, style: GutterStyle.medium, narrowPadding: 16.0);
 
     return Consumer<AppContext>(
       builder: (context, appContext, _) {

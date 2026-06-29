@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/responsive_layout.dart';
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({super.key, required this.eventContext});
@@ -56,7 +57,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),

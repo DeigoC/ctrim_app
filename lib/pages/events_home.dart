@@ -7,6 +7,7 @@ import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/posts/post_head.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -75,7 +76,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
 
       final int itemCount = defaultFilter ? appContext.eventHeads.length : eventHeads.length;
       final double webHorizontalPadding =
-          MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 5 : 0;
+          ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, style: GutterStyle.wide, narrowPadding: 0);
 
       return RefreshIndicator(
         edgeOffset: kToolbarHeight + 20,

@@ -1,0 +1,13 @@
+---
+description: ctrim_app Firebase and Firestore access patterns
+globs: lib/firebase/**
+alwaysApply: false
+---
+
+# ctrim_app Firebase
+
+- All Firestore reads/writes through `lib/firebase/db_managers/`
+- Cloud Functions via `functions_manager.dart`
+- `cloud_firestore` types only in `firebase/` and `models/`
+
+Info content: `InfoRepository` (`lib/utility/info_repository.dart`) + `info_db_manager.dart` for churches, testimonials, ctrim_info. `assets/info/` JSON is legacy seed/reference only.

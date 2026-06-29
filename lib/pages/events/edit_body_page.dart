@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../utility/event_context.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditBodyPage extends StatefulWidget {
   const EditBodyPage({super.key, required this.eventContext});
@@ -48,7 +49,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
 
     return QuillEditorWidget(
       key: _editorKey,

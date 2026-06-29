@@ -12,6 +12,7 @@ import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/responsive_layout.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -72,7 +73,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = size.width >= 768 ? size.width / 7 : 24.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, narrowPadding: 24.0);
 
     return PopScope(
       canPop: _loggedIn,

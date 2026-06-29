@@ -1,0 +1,19 @@
+---
+description: ctrim_app model class conventions
+globs: lib/models/**
+alwaysApply: false
+---
+
+# ctrim_app models
+
+- Plain Dart in `lib/models/`; avoid Flutter imports unless necessary (`EventHead` uses `Color`/`TimeOfDay`)
+- Constructor with named params and defaults
+- `fromMap(String id, Map<String, dynamic> data)` for Firestore/Hive
+- `toJson()` → `Map<String, dynamic>`
+- Private `_` fields; public getters/setters
+- List getters return `UnmodifiableListView`
+- `Timestamp` from `cloud_firestore`; convert to/from `DateTime` inside the model
+
+Note: testimonial model file is `lib/models/info/testimonial_into.dart` (historical typo — do not rename without a dedicated refactor).
+
+When adding or changing a model, add/update `test/unit/models/<name>_test.dart`.

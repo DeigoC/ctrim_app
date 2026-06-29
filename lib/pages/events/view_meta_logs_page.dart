@@ -8,6 +8,7 @@ import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewMetaLogsPage extends StatefulWidget {
   const ViewMetaLogsPage({super.key, required this.eventContext});
@@ -56,7 +57,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     final bool isAuthor = widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
         widget.eventContext.isUserContributor(_appContext.currentUser.id);
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return CustomScrollView(
       slivers: [

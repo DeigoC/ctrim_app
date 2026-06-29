@@ -20,6 +20,7 @@ import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/local_data_manager.dart';
 import 'home_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -158,7 +159,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = size.width >= 768 ? size.width / 6 : 24.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, style: GutterStyle.medium, narrowPadding: 24.0);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,

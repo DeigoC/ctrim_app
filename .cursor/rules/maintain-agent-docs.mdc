@@ -1,0 +1,30 @@
+---
+description: When to update Cursor rules, skills, and AGENTS.md as ctrim_app evolves
+alwaysApply: true
+---
+
+# Maintain agent docs (ctrim_app)
+
+After completing work, check whether agent guidance needs updating. Use skill `maintain-agent-docs` for the full checklist.
+
+## Update when
+
+- New architectural pattern (manager type, state holder, test layout, new `lib/pages/` area)
+- Cross-cutting behavior change (auth, Firestore access, info/Quill, web debug)
+- Non-obvious bug fix a future agent would hit again
+- New dependency or command agents should know about
+
+## Skip when
+
+- Routine bugfixes, typos, styling, or one-off changes with no reusable lesson
+
+## Where to edit
+
+| Change type | Update |
+|-------------|--------|
+| Always-on conventions | `.cursor/rules/*.mdc` |
+| Workflow / domain how-to | `.cursor/skills/<name>/` |
+| Quick orientation + changelog | `AGENTS.md` (Recent changes section) |
+| Copilot / cloud agents | `.github/copilot-instructions.md` |
+
+Keep edits minimal. Add a one-line entry to `AGENTS.md` → **Recent agent-relevant changes**. Do not commit doc-only updates unless the user asks.

@@ -6,6 +6,7 @@ import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../utility/responsive_layout.dart';
 
 // for now it's for all users since they will only be from Belfast
 // we should look to share either this whole page or make it adapt to view
@@ -31,7 +32,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   @override
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _searchQuery.isEmpty

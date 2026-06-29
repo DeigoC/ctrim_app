@@ -7,6 +7,7 @@ import '../models/info/ctrim_info.dart';
 import '../models/info/testimonial_into.dart';
 import '../utility/app_context.dart';
 import '../utility/info_repository.dart';
+import '../utility/responsive_layout.dart';
 import '../widgets/media/cached_image_widget.dart';
 import 'information/church_info_page.dart';
 import 'information/ctrim_info_page.dart';
@@ -24,10 +25,9 @@ class InformationHome extends StatefulWidget {
 class _InformationHomeState extends State<InformationHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
 
-  // Responsive breakpoints
-  static const double _mobileBreakpoint = 600;
-  static const double _tabletBreakpoint = 900;
-  static const double _desktopBreakpoint = 1200;
+  static const double _mobileBreakpoint = ResponsiveLayout.compact;
+  static const double _tabletBreakpoint = ResponsiveLayout.tablet;
+  static const double _desktopBreakpoint = ResponsiveLayout.desktop;
 
   // Images - Information
   static const String _mission = 'https://drive.google.com/uc?id=1RWa_4vx6vo1dXCP3SNc6WglxYTBoRY9T';
@@ -68,11 +68,7 @@ class _InformationHomeState extends State<InformationHome> {
     return 1;
   }
 
-  double _getMaxContentWidth(double width) {
-    if (width >= _desktopBreakpoint) return 1400;
-    if (width >= _tabletBreakpoint) return 1000;
-    return width;
-  }
+  double _getMaxContentWidth(double width) => ResponsiveLayout.maxContentWidth(width);
 
   @override
   Widget build(BuildContext context) {

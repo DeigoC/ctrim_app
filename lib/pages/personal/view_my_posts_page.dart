@@ -4,6 +4,7 @@ import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/widgets/posts/post_head.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewMyPostsPage extends StatefulWidget {
   const ViewMyPostsPage({super.key});
@@ -62,7 +63,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         .toList();
 
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),

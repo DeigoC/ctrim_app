@@ -17,6 +17,7 @@ import '../../widgets/posts/view_post_body.dart';
 import 'add_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -58,7 +59,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return PopScope(
       canPop: false,

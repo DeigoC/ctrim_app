@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../utility/event_context.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
   const EditEventDateLocationPage({super.key, required this.eventContext});
@@ -76,7 +77,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),
