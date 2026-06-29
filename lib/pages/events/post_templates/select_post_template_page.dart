@@ -5,6 +5,7 @@ import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import '../../../widgets/app_search_bar.dart';
 import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
 
@@ -91,34 +92,10 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       child: Column(
         children: [
           // Search Bar
-          TextField(
+          AppSearchBar(
             controller: _searchController,
+            hintText: 'Search templates...',
             onChanged: _onSearchChanged,
-            decoration: InputDecoration(
-              hintText: 'Search templates...',
-              prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant),
-                      onPressed: _clearSearch,
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.outline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.outlineVariant),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.primary, width: 2),
-              ),
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
           ),
           const SizedBox(height: 12),
           // Category Filter
@@ -543,13 +520,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   void _onSearchChanged(String query) {
     setState(() {
       _searchQuery = query;
-    });
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    setState(() {
-      _searchQuery = '';
     });
   }
 

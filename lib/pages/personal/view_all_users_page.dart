@@ -3,6 +3,7 @@ import 'package:ctrim_app/pages/personal/edit_user_page.dart';
 import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -44,15 +45,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       return Scaffold(
           appBar: AppBar(
             title: _isSearching
-                ? TextField(
+                ? AppSearchBar(
                     controller: _searchController,
+                    hintText: 'Search users...',
+                    inAppBar: true,
                     autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Search users...',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
-                    ),
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
