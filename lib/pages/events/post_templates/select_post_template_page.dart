@@ -13,10 +13,18 @@ import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
 
 class SelectPostTemplatePage extends StatefulWidget {
-  const SelectPostTemplatePage({super.key, required this.eventContext, this.bulkMode = false});
+  const SelectPostTemplatePage({
+    super.key,
+    required this.eventContext,
+    this.bulkMode = false,
+    this.sourcePostId,
+    this.sourcePostParentId,
+  });
   static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
   final bool bulkMode;
+  final String? sourcePostId;
+  final String? sourcePostParentId;
 
   @override
   State<SelectPostTemplatePage> createState() => _SelectPostTemplatePageState();
@@ -623,7 +631,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       MaterialPageRoute(
         builder: (_) => BulkCreatePostsPage(
           template: template,
-          parentID: widget.eventContext.metadata.parentID,
+          sourcePostId: widget.sourcePostId,
+          sourcePostParentId: widget.sourcePostParentId,
         ),
       ),
     );

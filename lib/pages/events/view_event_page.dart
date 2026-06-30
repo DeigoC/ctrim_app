@@ -459,9 +459,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           onTap: () => _onAddPost(_eventContext.id),
         ),
         ListTile(
-          title: const Text('Bulk Create Child Posts'),
+          title: const Text('Bulk Create Related Posts'),
           leading: const Icon(Icons.calendar_month),
-          onTap: _onBulkCreateChildPosts,
+          onTap: _onBulkCreateRelatedPosts,
         ),
         const Divider(indent: 16, endIndent: 16),
         ListTile(
@@ -527,7 +527,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     });
   }
 
-  void _onBulkCreateChildPosts() {
+  void _onBulkCreateRelatedPosts() {
     Navigator.of(context).pop();
     Navigator.push(
         context,
@@ -536,7 +536,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                 eventContext: EventContext.adding(
                     currentUserID: Provider.of<AppContext>(context, listen: false).currentUser.id,
                     parentID: _eventContext.id),
-                bulkMode: true))).then((_) {
+                bulkMode: true,
+                sourcePostId: _eventContext.id,
+                sourcePostParentId: _eventContext.metadata.parentID))).then((_) {
       setState(() {});
     });
   }

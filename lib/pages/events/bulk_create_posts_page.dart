@@ -4,14 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../models/event/event_head.dart';
 import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/post_template_mapper.dart';
 
+enum _BulkPostRelation { child, sibling }
+
 class BulkCreatePostsPage extends StatefulWidget {
-  const BulkCreatePostsPage({super.key, required this.template, this.parentID});
+  const BulkCreatePostsPage({
+    super.key,
+    required this.template,
+    this.parentID,
+    this.sourcePostId,
+    this.sourcePostParentId,
+  });
+
   final PostTemplate template;
   final String? parentID;
+  final String? sourcePostId;
+  final String? sourcePostParentId;
 
   @override
   State<BulkCreatePostsPage> createState() => _BulkCreatePostsPageState();
@@ -24,9 +37,17 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
   int _selectedWeeks = 4;
   int? _selectedDayOfWeek;
+  _BulkPostRelation _selectedRelation = _BulkPostRelation.child;
   List<_PostPreview> _previews = [];
   bool _isCreating = false;
   int _createdCount = 0;
+
+  String? get _effectiveParentID {
+    if (widget.sourcePostId != null) {
+      return _selectedRelation == _BulkPostRelation.child ? widget.sourcePostId : widget.sourcePostParentId;
+    }
+    return widget.parentID;
+  }
 
   @override
   void initState() {
@@ -78,6 +99,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final uid = appContext.currentUser.id;
     final location = widget.template.location;
+    final headDBManager = EventHeadDBManager();
 
     try {
       for (int i = 0; i < _previews.length; i++) {
@@ -85,17 +107,20 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         final eventContext = PostTemplateMapper.mapTemplateToEventContext(
           template: widget.template,
           currentUserID: uid,
-          parentID: widget.parentID,
+          parentID: _effectiveParentID,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
 
-        await eventContext.addNewPost(
+        final newID = await eventContext.addNewPost(
           title: preview.title,
           subtitle: preview.subtitle,
           uid: uid,
           location: location,
           eventDate: preview.date,
         );
+
+        await _updateParentMetadata(newID, preview.title, uid, appContext, headDBManager);
+        appContext.addNewPostHead(await headDBManager.fetchHead(newID));
 
         setState(() {
           _createdCount = i + 1;
@@ -118,6 +143,44 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         );
       }
     }
+  }
+
+  Future<void> _updateParentMetadata(
+    String newPostID,
+    String title,
+    String uid,
+    AppContext appContext,
+    EventHeadDBManager headDBManager,
+  ) async {
+    final String? parentID = _effectiveParentID;
+    if (parentID == null) return;
+
+    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+    final metadata = await dbManager.fetchMetadata();
+    metadata.childrenPostIDs.add(newPostID);
+    dbManager.updateMetadata(metadata);
+    appContext.setMetadata(parentID, metadata);
+
+    dbManager.addLogEntry(
+      logMessage: "Created related post: '$title'",
+      uid: uid,
+      ts: DateTime.now(),
+    );
+
+    EventHead parentHead;
+    if (appContext.eventHeads.any((e) => e.id == parentID)) {
+      parentHead = appContext.getPostHead(parentID);
+    } else {
+      parentHead = await headDBManager.fetchHead(parentID);
+    }
+
+    if (parentHead.recentDate.second == 59) {
+      parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: -58)));
+    } else {
+      parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: 1)));
+    }
+    headDBManager.updateHead(parentHead);
+    appContext.addOrUpdatePostHead(parentHead);
   }
 
   @override
@@ -184,6 +247,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
               ],
             ),
           ),
+          if (widget.sourcePostId != null) _buildRelationPicker(colorScheme),
           // Weeks selector
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -275,6 +339,46 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRelationPicker(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Text(
+            'Post relationship',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+        RadioListTile<_BulkPostRelation>(
+          dense: true,
+          title: const Text('Children of this post'),
+          subtitle: const Text('New posts appear under the current post'),
+          value: _BulkPostRelation.child,
+          groupValue: _selectedRelation,
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _selectedRelation = value);
+          },
+        ),
+        if (widget.sourcePostParentId != null)
+          RadioListTile<_BulkPostRelation>(
+            dense: true,
+            title: const Text('Siblings of this post'),
+            subtitle: const Text('New posts share the same parent as the current post'),
+            value: _BulkPostRelation.sibling,
+            groupValue: _selectedRelation,
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _selectedRelation = value);
+            },
+          ),
+        const Divider(height: 1),
+      ],
     );
   }
 
