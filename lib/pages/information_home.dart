@@ -930,38 +930,6 @@ class _InformationHomeState extends State<InformationHome> {
                     ])))));
   }
 
-  // TODO: should only be for admin
-  // Widget _buildMoreTestimonialSlot() {
-  //   final colorScheme = Theme.of(context).colorScheme;
-
-  //   return Padding(
-  //       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-  //       child: Card(
-  //           elevation: 2,
-  //           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-  //           child: InkWell(
-  //               onTap: () => _onMoreTestimonialsTap(),
-  //               borderRadius: const BorderRadius.all(Radius.circular(32)),
-  //               child: Container(
-  //                   height: MediaQuery.of(context).size.height * 0.32,
-  //                   width: double.infinity,
-  //                   decoration: BoxDecoration(
-  //                       borderRadius: const BorderRadius.all(Radius.circular(32)),
-  //                       gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [
-  //                         colorScheme.primary.withValues(alpha: 0.8),
-  //                         colorScheme.secondary.withValues(alpha: 0.8),
-  //                       ])),
-  //                   child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-  //                     Icon(Icons.add, color: Colors.white, size: 48),
-  //                     SizedBox(height: 16),
-  //                     Text('More Testimonials',
-  //                         style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
-  //                     SizedBox(height: 8),
-  //                     Text('Tap to see more testimonials...',
-  //                         style: TextStyle(fontSize: 16, color: Colors.white70, fontStyle: FontStyle.italic))
-  //                   ])))));
-  // }
-
   Widget _buildCtrimInformationSection() {
     final bool isAreaAdmin = Provider.of<AppContext>(context).currentUser.isAreaAdmin;
 

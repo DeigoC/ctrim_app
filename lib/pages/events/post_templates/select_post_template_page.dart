@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
+import '../../../utility/app_context.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import '../../../utility/post_template_mapper.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
@@ -273,7 +276,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     final Map<String, dynamic> templateData = {
       'Title': 'Blank Template',
       'Description': "A clean slate. Edit to your heart's content!",
-      'HeadTitle': 'TODO: what do i do with this?',
+      'HeadTitle': 'Blank Template',
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': 'Belfast',
       'Topics': ['Belfast'],
@@ -615,64 +618,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     }
   }
 
-  // void _tmpAddEventContextToTemplate(final EventContext eventContext) {
-  //   dynamic startTime = widget.eventContext.head.eventDate;
-  //   dynamic finishTime = widget.eventContext.program.finishTime;
-  //   if (startTime != null) {
-  //     startTime = Timestamp.fromDate(startTime);
-  //   }
-  //   if (finishTime != null) {
-  //     finishTime = Timestamp.fromDate(finishTime);
-  //   }
-  //   final Map<String, dynamic> templateData = {
-  //     'Title': eventContext.head.title,
-  //     'Description': 'TODO: change this description',
-  //     'HeadTitle': 'TODO change this head title',
-  //     'Body': eventContext.encodedBody,
-  //     'Location': eventContext.head.location,
-  //     'Topics': eventContext.metadata.topics,
-  //     'Contributors': eventContext.metadata.contributorUIDs,
-  //     'AllDay': eventContext.program.allDay,
-  //     'Online': eventContext.program.online,
-  //     'Address': eventContext.program.address,
-  //     'MapLink': eventContext.program.mapLink,
-  //     'StartTime': startTime,
-  //     'FinishTime': finishTime,
-  //     'Media': eventContext.media.allMedia,
-  //     'HeadMedia': eventContext.head.media,
-  //     'Roles': _rolesToJson(),
-  //   };
-  //   final PostTemplate template = PostTemplate.fromMap(false, widget.eventContext.id, templateData);
-  //   final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-  //   postTemplateDBManager.addPostTemplate(template);
-  // }
-
-  // List<Map<String, dynamic>> _rolesToJson() {
-  //   final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
-  //   for (final entry in widget.eventContext.program.roles) {
-  //     var start = entry['start'];
-  //     var end = entry['end'];
-  //     if (start != null) {
-  //       start = Timestamp.fromDate(entry['start']);
-  //     }
-  //     if (end != null) {
-  //       end = Timestamp.fromDate(entry['end']);
-  //     }
-
-  //     result.add({
-  //       'uids': entry['uids'],
-  //       'detail': entry['detail'],
-  //       'title': entry['title'],
-  //       'start': start,
-  //       'end': end,
-  //       'for_guests': entry['for_guests'],
-  //       'id': entry['id'],
-  //     });
-  //   }
-
-  //   return result;
-  // }
-
   void _onBulkAddPostTap(final PostTemplate template) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -685,13 +630,17 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
-    // convert the template to EventContext
-    final EventContext eventContext = _mapTemplateToEventContext(postTemplate);
+    final currentUserID = Provider.of<AppContext>(context, listen: false).currentUser.id;
+    final EventContext eventContext = PostTemplateMapper.mapTemplateToEventContext(
+      template: postTemplate,
+      currentUserID: currentUserID,
+      parentID: widget.eventContext.metadata.parentID,
+    );
 
     if (eventContext.head.eventDate != null) {
       final selectedDate = await _selectDate(context);
       if (selectedDate == null || !mounted) return;
-      _adjustEventProgramToDate(eventContext, selectedDate);
+      PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
       eventContext.head
           .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
       if (!mounted) return;
@@ -699,114 +648,5 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     } else {
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
     }
-  }
-
-  void _adjustEventProgramToDate(final EventContext eventContext, final DateTime selectedDate) {
-    final DateTime newEventDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day,
-        eventContext.head.eventDate!.hour, eventContext.head.eventDate!.minute);
-
-    eventContext.head.setEventDate(newEventDate);
-
-    if (eventContext.program.finishTime != null) {
-      final DateTime oldFinishTime = eventContext.program.finishTime!;
-      final DateTime finishTime =
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldFinishTime.hour, oldFinishTime.minute);
-      eventContext.program.setFinishTime(finishTime);
-    }
-
-    for (final scheduleItem in eventContext.program.roles) {
-      final DateTime oldDateStart = scheduleItem['start'];
-      final DateTime oldDateEnd = scheduleItem['end'];
-      final DateTime newDateStart =
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldDateStart.hour, oldDateStart.minute);
-      final DateTime newDateEnd =
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldDateEnd.hour, oldDateEnd.minute);
-
-      scheduleItem['start'] = newDateStart;
-      scheduleItem['end'] = newDateEnd;
-    }
-  }
-
-  EventContext _mapTemplateToEventContext(final PostTemplate postTemplate) {
-    // ? In the future, remove the EventContext when initialising this page - we just need the parentId
-    final EventContext eventContext =
-        EventContext.adding(currentUserID: '1', parentID: widget.eventContext.metadata.parentID);
-
-    // head
-    eventContext.head.setEventDate(postTemplate.startTime);
-    eventContext.head.setLocation(postTemplate.location);
-    eventContext.head.setTitle(postTemplate.title);
-
-    // subtitle - auto-select random if available
-    if (postTemplate.subtitles.isNotEmpty) {
-      final randomSubtitle = postTemplate.getRandomSubtitle();
-      if (randomSubtitle != null) {
-        eventContext.head.setSubtitle(randomSubtitle);
-      }
-      // Store subtitles list for later use in AddEventPage
-      eventContext.setTemplateSubtitles(List<String>.from(postTemplate.subtitles));
-    }
-
-    // head media pool - auto-select one random item if pool exists, otherwise use fixed headMedia
-    if (postTemplate.headMediaPool.isNotEmpty) {
-      final randomHeadMedia = postTemplate.getRandomHeadMediaPoolItem();
-      if (randomHeadMedia != null) {
-        eventContext.head.addMediaItem(
-            type: randomHeadMedia['type']!,
-            src: randomHeadMedia['src']!,
-            title: randomHeadMedia['title'] ?? '',
-            thumbnail: randomHeadMedia['thumbnailSrc'] ?? '');
-      }
-      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(postTemplate.headMediaPool));
-    } else {
-      for (final headMediaItem in postTemplate.headMedia) {
-        eventContext.head.addMediaItem(
-            type: headMediaItem['type']!,
-            src: headMediaItem['src']!,
-            title: headMediaItem['title'] ?? '',
-            thumbnail: headMediaItem['thumbnailSrc'] ?? '');
-      }
-    }
-
-    // body media pool - store for manual/random selection in media tab
-    if (postTemplate.bodyMediaPool.isNotEmpty) {
-      eventContext.setTemplateBodyMediaPool(List<Map<String, dynamic>>.from(postTemplate.bodyMediaPool));
-    }
-
-    // body and media
-    eventContext.setFetchedBody(postTemplate.body);
-    eventContext.media.addAllMediaFiles(postTemplate.media);
-
-    // meta related
-    eventContext.metadata.addAllTopics(postTemplate.topics);
-    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
-    if (postTemplate.contributors.isNotEmpty) {
-      eventContext.contributorAdditionUIDs.addAll(postTemplate.contributors);
-    }
-
-    // program related
-    int roleId = DateTime.now().millisecondsSinceEpoch;
-    for (final role in postTemplate.roles) {
-      final List<String> roleUids = List.from(role['uids']);
-      eventContext.program.addRole(
-          detail: role['detail'] ?? "",
-          uids: roleUids,
-          title: role['title'],
-          start: role['start'],
-          end: role['end'],
-          id: roleId);
-
-      if (roleUids.isNotEmpty) {
-        eventContext.addRoleAdditionNotification(roleUids, roleId);
-        roleId++;
-      }
-    }
-    eventContext.program.setAddress(postTemplate.address);
-    eventContext.program.setAllDay(postTemplate.allDay);
-    eventContext.program.setMapLink(postTemplate.mapLink);
-    eventContext.program.setOnline(postTemplate.online);
-    eventContext.program.setFinishTime(postTemplate.finishTime);
-
-    return eventContext;
   }
 }

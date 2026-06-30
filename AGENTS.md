@@ -8,7 +8,7 @@ This file applies to **ctrim_app only**. For worship-team work, switch to the `c
 
 ## Multi-root workspace
 
-Open `ctrim_worship/lib/firebase/ctrim_projects.code-workspace` in Cursor to work across ctrim_app, ctrim_worship, firebase_hosting, and my_python_stuff. Rules apply per folder based on the files you edit.
+Open `ctrim_worship/lib/firebase/ctrim_projects.code-workspace` in Cursor to work across ctrim_app, ctrim_worship, firebase_hosting, my_python_stuff, and ctrim_powerpoint_utils. Rules apply per folder based on the files you edit.
 
 ## Dart MCP setup
 
