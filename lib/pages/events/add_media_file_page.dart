@@ -67,7 +67,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           // Media Preview Card
           Card(
             elevation: 2,
-            child: Container(
+            child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.3,
               child: _buildMediaTestSlot(),
             ),
@@ -850,7 +850,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(

@@ -81,7 +81,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           body: filteredUsers.isEmpty
               ? Center(
                   child: Text(
-                    _searchQuery.isEmpty ? 'No users found' : 'No users match "${_searchQuery}"',
+                    _searchQuery.isEmpty ? 'No users found' : 'No users match "$_searchQuery"',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 )

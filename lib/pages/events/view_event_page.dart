@@ -655,8 +655,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             if (thisUID != currentUID) {
               try {
                 if (!appContext.haveTokensForUserID(thisUID)) {
-                  final String? authID = appContext.getAuthIDFromUID(thisUID);
-                  if (authID != null && authID.isNotEmpty) {
+                  final String authID = appContext.getAuthIDFromUID(thisUID);
+                  if (authID.isNotEmpty) {
                     final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
                     if (fetchedTokens.isNotEmpty) {
                       appContext.addTokensToUserID(thisUID, fetchedTokens);

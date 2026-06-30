@@ -180,7 +180,7 @@ class AppContext extends ChangeNotifier {
     sortPostsByIndex();
   }
 
-  bool isAtSameDayAs(thisDate) {
+  bool isAtSameDayAs(Object? thisDate) {
     if (thisDate is DateTime) {
       return thisDate.year == DateTime.now().year &&
           thisDate.month == DateTime.now().month &&

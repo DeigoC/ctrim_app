@@ -63,8 +63,14 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (popping) =>
-          !popping ? _onWillPop().then((popping) => popping ? Navigator.of(context).pop() : null) : null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _onWillPop().then((shouldPop) {
+          if (shouldPop && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+      },
       child: Scaffold(
           floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

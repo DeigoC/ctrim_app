@@ -594,36 +594,30 @@ class _PersonalHomeState extends State<PersonalHome> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Choose Startup Tab'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<int>(
-                title: const Text('Events'),
-                subtitle: const Text('Open to the Posts/Bulletin tab'),
-                value: 0,
-                groupValue: currentTab,
-                onChanged: (value) {
-                  if (value != null) {
-                    appContext.sharedPref.setPreferredStartupTab(value);
-                    appContext.rebuildPlease();
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              RadioListTile<int>(
-                title: const Text('Information'),
-                subtitle: const Text('Open to the CTRIM Information tab'),
-                value: 1,
-                groupValue: currentTab,
-                onChanged: (value) {
-                  if (value != null) {
-                    appContext.sharedPref.setPreferredStartupTab(value);
-                    appContext.rebuildPlease();
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            ],
+          content: RadioGroup<int>(
+            groupValue: currentTab,
+            onChanged: (value) {
+              if (value != null) {
+                appContext.sharedPref.setPreferredStartupTab(value);
+                appContext.rebuildPlease();
+                Navigator.pop(context);
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<int>(
+                  title: const Text('Events'),
+                  subtitle: const Text('Open to the Posts/Bulletin tab'),
+                  value: 0,
+                ),
+                RadioListTile<int>(
+                  title: const Text('Information'),
+                  subtitle: const Text('Open to the CTRIM Information tab'),
+                  value: 1,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -769,6 +763,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
 
     if (confirmed) {
+      if (!mounted) return;
       // Show loading while signing out
       DialogManager.showProgressDialog(
         context: context,

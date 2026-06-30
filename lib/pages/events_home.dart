@@ -87,6 +87,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             _refreshAnimationController.reset();
           });
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             behavior: !appContext.currentUser.isLeader ? SnackBarBehavior.floating : null,
             backgroundColor: colorScheme.inverseSurface,

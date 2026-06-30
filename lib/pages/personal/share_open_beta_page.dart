@@ -157,7 +157,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                     return Container(
                       width: 200,
                       height: 200,
-                      color: colorScheme.surfaceVariant,
+                      color: colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.qr_code,
                         size: 100,
@@ -275,7 +275,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                     return Container(
                       width: 200,
                       height: 200,
-                      color: colorScheme.surfaceVariant,
+                      color: colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.qr_code,
                         size: 100,

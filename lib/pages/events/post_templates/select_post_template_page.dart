@@ -690,7 +690,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
     if (eventContext.head.eventDate != null) {
       _selectDate(context).then((selectedDate) {
-        if (selectedDate != null) {
+        if (selectedDate != null && context.mounted) {
           _adjustEventProgramToDate(eventContext, selectedDate);
           eventContext.head
               .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');

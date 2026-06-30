@@ -48,7 +48,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -95,7 +95,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -134,7 +134,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -172,7 +172,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -316,7 +316,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedSubtitle,
+                initialValue: _selectedSubtitle,
                 decoration: const InputDecoration(
                   labelText: 'Select a subtitle',
                   border: OutlineInputBorder(),
@@ -407,7 +407,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _selectedSubtitle,
+                  initialValue: _selectedSubtitle,
                   decoration: const InputDecoration(
                     labelText: 'Select a subtitle',
                     border: OutlineInputBorder(),
@@ -509,7 +509,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),

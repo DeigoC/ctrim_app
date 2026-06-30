@@ -31,7 +31,7 @@ class _EditBodyPageState extends State<EditBodyPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        onPopInvoked: (popped) {
+        onPopInvokedWithResult: (didPop, result) {
           // ! This isn't perfect? Remember that the user can add empty lines
           final currentJson = _editorKey.currentState?.getDocumentJson();
           if (currentJson != null && !widget.eventContext.isSameJson(currentJson)) {

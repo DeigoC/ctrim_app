@@ -45,7 +45,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) => _onWillPop(),
+      onPopInvokedWithResult: (didPop, result) => _onWillPop(),
       child: Scaffold(
         appBar: AppBar(title: const Text('Register User')),
         body: _buildBody(),
@@ -87,8 +87,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             title: const Text('Are they a leader?'),
             subtitle: const Text('Can create posts'),
             value: _isLeader,
-            onChanged: (_) => setState(() {
-                  _isLeader = _;
+            onChanged: (value) => setState(() {
+                  _isLeader = value;
                 })),
         const Divider(),
         const SizedBox(height: 16),
@@ -145,6 +145,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
           _tecAuthID = TextEditingController(text: auth);
         });
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('No auth found for this email!'),
           behavior: SnackBarBehavior.floating,
@@ -168,6 +169,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       Navigator.of(context).pop();
                       _showAttemptingToSaveDialog();
                       _registerUser().then((newUser) {
+                        if (!context.mounted) return;
                         Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
                         _isSaved = true;
                         Navigator.of(context).pop(); // pop the 'progress' indicator

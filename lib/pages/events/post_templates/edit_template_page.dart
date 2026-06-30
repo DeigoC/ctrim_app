@@ -560,22 +560,22 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 ),
                 const SizedBox(height: 4),
                 Text('Type', style: Theme.of(context).textTheme.labelMedium),
-                Row(
-                  children: [
-                    Radio<String>(
-                      value: 'img',
-                      groupValue: selectedType,
-                      onChanged: (v) => setDialogState(() => selectedType = v!),
-                    ),
-                    const Text('Image'),
-                    const SizedBox(width: 16),
-                    Radio<String>(
-                      value: 'vid',
-                      groupValue: selectedType,
-                      onChanged: (v) => setDialogState(() => selectedType = v!),
-                    ),
-                    const Text('Video'),
-                  ],
+                RadioGroup<String>(
+                  groupValue: selectedType,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => selectedType = value);
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      const Radio<String>(value: 'img'),
+                      const Text('Image'),
+                      const SizedBox(width: 16),
+                      const Radio<String>(value: 'vid'),
+                      const Text('Video'),
+                    ],
+                  ),
                 ),
                 if (selectedType == 'vid') ...[
                   const SizedBox(height: 8),

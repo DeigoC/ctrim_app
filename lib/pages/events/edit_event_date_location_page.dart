@@ -61,7 +61,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      onPopInvoked: (popping) => _checkToUpdate(),
+      onPopInvokedWithResult: (didPop, result) => _checkToUpdate(),
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
@@ -267,7 +267,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -370,7 +370,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -414,7 +414,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 maxLines: null,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -498,7 +498,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   maxLines: null,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -563,6 +563,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
           _start = DateTime(selectedStartDate.year, selectedStartDate.month, selectedStartDate.day, selectedTOD.hour,
               selectedTOD.minute);
         });
+        if (!context.mounted) return;
         showDialog(
             context: context,
             barrierDismissible: false,
@@ -598,7 +599,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(

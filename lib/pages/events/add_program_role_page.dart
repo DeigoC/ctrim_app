@@ -45,10 +45,14 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (popping) => _isSaved
-          ? null
-          : DialogManager.discardChanges(context: context)
-              .then((popping) => popping ? Navigator.of(context).pop() : null),
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || _isSaved) return;
+        DialogManager.discardChanges(context: context).then((shouldPop) {
+          if (shouldPop && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+      },
       child: Scaffold(appBar: AppBar(title: const Text('Add Schedule')), body: _buildBody()),
     );
   }
@@ -388,12 +392,12 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   void _onViewAssignedMembersTap() {
     showDialog(
       context: context,
-      builder: (_) {
+      builder: (dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(_).size.height * 0.6,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
               maxWidth: 400,
             ),
             child: Column(

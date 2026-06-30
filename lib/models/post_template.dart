@@ -65,7 +65,7 @@ class PostTemplate {
     _defaultDayOfWeek = data['DefaultDayOfWeek'] != null ? data['DefaultDayOfWeek'] as int? : null;
   }
 
-  toJson(final bool forLocal) {
+  Map<String, dynamic> toJson(final bool forLocal) {
     dynamic startTime = _startTime;
     dynamic endTime = _finishTime;
     if (_startTime != null) {

@@ -28,7 +28,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   Widget build(BuildContext context) {
     return PopScope(
         canPop: true,
-        onPopInvoked: (_) {
+        onPopInvokedWithResult: (didPop, result) {
           if (_tecSubtitle.text.trim().isEmpty || _tecTitle.text.trim().isEmpty) {
             DialogManager.showAlertDialog(
                 context: context,

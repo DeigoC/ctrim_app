@@ -43,7 +43,7 @@ class EventHead {
     return result;
   }
 
-  toJson() {
+  Map<String, Object?> toJson() {
     return {
       'ID': _id,
       'Title': _title,

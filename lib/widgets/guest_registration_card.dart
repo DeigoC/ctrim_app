@@ -117,7 +117,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
             // Toggle between Sign Up and Sign In
             Container(
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -185,7 +185,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         borderSide: BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -236,7 +236,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         borderSide: BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -293,7 +293,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                           borderSide: BorderSide(color: colorScheme.primary, width: 2),
                         ),
                         filled: true,
-                        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -437,6 +437,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     );
 
     if (!confirmation) return;
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -731,6 +732,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     );
 
     if (!confirmed) return;
+    if (!mounted) return;
 
     try {
       DialogManager.showProgressDialog(

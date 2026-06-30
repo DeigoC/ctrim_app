@@ -111,8 +111,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
               style: TextStyle(fontSize: 16),
             ),
             TextButton.icon(
-              onPressed: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
+              onPressed: () => _refreshRoles().then((_) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+              }),
               label: const Text('Refresh'),
               icon: const Icon(Icons.refresh),
             )
@@ -135,8 +138,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
 
     return RefreshIndicator(
-      onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
+      onRefresh: () => _refreshRoles().then((_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+      }),
       child: ListView.separated(
           padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
           itemCount: sortedPostIDs.length,

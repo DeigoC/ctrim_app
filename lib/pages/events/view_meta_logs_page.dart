@@ -34,7 +34,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        onPopInvoked: (_) {
+        onPopInvokedWithResult: (didPop, result) {
           _checkForChangesToContributors();
         },
         child: Scaffold(
@@ -230,7 +230,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -309,7 +309,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
@@ -427,7 +427,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(

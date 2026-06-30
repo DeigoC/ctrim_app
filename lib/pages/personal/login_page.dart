@@ -77,7 +77,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     return PopScope(
       canPop: _loggedIn,
-      onPopInvoked: (_) => _loggedIn ? null : _onWillPop(),
+      onPopInvokedWithResult: (didPop, result) => _loggedIn ? null : _onWillPop(),
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
@@ -224,7 +224,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
@@ -281,7 +281,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

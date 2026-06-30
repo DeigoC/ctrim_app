@@ -39,7 +39,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        onPopInvoked: (_) {
+        onPopInvokedWithResult: (didPop, result) {
           if (!widget.eventContext.canSaveTheEditing) {
             _shouldBeAbleToSave();
           }
@@ -326,7 +326,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 aspectRatio: 16 / 9,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   ),
                   child: _buildMediaViewer(thisEntry, isKey),
                 ),
@@ -452,7 +452,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -933,6 +933,7 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
               child: const Text('Close'),
               onPressed: () {
                 _deleteOldThumbnail().then((_) {
+                  if (!context.mounted) return;
                   widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
                   Navigator.of(context).pop();
                   Navigator.of(context).pop();

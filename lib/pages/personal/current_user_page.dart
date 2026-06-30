@@ -153,6 +153,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
     // we need to override the image?
     await _updateLocalImageData();
     userDBManager.updateUser(_appContext.currentUser).then((_) {
+      if (!mounted) return;
       setState(() {
         _canSave = false;
         _testing = false;

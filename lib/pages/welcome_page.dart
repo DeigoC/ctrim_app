@@ -194,7 +194,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: TabBar(
@@ -261,7 +261,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
   Widget _buildHeroHeader(ThemeData theme, ColorScheme colorScheme) {
     // Get text scale factor to adjust sizes for accessibility
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1.0);
     final isLargeText = textScaleFactor > 1.2;
 
     // Adjust sizes based on text scaling for better accessibility
@@ -380,7 +380,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -438,7 +438,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -560,7 +560,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -618,7 +618,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -676,7 +676,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -751,7 +751,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.outlineVariant,
@@ -857,7 +857,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: colorScheme.outlineVariant,
@@ -949,10 +949,12 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     });
 
     final loggedIn = await _attemptToLogin();
+    if (!mounted) return;
     if (loggedIn) {
       _appContext.analytics.logLogin(loginMethod: 'welcome page');
       Navigator.of(context).pop();
       await _attemptToFetchAndSetUser();
+      if (!mounted) return;
       _instantiateTheRest(false);
     } else {
       setState(() {
@@ -1084,6 +1086,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       });
 
       final canVerifyEmail = await _attemptToRegister();
+      if (!mounted) return;
       if (canVerifyEmail) {
         _appContext.analytics.logEvent(name: 'register email');
         Navigator.of(context).pop();

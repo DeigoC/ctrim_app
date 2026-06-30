@@ -55,19 +55,19 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
                     itemCount: media.length,
-                    itemBuilder: (_, index) {
+                    itemBuilder: (itemContext, index) {
                       final Map<String, dynamic> entry = media[index];
                       if (entry['type']!.compareTo('img') == 0) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: ImageMediaSlot(
-                              mediaEntry: entry, onTap: () => _onMediaTap(index, _), postID: widget.eventContext.id),
+                              mediaEntry: entry, onTap: () => _onMediaTap(index, itemContext), postID: widget.eventContext.id),
                         );
                       }
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: VideoMediaSlot(
-                            mediaEntry: entry, postId: widget.eventContext.id, onTap: () => _onMediaTap(index, _)),
+                            mediaEntry: entry, postId: widget.eventContext.id, onTap: () => _onMediaTap(index, itemContext)),
                       );
                     }),
               ),
@@ -91,7 +91,7 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -174,7 +174,7 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
               NetworkImageHelper.getImageUrl(thumbUrl),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: colorScheme.surfaceVariant,
+                color: colorScheme.surfaceContainerHighest,
                 child: Icon(Icons.videocam_outlined, color: colorScheme.onSurfaceVariant),
               ),
             ),
@@ -187,7 +187,7 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
       }
     }
     return Container(
-      color: colorScheme.surfaceVariant,
+      color: colorScheme.surfaceContainerHighest,
       child: Icon(Icons.perm_media_outlined, color: colorScheme.onSurfaceVariant),
     );
   }
