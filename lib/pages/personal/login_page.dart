@@ -162,7 +162,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.1),
+                color: colorScheme.shadow.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -224,7 +224,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
@@ -281,7 +281,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

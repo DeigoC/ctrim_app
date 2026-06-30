@@ -96,7 +96,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               onPressed: () => _showSettings(),
               icon: const Icon(Icons.more_horiz, color: Colors.white),
               label: const Text('Edit', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withValues(alpha: 0.55))),
           const SizedBox(width: 8)
         ],
       ),

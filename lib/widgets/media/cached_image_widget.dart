@@ -149,7 +149,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
       child: Container(
         height: widget.height,
         width: widget.width,
-        color: colorScheme.errorContainer.withOpacity(0.3),
+        color: colorScheme.errorContainer.withValues(alpha: 0.3),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

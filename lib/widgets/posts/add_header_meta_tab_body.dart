@@ -48,7 +48,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -95,7 +95,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withOpacity(0.3),
+                      color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -134,7 +134,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withOpacity(0.3),
+                      color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -172,7 +172,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -254,7 +254,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.35),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
                             child: const Icon(Icons.check_circle, color: Colors.white, size: 28),
                           ),
                         ),
@@ -263,7 +263,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                       Positioned(
                         bottom: 4,
                         right: 4,
-                        child: Icon(Icons.videocam, size: 16, color: Colors.white.withOpacity(0.85)),
+                        child: Icon(Icons.videocam, size: 16, color: Colors.white.withValues(alpha: 0.85)),
                       ),
                   ],
                 ),
@@ -346,7 +346,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                             ? null
                             : Border(
                                 bottom: BorderSide(
-                                  color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                                  color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
                                   width: 1,
                                 ),
                               ),
@@ -356,7 +356,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                           Icon(
                             Icons.format_quote,
                             size: 16,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -437,7 +437,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                               ? null
                               : Border(
                                   bottom: BorderSide(
-                                    color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                                    color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
                                     width: 1,
                                   ),
                                 ),
@@ -447,7 +447,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                             Icon(
                               Icons.format_quote,
                               size: 16,
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -509,7 +509,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.3),
+              color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),

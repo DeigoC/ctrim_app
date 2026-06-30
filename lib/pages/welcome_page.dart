@@ -194,7 +194,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant.withOpacity(0.5),
+                          color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: TabBar(
@@ -289,7 +289,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       borderRadius: BorderRadius.circular(isLargeText ? 24 : 32),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -380,7 +380,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -438,7 +438,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -560,7 +560,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -618,7 +618,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -676,7 +676,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -751,7 +751,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.outlineVariant,
@@ -815,7 +815,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primary.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -857,7 +857,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
+                color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: colorScheme.outlineVariant,

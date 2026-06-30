@@ -100,7 +100,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -120,7 +120,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Text(
                 'Choose when your event will take place',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -179,7 +179,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -194,7 +194,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   subtitle: Text(
                     'Event starts',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                   ),
                   leading: Icon(
@@ -230,7 +230,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -240,19 +240,19 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     _end == null ? 'Not set' : _endFormat.format(_end!),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: _end == null ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : null,
+                          color: _end == null ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5) : null,
                         ),
                   ),
                   subtitle: Text(
                     'Event ends',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                   ),
                   leading: Icon(
                     Icons.stop,
                     color: _end == null
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
                         : Theme.of(context).colorScheme.secondary,
                   ),
                   trailing: Icon(
@@ -267,14 +267,14 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.today,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -335,7 +335,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -350,7 +350,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   subtitle: Text(
                     'Event location (currently fixed)',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                   ),
                   leading: Icon(
@@ -359,7 +359,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   ),
                   trailing: Icon(
                     Icons.lock,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     size: 20,
                   ),
                   onTap: _onSelectLocationClick,
@@ -370,14 +370,14 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.videocam,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -394,7 +394,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                           Text(
                             'Event will be held online',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                           ),
                         ],
@@ -414,7 +414,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 maxLines: null,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -437,7 +437,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     onPressed: _online ? _onOnlineMeetingLinkHelpClick : null,
                     icon: Icon(
                       Icons.help_outline,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     tooltip: 'Help',
                   ),
@@ -489,7 +489,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 Text(
                   'Provide a link to help attendees find the location',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                 ),
                 const SizedBox(height: 16),
@@ -498,7 +498,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   maxLines: null,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    fillColor: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -520,7 +520,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                       onPressed: _mapLinkHelpClick,
                       icon: Icon(
                         Icons.help_outline,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       tooltip: 'How to get map link',
                     ),
@@ -598,7 +598,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -614,7 +614,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                                   'Choose whether this is an all-day event or has a specific end time.',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                                   ),
                                 ),
                               ),
@@ -761,7 +761,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -789,7 +789,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     '1. Go to Google Maps\n2. Search for your event address\n3. Click the "Share" button\n4. Copy the link and paste it here',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -842,7 +842,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -870,7 +870,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     '• Zoom meeting links\n• Microsoft Teams links\n• Google Meet links\n• YouTube live streams',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                 ],

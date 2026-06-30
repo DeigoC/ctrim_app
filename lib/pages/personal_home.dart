@@ -76,7 +76,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.shadow.withOpacity(0.1),
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -173,7 +173,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.shadow.withOpacity(0.1),
+                        color: colorScheme.shadow.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -538,7 +538,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colorScheme.tertiary.withOpacity(0.1),
+                  color: colorScheme.tertiary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -692,7 +692,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

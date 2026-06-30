@@ -143,7 +143,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                           icon: const Icon(Icons.sort),
                           tooltip: 'Sort & Filter',
                           style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.primaryContainer.withOpacity(0.3),
+                            backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
                             foregroundColor: colorScheme.primary,
                           ),
                         ),
@@ -158,7 +158,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.shadow.withOpacity(0.1),
+                        color: colorScheme.shadow.withValues(alpha: 0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -208,7 +208,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colorScheme.shadow.withOpacity(0.05),
+                                color: colorScheme.shadow.withValues(alpha: 0.05),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -244,10 +244,10 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: (info['color'] as Color).withOpacity(0.1),
+        color: (info['color'] as Color).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (info['color'] as Color).withOpacity(0.3),
+          color: (info['color'] as Color).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -283,13 +283,13 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.3),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.event_note,
                 size: 64,
-                color: colorScheme.primary.withOpacity(0.7),
+                color: colorScheme.primary.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
@@ -305,7 +305,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
               'There are no events matching your current filter.\nTry adjusting your sort preferences.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                 height: 1.4,
               ),
             ),
@@ -504,9 +504,9 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    colorScheme.outline.withOpacity(0.1),
-                    colorScheme.outline.withOpacity(0.3),
-                    colorScheme.outline.withOpacity(0.1),
+                    colorScheme.outline.withValues(alpha: 0.1),
+                    colorScheme.outline.withValues(alpha: 0.3),
+                    colorScheme.outline.withValues(alpha: 0.1),
                   ],
                 ),
               ),
@@ -569,7 +569,7 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
             color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? colorScheme.primary.withOpacity(0.3) : Colors.transparent,
+              color: isSelected ? colorScheme.primary.withValues(alpha: 0.3) : Colors.transparent,
               width: 1,
             ),
           ),
@@ -584,15 +584,15 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
             subtitle: Text(
               option['subtitle'] as String,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: isSelected ? colorScheme.onPrimaryContainer.withOpacity(0.8) : colorScheme.onSurfaceVariant,
+                color: isSelected ? colorScheme.onPrimaryContainer.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
               ),
             ),
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? (option['color'] as Color).withOpacity(0.2)
-                    : (option['color'] as Color).withOpacity(0.1),
+                    ? (option['color'] as Color).withValues(alpha: 0.2)
+                    : (option['color'] as Color).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(

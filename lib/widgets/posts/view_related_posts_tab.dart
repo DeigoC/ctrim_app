@@ -56,7 +56,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
           Icon(
             Icons.library_books_outlined,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -179,7 +179,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
             Icon(
               Icons.filter_list_off,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(

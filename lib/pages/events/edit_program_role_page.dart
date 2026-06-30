@@ -207,11 +207,11 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                           Column(
                             children: [
                               Icon(Icons.person_add_alt_1,
-                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                               const SizedBox(height: 8),
                               Text(
                                 'No team members assigned',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                               ),
                             ],
                           )
@@ -341,7 +341,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

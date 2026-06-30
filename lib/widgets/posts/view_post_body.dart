@@ -34,7 +34,7 @@ class ViewPostBody extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.3),
+                color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -81,7 +81,7 @@ class ViewPostBody extends StatelessWidget {
       icon: const Icon(Icons.share, size: 18),
       tooltip: 'Save content',
       style: IconButton.styleFrom(
-        backgroundColor: colorScheme.surfaceVariant.withOpacity(0.5),
+        backgroundColor: colorScheme.surfaceVariant.withValues(alpha: 0.5),
         foregroundColor: colorScheme.onSurfaceVariant,
         padding: const EdgeInsets.all(8),
       ),
@@ -160,7 +160,7 @@ class ViewPostBody extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

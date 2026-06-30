@@ -88,7 +88,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             padding: const EdgeInsets.all(8),
@@ -99,7 +99,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
 
   Widget _buildLoadingState() {
     return Container(
-      color: Colors.black.withOpacity(0.5),
+      color: Colors.black.withValues(alpha: 0.5),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -133,7 +133,7 @@ class _VideoMediaSlotState extends State<VideoMediaSlot> {
             }
           : null,
       child: Container(
-        color: colorScheme.errorContainer.withOpacity(0.3),
+        color: colorScheme.errorContainer.withValues(alpha: 0.3),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

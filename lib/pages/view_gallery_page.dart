@@ -126,7 +126,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
               child: SizedBox(
                 height: kToolbarHeight,
                 child: AppBar(
-                  backgroundColor: Colors.transparent.withOpacity(0.3),
+                  backgroundColor: Colors.transparent.withValues(alpha: 0.3),
                   iconTheme: const IconThemeData(color: Colors.white),
                   actions: [IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))],
                 ),
@@ -135,7 +135,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
-            color: Colors.black.withOpacity(0.55),
+            color: Colors.black.withValues(alpha: 0.55),
             child: ListTile(
                 title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
                 leading: const Icon(Icons.photo_library, color: Colors.white)),

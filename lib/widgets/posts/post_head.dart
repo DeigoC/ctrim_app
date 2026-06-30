@@ -76,14 +76,14 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
             },
             child: Material(
               elevation: 4,
-              shadowColor: colorScheme.shadow.withOpacity(0.15),
+              shadowColor: colorScheme.shadow.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.1),
+                    color: colorScheme.outline.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -222,10 +222,10 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: widget.thisHead.eventStatusColor.withOpacity(0.15),
+              color: widget.thisHead.eventStatusColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: widget.thisHead.eventStatusColor.withOpacity(0.3),
+                color: widget.thisHead.eventStatusColor.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -309,7 +309,7 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.3),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -342,7 +342,7 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.5),
+              color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -371,7 +371,7 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
         Text(
           'Updated ${_timeAgo(widget.thisHead.recentDate)}',
           style: theme.textTheme.labelSmall?.copyWith(
-            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           ),
         ),
       ],

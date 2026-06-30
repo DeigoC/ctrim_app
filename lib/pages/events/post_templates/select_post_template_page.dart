@@ -310,11 +310,11 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isBlankTemplate ? colorScheme.primary.withOpacity(0.5) : colorScheme.outlineVariant,
+          color: isBlankTemplate ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
           width: isBlankTemplate ? 2 : 1,
         ),
       ),
-      color: isBlankTemplate ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surfaceContainerLow,
+      color: isBlankTemplate ? colorScheme.primaryContainer.withValues(alpha: 0.3) : colorScheme.surfaceContainerLow,
       child: InkWell(
         onTap: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
         borderRadius: BorderRadius.circular(16),
@@ -332,7 +332,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isBlankTemplate ? colorScheme.primary.withOpacity(0.2) : colorScheme.secondaryContainer,
+                      color: isBlankTemplate ? colorScheme.primary.withValues(alpha: 0.2) : colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(

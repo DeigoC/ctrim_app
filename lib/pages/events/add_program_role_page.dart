@@ -202,11 +202,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                           Column(
                             children: [
                               Icon(Icons.person_add_alt_1,
-                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                               const SizedBox(height: 8),
                               Text(
                                 'No team members assigned',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                               ),
                             ],
                           )
@@ -315,13 +315,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 ? Colors.amber
                 : isEnabled
                     ? Theme.of(context).colorScheme.outline
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
             width: showWarning ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
           color: isEnabled
               ? Theme.of(context).colorScheme.surface
-              : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              : Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,7 +333,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   size: 16,
                   color: isEnabled
                       ? (showWarning ? Colors.amber : Theme.of(context).colorScheme.primary)
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -341,8 +341,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isEnabled
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -361,8 +361,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 color: isEnabled
                     ? (hasTime
                         ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.7))
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],

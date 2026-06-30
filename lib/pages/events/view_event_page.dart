@@ -269,7 +269,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('Edit'),
             style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.primaryContainer.withOpacity(0.8),
+              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
               foregroundColor: colorScheme.onPrimaryContainer,
             )),
         const SizedBox(width: 8)

@@ -63,7 +63,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: colorScheme.primary.withOpacity(0.5),
+          color: colorScheme.primary.withValues(alpha: 0.5),
           width: 2,
         ),
       ),
@@ -117,7 +117,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
             // Toggle between Sign Up and Sign In
             Container(
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
+                color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -185,7 +185,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         borderSide: BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                      fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -236,7 +236,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         borderSide: BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                      fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -293,7 +293,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                           borderSide: BorderSide(color: colorScheme.primary, width: 2),
                         ),
                         filled: true,
-                        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {

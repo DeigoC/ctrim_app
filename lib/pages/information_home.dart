@@ -96,7 +96,7 @@ class _InformationHomeState extends State<InformationHome> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: colorScheme.shadow.withOpacity(0.1),
+                  color: colorScheme.shadow.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -208,7 +208,7 @@ class _InformationHomeState extends State<InformationHome> {
                         end: Alignment.bottomRight,
                         colors: [
                           colorScheme.primaryContainer,
-                          colorScheme.secondaryContainer.withOpacity(0.7),
+                          colorScheme.secondaryContainer.withValues(alpha: 0.7),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
@@ -235,7 +235,7 @@ class _InformationHomeState extends State<InformationHome> {
                           'Dedicated and committed to making true disciples who will passionately advance the Kingdom of God.',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                            color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -284,10 +284,10 @@ class _InformationHomeState extends State<InformationHome> {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: colorScheme.outline.withOpacity(0.2),
+                                      color: colorScheme.outline.withValues(alpha: 0.2),
                                     ),
                                   ),
                                   child: Text(
@@ -375,10 +375,10 @@ class _InformationHomeState extends State<InformationHome> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.surfaceVariant.withOpacity(0.3),
+                                  color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: colorScheme.outline.withOpacity(0.2),
+                                    color: colorScheme.outline.withValues(alpha: 0.2),
                                   ),
                                 ),
                                 child: Text(
@@ -452,7 +452,7 @@ class _InformationHomeState extends State<InformationHome> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant.withOpacity(0.3),
+                            color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -486,7 +486,7 @@ class _InformationHomeState extends State<InformationHome> {
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: colorScheme.outline.withOpacity(0.2),
+                                color: colorScheme.outline.withValues(alpha: 0.2),
                               ),
                             ),
                             child: Row(
@@ -703,7 +703,7 @@ class _InformationHomeState extends State<InformationHome> {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -841,7 +841,7 @@ class _InformationHomeState extends State<InformationHome> {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -907,7 +907,7 @@ class _InformationHomeState extends State<InformationHome> {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  Colors.black.withOpacity(0.7),
+                                  Colors.black.withValues(alpha: 0.7),
                                 ],
                               ),
                             ),
@@ -948,8 +948,8 @@ class _InformationHomeState extends State<InformationHome> {
   //                   decoration: BoxDecoration(
   //                       borderRadius: const BorderRadius.all(Radius.circular(32)),
   //                       gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [
-  //                         colorScheme.primary.withOpacity(0.8),
-  //                         colorScheme.secondary.withOpacity(0.8),
+  //                         colorScheme.primary.withValues(alpha: 0.8),
+  //                         colorScheme.secondary.withValues(alpha: 0.8),
   //                       ])),
   //                   child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
   //                     Icon(Icons.add, color: Colors.white, size: 48),
