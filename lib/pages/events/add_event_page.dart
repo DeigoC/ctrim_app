@@ -38,6 +38,14 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   final UserDBManager _userDBManager = UserDBManager();
 
   bool _canSave = false;
+  bool _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -62,14 +70,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _onWillPop().then((shouldPop) {
-          if (shouldPop && context.mounted) {
-            Navigator.of(context).pop();
-          }
-        });
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
       },
       child: Scaffold(
           floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,

@@ -684,19 +684,18 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     );
   }
 
-  void _onAddPostTap(final PostTemplate postTemplate) {
+  Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
     // convert the template to EventContext
     final EventContext eventContext = _mapTemplateToEventContext(postTemplate);
 
     if (eventContext.head.eventDate != null) {
-      _selectDate(context).then((selectedDate) {
-        if (selectedDate != null && context.mounted) {
-          _adjustEventProgramToDate(eventContext, selectedDate);
-          eventContext.head
-              .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
-        }
-      });
+      final selectedDate = await _selectDate(context);
+      if (selectedDate == null || !mounted) return;
+      _adjustEventProgramToDate(eventContext, selectedDate);
+      eventContext.head
+          .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
+      if (!mounted) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
     } else {
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
     }

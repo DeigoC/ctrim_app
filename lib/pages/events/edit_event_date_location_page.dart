@@ -552,22 +552,21 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     });
   }
 
-  void _onSelectStartTime(final DateTime selectedStartDate) {
-    showTimePicker(
-            context: context,
-            initialTime: TimeOfDay.fromDateTime(selectedStartDate
-                .add(Duration(hours: _start == null ? 9 : _start!.hour, minutes: _start == null ? 0 : _start!.minute))))
-        .then((selectedTOD) {
-      if (selectedTOD != null) {
-        setState(() {
-          _start = DateTime(selectedStartDate.year, selectedStartDate.month, selectedStartDate.day, selectedTOD.hour,
-              selectedTOD.minute);
-        });
-        if (!context.mounted) return;
-        showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => AlertDialog(
+  Future<void> _onSelectStartTime(final DateTime selectedStartDate) async {
+    final selectedTOD = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(selectedStartDate
+            .add(Duration(hours: _start == null ? 9 : _start!.hour, minutes: _start == null ? 0 : _start!.minute))));
+    if (selectedTOD == null || !mounted) return;
+    setState(() {
+      _start = DateTime(selectedStartDate.year, selectedStartDate.month, selectedStartDate.day, selectedTOD.hour,
+          selectedTOD.minute);
+    });
+    if (!mounted) return;
+    await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     title: Row(
                       children: [
@@ -644,8 +643,6 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                         label: const Text('Set End Time'),
                       ),
                     ]));
-      }
-    });
   }
 
   void _onSelectEndTimeClick() {

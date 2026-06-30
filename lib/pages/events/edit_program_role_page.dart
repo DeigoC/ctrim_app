@@ -25,7 +25,14 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   late final List<String> _selectedUsers;
 
   late DateTime _start, _end;
-  bool _canSave = false, _forGuests = true, _isSaved = false;
+  bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -49,14 +56,13 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop || _isSaved) return;
-        DialogManager.discardChanges(context: context).then((shouldPop) {
-          if (shouldPop && context.mounted) {
-            Navigator.of(context).pop();
-          }
-        });
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -697,7 +703,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                     widget.eventContext.allowSavingOfTheEdit();
                     _isSaved = true;
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop();
+                    _popRouteAfterAllowing();
                   },
                   child: const Text('Save')),
             ],
@@ -735,24 +741,20 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     debugPrint('--------role addition now looks like: ${widget.eventContext.roleAdditions}');
   }
 
-  void _onDeleteTap() {
+  Future<void> _onDeleteTap() async {
     // remember to send all from the original about the removal of role
-    DialogManager.showConfirmationDialog(
-            context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?')
-        .then((confirmation) {
-      if (confirmation) {
-        widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
-        widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
-        widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
+    final confirmation = await DialogManager.showConfirmationDialog(
+        context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?');
+    if (!confirmation || !mounted) return;
 
-        widget.eventContext.program.removeRole(widget.programEntry['id']);
-        widget.eventContext.allowSavingOfTheEdit();
+    widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
+    widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
+    widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
 
-        _isSaved = true;
-        if (context.mounted) {
-          Navigator.of(context).pop();
-        }
-      }
-    });
+    widget.eventContext.program.removeRole(widget.programEntry['id']);
+    widget.eventContext.allowSavingOfTheEdit();
+
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 }

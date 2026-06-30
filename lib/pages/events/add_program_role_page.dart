@@ -26,7 +26,14 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   final List<String> _selectedUsers = List.empty(growable: true);
 
   DateTime? _start, _end;
-  bool _canSave = false, _forGuests = true, _isSaved = false;
+  bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -44,14 +51,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop || _isSaved) return;
-        DialogManager.discardChanges(context: context).then((shouldPop) {
-          if (shouldPop && context.mounted) {
-            Navigator.of(context).pop();
-          }
-        });
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
       },
       child: Scaffold(appBar: AppBar(title: const Text('Add Schedule')), body: _buildBody()),
     );
@@ -681,7 +687,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                     widget.eventContext.allowSavingOfTheEdit();
                     _isSaved = true;
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop();
+                    _popRouteAfterAllowing();
                   },
                   child: const Text('Save')),
             ],
