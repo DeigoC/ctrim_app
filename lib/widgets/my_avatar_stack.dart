@@ -26,8 +26,6 @@ class MyAvatarStack extends StatelessWidget {
       }
     }
 
-    // TODO consider using a WidgetStack for our custom Avatars
-    // WidgetStack(positions: positions, stackedWidgets: stackedWidgets, buildInfoWidget: buildInfoWidget)
     return AvatarStack(
       height: kToolbarHeight,
       width: kIsWeb ? null : 90,

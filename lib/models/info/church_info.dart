@@ -96,11 +96,14 @@ class ChurchInfo {
   static List<String> _parseImageSources(final Map<String, dynamic> data) {
     final dynamic imageSources = data['imageSources'];
     if (imageSources is List) {
-      return imageSources.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+      return imageSources.map((e) => e.toString()).where((e) => e.isNotEmpty && e.toUpperCase() != 'TODO').toList();
     }
 
     final String fallback = (data['imgSrc'] ?? '').toString();
-    return fallback.isEmpty ? <String>[] : <String>[fallback];
+    if (fallback.isEmpty || fallback.toUpperCase() == 'TODO') {
+      return <String>[];
+    }
+    return <String>[fallback];
   }
 
   static List<dynamic> _parseBody(final dynamic rawBody) {

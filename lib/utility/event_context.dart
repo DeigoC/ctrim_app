@@ -200,7 +200,6 @@ class EventContext {
   // and save it as a txt file. This file should be able to work backwards and create the
   // post from it to save having to read from the DB
   // ! The following is assumed when all of the post is fetched (including logs)
-  // TODO: just realised i can put a lot of this logic into each of the part's dedicated class
   String transformPostToTxtFile(final String version) {
     // * Head - RecentDate
     String result = '${_head.recentDate.millisecondsSinceEpoch}-$version';

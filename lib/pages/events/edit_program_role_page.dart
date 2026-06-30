@@ -719,7 +719,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     widget.programEntry['start'] = _start;
     widget.programEntry['end'] = _end;
     widget.programEntry['for_guests'] = _forGuests;
-    widget.programEntry['priority'] = 1; // ! remember to change this!
+    widget.programEntry['priority'] = 1;
   }
 
   void _sortNotifications() {

@@ -337,7 +337,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
-  // TODO: insane! We need to break these mothods down
   Future<void> _notifyProgramRoleAddtitions(final String newPostID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;

@@ -39,15 +39,30 @@ service cloud.firestore {
       allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true;   
     }
     
-    match /users/{documents=**}{
+    match /users/{userId}{
       // Allow anyone to read user profiles (guest-friendly)
       allow read: if true;
-      
-      // only admins can register new users
-      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;  
-      
-      // allows users to change their own imgSrc (TODO: I think this can be tightened to only the same user can edit their own document)
-      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true; 
+
+      // Only admins can register new users
+      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;
+
+      // Admins may edit any profile; other users may only edit their own
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true ||
+        (
+          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true &&
+          resource.data.AuthID == request.auth.uid
+        )
+      );
+
+      // Role/post tracking updated by workers when managing events
+      match /supplemental/{document}{
+        allow read: if true;
+        allow write: if request.auth != null && (
+          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true ||
+          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true
+        );
+      }
     }
 
     match /id_tracker/{documents=**}{
