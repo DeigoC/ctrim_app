@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../utility/notification_token_resolver.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
@@ -32,7 +32,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   late final AppContext _appContext;
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
-  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EventHeadDBManager _headDBManager = EventHeadDBManager();
   final UserDBManager _userDBManager = UserDBManager();
@@ -319,7 +319,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (!_appContext.haveTokensForUserID(thisUID)) {
         final List<String> tokens =
-            await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
         _appContext.addTokensToUserID(thisUID, tokens);
       }
 
@@ -351,7 +351,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         if (thisUID != currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             final List<String> fetchedTokens =
-                await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+                await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, fetchedTokens);
           }
 

@@ -101,10 +101,10 @@ service cloud.firestore {
       }
     }
 
-    // Allow authenticated users to add their web tokens
-    match /notification_tokens/web_tokens {
-      allow read: if request.auth != null && 
-                     (request.auth.token.isLeader == true || 
+    // Allow authenticated users to manage web push tokens and topic subscriptions
+    match /notification_tokens/{docId} {
+      allow read: if request.auth != null &&
+                     (request.auth.token.isLeader == true ||
                       request.auth.token.isAreaAdmin == true);
       allow write: if request.auth != null;
     }

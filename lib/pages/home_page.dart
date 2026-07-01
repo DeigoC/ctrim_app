@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../models/event/event_head.dart';
@@ -12,6 +13,7 @@ import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
+import '../utility/web_notification_lifecycle.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -53,6 +55,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return surname;
     }));
     _setupCloudOnMessage();
+    _registerWebNotificationsIfNeeded();
 
     // * Check for first open and request notification permissions for all users (guests and authenticated)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -67,6 +70,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     super.initState();
+  }
+
+  void _registerWebNotificationsIfNeeded() {
+    if (!kIsWeb || _appContext.isCurrentUserGuest) return;
+
+    final authID = AuthManager().currentAuthUID;
+    if (authID.isEmpty) return;
+
+    final lifecycle = WebNotificationLifecycle();
+    lifecycle.register(
+      authId: authID,
+      onTokenSaved: _appContext.sharedPref.saveFCMToken,
+    );
+    lifecycle.listenForTokenRefresh(
+      authId: authID,
+      onTokenSaved: _appContext.sharedPref.saveFCMToken,
+    );
   }
 
   @override

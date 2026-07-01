@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../firebase/auth_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
@@ -67,16 +69,16 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
   // * Logic
 
   void _onTopicClick(final String topic, final bool newState) {
-    // update the messaaging manager accordingly, do the same with local storage, update the analytics
+    final authId = kIsWeb ? AuthManager().currentAuthUID : null;
     setState(() {
       if (newState) {
         debugPrint('subscribing to: $topic');
-        _messagingManager.subscribeToTopic(topic);
+        _messagingManager.subscribeToTopic(topic, authId: authId);
         _appContext.sharedPref.setSubscribedToTopic(topic, newState);
         _appContext.analytics.logEvent(name: 'Notification subscribe to: $topic');
       } else {
         debugPrint('unsubscribing to: $topic');
-        _messagingManager.unsubscribeFromTopic(topic);
+        _messagingManager.unsubscribeFromTopic(topic, authId: authId);
         _appContext.sharedPref.setSubscribedToTopic(topic, newState);
         _appContext.analytics.logEvent(name: 'Notification unsubscribe to: $topic');
       }

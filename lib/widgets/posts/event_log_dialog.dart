@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../utility/notification_token_resolver.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../utility/app_context.dart';
@@ -32,7 +32,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
   late final String _currentUserName, _currentUID;
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
-  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
   final UserDBManager _userDBManager = UserDBManager();
   bool _canSave = false;
 
@@ -192,7 +192,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
     for (final String uid in missingContacts) {
-      final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(uid));
+      final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(uid));
       _appContext.addTokensToUserID(uid, tokens);
     }
 
@@ -230,7 +230,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, tokens);
           }
 
@@ -263,7 +263,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, tokens);
           }
 
@@ -284,7 +284,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
           _appContext.addTokensToUserID(thisUID, tokens);
         }
 
@@ -306,7 +306,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     for (final String thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
           _appContext.addTokensToUserID(thisUID, tokens);
         }
 

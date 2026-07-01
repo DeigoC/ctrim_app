@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/messaging_manager.dart';
+import '../utility/web_notification_lifecycle.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
@@ -282,8 +283,8 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const Divider(height: 1, indent: 72),
               ],
 
-              // Push Notifications (non-web only)
-              if (!kIsWeb) ...[
+              // Push Notifications (authenticated users; web uses Firestore topic fan-out)
+              if (!appContext.isCurrentUserGuest) ...[
                 if (appContext.isCurrentUserGuest) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.notifications_active_rounded,
@@ -795,8 +796,15 @@ class _PersonalHomeState extends State<PersonalHome> {
   Future<void> _logout() async {
     final AuthManager authManager = AuthManager();
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    debugPrint('token to remove is ${widget.appContext.sharedPref.fcmToken}');
-    await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, widget.appContext.sharedPref.fcmToken);
+    final token = widget.appContext.sharedPref.fcmToken;
+    debugPrint('token to remove is $token');
+
+    if (kIsWeb && token.isNotEmpty) {
+      await WebNotificationLifecycle().unregister(authId: authManager.currentAuthUID, token: token);
+    } else if (token.isNotEmpty) {
+      await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, token);
+    }
+
     widget.appContext.sharedPref.clearCreds();
     widget.appContext.setUserToGuest();
     widget.appContext.rebuildPlease();
@@ -853,9 +861,8 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   void _onEnableNotificationsClick(AppContext appContext) async {
-    if (kIsWeb) return;
-
     final MessagingManager messagingManager = MessagingManager();
+    final authId = AuthManager().currentAuthUID;
 
     // Show explanation dialog
     final shouldProceed = await showDialog<bool>(
@@ -881,25 +888,27 @@ class _PersonalHomeState extends State<PersonalHome> {
 
     if (shouldProceed != true) return;
 
-    // Request permission and get token
-    final String? token = await messagingManager.requestPermissionAndToken();
+    String? token;
+    if (kIsWeb && authId.isNotEmpty && !appContext.isCurrentUserGuest) {
+      token = await WebNotificationLifecycle().register(
+        authId: authId,
+        requestPermission: true,
+        onTokenSaved: appContext.sharedPref.saveFCMToken,
+      );
+    } else {
+      token = await messagingManager.requestPermissionAndToken();
+    }
 
     if (token != null) {
       debugPrint('Token to save is $token');
 
-      // Store token based on user type
       if (appContext.isCurrentUserGuest) {
-        // Guest user - store token locally
         appContext.sharedPref.saveGuestFCMToken(token);
       } else {
-        // Authenticated user - store normally
         appContext.sharedPref.saveFCMToken(token);
       }
 
-      // Subscribe to Belfast topics
       appContext.sharedPref.setSubscribedToBelfast(true);
-
-      // Subscribe to all available topics
       appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
       appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
       appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
@@ -907,13 +916,14 @@ class _PersonalHomeState extends State<PersonalHome> {
       appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
       appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
 
-      messagingManager.subscribeToTopic('belfast-sunday-service');
-      messagingManager.subscribeToTopic('belfast-midweek-service');
-      messagingManager.subscribeToTopic('belfast-growth-mentoring');
-      messagingManager.subscribeToTopic('belfast-dawn-watch');
-      messagingManager.subscribeToTopic('belfast-overnight-prayer');
-      messagingManager.subscribeToTopic('belfast-youth-cg');
-      messagingManager.subscribeToTopic('Belfast');
+      final webAuthId = kIsWeb && !appContext.isCurrentUserGuest ? authId : null;
+      messagingManager.subscribeToTopic('belfast-sunday-service', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-midweek-service', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-growth-mentoring', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-dawn-watch', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-overnight-prayer', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-youth-cg', authId: webAuthId);
+      messagingManager.subscribeToTopic('Belfast', authId: webAuthId);
 
       if (mounted) {
         // Show success message

@@ -8,7 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../utility/notification_token_resolver.dart';
 import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
@@ -629,7 +629,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     try {
       final AppContext appContext = Provider.of<AppContext>(context, listen: false);
       final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-      final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+      final NotificationTokenResolver tokenResolver = NotificationTokenResolver();
       final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
 
       final String currentUID = appContext.currentUser.id;
@@ -659,7 +659,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                 if (!appContext.haveTokensForUserID(thisUID)) {
                   final String authID = appContext.getAuthIDFromUID(thisUID);
                   if (authID.isNotEmpty) {
-                    final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
+                    final List<String> fetchedTokens = await tokenResolver.resolveForAuthID(authID);
                     if (fetchedTokens.isNotEmpty) {
                       appContext.addTokensToUserID(thisUID, fetchedTokens);
                       tokens.addAll(fetchedTokens);

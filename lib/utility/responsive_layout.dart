@@ -20,6 +20,7 @@ abstract final class ResponsiveLayout {
 
   static const double loginMaxWidth = 500;
   static const double chordMaxWidth = 900;
+  static const double dialogMaxWidth = 420;
   static const double dialogAvatarMaxRadius = 120;
 
   static bool isCompact(double width) => width < compact;

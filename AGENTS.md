@@ -44,6 +44,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-06-29** — Web push aligned with worship pattern: `send_each_for_multicast` CF, topic fan-out via `web_topics` only, `WebNotificationLifecycle`, `NotificationTokenResolver`; deploy `functions/` + `firestore.rules` to `ctrim-8b49b`.
 - **2026-06-29** — Added `ResponsiveLayout` + `ResponsiveContent`; refactored inline 768px gutter checks across pages.
 - **2026-06-25** — Documented Dart MCP setup and `add_roots` URIs in AGENTS.md.
 - **2026-06-25** — Added `.cursor/rules/`, skills (new-feature, fix-bug, info-section, web-debug, maintain-agent-docs), and this file; Quill widgets are `QuillEditorWidget`/`QuillViewerWidget` in `quill_editor_wrapper.dart`.

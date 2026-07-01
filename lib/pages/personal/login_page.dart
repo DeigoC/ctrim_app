@@ -11,6 +11,7 @@ import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
+import '../../utility/web_notification_lifecycle.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -406,20 +407,25 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Future<void> _logUserToApp(final String authID) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final MessagingManager messagingManager = MessagingManager();
 
-    final String? token = await messagingManager.getToken();
+    if (kIsWeb) {
+      final lifecycle = WebNotificationLifecycle();
+      await lifecycle.register(
+        authId: authID,
+        onTokenSaved: appContext.sharedPref.saveFCMToken,
+      );
+    } else {
+      final MessagingManager messagingManager = MessagingManager();
+      final String? token = await messagingManager.getToken();
+      if (token != null) {
+        final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+        everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
+        appContext.sharedPref.saveFCMToken(token);
+      }
+    }
+
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
-
-    debugPrint('setting device token as $token');
-    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
-
-    if (token != null) {
-      everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platformName);
-      appContext.sharedPref.saveFCMToken(token);
-    }
 
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);

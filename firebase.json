@@ -32,8 +32,10 @@
     {
       "source": "functions",
       "codebase": "default",
+      "runtime": "python313",
       "ignore": [
         "venv",
+        "build",
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log"

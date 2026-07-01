@@ -19,6 +19,7 @@ import '../models/user.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/local_data_manager.dart';
+import '../utility/web_notification_lifecycle.dart';
 import 'home_page.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -1288,13 +1289,21 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<void> _saveFCMToken() async {
+    final authID = _authManager.currentAuthUID;
+    if (kIsWeb) {
+      await WebNotificationLifecycle().register(
+        authId: authID,
+        onTokenSaved: _appContext.sharedPref.saveFCMToken,
+      );
+      return;
+    }
+
     final MessagingManager messagingManager = MessagingManager();
     final token = await messagingManager.getToken();
     if (token != null) {
       debugPrint('token to save is $token');
-      final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
       _appContext.sharedPref.saveFCMToken(token);
-      _everyoneDBManager.addTokenForAuthID(authID: _authManager.currentAuthUID, token: token, platform: platformName);
+      _everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
     }
   }
 
