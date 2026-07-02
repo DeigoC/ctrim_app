@@ -408,19 +408,22 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Future<void> _logUserToApp(final String authID) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
 
-    if (kIsWeb) {
-      final lifecycle = WebNotificationLifecycle();
-      await lifecycle.register(
-        authId: authID,
-        onTokenSaved: appContext.sharedPref.saveFCMToken,
-      );
-    } else {
-      final MessagingManager messagingManager = MessagingManager();
-      final String? token = await messagingManager.getToken();
-      if (token != null) {
-        final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-        everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
-        appContext.sharedPref.saveFCMToken(token);
+    // Defer token registration on first open; HomePage shows welcome before any prompt.
+    if (!appContext.sharedPref.isFirstOpen) {
+      if (kIsWeb) {
+        final lifecycle = WebNotificationLifecycle();
+        await lifecycle.register(
+          authId: authID,
+          onTokenSaved: appContext.sharedPref.saveFCMToken,
+        );
+      } else {
+        final MessagingManager messagingManager = MessagingManager();
+        final String? token = await messagingManager.getToken();
+        if (token != null) {
+          final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+          everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
+          appContext.sharedPref.saveFCMToken(token);
+        }
       }
     }
 

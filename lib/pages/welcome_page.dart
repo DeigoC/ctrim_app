@@ -1290,6 +1290,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
   Future<void> _saveFCMToken() async {
     final authID = _authManager.currentAuthUID;
+    // Defer token registration on first open; HomePage shows welcome before any prompt.
+    if (_appContext.sharedPref.isFirstOpen) return;
+
     if (kIsWeb) {
       await WebNotificationLifecycle().register(
         authId: authID,

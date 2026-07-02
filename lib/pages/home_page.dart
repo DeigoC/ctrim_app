@@ -55,9 +55,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return surname;
     }));
     _setupCloudOnMessage();
-    _registerWebNotificationsIfNeeded();
+    _setupWebNotificationListeners();
 
-    // * Check for first open and request notification permissions for all users (guests and authenticated)
+    // Show first-open welcome dialog before any web token registration.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkIfFirstOpen();
     });
@@ -72,18 +72,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     super.initState();
   }
 
+  void _setupWebNotificationListeners() {
+    if (!kIsWeb || _appContext.isCurrentUserGuest) return;
+
+    final authID = AuthManager().currentAuthUID;
+    if (authID.isEmpty) return;
+
+    WebNotificationLifecycle().listenForTokenRefresh(
+      authId: authID,
+      onTokenSaved: _appContext.sharedPref.saveFCMToken,
+    );
+  }
+
   void _registerWebNotificationsIfNeeded() {
     if (!kIsWeb || _appContext.isCurrentUserGuest) return;
 
     final authID = AuthManager().currentAuthUID;
     if (authID.isEmpty) return;
 
-    final lifecycle = WebNotificationLifecycle();
-    lifecycle.register(
-      authId: authID,
-      onTokenSaved: _appContext.sharedPref.saveFCMToken,
-    );
-    lifecycle.listenForTokenRefresh(
+    WebNotificationLifecycle().register(
       authId: authID,
       onTokenSaved: _appContext.sharedPref.saveFCMToken,
     );
@@ -249,6 +256,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
       appContext.sharedPref.nowOpened();
     }
+
+    _registerWebNotificationsIfNeeded();
   }
 
   // not really something that can be tested at the moment. Requires a good amount of posts made
