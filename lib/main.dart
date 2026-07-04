@@ -18,6 +18,7 @@ import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
+import 'utility/user_schedule_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -152,26 +153,8 @@ Future<void> _fetchEssentialDataInBackground(
 
         // User roles cleanup
         currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
-        final List<String> postsToRemove = [];
-        for (final roleEntry in currentUser.roles!) {
-          if (heads.any((e) => e.id == roleEntry.postID)) {
-            final thisPost = heads.firstWhere((e) => e.id == roleEntry.postID);
-            if (thisPost.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
-              postsToRemove.add(thisPost.id);
-            }
-          } else {
-            postsToRemove.add(roleEntry.postID);
-          }
-        }
-
-        // Perform role removal if necessary
-        if (postsToRemove.isNotEmpty) {
-          debugPrint('removing the following dated roles: $postsToRemove');
-          currentUser.removeRoles(postsToRemove);
-          for (final postID in postsToRemove) {
-            await userDBManager.removeUserPostRole(currentUser.id, postID);
-          }
-        }
+        final scheduleService = UserScheduleService(userDBManager: userDBManager);
+        await scheduleService.pruneStaleRoles(user: currentUser, eventHeads: heads);
 
         // Add current user to all users list
         allUsers.removeWhere((e) => e.id == currentUser.id);

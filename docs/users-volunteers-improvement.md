@@ -2,7 +2,7 @@
 
 > **Purpose:** Living document for a multi-session refactor of the `User` model, schedule sync, and Belfast Volunteers UI.  
 > **Created:** 2026-07-04  
-> **Status:** Phase 1 complete — Phase 2 (centralized sync) not started  
+> **Status:** Phase 3 complete — Phase 4 (Cloud Function sync) not started  
 > **Start here in a new chat:** “Continue the Users/Volunteers improvement from `docs/users-volunteers-improvement.md`”
 
 ---
@@ -164,6 +164,9 @@ flowchart LR
 |------|------|
 | Model | `lib/models/user.dart` |
 | DB manager | `lib/firebase/db_managers/user_db_manager.dart` |
+| Schedule sync / cleanup | `lib/utility/user_schedule_service.dart` |
+| Volunteer locations | `lib/utility/volunteer_locations.dart` |
+| Profile hub | `lib/pages/personal/view_user_profile_page.dart` |
 | Auth / tokens / email | `lib/firebase/db_managers/everyone_db_manager.dart` |
 | App-wide user state | `lib/utility/app_context.dart` |
 | Volunteers list | `lib/pages/personal/view_all_users_page.dart` |
@@ -189,7 +192,8 @@ flowchart LR
 | My Schedule badge | Low | Counts role **entries**, not distinct upcoming posts |
 | `forname` typo | Low | Wide rename; entrenched in Firestore keys and Dart API |
 | Email not on User | Medium | Only in `everyone`; not visible on volunteer profile |
-| No tests for supplemental models | Low | `user_test.dart` only covers raw map helpers |
+| No user tags / teams | Medium | **Planned Phase 5** — only `isLeader` / `isAreaAdmin` / `location` today |
+| No tests for supplemental models | Low | Covered in Phase 1 |
 | Role refresh throttled 2 min | Low | Pull-to-refresh may no-op with “Fake Refreshing” |
 
 ### Async bugs to fix first (minimal diff)
@@ -246,12 +250,11 @@ flowchart LR
    - Reduces client drift and missed awaits
    - Keeps existing read path (`ViewUserRolesPage`)
 
-9. **Extended volunteer profile fields**
-   - `teams` / `ministries`, `availabilityNotes`, `isActive`, optional `phone`
+9. **Extended volunteer profile fields** (Phase 6)
+   - `availabilityNotes`, `isActive`, optional admin-only `phone`
 
-10. **Unify or document `users` vs `everyone`**
-    - Option A: document split (current)
-    - Option B: denormalize `email` onto `users` at registration
+10. **Admin-managed user tags** (Phase 5 — see dedicated section)
+    - Worship, Technical, Speaker, Usher, etc.; admin CRUD; multi-tag per user; filter list + picker
 
 ---
 
@@ -278,17 +281,19 @@ Use this checklist across chats. Update **Status** at the top when a phase compl
 
 ### Phase 2 — Centralized sync (1 chat)
 
-- [ ] Extract `UserScheduleService` (or equivalent)
-- [ ] Single `pruneStaleRoles(user, eventHeads)` used from login + schedule page + my posts
-- [ ] Delete duplicated cleanup in `main.dart` / pages
+- [x] Extract `lib/utility/user_schedule_service.dart`
+- [x] Single `staleRolePostIDs` / `pruneStaleRoles` used from login + schedule page
+- [x] Single `stalePostInvolvementIDs` / `pruneStalePostInvolvements` for My Posts + schedule Posts tab
+- [x] Delete duplicated cleanup in `main.dart` / pages
+- [x] Unit tests in `test/unit/utility/user_schedule_service_test.dart`
 
 ### Phase 3 — Volunteers UI (1–2 chats)
 
-- [ ] Location filter on `ViewAllUsersPage`
-- [ ] New `ViewUserProfilePage` (hub: info + schedule preview)
-- [ ] Wire list tap → profile hub; schedule remains full page
-- [ ] Fix My Schedule badge counting
-- [ ] Localize new strings
+- [x] Location filter on `ViewAllUsersPage` (`VolunteerLocations`, FilterChips: All / Belfast / Portadown / North Coast)
+- [x] New `ViewUserProfilePage` (avatar, badges, upcoming task preview, links to schedule/posts)
+- [x] Wire list tap → profile hub; full schedule via `ViewUserRolesPage`
+- [x] Fix My Schedule badge — `UserScheduleService.upcomingPostCount` (distinct upcoming posts)
+- [x] Localize new strings in `app_en.arb` (volunteers, profile, schedule menu)
 
 ### Phase 4 — Optional backend (separate deploy)
 
@@ -296,11 +301,99 @@ Use this checklist across chats. Update **Status** at the top when a phase compl
 - [ ] Deploy to `ctrim-8b49b` functions
 - [ ] Client can simplify writes (notify only, or stop writing roles client-side)
 
-### Phase 5 — Profile enrichment (future)
+### Phase 5 — Admin-managed user tags (1–2 chats)
 
-- [ ] New Firestore fields + migration strategy for existing users
-- [ ] Admin-only contact fields
-- [ ] Team/ministry tags on picker filters
+**Not implemented yet.** Volunteers today are only distinguished by `location`, `isLeader`, and `isAreaAdmin`. There is no worship / technical / speaker / usher labelling.
+
+- [ ] **Data model** — `UserTag` (`id`, `name`, optional `color`, `displayOrder`, `isActive`)
+- [ ] **Firestore** — `user_tags/{tagId}` collection; `Tags: [tagId, …]` on `users/{uid}` (multi-tag per user)
+- [ ] **DB manager** — `UserTagDBManager` (CRUD; area-admin writes only)
+- [ ] **Admin UI** — `ManageUserTagsPage`: create, rename, reorder, deactivate tags (Personal admin section)
+- [ ] **Assign tags** — multi-select on `EditUserPage` / `RegisterUserPage`
+- [ ] **Display** — chips on profile hub, volunteer list tiles, `DialogManager.showUserProfile`
+- [ ] **Filter** — `ViewAllUsersPage` and `UserSelectorDialog` filter by one or more tags
+- [ ] **Cache** — load tags at startup in `AppContext` (same pattern as `allUsers`)
+- [ ] **Security** — `firestore.rules`: tag definition writes restricted to area admins
+- [ ] **Seed** — optional initial tags (Worship Team, Technical, Speaker, Usher) via one-time admin setup or migration script
+- [ ] **Tests** — `user_tag_test.dart`, tag assignment on `User` model
+
+See [Admin-managed user tags](#admin-managed-user-tags) below for full design notes.
+
+### Phase 6 — Profile enrichment (future)
+
+- [ ] `availabilityNotes`, `isActive` (hide inactive from picker), optional admin-only `phone`
+- [ ] Unify or document `users` vs `everyone` email visibility
+
+---
+
+## Admin-managed user tags
+
+> **Status:** Planned (Phase 5) — not in the app today  
+> **Asked:** 2026-07-04 — worship / technical / speaker / usher-style labels; admin creates and edits tag definitions
+
+### Why admin-managed (not a hardcoded enum)
+
+A fixed enum in Dart would require an app release for every new team name. Area admins creating tags in-app matches how you already manage volunteers and info content — flexible and combinable (one person can be Worship + Technical).
+
+### Proposed data shape
+
+**Tag definitions** — `user_tags/{tagId}`
+
+```json
+{
+  "Name": "Worship Team",
+  "DisplayOrder": 1,
+  "Color": "#6B4EAA",
+  "IsActive": true
+}
+```
+
+**User assignment** — on existing `users/{uid}` document (simple queries) or `supplemental/tags` if you prefer not to touch main user docs:
+
+```json
+{
+  "Tags": ["tagId1", "tagId2"]
+}
+```
+
+Users hold **tag IDs**, not names — renames propagate everywhere without rewriting user docs.
+
+### Where tags would appear
+
+| Surface | Behaviour |
+|---------|-----------|
+| **Manage tags** (admin) | CRUD + reorder; deactivate instead of delete if users still assigned |
+| **Edit / Register user** | Multi-select chip picker |
+| **Belfast Volunteers list** | Filter chips + tag badges on tiles |
+| **Profile hub** (Phase 3) | Tag chips under name |
+| **User selector** (program roles) | Optional filter: “Worship only”, “Technical only”, etc. |
+| **Program tiles** | Optional: show tags under assignee name |
+
+### Implementation sketch
+
+```
+lib/models/user_tag.dart
+lib/firebase/db_managers/user_tag_db_manager.dart
+lib/pages/personal/manage_user_tags_page.dart   # admin
+lib/widgets/user_tag_chip.dart                  # display
+lib/widgets/user_tag_filter_bar.dart            # list + picker filters
+```
+
+Extend `User` with `List<String> tagIDs` (or typed `List<UserTagAssignment>` if you want symmetry with roles). Load `allTags` into `AppContext` alongside `allUsers`.
+
+### Considerations
+
+| Topic | Recommendation |
+|-------|----------------|
+| **Delete vs deactivate** | Deactivate tags that are still assigned; hard-delete only when zero users |
+| **Default tags** | Seed Worship / Technical / Speaker / Usher on first admin visit or via Firebase console — avoid shipping hardcoded lists in code |
+| **Leaders vs admins** | Tag **definition** CRUD: area admin only. Tag **assignment** on users: area admin (maybe leaders later) |
+| **ctrim_worship overlap** | Worship app has its own user model — tags stay in **ctrim_app** volunteer directory unless you later sync |
+| **Scope vs Phase 3** | Do profile hub (Phase 3) first, then tags (Phase 5) — tags display nicely on the hub |
+
+### Effort estimate
+
+~1–2 chats for a solid v1: model + Firestore + admin manage page + edit user assignment + list filter. Picker filter and profile chips add polish in the same phase or immediately after.
 
 ---
 
@@ -322,6 +415,9 @@ Use this checklist across chats. Update **Status** at the top when a phase compl
 | 2026-07-04 | Initial audit & this document | Findings + phased plan |
 | 2026-07-04 | Phase 0 | Async awaits in UserDBManager + callers; `allowPostView` → Schedule/Posts tabs; orphan role cleanup deferred to post-frame |
 | 2026-07-04 | Phase 1 | Typed `UserRoleAssignment`, `UserPostInvolvement` + `PostOwnership`; `User`/`UserDBManager`/callers migrated; 3 test files |
+| 2026-07-04 | Phase 2 | `UserScheduleService` centralises role/post pruning; callers in `main.dart`, schedule + posts pages |
+| 2026-07-04 | Phase 3 | `ViewUserProfilePage`, location filter on volunteers list, badge fix, l10n |
+| 2026-07-04 | Planning | Admin-managed user tags (Phase 5) — design added; not implemented |
 
 *(Append rows as work progresses.)*
 

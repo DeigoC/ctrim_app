@@ -48,6 +48,8 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-04** — Users/Volunteers Phase 3: profile hub, location filter, schedule badge fix; see `docs/users-volunteers-improvement.md`.
+- **2026-07-04** — Users/Volunteers Phase 2: `UserScheduleService` for role/post pruning; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Users/Volunteers Phase 1: typed `UserRoleAssignment` / `UserPostInvolvement`; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Users/Volunteers Phase 0: awaited supplemental Firestore writes; `ViewUserRolesPage` Schedule/Posts tabs when `allowPostView`; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Wide-screen home shell: `NavigationRail` (≥900px) in `home_page.dart`; CTRIM section uses vertical subsection nav on wide screens in `information_home.dart` (mobile keeps bottom nav + horizontal tabs).

@@ -99,6 +99,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CTRIM App'**
   String get appTitle;
+
+  /// Title for the volunteers directory when showing all locations
+  ///
+  /// In en, this message translates to:
+  /// **'Volunteers'**
+  String get volunteersTitle;
+
+  /// Title for the volunteers directory filtered by location
+  ///
+  /// In en, this message translates to:
+  /// **'{location} Volunteers'**
+  String volunteersTitleLocation(String location);
+
+  /// Filter chip label to show volunteers from every location
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get volunteersFilterAll;
+
+  /// Hint text for the volunteers search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search volunteers...'**
+  String get volunteersSearchHint;
+
+  /// Empty state when the volunteers list has no entries
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteers found'**
+  String get volunteersEmpty;
+
+  /// Empty state when search returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteers match \"{query}\"'**
+  String volunteersEmptySearch(String query);
+
+  /// Empty state when a location filter returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteers in {location}'**
+  String volunteersEmptyLocation(String location);
+
+  /// FAB label for registering a new volunteer
+  ///
+  /// In en, this message translates to:
+  /// **'Register User'**
+  String get registerUser;
+
+  /// Personal home menu item for the volunteers directory
+  ///
+  /// In en, this message translates to:
+  /// **'Volunteers'**
+  String get volunteersMenuTitle;
+
+  /// Personal home menu subtitle for the volunteers directory
+  ///
+  /// In en, this message translates to:
+  /// **'View community members'**
+  String get volunteersMenuSubtitle;
+
+  /// Personal home menu item for the current user's schedule
+  ///
+  /// In en, this message translates to:
+  /// **'My Schedule'**
+  String get mySchedule;
+
+  /// Personal home menu subtitle for the schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'View your tasks and roles'**
+  String get myScheduleSubtitle;
+
+  /// Badge shown when a volunteer can create events
+  ///
+  /// In en, this message translates to:
+  /// **'Leader'**
+  String get userProfileLeaderBadge;
+
+  /// Badge shown when a volunteer is an area admin
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get userProfileAdminBadge;
+
+  /// Section title on a volunteer profile for schedule preview
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming tasks'**
+  String get userProfileUpcomingTasks;
+
+  /// Message when a volunteer has no upcoming schedule items
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming tasks assigned.'**
+  String get userProfileNoUpcomingTasks;
+
+  /// Button to open the full schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'View full schedule'**
+  String get userProfileViewFullSchedule;
+
+  /// Button to open posts the volunteer authors or contributes to
+  ///
+  /// In en, this message translates to:
+  /// **'View posts'**
+  String get userProfileViewPosts;
+
+  /// App bar action for admins to edit a volunteer profile
+  ///
+  /// In en, this message translates to:
+  /// **'Edit user'**
+  String get userProfileEditUser;
+
+  /// Fallback event title on profile schedule preview
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled event'**
+  String get userProfileUntitledEvent;
 }
 
 class _AppLocalizationsDelegate

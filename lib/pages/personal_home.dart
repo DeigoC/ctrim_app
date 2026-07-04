@@ -7,8 +7,10 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/messaging_manager.dart';
-import '../utility/web_notification_lifecycle.dart';
+import '../src/localization/app_localizations.dart';
 import '../utility/app_context.dart';
+import '../utility/user_schedule_service.dart';
+import '../utility/web_notification_lifecycle.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/personal/personal_first_time_dialog.dart';
@@ -316,24 +318,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                 if (!kIsWeb) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.checklist_rounded,
-                  title: 'My Schedule',
-                  subtitle: 'View your tasks and roles',
-                  trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${appContext.currentUser.roles!.length}',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onErrorContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        )
-                      : null,
+                  title: AppLocalizations.of(context)!.mySchedule,
+                  subtitle: AppLocalizations.of(context)!.myScheduleSubtitle,
+                  trailing: _buildScheduleBadge(appContext, theme, colorScheme),
                   onTap: _onViewTasksClick,
                   theme: theme,
                   colorScheme: colorScheme,
@@ -353,8 +340,8 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.people_rounded,
-                  title: 'Belfast Volunteers',
-                  subtitle: 'View community members',
+                  title: AppLocalizations.of(context)!.volunteersMenuTitle,
+                  subtitle: AppLocalizations.of(context)!.volunteersMenuSubtitle,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
                   theme: theme,
                   colorScheme: colorScheme,
@@ -651,6 +638,31 @@ class _PersonalHomeState extends State<PersonalHome> {
         iconColor: colorScheme.error,
         isFirst: true,
         isLast: true,
+      ),
+    );
+  }
+
+  Widget? _buildScheduleBadge(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    if (appContext.currentUser.roles == null) return null;
+
+    final upcomingCount = UserScheduleService.upcomingPostCount(
+      user: appContext.currentUser,
+      eventHeads: appContext.eventHeads,
+    );
+    if (upcomingCount == 0) return null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$upcomingCount',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: colorScheme.onErrorContainer,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

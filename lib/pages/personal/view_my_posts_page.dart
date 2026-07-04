@@ -1,6 +1,6 @@
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/utility/user_schedule_service.dart';
 import 'package:ctrim_app/widgets/posts/post_head.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +14,8 @@ class ViewMyPostsPage extends StatefulWidget {
 
 class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   late final AppContext _appContext;
-  final UserDBManager _userDBManager = UserDBManager();
+  final UserScheduleService _scheduleService = UserScheduleService();
+
   @override
   void initState() {
     _appContext = Provider.of(context, listen: false);
@@ -39,14 +40,14 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
 
   Widget _buildFBBody() {
     return FutureBuilder(
-        future: _userDBManager.fetchUserPosts(_appContext.currentUser.id),
+        future: _scheduleService.fetchPosts(_appContext.currentUser.id),
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator.adaptive());
 
           if (snap.hasData) {
             _appContext.currentUser.setPosts(snap.data!);
             result = _buildBodyWithData();
-            WidgetsBinding.instance.addPostFrameCallback((_) => _removeOldPosts());
+            WidgetsBinding.instance.addPostFrameCallback((_) => _pruneStalePosts());
           } else if (snap.hasError) {
             result = Center(child: Text('Something went wrong!\n\n${snap.error}'));
           }
@@ -56,7 +57,6 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   }
 
   Widget _buildBodyWithData() {
-    // only use posts that exist with the fetched heads - we'll have removed unncessary posts by then?
     final List<String> postIDs = _appContext.currentUser.posts!
         .where((e) => _appContext.eventHeads.any((head) => head.id == e.postID))
         .map((e) => e.postID)
@@ -78,21 +78,15 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         });
   }
 
-  // * Logic
   void _onHelpClick() {
     DialogManager.showAlertDialog(
         context: context, title: 'My Posts Page', content: 'Recent posts that you can edit will show in this page');
   }
 
-  // remove really old posts otherwise this list will get really big
-  Future<void> _removeOldPosts() async {
-    final List<String> postsToRemove = _appContext.currentUser.posts!
-        .where((e) => !_appContext.eventHeads.any((head) => head.id == e.postID))
-        .map((e) => e.postID)
-        .toList();
-    if (postsToRemove.isEmpty) return;
-    debugPrint('removing the following posts: $postsToRemove');
-    _appContext.currentUser.removeAllPosts(postsToRemove);
-    await _userDBManager.updatePosts(_appContext.currentUser);
+  Future<void> _pruneStalePosts() async {
+    await _scheduleService.pruneStalePostInvolvements(
+      user: _appContext.currentUser,
+      eventHeads: _appContext.eventHeads,
+    );
   }
 }

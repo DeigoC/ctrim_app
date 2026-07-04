@@ -7,6 +7,7 @@ import '../../firebase/db_managers/id_tracker.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
+import '../../utility/volunteer_locations.dart';
 
 class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});
@@ -32,9 +33,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     });
   }
 
-  final List<String> _locations = <String>['Belfast', 'Portadown', 'North Coast'];
-
-  String _currentLocation = 'Belfast'; // default for now
+  String _currentLocation = VolunteerLocations.belfast;
 
   @override
   void dispose() {
@@ -130,7 +129,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     return DropdownButton<String>(
         icon: const Icon(Icons.map_sharp),
         hint: const Text('Location'),
-        items: _locations
+        items: VolunteerLocations.assignable
             .map((e) => DropdownMenuItem<String>(
                   value: e,
                   child: Text(e),

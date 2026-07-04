@@ -2,5 +2,100 @@
   "appTitle": "CTRIM App",
   "@appTitle": {
     "description": "The work in progress app for the CTRIM Church"
+  },
+  "volunteersTitle": "Volunteers",
+  "@volunteersTitle": {
+    "description": "Title for the volunteers directory when showing all locations"
+  },
+  "volunteersTitleLocation": "{location} Volunteers",
+  "@volunteersTitleLocation": {
+    "description": "Title for the volunteers directory filtered by location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "volunteersFilterAll": "All",
+  "@volunteersFilterAll": {
+    "description": "Filter chip label to show volunteers from every location"
+  },
+  "volunteersSearchHint": "Search volunteers...",
+  "@volunteersSearchHint": {
+    "description": "Hint text for the volunteers search field"
+  },
+  "volunteersEmpty": "No volunteers found",
+  "@volunteersEmpty": {
+    "description": "Empty state when the volunteers list has no entries"
+  },
+  "volunteersEmptySearch": "No volunteers match \"{query}\"",
+  "@volunteersEmptySearch": {
+    "description": "Empty state when search returns no volunteers",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "volunteersEmptyLocation": "No volunteers in {location}",
+  "@volunteersEmptyLocation": {
+    "description": "Empty state when a location filter returns no volunteers",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "registerUser": "Register User",
+  "@registerUser": {
+    "description": "FAB label for registering a new volunteer"
+  },
+  "volunteersMenuTitle": "Volunteers",
+  "@volunteersMenuTitle": {
+    "description": "Personal home menu item for the volunteers directory"
+  },
+  "volunteersMenuSubtitle": "View community members",
+  "@volunteersMenuSubtitle": {
+    "description": "Personal home menu subtitle for the volunteers directory"
+  },
+  "mySchedule": "My Schedule",
+  "@mySchedule": {
+    "description": "Personal home menu item for the current user's schedule"
+  },
+  "myScheduleSubtitle": "View your tasks and roles",
+  "@myScheduleSubtitle": {
+    "description": "Personal home menu subtitle for the schedule page"
+  },
+  "userProfileLeaderBadge": "Leader",
+  "@userProfileLeaderBadge": {
+    "description": "Badge shown when a volunteer can create events"
+  },
+  "userProfileAdminBadge": "Admin",
+  "@userProfileAdminBadge": {
+    "description": "Badge shown when a volunteer is an area admin"
+  },
+  "userProfileUpcomingTasks": "Upcoming tasks",
+  "@userProfileUpcomingTasks": {
+    "description": "Section title on a volunteer profile for schedule preview"
+  },
+  "userProfileNoUpcomingTasks": "No upcoming tasks assigned.",
+  "@userProfileNoUpcomingTasks": {
+    "description": "Message when a volunteer has no upcoming schedule items"
+  },
+  "userProfileViewFullSchedule": "View full schedule",
+  "@userProfileViewFullSchedule": {
+    "description": "Button to open the full schedule page"
+  },
+  "userProfileViewPosts": "View posts",
+  "@userProfileViewPosts": {
+    "description": "Button to open posts the volunteer authors or contributes to"
+  },
+  "userProfileEditUser": "Edit user",
+  "@userProfileEditUser": {
+    "description": "App bar action for admins to edit a volunteer profile"
+  },
+  "userProfileUntitledEvent": "Untitled event",
+  "@userProfileUntitledEvent": {
+    "description": "Fallback event title on profile schedule preview"
   }
 }
