@@ -42,8 +42,13 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 - Prefer the **Dart MCP** tools (`analyze_files`, `run_tests`, `dart_fix`) over raw shell when available
 - After significant features or non-obvious fixes, use skill **`maintain-agent-docs`** to keep rules/skills current
 
+## Ongoing work
+
+- **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
+
 ## Recent agent-relevant changes
 
+- **2026-07-04** — Users/Volunteers Phase 0: awaited supplemental Firestore writes; `ViewUserRolesPage` Schedule/Posts tabs when `allowPostView`; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Wide-screen home shell: `NavigationRail` (≥900px) in `home_page.dart`; CTRIM section uses vertical subsection nav on wide screens in `information_home.dart` (mobile keeps bottom nav + horizontal tabs).
 - **2026-06-29** — Web push aligned with worship pattern: `send_each_for_multicast` CF, topic fan-out via `web_topics` only, `WebNotificationLifecycle`, `NotificationTokenResolver`; deploy `functions/` + `firestore.rules` to `ctrim-8b49b`.
 - **2026-06-29** — Added `ResponsiveLayout` + `ResponsiveContent`; refactored inline 768px gutter checks across pages.

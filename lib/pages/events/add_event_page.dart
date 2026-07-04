@@ -372,11 +372,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   Future<void> _updateAllUserPostInvolvement(final String newPostID) async {
     // first up, the author
-    _userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
+    await _userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
 
     // then all the contributors
     for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
-      _userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
+      await _userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
     }
   }
 

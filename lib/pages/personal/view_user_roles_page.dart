@@ -7,8 +7,9 @@ import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
-import '../events/view_event_page.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/posts/post_head.dart';
+import '../events/view_event_page.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
   const ViewUserRolesPage({super.key, required this.selectedUser, this.allowPostView = false});
@@ -33,6 +34,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     if (widget.selectedUser.roles != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _performRoleCleanupCheck().then((removedOldStuff) {
+          if (!mounted) return;
           setState(() {
             // cleanup complete
             if (removedOldStuff) {
@@ -48,14 +50,40 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody(), appBar: AppBar(title: Text("${widget.selectedUser.forname}'s Schedule")));
+    if (widget.allowPostView) {
+      return DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(widget.selectedUser.fullname),
+            bottom: const TabBar(
+              tabs: [
+                Tab(text: 'Schedule'),
+                Tab(text: 'Posts'),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            children: [
+              _buildScheduleBody(),
+              _buildPostsBody(),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text("${widget.selectedUser.forname}'s Schedule")),
+      body: _buildScheduleBody(),
+    );
   }
 
-  Widget _buildBody() {
-    return widget.selectedUser.roles == null ? _buildFBBody() : _buildBodyWithData();
+  Widget _buildScheduleBody() {
+    return widget.selectedUser.roles == null ? _buildScheduleFBBody() : _buildScheduleBodyWithData();
   }
 
-  Widget _buildFBBody() {
+  Widget _buildScheduleFBBody() {
     debugPrint('fetching roles');
     return FutureBuilder(
         future: _userDBManager.fetchUserRoles(widget.selectedUser.id),
@@ -64,11 +92,12 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
           if (snap.hasData) {
             widget.selectedUser.setRoles(snap.data!);
-            result = _buildBodyWithData();
+            result = _buildScheduleBodyWithData();
 
             // in the chance we're looking at some other person's roles
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _performRoleCleanupCheck().then((removedOldStuff) {
+                if (!mounted) return;
                 if (removedOldStuff) {
                   setState(() {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +115,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         });
   }
 
-  Widget _buildBodyWithData() {
+  Widget _buildScheduleBodyWithData() {
     debugPrint('using existing roles');
 
     final Map<String, int> roleConterPerPost = {};
@@ -126,9 +155,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     // grabbing and cleaning up the user roles
     final sortedPostIDs = roleConterPerPost.keys.toList();
     debugPrint('pre sort: $sortedPostIDs');
-    List<String> postsToDelete =
+    final List<String> postsToDelete =
         sortedPostIDs.where((e) => !_appContext.eventHeads.any((head) => head.id == e)).toList();
-    _removePostsFromUser(postsToDelete);
+    if (postsToDelete.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _removePostsFromUser(postsToDelete));
+    }
     sortedPostIDs.removeWhere((e) => postsToDelete.contains(e));
     sortedPostIDs
         .sort((a, b) => _appContext.getPostHead(a).eventDate!.compareTo(_appContext.getPostHead(b).eventDate!));
@@ -154,6 +185,62 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
             return _buildTile(postID, roleConterPerPost[postID]!);
           }),
     );
+  }
+
+  Widget _buildPostsBody() {
+    if (widget.selectedUser.posts == null) {
+      return _buildPostsFBBody();
+    }
+    return _buildPostsBodyWithData();
+  }
+
+  Widget _buildPostsFBBody() {
+    return FutureBuilder(
+        future: _userDBManager.fetchUserPosts(widget.selectedUser.id),
+        builder: (_, snap) {
+          Widget result = const Center(child: CircularProgressIndicator.adaptive());
+
+          if (snap.hasData) {
+            widget.selectedUser.setPosts(snap.data!);
+            result = _buildPostsBodyWithData();
+            WidgetsBinding.instance.addPostFrameCallback((_) => _removeOldPosts());
+          } else if (snap.hasError) {
+            result = Center(child: Text('Something went wrong!\n\n${snap.error}'));
+          }
+
+          return result;
+        });
+  }
+
+  Widget _buildPostsBodyWithData() {
+    final List<String> postIDs = widget.selectedUser.posts!
+        .where((e) => _appContext.eventHeads.any((head) => head.id == e['id']))
+        .map((e) => e['id'] as String)
+        .toList();
+
+    if (postIDs.isEmpty) {
+      return const Center(
+        child: Text(
+          'No posts yet.',
+          style: TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
+    final double webHorizontalPadding =
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+
+    return ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+        itemCount: postIDs.length,
+        itemBuilder: (_, index) {
+          final thisHead = _appContext.getPostHead(postIDs[index]);
+          return PostHead(
+              thisHead: thisHead,
+              updatePost: () {
+                setState(() {});
+              });
+        });
   }
 
   Widget _buildTile(final String postID, final int roleCount) {
@@ -276,10 +363,23 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         });
       });
 
-  void _removePostsFromUser(final List<String> postsToRemove) async {
+  Future<void> _removePostsFromUser(final List<String> postsToRemove) async {
+    if (postsToRemove.isEmpty) return;
     debugPrint('deleting the following posts from user roles: $postsToRemove');
+    widget.selectedUser.removeRoles(postsToRemove);
     for (final String postId in postsToRemove) {
-      _userDBManager.removeUserPostRole(widget.selectedUser.id, postId);
+      await _userDBManager.removeUserPostRole(widget.selectedUser.id, postId);
     }
+  }
+
+  Future<void> _removeOldPosts() async {
+    final List<String> postsToRemove = widget.selectedUser.posts!
+        .where((e) => !_appContext.eventHeads.any((head) => head.id == e['id']))
+        .map((e) => e['id'] as String)
+        .toList();
+    if (postsToRemove.isEmpty) return;
+    debugPrint('removing the following posts: $postsToRemove');
+    widget.selectedUser.removeAllPosts(postsToRemove);
+    await _userDBManager.updatePosts(widget.selectedUser);
   }
 }

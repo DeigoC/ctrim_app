@@ -326,12 +326,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     // then add the new contributors
     for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
-      userDBManager.addPostToUser(contributorID, postID, 'contributor');
+      await userDBManager.addPostToUser(contributorID, postID, 'contributor');
     }
 
     // then remove the old contributors
     for (final String contributorID in widget.eventContext.contributorRemovalUIDs) {
-      userDBManager.removePostFromUser(contributorID, postID);
+      await userDBManager.removePostFromUser(contributorID, postID);
     }
   }
 

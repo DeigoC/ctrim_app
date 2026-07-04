@@ -9,8 +9,8 @@ class UserDBManager {
 
   Future<void> addUser(final User user) async {
     await _ref.doc(user.id).set(user);
-    _ref.doc(user.id).collection(_supplemental).doc(_roles).set({_roles: []});
-    _ref.doc(user.id).collection(_supplemental).doc(_posts).set({_posts: []});
+    await _ref.doc(user.id).collection(_supplemental).doc(_roles).set({_roles: []});
+    await _ref.doc(user.id).collection(_supplemental).doc(_posts).set({_posts: []});
   }
 
   Future<void> updateUser(final User user) async {
@@ -82,13 +82,13 @@ class UserDBManager {
   Future<void> addPostToUser(final String uid, final String postID, final String ownership) async {
     final data = await fetchUserPosts(uid);
     data.add({'id': postID, 'ownership': ownership});
-    _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
+    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
   }
 
   Future<void> removePostFromUser(final String uid, final String postID) async {
     final data = await fetchUserPosts(uid);
     data.removeWhere((e) => e['id'] == postID);
-    _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
+    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
   }
 
   Future<void> updatePosts(final User user) async {

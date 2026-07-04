@@ -46,7 +46,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
           if (snap.hasData) {
             _appContext.currentUser.setPosts(snap.data!);
             result = _buildBodyWithData();
-            _removeOldPosts();
+            WidgetsBinding.instance.addPostFrameCallback((_) => _removeOldPosts());
           } else if (snap.hasError) {
             result = Center(child: Text('Something went wrong!\n\n${snap.error}'));
           }
@@ -85,13 +85,14 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   }
 
   // remove really old posts otherwise this list will get really big
-  void _removeOldPosts() {
+  Future<void> _removeOldPosts() async {
     final List<String> postsToRemove = _appContext.currentUser.posts!
         .where((e) => !_appContext.eventHeads.any((head) => head.id == e['id']))
         .map((e) => e['id'] as String)
         .toList();
+    if (postsToRemove.isEmpty) return;
     debugPrint('removing the following posts: $postsToRemove');
     _appContext.currentUser.removeAllPosts(postsToRemove);
-    _userDBManager.updatePosts(_appContext.currentUser);
+    await _userDBManager.updatePosts(_appContext.currentUser);
   }
 }
