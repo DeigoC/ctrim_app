@@ -9,6 +9,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/user_avatar.dart';
+import '../../utility/responsive_layout.dart';
 
 class CurrentUserPage extends StatefulWidget {
   const CurrentUserPage({super.key});
@@ -45,7 +46,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
@@ -152,6 +153,7 @@ class _CurrentUserPageState extends State<CurrentUserPage> {
     // we need to override the image?
     await _updateLocalImageData();
     userDBManager.updateUser(_appContext.currentUser).then((_) {
+      if (!mounted) return;
       setState(() {
         _canSave = false;
         _testing = false;

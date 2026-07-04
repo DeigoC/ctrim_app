@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../models/event/event_head.dart';
@@ -12,6 +13,7 @@ import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
+import '../utility/web_notification_lifecycle.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -53,8 +55,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       return surname;
     }));
     _setupCloudOnMessage();
+    _setupWebNotificationListeners();
 
-    // * Check for first open and request notification permissions for all users (guests and authenticated)
+    // Show first-open welcome dialog before any web token registration.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkIfFirstOpen();
     });
@@ -67,6 +70,30 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     super.initState();
+  }
+
+  void _setupWebNotificationListeners() {
+    if (!kIsWeb || _appContext.isCurrentUserGuest) return;
+
+    final authID = AuthManager().currentAuthUID;
+    if (authID.isEmpty) return;
+
+    WebNotificationLifecycle().listenForTokenRefresh(
+      authId: authID,
+      onTokenSaved: _appContext.sharedPref.saveFCMToken,
+    );
+  }
+
+  void _registerWebNotificationsIfNeeded() {
+    if (!kIsWeb || _appContext.isCurrentUserGuest) return;
+
+    final authID = AuthManager().currentAuthUID;
+    if (authID.isEmpty) return;
+
+    WebNotificationLifecycle().register(
+      authId: authID,
+      onTokenSaved: _appContext.sharedPref.saveFCMToken,
+    );
   }
 
   @override
@@ -223,12 +250,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             child: Padding(
                                 padding: const EdgeInsets.only(right: 16.0),
                                 child: TextButton(
-                                    onPressed: () => Navigator.pop(_),
+                                    onPressed: () => Navigator.pop(context),
                                     child: const Text('Get Started', style: TextStyle(fontSize: 16)))))
                       ])))));
 
       appContext.sharedPref.nowOpened();
     }
+
+    _registerWebNotificationsIfNeeded();
   }
 
   // not really something that can be tested at the moment. Requires a good amount of posts made
@@ -358,7 +387,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _openInformationTeachingPage(final String jsonPath) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => CTRIMInfoPage(jsonPath: jsonPath)));
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CTRIMInfoPage(documentId: _resolveInfoDocumentId(jsonPath))));
+  }
+
+  String _resolveInfoDocumentId(final String rawValue) {
+    switch (rawValue) {
+      case 'assets/info/ctrim_info/core_values.json':
+        return 'core_values';
+      case 'assets/info/ctrim_info/4xd.json':
+        return '4xd';
+      case 'assets/info/ctrim_info/cell_group.json':
+        return 'cell_group';
+      case 'assets/info/ctrim_info/devotionals.json':
+        return 'devotionals';
+      default:
+        return rawValue;
+    }
   }
 
   // all notifications potentially will be asking to open a page

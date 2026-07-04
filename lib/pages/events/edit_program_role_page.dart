@@ -7,6 +7,7 @@ import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditEventProgramPage extends StatefulWidget {
   const EditEventProgramPage({super.key, required this.eventContext, required this.programEntry});
@@ -24,7 +25,14 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   late final List<String> _selectedUsers;
 
   late DateTime _start, _end;
-  bool _canSave = false, _forGuests = true, _isSaved = false;
+  bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -48,11 +56,14 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvoked: (_) => _isSaved
-          ? null
-          : DialogManager.discardChanges(context: context)
-              .then((popping) => popping ? Navigator.of(context).pop() : null),
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Edit Program'),
@@ -64,7 +75,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
@@ -206,11 +217,11 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                           Column(
                             children: [
                               Icon(Icons.person_add_alt_1,
-                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                               const SizedBox(height: 8),
                               Text(
                                 'No team members assigned',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                               ),
                             ],
                           )
@@ -340,7 +351,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -548,12 +559,12 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   void _onViewAssignedMembersTap() {
     showDialog(
       context: context,
-      builder: (_) {
+      builder: (dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(_).size.height * 0.6,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
               maxWidth: 400,
             ),
             child: Column(
@@ -692,7 +703,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                     widget.eventContext.allowSavingOfTheEdit();
                     _isSaved = true;
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop();
+                    _popRouteAfterAllowing();
                   },
                   child: const Text('Save')),
             ],
@@ -708,7 +719,7 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     widget.programEntry['start'] = _start;
     widget.programEntry['end'] = _end;
     widget.programEntry['for_guests'] = _forGuests;
-    widget.programEntry['priority'] = 1; // ! remember to change this!
+    widget.programEntry['priority'] = 1;
   }
 
   void _sortNotifications() {
@@ -730,22 +741,20 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     debugPrint('--------role addition now looks like: ${widget.eventContext.roleAdditions}');
   }
 
-  void _onDeleteTap() {
+  Future<void> _onDeleteTap() async {
     // remember to send all from the original about the removal of role
-    DialogManager.showConfirmationDialog(
-            context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?')
-        .then((confirmation) {
-      if (confirmation) {
-        widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
-        widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
-        widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
+    final confirmation = await DialogManager.showConfirmationDialog(
+        context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?');
+    if (!confirmation || !mounted) return;
 
-        widget.eventContext.program.removeRole(widget.programEntry['id']);
-        widget.eventContext.allowSavingOfTheEdit();
+    widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
+    widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
+    widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
 
-        _isSaved = true;
-        Navigator.of(context).pop();
-      }
-    });
+    widget.eventContext.program.removeRole(widget.programEntry['id']);
+    widget.eventContext.allowSavingOfTheEdit();
+
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 }

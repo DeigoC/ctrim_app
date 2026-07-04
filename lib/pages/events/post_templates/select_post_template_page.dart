@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
+import '../../../utility/app_context.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import '../../../utility/post_template_mapper.dart';
+import '../../../widgets/app_search_bar.dart';
 import '../add_event_page.dart';
+import '../bulk_create_posts_page.dart';
 
 class SelectPostTemplatePage extends StatefulWidget {
-  const SelectPostTemplatePage({super.key, required this.eventContext});
+  const SelectPostTemplatePage({
+    super.key,
+    required this.eventContext,
+    this.bulkMode = false,
+    this.sourcePostId,
+    this.sourcePostParentId,
+  });
   static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
+  final bool bulkMode;
+  final String? sourcePostId;
+  final String? sourcePostParentId;
 
   @override
   State<SelectPostTemplatePage> createState() => _SelectPostTemplatePageState();
@@ -60,7 +74,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Choose Template'),
+        title: Text(widget.bulkMode ? 'Bulk Create Posts' : 'Choose Template'),
         backgroundColor: colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -89,34 +103,10 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       child: Column(
         children: [
           // Search Bar
-          TextField(
+          AppSearchBar(
             controller: _searchController,
+            hintText: 'Search templates...',
             onChanged: _onSearchChanged,
-            decoration: InputDecoration(
-              hintText: 'Search templates...',
-              prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant),
-                      onPressed: _clearSearch,
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.outline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.outlineVariant),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.primary, width: 2),
-              ),
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
           ),
           const SizedBox(height: 12),
           // Category Filter
@@ -171,13 +161,16 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           }
 
           if (snap.hasError) {
+            debugPrint('Error fetching templates: ${snap.error}');
             return _buildErrorState(snap.error.toString());
           }
 
           if (snap.hasData) {
             final List<PostTemplate> data = snap.data!;
             data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
-            data.add(_createBlankSlate());
+            if (!widget.bulkMode) {
+              data.add(_createBlankSlate());
+            }
 
             _allTemplates = data;
             _filteredTemplates = _getFilteredTemplates(data);
@@ -291,7 +284,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     final Map<String, dynamic> templateData = {
       'Title': 'Blank Template',
       'Description': "A clean slate. Edit to your heart's content!",
-      'HeadTitle': 'TODO: what do i do with this?',
+      'HeadTitle': 'Blank Template',
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': 'Belfast',
       'Topics': ['Belfast'],
@@ -328,13 +321,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isBlankTemplate ? colorScheme.primary.withOpacity(0.5) : colorScheme.outlineVariant,
+          color: isBlankTemplate ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
           width: isBlankTemplate ? 2 : 1,
         ),
       ),
-      color: isBlankTemplate ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surfaceContainerLow,
+      color: isBlankTemplate ? colorScheme.primaryContainer.withValues(alpha: 0.3) : colorScheme.surfaceContainerLow,
       child: InkWell(
-        onTap: () => _onAddPostTap(template),
+        onTap: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -350,7 +343,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isBlankTemplate ? colorScheme.primary.withOpacity(0.2) : colorScheme.secondaryContainer,
+                      color: isBlankTemplate ? colorScheme.primary.withValues(alpha: 0.2) : colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -424,7 +417,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                 children: [
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () => _onAddPostTap(template),
+                      onPressed: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
                       style: FilledButton.styleFrom(
                         backgroundColor: isBlankTemplate ? colorScheme.primary : colorScheme.secondaryContainer,
                         foregroundColor: isBlankTemplate ? colorScheme.onPrimary : colorScheme.onSecondaryContainer,
@@ -434,11 +427,13 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       icon: Icon(
-                        isBlankTemplate ? Icons.create : Icons.add_circle_outline,
+                        widget.bulkMode
+                            ? Icons.calendar_month
+                            : (isBlankTemplate ? Icons.create : Icons.add_circle_outline),
                         size: 18,
                       ),
                       label: Text(
-                        isBlankTemplate ? 'Start from Blank' : 'Use Template',
+                        widget.bulkMode ? 'Bulk Create' : (isBlankTemplate ? 'Start from Blank' : 'Use Template'),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -539,13 +534,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     });
   }
 
-  void _clearSearch() {
-    _searchController.clear();
-    setState(() {
-      _searchQuery = '';
-    });
-  }
-
   void _onCategoryChanged(String category) {
     setState(() {
       _selectedCategory = category;
@@ -606,7 +594,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
     if (checkedToday) {
       // read locally
-      return await dataManager.readAllPostTemplates();
+      final List<PostTemplate> cachedTemplates = await dataManager.readAllPostTemplates();
+      // If cache is empty but we've checked today, something went wrong - force refresh
+      if (cachedTemplates.isEmpty) {
+        debugPrint('Cache returned empty, forcing refresh...');
+        await dataManager.clearPostTemplateDir();
+        return _getTemplates(); // Retry which will fetch from Firestore
+      }
+      return cachedTemplates;
     }
 
     final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
@@ -631,169 +626,36 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     }
   }
 
-  // void _tmpAddEventContextToTemplate(final EventContext eventContext) {
-  //   dynamic startTime = widget.eventContext.head.eventDate;
-  //   dynamic finishTime = widget.eventContext.program.finishTime;
-  //   if (startTime != null) {
-  //     startTime = Timestamp.fromDate(startTime);
-  //   }
-  //   if (finishTime != null) {
-  //     finishTime = Timestamp.fromDate(finishTime);
-  //   }
-  //   final Map<String, dynamic> templateData = {
-  //     'Title': eventContext.head.title,
-  //     'Description': 'TODO: change this description',
-  //     'HeadTitle': 'TODO change this head title',
-  //     'Body': eventContext.encodedBody,
-  //     'Location': eventContext.head.location,
-  //     'Topics': eventContext.metadata.topics,
-  //     'Contributors': eventContext.metadata.contributorUIDs,
-  //     'AllDay': eventContext.program.allDay,
-  //     'Online': eventContext.program.online,
-  //     'Address': eventContext.program.address,
-  //     'MapLink': eventContext.program.mapLink,
-  //     'StartTime': startTime,
-  //     'FinishTime': finishTime,
-  //     'Media': eventContext.media.allMedia,
-  //     'HeadMedia': eventContext.head.media,
-  //     'Roles': _rolesToJson(),
-  //   };
-  //   final PostTemplate template = PostTemplate.fromMap(false, widget.eventContext.id, templateData);
-  //   final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-  //   postTemplateDBManager.addPostTemplate(template);
-  // }
+  void _onBulkAddPostTap(final PostTemplate template) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BulkCreatePostsPage(
+          template: template,
+          sourcePostId: widget.sourcePostId,
+          sourcePostParentId: widget.sourcePostParentId,
+        ),
+      ),
+    );
+  }
 
-  // List<Map<String, dynamic>> _rolesToJson() {
-  //   final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
-  //   for (final entry in widget.eventContext.program.roles) {
-  //     var start = entry['start'];
-  //     var end = entry['end'];
-  //     if (start != null) {
-  //       start = Timestamp.fromDate(entry['start']);
-  //     }
-  //     if (end != null) {
-  //       end = Timestamp.fromDate(entry['end']);
-  //     }
-
-  //     result.add({
-  //       'uids': entry['uids'],
-  //       'detail': entry['detail'],
-  //       'title': entry['title'],
-  //       'start': start,
-  //       'end': end,
-  //       'for_guests': entry['for_guests'],
-  //       'id': entry['id'],
-  //     });
-  //   }
-
-  //   return result;
-  // }
-
-  void _onAddPostTap(final PostTemplate postTemplate) {
-    // convert the template to EventContext
-    final EventContext eventContext = _mapTemplateToEventContext(postTemplate);
+  Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
+    final currentUserID = Provider.of<AppContext>(context, listen: false).currentUser.id;
+    final EventContext eventContext = PostTemplateMapper.mapTemplateToEventContext(
+      template: postTemplate,
+      currentUserID: currentUserID,
+      parentID: widget.eventContext.metadata.parentID,
+    );
 
     if (eventContext.head.eventDate != null) {
-      _selectDate(context).then((selectedDate) {
-        if (selectedDate != null) {
-          _adjustEventProgramToDate(eventContext, selectedDate);
-          eventContext.head
-              .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
-        }
-      });
+      final selectedDate = await _selectDate(context);
+      if (selectedDate == null || !mounted) return;
+      PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
+      eventContext.head
+          .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
+      if (!mounted) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
     } else {
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
     }
-  }
-
-  void _adjustEventProgramToDate(final EventContext eventContext, final DateTime selectedDate) {
-    final DateTime newEventDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day,
-        eventContext.head.eventDate!.hour, eventContext.head.eventDate!.minute);
-
-    eventContext.head.setEventDate(newEventDate);
-
-    if (eventContext.program.finishTime != null) {
-      final DateTime oldFinishTime = eventContext.program.finishTime!;
-      final DateTime finishTime =
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldFinishTime.hour, oldFinishTime.minute);
-      eventContext.program.setFinishTime(finishTime);
-    }
-
-    for (final scheduleItem in eventContext.program.roles) {
-      final DateTime oldDateStart = scheduleItem['start'];
-      final DateTime oldDateEnd = scheduleItem['end'];
-      final DateTime newDateStart =
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldDateStart.hour, oldDateStart.minute);
-      final DateTime newDateEnd =
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldDateEnd.hour, oldDateEnd.minute);
-
-      scheduleItem['start'] = newDateStart;
-      scheduleItem['end'] = newDateEnd;
-    }
-  }
-
-  EventContext _mapTemplateToEventContext(final PostTemplate postTemplate) {
-    // ? In the future, remove the EventContext when initialising this page - we just need the parentId
-    final EventContext eventContext =
-        EventContext.adding(currentUserID: '1', parentID: widget.eventContext.metadata.parentID);
-
-    // head
-    eventContext.head.setEventDate(postTemplate.startTime);
-    eventContext.head.setLocation(postTemplate.location);
-    eventContext.head.setTitle(postTemplate.title);
-
-    // subtitle - auto-select random if available
-    if (postTemplate.subtitles.isNotEmpty) {
-      final randomSubtitle = postTemplate.getRandomSubtitle();
-      if (randomSubtitle != null) {
-        eventContext.head.setSubtitle(randomSubtitle);
-      }
-      // Store subtitles list for later use in AddEventPage
-      eventContext.setTemplateSubtitles(List<String>.from(postTemplate.subtitles));
-    }
-    for (final headMediaItem in postTemplate.headMedia) {
-      eventContext.head.addMediaItem(
-          type: headMediaItem['type']!,
-          src: headMediaItem['src']!,
-          title: headMediaItem['title'] ?? '',
-          thumbnail: headMediaItem['thumbnailSrc'] ?? '');
-    }
-
-    // body and media
-    eventContext.setFetchedBody(postTemplate.body);
-    eventContext.media.addAllMediaFiles(postTemplate.media);
-
-    // meta related
-    eventContext.metadata.addAllTopics(postTemplate.topics);
-    eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
-    if (postTemplate.contributors.isNotEmpty) {
-      eventContext.contributorAdditionUIDs.addAll(postTemplate.contributors);
-    }
-
-    // program related
-    int roleId = DateTime.now().millisecondsSinceEpoch;
-    for (final role in postTemplate.roles) {
-      final List<String> roleUids = List.from(role['uids']);
-      eventContext.program.addRole(
-          detail: role['detail'] ?? "",
-          uids: roleUids,
-          title: role['title'],
-          start: role['start'],
-          end: role['end'],
-          id: roleId);
-
-      if (roleUids.isNotEmpty) {
-        eventContext.addRoleAdditionNotification(roleUids, roleId);
-        roleId++;
-      }
-    }
-    eventContext.program.setAddress(postTemplate.address);
-    eventContext.program.setAllDay(postTemplate.allDay);
-    eventContext.program.setMapLink(postTemplate.mapLink);
-    eventContext.program.setOnline(postTemplate.online);
-    eventContext.program.setFinishTime(postTemplate.finishTime);
-
-    return eventContext;
   }
 }

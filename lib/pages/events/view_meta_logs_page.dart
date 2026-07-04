@@ -8,6 +8,7 @@ import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewMetaLogsPage extends StatefulWidget {
   const ViewMetaLogsPage({super.key, required this.eventContext});
@@ -33,7 +34,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        onPopInvoked: (_) {
+        onPopInvokedWithResult: (didPop, result) {
           _checkForChangesToContributors();
         },
         child: Scaffold(
@@ -56,7 +57,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     final bool isAuthor = widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
         widget.eventContext.isUserContributor(_appContext.currentUser.id);
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return CustomScrollView(
       slivers: [
@@ -109,7 +110,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                       subtitle: Text(
                         'Event creator and owner',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                       ),
                       leading: MyUserAvatar(mainAdmin),
@@ -156,7 +157,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                               Text(
                                 'People who can edit this event',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                     ),
                               ),
                             ],
@@ -229,13 +230,13 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.history_edu,
                               size: 48,
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -243,14 +244,14 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                             'No changes yet',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                 ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Event changes and updates will appear here as they happen.',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                             textAlign: TextAlign.center,
                           ),
@@ -281,7 +282,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           child: Text(
                             _dateFormat.format(thisEntry['ts']),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                           ),
                         ),
@@ -289,7 +290,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                         trailing: Icon(
                           Icons.arrow_forward_ios,
                           size: 16,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                         onTap: () => _showFullLog(thisEntry, webHorizontalPadding),
                       ),
@@ -308,24 +309,24 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
           children: [
             Icon(
               Icons.person_off,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
               'No contributors added yet',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
             ),
@@ -341,7 +342,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -357,7 +358,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -406,7 +407,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                                 Text(
                                   _dateFormat.format(entry['ts']),
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.8),
+                                        color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                                       ),
                                 ),
                               ],
@@ -426,7 +427,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -505,7 +506,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                               Text(
                                 '${selectedUsers.length} contributor${selectedUsers.length == 1 ? '' : 's'}',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSecondaryContainer.withOpacity(0.8),
+                                      color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(alpha: 0.8),
                                     ),
                               ),
                             ],
@@ -538,7 +539,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                             subtitle: Text(
                               thisU.location,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                   ),
                             ),
                             trailing: (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
@@ -610,7 +611,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -626,7 +627,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                       'They will no longer be able to edit this event.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ),

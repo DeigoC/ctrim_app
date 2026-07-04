@@ -200,7 +200,6 @@ class EventContext {
   // and save it as a txt file. This file should be able to work backwards and create the
   // post from it to save having to read from the DB
   // ! The following is assumed when all of the post is fetched (including logs)
-  // TODO: just realised i can put a lot of this logic into each of the part's dedicated class
   String transformPostToTxtFile(final String version) {
     // * Head - RecentDate
     String result = '${_head.recentDate.millisecondsSinceEpoch}-$version';
@@ -455,4 +454,14 @@ class EventContext {
   // template subtitles
   List<String>? get templateSubtitles => _templateSubtitles;
   void setTemplateSubtitles(final List<String>? subtitles) => _templateSubtitles = subtitles;
+
+  // template media pools
+  List<Map<String, dynamic>>? _templateHeadMediaPool;
+  List<Map<String, dynamic>>? _templateBodyMediaPool;
+
+  List<Map<String, dynamic>>? get templateHeadMediaPool => _templateHeadMediaPool;
+  void setTemplateHeadMediaPool(final List<Map<String, dynamic>>? pool) => _templateHeadMediaPool = pool;
+
+  List<Map<String, dynamic>>? get templateBodyMediaPool => _templateBodyMediaPool;
+  void setTemplateBodyMediaPool(final List<Map<String, dynamic>>? pool) => _templateBodyMediaPool = pool;
 }

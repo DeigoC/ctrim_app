@@ -8,6 +8,7 @@ import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_selector_dialog.dart';
+import '../../utility/responsive_layout.dart';
 
 class AddEventProgramPage extends StatefulWidget {
   const AddEventProgramPage({super.key, required this.eventContext});
@@ -25,7 +26,14 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   final List<String> _selectedUsers = List.empty(growable: true);
 
   DateTime? _start, _end;
-  bool _canSave = false, _forGuests = true, _isSaved = false;
+  bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -43,18 +51,21 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvoked: (popping) => _isSaved
-          ? null
-          : DialogManager.discardChanges(context: context)
-              .then((popping) => popping ? Navigator.of(context).pop() : null),
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
       child: Scaffold(appBar: AppBar(title: const Text('Add Schedule')), body: _buildBody()),
     );
   }
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),
@@ -201,11 +212,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                           Column(
                             children: [
                               Icon(Icons.person_add_alt_1,
-                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                               const SizedBox(height: 8),
                               Text(
                                 'No team members assigned',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                               ),
                             ],
                           )
@@ -314,13 +325,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 ? Colors.amber
                 : isEnabled
                     ? Theme.of(context).colorScheme.outline
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
             width: showWarning ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
           color: isEnabled
               ? Theme.of(context).colorScheme.surface
-              : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              : Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +343,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   size: 16,
                   color: isEnabled
                       ? (showWarning ? Colors.amber : Theme.of(context).colorScheme.primary)
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -340,8 +351,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isEnabled
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -360,8 +371,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 color: isEnabled
                     ? (hasTime
                         ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.7))
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -387,12 +398,12 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   void _onViewAssignedMembersTap() {
     showDialog(
       context: context,
-      builder: (_) {
+      builder: (dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(_).size.height * 0.6,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
               maxWidth: 400,
             ),
             child: Column(
@@ -676,7 +687,7 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                     widget.eventContext.allowSavingOfTheEdit();
                     _isSaved = true;
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop();
+                    _popRouteAfterAllowing();
                   },
                   child: const Text('Save')),
             ],

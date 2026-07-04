@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../utility/notification_token_resolver.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../utility/app_context.dart';
@@ -32,7 +32,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
   late final String _currentUserName, _currentUID;
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
-  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
   final UserDBManager _userDBManager = UserDBManager();
   bool _canSave = false;
 
@@ -98,27 +98,34 @@ class _EventLogDialogState extends State<EventLogDialog> {
     }
   }
 
-  void _saveClick() {
-    DialogManager.showConfirmationDialog(
-            context: context,
-            title: 'Confirm Save?',
-            content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
-            confirmText: 'Yes',
-            cancelText: 'Cancel')
-        .then((confirmation) {
-      if (confirmation) {
-        DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
-        _performUpdate(_appContext.currentUser.id).then((_) {
-          _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
-          widget.eventContext.resetSavingOfTheEdit();
-          widget.updatePage();
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
-        });
-      }
-    });
+  void _saveClick() async {
+    final confirmation = await DialogManager.showConfirmationDialog(
+        context: context,
+        title: 'Confirm Save?',
+        content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
+        confirmText: 'Yes',
+        cancelText: 'Cancel');
+
+    if (!confirmation || !mounted) return;
+
+    DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
+    try {
+      await _performUpdate(_appContext.currentUser.id);
+      if (!mounted) return;
+      _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+      widget.eventContext.resetSavingOfTheEdit();
+      widget.updatePage();
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
+    } catch (e) {
+      debugPrint('Error saving post: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save changes: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _performUpdate(final String uid) async {
@@ -128,13 +135,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
+    final List<Future<void>> tasks = [
+      _sendContributorAdditionNotificaitons(),
+      _sendContributorRemovalNotificaitons(),
+      _updateAllUserPostInvolvement(),
+    ];
     if (widget.eventContext.head.eventDate != null) {
-      await _sortRoleAdditions();
-      await _sendRoleRemovals();
+      tasks.add(_sortRoleAdditions());
+      tasks.add(_sendRoleRemovals());
     }
-    await _sendContributorAdditionNotificaitons();
-    await _sendContributorRemovalNotificaitons();
-    await _updateAllUserPostInvolvement();
+    await Future.wait(tasks);
     _sendPostNotification();
   }
 
@@ -182,7 +192,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
     for (final String uid in missingContacts) {
-      final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(uid));
+      final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(uid));
       _appContext.addTokensToUserID(uid, tokens);
     }
 
@@ -220,7 +230,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, tokens);
           }
 
@@ -253,7 +263,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, tokens);
           }
 
@@ -274,7 +284,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
           _appContext.addTokensToUserID(thisUID, tokens);
         }
 
@@ -296,7 +306,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     for (final String thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+          final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
           _appContext.addTokensToUserID(thisUID, tokens);
         }
 

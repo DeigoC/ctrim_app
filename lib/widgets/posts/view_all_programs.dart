@@ -62,7 +62,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
             return ProgramTile(
               programEntry: programRoles[index],
-              onTap: (_) => _programTap(_, index),
+              onTap: (tapContext) => _programTap(tapContext, index),
               selected: _selectedIndex == index,
               assignedUsers:
                   (programRoles[index]["uids"] as List<String>).map((e) => _appContext.getUserFromID(e)).toList(),
@@ -169,7 +169,9 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   bool _canEditPostProgram() {
     if (widget.isAddingPost ||
         widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
-        widget.eventContext.isUserContributor(_appContext.currentUser.id)) return true;
+        widget.eventContext.isUserContributor(_appContext.currentUser.id)) {
+      return true;
+    }
     return DateTime.now()
             .isBefore(widget.eventContext.head.eventDate ?? DateTime.now().subtract(const Duration(days: 1))) &&
         (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
@@ -198,13 +200,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         widget.eventContext.program.online ? widget.eventContext.program.address : widget.eventContext.program.mapLink;
     launchUrlString(link, mode: LaunchMode.externalApplication).onError((error, stackTrace) async {
       debugPrint('error with link: $link');
+      if (!mounted) return false;
       DialogManager.showAlertDialog(
           context: context,
           title: 'Error!',
           content: 'Attempted to open the following link:\n\n$link. \n\nError message: $error');
       return false; // ???
     }).then((success) {
-      if (!success) {
+      if (!success && mounted) {
         DialogManager.showAlertDialog(
             context: context, title: 'Error!', content: 'Attempted to open the following link:\n\n$link');
       }

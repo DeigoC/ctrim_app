@@ -1,4 +1,29 @@
 {
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "flutter_service_worker.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ]
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
@@ -7,8 +32,10 @@
     {
       "source": "functions",
       "codebase": "default",
+      "runtime": "python313",
       "ignore": [
         "venv",
+        "build",
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log"

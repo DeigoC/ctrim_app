@@ -23,6 +23,7 @@ class AddEventHeadMeta extends StatefulWidget {
 
 class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   String? _selectedSubtitle;
+  String? _selectedHeadMediaSrc;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +31,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     final colorScheme = theme.colorScheme;
     final availableSubtitles = widget.eventContext.templateSubtitles;
     final hasSubtitles = availableSubtitles != null && availableSubtitles.isNotEmpty;
+    final headMediaPool = widget.eventContext.templateHeadMediaPool;
+    final hasHeadMediaPool = headMediaPool != null && headMediaPool.isNotEmpty;
 
     return SingleChildScrollView(
       child: Column(
@@ -45,7 +48,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -92,7 +95,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withOpacity(0.3),
+                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -120,6 +123,45 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               ),
             ),
 
+          // Head Media Pool Section (if available)
+          if (hasHeadMediaPool)
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.image_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Template Cover Image',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildHeadMediaPoolSelector(headMediaPool),
+                  ),
+                ],
+              ),
+            ),
+
           // Subtitle Section
           Card(
             elevation: 1,
@@ -130,7 +172,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -174,6 +216,96 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     );
   }
 
+  Widget _buildHeadMediaPoolSelector(List<Map<String, dynamic>> pool) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: pool.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, index) {
+              final item = pool[index];
+              final bool isSelected = _selectedHeadMediaSrc == item['src'];
+              final bool isVideo = item['type'] == 'vid';
+              final String? thumbnailSrc = item['thumbnailSrc'];
+              final String src = item['src'] ?? '';
+              final displaySrc = isVideo ? thumbnailSrc : src;
+
+              return GestureDetector(
+                onTap: () => _applyHeadMediaItem(item),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 96,
+                        height: 96,
+                        child: displaySrc != null && displaySrc.isNotEmpty
+                            ? Image.network(displaySrc,
+                                fit: BoxFit.cover, errorBuilder: (_, __, ___) => _headMediaFallback(isVideo))
+                            : _headMediaFallback(isVideo),
+                      ),
+                    ),
+                    if (isSelected)
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
+                            child: const Icon(Icons.check_circle, color: Colors.white, size: 28),
+                          ),
+                        ),
+                      ),
+                    if (isVideo)
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Icon(Icons.videocam, size: 16, color: Colors.white.withValues(alpha: 0.85)),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () {
+            final random = Random();
+            _applyHeadMediaItem(pool[random.nextInt(pool.length)]);
+          },
+          icon: const Icon(Icons.shuffle, size: 18),
+          label: const Text('Random'),
+        ),
+      ],
+    );
+  }
+
+  Widget _headMediaFallback(bool isVideo) {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Icon(
+        isVideo ? Icons.videocam_outlined : Icons.image_outlined,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+
+  void _applyHeadMediaItem(Map<String, dynamic> item) {
+    widget.eventContext.head.clearMedia();
+    widget.eventContext.head.addMediaItem(
+      type: item['type']!,
+      src: item['src']!,
+      title: item['title'] ?? '',
+      thumbnail: item['thumbnailSrc'] ?? '',
+    );
+    setState(() => _selectedHeadMediaSrc = item['src']);
+    widget.onRequiredFieldChange('');
+  }
+
   Widget _buildSubtitleSelectorContent(List<String> availableSubtitles) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -184,7 +316,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedSubtitle,
+                initialValue: _selectedSubtitle,
                 decoration: const InputDecoration(
                   labelText: 'Select a subtitle',
                   border: OutlineInputBorder(),
@@ -214,7 +346,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                             ? null
                             : Border(
                                 bottom: BorderSide(
-                                  color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                                  color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
                                   width: 1,
                                 ),
                               ),
@@ -224,7 +356,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                           Icon(
                             Icons.format_quote,
                             size: 16,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -275,7 +407,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _selectedSubtitle,
+                  initialValue: _selectedSubtitle,
                   decoration: const InputDecoration(
                     labelText: 'Select a subtitle',
                     border: OutlineInputBorder(),
@@ -305,7 +437,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                               ? null
                               : Border(
                                   bottom: BorderSide(
-                                    color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                                    color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
                                     width: 1,
                                   ),
                                 ),
@@ -315,7 +447,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                             Icon(
                               Icons.format_quote,
                               size: 16,
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -377,7 +509,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.3),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),

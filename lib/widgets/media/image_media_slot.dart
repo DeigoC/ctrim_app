@@ -130,7 +130,7 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
             }
           : null,
       child: Container(
-        color: colorScheme.errorContainer.withOpacity(0.3),
+        color: colorScheme.errorContainer.withValues(alpha: 0.3),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

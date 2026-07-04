@@ -23,7 +23,14 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   final FocusNode _fnSurname = FocusNode(), _fnEmail = FocusNode();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
 
-  bool _canSave = false, _isSaved = false, _isLeader = false;
+  bool _canSave = false, _isSaved = false, _isLeader = false, _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   final List<String> _locations = <String>['Belfast', 'Portadown', 'North Coast'];
 
@@ -44,8 +51,14 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvoked: (_) => _onWillPop(),
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
       child: Scaffold(
         appBar: AppBar(title: const Text('Register User')),
         body: _buildBody(),
@@ -87,8 +100,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             title: const Text('Are they a leader?'),
             subtitle: const Text('Can create posts'),
             value: _isLeader,
-            onChanged: (_) => setState(() {
-                  _isLeader = _;
+            onChanged: (value) => setState(() {
+                  _isLeader = value;
                 })),
         const Divider(),
         const SizedBox(height: 16),
@@ -145,6 +158,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
           _tecAuthID = TextEditingController(text: auth);
         });
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('No auth found for this email!'),
           behavior: SnackBarBehavior.floating,
@@ -164,15 +178,15 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
               actions: [
                 TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
                 TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).pop();
                       _showAttemptingToSaveDialog();
-                      _registerUser().then((newUser) {
-                        Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
-                        _isSaved = true;
-                        Navigator.of(context).pop(); // pop the 'progress' indicator
-                        Navigator.of(context).pop(); // pop the page
-                      });
+                      final newUser = await _registerUser();
+                      if (!mounted) return;
+                      Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
+                      _isSaved = true;
+                      Navigator.of(context).pop(); // pop the progress indicator
+                      _popRouteAfterAllowing();
                     },
                     child: const Text('Save')),
               ],
@@ -214,33 +228,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             ),
           );
         });
-  }
-
-  Future<bool> _onWillPop() async {
-    if (_isSaved) return true;
-    bool shouldPop = false;
-
-    await showDialog(
-      context: context,
-      builder: (_) {
-        return AlertDialog.adaptive(
-          title: const Text('Leave Page'),
-          content: const Text('Do you want to discard all the changes made?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-            TextButton(
-                onPressed: () {
-                  shouldPop = true;
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Discard')),
-          ],
-        );
-      },
-    );
-
-    return shouldPop;
   }
 
   void _areFieldsGood(String _) {

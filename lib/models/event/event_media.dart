@@ -16,7 +16,7 @@ class EventMedia {
     _media = _toMedia(List<Map<String, dynamic>>.from(data['Media']));
   }
 
-  toJson() {
+  Map<String, List<dynamic>> toJson() {
     return {'Media': _media};
   }
 

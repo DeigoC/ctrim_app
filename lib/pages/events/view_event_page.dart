@@ -8,7 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../utility/notification_token_resolver.dart';
 import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
@@ -28,6 +28,7 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -163,7 +164,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   Widget _buildBodyWithData() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
@@ -268,7 +269,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('Edit'),
             style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.primaryContainer.withOpacity(0.8),
+              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
               foregroundColor: colorScheme.onPrimaryContainer,
             )),
         const SizedBox(width: 8)
@@ -438,13 +439,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       )
     ];
 
-    if (!kIsWeb) {
-      children.add(ListTile(
-        title: const Text('Edit Media'),
-        leading: const Icon(Icons.photo_library),
-        onTap: _onEditMediaClick,
-      ));
-    }
+    children.add(ListTile(
+      title: const Text('Edit Media'),
+      leading: const Icon(Icons.photo_library),
+      onTap: _onEditMediaClick,
+    ));
 
     if (Provider.of<AppContext>(context, listen: false).currentUser.isLeader) {
       children.addAll([
@@ -458,6 +457,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           title: const Text('Create Child Post'),
           leading: const Icon(Icons.post_add),
           onTap: () => _onAddPost(_eventContext.id),
+        ),
+        ListTile(
+          title: const Text('Bulk Create Related Posts'),
+          leading: const Icon(Icons.calendar_month),
+          onTap: _onBulkCreateRelatedPosts,
         ),
         const Divider(indent: 16, endIndent: 16),
         ListTile(
@@ -520,6 +524,22 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       setState(() {
         // rebuild? - will this update when creating sibling posts?
       });
+    });
+  }
+
+  void _onBulkCreateRelatedPosts() {
+    Navigator.of(context).pop();
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => SelectPostTemplatePage(
+                eventContext: EventContext.adding(
+                    currentUserID: Provider.of<AppContext>(context, listen: false).currentUser.id,
+                    parentID: _eventContext.id),
+                bulkMode: true,
+                sourcePostId: _eventContext.id,
+                sourcePostParentId: _eventContext.metadata.parentID))).then((_) {
+      setState(() {});
     });
   }
 
@@ -609,7 +629,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     try {
       final AppContext appContext = Provider.of<AppContext>(context, listen: false);
       final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-      final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+      final NotificationTokenResolver tokenResolver = NotificationTokenResolver();
       final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
 
       final String currentUID = appContext.currentUser.id;
@@ -637,9 +657,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             if (thisUID != currentUID) {
               try {
                 if (!appContext.haveTokensForUserID(thisUID)) {
-                  final String? authID = appContext.getAuthIDFromUID(thisUID);
-                  if (authID != null && authID.isNotEmpty) {
-                    final List<String> fetchedTokens = await everyoneDBManager.fetchTokensFromAuthID(authID);
+                  final String authID = appContext.getAuthIDFromUID(thisUID);
+                  if (authID.isNotEmpty) {
+                    final List<String> fetchedTokens = await tokenResolver.resolveForAuthID(authID);
                     if (fetchedTokens.isNotEmpty) {
                       appContext.addTokensToUserID(thisUID, fetchedTokens);
                       tokens.addAll(fetchedTokens);

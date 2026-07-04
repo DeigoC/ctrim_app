@@ -25,7 +25,7 @@ class EventLog {
     }
   }
 
-  toJson() {
+  Map<String, List<dynamic>> toJson() {
     return {'Logs': _roleToJson()};
   }
 

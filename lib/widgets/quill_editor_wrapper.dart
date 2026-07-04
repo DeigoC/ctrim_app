@@ -17,8 +17,9 @@ class QuillViewerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final document = _safeDocumentFromJson(jsonContent);
     final controller = quill.QuillController(
-      document: quill.Document.fromJson(jsonContent),
+      document: document,
       selection: const TextSelection.collapsed(offset: 0),
     );
 
@@ -35,6 +36,51 @@ class QuillViewerWidget extends StatelessWidget {
 
     return editor;
   }
+
+  quill.Document _safeDocumentFromJson(final List<dynamic> content) {
+    try {
+      return quill.Document.fromJson(content);
+    } catch (_) {
+      final normalized = _normalizeDelta(content);
+      try {
+        return quill.Document.fromJson(normalized);
+      } catch (_) {
+        return quill.Document.fromJson(_fallbackDelta);
+      }
+    }
+  }
+
+  List<dynamic> _normalizeDelta(final List<dynamic> content) {
+    if (content.isEmpty) {
+      return List<dynamic>.from(_fallbackDelta);
+    }
+
+    final sanitized = <dynamic>[];
+    for (final op in content) {
+      if (op is Map && op['insert'] is String && (op['insert'] as String).isEmpty) {
+        continue;
+      }
+      sanitized.add(op);
+    }
+
+    if (sanitized.isEmpty) {
+      return List<dynamic>.from(_fallbackDelta);
+    }
+
+    final lastOp = sanitized.last;
+    if (lastOp is Map && lastOp['insert'] is String) {
+      final lastInsert = (lastOp['insert'] as String);
+      if (!lastInsert.endsWith('\n')) {
+        sanitized.add(const <String, dynamic>{'insert': '\n'});
+      }
+    }
+
+    return sanitized;
+  }
+
+  static const List<Map<String, dynamic>> _fallbackDelta = <Map<String, dynamic>>[
+    <String, dynamic>{'insert': '\n'}
+  ];
 }
 
 /// A wrapper widget for QuillEditor with editing capabilities.
@@ -71,8 +117,9 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
   @override
   void initState() {
     super.initState();
+    final document = _safeDocumentFromJson(widget.jsonContent);
     _controller = quill.QuillController(
-      document: quill.Document.fromJson(widget.jsonContent),
+      document: document,
       selection: const TextSelection.collapsed(offset: 0),
     );
 
@@ -126,4 +173,49 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
 
   /// Exposes the controller for advanced use cases
   quill.QuillController get controller => _controller;
+
+  quill.Document _safeDocumentFromJson(final List<dynamic> content) {
+    try {
+      return quill.Document.fromJson(content);
+    } catch (_) {
+      final normalized = _normalizeDelta(content);
+      try {
+        return quill.Document.fromJson(normalized);
+      } catch (_) {
+        return quill.Document.fromJson(_fallbackDelta);
+      }
+    }
+  }
+
+  List<dynamic> _normalizeDelta(final List<dynamic> content) {
+    if (content.isEmpty) {
+      return List<dynamic>.from(_fallbackDelta);
+    }
+
+    final sanitized = <dynamic>[];
+    for (final op in content) {
+      if (op is Map && op['insert'] is String && (op['insert'] as String).isEmpty) {
+        continue;
+      }
+      sanitized.add(op);
+    }
+
+    if (sanitized.isEmpty) {
+      return List<dynamic>.from(_fallbackDelta);
+    }
+
+    final lastOp = sanitized.last;
+    if (lastOp is Map && lastOp['insert'] is String) {
+      final lastInsert = (lastOp['insert'] as String);
+      if (!lastInsert.endsWith('\n')) {
+        sanitized.add(const <String, dynamic>{'insert': '\n'});
+      }
+    }
+
+    return sanitized;
+  }
+
+  static const List<Map<String, dynamic>> _fallbackDelta = <Map<String, dynamic>>[
+    <String, dynamic>{'insert': '\n'}
+  ];
 }

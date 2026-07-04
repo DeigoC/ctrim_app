@@ -3,13 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
   late List<String> _topics, _contributorUIDs, _subtitles;
-  late List<Map<String, dynamic>> _headMedia, _media;
+  late List<Map<String, dynamic>> _headMedia, _media, _headMediaPool, _bodyMediaPool;
 
   // * Event Program related
   late DateTime? _startTime, _finishTime;
   late String _mapLink, _address;
   late List<Map<String, dynamic>> _roles;
   bool _allDay = false, _online = false;
+  int? _defaultDayOfWeek;
 
   PostTemplate.fromMap(final bool forLocal, final String id, final Map<String, dynamic> data) {
     _id = id;
@@ -55,9 +56,16 @@ class PostTemplate {
     // media
     _headMedia = _parseMedia(List<Map<String, dynamic>>.from(data['HeadMedia']));
     _media = _parseMedia(List<Map<String, dynamic>>.from(data['Media']));
+    _headMediaPool = data['HeadMediaPool'] != null
+        ? _parseMedia(List<Map<String, dynamic>>.from(data['HeadMediaPool']))
+        : <Map<String, dynamic>>[];
+    _bodyMediaPool = data['BodyMediaPool'] != null
+        ? _parseMedia(List<Map<String, dynamic>>.from(data['BodyMediaPool']))
+        : <Map<String, dynamic>>[];
+    _defaultDayOfWeek = data['DefaultDayOfWeek'] != null ? data['DefaultDayOfWeek'] as int? : null;
   }
 
-  toJson(final bool forLocal) {
+  Map<String, dynamic> toJson(final bool forLocal) {
     dynamic startTime = _startTime;
     dynamic endTime = _finishTime;
     if (_startTime != null) {
@@ -82,6 +90,9 @@ class PostTemplate {
       'MapLink': _mapLink,
       'HeadMedia': _headMedia,
       'Media': _media,
+      'HeadMediaPool': _headMediaPool,
+      'BodyMediaPool': _bodyMediaPool,
+      'DefaultDayOfWeek': _defaultDayOfWeek,
       'StartTime': startTime,
       'FinishTime': endTime,
       'Roles': _rolesToJson(forLocal),
@@ -102,9 +113,12 @@ class PostTemplate {
 
   DateTime? get startTime => _startTime;
   DateTime? get finishTime => _finishTime;
+  int? get defaultDayOfWeek => _defaultDayOfWeek;
 
   List<Map<String, dynamic>> get headMedia => _headMedia;
   List<Map<String, dynamic>> get media => _media;
+  List<Map<String, dynamic>> get headMediaPool => _headMediaPool;
+  List<Map<String, dynamic>> get bodyMediaPool => _bodyMediaPool;
   List<Map<String, dynamic>> get roles => _roles;
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
@@ -122,6 +136,7 @@ class PostTemplate {
 
   void setStartTime(final DateTime? start) => _startTime = start;
   void setEndtime(final DateTime? end) => _finishTime = end;
+  void setDefaultDayOfWeek(final int? day) => _defaultDayOfWeek = day;
 
   // subtitle list management
   void addSubtitle(final String subtitle) {
@@ -138,6 +153,42 @@ class PostTemplate {
     if (_subtitles.isEmpty) return null;
     final random = DateTime.now().millisecondsSinceEpoch % _subtitles.length;
     return _subtitles[random];
+  }
+
+  // head media pool management
+  void addHeadMediaPoolItem(final Map<String, dynamic> item) {
+    if (!_headMediaPool.any((e) => e['src'] == item['src'])) {
+      _headMediaPool.add(Map<String, dynamic>.from(item));
+    }
+  }
+
+  void removeHeadMediaPoolItem(final String src) => _headMediaPool.removeWhere((e) => e['src'] == src);
+
+  void setHeadMediaPool(final List<Map<String, dynamic>> pool) =>
+      _headMediaPool = pool.map((e) => Map<String, dynamic>.from(e)).toList();
+
+  Map<String, dynamic>? getRandomHeadMediaPoolItem() {
+    if (_headMediaPool.isEmpty) return null;
+    final index = DateTime.now().millisecondsSinceEpoch % _headMediaPool.length;
+    return _headMediaPool[index];
+  }
+
+  // body media pool management
+  void addBodyMediaPoolItem(final Map<String, dynamic> item) {
+    if (!_bodyMediaPool.any((e) => e['src'] == item['src'])) {
+      _bodyMediaPool.add(Map<String, dynamic>.from(item));
+    }
+  }
+
+  void removeBodyMediaPoolItem(final String src) => _bodyMediaPool.removeWhere((e) => e['src'] == src);
+
+  void setBodyMediaPool(final List<Map<String, dynamic>> pool) =>
+      _bodyMediaPool = pool.map((e) => Map<String, dynamic>.from(e)).toList();
+
+  Map<String, dynamic>? getRandomBodyMediaPoolItem() {
+    if (_bodyMediaPool.isEmpty) return null;
+    final index = DateTime.now().millisecondsSinceEpoch % _bodyMediaPool.length;
+    return _bodyMediaPool[index];
   }
 
   // private methods

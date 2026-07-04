@@ -34,7 +34,7 @@ class ViewPostBody extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.3),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -81,7 +81,7 @@ class ViewPostBody extends StatelessWidget {
       icon: const Icon(Icons.share, size: 18),
       tooltip: 'Save content',
       style: IconButton.styleFrom(
-        backgroundColor: colorScheme.surfaceVariant.withOpacity(0.5),
+        backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         foregroundColor: colorScheme.onSurfaceVariant,
         padding: const EdgeInsets.all(8),
       ),
@@ -116,9 +116,11 @@ class ViewPostBody extends StatelessWidget {
     } else {
       // Mobile: Use native share sheet with positioning
       final box = context.findRenderObject() as RenderBox?;
-      await Share.share(
-        finalContent,
-        sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+      await SharePlus.instance.share(
+        ShareParams(
+          text: finalContent,
+          sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        ),
       );
     }
   }
@@ -127,14 +129,16 @@ class ViewPostBody extends StatelessWidget {
   Future<void> _shareOnWeb(BuildContext context, String content) async {
     try {
       // Try Web Share API first (works on Chrome, Edge, mobile browsers)
-      final result = await Share.share(content);
+      final result = await SharePlus.instance.share(ShareParams(text: content));
 
       // If share was dismissed or failed, offer clipboard option
       if (result.status == ShareResultStatus.dismissed || result.status == ShareResultStatus.unavailable) {
+        if (!context.mounted) return;
         await _showCopyDialog(context, content);
       }
     } catch (e) {
       // Web Share API not supported, show copy dialog
+      if (!context.mounted) return;
       await _showCopyDialog(context, content);
     }
   }
@@ -160,7 +164,7 @@ class ViewPostBody extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

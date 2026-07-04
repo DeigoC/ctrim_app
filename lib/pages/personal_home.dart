@@ -7,13 +7,13 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/messaging_manager.dart';
+import '../utility/web_notification_lifecycle.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/personal/personal_first_time_dialog.dart';
 import 'events/post_templates/view_templates_page.dart';
 import 'personal/guest_registration_page.dart';
-import 'personal/attending_sunday_info_page.dart';
 import 'personal/current_user_page.dart';
 import 'personal/login_page.dart';
 import 'personal/notification_management_page.dart';
@@ -21,6 +21,7 @@ import 'personal/share_open_beta_page.dart';
 import 'personal/view_all_users_page.dart';
 import 'personal/view_my_posts_page.dart';
 import 'personal/view_user_roles_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
   const PersonalHome({super.key, required this.appContext});
@@ -32,6 +33,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  static const String _powerpointGeneratorUrl = 'https://ctrim-powerpoint-generator.streamlit.app';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
@@ -52,7 +54,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = size.width >= 768 ? size.width / 6 : 16.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, style: GutterStyle.medium, narrowPadding: 16.0);
 
     return Consumer<AppContext>(
       builder: (context, appContext, _) {
@@ -75,7 +77,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.shadow.withOpacity(0.1),
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -172,7 +174,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.shadow.withOpacity(0.1),
+                        color: colorScheme.shadow.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -281,21 +283,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const Divider(height: 1, indent: 72),
               ],
 
-              // Sunday Service
-              _buildModernListTile(
-                icon: Icons.church_rounded,
-                title: 'Attending Sunday Service',
-                subtitle: 'Manage your attendance',
-                onTap: _onAttendingSundayServiceClick,
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.primary,
-                isFirst: !appContext.isCurrentUserGuest,
-              ),
-
-              // Push Notifications (non-web only)
-              if (!kIsWeb) ...[
-                const Divider(height: 1, indent: 72),
+              // Push Notifications (authenticated users; web uses Firestore topic fan-out)
+              if (!appContext.isCurrentUserGuest) ...[
+                if (appContext.isCurrentUserGuest) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.notifications_active_rounded,
                   title: 'Push Notifications',
@@ -304,6 +294,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   theme: theme,
                   colorScheme: colorScheme,
                   iconColor: colorScheme.secondary,
+                  isFirst: !appContext.isCurrentUserGuest,
                 ),
                 // Show enable notifications option if not yet enabled
                 if (!appContext.sharedPref.isFirstOpen && appContext.sharedPref.fcmToken.isEmpty) ...[
@@ -322,7 +313,7 @@ class _PersonalHomeState extends State<PersonalHome> {
 
               // User-specific actions
               if (!appContext.isCurrentUserGuest) ...[
-                const Divider(height: 1, indent: 72),
+                if (!kIsWeb) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.checklist_rounded,
                   title: 'My Schedule',
@@ -347,6 +338,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   theme: theme,
                   colorScheme: colorScheme,
                   iconColor: colorScheme.tertiary,
+                  isFirst: kIsWeb,
                 ),
                 const Divider(height: 1, indent: 72),
                 _buildModernListTile(
@@ -487,6 +479,16 @@ class _PersonalHomeState extends State<PersonalHome> {
                   ),
                   const Divider(height: 1, indent: 72),
                   _buildModernListTile(
+                    icon: Icons.build_rounded,
+                    title: 'PowerPoint Generator',
+                    subtitle: 'Create service slides easily',
+                    onTap: () => launchUrlString(_powerpointGeneratorUrl),
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    iconColor: colorScheme.primary,
+                  ),
+                  const Divider(height: 1, indent: 72),
+                  _buildModernListTile(
                     icon: Icons.privacy_tip_rounded,
                     title: 'Privacy Policy',
                     subtitle: 'View our privacy policy',
@@ -537,7 +539,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colorScheme.tertiary.withOpacity(0.1),
+                  color: colorScheme.tertiary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -593,36 +595,30 @@ class _PersonalHomeState extends State<PersonalHome> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Choose Startup Tab'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<int>(
-                title: const Text('Events'),
-                subtitle: const Text('Open to the Posts/Bulletin tab'),
-                value: 0,
-                groupValue: currentTab,
-                onChanged: (value) {
-                  if (value != null) {
-                    appContext.sharedPref.setPreferredStartupTab(value);
-                    appContext.rebuildPlease();
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              RadioListTile<int>(
-                title: const Text('Information'),
-                subtitle: const Text('Open to the CTRIM Information tab'),
-                value: 1,
-                groupValue: currentTab,
-                onChanged: (value) {
-                  if (value != null) {
-                    appContext.sharedPref.setPreferredStartupTab(value);
-                    appContext.rebuildPlease();
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            ],
+          content: RadioGroup<int>(
+            groupValue: currentTab,
+            onChanged: (value) {
+              if (value != null) {
+                appContext.sharedPref.setPreferredStartupTab(value);
+                appContext.rebuildPlease();
+                Navigator.pop(context);
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<int>(
+                  title: const Text('Events'),
+                  subtitle: const Text('Open to the Posts/Bulletin tab'),
+                  value: 0,
+                ),
+                RadioListTile<int>(
+                  title: const Text('Information'),
+                  subtitle: const Text('Open to the CTRIM Information tab'),
+                  value: 1,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -691,7 +687,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -768,6 +764,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
 
     if (confirmed) {
+      if (!mounted) return;
       // Show loading while signing out
       DialogManager.showProgressDialog(
         context: context,
@@ -775,14 +772,23 @@ class _PersonalHomeState extends State<PersonalHome> {
         subtitle: 'Please wait...',
       );
 
-      widget.appContext.analytics.logEvent(name: 'logout');
-      await _logout();
+      try {
+        widget.appContext.analytics.logEvent(name: 'logout');
+        await _logout();
 
-      if (mounted) {
-        Navigator.of(context).pop(); // Close progress dialog
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
-          setState(() {});
-        });
+        if (mounted) {
+          Navigator.of(context).pop(); // Close progress dialog
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginPage())).then((_) {
+            setState(() {});
+          });
+        }
+      } catch (e) {
+        debugPrint('Error signing out: $e');
+        if (mounted) {
+          Navigator.of(context).pop(); // dismiss progress dialog
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Failed to sign out: $e'), behavior: SnackBarBehavior.floating));
+        }
       }
     }
   }
@@ -790,8 +796,15 @@ class _PersonalHomeState extends State<PersonalHome> {
   Future<void> _logout() async {
     final AuthManager authManager = AuthManager();
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    debugPrint('token to remove is ${widget.appContext.sharedPref.fcmToken}');
-    await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, widget.appContext.sharedPref.fcmToken);
+    final token = widget.appContext.sharedPref.fcmToken;
+    debugPrint('token to remove is $token');
+
+    if (kIsWeb && token.isNotEmpty) {
+      await WebNotificationLifecycle().unregister(authId: authManager.currentAuthUID, token: token);
+    } else if (token.isNotEmpty) {
+      await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, token);
+    }
+
     widget.appContext.sharedPref.clearCreds();
     widget.appContext.setUserToGuest();
     widget.appContext.rebuildPlease();
@@ -811,10 +824,6 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _onNotificationManagerClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationManagementPage()));
-  }
-
-  void _onAttendingSundayServiceClick() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendingSundayServicePage()));
   }
 
   void _onUserProfileClick() {
@@ -852,9 +861,8 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   void _onEnableNotificationsClick(AppContext appContext) async {
-    if (kIsWeb) return;
-
     final MessagingManager messagingManager = MessagingManager();
+    final authId = AuthManager().currentAuthUID;
 
     // Show explanation dialog
     final shouldProceed = await showDialog<bool>(
@@ -880,25 +888,27 @@ class _PersonalHomeState extends State<PersonalHome> {
 
     if (shouldProceed != true) return;
 
-    // Request permission and get token
-    final String? token = await messagingManager.requestPermissionAndToken();
+    String? token;
+    if (kIsWeb && authId.isNotEmpty && !appContext.isCurrentUserGuest) {
+      token = await WebNotificationLifecycle().register(
+        authId: authId,
+        requestPermission: true,
+        onTokenSaved: appContext.sharedPref.saveFCMToken,
+      );
+    } else {
+      token = await messagingManager.requestPermissionAndToken();
+    }
 
     if (token != null) {
       debugPrint('Token to save is $token');
 
-      // Store token based on user type
       if (appContext.isCurrentUserGuest) {
-        // Guest user - store token locally
         appContext.sharedPref.saveGuestFCMToken(token);
       } else {
-        // Authenticated user - store normally
         appContext.sharedPref.saveFCMToken(token);
       }
 
-      // Subscribe to Belfast topics
       appContext.sharedPref.setSubscribedToBelfast(true);
-
-      // Subscribe to all available topics
       appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
       appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
       appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
@@ -906,13 +916,14 @@ class _PersonalHomeState extends State<PersonalHome> {
       appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
       appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
 
-      messagingManager.subscribeToTopic('belfast-sunday-service');
-      messagingManager.subscribeToTopic('belfast-midweek-service');
-      messagingManager.subscribeToTopic('belfast-growth-mentoring');
-      messagingManager.subscribeToTopic('belfast-dawn-watch');
-      messagingManager.subscribeToTopic('belfast-overnight-prayer');
-      messagingManager.subscribeToTopic('belfast-youth-cg');
-      messagingManager.subscribeToTopic('Belfast');
+      final webAuthId = kIsWeb && !appContext.isCurrentUserGuest ? authId : null;
+      messagingManager.subscribeToTopic('belfast-sunday-service', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-midweek-service', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-growth-mentoring', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-dawn-watch', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-overnight-prayer', authId: webAuthId);
+      messagingManager.subscribeToTopic('belfast-youth-cg', authId: webAuthId);
+      messagingManager.subscribeToTopic('Belfast', authId: webAuthId);
 
       if (mounted) {
         // Show success message

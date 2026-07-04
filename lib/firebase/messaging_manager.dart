@@ -2,17 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../utility/notification_debug.dart';
+
 class MessagingManager {
   static final FirebaseMessaging _instance = FirebaseMessaging.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _ctrimBelfast = 'ctrim-belfast';
+  static const String _webTokensDoc = 'web_tokens';
+  static const String _webTopicsDoc = 'web_topics';
   static const String _vapidKey =
       'BA_LUkYRR60mG5nEYSRe4B260xxJFVSYRjxqDksn7DT8u0MvvVUZM6hln9W4acuiY7sbBjLQ3170UJFqiC0J7MI';
 
-  Future<String?> requestPermissionAndToken() async {
+  Future<String?> requestPermissionAndToken({String? authId}) async {
     try {
-      // Request permission for notifications
-      NotificationSettings settings = await _instance.requestPermission(
+      final settings = await _instance.requestPermission(
         alert: true,
         announcement: false,
         badge: true,
@@ -22,214 +24,268 @@ class MessagingManager {
         sound: true,
       );
 
-      debugPrint('User granted permission: ${settings.authorizationStatus}');
+      NotificationDebug.log('permission status: ${settings.authorizationStatus}');
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
-        // For web, we need the VAPID key
-        final String? token = await _instance.getToken(
-          vapidKey: kIsWeb ? _vapidKey : null,
-        );
-        debugPrint('FCM Token generated: $token');
-
-        // Register token in Firestore if on web
-        if (kIsWeb && token != null) {
-          await _registerWebToken(token);
+        final token = await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+        if (kIsWeb && token != null && authId != null && authId.isNotEmpty) {
+          await registerWebToken(token: token, authId: authId);
         }
-
         return token;
-      } else {
-        debugPrint('User declined or has not accepted permission');
-        return null;
       }
+
+      NotificationDebug.warn('Notification permission not granted');
+      return null;
     } catch (e) {
-      debugPrint('Error requesting permission and token: $e');
+      NotificationDebug.error('Error requesting permission and token', e);
       return null;
     }
   }
 
-  Future<String?> getToken() async {
+  Future<String?> getToken({String? authId}) async {
     try {
-      final token = await _instance.getToken(
-        vapidKey: kIsWeb ? _vapidKey : null,
-      );
-      debugPrint('FCM Token retrieved: $token');
-
-      // Register token in Firestore if on web
-      if (kIsWeb && token != null) {
-        await _registerWebToken(token);
+      final token = await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+      if (kIsWeb && token != null && authId != null && authId.isNotEmpty) {
+        await registerWebToken(token: token, authId: authId);
       }
-
       return token;
     } catch (e) {
-      debugPrint('Error getting token: $e');
+      NotificationDebug.error('Error getting token', e);
       return null;
     }
   }
 
-  /// Register web token in a centralized collection for efficient batch sending
-  Future<void> _registerWebToken(String token) async {
-    try {
-      // Store in a map structure for O(1) lookups and efficient storage
-      await _firestore.collection('notification_tokens').doc('web_tokens').set({
-        'tokens': FieldValue.arrayUnion([token]),
-        'lastUpdated': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+  /// Persist web token with auth metadata (replaces legacy flat array-only storage).
+  Future<void> registerWebToken({required String token, required String authId}) async {
+    if (!kIsWeb) return;
 
-      debugPrint('✅ Web token registered in centralized collection');
+    try {
+      final docRef = _firestore.collection('notification_tokens').doc(_webTokensDoc);
+      final doc = await docRef.get();
+      final existing = _parseTokenEntries(doc.data());
+
+      final staleDeletes = <String, dynamic>{};
+      for (final entry in existing.entries) {
+        if (entry.value['authId'] == authId && entry.key != token) {
+          staleDeletes[entry.key] = FieldValue.delete();
+        }
+      }
+
+      if (staleDeletes.isNotEmpty) {
+        await docRef.set({'entries': staleDeletes}, SetOptions(merge: true));
+      }
+
+      await docRef.set(
+        {
+          'entries': {
+            token: {
+              'authId': authId,
+              'lastActive': FieldValue.serverTimestamp(),
+            },
+          },
+          'lastUpdated': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      NotificationDebug.log('Registered web token for authId=$authId');
+      NotificationDebug.token('saved', token);
+      NotificationDebug.tokenForManualTest(token);
     } catch (e) {
-      debugPrint('❌ Error registering web token: $e');
+      NotificationDebug.error('Error registering web token', e);
     }
   }
 
-  /// Remove web token when user logs out or revokes permission
   Future<void> removeWebToken(String token) async {
     if (!kIsWeb) return;
 
     try {
-      await _firestore.collection('notification_tokens').doc('web_tokens').update({
-        'tokens': FieldValue.arrayRemove([token]),
-      });
+      await _firestore.collection('notification_tokens').doc(_webTokensDoc).set({
+        'entries': {token: FieldValue.delete()},
+      }, SetOptions(merge: true));
 
-      debugPrint('🗑️ Web token removed from centralized collection');
+      await _removeTokenFromAllWebTopics(token);
+      NotificationDebug.log('Removed web token from notification_tokens');
     } catch (e) {
-      debugPrint('❌ Error removing web token: $e');
+      NotificationDebug.error('Error removing web token', e);
     }
   }
 
-  /// Subscribe to the main CTRIM Belfast topic
-  /// Note: Topic subscriptions are not supported on web, tokens must be managed server-side
-  Future<void> subscribeToCTRIMBelfast() async {
-    if (kIsWeb) {
-      debugPrint('ℹ️ Web platform detected - using token-based notifications (topic subscriptions not supported)');
-      // Web tokens are automatically registered in _registerWebToken()
-      // Do NOT call removeWebToken here!
-      return;
-    }
+  Future<void> _removeTokenFromAllWebTopics(String token) async {
     try {
-      await _instance.subscribeToTopic(_ctrimBelfast);
-      debugPrint('✅ Subscribed to topic: $_ctrimBelfast');
-    } catch (e) {
-      debugPrint('❌ Error subscribing to topic: $e');
-    }
-  }
+      final doc = await _firestore.collection('notification_tokens').doc(_webTopicsDoc).get();
+      if (!doc.exists || doc.data() == null) return;
 
-  /// Unsubscribe from the main CTRIM Belfast topic
-  Future<void> unsubscribeFromCTRIMBelfast() async {
-    if (kIsWeb) {
-      debugPrint('ℹ️ Unsubscribing from web notifications');
-      // Remove web token from collection
-      final token = await getToken();
-      if (token != null) {
-        await removeWebToken(token);
-      }
-      return;
-    }
-    try {
-      await _instance.unsubscribeFromTopic(_ctrimBelfast);
-      debugPrint('✅ Unsubscribed from topic: $_ctrimBelfast');
-    } catch (e) {
-      debugPrint('❌ Error unsubscribing from topic: $e');
-    }
-  }
-
-  /// Subscribe to a custom topic
-  Future<void> subscribeToTopic(final String topic) async {
-    if (kIsWeb) {
-      // For web, store the token in a topic-specific collection
-      final token = await getToken();
-      if (token != null) {
-        try {
-          await _firestore.collection('notification_tokens').doc('web_topics').set({
-            topic: FieldValue.arrayUnion([token]),
-          }, SetOptions(merge: true));
-          debugPrint('✅ Web user subscribed to topic: $topic');
-        } catch (e) {
-          debugPrint('❌ Error subscribing to web topic: $e');
+      final updates = <String, dynamic>{};
+      for (final entry in doc.data()!.entries) {
+        if (entry.value is List && (entry.value as List).contains(token)) {
+          updates[entry.key] = FieldValue.arrayRemove([token]);
         }
       }
+
+      if (updates.isNotEmpty) {
+        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).update(updates);
+      }
+    } catch (e) {
+      NotificationDebug.warn('Could not remove token from web_topics: $e');
+    }
+  }
+
+  Future<void> subscribeToTopic(final String topic, {String? authId}) async {
+    if (kIsWeb) {
+      final token = await getToken(authId: authId);
+      if (token == null) return;
+
+      try {
+        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).set({
+          topic: FieldValue.arrayUnion([token]),
+        }, SetOptions(merge: true));
+        NotificationDebug.log('Web subscribed to topic "$topic" (Firestore web_topics)');
+      } catch (e) {
+        NotificationDebug.error('Error subscribing to web topic', e);
+      }
       return;
     }
+
     try {
       await _instance.subscribeToTopic(topic);
-      debugPrint('✅ Subscribed to topic: $topic');
+      NotificationDebug.log('Subscribed to FCM topic: $topic');
     } catch (e) {
-      debugPrint('❌ Error subscribing to topic: $e');
+      NotificationDebug.error('Error subscribing to topic', e);
     }
   }
 
-  /// Unsubscribe from a custom topic
-  Future<void> unsubscribeFromTopic(final String topic) async {
+  Future<void> unsubscribeFromTopic(final String topic, {String? authId}) async {
     if (kIsWeb) {
-      // For web, remove the token from the topic-specific collection
-      final token = await getToken();
-      if (token != null) {
-        try {
-          await _firestore.collection('notification_tokens').doc('web_topics').update({
-            topic: FieldValue.arrayRemove([token]),
-          });
-          debugPrint('✅ Web user unsubscribed from topic: $topic');
-        } catch (e) {
-          debugPrint('❌ Error unsubscribing from web topic: $e');
-        }
+      final token = await _instance.getToken(vapidKey: _vapidKey);
+      if (token == null) return;
+
+      try {
+        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).update({
+          topic: FieldValue.arrayRemove([token]),
+        });
+        NotificationDebug.log('Web unsubscribed from topic "$topic"');
+      } catch (e) {
+        NotificationDebug.error('Error unsubscribing from web topic', e);
       }
       return;
     }
+
     try {
       await _instance.unsubscribeFromTopic(topic);
-      debugPrint('✅ Unsubscribed from topic: $topic');
     } catch (e) {
-      debugPrint('❌ Error unsubscribing from topic: $e');
+      NotificationDebug.error('Error unsubscribing from topic', e);
     }
   }
 
-  /// Listen for token refresh (important for maintaining valid tokens)
-  void onTokenRefresh(Function(String) callback) {
-    _instance.onTokenRefresh.listen((newToken) {
-      debugPrint('🔄 FCM Token refreshed: $newToken');
+  void listenForTokenRefresh({required String authId, required void Function(String) onRefreshed}) {
+    _instance.onTokenRefresh.listen((newToken) async {
+      NotificationDebug.section('onTokenRefresh');
+      NotificationDebug.token('new token', newToken);
 
-      // Update web token in Firestore
       if (kIsWeb) {
-        _registerWebToken(newToken);
+        await registerWebToken(token: newToken, authId: authId);
       }
 
-      callback(newToken);
+      onRefreshed(newToken);
     });
   }
 
-  /// Get all web tokens for sending notifications (used by admin/cloud functions)
-  static Future<List<String>> getWebTokens() async {
+  static Future<List<String>> getWebTokensForTopic(String topic) async {
     try {
-      final doc = await _firestore.collection('notification_tokens').doc('web_tokens').get();
+      final topicDoc = await _firestore.collection('notification_tokens').doc(_webTopicsDoc).get();
+      final topicTokens = <String>{};
 
-      if (doc.exists && doc.data() != null) {
-        final tokens = List<String>.from(doc.data()!['tokens'] ?? []);
-        debugPrint('📱 Retrieved ${tokens.length} web tokens');
-        return tokens;
+      if (topicDoc.exists && topicDoc.data() != null) {
+        topicTokens.addAll(List<String>.from(topicDoc.data()![topic] ?? []));
       }
 
-      return [];
+      final deduped = topicTokens.toList();
+      NotificationDebug.log('Topic "$topic" → ${deduped.length} web token(s)');
+      return deduped;
     } catch (e) {
-      debugPrint('❌ Error getting web tokens: $e');
+      NotificationDebug.error('Error getting web tokens for topic', e);
       return [];
     }
   }
 
-  /// Get web tokens subscribed to a specific topic (used by admin/cloud functions)
-  static Future<List<String>> getWebTokensForTopic(String topic) async {
+  static Future<List<String>> getWebTokensForAuthId(String authId) async {
     try {
-      final doc = await _firestore.collection('notification_tokens').doc('web_topics').get();
-
-      if (doc.exists && doc.data() != null) {
-        final tokens = List<String>.from(doc.data()![topic] ?? []);
-        debugPrint('📱 Retrieved ${tokens.length} web tokens for topic: $topic');
-        return tokens;
-      }
-
-      return [];
+      final doc = await _firestore.collection('notification_tokens').doc(_webTokensDoc).get();
+      final entries = _parseTokenEntries(doc.data());
+      final tokens = _oneLatestTokenPerAuthId(entries, authId: authId);
+      return tokens;
     } catch (e) {
-      debugPrint('❌ Error getting web tokens for topic: $e');
+      NotificationDebug.error('Error getting web tokens for authId', e);
       return [];
     }
+  }
+
+  static Map<String, Map<String, dynamic>> _parseTokenEntries(Map<String, dynamic>? data) {
+    if (data == null) return {};
+
+    final parsed = <String, Map<String, dynamic>>{};
+
+    final nested = data['entries'];
+    if (nested is Map) {
+      for (final entry in nested.entries) {
+        if (entry.value is Map) {
+          parsed[entry.key.toString()] = Map<String, dynamic>.from(entry.value as Map);
+        }
+      }
+    }
+
+    // Legacy flat array — no authId metadata; kept for reads until migrated.
+    final legacy = data['tokens'];
+    if (legacy is List) {
+      for (final raw in legacy) {
+        final token = raw.toString();
+        parsed.putIfAbsent(token, () => {});
+      }
+    }
+
+    return parsed;
+  }
+
+  static List<String> _oneLatestTokenPerAuthId(
+    Map<String, Map<String, dynamic>> entries, {
+    String? authId,
+  }) {
+    if (authId != null) {
+      String? bestToken;
+      DateTime bestActive = DateTime.fromMillisecondsSinceEpoch(0);
+
+      for (final entry in entries.entries) {
+        if (entry.value['authId'] != authId) continue;
+        final lastActive = (entry.value['lastActive'] as Timestamp?)?.toDate() ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        if (bestToken == null || lastActive.isAfter(bestActive)) {
+          bestToken = entry.key;
+          bestActive = lastActive;
+        }
+      }
+      return bestToken == null ? [] : [bestToken];
+    }
+
+    final latestByAuth = <String, ({String token, DateTime lastActive})>{};
+    final withoutAuth = <String>[];
+
+    for (final entry in entries.entries) {
+      final userAuth = entry.value['authId'];
+      if (userAuth is! String || userAuth.isEmpty) {
+        withoutAuth.add(entry.key);
+        continue;
+      }
+
+      final lastActive = (entry.value['lastActive'] as Timestamp?)?.toDate() ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final current = latestByAuth[userAuth];
+      if (current == null || lastActive.isAfter(current.lastActive)) {
+        latestByAuth[userAuth] = (token: entry.key, lastActive: lastActive);
+      }
+    }
+
+    return [...withoutAuth, ...latestByAuth.values.map((pick) => pick.token)];
   }
 }

@@ -1,69 +1,29 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
+
+import '../utility/notification_debug.dart';
+import '../utility/notification_token_resolver.dart';
 import 'messaging_manager.dart';
 
 class CloudFunctionManager {
   static final _inst = FirebaseFunctions.instanceFor(region: 'europe-west1');
+  final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
 
-  CloudFunctionManager() {
-    if (kDebugMode) {
-      _inst.useFunctionsEmulator('localhost', 5001);
-    }
-  }
+  CloudFunctionManager();
 
-  Future<void> sendMessageToSelectedTokens(
-      {required List<String> tokens,
-      required String title,
-      required String body,
-      required Map<String, String> data,
-      String? androidImage,
-      String? iOSImage}) async {
-    String tokensStr = '';
-    for (String token in tokens) {
-      tokensStr += '$token,';
-    }
-    if (tokensStr.isNotEmpty) {
-      tokensStr = tokensStr.substring(0, tokensStr.length - 1);
-    }
+  /// Send to native topic subscribers plus web tokens stored for [topic] in Firestore.
+  Future<void> sendToTopic({
+    required String topic,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+    String? androidImage,
+    String? iOSImage,
+  }) async {
+    NotificationDebug.section('sendToTopic → send_to_topic');
+    NotificationDebug.log('topic=$topic title=$title');
 
-    final List<String> dataStrings = _convertMapToKeyValueStrings(data);
-    final Map<String, String> callParams = {
-      'Title': title,
-      'Body': body,
-      'DataKeys': dataStrings[0],
-      'DataValues': dataStrings[1],
-      'Tokens': tokensStr,
-      'iOSImage': iOSImage ?? '',
-      'AndroidImage': androidImage ?? '',
-    };
-
-    if (!kDebugMode) {
-      final HttpsCallable callable = _inst.httpsCallable('send_notification_to_multiple_tokens');
-      final result = await callable.call(callParams);
-      debugPrint(result.data.toString());
-    } else {
-      debugPrint('------------------------');
-      debugPrint('in debug - send_notification_to_multiple_tokens was meant to be called');
-      debugPrint('title: $title');
-      debugPrint('body: $body');
-      debugPrint('data is: $data');
-      debugPrint('tokens are: $tokens');
-      debugPrint('ios and android image is: ${iOSImage ?? 'null'}');
-      debugPrint('------------------------');
-    }
-  }
-
-  /// Send notification to topic and also to all web tokens
-  /// This ensures web users receive topic notifications too
-  Future<void> sendToTopic(
-      {required String topic,
-      required String title,
-      required String body,
-      required Map<String, String> data,
-      String? androidImage,
-      String? iOSImage}) async {
-    final List<String> dataStrings = _convertMapToKeyValueStrings(data);
-    final Map<String, String> callParams = {
+    final dataStrings = _convertMapToKeyValueStrings(data);
+    final callParams = {
       'Title': title,
       'Body': body,
       'DataKeys': dataStrings[0],
@@ -73,55 +33,140 @@ class CloudFunctionManager {
       'AndroidImage': androidImage ?? '',
     };
 
-    if (!kDebugMode) {
-      // Send to topic (iOS/Android)
-      final HttpsCallable topicCallable = _inst.httpsCallable('send_to_topic');
-      final topicResult = await topicCallable.call(callParams);
-      debugPrint('Topic notification sent: ${topicResult.data}');
+    await _callCloudFunction('send_to_topic', callParams);
+    await _sendToWebTokens(
+      topic: topic,
+      title: title,
+      body: body,
+      data: data,
+      androidImage: androidImage,
+      iOSImage: iOSImage,
+    );
+  }
 
-      // Get web tokens for general notifications
-      final webTokens = await MessagingManager.getWebTokens();
+  /// Direct send: merges everyone device_tokens + web tokens per auth ID.
+  Future<void> sendMessageToAuthUsers({
+    required List<String> authIDs,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+    String? androidImage,
+    String? iOSImage,
+  }) async {
+    NotificationDebug.section('sendMessageToAuthUsers');
+    NotificationDebug.log('authIDs=$authIDs title=$title');
 
-      // Get web tokens subscribed to this specific topic
-      final webTopicTokens = await MessagingManager.getWebTokensForTopic(topic);
+    final tokens = <String>{};
+    for (final authID in authIDs) {
+      if (authID.isEmpty) continue;
+      tokens.addAll(await _tokenResolver.resolveForAuthID(authID));
+    }
 
-      // Combine and deduplicate tokens
-      final allWebTokens = {...webTokens, ...webTopicTokens}.toList();
+    if (tokens.isEmpty) {
+      NotificationDebug.warn('sendMessageToAuthUsers: no tokens');
+      return;
+    }
 
-      if (allWebTokens.isNotEmpty) {
-        debugPrint('Sending to ${allWebTokens.length} web tokens (${webTopicTokens.length} topic-specific)...');
-        await sendMessageToSelectedTokens(
-          tokens: allWebTokens,
-          title: title,
-          body: body,
-          data: data,
-          androidImage: androidImage,
-          iOSImage: iOSImage,
-        );
+    await sendMessageToSelectedTokens(
+      tokens: tokens.toList(),
+      title: title,
+      body: body,
+      data: data,
+      androidImage: androidImage,
+      iOSImage: iOSImage,
+    );
+  }
+
+  Future<void> sendMessageToSelectedTokens({
+    required List<String> tokens,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+    String? androidImage,
+    String? iOSImage,
+  }) async {
+    if (tokens.isEmpty) {
+      NotificationDebug.warn('sendMessageToSelectedTokens: empty token list');
+      return;
+    }
+
+    final uniqueTokens = tokens.toSet().toList();
+    final dataStrings = _convertMapToKeyValueStrings(data);
+    final callParams = {
+      'Title': title,
+      'Body': body,
+      'DataKeys': dataStrings[0],
+      'DataValues': dataStrings[1],
+      'Tokens': uniqueTokens.join(','),
+      'iOSImage': iOSImage ?? '',
+      'AndroidImage': androidImage ?? '',
+    };
+
+    NotificationDebug.section('sendMessageToSelectedTokens');
+    NotificationDebug.log('${uniqueTokens.length} token(s), title=$title');
+    for (final t in uniqueTokens) {
+      NotificationDebug.token('  recipient', t);
+    }
+
+    await _callCloudFunction('send_notification_to_multiple_tokens', callParams);
+  }
+
+  Future<void> _sendToWebTokens({
+    required String topic,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+    String? androidImage,
+    String? iOSImage,
+  }) async {
+    try {
+      NotificationDebug.section('_sendToWebTokens');
+      NotificationDebug.log('topic=$topic');
+
+      final webTokens = await MessagingManager.getWebTokensForTopic(topic);
+      if (webTokens.isEmpty) {
+        NotificationDebug.warn('No web tokens for topic "$topic"');
+        return;
       }
-    } else {
-      debugPrint('------------------------');
-      debugPrint('in debug - send_to_topic was meant to be called. The following are the details to be sent:');
-      debugPrint('title: $title');
-      debugPrint('body: $body');
-      debugPrint('data is: $data');
-      debugPrint('topic is: $topic');
-      debugPrint('ios and android image is: ${iOSImage ?? 'null'}');
-      debugPrint('------------------------');
+
+      await sendMessageToSelectedTokens(
+        tokens: webTokens,
+        title: title,
+        body: body,
+        data: data,
+        androidImage: androidImage,
+        iOSImage: iOSImage,
+      );
+    } catch (e) {
+      NotificationDebug.error('Error sending to web tokens', e);
     }
   }
 
-  List<String> _convertMapToKeyValueStrings(final Map<String, String> data) {
-    String dataKeys = '', dataValues = '';
-    if (data.isNotEmpty) {
-      for (final element in data.entries) {
-        dataKeys += '${element.key},';
-        dataValues += '${element.value},';
-      }
-      dataKeys = dataKeys.substring(0, dataKeys.length - 1);
-      dataValues = dataValues.substring(0, dataValues.length - 1);
+  Future<void> _callCloudFunction(String name, Map<String, String> callParams) async {
+    try {
+      final callable = _inst.httpsCallable(name);
+      final result = await callable.call(callParams);
+      NotificationDebug.log('$name result: ${result.data}');
+    } catch (e) {
+      NotificationDebug.error('$name failed', e);
+      rethrow;
+    }
+  }
+
+  List<String> _convertMapToKeyValueStrings(Map<String, String> data) {
+    if (data.isEmpty) {
+      return ['', ''];
     }
 
-    return [dataKeys, dataValues];
+    String dataKeys = '';
+    String dataValues = '';
+    for (final element in data.entries) {
+      dataKeys += '${element.key},';
+      dataValues += '${element.value},';
+    }
+    return [
+      dataKeys.substring(0, dataKeys.length - 1),
+      dataValues.substring(0, dataValues.length - 1),
+    ];
   }
 }

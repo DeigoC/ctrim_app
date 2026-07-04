@@ -1,6 +1,7 @@
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import '../../utility/event_context.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditHeadDetailsPage extends StatefulWidget {
   const EditHeadDetailsPage({super.key, required this.eventContext});
@@ -27,7 +28,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   Widget build(BuildContext context) {
     return PopScope(
         canPop: true,
-        onPopInvoked: (_) {
+        onPopInvokedWithResult: (didPop, result) {
           if (_tecSubtitle.text.trim().isEmpty || _tecTitle.text.trim().isEmpty) {
             DialogManager.showAlertDialog(
                 context: context,
@@ -45,7 +46,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
     return ListView(
       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: webHorizontalPadding),
       children: [
