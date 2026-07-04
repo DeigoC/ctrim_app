@@ -1,7 +1,10 @@
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
+import 'package:ctrim_app/widgets/user_tag_chip.dart';
+import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,10 +24,9 @@ class UserSelectorDialog extends StatefulWidget {
 }
 
 class _UserSelectorDialogState extends State<UserSelectorDialog> {
-  // inlcude everyone for now, regardless of location
-  // we will have a list of userIDs that are not to be shown
-
   late final TextEditingController _tecSearch;
+  Set<String> _selectedTagIDs = {};
+
   @override
   void initState() {
     _tecSearch = TextEditingController();
@@ -43,7 +45,8 @@ class _UserSelectorDialogState extends State<UserSelectorDialog> {
       final users = appContext.allUsers
           .where((e) =>
               !widget.alreadySelectedUIDs.contains(e.id) &&
-              e.fullname.toLowerCase().contains(_tecSearch.text.toLowerCase().trim()))
+              e.fullname.toLowerCase().contains(_tecSearch.text.toLowerCase().trim()) &&
+              UserTagHelpers.userMatchesTagFilter(user: e, selectedTagIDs: _selectedTagIDs))
           .toList();
 
       if (!widget.includeCurrentUser) {
@@ -62,15 +65,23 @@ class _UserSelectorDialogState extends State<UserSelectorDialog> {
             });
           },
         ),
+        UserTagFilterBar(
+          tags: appContext.allTags,
+          selectedTagIDs: _selectedTagIDs,
+          onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
+        ),
         SizedBox(
             height: MediaQuery.of(context).size.height * 0.5,
             child: ListView.builder(
                 itemCount: users.length,
                 itemBuilder: (_, index) {
                   final thisU = users[index];
+                  final userTags = UserTagHelpers.tagsForUser(user: thisU, allTags: appContext.allTags);
                   return ListTile(
                     leading: MyUserAvatar(thisU),
                     title: Text(thisU.fullname),
+                    subtitle: userTags.isEmpty ? null : UserTagChipRow(tags: userTags, dense: true),
+                    isThreeLine: userTags.isNotEmpty,
                     onTap: () => _onSelectedClick(thisU.id),
                     trailing: _buildTrailing(thisU),
                   );

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_metadata.dart';
 import '../models/user.dart';
+import '../models/user_tag.dart';
 import 'app_shared_preferences.dart';
 
 // handles some highlevel behaviours (like notifications) and persistant data for network optimisation
@@ -16,6 +17,7 @@ class AppContext extends ChangeNotifier {
   // these will always be fetched on startup and maintained for the session
   static late final List<EventHead> _eventHeads;
   static late final List<User> _allUsers;
+  static late final List<UserTag> _allTags;
 
   // there's an interesting idea for optimisation to do with the recentDate and writing to file
   // so this file below here might be unecessary for now
@@ -39,9 +41,11 @@ class AppContext extends ChangeNotifier {
       required FirebaseAnalytics analytics,
       List<EventHead>? heads,
       List<User>? allUsers,
+      List<UserTag>? allTags,
       User? user}) {
     _eventHeads = heads ?? List<EventHead>.empty(growable: true);
     _allUsers = allUsers ?? List<User>.empty(growable: true);
+    _allTags = allTags ?? List<UserTag>.empty(growable: true);
     _currentUser = user ?? _guest;
     _analytics = analytics;
     _sharedPref = AppSharedPreferences(preferences: prefInstance);
@@ -193,6 +197,43 @@ class AppContext extends ChangeNotifier {
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
   User get currentUser => _currentUser;
   List<User> get allUsers => _allUsers;
+  List<UserTag> get allTags => UnmodifiableListView(_allTags);
+  List<UserTag> get activeTags => _allTags.where((tag) => tag.isActive).toList();
+
+  void setAllTags(final List<UserTag> tags) {
+    _allTags
+      ..clear()
+      ..addAll(tags);
+    _allTags.sort((a, b) {
+      final orderCompare = a.displayOrder.compareTo(b.displayOrder);
+      if (orderCompare != 0) return orderCompare;
+      return a.name.compareTo(b.name);
+    });
+    notifyListeners();
+  }
+
+  void addOrUpdateTag(final UserTag tag) {
+    _allTags.removeWhere((t) => t.id == tag.id);
+    _allTags.add(tag);
+    _allTags.sort((a, b) {
+      final orderCompare = a.displayOrder.compareTo(b.displayOrder);
+      if (orderCompare != 0) return orderCompare;
+      return a.name.compareTo(b.name);
+    });
+    notifyListeners();
+  }
+
+  void removeTag(final String tagId) {
+    _allTags.removeWhere((t) => t.id == tagId);
+    notifyListeners();
+  }
+
+  UserTag? tagById(final String tagId) {
+    for (final tag in _allTags) {
+      if (tag.id == tagId) return tag;
+    }
+    return null;
+  }
 
   void setUserToGuest() => _currentUser = _guest;
   void setCurrentUser(final User? user) => _currentUser = user ?? _guest;

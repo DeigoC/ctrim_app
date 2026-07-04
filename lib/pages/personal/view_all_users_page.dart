@@ -4,9 +4,12 @@ import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
+import 'package:ctrim_app/widgets/user_tag_chip.dart';
+import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +27,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   bool _isSearching = false;
   String _searchQuery = '';
   late String _locationFilter;
+  Set<String> _selectedTagIDs = {};
 
   @override
   void initState() {
@@ -106,6 +110,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   }).toList(),
                 ),
               ),
+              UserTagFilterBar(
+                tags: appContext.allTags,
+                selectedTagIDs: _selectedTagIDs,
+                horizontalPadding: webHorizontalPadding,
+                onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
+              ),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
@@ -120,9 +130,21 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         itemCount: filteredUsers.length,
                         itemBuilder: (_, index) {
                           final thisUser = filteredUsers[index];
+                          final userTags = UserTagHelpers.tagsForUser(user: thisUser, allTags: appContext.allTags);
                           return ListTile(
                             title: Text(thisUser.fullname),
-                            subtitle: Text(thisUser.location),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(thisUser.location),
+                                if (userTags.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: UserTagChipRow(tags: userTags, dense: true),
+                                  ),
+                              ],
+                            ),
+                            isThreeLine: userTags.isNotEmpty,
                             leading: MyUserAvatar(thisUser),
                             onTap: () => _onUserTap(thisUser),
                             onLongPress:
@@ -140,6 +162,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
 
     if (_locationFilter != VolunteerLocations.all) {
       users = users.where((user) => user.location == _locationFilter);
+    }
+
+    if (_selectedTagIDs.isNotEmpty) {
+      users = users.where((user) => UserTagHelpers.userMatchesTagFilter(
+            user: user,
+            selectedTagIDs: _selectedTagIDs,
+          ));
     }
 
     if (_searchQuery.isNotEmpty) {
@@ -161,6 +190,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   String _emptyMessage(AppLocalizations l10n) {
     if (_searchQuery.isNotEmpty) {
       return l10n.volunteersEmptySearch(_searchQuery);
+    }
+    if (_selectedTagIDs.isNotEmpty) {
+      return l10n.volunteersEmptyTags;
     }
     if (_locationFilter != VolunteerLocations.all) {
       return l10n.volunteersEmptyLocation(_locationFilter);

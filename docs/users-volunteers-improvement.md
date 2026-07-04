@@ -2,7 +2,7 @@
 
 > **Purpose:** Living document for a multi-session refactor of the `User` model, schedule sync, and Belfast Volunteers UI.  
 > **Created:** 2026-07-04  
-> **Status:** Phase 4 complete (deploy pending) — Phase 5 (admin tags) not started  
+> **Status:** Phase 5 complete — deploy `firestore.rules` for `user_tags` collection  
 > **Start here in a new chat:** “Continue the Users/Volunteers improvement from `docs/users-volunteers-improvement.md`”
 
 ---
@@ -313,19 +313,18 @@ If you see `Permission denied while using the Eventarc Service Agent`:
 
 ### Phase 5 — Admin-managed user tags (1–2 chats)
 
-**Not implemented yet.** Volunteers today are only distinguished by `location`, `isLeader`, and `isAreaAdmin`. There is no worship / technical / speaker / usher labelling.
-
-- [ ] **Data model** — `UserTag` (`id`, `name`, optional `color`, `displayOrder`, `isActive`)
-- [ ] **Firestore** — `user_tags/{tagId}` collection; `Tags: [tagId, …]` on `users/{uid}` (multi-tag per user)
-- [ ] **DB manager** — `UserTagDBManager` (CRUD; area-admin writes only)
-- [ ] **Admin UI** — `ManageUserTagsPage`: create, rename, reorder, deactivate tags (Personal admin section)
-- [ ] **Assign tags** — multi-select on `EditUserPage` / `RegisterUserPage`
-- [ ] **Display** — chips on profile hub, volunteer list tiles, `DialogManager.showUserProfile`
-- [ ] **Filter** — `ViewAllUsersPage` and `UserSelectorDialog` filter by one or more tags
-- [ ] **Cache** — load tags at startup in `AppContext` (same pattern as `allUsers`)
-- [ ] **Security** — `firestore.rules`: tag definition writes restricted to area admins
-- [ ] **Seed** — optional initial tags (Worship Team, Technical, Speaker, Usher) via one-time admin setup or migration script
-- [ ] **Tests** — `user_tag_test.dart`, tag assignment on `User` model
+- [x] **Data model** — `UserTag` (`id`, `name`, optional `color`, `displayOrder`, `isActive`)
+- [x] **Firestore** — `user_tags/{tagId}` collection; `Tags: [tagId, …]` on `users/{uid}` (multi-tag per user)
+- [x] **DB manager** — `UserTagDBManager` (CRUD; area-admin writes only)
+- [x] **Admin UI** — `ManageUserTagsPage`: create, rename, reorder, deactivate tags (Personal admin section)
+- [x] **Assign tags** — multi-select on `EditUserPage` / `RegisterUserPage`
+- [x] **Display** — chips on profile hub, volunteer list tiles, `DialogManager.showUserProfile`
+- [x] **Filter** — `ViewAllUsersPage` and `UserSelectorDialog` filter by one or more tags
+- [x] **Cache** — load tags at startup in `AppContext` (same pattern as `allUsers`)
+- [x] **Security** — `firestore.rules`: tag definition writes restricted to area admins
+- [x] **Seed** — optional initial tags (Worship Team, Technical, Speaker, Usher) via “Add starter tags” on manage page
+- [x] **Tests** — `user_tag_test.dart`, tag assignment on `User` model
+- [ ] **Deploy rules:** `firebase deploy --only firestore:rules --project ctrim-8b49b`
 
 See [Admin-managed user tags](#admin-managed-user-tags) below for full design notes.
 
@@ -338,8 +337,7 @@ See [Admin-managed user tags](#admin-managed-user-tags) below for full design no
 
 ## Admin-managed user tags
 
-> **Status:** Planned (Phase 5) — not in the app today  
-> **Asked:** 2026-07-04 — worship / technical / speaker / usher-style labels; admin creates and edits tag definitions
+> **Status:** Implemented (Phase 5) — admin CRUD in Personal → Admin Tools → Volunteer Tags
 
 ### Why admin-managed (not a hardcoded enum)
 
@@ -428,6 +426,7 @@ Extend `User` with `List<String> tagIDs` (or typed `List<UserTagAssignment>` if 
 | 2026-07-04 | Phase 2 | `UserScheduleService` centralises role/post pruning; callers in `main.dart`, schedule + posts pages |
 | 2026-07-04 | Phase 4 | CF `sync_user_roles_on_program_write`; client role writes removed on post save |
 | 2026-07-04 | Phase 3 | `ViewUserProfilePage`, location filter on volunteers list, badge fix, l10n |
+| 2026-07-04 | Phase 5 | Admin-managed user tags: `UserTag`, `UserTagDBManager`, manage page, assignment, filters, chips |
 | 2026-07-04 | Planning | Admin-managed user tags (Phase 5) — design added; not implemented |
 
 *(Append rows as work progresses.)*

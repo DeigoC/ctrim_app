@@ -219,6 +219,32 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Untitled event'**
   String get userProfileUntitledEvent;
+
+  String get cancel;
+  String get save;
+  String get userTagsFilterClear;
+  String get userTagsAssignLabel;
+  String get userTagsNoneAvailable;
+  String get manageUserTagsTitle;
+  String get manageUserTagsAdd;
+  String get manageUserTagsEmpty;
+  String get manageUserTagsSeedDefaults;
+  String get manageUserTagsActive;
+  String get manageUserTagsInactive;
+  String get manageUserTagsMoveUp;
+  String get manageUserTagsMoveDown;
+  String get manageUserTagsEdit;
+  String get manageUserTagsDeactivate;
+  String get manageUserTagsActivate;
+  String get manageUserTagsDelete;
+  String get manageUserTagsNameLabel;
+  String get manageUserTagsColorLabel;
+  String get manageUserTagsCreate;
+  String manageUserTagsDeleteConfirm(String name);
+  String manageUserTagsDeleteBlocked(int count);
+  String get manageUserTagsMenuTitle;
+  String get manageUserTagsMenuSubtitle;
+  String get volunteersEmptyTags;
 }
 
 class _AppLocalizationsDelegate

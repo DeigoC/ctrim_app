@@ -97,5 +97,115 @@
   "userProfileUntitledEvent": "Untitled event",
   "@userProfileUntitledEvent": {
     "description": "Fallback event title on profile schedule preview"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel button label"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save button label"
+  },
+  "userTagsFilterClear": "Clear tags",
+  "@userTagsFilterClear": {
+    "description": "Button to clear selected tag filters"
+  },
+  "userTagsAssignLabel": "Teams & tags",
+  "@userTagsAssignLabel": {
+    "description": "Section label for assigning tags to a volunteer"
+  },
+  "userTagsNoneAvailable": "No tags defined yet. Area admins can create tags in Admin Tools.",
+  "@userTagsNoneAvailable": {
+    "description": "Message when no user tags exist for assignment"
+  },
+  "manageUserTagsTitle": "Manage Tags",
+  "@manageUserTagsTitle": {
+    "description": "Title for the admin page that manages volunteer tag definitions"
+  },
+  "manageUserTagsAdd": "Add tag",
+  "@manageUserTagsAdd": {
+    "description": "Action to create a new volunteer tag"
+  },
+  "manageUserTagsEmpty": "No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.",
+  "@manageUserTagsEmpty": {
+    "description": "Empty state on the manage tags page"
+  },
+  "manageUserTagsSeedDefaults": "Add starter tags",
+  "@manageUserTagsSeedDefaults": {
+    "description": "Button to seed default volunteer tags"
+  },
+  "manageUserTagsActive": "Active",
+  "@manageUserTagsActive": {
+    "description": "Status label for an active tag"
+  },
+  "manageUserTagsInactive": "Inactive",
+  "@manageUserTagsInactive": {
+    "description": "Status label for a deactivated tag"
+  },
+  "manageUserTagsMoveUp": "Move up",
+  "@manageUserTagsMoveUp": {
+    "description": "Reorder a tag higher in the list"
+  },
+  "manageUserTagsMoveDown": "Move down",
+  "@manageUserTagsMoveDown": {
+    "description": "Reorder a tag lower in the list"
+  },
+  "manageUserTagsEdit": "Edit",
+  "@manageUserTagsEdit": {
+    "description": "Edit an existing tag"
+  },
+  "manageUserTagsDeactivate": "Deactivate",
+  "@manageUserTagsDeactivate": {
+    "description": "Deactivate a tag so it cannot be assigned"
+  },
+  "manageUserTagsActivate": "Activate",
+  "@manageUserTagsActivate": {
+    "description": "Reactivate a deactivated tag"
+  },
+  "manageUserTagsDelete": "Delete",
+  "@manageUserTagsDelete": {
+    "description": "Delete a tag definition"
+  },
+  "manageUserTagsNameLabel": "Tag name",
+  "@manageUserTagsNameLabel": {
+    "description": "Label for the tag name field"
+  },
+  "manageUserTagsColorLabel": "Color (optional)",
+  "@manageUserTagsColorLabel": {
+    "description": "Label for the optional tag color hex field"
+  },
+  "manageUserTagsCreate": "Create",
+  "@manageUserTagsCreate": {
+    "description": "Create a new tag"
+  },
+  "manageUserTagsDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@manageUserTagsDeleteConfirm": {
+    "description": "Confirmation before deleting a tag",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageUserTagsDeleteBlocked": "Cannot delete — {count} volunteers still have this tag. Deactivate it instead.",
+  "@manageUserTagsDeleteBlocked": {
+    "description": "Error when trying to delete a tag that is still assigned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "manageUserTagsMenuTitle": "Volunteer Tags",
+  "@manageUserTagsMenuTitle": {
+    "description": "Personal home admin menu item for managing tags"
+  },
+  "manageUserTagsMenuSubtitle": "Create and edit team labels",
+  "@manageUserTagsMenuSubtitle": {
+    "description": "Personal home admin menu subtitle for managing tags"
+  },
+  "volunteersEmptyTags": "No volunteers match the selected tags",
+  "@volunteersEmptyTags": {
+    "description": "Empty state when tag filter returns no volunteers"
   }
 }

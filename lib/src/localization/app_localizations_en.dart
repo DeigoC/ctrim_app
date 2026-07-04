@@ -76,4 +76,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userProfileUntitledEvent => 'Untitled event';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get userTagsFilterClear => 'Clear tags';
+
+  @override
+  String get userTagsAssignLabel => 'Teams & tags';
+
+  @override
+  String get userTagsNoneAvailable =>
+      'No tags defined yet. Area admins can create tags in Admin Tools.';
+
+  @override
+  String get manageUserTagsTitle => 'Manage Tags';
+
+  @override
+  String get manageUserTagsAdd => 'Add tag';
+
+  @override
+  String get manageUserTagsEmpty =>
+      'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.';
+
+  @override
+  String get manageUserTagsSeedDefaults => 'Add starter tags';
+
+  @override
+  String get manageUserTagsActive => 'Active';
+
+  @override
+  String get manageUserTagsInactive => 'Inactive';
+
+  @override
+  String get manageUserTagsMoveUp => 'Move up';
+
+  @override
+  String get manageUserTagsMoveDown => 'Move down';
+
+  @override
+  String get manageUserTagsEdit => 'Edit';
+
+  @override
+  String get manageUserTagsDeactivate => 'Deactivate';
+
+  @override
+  String get manageUserTagsActivate => 'Activate';
+
+  @override
+  String get manageUserTagsDelete => 'Delete';
+
+  @override
+  String get manageUserTagsNameLabel => 'Tag name';
+
+  @override
+  String get manageUserTagsColorLabel => 'Color (optional)';
+
+  @override
+  String get manageUserTagsCreate => 'Create';
+
+  @override
+  String manageUserTagsDeleteConfirm(String name) {
+    return 'Delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String manageUserTagsDeleteBlocked(int count) {
+    return 'Cannot delete — $count volunteers still have this tag. Deactivate it instead.';
+  }
+
+  @override
+  String get manageUserTagsMenuTitle => 'Volunteer Tags';
+
+  @override
+  String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
+
+  @override
+  String get volunteersEmptyTags => 'No volunteers match the selected tags';
 }

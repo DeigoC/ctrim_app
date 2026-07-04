@@ -11,6 +11,7 @@ import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
 import 'firebase/db_managers/id_tracker.dart';
 import 'firebase/db_managers/user_db_manager.dart';
+import 'firebase/db_managers/user_tag_db_manager.dart';
 import 'firebase_options.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
@@ -125,10 +126,12 @@ Future<void> _fetchEssentialDataInBackground(
   try {
     final heads = await eventHeadDBManager.fetchEventHeads();
     final allUsers = await _fetchAllUsers(prefInstance);
+    final allTags = await UserTagDBManager().fetchAllTags();
 
     // Update guest context with initial data
     guestContext.addAllEventHeads(heads);
     guestContext.allUsers.addAll(allUsers);
+    guestContext.setAllTags(allTags);
     guestContext.sortPostsByIndex();
     guestContext.rebuildPlease();
 
@@ -202,32 +205,51 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
     debugPrint('--fetching users from Local Data');
 
     usersData.removeAt(0);
-    const int chunkSize = 8;
-    final int numberOfChunks = usersData.length ~/ chunkSize;
-
-    final List<List<String>> allUserEntries = List<List<String>>.generate(numberOfChunks, (index) {
-      int startIndex = index * chunkSize;
-      int endIndex = (index + 1) * chunkSize;
-      return usersData.sublist(startIndex, endIndex);
-    });
-
-    final List<ctrim.User> result = List<ctrim.User>.empty(growable: true);
-    for (final userEntry in allUserEntries) {
-      final thisUser = ctrim.User(
-          id: userEntry[0],
-          forname: userEntry[1],
-          surname: userEntry[2],
-          imgSrc: userEntry[3],
-          isLeader: userEntry[4] == '1',
-          isAreaAdmin: userEntry[5] == '1',
-          location: userEntry[6],
-          authID: userEntry[7]);
-      result.add(thisUser);
+    const int oldChunkSize = 8;
+    const int newChunkSize = 9;
+    final int dataLength = usersData.length;
+    int chunkSize = newChunkSize;
+    if (dataLength % newChunkSize == 0) {
+      chunkSize = newChunkSize;
+    } else if (dataLength % oldChunkSize == 0) {
+      chunkSize = oldChunkSize;
+    } else {
+      debugPrint('--local user cache format mismatch, refetching from DB');
+      shouldReadLocalData = false;
     }
 
-    return result;
-  } else {
-    debugPrint('--fetching users from DB');
+    if (shouldReadLocalData) {
+      final int numberOfChunks = dataLength ~/ chunkSize;
+
+      final List<List<String>> allUserEntries = List<List<String>>.generate(numberOfChunks, (index) {
+        int startIndex = index * chunkSize;
+        int endIndex = (index + 1) * chunkSize;
+        return usersData.sublist(startIndex, endIndex);
+      });
+
+      final List<ctrim.User> result = List<ctrim.User>.empty(growable: true);
+      for (final userEntry in allUserEntries) {
+        final tagIDs = chunkSize == newChunkSize && userEntry.length > 8
+            ? userEntry[8].split(',').where((e) => e.isNotEmpty).toList()
+            : <String>[];
+        final thisUser = ctrim.User(
+            id: userEntry[0],
+            forname: userEntry[1],
+            surname: userEntry[2],
+            imgSrc: userEntry[3],
+            isLeader: userEntry[4] == '1',
+            isAreaAdmin: userEntry[5] == '1',
+            location: userEntry[6],
+            authID: userEntry[7],
+            tagIDs: tagIDs);
+        result.add(thisUser);
+      }
+
+      return result;
+    }
+  }
+
+  debugPrint('--fetching users from DB');
     final UserDBManager userDBManager = UserDBManager();
     final allUsers = await userDBManager.fetchAllUsers();
 
@@ -241,6 +263,7 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
       allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
       allUsersContent += '\n${user.location}';
       allUsersContent += '\n${user.authID}';
+      allUsersContent += '\n${user.tagIDs.join(',')}';
     }
 
     debugPrint('--writing users from DB');
@@ -250,5 +273,4 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
 
     pref.setBool('fetchUserImages', true); // refresh user image fetch
     return allUsers;
-  }
 }

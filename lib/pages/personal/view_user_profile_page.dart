@@ -8,7 +8,9 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
+import '../../utility/user_tag_helpers.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/user_tag_chip.dart';
 import 'edit_user_page.dart';
 import 'view_user_roles_page.dart';
 
@@ -91,6 +93,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       eventHeads: _appContext.eventHeads,
       limit: 3,
     );
+    final userTags = UserTagHelpers.tagsForUser(user: widget.selectedUser, allTags: _appContext.allTags);
 
     return ListView(
       padding: EdgeInsets.fromLTRB(webHorizontalPadding, 16, webHorizontalPadding, 24),
@@ -130,6 +133,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
                       if (widget.selectedUser.isAreaAdmin) _buildBadge(l10n.userProfileAdminBadge, colorScheme.primaryContainer, colorScheme.onPrimaryContainer),
                     ],
                   ),
+                ],
+                if (userTags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  UserTagChipRow(tags: userTags, alignment: WrapAlignment.center),
                 ],
               ],
             ),

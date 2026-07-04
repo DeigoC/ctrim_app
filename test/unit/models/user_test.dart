@@ -40,6 +40,7 @@ void main() {
         expect(user.isAreaAdmin, true);
         expect(user.isLeader, true);
         expect(user.authID, 'auth-abc');
+        expect(user.tagIDs, isEmpty);
       });
     });
 
@@ -53,6 +54,7 @@ void main() {
           'IsLeader': true,
           'AuthID': 'auth-xyz',
           'ImgSrc': 'https://example.com/alice.png',
+          'Tags': ['tag-1', 'tag-2'],
         };
 
         final user = User.fromMap('99', map);
@@ -65,6 +67,20 @@ void main() {
         expect(user.isLeader, true);
         expect(user.authID, 'auth-xyz');
         expect(user.imgSrc, 'https://example.com/alice.png');
+        expect(user.tagIDs, ['tag-1', 'tag-2']);
+      });
+
+      test('fromMap defaults Tags to empty list when missing', () {
+        final user = User.fromMap('1', {
+          'Forename': 'A',
+          'Surname': 'B',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+        });
+        expect(user.tagIDs, isEmpty);
       });
     });
 
@@ -90,6 +106,18 @@ void main() {
         expect(json['IsLeader'], true);
         expect(json['ImgSrc'], 'img.png');
         expect(json['AuthID'], 'auth-1');
+        expect(json['Tags'], isEmpty);
+      });
+
+      test('serialises tag IDs', () {
+        final user = User(
+          id: '1',
+          forname: 'John',
+          surname: 'Smith',
+          tagIDs: ['a', 'b'],
+        );
+        final json = user.toJson() as Map<String, dynamic>;
+        expect(json['Tags'], ['a', 'b']);
       });
     });
 
@@ -195,6 +223,24 @@ void main() {
 
         expect(user.posts!.length, 1);
         expect(user.posts!.first.postID, 'post-2');
+      });
+    });
+
+    group('tag IDs', () {
+      test('setTagIDs stores unmodifiable list', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith');
+        user.setTagIDs(['t1', 't2']);
+
+        expect(user.tagIDs, ['t1', 't2']);
+        expect(() => user.tagIDs.add('t3'), throwsUnsupportedError);
+      });
+
+      test('hasTag and hasAnyTag work', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith', tagIDs: ['worship', 'tech']);
+        expect(user.hasTag('worship'), isTrue);
+        expect(user.hasTag('usher'), isFalse);
+        expect(user.hasAnyTag(['usher', 'tech']), isTrue);
+        expect(user.hasAnyTag(['usher']), isFalse);
       });
     });
 

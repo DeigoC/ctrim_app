@@ -23,6 +23,7 @@ import 'personal/share_open_beta_page.dart';
 import 'personal/view_all_users_page.dart';
 import 'personal/view_my_posts_page.dart';
 import 'personal/view_user_roles_page.dart';
+import 'personal/manage_user_tags_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
@@ -405,16 +406,32 @@ class _PersonalHomeState extends State<PersonalHome> {
               width: 1,
             ),
           ),
-          child: _buildModernListTile(
-            icon: Icons.newspaper_rounded,
-            title: 'Post Templates',
-            subtitle: 'Manage post templates',
-            onTap: _openViewTemplatesClick,
-            theme: theme,
-            colorScheme: colorScheme,
-            iconColor: colorScheme.primary,
-            isFirst: true,
-            isLast: true,
+          child: Column(
+            children: [
+              _buildModernListTile(
+                icon: Icons.newspaper_rounded,
+                title: 'Post Templates',
+                subtitle: 'Manage post templates',
+                onTap: _openViewTemplatesClick,
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.primary,
+                isFirst: true,
+                isLast: false,
+              ),
+              Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              _buildModernListTile(
+                icon: Icons.label_rounded,
+                title: AppLocalizations.of(context)!.manageUserTagsMenuTitle,
+                subtitle: AppLocalizations.of(context)!.manageUserTagsMenuSubtitle,
+                onTap: _openManageUserTagsClick,
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.primary,
+                isFirst: false,
+                isLast: true,
+              ),
+            ],
           ),
         ),
       ],
@@ -856,6 +873,10 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _openViewTemplatesClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewTemplatesPage()));
+  }
+
+  void _openManageUserTagsClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageUserTagsPage()));
   }
 
   void _onRegisterAccountClick() {

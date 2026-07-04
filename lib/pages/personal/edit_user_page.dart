@@ -11,6 +11,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/user_tag_picker.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditUserPage extends StatefulWidget {
@@ -34,6 +35,7 @@ class _EditUserPageState extends State<EditUserPage> {
   late bool _isAreaAdmin;
   late bool _isLeader;
   late String _src;
+  late Set<String> _selectedTagIDs;
   bool _testing = false;
   bool _canSave = false;
   bool _hasChanges = false;
@@ -49,6 +51,7 @@ class _EditUserPageState extends State<EditUserPage> {
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _src = widget.user.imgSrc;
+    _selectedTagIDs = Set<String>.from(widget.user.tagIDs);
 
     _tecForename.addListener(_onFieldChanged);
     _tecSurname.addListener(_onFieldChanged);
@@ -72,10 +75,16 @@ class _EditUserPageState extends State<EditUserPage> {
         _tecImgSrc.text != widget.user.imgSrc;
 
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin || _isLeader != widget.user.isLeader;
+    final hasTagChanges = !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
 
     setState(() {
-      _hasChanges = hasTextChanges || hasFlagChanges;
+      _hasChanges = hasTextChanges || hasFlagChanges || hasTagChanges;
     });
+  }
+
+  bool _setEquals(Set<String> a, Set<String> b) {
+    if (a.length != b.length) return false;
+    return a.containsAll(b);
   }
 
   @override
@@ -253,6 +262,19 @@ class _EditUserPageState extends State<EditUserPage> {
             ),
           ),
           const SizedBox(height: 16),
+          Consumer<AppContext>(
+            builder: (context, appContext, _) => UserTagPicker(
+              allTags: appContext.allTags,
+              selectedTagIDs: _selectedTagIDs,
+              onChanged: (selected) {
+                setState(() {
+                  _selectedTagIDs = selected;
+                  _onFieldChanged();
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // User ID Info
           Card(
@@ -352,11 +374,30 @@ class _EditUserPageState extends State<EditUserPage> {
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
       authID: widget.user.authID,
+      tagIDs: _selectedTagIDs.toList(),
     );
 
     try {
       // Update in database
-      await _userDBManager.updateUser(updatedUser);
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      final preservedInactiveTags = widget.user.tagIDs.where((id) {
+        final tag = appContext.tagById(id);
+        return tag != null && !tag.isActive;
+      });
+      final tagIDsToSave = [...preservedInactiveTags, ..._selectedTagIDs];
+
+      final userToSave = User(
+        id: updatedUser.id,
+        forname: updatedUser.forname,
+        surname: updatedUser.surname,
+        imgSrc: updatedUser.imgSrc,
+        location: updatedUser.location,
+        isAreaAdmin: updatedUser.isAreaAdmin,
+        isLeader: updatedUser.isLeader,
+        authID: updatedUser.authID,
+        tagIDs: tagIDsToSave,
+      );
+      await _userDBManager.updateUser(userToSave);
 
       // Update local image data if image changed
       if (_src != widget.user.imgSrc && _src.isNotEmpty) {
@@ -371,7 +412,25 @@ class _EditUserPageState extends State<EditUserPage> {
         final allUsers = appContext.allUsers;
         final index = allUsers.indexWhere((u) => u.id == widget.user.id);
         if (index != -1) {
-          allUsers[index].setImgSrc(updatedUser.imgSrc);
+          final existing = allUsers[index];
+          final replacement = User(
+            id: userToSave.id,
+            forname: userToSave.forname,
+            surname: userToSave.surname,
+            imgSrc: userToSave.imgSrc,
+            location: userToSave.location,
+            isAreaAdmin: userToSave.isAreaAdmin,
+            isLeader: userToSave.isLeader,
+            authID: userToSave.authID,
+            tagIDs: userToSave.tagIDs,
+          );
+          if (existing.roles != null) replacement.setRoles(existing.roles!.toList());
+          if (existing.posts != null) replacement.setPosts(existing.posts!.toList());
+          allUsers[index] = replacement;
+
+          if (appContext.currentUser.id == widget.user.id) {
+            appContext.setCurrentUser(replacement);
+          }
         }
 
         setState(() {
