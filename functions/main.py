@@ -1,7 +1,9 @@
 # Deploy with `firebase deploy --only functions`
 
-from firebase_functions import https_fn, options
-from firebase_admin import initialize_app, messaging
+from firebase_functions import firestore_fn, https_fn, options
+from firebase_admin import firestore, initialize_app, messaging
+
+from user_role_sync import sync_post_program_roles, sync_program_roles_from_change
 
 initialize_app()
 options.set_global_options(max_instances=10, region='europe-west1')
@@ -151,3 +153,48 @@ def send_to_topic(req: https_fn.CallableRequest) -> any:
 
     messaging.send(msg)
     return {'result': 'finished sending to topic!'}
+
+
+@https_fn.on_call(region='europe-west1')
+def sync_user_roles_for_post(req: https_fn.CallableRequest) -> any:
+    """Callable fallback for role sync (no Eventarc). Client invokes after program save."""
+    post_id = str(req.data.get('PostID', '')).strip()
+    if not post_id:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+            message='PostID is required',
+        )
+
+    removed_raw = str(req.data.get('RemovedUIDs', '')).strip()
+    cleared_uids = [uid.strip() for uid in removed_raw.split(',') if uid.strip()]
+
+    db = firestore.client()
+    result = sync_post_program_roles(db, post_id, cleared_uids=cleared_uids or None)
+    print(f'sync_user_roles_for_post post={post_id} result={result}')
+    return {'result': 'sync complete', **result}
+
+
+# Optional: auto-sync on program writes. Requires Eventarc IAM on first deploy —
+# if deploy fails with "Eventarc Service Agent", use sync_user_roles_for_post above
+# or wait a few minutes and retry.
+@firestore_fn.on_document_written(
+    document='events/{postId}/supplemental/program',
+    region='europe-west1',
+)
+def sync_user_roles_on_program_write(event: firestore_fn.Event[firestore_fn.Change | None]) -> None:
+    """Keep users/{uid}/supplemental/roles in sync when program docs change."""
+    if event.data is None:
+        return
+
+    post_id = event.params['postId']
+    db = firestore.client()
+
+    before_program = None
+    after_program = None
+    if event.data.before is not None and event.data.before.exists:
+        before_program = event.data.before.to_dict()
+    if event.data.after is not None and event.data.after.exists:
+        after_program = event.data.after.to_dict()
+
+    result = sync_program_roles_from_change(db, post_id, before_program, after_program)
+    print(f'sync_user_roles_on_program_write post={post_id} result={result}')

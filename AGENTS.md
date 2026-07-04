@@ -48,6 +48,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-04** — Users/Volunteers Phase 4: callable `sync_user_roles_for_post` (+ optional Firestore trigger); deploy callable first if Eventarc fails.
 - **2026-07-04** — Users/Volunteers Phase 3: profile hub, location filter, schedule badge fix; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Users/Volunteers Phase 2: `UserScheduleService` for role/post pruning; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Users/Volunteers Phase 1: typed `UserRoleAssignment` / `UserPostInvolvement`; see `docs/users-volunteers-improvement.md`.

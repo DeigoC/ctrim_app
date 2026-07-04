@@ -2,7 +2,7 @@
 
 > **Purpose:** Living document for a multi-session refactor of the `User` model, schedule sync, and Belfast Volunteers UI.  
 > **Created:** 2026-07-04  
-> **Status:** Phase 3 complete — Phase 4 (Cloud Function sync) not started  
+> **Status:** Phase 4 complete (deploy pending) — Phase 5 (admin tags) not started  
 > **Start here in a new chat:** “Continue the Users/Volunteers improvement from `docs/users-volunteers-improvement.md`”
 
 ---
@@ -93,7 +93,7 @@ flowchart LR
     D --> H[home_page refreshes roles]
 ```
 
-**Dual source of truth:** assignments live in `EventProgram.roles[].uids` *and* denormalized on each user's `roles` doc. They can drift if a client write fails or is not awaited.
+**Dual source of truth:** assignments live in `EventProgram.roles[].uids` *and* denormalized on each user's `roles` doc. **Phase 4:** `sync_user_roles_on_program_write` (Cloud Function) re-syncs user supplemental roles whenever `events/{postId}/supplemental/program` is written. Client no longer writes roles on post save; stale-row cleanup remains client-side via `UserScheduleService`.
 
 ---
 
@@ -295,11 +295,21 @@ Use this checklist across chats. Update **Status** at the top when a phase compl
 - [x] Fix My Schedule badge — `UserScheduleService.upcomingPostCount` (distinct upcoming posts)
 - [x] Localize new strings in `app_en.arb` (volunteers, profile, schedule menu)
 
-### Phase 4 — Optional backend (separate deploy)
+### Phase 4 — Backend role sync
 
-- [ ] Cloud Function: sync `users/{uid}/supplemental/roles` from post program on write
-- [ ] Deploy to `ctrim-8b49b` functions
-- [ ] Client can simplify writes (notify only, or stop writing roles client-side)
+- [x] Callable CF `sync_user_roles_for_post` — **deploy this first** (same as other HTTPS functions)
+- [x] Client invokes CF after program save (`add_event_page`, `event_log_dialog`)
+- [x] Optional Firestore trigger `sync_user_roles_on_program_write` (may fail first deploy — Eventarc IAM)
+- [x] **Deploy callable:** `firebase deploy --only functions:sync_user_roles_for_post --project ctrim-8b49b`
+- [ ] **Optional later:** `firebase deploy --only functions:sync_user_roles_on_program_write` (retry after ~10 min if Eventarc error)
+
+#### Eventarc deploy error (Firestore trigger)
+
+If you see `Permission denied while using the Eventarc Service Agent`:
+
+1. **Use the callable** — the app already calls `sync_user_roles_for_post` after every program save; roles work without the trigger.
+2. Wait 5–10 minutes and retry the Firestore trigger deploy (first 2nd-gen function in a project).
+3. Or in [Google Cloud Console → IAM](https://console.cloud.google.com/iam-admin/iam?project=ctrim-8b49b), ensure the **Eventarc Service Agent** (`service-<PROJECT_NUMBER>@gcp-sa-eventarc.iam.gserviceaccount.com`) has the **Eventarc Service Agent** role.
 
 ### Phase 5 — Admin-managed user tags (1–2 chats)
 
@@ -416,6 +426,7 @@ Extend `User` with `List<String> tagIDs` (or typed `List<UserTagAssignment>` if 
 | 2026-07-04 | Phase 0 | Async awaits in UserDBManager + callers; `allowPostView` → Schedule/Posts tabs; orphan role cleanup deferred to post-frame |
 | 2026-07-04 | Phase 1 | Typed `UserRoleAssignment`, `UserPostInvolvement` + `PostOwnership`; `User`/`UserDBManager`/callers migrated; 3 test files |
 | 2026-07-04 | Phase 2 | `UserScheduleService` centralises role/post pruning; callers in `main.dart`, schedule + posts pages |
+| 2026-07-04 | Phase 4 | CF `sync_user_roles_on_program_write`; client role writes removed on post save |
 | 2026-07-04 | Phase 3 | `ViewUserProfilePage`, location filter on volunteers list, badge fix, l10n |
 | 2026-07-04 | Planning | Admin-managed user tags (Phase 5) — design added; not implemented |
 

@@ -33,7 +33,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
-  final UserDBManager _userDBManager = UserDBManager();
   bool _canSave = false;
 
   @override
@@ -134,6 +133,13 @@ class _EventLogDialogState extends State<EventLogDialog> {
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
+
+    if (widget.eventContext.head.eventDate != null) {
+      await _cloudFunctionManager.syncUserRolesForPost(
+        postId: widget.eventContext.id,
+        removedUserIds: widget.eventContext.collectRoleRemovalUserIds(),
+      );
+    }
 
     final List<Future<void>> tasks = [
       _sendContributorAdditionNotificaitons(),
@@ -236,13 +242,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        await _userDBManager.addUserRole(
-            uid: thisUID,
-            postID: widget.eventContext.id,
-            roleID: additionEntry.key,
-            millisecondStart: (roleEntry['start'] as DateTime).millisecondsSinceEpoch,
-            millisecondEnd: (roleEntry['end'] as DateTime).millisecondsSinceEpoch,
-            title: roleEntry['title']);
       }
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -269,7 +268,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        await _userDBManager.removeUserRole(thisUID, removalEntry.key);
       }
       await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);

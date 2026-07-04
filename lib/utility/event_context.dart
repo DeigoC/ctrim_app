@@ -119,11 +119,11 @@ class EventContext {
     _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': now});
 
     await headDBManager.saveNewHead(headToUpload);
-    dbManager.addBody(_body.json);
-    dbManager.addMedia(_media);
-    dbManager.addMetadata(_metadata);
-    dbManager.setLog(_log);
-    dbManager.addProgram(_program);
+    await dbManager.addBody(_body.json);
+    await dbManager.addMedia(_media);
+    await dbManager.addMetadata(_metadata);
+    await dbManager.setLog(_log);
+    await dbManager.addProgram(_program);
     return newID;
   }
 
@@ -138,10 +138,19 @@ class EventContext {
     dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
 
     await headDBManager.updateHead(_head);
-    dbManager.updateBody(_body.decodedJson);
-    dbManager.updateMetadata(_metadata);
-    dbManager.updateProgram(_program);
-    dbManager.updateMedia(_media);
+    await dbManager.updateBody(_body.decodedJson);
+    await dbManager.updateMetadata(_metadata);
+    await dbManager.updateProgram(_program);
+    await dbManager.updateMedia(_media);
+  }
+
+  /// User IDs removed from program roles during the current edit (for CF role sync).
+  List<String> collectRoleRemovalUserIds() {
+    final uids = <String>{};
+    for (final removed in _roleRemovals.values) {
+      uids.addAll(removed);
+    }
+    return uids.toList();
   }
 
   String get id => _head.id;

@@ -45,6 +45,8 @@ class UserDBManager {
     return UserRoleAssignment.listFromFirestore(roleData);
   }
 
+  // Role/post tracking: program role rows are synced by Cloud Function
+  // sync_user_roles_on_program_write; clients still prune stale rows locally.
   Future<void> addUserRole(
       {required String uid,
       required String postID,

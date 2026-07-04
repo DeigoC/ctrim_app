@@ -153,6 +153,25 @@ class CloudFunctionManager {
     }
   }
 
+  /// Sync supplemental user roles from the saved event program (Phase 4 CF).
+  Future<void> syncUserRolesForPost({
+    required String postId,
+    List<String> removedUserIds = const [],
+  }) async {
+    try {
+      NotificationDebug.section('syncUserRolesForPost');
+      NotificationDebug.log('postId=$postId removed=${removedUserIds.length}');
+      final callable = _inst.httpsCallable('sync_user_roles_for_post');
+      final result = await callable.call({
+        'PostID': postId,
+        'RemovedUIDs': removedUserIds.join(','),
+      });
+      NotificationDebug.log('sync_user_roles_for_post result: ${result.data}');
+    } catch (e) {
+      NotificationDebug.error('sync_user_roles_for_post failed', e);
+    }
+  }
+
   List<String> _convertMapToKeyValueStrings(Map<String, String> data) {
     if (data.isEmpty) {
       return ['', ''];
