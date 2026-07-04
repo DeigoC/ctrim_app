@@ -48,6 +48,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-04** — Users/Volunteers Phase 1: typed `UserRoleAssignment` / `UserPostInvolvement`; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Users/Volunteers Phase 0: awaited supplemental Firestore writes; `ViewUserRolesPage` Schedule/Posts tabs when `allowPostView`; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Wide-screen home shell: `NavigationRail` (≥900px) in `home_page.dart`; CTRIM section uses vertical subsection nav on wide screens in `information_home.dart` (mobile keeps bottom nav + horizontal tabs).
 - **2026-06-29** — Web push aligned with worship pattern: `send_each_for_multicast` CF, topic fan-out via `web_topics` only, `WebNotificationLifecycle`, `NotificationTokenResolver`; deploy `functions/` + `firestore.rules` to `ctrim-8b49b`.

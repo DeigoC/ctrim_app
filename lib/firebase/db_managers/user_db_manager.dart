@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/user.dart';
+import '../../models/user_post_involvement.dart';
+import '../../models/user_role_assignment.dart';
 
 class UserDBManager {
   static final CollectionReference _ref = FirebaseFirestore.instance.collection('users').withConverter<User>(
@@ -34,16 +36,13 @@ class UserDBManager {
     return null;
   }
 
-  // * Suppplemental data
-  // For the sake of further enhancement to these fields, they will remain as a list of maps
-
   // User roles (or tasks)
   // this tracks the posts that they have a specific role in as well as
   // the id (datetime) of the specific schedule item
-  Future<List<Map<String, dynamic>>> fetchUserRoles(final String uid) async {
+  Future<List<UserRoleAssignment>> fetchUserRoles(final String uid) async {
     final doc = await _ref.doc(uid).collection(_supplemental).doc(_roles).get();
-    final roleData = List<Map<String, dynamic>>.from(doc.data()![_roles]);
-    return roleData;
+    final roleData = List<dynamic>.from(doc.data()![_roles]);
+    return UserRoleAssignment.listFromFirestore(roleData);
   }
 
   Future<void> addUserRole(
@@ -54,44 +53,54 @@ class UserDBManager {
       required int millisecondEnd,
       required String title}) async {
     final data = await fetchUserRoles(uid);
-    data.add({'postID': postID, 'id': roleID, 'startMil': millisecondStart, 'endMil': millisecondEnd, 'title': title});
-    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+    data.add(UserRoleAssignment(
+      postID: postID,
+      roleID: roleID,
+      start: DateTime.fromMillisecondsSinceEpoch(millisecondStart),
+      end: DateTime.fromMillisecondsSinceEpoch(millisecondEnd),
+      title: title,
+    ));
+    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: UserRoleAssignment.listToFirestore(data)});
   }
 
   Future<void> removeUserRole(final String uid, final int roleID) async {
     final data = await fetchUserRoles(uid);
-    data.removeWhere((e) => e['id'] as int == roleID);
-    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+    data.removeWhere((e) => e.roleID == roleID);
+    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: UserRoleAssignment.listToFirestore(data)});
   }
 
   Future<void> removeUserPostRole(final String uid, final String postID) async {
     final data = await fetchUserRoles(uid);
-    data.removeWhere((e) => e['postID'] == postID);
-    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: data});
+    data.removeWhere((e) => e.postID == postID);
+    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: UserRoleAssignment.listToFirestore(data)});
   }
 
   // User posts
   // this tracks the posts the user is tied with as either
   // an author or contributor
-  Future<List<Map<String, dynamic>>> fetchUserPosts(final String uid) async {
+  Future<List<UserPostInvolvement>> fetchUserPosts(final String uid) async {
     final doc = await _ref.doc(uid).collection(_supplemental).doc(_posts).get();
-    final postsData = List<Map<String, dynamic>>.from(doc.data()![_posts]);
-    return postsData;
+    final postsData = List<dynamic>.from(doc.data()![_posts]);
+    return UserPostInvolvement.listFromFirestore(postsData);
   }
 
   Future<void> addPostToUser(final String uid, final String postID, final String ownership) async {
     final data = await fetchUserPosts(uid);
-    data.add({'id': postID, 'ownership': ownership});
-    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
+    data.add(UserPostInvolvement(postID: postID, ownership: PostOwnership.fromString(ownership)));
+    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: UserPostInvolvement.listToFirestore(data)});
   }
 
   Future<void> removePostFromUser(final String uid, final String postID) async {
     final data = await fetchUserPosts(uid);
-    data.removeWhere((e) => e['id'] == postID);
-    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: data});
+    data.removeWhere((e) => e.postID == postID);
+    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: UserPostInvolvement.listToFirestore(data)});
   }
 
   Future<void> updatePosts(final User user) async {
-    await _ref.doc(user.id).collection(_supplemental).doc(_posts).update({_posts: user.posts!});
+    await _ref
+        .doc(user.id)
+        .collection(_supplemental)
+        .doc(_posts)
+        .update({_posts: UserPostInvolvement.listToFirestore(user.posts!.toList())});
   }
 }

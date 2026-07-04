@@ -1,9 +1,13 @@
 import 'dart:collection';
 
+import 'user_post_involvement.dart';
+import 'user_role_assignment.dart';
+
 class User {
   late String _forename, _surname, _authID, _imgSrc, _id, _location;
   late bool _isAreaAdmin, _isLeader;
-  List<Map<String, dynamic>>? _roles, _posts;
+  List<UserRoleAssignment>? _roles;
+  List<UserPostInvolvement>? _posts;
 
   User(
       {required String id,
@@ -48,11 +52,11 @@ class User {
 
   void setImgSrc(final String newImgSrc) => _imgSrc = newImgSrc;
 
-  void setRoles(final List<Map<String, dynamic>> newRoles) => _roles = newRoles;
-  void removeRoles(final List<String> postIDs) => _roles!.removeWhere((e) => postIDs.contains(e['postID']));
+  void setRoles(final List<UserRoleAssignment> newRoles) => _roles = newRoles;
+  void removeRoles(final List<String> postIDs) => _roles!.removeWhere((e) => postIDs.contains(e.postID));
 
-  void setPosts(final List<Map<String, dynamic>> newPosts) => _posts = newPosts;
-  void removeAllPosts(final List<String> allPosts) => _posts!.removeWhere((e) => allPosts.contains(e['id']));
+  void setPosts(final List<UserPostInvolvement> newPosts) => _posts = newPosts;
+  void removeAllPosts(final List<String> postIDs) => _posts!.removeWhere((e) => postIDs.contains(e.postID));
 
   String get id => _id;
   String get forname => _forename;
@@ -66,6 +70,6 @@ class User {
   bool get isAreaAdmin => _isAreaAdmin;
   bool get isLeader => _isLeader;
 
-  List<Map<String, dynamic>>? get roles => _roles == null ? null : UnmodifiableListView(_roles!);
-  List<Map<String, dynamic>>? get posts => _posts == null ? null : UnmodifiableListView(_posts!);
+  List<UserRoleAssignment>? get roles => _roles == null ? null : UnmodifiableListView(_roles!);
+  List<UserPostInvolvement>? get posts => _posts == null ? null : UnmodifiableListView(_posts!);
 }

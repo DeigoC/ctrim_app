@@ -2,7 +2,7 @@
 
 > **Purpose:** Living document for a multi-session refactor of the `User` model, schedule sync, and Belfast Volunteers UI.  
 > **Created:** 2026-07-04  
-> **Status:** Phase 0 complete — Phase 1 (typed models) not started  
+> **Status:** Phase 1 complete — Phase 2 (centralized sync) not started  
 > **Start here in a new chat:** “Continue the Users/Volunteers improvement from `docs/users-volunteers-improvement.md`”
 
 ---
@@ -268,12 +268,13 @@ Use this checklist across chats. Update **Status** at the top when a phase compl
 
 ### Phase 1 — Typed models (1–2 chats)
 
-- [ ] Create `lib/models/user_role_assignment.dart`
-- [ ] Create `lib/models/user_post_involvement.dart`
-- [ ] Refactor `User` to use typed lists (keep Firestore shape compatible)
-- [ ] Update `UserDBManager` read/write
-- [ ] Update `user_test.dart` + new model tests
-- [ ] Run `flutter analyze` + `flutter test test/unit/`
+- [x] Create `lib/models/user_role_assignment.dart`
+- [x] Create `lib/models/user_post_involvement.dart` (includes `PostOwnership` enum)
+- [x] Refactor `User` to use typed lists (Firestore shape unchanged via `toJson`/`fromMap`)
+- [x] Update `UserDBManager` read/write
+- [x] Update callers: `view_user_roles_page`, `view_my_posts_page`, `main.dart`
+- [x] Update `user_test.dart` + new model tests
+- [x] Run `flutter analyze` + `flutter test test/unit/`
 
 ### Phase 2 — Centralized sync (1 chat)
 
@@ -320,6 +321,7 @@ Use this checklist across chats. Update **Status** at the top when a phase compl
 |------|-------------|------|
 | 2026-07-04 | Initial audit & this document | Findings + phased plan |
 | 2026-07-04 | Phase 0 | Async awaits in UserDBManager + callers; `allowPostView` → Schedule/Posts tabs; orphan role cleanup deferred to post-frame |
+| 2026-07-04 | Phase 1 | Typed `UserRoleAssignment`, `UserPostInvolvement` + `PostOwnership`; `User`/`UserDBManager`/callers migrated; 3 test files |
 
 *(Append rows as work progresses.)*
 

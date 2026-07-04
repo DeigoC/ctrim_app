@@ -58,8 +58,8 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   Widget _buildBodyWithData() {
     // only use posts that exist with the fetched heads - we'll have removed unncessary posts by then?
     final List<String> postIDs = _appContext.currentUser.posts!
-        .where((e) => _appContext.eventHeads.any((head) => head.id == e['id']))
-        .map((e) => e['id'] as String)
+        .where((e) => _appContext.eventHeads.any((head) => head.id == e.postID))
+        .map((e) => e.postID)
         .toList();
 
     final double webHorizontalPadding =
@@ -87,8 +87,8 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   // remove really old posts otherwise this list will get really big
   Future<void> _removeOldPosts() async {
     final List<String> postsToRemove = _appContext.currentUser.posts!
-        .where((e) => !_appContext.eventHeads.any((head) => head.id == e['id']))
-        .map((e) => e['id'] as String)
+        .where((e) => !_appContext.eventHeads.any((head) => head.id == e.postID))
+        .map((e) => e.postID)
         .toList();
     if (postsToRemove.isEmpty) return;
     debugPrint('removing the following posts: $postsToRemove');

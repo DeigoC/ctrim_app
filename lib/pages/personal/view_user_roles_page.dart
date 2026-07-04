@@ -121,7 +121,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     final Map<String, int> roleConterPerPost = {};
 
     for (final roleEntry in widget.selectedUser.roles!) {
-      final String thisPostID = roleEntry['postID'];
+      final String thisPostID = roleEntry.postID;
       if (roleConterPerPost.containsKey(thisPostID)) {
         roleConterPerPost[thisPostID] = roleConterPerPost[thisPostID]! + 1;
       } else {
@@ -214,8 +214,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   Widget _buildPostsBodyWithData() {
     final List<String> postIDs = widget.selectedUser.posts!
-        .where((e) => _appContext.eventHeads.any((head) => head.id == e['id']))
-        .map((e) => e['id'] as String)
+        .where((e) => _appContext.eventHeads.any((head) => head.id == e.postID))
+        .map((e) => e.postID)
         .toList();
 
     if (postIDs.isEmpty) {
@@ -272,14 +272,13 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     final postHead = _appContext.eventHeads.firstWhere((e) => e.id == postID);
     final List<Widget> roleChildren = [];
 
-    final userRoles = widget.selectedUser.roles!.where((e) => e['postID'] == postID).toList();
-    userRoles.sort(((a, b) => (a['startMil'] as int).compareTo(b['startMil'] as int)));
+    final userRoles = widget.selectedUser.roles!.where((e) => e.postID == postID).toList();
+    userRoles.sort(((a, b) => a.start.compareTo(b.start)));
 
     for (final roleElement in userRoles) {
-      final String timeString =
-          '${_timeFormat.format(DateTime.fromMillisecondsSinceEpoch(roleElement['startMil']))} - ${_timeFormat.format(DateTime.fromMillisecondsSinceEpoch(roleElement['endMil']))}';
+      final String timeString = '${_timeFormat.format(roleElement.start)} - ${_timeFormat.format(roleElement.end)}';
       roleChildren.add(ListTile(
-        title: Text(roleElement['title']),
+        title: Text(roleElement.title),
         subtitle: Text(timeString),
         leading: const Icon(Icons.event),
       ));
@@ -333,15 +332,15 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     // remove roles set in the past
     final List<String> postsToRemove = [];
     for (final roleEntry in widget.selectedUser.roles!) {
-      if (_appContext.eventHeads.any((e) => e.id == roleEntry['postID'])) {
-        final post = _appContext.getPostHead(roleEntry['postID']);
+      if (_appContext.eventHeads.any((e) => e.id == roleEntry.postID)) {
+        final post = _appContext.getPostHead(roleEntry.postID);
         if (post.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
           postsToRemove.add(post.id);
         }
       } else {
         // in the future, the bandwidth of posts might get pretty large where future posts will start to drift away
         // somthing to be mindful of as the app scales forward
-        postsToRemove.add(roleEntry['postID']);
+        postsToRemove.add(roleEntry.postID);
       }
     }
 
@@ -374,8 +373,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
   Future<void> _removeOldPosts() async {
     final List<String> postsToRemove = widget.selectedUser.posts!
-        .where((e) => !_appContext.eventHeads.any((head) => head.id == e['id']))
-        .map((e) => e['id'] as String)
+        .where((e) => !_appContext.eventHeads.any((head) => head.id == e.postID))
+        .map((e) => e.postID)
         .toList();
     if (postsToRemove.isEmpty) return;
     debugPrint('removing the following posts: $postsToRemove');

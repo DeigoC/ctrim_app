@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_post_involvement.dart';
+import 'package:ctrim_app/models/user_role_assignment.dart';
 
 void main() {
   group('User', () {
@@ -131,49 +133,68 @@ void main() {
 
       test('setRoles stores and returns an unmodifiable list', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
-        final roles = [
-          {'postID': 'p1', 'title': 'Leader'},
-        ];
-        user.setRoles(roles);
+        user.setRoles([
+          UserRoleAssignment(
+            postID: 'p1',
+            roleID: 1,
+            start: DateTime(2024, 6, 15, 10),
+            end: DateTime(2024, 6, 15, 11),
+            title: 'Leader',
+          ),
+        ]);
 
         expect(user.roles, isNotNull);
         expect(user.roles!.length, 1);
-        expect(() => user.roles!.add({}), throwsUnsupportedError);
+        expect(user.roles!.first.title, 'Leader');
+        expect(() => user.roles!.add(user.roles!.first), throwsUnsupportedError);
       });
 
       test('setPosts stores and returns an unmodifiable list', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          {'id': 'post-1'},
+          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
         ]);
 
         expect(user.posts, isNotNull);
         expect(user.posts!.length, 1);
-        expect(() => user.posts!.add({}), throwsUnsupportedError);
+        expect(user.posts!.first.postID, 'post-1');
+        expect(() => user.posts!.add(user.posts!.first), throwsUnsupportedError);
       });
 
       test('removeRoles removes matching entries', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setRoles([
-          {'postID': 'p1'},
-          {'postID': 'p2'},
+          UserRoleAssignment(
+            postID: 'p1',
+            roleID: 1,
+            start: DateTime(2024, 6, 15, 10),
+            end: DateTime(2024, 6, 15, 11),
+            title: 'A',
+          ),
+          UserRoleAssignment(
+            postID: 'p2',
+            roleID: 2,
+            start: DateTime(2024, 6, 16, 10),
+            end: DateTime(2024, 6, 16, 11),
+            title: 'B',
+          ),
         ]);
         user.removeRoles(['p1']);
 
         expect(user.roles!.length, 1);
-        expect(user.roles!.first['postID'], 'p2');
+        expect(user.roles!.first.postID, 'p2');
       });
 
       test('removeAllPosts removes matching entries', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          {'id': 'post-1'},
-          {'id': 'post-2'},
+          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
+          UserPostInvolvement(postID: 'post-2', ownership: PostOwnership.contributor),
         ]);
         user.removeAllPosts(['post-1']);
 
         expect(user.posts!.length, 1);
-        expect(user.posts!.first['id'], 'post-2');
+        expect(user.posts!.first.postID, 'post-2');
       });
     });
 

@@ -154,13 +154,13 @@ Future<void> _fetchEssentialDataInBackground(
         currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
         final List<String> postsToRemove = [];
         for (final roleEntry in currentUser.roles!) {
-          if (heads.any((e) => e.id == roleEntry['postID'])) {
-            final thisPost = heads.firstWhere((e) => e.id == roleEntry['postID']);
+          if (heads.any((e) => e.id == roleEntry.postID)) {
+            final thisPost = heads.firstWhere((e) => e.id == roleEntry.postID);
             if (thisPost.eventDate!.add(const Duration(days: 1)).isBefore(DateTime.now())) {
               postsToRemove.add(thisPost.id);
             }
           } else {
-            postsToRemove.add(roleEntry['postID']);
+            postsToRemove.add(roleEntry.postID);
           }
         }
 
