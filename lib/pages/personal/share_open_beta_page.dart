@@ -57,7 +57,7 @@ class ShareOpenBetaPage extends StatelessWidget {
             Text(
               'Help us improve by testing new features before they\'re released!',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
               ),
               textAlign: TextAlign.center,
             ),
@@ -143,7 +143,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.shadow.withOpacity(0.1),
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -157,7 +157,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                     return Container(
                       width: 200,
                       height: 200,
-                      color: colorScheme.surfaceVariant,
+                      color: colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.qr_code,
                         size: 100,
@@ -261,7 +261,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.shadow.withOpacity(0.1),
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -275,7 +275,7 @@ class ShareOpenBetaPage extends StatelessWidget {
                     return Container(
                       width: 200,
                       height: 200,
-                      color: colorScheme.surfaceVariant,
+                      color: colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.qr_code,
                         size: 100,

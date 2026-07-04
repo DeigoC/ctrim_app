@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../utility/notification_token_resolver.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
@@ -17,6 +17,7 @@ import '../../widgets/posts/view_post_body.dart';
 import 'add_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -31,12 +32,20 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   late final AppContext _appContext;
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
-  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final EventHeadDBManager _headDBManager = EventHeadDBManager();
   final UserDBManager _userDBManager = UserDBManager();
 
   bool _canSave = false;
+  bool _allowPop = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -58,12 +67,17 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return PopScope(
-      canPop: false,
-      onPopInvoked: (popping) =>
-          !popping ? _onWillPop().then((popping) => popping ? Navigator.of(context).pop() : null) : null,
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
       child: Scaffold(
           floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -95,7 +109,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               onPressed: () => _showSettings(),
               icon: const Icon(Icons.more_horiz, color: Colors.white),
               label: const Text('Edit', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withOpacity(0.55))),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withValues(alpha: 0.55))),
           const SizedBox(width: 8)
         ],
       ),
@@ -178,17 +192,24 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     return true;
   }
 
-  void _onSaveClick() {
-    _confirmSave().then((confirmed) {
-      if (confirmed) {
-        DialogManager.showProgressDialog(context: context, title: 'Uploading Post');
-        _savePost().then((_) {
-          Navigator.of(context).pop(); // pop the progress dialog
-          Navigator.of(context).pop(); // pop this add page
-          Navigator.of(context).pop(); // pop the template page
-        });
-      }
-    });
+  void _onSaveClick() async {
+    final confirmed = await _confirmSave();
+    if (!confirmed || !mounted) return;
+
+    DialogManager.showProgressDialog(context: context, title: 'Uploading Post');
+    try {
+      await _savePost();
+      if (!mounted) return;
+      Navigator.of(context).pop(); // pop the progress dialog
+      Navigator.of(context).pop(); // pop this add page
+      Navigator.of(context).pop(); // pop the template page
+    } catch (e) {
+      debugPrint('Error saving post: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to upload post: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<bool> _confirmSave() async {
@@ -298,7 +319,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (!_appContext.haveTokensForUserID(thisUID)) {
         final List<String> tokens =
-            await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+            await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
         _appContext.addTokensToUserID(thisUID, tokens);
       }
 
@@ -316,7 +337,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     }
   }
 
-  // TODO: insane! We need to break these mothods down
   Future<void> _notifyProgramRoleAddtitions(final String newPostID) async {
     final String currentUserName = _appContext.currentUser.forname;
     final String currentUID = _appContext.currentUser.id;
@@ -331,7 +351,7 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         if (thisUID != currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             final List<String> fetchedTokens =
-                await _everyoneDBManager.fetchTokensFromAuthID(_appContext.getAuthIDFromUID(thisUID));
+                await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
             _appContext.addTokensToUserID(thisUID, fetchedTokens);
           }
 

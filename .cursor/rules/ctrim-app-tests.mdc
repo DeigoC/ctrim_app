@@ -1,0 +1,18 @@
+---
+description: ctrim_app unit test conventions
+globs: test/**
+alwaysApply: false
+---
+
+# ctrim_app tests
+
+- Unit tests: `test/unit/models/<model>_test.dart`
+- Groups mirror public API: constructor, fromMap, toJson, getters, setters
+- Prefer real objects for pure Dart models (no mock library in pubspec yet)
+
+```bash
+flutter test test/unit/
+flutter analyze
+```
+
+Add `mockito` or `mocktail` to dev_dependencies only when Firebase mocking is required.

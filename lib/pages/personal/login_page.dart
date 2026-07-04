@@ -11,7 +11,9 @@ import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
+import '../../utility/web_notification_lifecycle.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/responsive_layout.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -72,11 +74,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = size.width >= 768 ? size.width / 7 : 24.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, narrowPadding: 24.0);
 
     return PopScope(
-      canPop: false,
-      onPopInvoked: (_) => _loggedIn ? null : _onWillPop(),
+      canPop: _loggedIn,
+      onPopInvokedWithResult: (didPop, result) => _loggedIn ? null : _onWillPop(),
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
@@ -161,7 +163,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.1),
+                color: colorScheme.shadow.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -223,7 +225,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
@@ -280,7 +282,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           borderSide: BorderSide(color: colorScheme.error),
         ),
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -379,10 +381,22 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final authID = await _attemptToLogin();
 
     if (authID != null) {
-      await _logUserToApp(authID);
-      if (mounted) {
-        Navigator.of(context).pop(); // Close progress dialog
-        Navigator.of(context).pop(); // Close login page
+      try {
+        await _logUserToApp(authID);
+        if (mounted) {
+          Navigator.of(context).pop(); // Close progress dialog
+          Navigator.of(context).pop(); // Close login page
+        }
+      } catch (e) {
+        debugPrint('Error logging in user: $e');
+        if (mounted) {
+          Navigator.of(context).pop(); // dismiss progress dialog
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to complete login: $e'), behavior: SnackBarBehavior.floating));
+        }
       }
     } else {
       setState(() {
@@ -393,20 +407,28 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Future<void> _logUserToApp(final String authID) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final MessagingManager messagingManager = MessagingManager();
 
-    final String? token = await messagingManager.getToken();
+    // Defer token registration on first open; HomePage shows welcome before any prompt.
+    if (!appContext.sharedPref.isFirstOpen) {
+      if (kIsWeb) {
+        final lifecycle = WebNotificationLifecycle();
+        await lifecycle.register(
+          authId: authID,
+          onTokenSaved: appContext.sharedPref.saveFCMToken,
+        );
+      } else {
+        final MessagingManager messagingManager = MessagingManager();
+        final String? token = await messagingManager.getToken();
+        if (token != null) {
+          final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+          everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
+          appContext.sharedPref.saveFCMToken(token);
+        }
+      }
+    }
+
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
-
-    debugPrint('setting device token as $token');
-    final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-    final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
-
-    if (token != null) {
-      everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: platformName);
-      appContext.sharedPref.saveFCMToken(token);
-    }
 
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);

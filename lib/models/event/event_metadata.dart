@@ -24,7 +24,7 @@ class EventMetadata {
         _childrenIDs = List<String>.from(data['ChildrenIDs']),
         _topics = List<String>.from(data['Topics'] ?? []);
 
-  toJson() {
+  Map<String, Object?> toJson() {
     return {
       'AuthorUID': _authorUID,
       'LastUID': _lastUID,

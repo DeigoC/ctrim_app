@@ -11,6 +11,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/user_avatar.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditUserPage extends StatefulWidget {
   const EditUserPage({super.key, required this.user});
@@ -97,7 +98,7 @@ class _EditUserPageState extends State<EditUserPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),

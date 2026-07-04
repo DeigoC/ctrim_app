@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/responsive_layout.dart';
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({super.key, required this.eventContext});
@@ -56,7 +57,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
@@ -66,7 +67,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           // Media Preview Card
           Card(
             elevation: 2,
-            child: Container(
+            child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.3,
               child: _buildMediaTestSlot(),
             ),
@@ -247,7 +248,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
               : Theme.of(context).colorScheme.surface,
         ),
         child: Column(
@@ -257,7 +258,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               size: 32,
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 8),
             Text(
@@ -272,7 +273,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -291,9 +292,9 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
+          color: Colors.blue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -317,9 +318,9 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
+          color: Colors.red.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.withOpacity(0.3)),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -352,7 +353,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
           ),
         ],
@@ -384,7 +385,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
           ),
         ],
@@ -396,7 +397,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -420,7 +421,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
           ),
         ],
@@ -460,7 +461,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
           ),
           const SizedBox(height: 16),
@@ -483,7 +484,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       return Container(
         decoration: BoxDecoration(
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
             style: BorderStyle.solid,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -496,20 +497,20 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               Icon(
                 _isVideo ? Icons.videocam_outlined : Icons.image_outlined,
                 size: 64,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
                 'Media Preview',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Add a URL and test to see preview',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
               ),
             ],
@@ -715,7 +716,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                     'Video is ready! You can add a thumbnail URL above for better preview.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -849,7 +850,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -878,7 +879,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                     'Source: ${_src.length > 50 ? '${_src.substring(0, 47)}...' : _src}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -1026,7 +1027,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).colorScheme.primaryContainer,
@@ -1053,7 +1054,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             content,
             style: TextStyle(
               fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
         ],

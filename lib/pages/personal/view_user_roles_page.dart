@@ -8,6 +8,7 @@ import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../events/view_event_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
   const ViewUserRolesPage({super.key, required this.selectedUser, this.allowPostView = false});
@@ -110,8 +111,12 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
               style: TextStyle(fontSize: 16),
             ),
             TextButton.icon(
-              onPressed: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
+              onPressed: () async {
+                await _refreshRoles();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+              },
               label: const Text('Refresh'),
               icon: const Icon(Icons.refresh),
             )
@@ -131,11 +136,15 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
     // finish building
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 8;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
 
     return RefreshIndicator(
-      onRefresh: () => _refreshRoles().then((_) => ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating))),
+      onRefresh: () async {
+        await _refreshRoles();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+      },
       child: ListView.separated(
           padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
           itemCount: sortedPostIDs.length,

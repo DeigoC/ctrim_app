@@ -9,8 +9,11 @@ service cloud.firestore {
     }
 
     match /everyone/{auth_id}{
-      // Only authenticated users can read their own auth document
-      allow read: if request.auth != null && auth_id == request.auth.uid;
+      // Only authenticated users can read their own auth document, or admins can read any
+      allow read: if request.auth != null && (
+        auth_id == request.auth.uid ||
+        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true
+      );
       
       // allow authenticated users to create their own document 
       allow create: if request.auth != null && auth_id == request.auth.uid && request.resource.data.keys().hasOnly(['email']);
@@ -20,6 +23,7 @@ service cloud.firestore {
       
       // for the bookmarks and supplemental parts, we should only allow the same user access to it
       match /supplemental/{document}{
+        allow read: if request.auth != null && auth_id == request.auth.uid;
         allow write: if request.auth != null && request.resource.data.auth == request.auth.uid;
       }
     }
@@ -35,15 +39,30 @@ service cloud.firestore {
       allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true;   
     }
     
-    match /users/{documents=**}{
+    match /users/{userId}{
       // Allow anyone to read user profiles (guest-friendly)
       allow read: if true;
-      
-      // only admins can register new users
-      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;  
-      
-      // allows users to change their own imgSrc (TODO: I think this can be tightened to only the same user can edit their own document)
-      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true; 
+
+      // Only admins can register new users
+      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;
+
+      // Admins may edit any profile; other users may only edit their own
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true ||
+        (
+          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true &&
+          resource.data.AuthID == request.auth.uid
+        )
+      );
+
+      // Role/post tracking updated by workers when managing events
+      match /supplemental/{document}{
+        allow read: if true;
+        allow write: if request.auth != null && (
+          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true ||
+          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true
+        );
+      }
     }
 
     match /id_tracker/{documents=**}{
@@ -64,10 +83,28 @@ service cloud.firestore {
       allow create, write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;
     }
 
-    // Allow authenticated users to add their web tokens
-    match /notification_tokens/web_tokens {
-      allow read: if request.auth != null && 
-                     (request.auth.token.isLeader == true || 
+    match /information/{sectionId} {
+      allow read: if true;
+      allow create, write: if request.auth != null &&
+        (request.auth.token.isAreaAdmin == true ||
+         request.auth.token.isAdmin == true ||
+         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true ||
+         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true);
+
+      match /items/{documentId} {
+        allow read: if true;
+        allow create, write: if request.auth != null &&
+          (request.auth.token.isAreaAdmin == true ||
+           request.auth.token.isAdmin == true ||
+           get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true ||
+           get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true);
+      }
+    }
+
+    // Allow authenticated users to manage web push tokens and topic subscriptions
+    match /notification_tokens/{docId} {
+      allow read: if request.auth != null &&
+                     (request.auth.token.isLeader == true ||
                       request.auth.token.isAreaAdmin == true);
       allow write: if request.auth != null;
     }

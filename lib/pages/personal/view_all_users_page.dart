@@ -3,9 +3,11 @@ import 'package:ctrim_app/pages/personal/edit_user_page.dart';
 import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../utility/responsive_layout.dart';
 
 // for now it's for all users since they will only be from Belfast
 // we should look to share either this whole page or make it adapt to view
@@ -31,7 +33,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   @override
   Widget build(BuildContext context) {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 0;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _searchQuery.isEmpty
@@ -43,15 +45,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       return Scaffold(
           appBar: AppBar(
             title: _isSearching
-                ? TextField(
+                ? AppSearchBar(
                     controller: _searchController,
+                    hintText: 'Search users...',
+                    inAppBar: true,
                     autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Search users...',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
-                    ),
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
@@ -83,7 +81,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           body: filteredUsers.isEmpty
               ? Center(
                   child: Text(
-                    _searchQuery.isEmpty ? 'No users found' : 'No users match "${_searchQuery}"',
+                    _searchQuery.isEmpty ? 'No users found' : 'No users match "$_searchQuery"',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 )

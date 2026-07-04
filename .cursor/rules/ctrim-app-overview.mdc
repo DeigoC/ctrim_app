@@ -1,0 +1,37 @@
+---
+description: ctrim_app project overview, structure, and global constraints
+alwaysApply: true
+---
+
+# ctrim_app
+
+Church/community Flutter app: events, information pages, personal section, bulletin board. Firebase: Firestore, Auth, Analytics, Messaging, App Check, Cloud Functions. Hive via `LocalDataManager`.
+
+## Layout
+
+- `lib/firebase/` — auth, functions, messaging, `db_managers/` (one per collection)
+- `lib/models/` — plain Dart models (`event/`, `info/`, `user.dart`, `post_template.dart`)
+- `lib/pages/` — full screens (`events/`, `information/`, `personal/`, `information_home.dart`)
+- `lib/utility/` — `AppContext` (root `ChangeNotifier`), `InfoRepository`, prefs, local data
+- `lib/widgets/` — reusable UI including `quill_editor_wrapper.dart`
+- `test/unit/models/` — one `*_test.dart` per model
+
+## State
+
+- `provider` + `AppContext` (`lib/utility/app_context.dart`) — user, event heads, prefs, analytics
+- `EventContext` (`lib/utility/event_context.dart`) for event-scoped state
+- Call `notifyListeners()` only inside `AppContext` methods
+
+## UI
+
+- Localize user-visible strings (`flutter_localizations` / `intl`)
+- Quill: `QuillEditorWidget` / `QuillViewerWidget` in `lib/widgets/quill_editor_wrapper.dart`
+- Images: `photo_view`; video: `video_player`
+
+## Constraints
+
+- No business logic in `build` methods
+- No `cloud_firestore` in pages/widgets (only `firebase/` and `models/`)
+- No `print()` — use `debugPrint()` or remove
+- Do not bump `pubspec.yaml` version numbers
+- Check `pubspec.yaml` before adding dependencies

@@ -63,7 +63,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: colorScheme.primary.withOpacity(0.5),
+          color: colorScheme.primary.withValues(alpha: 0.5),
           width: 2,
         ),
       ),
@@ -117,7 +117,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
             // Toggle between Sign Up and Sign In
             Container(
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -185,7 +185,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         borderSide: BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -236,7 +236,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         borderSide: BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -293,7 +293,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                           borderSide: BorderSide(color: colorScheme.primary, width: 2),
                         ),
                         filled: true,
-                        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -437,6 +437,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     );
 
     if (!confirmation) return;
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -559,28 +560,36 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       subtitle: 'Please wait...',
     );
 
-    final verified = await _authManager.hasUserVerifiedEmail();
+    try {
+      final verified = await _authManager.hasUserVerifiedEmail();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    Navigator.of(context).pop(); // Close progress dialog
+      Navigator.of(context).pop(); // Close progress dialog
 
-    if (!verified) {
-      DialogManager.showAlertDialog(
-        context: context,
-        title: 'Email Not Verified',
-        content:
-            'Email verification is not complete yet. Please check your inbox at ${_emailController.text.trim()} and click the verification link.',
-        icon: Icons.mark_email_unread_outlined,
-        isError: true,
-      );
-      return;
+      if (!verified) {
+        DialogManager.showAlertDialog(
+          context: context,
+          title: 'Email Not Verified',
+          content:
+              'Email verification is not complete yet. Please check your inbox at ${_emailController.text.trim()} and click the verification link.',
+          icon: Icons.mark_email_unread_outlined,
+          isError: true,
+        );
+        return;
+      }
+
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      appContext.analytics.logSignUp(signUpMethod: 'email-verified');
+
+      await _completeAuthentication(true);
+    } catch (e) {
+      debugPrint('Error checking verification: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Verification check failed: $e'), behavior: SnackBarBehavior.floating));
     }
-
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    appContext.analytics.logSignUp(signUpMethod: 'email-verified');
-
-    await _completeAuthentication(true);
   }
 
   Future<void> _completeAuthentication(bool isNewUser) async {
@@ -590,38 +599,46 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       context: context,
     );
 
-    final appContext = Provider.of<AppContext>(context, listen: false);
+    try {
+      final appContext = Provider.of<AppContext>(context, listen: false);
 
-    // Save credentials
-    appContext.sharedPref.saveCreds(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
-
-    // Create user in Firestore if new registration
-    if (isNewUser) {
-      await _everyoneDBManager.createUser(
-        _authManager.currentAuthUID,
+      // Save credentials
+      appContext.sharedPref.saveCreds(
         _emailController.text.trim(),
+        _passwordController.text,
       );
-    }
 
-    // Migrate guest FCM token if exists
-    await _migrateFCMToken();
+      // Create user in Firestore if new registration
+      if (isNewUser) {
+        await _everyoneDBManager.createUser(
+          _authManager.currentAuthUID,
+          _emailController.text.trim(),
+        );
+      }
 
-    // Fetch essential data
-    await _fetchEssentialData();
+      // Migrate guest FCM token if exists
+      await _migrateFCMToken();
 
-    if (!mounted) return;
+      // Fetch essential data
+      await _fetchEssentialData();
 
-    appContext.sharedPref.setLoggedOut(false);
-    appContext.sharedPref.setDismissedGuestBanner(true);
+      if (!mounted) return;
 
-    Navigator.of(context).pop(); // Close progress dialog
+      appContext.sharedPref.setLoggedOut(false);
+      appContext.sharedPref.setDismissedGuestBanner(true);
 
-    // Rebuild UI to show authenticated state
-    if (mounted) {
-      setState(() {});
+      Navigator.of(context).pop(); // Close progress dialog
+
+      // Rebuild UI to show authenticated state
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Error completing authentication: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to complete setup: $e'), behavior: SnackBarBehavior.floating));
     }
   }
 
@@ -715,6 +732,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     );
 
     if (!confirmed) return;
+    if (!mounted) return;
 
     try {
       DialogManager.showProgressDialog(

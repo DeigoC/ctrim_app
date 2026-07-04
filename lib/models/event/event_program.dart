@@ -44,7 +44,7 @@ class EventProgram {
     }
   }
 
-  toJson() {
+  Map<String, Object?> toJson() {
     return {
       'AllDay': _allDay,
       'Online': _online,

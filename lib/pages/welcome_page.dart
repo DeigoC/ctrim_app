@@ -19,7 +19,9 @@ import '../models/user.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/local_data_manager.dart';
+import '../utility/web_notification_lifecycle.dart';
 import 'home_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -158,7 +160,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = size.width >= 768 ? size.width / 6 : 24.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, style: GutterStyle.medium, narrowPadding: 24.0);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -193,7 +195,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant.withOpacity(0.5),
+                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: TabBar(
@@ -260,7 +262,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
   Widget _buildHeroHeader(ThemeData theme, ColorScheme colorScheme) {
     // Get text scale factor to adjust sizes for accessibility
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1.0);
     final isLargeText = textScaleFactor > 1.2;
 
     // Adjust sizes based on text scaling for better accessibility
@@ -288,7 +290,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       borderRadius: BorderRadius.circular(isLargeText ? 24 : 32),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -379,7 +381,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -437,7 +439,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -559,7 +561,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -617,7 +619,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -675,7 +677,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   borderSide: BorderSide(color: colorScheme.error),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -750,7 +752,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.outlineVariant,
@@ -814,7 +816,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primary.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -856,7 +858,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: colorScheme.outlineVariant,
@@ -948,10 +950,12 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     });
 
     final loggedIn = await _attemptToLogin();
+    if (!mounted) return;
     if (loggedIn) {
       _appContext.analytics.logLogin(loginMethod: 'welcome page');
       Navigator.of(context).pop();
       await _attemptToFetchAndSetUser();
+      if (!mounted) return;
       _instantiateTheRest(false);
     } else {
       setState(() {
@@ -1083,6 +1087,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       });
 
       final canVerifyEmail = await _attemptToRegister();
+      if (!mounted) return;
       if (canVerifyEmail) {
         _appContext.analytics.logEvent(name: 'register email');
         Navigator.of(context).pop();
@@ -1209,7 +1214,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       subtitle: 'Please wait...',
     );
 
-    await _authManager.hasUserVerifiedEmail().then((verified) {
+    try {
+      final verified = await _authManager.hasUserVerifiedEmail();
+      if (!mounted) return;
+
       if (!verified) {
         Navigator.of(context).pop();
         DialogManager.showAlertDialog(
@@ -1229,7 +1237,16 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
         Navigator.of(context).pop();
         _instantiateTheRest(true);
       }
-    });
+    } catch (e) {
+      debugPrint('Error checking verification: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Verification check failed: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _instantiateTheRest(bool fromRegistration) async {
@@ -1238,19 +1255,29 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       subtitle: 'Setting up your experience...',
       context: context,
     );
-    _saveCreds(fromRegistration);
 
-    if (fromRegistration) {
-      await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
-    }
-    _saveFCMToken();
-    _fetchEssentialData().then((_) {
+    try {
+      _saveCreds(fromRegistration);
+
+      if (fromRegistration) {
+        await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+      }
+      _saveFCMToken();
+      await _fetchEssentialData();
+
+      if (!mounted) return;
       debugPrint('opened home page here');
       _appContext.sharedPref.setLoggedOut(false);
       Navigator.of(context).pop(); // pop the progress dialog
       Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
       Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
-    });
+    } catch (e) {
+      debugPrint('Error setting up: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss progress dialog
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to complete setup: $e'), behavior: SnackBarBehavior.floating));
+    }
   }
 
   Future<void> _fetchEssentialData() async {
@@ -1262,13 +1289,24 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<void> _saveFCMToken() async {
+    final authID = _authManager.currentAuthUID;
+    // Defer token registration on first open; HomePage shows welcome before any prompt.
+    if (_appContext.sharedPref.isFirstOpen) return;
+
+    if (kIsWeb) {
+      await WebNotificationLifecycle().register(
+        authId: authID,
+        onTokenSaved: _appContext.sharedPref.saveFCMToken,
+      );
+      return;
+    }
+
     final MessagingManager messagingManager = MessagingManager();
     final token = await messagingManager.getToken();
     if (token != null) {
       debugPrint('token to save is $token');
-      final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
       _appContext.sharedPref.saveFCMToken(token);
-      _everyoneDBManager.addTokenForAuthID(authID: _authManager.currentAuthUID, token: token, platform: platformName);
+      _everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
     }
   }
 

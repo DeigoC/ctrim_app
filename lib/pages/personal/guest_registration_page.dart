@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/guest_registration_card.dart';
+import '../../utility/responsive_layout.dart';
 
 class GuestRegistrationPage extends StatelessWidget {
   const GuestRegistrationPage({super.key});
@@ -9,7 +10,7 @@ class GuestRegistrationPage extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final size = MediaQuery.of(context).size;
-    final double horizontalPadding = size.width >= 768 ? size.width / 6 : 24.0;
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, style: GutterStyle.medium, narrowPadding: 24.0);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -28,10 +29,10 @@ class GuestRegistrationPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withOpacity(0.3),
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primary.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -87,7 +88,7 @@ class GuestRegistrationPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: colorScheme.secondaryContainer.withOpacity(0.5),
+                        color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

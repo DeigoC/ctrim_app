@@ -6,6 +6,7 @@ import '../../utility/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
 import 'add_media_file_page.dart';
+import '../../utility/responsive_layout.dart';
 
 class EditGalleryPage extends StatefulWidget {
   const EditGalleryPage({super.key, required this.eventContext});
@@ -38,7 +39,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        onPopInvoked: (_) {
+        onPopInvokedWithResult: (didPop, result) {
           if (!widget.eventContext.canSaveTheEditing) {
             _shouldBeAbleToSave();
           }
@@ -58,7 +59,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   Widget _buildBody() {
     final double webHorizontalPadding =
-        MediaQuery.of(context).size.width >= 768 ? MediaQuery.of(context).size.width / 7 : 16;
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
     return SafeArea(
       top: false,
@@ -112,7 +113,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                   Text(
                                     '${widget.eventContext.head.media.length}/4 items',
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                         ),
                                   ),
                                 ],
@@ -143,7 +144,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                               ),
                               borderRadius: BorderRadius.circular(12),
                               color: Theme.of(context).colorScheme.surface,
@@ -153,20 +154,20 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 Icon(
                                   Icons.star_border,
                                   size: 48,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'No Key Media Yet',
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                       ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Add media files and mark them as key media',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                       ),
                                 ),
                               ],
@@ -216,7 +217,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                   Text(
                                     '${widget.eventContext.media.allMedia.length} items',
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                         ),
                                   ),
                                 ],
@@ -250,7 +251,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                         ),
                         borderRadius: BorderRadius.circular(12),
                         color: Theme.of(context).colorScheme.surface,
@@ -260,13 +261,13 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                           Icon(
                             Icons.add_photo_alternate_outlined,
                             size: 64,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'No Media Files Yet',
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                           ),
                           const SizedBox(height: 8),
@@ -274,7 +275,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             'Tap the + button to add your first image or video',
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                 ),
                           ),
                           const SizedBox(height: 16),
@@ -325,7 +326,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 aspectRatio: 16 / 9,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   ),
                   child: _buildMediaViewer(thisEntry, isKey),
                 ),
@@ -338,7 +339,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                       begin: Alignment.topRight,
                       end: Alignment.center,
                       colors: [
-                        Colors.black.withOpacity(0.6),
+                        Colors.black.withValues(alpha: 0.6),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.7],
@@ -359,7 +360,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -442,7 +443,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontStyle: thisEntry['title']!.isEmpty ? FontStyle.italic : FontStyle.normal,
                         color: thisEntry['title']!.isEmpty
-                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
                             : Theme.of(context).colorScheme.onSurface,
                         fontWeight: thisEntry['title']!.isEmpty ? FontWeight.normal : FontWeight.w500,
                       ),
@@ -451,7 +452,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -554,10 +555,10 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -671,7 +672,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             Text(
               'Add a caption to describe this ${thisEntry['type'] == 'vid' ? 'video' : 'image'}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
             ),
             const SizedBox(height: 16),
@@ -745,7 +746,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -773,7 +774,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                     '• First image becomes the event thumbnail\n• Displayed prominently in event previews\n• Maximum of 4 key media items\n• Can be images or videos',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -826,7 +827,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -854,7 +855,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                     '• Add captions to describe your media\n• Mark important items as key media\n• Videos can have custom thumbnails\n• Organize your media gallery',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -932,6 +933,7 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
               child: const Text('Close'),
               onPressed: () {
                 _deleteOldThumbnail().then((_) {
+                  if (!context.mounted) return;
                   widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
                   Navigator.of(context).pop();
                   Navigator.of(context).pop();
