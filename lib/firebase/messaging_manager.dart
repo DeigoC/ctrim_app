@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-import 'notification_debug.dart';
+import '../utility/notification_debug.dart';
 
 class MessagingManager {
   static final FirebaseMessaging _instance = FirebaseMessaging.instance;

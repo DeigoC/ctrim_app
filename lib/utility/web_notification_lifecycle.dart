@@ -70,7 +70,7 @@ class WebNotificationLifecycle {
     required String token,
     void Function(String token)? onTokenSaved,
   }) async {
-    await _everyoneDBManager.addTokenForAuthID(authId: authId, token: token, platform: 'Web');
+    await _everyoneDBManager.addTokenForAuthID(authID: authId, token: token, platform: 'Web');
     onTokenSaved?.call(token);
     NotificationDebug.log('Token synced to notification_tokens and everyone/device_tokens');
   }
