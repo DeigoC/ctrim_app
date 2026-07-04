@@ -4,7 +4,12 @@
 
 | Page | Role |
 |------|------|
-| `information_home.dart` | Tabs: About, Churches, Testimonials, Information |
+| `information_home.dart` | Shell: nav + tabs; loads futures via `InfoRepository` |
+| `information/about_tab.dart` | About tab content |
+| `information/churches_tab.dart` | Churches list/grid |
+| `information/testimonials_tab.dart` | Testimonials list/grid |
+| `information/ctrim_info_list_tab.dart` | CTRIM topics list/grid |
+| `information/info_tab_widgets.dart` | Shared cards, empty/error states |
 | `church_info_page.dart` | Single church; loads content via repository |
 | `ctrim_info_page.dart` | CTRIM org topics |
 | `testimonial_info_page.dart` | Testimonial detail |

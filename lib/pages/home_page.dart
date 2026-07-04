@@ -13,6 +13,7 @@ import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
+import '../utility/responsive_layout.dart';
 import '../utility/web_notification_lifecycle.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
@@ -28,14 +29,27 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _NavDestination {
+  const _NavDestination({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+}
+
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  static const List<_NavDestination> _destinations = [
+    _NavDestination(icon: Icons.library_books, label: 'Bulletin'),
+    _NavDestination(icon: Icons.church, label: 'CTRIM'),
+    _NavDestination(icon: Icons.person, label: 'Personal'),
+  ];
+
   late final TabController _informationTabController;
   late int _selectedIndex;
 
   late final AppContext _appContext;
-  final ScrollController _postsScrollController = ScrollController(), _informationScrollController = ScrollController();
-
-  // bool _bottomBarIsVisible = true;
+  final ScrollController _postsScrollController = ScrollController(),
+      _informationScrollController = ScrollController();
 
   @override
   void initState() {
@@ -109,46 +123,78 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Consumer<AppContext>(builder: (context, appContext, child) {
       return PopScope(
         canPop: false, // safety for the first session
-        child: Scaffold(
-          body: _buildSelectedBody(appContext),
-          floatingActionButton: _buildFAB(),
-          bottomNavigationBar: BottomNavigationBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              currentIndex: _selectedIndex,
-              onTap: (index) => _onNavigationItemTap(index),
-              unselectedFontSize: 8,
-              selectedFontSize: 12,
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Bulletin'),
-                BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
-              ]),
-          // ? Check the bottom out for another time
-          // bottomNavigationBar: SafeArea(
-          //   child: AnimatedContainer(
-          //     duration: const Duration(milliseconds: 300),
-          //     height: _bottomBarIsVisible ? kBottomNavigationBarHeight : 0,
-          //     child: Visibility(
-          //       visible: _bottomBarIsVisible,
-          //       child: BottomNavigationBar(
-          //           backgroundColor: Colors.transparent,
-          //           elevation: 0,
-          //           currentIndex: _selectedIndex,
-          //           onTap: (index) => _onNavigationItemTap(index),
-          //           unselectedFontSize: 0,
-          //           selectedFontSize: 0,
-          //           items: const <BottomNavigationBarItem>[
-          //             BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Posts'),
-          //             BottomNavigationBarItem(icon: Icon(Icons.church), label: 'CTRIM'),
-          //             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal')
-          //           ]),
-          //     ),
-          //   ),
-          // ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final useRail = ResponsiveLayout.isWideScreen(constraints.maxWidth);
+            return Scaffold(
+              body: useRail
+                  ? _buildWideBody(appContext)
+                  : _buildSelectedBody(appContext),
+              floatingActionButton: _buildFAB(),
+              bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
+            );
+          },
         ),
       );
     });
+  }
+
+  Widget _buildWideBody(final AppContext appContext) {
+    return Row(
+      children: [
+        _buildNavigationRail(),
+        const VerticalDivider(width: 1),
+        Expanded(child: _buildSelectedBody(appContext)),
+      ],
+    );
+  }
+
+  Widget _buildNavigationRail() {
+    return NavigationRail(
+      selectedIndex: _selectedIndex,
+      extended: MediaQuery.sizeOf(context).width >= ResponsiveLayout.desktop,
+      onDestinationSelected: _onNavigationItemTap,
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(
+            'assets/images/ctrim_logo.png',
+            width: 48,
+            height: 48,
+            errorBuilder: (_, __, ___) => Icon(Icons.church,
+                size: 48, color: Theme.of(context).colorScheme.primary),
+          ),
+        ),
+      ),
+      destinations: _destinations
+          .map(
+            (dest) => NavigationRailDestination(
+              icon: Icon(dest.icon),
+              label: Text(dest.label),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return BottomNavigationBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      currentIndex: _selectedIndex,
+      onTap: _onNavigationItemTap,
+      unselectedFontSize: 8,
+      selectedFontSize: 12,
+      items: _destinations
+          .map(
+            (dest) => BottomNavigationBarItem(
+              icon: Icon(dest.icon),
+              label: dest.label,
+            ),
+          )
+          .toList(),
+    );
   }
 
   Widget _buildSelectedBody(final AppContext appContext) {
@@ -179,7 +225,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => SelectPostTemplatePage(eventContext: EventContext.adding(currentUserID: uid))))
+                        builder: (_) => SelectPostTemplatePage(
+                            eventContext:
+                                EventContext.adding(currentUserID: uid))))
                 .then((_) {
               setState(() {});
             });
@@ -199,9 +247,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     } else {
       // scroll page to top
       if (index == 0) {
-        _postsScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+        _postsScrollController.animateTo(0,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
       } else if (index == 1) {
-        _informationScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+        _informationScrollController.animateTo(0,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
       }
     }
   }
@@ -231,28 +281,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               child: SingleChildScrollView(
                   child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Text('Welcome! 👋',
-                                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.start)),
-                        const SizedBox(height: 16),
-                        const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Text(
-                                'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
-                                textAlign: TextAlign.start,
-                                style: TextStyle(fontSize: 16))),
-                        const SizedBox(height: 8),
-                        Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Get Started', style: TextStyle(fontSize: 16)))))
-                      ])))));
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                child: Text('Welcome! 👋',
+                                    style: TextStyle(
+                                        fontSize: 21,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.start)),
+                            const SizedBox(height: 16),
+                            const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                child: Text(
+                                    'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
+                                    textAlign: TextAlign.start,
+                                    style: TextStyle(fontSize: 16))),
+                            const SizedBox(height: 8),
+                            Align(
+                                alignment: Alignment.centerRight,
+                                child: Padding(
+                                    padding: const EdgeInsets.only(right: 16.0),
+                                    child: TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Get Started',
+                                            style: TextStyle(fontSize: 16)))))
+                          ])))));
 
       appContext.sharedPref.nowOpened();
     }
@@ -294,7 +349,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     // when the app is opened (foreground messages)
     FirebaseMessaging.onMessage.listen((message) {
-      debugPrint('-----------------Hello from on message! Here is the message: ${message.data}');
+      debugPrint(
+          '-----------------Hello from on message! Here is the message: ${message.data}');
       _handleOnMessage(message).then((_) {
         _appContext.rebuildPlease();
       });
@@ -302,15 +358,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     // when the app is opened in the background of device
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('-----------------Hello from on message opened app! Here is the message: ${message.data}');
+      debugPrint(
+          '-----------------Hello from on message opened app! Here is the message: ${message.data}');
       _handleOnMessageOpenedBackground(message).then((_) {
         _appContext.rebuildPlease();
       });
     });
 
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((message) => message != null ? () => _handleInitialMessage(message) : null);
+    FirebaseMessaging.instance.getInitialMessage().then((message) =>
+        message != null ? () => _handleInitialMessage(message) : null);
   }
 
   /// Web-specific: Listen for notification clicks from the service worker
@@ -326,9 +382,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
-    if (!_appContext.sharedPref.loggedOut && message.data.containsKey('PostID')) {
+    if (!_appContext.sharedPref.loggedOut &&
+        message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
-      final bool hasHead = _appContext.eventHeads.any((element) => element.id.compareTo(postID) == 0);
+      final bool hasHead = _appContext.eventHeads
+          .any((element) => element.id.compareTo(postID) == 0);
 
       if (!hasHead) {
         //  fetch and add the head
@@ -336,7 +394,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         final head = await eventHeadDBManager.fetchHead(postID);
         _appContext.addNewPostHead(head);
       }
-      final thisHead = _appContext.eventHeads.firstWhere((element) => element.id.compareTo(postID) == 0);
+      final thisHead = _appContext.eventHeads
+          .firstWhere((element) => element.id.compareTo(postID) == 0);
       _openPost(thisHead);
     } else if (message.data.containsKey('InfoPage')) {
       _openInformationTeachingPage(message.data['InfoPage']);
@@ -346,7 +405,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {
     // ! this one makes sense to have an opening dialog
-    final bool openPage = _appContext.sharedPref.loggedOut ? false : await _showFCMMessage(message, true);
+    final bool openPage = _appContext.sharedPref.loggedOut
+        ? false
+        : await _showFCMMessage(message, true);
 
     if (message.data.containsKey('PostID')) {
       final String postID = message.data['PostID'];
@@ -360,7 +421,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-  Future<void> _handleOnMessageOpenedBackground(final RemoteMessage message) async {
+  Future<void> _handleOnMessageOpenedBackground(
+      final RemoteMessage message) async {
     // ! no need for a dialog, just open the page no matter where the user may be
     final bool hasLoggedOut = _appContext.sharedPref.loggedOut;
     if (message.data.containsKey('PostID')) {
@@ -383,12 +445,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _openPost(final EventHead thisHead) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
   }
 
   void _openInformationTeachingPage(final String jsonPath) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => CTRIMInfoPage(documentId: _resolveInfoDocumentId(jsonPath))));
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) =>
+            CTRIMInfoPage(documentId: _resolveInfoDocumentId(jsonPath))));
   }
 
   String _resolveInfoDocumentId(final String rawValue) {
@@ -408,7 +472,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   // all notifications potentially will be asking to open a page
   // well... maybe not, let's make it an optional thing
-  Future<bool> _showFCMMessage(final RemoteMessage message, bool openingPage) async {
+  Future<bool> _showFCMMessage(
+      final RemoteMessage message, bool openingPage) async {
     final RemoteNotification notification = message.notification!;
     final String? closeText = message.data['CloseText'];
     final String? superImageUrl = message.data['SuperImageUrl'];
@@ -420,7 +485,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       imageUrl = superImageUrl ?? notification.web?.image;
     } else {
       // On native platforms, get platform-specific image
-      imageUrl = superImageUrl ?? (Platform.isAndroid ? notification.android?.imageUrl : notification.apple?.imageUrl);
+      imageUrl = superImageUrl ??
+          (Platform.isAndroid
+              ? notification.android?.imageUrl
+              : notification.apple?.imageUrl);
     }
 
     bool result = false;
@@ -445,38 +513,52 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         builder: (_) {
           // ! wrap this in an orientation builder!
           return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               child: SingleChildScrollView(
-                  child:
-                      Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                imageUrl != null
-                    ? Container(
-                        foregroundDecoration: BoxDecoration(
-                            borderRadius:
-                                const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                            image: DecorationImage(
-                                image: NetworkImage(NetworkImageHelper.getImageUrl(imageUrl)), fit: BoxFit.fill)),
-                        child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child:
-                                Image.network(NetworkImageHelper.getImageUrl(imageUrl)) // so jank lol! It works though
-                            ))
-                    : Container(),
-                imageUrl != null ? const SizedBox(height: 16) : const SizedBox(height: 24),
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child:
-                        Text(notification.title!, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold))),
-                const SizedBox(height: 8),
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Text(notification.body!, style: const TextStyle(fontSize: 16))),
-                const SizedBox(height: 8),
-                Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.end, children: buttonChildren)),
-                const SizedBox(height: 16)
-              ])));
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                    imageUrl != null
+                        ? Container(
+                            foregroundDecoration: BoxDecoration(
+                                borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    topRight: Radius.circular(16)),
+                                image: DecorationImage(
+                                    image: NetworkImage(
+                                        NetworkImageHelper.getImageUrl(
+                                            imageUrl)),
+                                    fit: BoxFit.fill)),
+                            child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.network(
+                                    NetworkImageHelper.getImageUrl(
+                                        imageUrl)) // so jank lol! It works though
+                                ))
+                        : Container(),
+                    imageUrl != null
+                        ? const SizedBox(height: 16)
+                        : const SizedBox(height: 24),
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(notification.title!,
+                            style: const TextStyle(
+                                fontSize: 21, fontWeight: FontWeight.bold))),
+                    const SizedBox(height: 8),
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(notification.body!,
+                            style: const TextStyle(fontSize: 16))),
+                    const SizedBox(height: 8),
+                    Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: buttonChildren)),
+                    const SizedBox(height: 16)
+                  ])));
         });
 
     return result;
@@ -485,7 +567,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // in the case that the notification is on a Post Update - receiving word of a role
   Future<void> _updateUserRoles() async {
     final UserDBManager userDBManager = UserDBManager();
-    _appContext.currentUser.setRoles(await userDBManager.fetchUserRoles(_appContext.currentUser.id));
+    _appContext.currentUser.setRoles(
+        await userDBManager.fetchUserRoles(_appContext.currentUser.id));
   }
 
   // * maintenance work
@@ -499,7 +582,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
       if (user.imgSrc.isNotEmpty && !hasImage) {
         // User has image URL but not cached - download and cache it
-        debugPrint('Caching user profile pic for ${user.forname} ID ${user.id}');
+        debugPrint(
+            'Caching user profile pic for ${user.forname} ID ${user.id}');
         try {
           final String imageUrl = NetworkImageHelper.getImageUrl(user.imgSrc);
           final response = await http.get(Uri.parse(imageUrl));
@@ -511,7 +595,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         }
       } else if (user.imgSrc.isEmpty && hasImage) {
         // User removed image but it's still cached - delete it
-        debugPrint('Deleting cached profile pic for ${user.forname} ID ${user.id}');
+        debugPrint(
+            'Deleting cached profile pic for ${user.forname} ID ${user.id}');
         await localDataManager.deleteUserImage(user.id);
       }
     }
