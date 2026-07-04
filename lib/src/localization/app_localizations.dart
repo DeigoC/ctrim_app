@@ -220,30 +220,154 @@ abstract class AppLocalizations {
   /// **'Untitled event'**
   String get userProfileUntitledEvent;
 
+  /// Generic cancel button label
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
   String get cancel;
+
+  /// Generic save button label
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
   String get save;
+
+  /// Button to clear selected tag filters
+  ///
+  /// In en, this message translates to:
+  /// **'Clear tags'**
   String get userTagsFilterClear;
+
+  /// Section label for assigning tags to a volunteer
+  ///
+  /// In en, this message translates to:
+  /// **'Teams & tags'**
   String get userTagsAssignLabel;
+
+  /// Message when no user tags exist for assignment
+  ///
+  /// In en, this message translates to:
+  /// **'No tags defined yet. Area admins can create tags in Admin Tools.'**
   String get userTagsNoneAvailable;
+
+  /// Title for the admin page that manages volunteer tag definitions
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Tags'**
   String get manageUserTagsTitle;
+
+  /// Action to create a new volunteer tag
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
   String get manageUserTagsAdd;
+
+  /// Empty state on the manage tags page
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.'**
   String get manageUserTagsEmpty;
+
+  /// Button to seed default volunteer tags
+  ///
+  /// In en, this message translates to:
+  /// **'Add starter tags'**
   String get manageUserTagsSeedDefaults;
+
+  /// Status label for an active tag
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
   String get manageUserTagsActive;
+
+  /// Status label for a deactivated tag
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
   String get manageUserTagsInactive;
+
+  /// Reorder a tag higher in the list
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
   String get manageUserTagsMoveUp;
+
+  /// Reorder a tag lower in the list
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
   String get manageUserTagsMoveDown;
+
+  /// Edit an existing tag
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
   String get manageUserTagsEdit;
+
+  /// Deactivate a tag so it cannot be assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
   String get manageUserTagsDeactivate;
+
+  /// Reactivate a deactivated tag
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
   String get manageUserTagsActivate;
+
+  /// Delete a tag definition
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
   String get manageUserTagsDelete;
+
+  /// Label for the tag name field
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
   String get manageUserTagsNameLabel;
+
+  /// Label for the optional tag color hex field
+  ///
+  /// In en, this message translates to:
+  /// **'Color (optional)'**
   String get manageUserTagsColorLabel;
+
+  /// Create a new tag
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
   String get manageUserTagsCreate;
+
+  /// Confirmation before deleting a tag
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? This cannot be undone.'**
   String manageUserTagsDeleteConfirm(String name);
+
+  /// Error when trying to delete a tag that is still assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete — {count} volunteers still have this tag. Deactivate it instead.'**
   String manageUserTagsDeleteBlocked(int count);
+
+  /// Personal home admin menu item for managing tags
+  ///
+  /// In en, this message translates to:
+  /// **'Volunteer Tags'**
   String get manageUserTagsMenuTitle;
+
+  /// Personal home admin menu subtitle for managing tags
+  ///
+  /// In en, this message translates to:
+  /// **'Create and edit team labels'**
   String get manageUserTagsMenuSubtitle;
+
+  /// Empty state when tag filter returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteers match the selected tags'**
   String get volunteersEmptyTags;
 }
 

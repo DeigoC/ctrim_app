@@ -39,6 +39,7 @@ class _EditUserPageState extends State<EditUserPage> {
   bool _testing = false;
   bool _canSave = false;
   bool _hasChanges = false;
+  bool _imageValidated = true;
 
   @override
   void initState() {
@@ -53,10 +54,10 @@ class _EditUserPageState extends State<EditUserPage> {
     _src = widget.user.imgSrc;
     _selectedTagIDs = Set<String>.from(widget.user.tagIDs);
 
-    _tecForename.addListener(_onFieldChanged);
-    _tecSurname.addListener(_onFieldChanged);
-    _tecLocation.addListener(_onFieldChanged);
-    _tecImgSrc.addListener(_onFieldChanged);
+    _tecForename.addListener(_updateChangeState);
+    _tecSurname.addListener(_updateChangeState);
+    _tecLocation.addListener(_updateChangeState);
+    _tecImgSrc.addListener(_updateChangeState);
   }
 
   @override
@@ -68,17 +69,27 @@ class _EditUserPageState extends State<EditUserPage> {
     super.dispose();
   }
 
-  void _onFieldChanged() {
+  void _updateChangeState() {
+    final sanitizedImg = _sanitiseSrc();
     final hasTextChanges = _tecForename.text != widget.user.forname ||
         _tecSurname.text != widget.user.surname ||
-        _tecLocation.text != widget.user.location ||
-        _tecImgSrc.text != widget.user.imgSrc;
-
+        _tecLocation.text != widget.user.location;
+    final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin || _isLeader != widget.user.isLeader;
     final hasTagChanges = !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
+    final requiredFieldsFilled = _tecForename.text.trim().isNotEmpty &&
+        _tecSurname.text.trim().isNotEmpty &&
+        _tecLocation.text.trim().isNotEmpty;
+
+    if (!hasImgFieldChange) {
+      _imageValidated = true;
+    } else if (_src != sanitizedImg) {
+      _imageValidated = false;
+    }
 
     setState(() {
-      _hasChanges = hasTextChanges || hasFlagChanges || hasTagChanges;
+      _hasChanges = hasTextChanges || hasFlagChanges || hasTagChanges || hasImgFieldChange;
+      _canSave = _hasChanges && _imageValidated && requiredFieldsFilled;
     });
   }
 
@@ -92,16 +103,27 @@ class _EditUserPageState extends State<EditUserPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit User'),
-        actions: [
-          if (_hasChanges)
-            IconButton(
-              onPressed: _canSave ? _onSaveChangesClick : null,
-              icon: const Icon(Icons.save),
-              tooltip: 'Save Changes',
-            ),
-        ],
       ),
       body: _buildBody(),
+      bottomNavigationBar: _buildSaveBar(),
+    );
+  }
+
+  Widget? _buildSaveBar() {
+    if (!_hasChanges) return null;
+
+    final horizontalPadding =
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
+        child: FilledButton.icon(
+          onPressed: _canSave ? _onSaveChangesClick : null,
+          icon: const Icon(Icons.save),
+          label: const Text('Save Changes'),
+        ),
+      ),
     );
   }
 
@@ -242,8 +264,8 @@ class _EditUserPageState extends State<EditUserPage> {
                     onChanged: (value) {
                       setState(() {
                         _isAreaAdmin = value;
-                        _onFieldChanged();
                       });
+                      _updateChangeState();
                     },
                   ),
                   SwitchListTile(
@@ -253,8 +275,8 @@ class _EditUserPageState extends State<EditUserPage> {
                     onChanged: (value) {
                       setState(() {
                         _isLeader = value;
-                        _onFieldChanged();
                       });
+                      _updateChangeState();
                     },
                   ),
                 ],
@@ -267,10 +289,8 @@ class _EditUserPageState extends State<EditUserPage> {
               allTags: appContext.allTags,
               selectedTagIDs: _selectedTagIDs,
               onChanged: (selected) {
-                setState(() {
-                  _selectedTagIDs = selected;
-                  _onFieldChanged();
-                });
+                _selectedTagIDs = selected;
+                _updateChangeState();
               },
             ),
           ),
@@ -317,10 +337,11 @@ class _EditUserPageState extends State<EditUserPage> {
 
   Future<void> _testImageClick() async {
     setState(() {
-      _canSave = false;
       _testing = true;
       _src = _sanitiseSrc();
+      _imageValidated = false;
     });
+    _updateChangeState();
 
     try {
       // Test if the image is accessible via HEAD request
@@ -332,8 +353,9 @@ class _EditUserPageState extends State<EditUserPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          _canSave = true;
+          _imageValidated = true;
         });
+        _updateChangeState();
       } else {
         throw Exception('HTTP ${response.statusCode}');
       }
@@ -348,8 +370,9 @@ class _EditUserPageState extends State<EditUserPage> {
       }
       setState(() {
         _testing = false;
-        _canSave = false;
+        _imageValidated = false;
       });
+      _updateChangeState();
     }
   }
 
@@ -437,6 +460,7 @@ class _EditUserPageState extends State<EditUserPage> {
           _canSave = false;
           _testing = false;
           _hasChanges = false;
+          _imageValidated = true;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(

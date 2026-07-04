@@ -126,12 +126,16 @@ Future<void> _fetchEssentialDataInBackground(
   try {
     final heads = await eventHeadDBManager.fetchEventHeads();
     final allUsers = await _fetchAllUsers(prefInstance);
-    final allTags = await UserTagDBManager().fetchAllTags();
 
-    // Update guest context with initial data
     guestContext.addAllEventHeads(heads);
     guestContext.allUsers.addAll(allUsers);
-    guestContext.setAllTags(allTags);
+
+    try {
+      final allTags = await UserTagDBManager().fetchAllTags();
+      guestContext.setAllTags(allTags);
+    } catch (e) {
+      debugPrint('Error fetching user tags (deploy firestore.rules if needed): $e');
+    }
     guestContext.sortPostsByIndex();
     guestContext.rebuildPlease();
 
