@@ -156,10 +156,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                         final userTags = UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
                         final isSelected = _selectedUIDs.contains(user.id);
 
-                        return CheckboxListTile(
-                          value: isSelected,
-                          onChanged: (_) => _toggleUser(user.id),
-                          secondary: MyUserAvatar(user),
+                        return ListTile(
+                          leading: Checkbox(
+                            value: isSelected,
+                            onChanged: (_) => _toggleUser(user.id),
+                          ),
                           title: Text(user.fullname),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,14 +174,19 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                             ],
                           ),
                           isThreeLine: userTags.isNotEmpty,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          trailing: widget.allowTaskCheck
-                              ? IconButton(
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              MyUserAvatar(user),
+                              if (widget.allowTaskCheck)
+                                IconButton(
                                   onPressed: () => _openUserSchedule(user),
                                   icon: const Icon(Icons.checklist),
                                   tooltip: l10n.mySchedule,
-                                )
-                              : null,
+                                ),
+                            ],
+                          ),
+                          onTap: () => _toggleUser(user.id),
                         );
                       },
                     ),
