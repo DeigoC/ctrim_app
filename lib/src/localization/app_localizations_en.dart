@@ -177,4 +177,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectUsersManageContributors => 'Manage contributors';
+
+  @override
+  String get volunteersSortLabel => 'Sort';
+
+  @override
+  String get volunteersSortSurname => 'Surname';
+
+  @override
+  String get volunteersSortTags => 'Team';
 }

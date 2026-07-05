@@ -405,6 +405,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage contributors'**
   String get selectUsersManageContributors;
+
+  /// Label before sort mode chips on the volunteers list
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get volunteersSortLabel;
+
+  /// Sort volunteers by surname
+  ///
+  /// In en, this message translates to:
+  /// **'Surname'**
+  String get volunteersSortSurname;
+
+  /// Sort volunteers by primary team tag
+  ///
+  /// In en, this message translates to:
+  /// **'Team'**
+  String get volunteersSortTags;
 }
 
 class _AppLocalizationsDelegate

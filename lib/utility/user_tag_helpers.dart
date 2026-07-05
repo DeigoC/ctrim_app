@@ -56,4 +56,31 @@ class UserTagHelpers {
     }
     return user.hasAnyTag(selectedTagIDs);
   }
+
+  /// Surname, then forename (case-insensitive).
+  static int compareUsersBySurname(User a, User b) {
+    final bySurname = a.surname.toLowerCase().compareTo(b.surname.toLowerCase());
+    if (bySurname != 0) return bySurname;
+    return a.forname.toLowerCase().compareTo(b.forname.toLowerCase());
+  }
+
+  /// Primary tag display order, then tag name, then [compareUsersBySurname].
+  /// Users without tags sort last.
+  static int compareUsersByPrimaryTag(User a, User b, List<UserTag> allTags) {
+    const untaggedOrder = 0x7FFFFFFF;
+    final tagsA = tagsForUser(user: a, allTags: allTags);
+    final tagsB = tagsForUser(user: b, allTags: allTags);
+    final orderA = tagsA.isEmpty ? untaggedOrder : tagsA.first.displayOrder;
+    final orderB = tagsB.isEmpty ? untaggedOrder : tagsB.first.displayOrder;
+
+    final orderCompare = orderA.compareTo(orderB);
+    if (orderCompare != 0) return orderCompare;
+
+    if (tagsA.isNotEmpty && tagsB.isNotEmpty) {
+      final nameCompare = tagsA.first.name.toLowerCase().compareTo(tagsB.first.name.toLowerCase());
+      if (nameCompare != 0) return nameCompare;
+    }
+
+    return compareUsersBySurname(a, b);
+  }
 }

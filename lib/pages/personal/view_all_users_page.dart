@@ -1,4 +1,5 @@
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/pages/personal/edit_user_page.dart';
 import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
@@ -15,6 +16,8 @@ import 'package:provider/provider.dart';
 
 import '../../utility/responsive_layout.dart';
 
+enum _VolunteerSortMode { surname, tags }
+
 class ViewAllUsersPage extends StatefulWidget {
   const ViewAllUsersPage({super.key});
 
@@ -28,6 +31,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   String _searchQuery = '';
   late String _locationFilter;
   Set<String> _selectedTagIDs = {};
+  _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
 
   @override
   void initState() {
@@ -49,7 +53,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      final filteredUsers = _filteredUsers(appContext.allUsers);
+      final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
 
       return Scaffold(
           appBar: AppBar(
@@ -116,6 +120,34 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 horizontalPadding: webHorizontalPadding,
                 onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
               ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.fromLTRB(webHorizontalPadding, 0, webHorizontalPadding, 8),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+                      child: Text(
+                        l10n.volunteersSortLabel,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(l10n.volunteersSortSurname),
+                        selected: _sortMode == _VolunteerSortMode.surname,
+                        onSelected: (_) => setState(() => _sortMode = _VolunteerSortMode.surname),
+                      ),
+                    ),
+                    FilterChip(
+                      label: Text(l10n.volunteersSortTags),
+                      selected: _sortMode == _VolunteerSortMode.tags,
+                      onSelected: (_) => setState(() => _sortMode = _VolunteerSortMode.tags),
+                    ),
+                  ],
+                ),
+              ),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
@@ -157,7 +189,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     });
   }
 
-  List<User> _filteredUsers(List<User> allUsers) {
+  List<User> _filteredUsers(List<User> allUsers, List<UserTag> allTags) {
     Iterable<User> users = allUsers;
 
     if (_locationFilter != VolunteerLocations.all) {
@@ -176,7 +208,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       users = users.where((user) => user.fullname.toLowerCase().contains(query));
     }
 
-    final result = users.toList()..sort((a, b) => a.fullname.compareTo(b.fullname));
+    final result = users.toList()
+      ..sort((a, b) {
+        return switch (_sortMode) {
+          _VolunteerSortMode.surname => UserTagHelpers.compareUsersBySurname(a, b),
+          _VolunteerSortMode.tags => UserTagHelpers.compareUsersByPrimaryTag(a, b, allTags),
+        };
+      });
     return result;
   }
 

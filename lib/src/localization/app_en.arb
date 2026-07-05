@@ -236,5 +236,17 @@
   "selectUsersManageContributors": "Manage contributors",
   "@selectUsersManageContributors": {
     "description": "Button to open the contributor picker"
+  },
+  "volunteersSortLabel": "Sort",
+  "@volunteersSortLabel": {
+    "description": "Label before sort mode chips on the volunteers list"
+  },
+  "volunteersSortSurname": "Surname",
+  "@volunteersSortSurname": {
+    "description": "Sort volunteers by surname"
+  },
+  "volunteersSortTags": "Team",
+  "@volunteersSortTags": {
+    "description": "Sort volunteers by primary team tag"
   }
 }
