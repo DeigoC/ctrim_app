@@ -527,6 +527,16 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     });
   }
 
+  void _syncChildrenMetadataFromAppContext() {
+    final cached = Provider.of<AppContext>(context, listen: false).getMetadata(_eventContext.id);
+    if (cached == null) return;
+    for (final childId in cached.childrenPostIDs) {
+      if (!_eventContext.metadata.childrenPostIDs.contains(childId)) {
+        _eventContext.metadata.childrenPostIDs.add(childId);
+      }
+    }
+  }
+
   void _onBulkCreateRelatedPosts() {
     Navigator.of(context).pop();
     Navigator.push(
@@ -539,6 +549,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                 bulkMode: true,
                 sourcePostId: _eventContext.id,
                 sourcePostParentId: _eventContext.metadata.parentID))).then((_) {
+      _syncChildrenMetadataFromAppContext();
       setState(() {});
     });
   }
