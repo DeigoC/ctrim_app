@@ -393,6 +393,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage members'**
   String get selectUsersManageMembers;
+
+  /// Title for the contributor multi-select picker page
+  ///
+  /// In en, this message translates to:
+  /// **'Select contributors'**
+  String get selectUsersContributorsTitle;
+
+  /// Button to open the contributor picker
+  ///
+  /// In en, this message translates to:
+  /// **'Manage contributors'**
+  String get selectUsersManageContributors;
 }
 
 class _AppLocalizationsDelegate

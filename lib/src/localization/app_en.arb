@@ -228,5 +228,13 @@
   "selectUsersManageMembers": "Manage members",
   "@selectUsersManageMembers": {
     "description": "Button to open the volunteer picker from schedule assignment"
+  },
+  "selectUsersContributorsTitle": "Select contributors",
+  "@selectUsersContributorsTitle": {
+    "description": "Title for the contributor multi-select picker page"
+  },
+  "selectUsersManageContributors": "Manage contributors",
+  "@selectUsersManageContributors": {
+    "description": "Button to open the contributor picker"
   }
 }

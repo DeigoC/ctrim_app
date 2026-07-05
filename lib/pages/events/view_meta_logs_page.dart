@@ -3,11 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
+import '../../pages/personal/select_users_page.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
-import '../../widgets/user_selector_dialog.dart';
 import '../../utility/responsive_layout.dart';
 
 class ViewMetaLogsPage extends StatefulWidget {
@@ -165,9 +166,9 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                         ),
                         if (isAuthor)
                           FilledButton.icon(
-                            onPressed: _viewPotentialContributorsTap,
-                            icon: const Icon(Icons.person_add_alt_1, size: 18),
-                            label: const Text('Add'),
+                            onPressed: _manageContributorsTap,
+                            icon: const Icon(Icons.group, size: 18),
+                            label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
                             style: FilledButton.styleFrom(
                               backgroundColor: Theme.of(context).colorScheme.secondary,
                               foregroundColor: Theme.of(context).colorScheme.onSecondary,
@@ -176,7 +177,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildContributors(selectedUsers),
+                    _buildContributors(selectedUsers, isAuthor: isAuthor),
                   ],
                 ),
               ),
@@ -304,7 +305,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     );
   }
 
-  Widget _buildContributors(final List<User> selectedUsers) {
+  Widget _buildContributors(final List<User> selectedUsers, {required bool isAuthor}) {
     if (selectedUsers.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -336,7 +337,13 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     }
 
     return InkWell(
-      onTap: () => _showContributors(selectedUsers),
+      onTap: () {
+        if (isAuthor) {
+          _manageContributorsTap();
+        } else {
+          _showContributors(selectedUsers);
+        }
+      },
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -643,9 +650,13 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           ),
           FilledButton(
             onPressed: () {
-              _removeContributor(thisU.id);
-              Navigator.of(context).pop(); // Close confirmation dialog
-              Navigator.of(context).pop(); // Close contributors dialog
+              final updated = List<String>.from(widget.eventContext.metadata.contributorUIDs)..remove(thisU.id);
+              setState(() {
+                widget.eventContext.applyContributorUIDs(updated);
+                widget.eventContext.allowSavingOfTheEdit();
+              });
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
             },
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
@@ -658,31 +669,20 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     );
   }
 
-  void _removeContributor(final String removedUID) {
+  Future<void> _manageContributorsTap() async {
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: List<String>.from(widget.eventContext.metadata.contributorUIDs),
+          excludedUIDs: [widget.eventContext.metadata.authorUID],
+          title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
     setState(() {
-      widget.eventContext.metadata.contributorUIDs.remove(removedUID);
-      widget.eventContext.contributorAdditionUIDs.remove(removedUID);
-      widget.eventContext.contributorRemovalUIDs.add(removedUID);
-      widget.eventContext.allowSavingOfTheEdit();
-    });
-  }
-
-  void _viewPotentialContributorsTap() {
-    final List<String> alreadySelected = List<String>.from(widget.eventContext.metadata.contributorUIDs);
-    alreadySelected.add(widget.eventContext.metadata.authorUID);
-
-    showDialog(
-        context: context,
-        builder: (_) =>
-            UserSelectorDialog(alreadySelectedUIDs: alreadySelected, onSelected: (newID) => _addContributor(newID)));
-  }
-
-  void _addContributor(final String newContributorID) {
-    setState(() {
-      // bothersome? just put all of this in eventContext?
-      widget.eventContext.metadata.contributorUIDs.add(newContributorID);
-      widget.eventContext.contributorAdditionUIDs.add(newContributorID);
-      widget.eventContext.contributorRemovalUIDs.remove(newContributorID);
+      widget.eventContext.applyContributorUIDs(result);
       widget.eventContext.allowSavingOfTheEdit();
     });
   }

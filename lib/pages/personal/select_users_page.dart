@@ -20,12 +20,14 @@ class SelectUsersPage extends StatefulWidget {
   const SelectUsersPage({
     super.key,
     required this.selectedUIDs,
+    this.excludedUIDs = const [],
     this.includeCurrentUser = false,
     this.allowTaskCheck = false,
     this.title,
   });
 
   final List<String> selectedUIDs;
+  final List<String> excludedUIDs;
   final bool includeCurrentUser;
   final bool allowTaskCheck;
   final String? title;
@@ -194,6 +196,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
     if (!widget.includeCurrentUser) {
       users = users.where((user) => user.id != appContext.currentUser.id);
+    }
+
+    if (widget.excludedUIDs.isNotEmpty) {
+      final excluded = widget.excludedUIDs.toSet();
+      users = users.where((user) => !excluded.contains(user.id));
     }
 
     if (_locationFilter != VolunteerLocations.all) {

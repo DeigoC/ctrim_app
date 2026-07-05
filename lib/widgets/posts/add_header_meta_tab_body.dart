@@ -1,8 +1,9 @@
 import 'dart:math';
+import 'package:ctrim_app/pages/personal/select_users_page.dart';
+import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
-import 'package:ctrim_app/widgets/user_selector_dialog.dart';
+import 'package:ctrim_app/widgets/my_avatar_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -534,12 +535,6 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                OutlinedButton.icon(
-                  onPressed: _onAddContributorClick,
-                  icon: const Icon(Icons.person_add, size: 18),
-                  label: const Text('Add Contributor'),
-                ),
-                const SizedBox(height: 16),
                 if (widget.eventContext.metadata.contributorUIDs.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -551,24 +546,26 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                       textAlign: TextAlign.center,
                     ),
                   )
-                else
-                  ...widget.eventContext.metadata.contributorUIDs.map((uid) {
-                    final thisU = appContext.allUsers.firstWhere((e) => e.id.compareTo(uid) == 0);
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      elevation: 0,
-                      color: colorScheme.surfaceContainerHighest,
-                      child: ListTile(
-                        title: Text(thisU.fullname),
-                        leading: MyUserAvatar(thisU),
-                        trailing: IconButton(
-                          onPressed: () => _onContributorRemoved(uid),
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          tooltip: 'Remove contributor',
-                        ),
-                      ),
-                    );
-                  }),
+                else ...[
+                  MyAvatarStack(
+                    users: appContext.allUsers
+                        .where((e) => widget.eventContext.metadata.contributorUIDs.contains(e.id))
+                        .toList(),
+                    appDir: appContext.appDir,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${widget.eventContext.metadata.contributorUIDs.length} contributor${widget.eventContext.metadata.contributorUIDs.length == 1 ? '' : 's'}',
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _onManageContributorsTap,
+                  icon: const Icon(Icons.group, size: 18),
+                  label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
+                ),
                 const Divider(height: 32),
                 ..._buildNotificationControls(),
               ],
@@ -594,24 +591,20 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
 
   // ? Logic
 
-  void _onAddContributorClick() {
-    showDialog(
-        context: context,
-        builder: (_) => UserSelectorDialog(
-            alreadySelectedUIDs: widget.eventContext.metadata.contributorUIDs, onSelected: _onContributorSelected));
-  }
-
-  void _onContributorSelected(final String id) {
+  Future<void> _onManageContributorsTap() async {
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: List<String>.from(widget.eventContext.metadata.contributorUIDs),
+          excludedUIDs: [widget.eventContext.metadata.authorUID],
+          title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
     setState(() {
-      widget.eventContext.metadata.contributorUIDs.add(id);
-      widget.eventContext.contributorAdditionUIDs.add(id);
-    });
-  }
-
-  void _onContributorRemoved(final String id) {
-    setState(() {
-      widget.eventContext.metadata.contributorUIDs.remove(id);
-      widget.eventContext.contributorAdditionUIDs.remove(id);
+      widget.eventContext.applyContributorUIDs(result);
     });
   }
 

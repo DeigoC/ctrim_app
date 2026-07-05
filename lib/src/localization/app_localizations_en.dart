@@ -171,4 +171,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectUsersManageMembers => 'Manage members';
+
+  @override
+  String get selectUsersContributorsTitle => 'Select contributors';
+
+  @override
+  String get selectUsersManageContributors => 'Manage contributors';
 }

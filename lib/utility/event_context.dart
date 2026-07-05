@@ -460,6 +460,29 @@ class EventContext {
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
 
+  /// Replaces contributor UIDs and updates addition/removal tracking for save notifications.
+  void applyContributorUIDs(List<String> newUIDs) {
+    final previous = Set<String>.from(_metadata.contributorUIDs);
+    final next = Set<String>.from(newUIDs);
+
+    _metadata.contributorUIDs
+      ..clear()
+      ..addAll(newUIDs);
+
+    for (final added in next.difference(previous)) {
+      if (!_contributorAdditionUIDs.contains(added)) {
+        _contributorAdditionUIDs.add(added);
+      }
+      _contributorRemovalUIDs.remove(added);
+    }
+    for (final removed in previous.difference(next)) {
+      _contributorAdditionUIDs.remove(removed);
+      if (!_contributorRemovalUIDs.contains(removed)) {
+        _contributorRemovalUIDs.add(removed);
+      }
+    }
+  }
+
   // template subtitles
   List<String>? get templateSubtitles => _templateSubtitles;
   void setTemplateSubtitles(final List<String>? subtitles) => _templateSubtitles = subtitles;
