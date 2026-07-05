@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../pages/personal/select_users_page.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../widgets/my_avatar_stack.dart';
-import '../../widgets/user_avatar.dart';
-import '../../widgets/user_selector_dialog.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditEventProgramPage extends StatefulWidget {
@@ -225,28 +225,22 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                               ),
                             ],
                           )
-                        else
-                          InkWell(
-                            onTap: _onViewAssignedMembersTap,
-                            child: Column(
-                              children: [
-                                MyAvatarStack(
-                                  users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
-                                  appDir: _appContext.appDir,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${_selectedUsers.length} member${_selectedUsers.length == 1 ? '' : 's'} assigned',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
+                        else ...[
+                          MyAvatarStack(
+                            users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
+                            appDir: _appContext.appDir,
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${_selectedUsers.length} member${_selectedUsers.length == 1 ? '' : 's'} assigned',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         FilledButton.icon(
-                          onPressed: _onSelectMembersTap,
-                          icon: const Icon(Icons.person_add),
-                          label: Text(_selectedUsers.isEmpty ? 'Assign Members' : 'Add More Members'),
+                          onPressed: _onManageMembersTap,
+                          icon: const Icon(Icons.group),
+                          label: Text(AppLocalizations.of(context)!.selectUsersManageMembers),
                         ),
                       ],
                     ),
@@ -556,136 +550,30 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     return false;
   }
 
-  void _onViewAssignedMembersTap() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
-              maxWidth: 400,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.group, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Assigned Members (${_selectedUsers.length})',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: _selectedUsers.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.all(32),
-                          child: Column(
-                            children: [
-                              Icon(Icons.person_off, size: 48, color: Colors.grey),
-                              SizedBox(height: 16),
-                              Text('No members assigned'),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _selectedUsers.length,
-                          itemBuilder: (_, index) {
-                            final thisUser = _appContext.allUsers
-                                .firstWhere((element) => element.id.compareTo(_selectedUsers[index]) == 0);
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                              child: ListTile(
-                                title: Text(thisUser.fullname),
-                                subtitle: Text(thisUser.location),
-                                leading: MyUserAvatar(thisUser),
-                                trailing: IconButton(
-                                  onPressed: () => _onRemoveUserFromRole(thisUser.id),
-                                  icon: const Icon(Icons.remove_circle, color: Colors.red),
-                                  tooltip: 'Remove from assignment',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Close'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  Future<void> _onManageMembersTap() async {
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: List<String>.from(_selectedUsers),
+          includeCurrentUser: true,
+          allowTaskCheck: true,
+        ),
+      ),
     );
+    if (result == null || !mounted) return;
+    _applySelectionChange(result);
   }
 
-  void _onSelectMembersTap() {
-    showDialog(
-        context: context,
-        builder: (_) => UserSelectorDialog(
-            alreadySelectedUIDs: _selectedUsers,
-            includeCurrentUser: true,
-            allowTaskCheck: true,
-            onSelected: (newID) => setState(() {
-                  _selectedUsers.add(newID);
-                  _hasAnythingChanged();
-                })));
-  }
+  void _applySelectionChange(List<String> newSelection) {
+    if (_selectedUsers.toString() == newSelection.toString()) return;
 
-  void _onRemoveUserFromRole(final String uid) {
-    showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text('Remove From Role'),
-            content: const Text('Are you sure you want to continue'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedUsers.removeWhere((element) => element.compareTo(uid) == 0);
-                      widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
-                      _hasAnythingChanged();
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    });
-                  },
-                  child: const Text('Yes'))
-            ],
-          );
-        });
+    setState(() {
+      _selectedUsers
+        ..clear()
+        ..addAll(newSelection);
+    });
+    _hasAnythingChanged();
   }
 
   void _onSaveClick() {

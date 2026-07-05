@@ -369,6 +369,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No volunteers match the selected tags'**
   String get volunteersEmptyTags;
+
+  /// Title for the multi-select volunteer picker page
+  ///
+  /// In en, this message translates to:
+  /// **'Select members'**
+  String get selectUsersTitle;
+
+  /// Confirm button on the volunteer picker page
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get selectUsersDone;
+
+  /// Selected member count on the volunteer picker page
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectUsersSelected(int count);
+
+  /// Button to open the volunteer picker from schedule assignment
+  ///
+  /// In en, this message translates to:
+  /// **'Manage members'**
+  String get selectUsersManageMembers;
 }
 
 class _AppLocalizationsDelegate

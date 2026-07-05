@@ -207,5 +207,26 @@
   "volunteersEmptyTags": "No volunteers match the selected tags",
   "@volunteersEmptyTags": {
     "description": "Empty state when tag filter returns no volunteers"
+  },
+  "selectUsersTitle": "Select members",
+  "@selectUsersTitle": {
+    "description": "Title for the multi-select volunteer picker page"
+  },
+  "selectUsersDone": "Done",
+  "@selectUsersDone": {
+    "description": "Confirm button on the volunteer picker page"
+  },
+  "selectUsersSelected": "{count} selected",
+  "@selectUsersSelected": {
+    "description": "Selected member count on the volunteer picker page",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectUsersManageMembers": "Manage members",
+  "@selectUsersManageMembers": {
+    "description": "Button to open the volunteer picker from schedule assignment"
   }
 }

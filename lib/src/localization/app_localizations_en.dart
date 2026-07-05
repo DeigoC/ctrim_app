@@ -157,4 +157,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersEmptyTags => 'No volunteers match the selected tags';
+
+  @override
+  String get selectUsersTitle => 'Select members';
+
+  @override
+  String get selectUsersDone => 'Done';
+
+  @override
+  String selectUsersSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectUsersManageMembers => 'Manage members';
 }
