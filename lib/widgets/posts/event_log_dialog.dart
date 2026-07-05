@@ -134,24 +134,28 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
-    if (widget.eventContext.head.eventDate != null) {
-      await _cloudFunctionManager.syncUserRolesForPost(
-        postId: widget.eventContext.id,
-        removedUserIds: widget.eventContext.collectRoleRemovalUserIds(),
-      );
-    }
+    try {
+      if (widget.eventContext.head.eventDate != null) {
+        await _cloudFunctionManager.syncUserRolesForPost(
+          postId: widget.eventContext.id,
+          removedUserIds: widget.eventContext.collectRoleRemovalUserIds(),
+        );
+      }
 
-    final List<Future<void>> tasks = [
-      _sendContributorAdditionNotificaitons(),
-      _sendContributorRemovalNotificaitons(),
-      _updateAllUserPostInvolvement(),
-    ];
-    if (widget.eventContext.head.eventDate != null) {
-      tasks.add(_sortRoleAdditions());
-      tasks.add(_sendRoleRemovals());
+      final List<Future<void>> tasks = [
+        _sendContributorAdditionNotificaitons(),
+        _sendContributorRemovalNotificaitons(),
+        _updateAllUserPostInvolvement(),
+      ];
+      if (widget.eventContext.head.eventDate != null) {
+        tasks.add(_sortRoleAdditions());
+        tasks.add(_sendRoleRemovals());
+      }
+      await Future.wait(tasks);
+      _sendPostNotification();
+    } catch (e, stack) {
+      debugPrint('Post saved but follow-up notifications/sync failed: $e\n$stack');
     }
-    await Future.wait(tasks);
-    _sendPostNotification();
   }
 
   Future<void> _sendPostNotification() async {

@@ -48,6 +48,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-05** — Post schedule save on web: workers need read access to `everyone/.../device_tokens` + `notification_tokens` for role-assignment notifications; `EventLogDialog` no longer fails the save when notification follow-ups error.
 - **2026-07-04** — Users/Volunteers Phase 5: admin-managed user tags (`user_tags` collection, manage page, filters/chips); deploy `firestore.rules`.
 - **2026-07-04** — Users/Volunteers Phase 3: profile hub, location filter, schedule badge fix; see `docs/users-volunteers-improvement.md`.
 - **2026-07-04** — Users/Volunteers Phase 2: `UserScheduleService` for role/post pruning; see `docs/users-volunteers-improvement.md`.

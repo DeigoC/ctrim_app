@@ -135,7 +135,7 @@ class EventContext {
     _head.setRecentDate(now);
     metadata.setLastUID(uid);
 
-    dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
+    await dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
 
     await headDBManager.updateHead(_head);
     await dbManager.updateBody(_body.decodedJson);
