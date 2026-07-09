@@ -31,6 +31,7 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import 'send_broadcast_notification_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class ViewEventPage extends StatefulWidget {
@@ -602,60 +603,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   void _notifyBroadcastClick() {
-    DialogManager.showConfirmationDialog(
-            context: context,
-            title: 'Notify Broadcast',
-            content:
-                'This action will send a push notification to people who subscribed to these notifications. Do you wish to continue?')
-        .then((confirmation) async {
-      if (!confirmation) return;
-
-      final List<String> topics = _eventContext.metadata.topics;
-      if (topics.isEmpty) {
-        if (mounted) {
-          DialogManager.showSnackBar(
-            context: context,
-            message: 'No broadcast topics on this post',
-            isError: true,
-          );
-        }
-        return;
-      }
-
-      final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-      final String title = _eventContext.head.title;
-      final String subtitle = _eventContext.head.subtitle;
-      var combined = const NotificationSendResult();
-
-      try {
-        for (final topic in topics) {
-          final result = await cloudFunctionManager.sendToTopic(
-            topic: topic,
-            title: title,
-            body: subtitle,
-            data: {'PostID': _eventContext.id},
-            iOSImage: _eventContext.head.getKeyGraphic(),
-            androidImage: _eventContext.head.getKeyGraphic(),
-          );
-          combined = combined.merge(result);
-        }
-        if (mounted) {
-          DialogManager.showSnackBar(
-            context: context,
-            message: combined.feedbackMessage,
-            isError: combined.hasFailures && !combined.hasSuccess,
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          DialogManager.showSnackBar(
-            context: context,
-            message: 'Failed to send broadcast: $e',
-            isError: true,
-          );
-        }
-      }
-    });
+    Navigator.of(context).pop();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SendBroadcastNotificationPage(eventContext: _eventContext),
+      ),
+    );
   }
 
   void _notifyScheduledMembersClick() {

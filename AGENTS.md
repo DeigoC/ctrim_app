@@ -48,19 +48,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-09** — Broadcast notify compose page: `SendBroadcastNotificationPage` + `EventNotificationCopy` (preset / subtitle / custom body); `Notify: Broadcast` opens the page instead of sending subtitle immediately.
 - **2026-07-09** — Notification Phase 2: leader snackbar feedback from send results; CF prunes invalid FCM tokens; web deep links via `/?postId=` + SW `NOTIFICATION_CLICKED`; removed dead `sendMessageToAuthUsers` / `userWriteTest`.
 - **2026-07-09** — Push notification hardening: CF `send_to_topic` / `send_notification_to_multiple_tokens` require worker auth; web topic migration on FCM token refresh; startup topic reconciliation; `getInitialMessage` cold-start fix; mobile enable saves `device_tokens`; `NotificationTopics` + `NotificationSubscriptionService`.
 - **2026-07-05** — Post schedule save on web: workers need read access to `everyone/.../device_tokens` + `notification_tokens` for role-assignment notifications; `EventLogDialog` no longer fails the save when notification follow-ups error.
 - **2026-07-04** — Users/Volunteers Phase 5: admin-managed user tags (`user_tags` collection, manage page, filters/chips); deploy `firestore.rules`.
-- **2026-07-04** — Users/Volunteers Phase 3: profile hub, location filter, schedule badge fix; see `docs/users-volunteers-improvement.md`.
-- **2026-07-04** — Users/Volunteers Phase 2: `UserScheduleService` for role/post pruning; see `docs/users-volunteers-improvement.md`.
-- **2026-07-04** — Users/Volunteers Phase 1: typed `UserRoleAssignment` / `UserPostInvolvement`; see `docs/users-volunteers-improvement.md`.
-- **2026-07-04** — Users/Volunteers Phase 0: awaited supplemental Firestore writes; `ViewUserRolesPage` Schedule/Posts tabs when `allowPostView`; see `docs/users-volunteers-improvement.md`.
-- **2026-07-04** — Wide-screen home shell: `NavigationRail` (≥900px) in `home_page.dart`; CTRIM section uses vertical subsection nav on wide screens in `information_home.dart` (mobile keeps bottom nav + horizontal tabs).
-- **2026-06-29** — Web push aligned with worship pattern: `send_each_for_multicast` CF, topic fan-out via `web_topics` only, `WebNotificationLifecycle`, `NotificationTokenResolver`; deploy `functions/` + `firestore.rules` to `ctrim-8b49b`.
-- **2026-06-29** — Added `ResponsiveLayout` + `ResponsiveContent`; refactored inline 768px gutter checks across pages.
-- **2026-06-25** — Documented Dart MCP setup and `add_roots` URIs in AGENTS.md.
-- **2026-06-25** — Added `.cursor/rules/`, skills (new-feature, fix-bug, info-section, web-debug, maintain-agent-docs), and this file; Quill widgets are `QuillEditorWidget`/`QuillViewerWidget` in `quill_editor_wrapper.dart`.
 
 ## Commands
 
