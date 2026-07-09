@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,7 @@ import '../src/localization/app_localizations.dart';
 import '../utility/app_context.dart';
 import '../utility/user_schedule_service.dart';
 import '../utility/web_notification_lifecycle.dart';
+import '../utility/notification_topics.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/personal/personal_first_time_dialog.dart';
@@ -927,9 +930,19 @@ class _PersonalHomeState extends State<PersonalHome> {
         authId: authId,
         requestPermission: true,
         onTokenSaved: appContext.sharedPref.saveFCMToken,
+        prefs: appContext.sharedPref,
+        webAuthId: authId,
       );
     } else {
       token = await messagingManager.requestPermissionAndToken();
+      if (token != null && authId.isNotEmpty && !appContext.isCurrentUserGuest) {
+        final everyoneDBManager = EveryoneDBManager();
+        await everyoneDBManager.addTokenForAuthID(
+          authID: authId,
+          token: token,
+          platform: Platform.operatingSystem,
+        );
+      }
     }
 
     if (token != null) {
@@ -942,21 +955,15 @@ class _PersonalHomeState extends State<PersonalHome> {
       }
 
       appContext.sharedPref.setSubscribedToBelfast(true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
+      for (final topic in NotificationTopics.serviceTopics) {
+        appContext.sharedPref.setSubscribedToTopic(topic, true);
+      }
 
       final webAuthId = kIsWeb && !appContext.isCurrentUserGuest ? authId : null;
-      messagingManager.subscribeToTopic('belfast-sunday-service', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-midweek-service', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-growth-mentoring', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-dawn-watch', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-overnight-prayer', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-youth-cg', authId: webAuthId);
-      messagingManager.subscribeToTopic('Belfast', authId: webAuthId);
+      for (final topic in NotificationTopics.serviceTopics) {
+        messagingManager.subscribeToTopic(topic, authId: webAuthId);
+      }
+      messagingManager.subscribeToTopic(NotificationTopics.belfastUmbrella, authId: webAuthId);
 
       if (mounted) {
         // Show success message

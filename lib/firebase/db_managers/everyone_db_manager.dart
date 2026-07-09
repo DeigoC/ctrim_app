@@ -8,12 +8,6 @@ class EveryoneDBManager {
       _auth = 'auth',
       _email = 'email';
 
-  Future<void> userWriteTest(bool content) async {
-    // await _ref.doc('tVV1P736xr9EucuSWlXRudLDra9R').update({'isUser': content});
-    await _ref.doc('36YOuzlzlBkSi7t68AGGJGA4Zv82').update({'isUser': true});
-    await _ref.doc('PvfOhjYmXhtQYUIwEMIwqntNjQm9').update({'isUser': true});
-  }
-
   Future<void> createUser(final String authID, final String email) async {
     await _ref.doc(authID).set({_email: email});
     await _ref.doc(authID).collection(_supplemental).doc(_bookmarks).set({_bookmarks: [], _auth: authID});
@@ -43,11 +37,6 @@ class EveryoneDBManager {
   }
 
   // ! bookmark related
-
-  Future<List<String>> fetchBookmarksForAuthID(final String authID) async {
-    final doc = await _ref.doc(authID).collection(_supplemental).doc(_deviceTokens).get();
-    return List<String>.from(doc.data()![_bookmarks]);
-  }
 
   Future<void> updateBookmarkForAuthID(final String authID, final List<String> bookmarks) async {
     await _ref.doc(authID).collection(_supplemental).doc(_bookmarks).update({_bookmarks: bookmarks});

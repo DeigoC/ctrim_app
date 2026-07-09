@@ -240,8 +240,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, tokens);
+            final resolved = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, resolved);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -266,8 +266,8 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, tokens);
+            final resolved = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, resolved);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));

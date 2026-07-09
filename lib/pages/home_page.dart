@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:universal_html/html.dart' as html;
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
@@ -15,6 +16,8 @@ import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
 import '../utility/responsive_layout.dart';
 import '../utility/web_notification_lifecycle.dart';
+import '../utility/notification_subscription_service.dart';
+import '../utility/web_notification_deep_link.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -95,6 +98,8 @@ class _HomePageState extends State<HomePage>
     WebNotificationLifecycle().listenForTokenRefresh(
       authId: authID,
       onTokenSaved: _appContext.sharedPref.saveFCMToken,
+      prefs: _appContext.sharedPref,
+      webAuthId: authID,
     );
   }
 
@@ -107,6 +112,21 @@ class _HomePageState extends State<HomePage>
     WebNotificationLifecycle().register(
       authId: authID,
       onTokenSaved: _appContext.sharedPref.saveFCMToken,
+      prefs: _appContext.sharedPref,
+      webAuthId: authID,
+    );
+    _reconcileNotificationSubscriptions();
+  }
+
+  Future<void> _reconcileNotificationSubscriptions() async {
+    if (_appContext.isCurrentUserGuest || _appContext.sharedPref.loggedOut) return;
+
+    final authID = kIsWeb ? AuthManager().currentAuthUID : null;
+    if (kIsWeb && (authID == null || authID.isEmpty)) return;
+
+    await NotificationSubscriptionService().reconcile(
+      prefs: _appContext.sharedPref,
+      webAuthId: authID,
     );
   }
 
@@ -313,6 +333,9 @@ class _HomePageState extends State<HomePage>
     }
 
     _registerWebNotificationsIfNeeded();
+    if (!kIsWeb) {
+      _reconcileNotificationSubscriptions();
+    }
   }
 
   // not really something that can be tested at the moment. Requires a good amount of posts made
@@ -342,9 +365,11 @@ class _HomePageState extends State<HomePage>
   // * Notification related
 
   void _setupCloudOnMessage() {
-    // Set up web-specific notification handling
     if (kIsWeb) {
-      _setupWebNotificationListener();
+      _setupWebNotificationClickListener();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleWebLaunchDeepLink();
+      });
     }
 
     // when the app is opened (foreground messages)
@@ -365,42 +390,58 @@ class _HomePageState extends State<HomePage>
       });
     });
 
-    FirebaseMessaging.instance.getInitialMessage().then((message) =>
-        message != null ? () => _handleInitialMessage(message) : null);
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        _handleInitialMessage(message);
+      }
+    });
   }
 
-  /// Web-specific: Listen for notification clicks from the service worker
-  void _setupWebNotificationListener() {
-    if (kIsWeb) {
-      // Listen for messages from the service worker
-      // When a notification is clicked, the service worker sends a message
-      // This is handled via JavaScript postMessage API
-      debugPrint('Setting up web notification listener');
-      // The actual implementation uses browser's messaging API
-      // which is automatically handled by Firebase Messaging Web SDK
+  /// Web: open post/info when the service worker focuses an existing tab.
+  void _setupWebNotificationClickListener() {
+    if (!kIsWeb) return;
+
+    html.window.onMessage.listen((event) {
+      final data = event.data;
+      if (data is! Map) return;
+      if (data['type'] != 'NOTIFICATION_CLICKED') return;
+
+      final payload = data['data'];
+      if (payload is! Map) return;
+
+      final mapped = <String, dynamic>{
+        for (final entry in payload.entries) entry.key.toString(): entry.value,
+      };
+      _openFromNotificationData(mapped);
+    });
+  }
+
+  void _handleWebLaunchDeepLink() {
+    final params = WebNotificationDeepLink.consumeLaunchParams();
+    if (params.isEmpty) return;
+    _openFromNotificationData(params);
+  }
+
+  Future<void> _openFromNotificationData(Map<String, dynamic> data) async {
+    if (_appContext.sharedPref.loggedOut) return;
+
+    if (data.containsKey('PostID')) {
+      final postID = data['PostID']?.toString() ?? '';
+      if (postID.isEmpty) return;
+      final head = await _reloadEventHead(postID);
+      if (!mounted) return;
+      _openPost(head);
+      _updateUserRoles();
+    } else if (data.containsKey('InfoPage')) {
+      final infoPage = data['InfoPage']?.toString() ?? '';
+      if (infoPage.isEmpty) return;
+      if (!mounted) return;
+      _openInformationTeachingPage(infoPage);
     }
   }
 
   Future<void> _handleInitialMessage(final RemoteMessage message) async {
-    if (!_appContext.sharedPref.loggedOut &&
-        message.data.containsKey('PostID')) {
-      final String postID = message.data['PostID'];
-      final bool hasHead = _appContext.eventHeads
-          .any((element) => element.id.compareTo(postID) == 0);
-
-      if (!hasHead) {
-        //  fetch and add the head
-        final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-        final head = await eventHeadDBManager.fetchHead(postID);
-        _appContext.addNewPostHead(head);
-      }
-      final thisHead = _appContext.eventHeads
-          .firstWhere((element) => element.id.compareTo(postID) == 0);
-      _openPost(thisHead);
-    } else if (message.data.containsKey('InfoPage')) {
-      _openInformationTeachingPage(message.data['InfoPage']);
-    }
-    // _showFCMMessage(message);
+    await _openFromNotificationData(message.data);
   }
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {

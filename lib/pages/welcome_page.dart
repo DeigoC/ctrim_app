@@ -1297,6 +1297,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       await WebNotificationLifecycle().register(
         authId: authID,
         onTokenSaved: _appContext.sharedPref.saveFCMToken,
+        prefs: _appContext.sharedPref,
+        webAuthId: authID,
       );
       return;
     }

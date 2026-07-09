@@ -48,6 +48,8 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-09** — Notification Phase 2: leader snackbar feedback from send results; CF prunes invalid FCM tokens; web deep links via `/?postId=` + SW `NOTIFICATION_CLICKED`; removed dead `sendMessageToAuthUsers` / `userWriteTest`.
+- **2026-07-09** — Push notification hardening: CF `send_to_topic` / `send_notification_to_multiple_tokens` require worker auth; web topic migration on FCM token refresh; startup topic reconciliation; `getInitialMessage` cold-start fix; mobile enable saves `device_tokens`; `NotificationTopics` + `NotificationSubscriptionService`.
 - **2026-07-05** — Post schedule save on web: workers need read access to `everyone/.../device_tokens` + `notification_tokens` for role-assignment notifications; `EventLogDialog` no longer fails the save when notification follow-ups error.
 - **2026-07-04** — Users/Volunteers Phase 5: admin-managed user tags (`user_tags` collection, manage page, filters/chips); deploy `firestore.rules`.
 - **2026-07-04** — Users/Volunteers Phase 3: profile hub, location filter, schedule badge fix; see `docs/users-volunteers-improvement.md`.
