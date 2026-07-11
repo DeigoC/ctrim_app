@@ -18,6 +18,9 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          # Pin to match local SDK. flutter_quill 11.5.0 breaks on 3.44+;
+          # 11.5.1 requires Flutter >=3.44, so bump both together later.
+          flutter-version: "3.41.9"
           channel: stable
           cache: true
 
