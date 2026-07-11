@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,8 +9,11 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/messaging_manager.dart';
-import '../utility/web_notification_lifecycle.dart';
+import '../src/localization/app_localizations.dart';
 import '../utility/app_context.dart';
+import '../utility/user_schedule_service.dart';
+import '../utility/web_notification_lifecycle.dart';
+import '../utility/notification_topics.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/personal/personal_first_time_dialog.dart';
@@ -21,6 +26,7 @@ import 'personal/share_open_beta_page.dart';
 import 'personal/view_all_users_page.dart';
 import 'personal/view_my_posts_page.dart';
 import 'personal/view_user_roles_page.dart';
+import 'personal/manage_user_tags_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
@@ -316,24 +322,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                 if (!kIsWeb) const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.checklist_rounded,
-                  title: 'My Schedule',
-                  subtitle: 'View your tasks and roles',
-                  trailing: (appContext.currentUser.roles != null && appContext.currentUser.roles!.isNotEmpty)
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${appContext.currentUser.roles!.length}',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onErrorContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        )
-                      : null,
+                  title: AppLocalizations.of(context)!.mySchedule,
+                  subtitle: AppLocalizations.of(context)!.myScheduleSubtitle,
+                  trailing: _buildScheduleBadge(appContext, theme, colorScheme),
                   onTap: _onViewTasksClick,
                   theme: theme,
                   colorScheme: colorScheme,
@@ -353,8 +344,8 @@ class _PersonalHomeState extends State<PersonalHome> {
                 const Divider(height: 1, indent: 72),
                 _buildModernListTile(
                   icon: Icons.people_rounded,
-                  title: 'Belfast Volunteers',
-                  subtitle: 'View community members',
+                  title: AppLocalizations.of(context)!.volunteersMenuTitle,
+                  subtitle: AppLocalizations.of(context)!.volunteersMenuSubtitle,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
                   theme: theme,
                   colorScheme: colorScheme,
@@ -418,16 +409,32 @@ class _PersonalHomeState extends State<PersonalHome> {
               width: 1,
             ),
           ),
-          child: _buildModernListTile(
-            icon: Icons.newspaper_rounded,
-            title: 'Post Templates',
-            subtitle: 'Manage post templates',
-            onTap: _openViewTemplatesClick,
-            theme: theme,
-            colorScheme: colorScheme,
-            iconColor: colorScheme.primary,
-            isFirst: true,
-            isLast: true,
+          child: Column(
+            children: [
+              _buildModernListTile(
+                icon: Icons.newspaper_rounded,
+                title: 'Post Templates',
+                subtitle: 'Manage post templates',
+                onTap: _openViewTemplatesClick,
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.primary,
+                isFirst: true,
+                isLast: false,
+              ),
+              Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              _buildModernListTile(
+                icon: Icons.label_rounded,
+                title: AppLocalizations.of(context)!.manageUserTagsMenuTitle,
+                subtitle: AppLocalizations.of(context)!.manageUserTagsMenuSubtitle,
+                onTap: _openManageUserTagsClick,
+                theme: theme,
+                colorScheme: colorScheme,
+                iconColor: colorScheme.primary,
+                isFirst: false,
+                isLast: true,
+              ),
+            ],
           ),
         ),
       ],
@@ -655,6 +662,31 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
   }
 
+  Widget? _buildScheduleBadge(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    if (appContext.currentUser.roles == null) return null;
+
+    final upcomingCount = UserScheduleService.upcomingPostCount(
+      user: appContext.currentUser,
+      eventHeads: appContext.eventHeads,
+    );
+    if (upcomingCount == 0) return null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$upcomingCount',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: colorScheme.onErrorContainer,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildModernListTile({
     required IconData icon,
     required String title,
@@ -846,6 +878,10 @@ class _PersonalHomeState extends State<PersonalHome> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewTemplatesPage()));
   }
 
+  void _openManageUserTagsClick() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageUserTagsPage()));
+  }
+
   void _onRegisterAccountClick() {
     Navigator.push(
       context,
@@ -894,9 +930,19 @@ class _PersonalHomeState extends State<PersonalHome> {
         authId: authId,
         requestPermission: true,
         onTokenSaved: appContext.sharedPref.saveFCMToken,
+        prefs: appContext.sharedPref,
+        webAuthId: authId,
       );
     } else {
       token = await messagingManager.requestPermissionAndToken();
+      if (token != null && authId.isNotEmpty && !appContext.isCurrentUserGuest) {
+        final everyoneDBManager = EveryoneDBManager();
+        await everyoneDBManager.addTokenForAuthID(
+          authID: authId,
+          token: token,
+          platform: Platform.operatingSystem,
+        );
+      }
     }
 
     if (token != null) {
@@ -909,21 +955,15 @@ class _PersonalHomeState extends State<PersonalHome> {
       }
 
       appContext.sharedPref.setSubscribedToBelfast(true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-sunday-service', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-midweek-service', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-growth-mentoring', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-dawn-watch', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-overnight-prayer', true);
-      appContext.sharedPref.setSubscribedToTopic('belfast-youth-cg', true);
+      for (final topic in NotificationTopics.serviceTopics) {
+        appContext.sharedPref.setSubscribedToTopic(topic, true);
+      }
 
       final webAuthId = kIsWeb && !appContext.isCurrentUserGuest ? authId : null;
-      messagingManager.subscribeToTopic('belfast-sunday-service', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-midweek-service', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-growth-mentoring', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-dawn-watch', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-overnight-prayer', authId: webAuthId);
-      messagingManager.subscribeToTopic('belfast-youth-cg', authId: webAuthId);
-      messagingManager.subscribeToTopic('Belfast', authId: webAuthId);
+      for (final topic in NotificationTopics.serviceTopics) {
+        messagingManager.subscribeToTopic(topic, authId: webAuthId);
+      }
+      messagingManager.subscribeToTopic(NotificationTopics.belfastUmbrella, authId: webAuthId);
 
       if (mounted) {
         // Show success message

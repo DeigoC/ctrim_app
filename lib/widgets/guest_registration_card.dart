@@ -704,6 +704,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
       allUsersContent += '\n${user.location}';
       allUsersContent += '\n${user.authID}';
+      allUsersContent += '\n${user.tagIDs.join(',')}';
     }
 
     debugPrint('--writing users from DB');

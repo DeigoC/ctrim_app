@@ -274,12 +274,9 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
         _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
       }
 
-      // fetch the parent metadata
-      if (_appContext.getMetadata(parentID) == null) {
-        debugPrint('fetching parent');
-        final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-        _appContext.setMetadata(parentID, await dbManager.fetchMetadata());
-      }
+      // Always refresh parent metadata so siblings stay in sync after bulk creation.
+      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+      _appContext.setMetadata(parentID, await dbManager.fetchMetadata());
 
       // fetch siblings - we know for sure that we have the parent meta
       await _getSiblingPostID(_appContext.getMetadata(parentID)!);

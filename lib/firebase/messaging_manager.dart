@@ -162,9 +162,9 @@ class MessagingManager {
       if (token == null) return;
 
       try {
-        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).update({
+        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).set({
           topic: FieldValue.arrayRemove([token]),
-        });
+        }, SetOptions(merge: true));
         NotificationDebug.log('Web unsubscribed from topic "$topic"');
       } catch (e) {
         NotificationDebug.error('Error unsubscribing from web topic', e);
@@ -176,6 +176,35 @@ class MessagingManager {
       await _instance.unsubscribeFromTopic(topic);
     } catch (e) {
       NotificationDebug.error('Error unsubscribing from topic', e);
+    }
+  }
+
+  /// Remove [oldToken] from all web topic lists, then add [newToken] to [topics].
+  Future<void> migrateWebTopicToken({
+    required String oldToken,
+    required String newToken,
+    required List<String> topics,
+  }) async {
+    if (!kIsWeb || oldToken == newToken) return;
+
+    try {
+      await _removeTokenFromAllWebTopics(oldToken);
+
+      if (topics.isEmpty) return;
+
+      final updates = <String, dynamic>{};
+      for (final topic in topics) {
+        updates[topic] = FieldValue.arrayUnion([newToken]);
+      }
+      await _firestore.collection('notification_tokens').doc(_webTopicsDoc).set(
+            updates,
+            SetOptions(merge: true),
+          );
+      NotificationDebug.log(
+        'Migrated web topic token (${topics.length} topic(s))',
+      );
+    } catch (e) {
+      NotificationDebug.error('Error migrating web topic token', e);
     }
   }
 

@@ -415,6 +415,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         await lifecycle.register(
           authId: authID,
           onTokenSaved: appContext.sharedPref.saveFCMToken,
+          prefs: appContext.sharedPref,
+          webAuthId: authID,
         );
       } else {
         final MessagingManager messagingManager = MessagingManager();

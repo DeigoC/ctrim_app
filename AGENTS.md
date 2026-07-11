@@ -42,12 +42,17 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 - Prefer the **Dart MCP** tools (`analyze_files`, `run_tests`, `dart_fix`) over raw shell when available
 - After significant features or non-obvious fixes, use skill **`maintain-agent-docs`** to keep rules/skills current
 
+## Ongoing work
+
+- **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
+
 ## Recent agent-relevant changes
 
-- **2026-06-29** — Web push aligned with worship pattern: `send_each_for_multicast` CF, topic fan-out via `web_topics` only, `WebNotificationLifecycle`, `NotificationTokenResolver`; deploy `functions/` + `firestore.rules` to `ctrim-8b49b`.
-- **2026-06-29** — Added `ResponsiveLayout` + `ResponsiveContent`; refactored inline 768px gutter checks across pages.
-- **2026-06-25** — Documented Dart MCP setup and `add_roots` URIs in AGENTS.md.
-- **2026-06-25** — Added `.cursor/rules/`, skills (new-feature, fix-bug, info-section, web-debug, maintain-agent-docs), and this file; Quill widgets are `QuillEditorWidget`/`QuillViewerWidget` in `quill_editor_wrapper.dart`.
+- **2026-07-11** — Web Hosting CI: merge to `main` deploys via `.github/workflows/firebase-hosting-merge.yml`; PRs get preview channels via `firebase-hosting-pull-request.yml` (secret `FIREBASE_SERVICE_ACCOUNT_CTRIM_APP`). Flutter pinned to `3.41.9` (quill 11.5.0 incompatible with 3.44).
+- **2026-07-09** — Broadcast notify compose page: `SendBroadcastNotificationPage` + `EventNotificationCopy` (preset / subtitle / custom body); `Notify: Broadcast` opens the page instead of sending subtitle immediately.
+- **2026-07-09** — Notification Phase 2: leader snackbar feedback from send results; CF prunes invalid FCM tokens; web deep links via `/?postId=` + SW `NOTIFICATION_CLICKED`; removed dead `sendMessageToAuthUsers` / `userWriteTest`.
+- **2026-07-09** — Push notification hardening: CF `send_to_topic` / `send_notification_to_multiple_tokens` require worker auth; web topic migration on FCM token refresh; startup topic reconciliation; `getInitialMessage` cold-start fix; mobile enable saves `device_tokens`; `NotificationTopics` + `NotificationSubscriptionService`.
+- **2026-07-05** — Post schedule save on web: workers need read access to `everyone/.../device_tokens` + `notification_tokens` for role-assignment notifications; `EventLogDialog` no longer fails the save when notification follow-ups error.
 
 ## Commands
 

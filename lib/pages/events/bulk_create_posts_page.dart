@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/event/event_metadata.dart';
 import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/post_template_mapper.dart';
@@ -32,7 +33,6 @@ class BulkCreatePostsPage extends StatefulWidget {
 
 class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   static const _dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  static final _previewDateFormat = DateFormat('EEE d MMM');
   final _random = Random();
 
   int _selectedWeeks = 4;
@@ -68,7 +68,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         final subtitle = widget.template.subtitles.isNotEmpty
             ? widget.template.subtitles[_random.nextInt(widget.template.subtitles.length)]
             : '';
-        final titleDate = DateFormat('d MMM').format(date);
+        final titleDate = _formatBulkPostTitleDate(date);
         final baseTitle = widget.template.title;
         final title = '$baseTitle – $titleDate';
         _previews.add(_PostPreview(title: title, subtitle: subtitle, date: date));
@@ -101,13 +101,22 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     final location = widget.template.location;
     final headDBManager = EventHeadDBManager();
 
+    final String? parentID = _effectiveParentID;
+    EventSupplementalDBManager? parentDbManager;
+    EventMetadata? parentMetadata;
+    if (parentID != null) {
+      parentDbManager = EventSupplementalDBManager(parentID);
+      parentMetadata = await parentDbManager.fetchMetadata();
+      appContext.setMetadata(parentID, parentMetadata);
+    }
+
     try {
       for (int i = 0; i < _previews.length; i++) {
         final preview = _previews[i];
         final eventContext = PostTemplateMapper.mapTemplateToEventContext(
           template: widget.template,
           currentUserID: uid,
-          parentID: _effectiveParentID,
+          parentID: parentID,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
 
@@ -119,7 +128,18 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           eventDate: preview.date,
         );
 
-        await _updateParentMetadata(newID, preview.title, uid, appContext, headDBManager);
+        if (parentID != null && parentMetadata != null && parentDbManager != null) {
+          await _updateParentMetadata(
+            newPostID: newID,
+            title: preview.title,
+            parentID: parentID,
+            parentMetadata: parentMetadata,
+            uid: uid,
+            appContext: appContext,
+            headDBManager: headDBManager,
+            parentDbManager: parentDbManager,
+          );
+        }
         appContext.addNewPostHead(await headDBManager.fetchHead(newID));
 
         setState(() {
@@ -145,23 +165,21 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     }
   }
 
-  Future<void> _updateParentMetadata(
-    String newPostID,
-    String title,
-    String uid,
-    AppContext appContext,
-    EventHeadDBManager headDBManager,
-  ) async {
-    final String? parentID = _effectiveParentID;
-    if (parentID == null) return;
+  Future<void> _updateParentMetadata({
+    required String newPostID,
+    required String title,
+    required String parentID,
+    required EventMetadata parentMetadata,
+    required String uid,
+    required AppContext appContext,
+    required EventHeadDBManager headDBManager,
+    required EventSupplementalDBManager parentDbManager,
+  }) async {
+    parentMetadata.childrenPostIDs.add(newPostID);
+    await parentDbManager.updateMetadata(parentMetadata);
+    appContext.setMetadata(parentID, parentMetadata);
 
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
-    final metadata = await dbManager.fetchMetadata();
-    metadata.childrenPostIDs.add(newPostID);
-    dbManager.updateMetadata(metadata);
-    appContext.setMetadata(parentID, metadata);
-
-    dbManager.addLogEntry(
+    await parentDbManager.addLogEntry(
       logMessage: "Created related post: '$title'",
       uid: uid,
       ts: DateTime.now(),
@@ -179,7 +197,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     } else {
       parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: 1)));
     }
-    headDBManager.updateHead(parentHead);
+    await headDBManager.updateHead(parentHead);
     appContext.addOrUpdatePostHead(parentHead);
   }
 
@@ -300,7 +318,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  _previewDateFormat.format(preview.date),
+                                  _formatBulkPostPreviewDate(preview.date),
                                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                         color: colorScheme.onPrimaryContainer,
                                         fontWeight: FontWeight.w600,
@@ -430,6 +448,26 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 }
+
+String _dayWithOrdinal(int day) {
+  if (day >= 11 && day <= 13) return '${day}th';
+  switch (day % 10) {
+    case 1:
+      return '${day}st';
+    case 2:
+      return '${day}nd';
+    case 3:
+      return '${day}rd';
+    default:
+      return '${day}th';
+  }
+}
+
+String _formatBulkPostTitleDate(DateTime date) =>
+    '${_dayWithOrdinal(date.day)} ${DateFormat('MMM').format(date)}';
+
+String _formatBulkPostPreviewDate(DateTime date) =>
+    '${DateFormat('EEE').format(date)} ${_dayWithOrdinal(date.day)} ${DateFormat('MMM').format(date)}';
 
 class _PostPreview {
   String title;

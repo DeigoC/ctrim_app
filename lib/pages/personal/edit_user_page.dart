@@ -11,6 +11,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/user_tag_picker.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditUserPage extends StatefulWidget {
@@ -34,9 +35,11 @@ class _EditUserPageState extends State<EditUserPage> {
   late bool _isAreaAdmin;
   late bool _isLeader;
   late String _src;
+  late Set<String> _selectedTagIDs;
   bool _testing = false;
   bool _canSave = false;
   bool _hasChanges = false;
+  bool _imageValidated = true;
 
   @override
   void initState() {
@@ -49,11 +52,12 @@ class _EditUserPageState extends State<EditUserPage> {
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _src = widget.user.imgSrc;
+    _selectedTagIDs = Set<String>.from(widget.user.tagIDs);
 
-    _tecForename.addListener(_onFieldChanged);
-    _tecSurname.addListener(_onFieldChanged);
-    _tecLocation.addListener(_onFieldChanged);
-    _tecImgSrc.addListener(_onFieldChanged);
+    _tecForename.addListener(_updateChangeState);
+    _tecSurname.addListener(_updateChangeState);
+    _tecLocation.addListener(_updateChangeState);
+    _tecImgSrc.addListener(_updateChangeState);
   }
 
   @override
@@ -65,17 +69,33 @@ class _EditUserPageState extends State<EditUserPage> {
     super.dispose();
   }
 
-  void _onFieldChanged() {
+  void _updateChangeState() {
+    final sanitizedImg = _sanitiseSrc();
     final hasTextChanges = _tecForename.text != widget.user.forname ||
         _tecSurname.text != widget.user.surname ||
-        _tecLocation.text != widget.user.location ||
-        _tecImgSrc.text != widget.user.imgSrc;
-
+        _tecLocation.text != widget.user.location;
+    final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin || _isLeader != widget.user.isLeader;
+    final hasTagChanges = !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
+    final requiredFieldsFilled = _tecForename.text.trim().isNotEmpty &&
+        _tecSurname.text.trim().isNotEmpty &&
+        _tecLocation.text.trim().isNotEmpty;
+
+    if (!hasImgFieldChange) {
+      _imageValidated = true;
+    } else if (_src != sanitizedImg) {
+      _imageValidated = false;
+    }
 
     setState(() {
-      _hasChanges = hasTextChanges || hasFlagChanges;
+      _hasChanges = hasTextChanges || hasFlagChanges || hasTagChanges || hasImgFieldChange;
+      _canSave = _hasChanges && _imageValidated && requiredFieldsFilled;
     });
+  }
+
+  bool _setEquals(Set<String> a, Set<String> b) {
+    if (a.length != b.length) return false;
+    return a.containsAll(b);
   }
 
   @override
@@ -83,16 +103,27 @@ class _EditUserPageState extends State<EditUserPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit User'),
-        actions: [
-          if (_hasChanges)
-            IconButton(
-              onPressed: _canSave ? _onSaveChangesClick : null,
-              icon: const Icon(Icons.save),
-              tooltip: 'Save Changes',
-            ),
-        ],
       ),
       body: _buildBody(),
+      bottomNavigationBar: _buildSaveBar(),
+    );
+  }
+
+  Widget? _buildSaveBar() {
+    if (!_hasChanges) return null;
+
+    final horizontalPadding =
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
+        child: FilledButton.icon(
+          onPressed: _canSave ? _onSaveChangesClick : null,
+          icon: const Icon(Icons.save),
+          label: const Text('Save Changes'),
+        ),
+      ),
     );
   }
 
@@ -233,8 +264,8 @@ class _EditUserPageState extends State<EditUserPage> {
                     onChanged: (value) {
                       setState(() {
                         _isAreaAdmin = value;
-                        _onFieldChanged();
                       });
+                      _updateChangeState();
                     },
                   ),
                   SwitchListTile(
@@ -244,12 +275,23 @@ class _EditUserPageState extends State<EditUserPage> {
                     onChanged: (value) {
                       setState(() {
                         _isLeader = value;
-                        _onFieldChanged();
                       });
+                      _updateChangeState();
                     },
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Consumer<AppContext>(
+            builder: (context, appContext, _) => UserTagPicker(
+              allTags: appContext.allTags,
+              selectedTagIDs: _selectedTagIDs,
+              onChanged: (selected) {
+                _selectedTagIDs = selected;
+                _updateChangeState();
+              },
             ),
           ),
           const SizedBox(height: 16),
@@ -295,10 +337,11 @@ class _EditUserPageState extends State<EditUserPage> {
 
   Future<void> _testImageClick() async {
     setState(() {
-      _canSave = false;
       _testing = true;
       _src = _sanitiseSrc();
+      _imageValidated = false;
     });
+    _updateChangeState();
 
     try {
       // Test if the image is accessible via HEAD request
@@ -310,8 +353,9 @@ class _EditUserPageState extends State<EditUserPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          _canSave = true;
+          _imageValidated = true;
         });
+        _updateChangeState();
       } else {
         throw Exception('HTTP ${response.statusCode}');
       }
@@ -326,8 +370,9 @@ class _EditUserPageState extends State<EditUserPage> {
       }
       setState(() {
         _testing = false;
-        _canSave = false;
+        _imageValidated = false;
       });
+      _updateChangeState();
     }
   }
 
@@ -352,11 +397,30 @@ class _EditUserPageState extends State<EditUserPage> {
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
       authID: widget.user.authID,
+      tagIDs: _selectedTagIDs.toList(),
     );
 
     try {
       // Update in database
-      await _userDBManager.updateUser(updatedUser);
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      final preservedInactiveTags = widget.user.tagIDs.where((id) {
+        final tag = appContext.tagById(id);
+        return tag != null && !tag.isActive;
+      });
+      final tagIDsToSave = [...preservedInactiveTags, ..._selectedTagIDs];
+
+      final userToSave = User(
+        id: updatedUser.id,
+        forname: updatedUser.forname,
+        surname: updatedUser.surname,
+        imgSrc: updatedUser.imgSrc,
+        location: updatedUser.location,
+        isAreaAdmin: updatedUser.isAreaAdmin,
+        isLeader: updatedUser.isLeader,
+        authID: updatedUser.authID,
+        tagIDs: tagIDsToSave,
+      );
+      await _userDBManager.updateUser(userToSave);
 
       // Update local image data if image changed
       if (_src != widget.user.imgSrc && _src.isNotEmpty) {
@@ -371,13 +435,32 @@ class _EditUserPageState extends State<EditUserPage> {
         final allUsers = appContext.allUsers;
         final index = allUsers.indexWhere((u) => u.id == widget.user.id);
         if (index != -1) {
-          allUsers[index].setImgSrc(updatedUser.imgSrc);
+          final existing = allUsers[index];
+          final replacement = User(
+            id: userToSave.id,
+            forname: userToSave.forname,
+            surname: userToSave.surname,
+            imgSrc: userToSave.imgSrc,
+            location: userToSave.location,
+            isAreaAdmin: userToSave.isAreaAdmin,
+            isLeader: userToSave.isLeader,
+            authID: userToSave.authID,
+            tagIDs: userToSave.tagIDs,
+          );
+          if (existing.roles != null) replacement.setRoles(existing.roles!.toList());
+          if (existing.posts != null) replacement.setPosts(existing.posts!.toList());
+          allUsers[index] = replacement;
+
+          if (appContext.currentUser.id == widget.user.id) {
+            appContext.setCurrentUser(replacement);
+          }
         }
 
         setState(() {
           _canSave = false;
           _testing = false;
           _hasChanges = false;
+          _imageValidated = true;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(

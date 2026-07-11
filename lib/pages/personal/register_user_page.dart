@@ -7,6 +7,8 @@ import '../../firebase/db_managers/id_tracker.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
+import '../../utility/volunteer_locations.dart';
+import '../../widgets/user_tag_picker.dart';
 
 class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});
@@ -24,6 +26,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
 
   bool _canSave = false, _isSaved = false, _isLeader = false, _allowPop = false;
+  Set<String> _selectedTagIDs = {};
 
   void _popRouteAfterAllowing() {
     setState(() => _allowPop = true);
@@ -32,9 +35,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     });
   }
 
-  final List<String> _locations = <String>['Belfast', 'Portadown', 'North Coast'];
-
-  String _currentLocation = 'Belfast'; // default for now
+  String _currentLocation = VolunteerLocations.belfast;
 
   @override
   void dispose() {
@@ -105,6 +106,14 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                 })),
         const Divider(),
         const SizedBox(height: 16),
+        Consumer<AppContext>(
+          builder: (context, appContext, _) => UserTagPicker(
+            allTags: appContext.allTags,
+            selectedTagIDs: _selectedTagIDs,
+            onChanged: (selected) => setState(() => _selectedTagIDs = selected),
+          ),
+        ),
+        const SizedBox(height: 16),
         ElevatedButton(
             onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
             child: const Text('Search for AuthID')),
@@ -130,7 +139,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     return DropdownButton<String>(
         icon: const Icon(Icons.map_sharp),
         hint: const Text('Location'),
-        items: _locations
+        items: VolunteerLocations.assignable
             .map((e) => DropdownMenuItem<String>(
                   value: e,
                   child: Text(e),
@@ -208,10 +217,12 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         forname: _tecForename.text.trim(),
         surname: _tecSurname.text.trim(),
         authID: _tecAuthID.text,
-        isLeader: _isLeader);
+        location: _currentLocation,
+        isLeader: _isLeader,
+        tagIDs: _selectedTagIDs.toList());
 
     _everyoneDBManager.setAsUser(_tecAuthID.text, _isLeader);
-    userDBManager.addUser(newUser);
+    await userDBManager.addUser(newUser);
     return newUser;
   }
 

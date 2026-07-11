@@ -6,7 +6,45 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0175C2">
   <meta name="description" content="The Official App for CTRIM - currently a Work in Progress! Please download the app in iOS and Android">
+
+  <!-- Inline splash — paints before Flutter/JS loads -->
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background-color: #0175C2;
+    }
+    #flutter-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #0175C2;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    #flutter-splash.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #flutter-splash img {
+      width: 96px;
+      height: 96px;
+      border-radius: 20px;
+    }
+    #flutter-splash p {
+      margin: 16px 0 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+  </style>
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,7 +80,20 @@
 </head>
 
 <body>
+  <div id="flutter-splash" aria-hidden="true">
+    <img src="icons/Icon-192.png" alt="">
+    <p>CTRIM App</p>
+  </div>
+
   <script>
+    function removeFlutterSplash() {
+      var splash = document.getElementById('flutter-splash');
+      if (!splash) return;
+      splash.classList.add('fade-out');
+      splash.addEventListener('transitionend', function () { splash.remove(); });
+    }
+    window.addEventListener('flutter-first-frame', removeFlutterSplash);
+
     console.log('🚀 Starting CTRIM App...');
 
     window.addEventListener('load', function(ev) {
