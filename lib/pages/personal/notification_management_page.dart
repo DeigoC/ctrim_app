@@ -6,6 +6,7 @@ import '../../firebase/auth_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/notification_topics.dart';
 
 class NotificationManagementPage extends StatefulWidget {
   const NotificationManagementPage({super.key});
@@ -42,25 +43,33 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
         const Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0), child: Text('Belfast', style: TextStyle(fontSize: 24))),
         SwitchListTile(
+            title: const Text('All Belfast updates'),
+            value: _appContext.sharedPref.subscribedToBelfast,
+            onChanged: (newState) => _onBelfastUmbrellaClick(newState)),
+        SwitchListTile(
             title: const Text('Sunday Worship Service'),
-            value: _appContext.sharedPref.isSubscribedToTopic('belfast-sunday-service'),
-            onChanged: (newState) => _onTopicClick('belfast-sunday-service', newState)),
+            value: _appContext.sharedPref.isSubscribedToTopic(NotificationTopics.sundayService),
+            onChanged: (newState) => _onTopicClick(NotificationTopics.sundayService, newState)),
         SwitchListTile(
             title: const Text('Midweek Service'),
-            value: _appContext.sharedPref.isSubscribedToTopic('belfast-midweek-service'),
-            onChanged: (newState) => _onTopicClick('belfast-midweek-service', newState)),
+            value: _appContext.sharedPref.isSubscribedToTopic(NotificationTopics.midweekService),
+            onChanged: (newState) => _onTopicClick(NotificationTopics.midweekService, newState)),
         SwitchListTile(
             title: const Text('Growth Mentoring'),
-            value: _appContext.sharedPref.isSubscribedToTopic('belfast-growth-mentoring'),
-            onChanged: (newState) => _onTopicClick('belfast-growth-mentoring', newState)),
+            value: _appContext.sharedPref.isSubscribedToTopic(NotificationTopics.growthMentoring),
+            onChanged: (newState) => _onTopicClick(NotificationTopics.growthMentoring, newState)),
+        SwitchListTile(
+            title: const Text('Dawn Watch'),
+            value: _appContext.sharedPref.isSubscribedToTopic(NotificationTopics.dawnWatch),
+            onChanged: (newState) => _onTopicClick(NotificationTopics.dawnWatch, newState)),
         SwitchListTile(
             title: const Text('Youth Online Caregroup'),
-            value: _appContext.sharedPref.isSubscribedToTopic('belfast-youth-cg'),
-            onChanged: (newState) => _onTopicClick('belfast-youth-cg', newState)),
+            value: _appContext.sharedPref.isSubscribedToTopic(NotificationTopics.youthCaregroup),
+            onChanged: (newState) => _onTopicClick(NotificationTopics.youthCaregroup, newState)),
         SwitchListTile(
             title: const Text('Overnight Prayer'),
-            value: _appContext.sharedPref.isSubscribedToTopic('belfast-overnight-prayer'),
-            onChanged: (newState) => _onTopicClick('belfast-overnight-prayer', newState)),
+            value: _appContext.sharedPref.isSubscribedToTopic(NotificationTopics.overnightPrayer),
+            onChanged: (newState) => _onTopicClick(NotificationTopics.overnightPrayer, newState)),
         const Divider()
       ],
     );
@@ -68,18 +77,30 @@ class _NotificationManagementPageState extends State<NotificationManagementPage>
 
   // * Logic
 
-  void _onTopicClick(final String topic, final bool newState) {
+  void _onBelfastUmbrellaClick(final bool newState) {
+    _onTopicClick(NotificationTopics.belfastUmbrella, newState, updateBelfastPref: true);
+  }
+
+  void _onTopicClick(final String topic, final bool newState, {bool updateBelfastPref = false}) {
     final authId = kIsWeb ? AuthManager().currentAuthUID : null;
     setState(() {
       if (newState) {
         debugPrint('subscribing to: $topic');
         _messagingManager.subscribeToTopic(topic, authId: authId);
-        _appContext.sharedPref.setSubscribedToTopic(topic, newState);
+        if (updateBelfastPref) {
+          _appContext.sharedPref.setSubscribedToBelfast(true);
+        } else {
+          _appContext.sharedPref.setSubscribedToTopic(topic, true);
+        }
         _appContext.analytics.logEvent(name: 'Notification subscribe to: $topic');
       } else {
         debugPrint('unsubscribing to: $topic');
         _messagingManager.unsubscribeFromTopic(topic, authId: authId);
-        _appContext.sharedPref.setSubscribedToTopic(topic, newState);
+        if (updateBelfastPref) {
+          _appContext.sharedPref.setSubscribedToBelfast(false);
+        } else {
+          _appContext.sharedPref.setSubscribedToTopic(topic, false);
+        }
         _appContext.analytics.logEvent(name: 'Notification unsubscribe to: $topic');
       }
     });

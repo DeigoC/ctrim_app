@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../utility/notification_token_resolver.dart';
 import '../../firebase/functions_manager.dart';
@@ -16,6 +17,8 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
+import '../../utility/notification_send_result.dart';
+import '../../utility/notification_topics.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_metadata_section.dart';
@@ -28,6 +31,7 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import 'send_broadcast_notification_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class ViewEventPage extends StatefulWidget {
@@ -40,7 +44,6 @@ class ViewEventPage extends StatefulWidget {
 
 class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProviderStateMixin {
   static final MessagingManager _messagingManager = MessagingManager();
-  static const String _post = 'post-';
 
   late final TabController _tabController;
   late final EventContext _eventContext;
@@ -394,13 +397,14 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   void _updateWholePostBody() => setState(() {});
 
   void _bookmarkClick(final AppContext appContext, final bool bookmarked) {
+    final webAuthId = kIsWeb ? AuthManager().currentAuthUID : null;
     setState(() {
       if (bookmarked) {
         appContext.sharedPref.removePostBookmark(_eventContext.id);
-        _messagingManager.unsubscribeFromTopic(_topic);
+        _messagingManager.unsubscribeFromTopic(_topic, authId: webAuthId);
       } else {
         appContext.sharedPref.addPostBookmark(_eventContext.id);
-        _messagingManager.subscribeToTopic(_topic);
+        _messagingManager.subscribeToTopic(_topic, authId: webAuthId);
       }
     });
   }
@@ -527,6 +531,16 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     });
   }
 
+  void _syncChildrenMetadataFromAppContext() {
+    final cached = Provider.of<AppContext>(context, listen: false).getMetadata(_eventContext.id);
+    if (cached == null) return;
+    for (final childId in cached.childrenPostIDs) {
+      if (!_eventContext.metadata.childrenPostIDs.contains(childId)) {
+        _eventContext.metadata.childrenPostIDs.add(childId);
+      }
+    }
+  }
+
   void _onBulkCreateRelatedPosts() {
     Navigator.of(context).pop();
     Navigator.push(
@@ -539,11 +553,12 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                 bulkMode: true,
                 sourcePostId: _eventContext.id,
                 sourcePostParentId: _eventContext.metadata.parentID))).then((_) {
+      _syncChildrenMetadataFromAppContext();
       setState(() {});
     });
   }
 
-  String get _topic => _post + _eventContext.id;
+  String get _topic => NotificationTopics.postTopic(_eventContext.id);
 
   Future<List<String>> _attemptToGetExistingPostData() async {
     final LocalDataManager localDataManager = LocalDataManager();
@@ -588,29 +603,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   void _notifyBroadcastClick() {
-    DialogManager.showConfirmationDialog(
-            context: context,
-            title: 'Notify Broadcast',
-            content:
-                'This action will send a push notification to people who subscribed to these notifications. Do you wish to continue?')
-        .then((confirmation) {
-      if (confirmation) {
-        final List<String> topics = _eventContext.metadata.topics;
-        final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-        final String title = _eventContext.head.title;
-        final String subtitle = _eventContext.head.subtitle;
-
-        for (final topic in topics) {
-          cloudFunctionManager.sendToTopic(
-              topic: topic,
-              title: title,
-              body: subtitle,
-              data: {'PostID': _eventContext.id},
-              iOSImage: _eventContext.head.getKeyGraphic(),
-              androidImage: _eventContext.head.getKeyGraphic());
-        }
-      }
-    });
+    Navigator.of(context).pop();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SendBroadcastNotificationPage(eventContext: _eventContext),
+      ),
+    );
   }
 
   void _notifyScheduledMembersClick() {
@@ -635,8 +634,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       final String currentUID = appContext.currentUser.id;
       final String title = "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
 
-      int successCount = 0;
-      int errorCount = 0;
+      var combined = const NotificationSendResult();
+      var usersWithoutTokens = 0;
 
       for (final roleEntry in _eventContext.program.roles) {
         try {
@@ -663,16 +662,19 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                     if (fetchedTokens.isNotEmpty) {
                       appContext.addTokensToUserID(thisUID, fetchedTokens);
                       tokens.addAll(fetchedTokens);
+                    } else {
+                      usersWithoutTokens++;
                     }
                   } else {
                     debugPrint('Warning: Could not get authID for user $thisUID, skipping...');
+                    usersWithoutTokens++;
                   }
                 } else {
                   tokens.addAll(appContext.getTokensFromUserID(thisUID));
                 }
               } catch (e) {
                 debugPrint('Error fetching tokens for user $thisUID: $e');
-                errorCount++;
+                usersWithoutTokens++;
                 continue;
               }
             }
@@ -680,29 +682,35 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
           if (tokens.isNotEmpty) {
             try {
-              await cloudFunctionManager.sendMessageToSelectedTokens(
-                  tokens: tokens, title: title, body: body, data: {'PostID': _eventContext.id});
-              successCount++;
+              final result = await cloudFunctionManager.sendMessageToSelectedTokens(
+                tokens: tokens,
+                title: title,
+                body: body,
+                data: {'PostID': _eventContext.id},
+              );
+              combined = combined.merge(result);
             } catch (e) {
               debugPrint('Error sending notification for role "$roleTitle": $e');
-              errorCount++;
+              combined = combined.merge(const NotificationSendResult(failureCount: 1));
             }
           }
         } catch (e) {
           debugPrint('Error processing role entry: $e');
-          errorCount++;
+          combined = combined.merge(const NotificationSendResult(failureCount: 1));
           continue;
         }
       }
 
       if (mounted) {
-        final String message = errorCount > 0
-            ? 'Notifications sent: $successCount successful, $errorCount failed'
-            : 'Successfully sent $successCount notification${successCount != 1 ? 's' : ''}';
-
+        var message = combined.feedbackMessage;
+        if (usersWithoutTokens > 0) {
+          message =
+              '$message · $usersWithoutTokens member${usersWithoutTokens == 1 ? '' : 's'} had no device';
+        }
         DialogManager.showSnackBar(
           context: context,
           message: message,
+          isError: combined.hasFailures && !combined.hasSuccess,
         );
       }
     } catch (e) {
@@ -711,6 +719,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         DialogManager.showSnackBar(
           context: context,
           message: 'Failed to send notifications: $e',
+          isError: true,
         );
       }
     }

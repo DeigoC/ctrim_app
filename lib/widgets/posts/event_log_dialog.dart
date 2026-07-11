@@ -33,7 +33,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
   final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
-  final UserDBManager _userDBManager = UserDBManager();
   bool _canSave = false;
 
   @override
@@ -135,17 +134,28 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
 
-    final List<Future<void>> tasks = [
-      _sendContributorAdditionNotificaitons(),
-      _sendContributorRemovalNotificaitons(),
-      _updateAllUserPostInvolvement(),
-    ];
-    if (widget.eventContext.head.eventDate != null) {
-      tasks.add(_sortRoleAdditions());
-      tasks.add(_sendRoleRemovals());
+    try {
+      if (widget.eventContext.head.eventDate != null) {
+        await _cloudFunctionManager.syncUserRolesForPost(
+          postId: widget.eventContext.id,
+          removedUserIds: widget.eventContext.collectRoleRemovalUserIds(),
+        );
+      }
+
+      final List<Future<void>> tasks = [
+        _sendContributorAdditionNotificaitons(),
+        _sendContributorRemovalNotificaitons(),
+        _updateAllUserPostInvolvement(),
+      ];
+      if (widget.eventContext.head.eventDate != null) {
+        tasks.add(_sortRoleAdditions());
+        tasks.add(_sendRoleRemovals());
+      }
+      await Future.wait(tasks);
+      _sendPostNotification();
+    } catch (e, stack) {
+      debugPrint('Post saved but follow-up notifications/sync failed: $e\n$stack');
     }
-    await Future.wait(tasks);
-    _sendPostNotification();
   }
 
   Future<void> _sendPostNotification() async {
@@ -230,19 +240,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, tokens);
+            final resolved = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, resolved);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        await _userDBManager.addUserRole(
-            uid: thisUID,
-            postID: widget.eventContext.id,
-            roleID: additionEntry.key,
-            millisecondStart: (roleEntry['start'] as DateTime).millisecondsSinceEpoch,
-            millisecondEnd: (roleEntry['end'] as DateTime).millisecondsSinceEpoch,
-            title: roleEntry['title']);
       }
       _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -263,13 +266,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, tokens);
+            final resolved = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
+            _appContext.addTokensToUserID(thisUID, resolved);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
-        await _userDBManager.removeUserRole(thisUID, removalEntry.key);
       }
       await _cloudFunctionManager.sendMessageToSelectedTokens(
           tokens: tokens, title: title, body: body, data: _notificationdata);
@@ -326,12 +328,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     // then add the new contributors
     for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
-      userDBManager.addPostToUser(contributorID, postID, 'contributor');
+      await userDBManager.addPostToUser(contributorID, postID, 'contributor');
     }
 
     // then remove the old contributors
     for (final String contributorID in widget.eventContext.contributorRemovalUIDs) {
-      userDBManager.removePostFromUser(contributorID, postID);
+      await userDBManager.removePostFromUser(contributorID, postID);
     }
   }
 

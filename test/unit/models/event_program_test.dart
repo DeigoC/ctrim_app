@@ -117,6 +117,18 @@ void main() {
         final program = EventProgram();
         expect(() => program.roles.add({}), throwsUnsupportedError);
       });
+
+      test('toJson omits timestamps for roles without start/end', () {
+        final program = EventProgram();
+        program.addRole(uids: ['user-1'], title: 'Open slot', start: null, end: null, id: 3000);
+
+        final json = program.toJson();
+        final role = (json['Roles'] as List).first as Map<String, dynamic>;
+
+        expect(role['start'], isNull);
+        expect(role['end'], isNull);
+        expect(role['title'], 'Open slot');
+      });
     });
 
     group('orderProgramsByStartTime', () {

@@ -62,8 +62,8 @@ class EventProgram {
         'uids': entry['uids'],
         'detail': entry['detail'],
         'title': entry['title'],
-        'start': Timestamp.fromDate(entry['start']),
-        'end': Timestamp.fromDate(entry['end']),
+        'start': entry['start'] == null ? null : Timestamp.fromDate(entry['start'] as DateTime),
+        'end': entry['end'] == null ? null : Timestamp.fromDate(entry['end'] as DateTime),
         'for_guests': entry['for_guests'],
         'id': entry['id'],
       });

@@ -3,17 +3,22 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/messaging_manager.dart';
+import 'app_shared_preferences.dart';
 import 'notification_debug.dart';
+import 'notification_subscription_service.dart';
 
 /// Registers and refreshes web FCM tokens in Firestore + everyone/device_tokens.
 class WebNotificationLifecycle {
   final MessagingManager _messagingManager = MessagingManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final NotificationSubscriptionService _subscriptionService = NotificationSubscriptionService();
 
   Future<String?> register({
     required String authId,
     bool requestPermission = false,
     void Function(String token)? onTokenSaved,
+    AppSharedPreferences? prefs,
+    String? webAuthId,
   }) async {
     if (!kIsWeb || authId.isEmpty) return null;
 
@@ -35,6 +40,9 @@ class WebNotificationLifecycle {
 
       if (token != null) {
         await _syncToEveryone(authId: authId, token: token, onTokenSaved: onTokenSaved);
+        if (prefs != null) {
+          await _subscriptionService.reconcile(prefs: prefs, webAuthId: webAuthId ?? authId);
+        }
       }
       return token;
     } catch (e) {
@@ -46,13 +54,26 @@ class WebNotificationLifecycle {
   void listenForTokenRefresh({
     required String authId,
     void Function(String token)? onTokenSaved,
+    AppSharedPreferences? prefs,
+    String? webAuthId,
   }) {
     if (!kIsWeb) return;
 
     _messagingManager.listenForTokenRefresh(
       authId: authId,
       onRefreshed: (token) async {
+        final previousToken = prefs?.fcmToken ?? '';
+        if (prefs != null && previousToken.isNotEmpty && previousToken != token) {
+          await _subscriptionService.migrateWebTopicsAfterTokenRefresh(
+            oldToken: previousToken,
+            newToken: token,
+            prefs: prefs,
+          );
+        }
         await _syncToEveryone(authId: authId, token: token, onTokenSaved: onTokenSaved);
+        if (prefs != null) {
+          await _subscriptionService.reconcile(prefs: prefs, webAuthId: webAuthId ?? authId);
+        }
       },
     );
   }

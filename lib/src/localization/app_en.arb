@@ -2,5 +2,251 @@
   "appTitle": "CTRIM App",
   "@appTitle": {
     "description": "The work in progress app for the CTRIM Church"
+  },
+  "volunteersTitle": "Volunteers",
+  "@volunteersTitle": {
+    "description": "Title for the volunteers directory when showing all locations"
+  },
+  "volunteersTitleLocation": "{location} Volunteers",
+  "@volunteersTitleLocation": {
+    "description": "Title for the volunteers directory filtered by location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "volunteersFilterAll": "All",
+  "@volunteersFilterAll": {
+    "description": "Filter chip label to show volunteers from every location"
+  },
+  "volunteersSearchHint": "Search volunteers...",
+  "@volunteersSearchHint": {
+    "description": "Hint text for the volunteers search field"
+  },
+  "volunteersEmpty": "No volunteers found",
+  "@volunteersEmpty": {
+    "description": "Empty state when the volunteers list has no entries"
+  },
+  "volunteersEmptySearch": "No volunteers match \"{query}\"",
+  "@volunteersEmptySearch": {
+    "description": "Empty state when search returns no volunteers",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "volunteersEmptyLocation": "No volunteers in {location}",
+  "@volunteersEmptyLocation": {
+    "description": "Empty state when a location filter returns no volunteers",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "registerUser": "Register User",
+  "@registerUser": {
+    "description": "FAB label for registering a new volunteer"
+  },
+  "volunteersMenuTitle": "Volunteers",
+  "@volunteersMenuTitle": {
+    "description": "Personal home menu item for the volunteers directory"
+  },
+  "volunteersMenuSubtitle": "View community members",
+  "@volunteersMenuSubtitle": {
+    "description": "Personal home menu subtitle for the volunteers directory"
+  },
+  "mySchedule": "My Schedule",
+  "@mySchedule": {
+    "description": "Personal home menu item for the current user's schedule"
+  },
+  "myScheduleSubtitle": "View your tasks and roles",
+  "@myScheduleSubtitle": {
+    "description": "Personal home menu subtitle for the schedule page"
+  },
+  "userProfileLeaderBadge": "Leader",
+  "@userProfileLeaderBadge": {
+    "description": "Badge shown when a volunteer can create events"
+  },
+  "userProfileAdminBadge": "Admin",
+  "@userProfileAdminBadge": {
+    "description": "Badge shown when a volunteer is an area admin"
+  },
+  "userProfileUpcomingTasks": "Upcoming tasks",
+  "@userProfileUpcomingTasks": {
+    "description": "Section title on a volunteer profile for schedule preview"
+  },
+  "userProfileNoUpcomingTasks": "No upcoming tasks assigned.",
+  "@userProfileNoUpcomingTasks": {
+    "description": "Message when a volunteer has no upcoming schedule items"
+  },
+  "userProfileViewFullSchedule": "View full schedule",
+  "@userProfileViewFullSchedule": {
+    "description": "Button to open the full schedule page"
+  },
+  "userProfileViewPosts": "View posts",
+  "@userProfileViewPosts": {
+    "description": "Button to open posts the volunteer authors or contributes to"
+  },
+  "userProfileEditUser": "Edit user",
+  "@userProfileEditUser": {
+    "description": "App bar action for admins to edit a volunteer profile"
+  },
+  "userProfileUntitledEvent": "Untitled event",
+  "@userProfileUntitledEvent": {
+    "description": "Fallback event title on profile schedule preview"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel button label"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save button label"
+  },
+  "userTagsFilterClear": "Clear tags",
+  "@userTagsFilterClear": {
+    "description": "Button to clear selected tag filters"
+  },
+  "userTagsAssignLabel": "Teams & tags",
+  "@userTagsAssignLabel": {
+    "description": "Section label for assigning tags to a volunteer"
+  },
+  "userTagsNoneAvailable": "No tags defined yet. Area admins can create tags in Admin Tools.",
+  "@userTagsNoneAvailable": {
+    "description": "Message when no user tags exist for assignment"
+  },
+  "manageUserTagsTitle": "Manage Tags",
+  "@manageUserTagsTitle": {
+    "description": "Title for the admin page that manages volunteer tag definitions"
+  },
+  "manageUserTagsAdd": "Add tag",
+  "@manageUserTagsAdd": {
+    "description": "Action to create a new volunteer tag"
+  },
+  "manageUserTagsEmpty": "No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.",
+  "@manageUserTagsEmpty": {
+    "description": "Empty state on the manage tags page"
+  },
+  "manageUserTagsSeedDefaults": "Add starter tags",
+  "@manageUserTagsSeedDefaults": {
+    "description": "Button to seed default volunteer tags"
+  },
+  "manageUserTagsActive": "Active",
+  "@manageUserTagsActive": {
+    "description": "Status label for an active tag"
+  },
+  "manageUserTagsInactive": "Inactive",
+  "@manageUserTagsInactive": {
+    "description": "Status label for a deactivated tag"
+  },
+  "manageUserTagsMoveUp": "Move up",
+  "@manageUserTagsMoveUp": {
+    "description": "Reorder a tag higher in the list"
+  },
+  "manageUserTagsMoveDown": "Move down",
+  "@manageUserTagsMoveDown": {
+    "description": "Reorder a tag lower in the list"
+  },
+  "manageUserTagsEdit": "Edit",
+  "@manageUserTagsEdit": {
+    "description": "Edit an existing tag"
+  },
+  "manageUserTagsDeactivate": "Deactivate",
+  "@manageUserTagsDeactivate": {
+    "description": "Deactivate a tag so it cannot be assigned"
+  },
+  "manageUserTagsActivate": "Activate",
+  "@manageUserTagsActivate": {
+    "description": "Reactivate a deactivated tag"
+  },
+  "manageUserTagsDelete": "Delete",
+  "@manageUserTagsDelete": {
+    "description": "Delete a tag definition"
+  },
+  "manageUserTagsNameLabel": "Tag name",
+  "@manageUserTagsNameLabel": {
+    "description": "Label for the tag name field"
+  },
+  "manageUserTagsColorLabel": "Color (optional)",
+  "@manageUserTagsColorLabel": {
+    "description": "Label for the optional tag color hex field"
+  },
+  "manageUserTagsCreate": "Create",
+  "@manageUserTagsCreate": {
+    "description": "Create a new tag"
+  },
+  "manageUserTagsDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@manageUserTagsDeleteConfirm": {
+    "description": "Confirmation before deleting a tag",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageUserTagsDeleteBlocked": "Cannot delete — {count} volunteers still have this tag. Deactivate it instead.",
+  "@manageUserTagsDeleteBlocked": {
+    "description": "Error when trying to delete a tag that is still assigned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "manageUserTagsMenuTitle": "Volunteer Tags",
+  "@manageUserTagsMenuTitle": {
+    "description": "Personal home admin menu item for managing tags"
+  },
+  "manageUserTagsMenuSubtitle": "Create and edit team labels",
+  "@manageUserTagsMenuSubtitle": {
+    "description": "Personal home admin menu subtitle for managing tags"
+  },
+  "volunteersEmptyTags": "No volunteers match the selected tags",
+  "@volunteersEmptyTags": {
+    "description": "Empty state when tag filter returns no volunteers"
+  },
+  "selectUsersTitle": "Select members",
+  "@selectUsersTitle": {
+    "description": "Title for the multi-select volunteer picker page"
+  },
+  "selectUsersDone": "Done",
+  "@selectUsersDone": {
+    "description": "Confirm button on the volunteer picker page"
+  },
+  "selectUsersSelected": "{count} selected",
+  "@selectUsersSelected": {
+    "description": "Selected member count on the volunteer picker page",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectUsersManageMembers": "Manage members",
+  "@selectUsersManageMembers": {
+    "description": "Button to open the volunteer picker from schedule assignment"
+  },
+  "selectUsersContributorsTitle": "Select contributors",
+  "@selectUsersContributorsTitle": {
+    "description": "Title for the contributor multi-select picker page"
+  },
+  "selectUsersManageContributors": "Manage contributors",
+  "@selectUsersManageContributors": {
+    "description": "Button to open the contributor picker"
+  },
+  "volunteersSortLabel": "Sort",
+  "@volunteersSortLabel": {
+    "description": "Label before sort mode chips on the volunteers list"
+  },
+  "volunteersSortSurname": "Surname",
+  "@volunteersSortSurname": {
+    "description": "Sort volunteers by surname"
+  },
+  "volunteersSortTags": "Team",
+  "@volunteersSortTags": {
+    "description": "Sort volunteers by primary team tag"
   }
 }

@@ -10,4 +10,180 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTitle => 'CTRIM App';
+
+  @override
+  String get volunteersTitle => 'Volunteers';
+
+  @override
+  String volunteersTitleLocation(String location) {
+    return '$location Volunteers';
+  }
+
+  @override
+  String get volunteersFilterAll => 'All';
+
+  @override
+  String get volunteersSearchHint => 'Search volunteers...';
+
+  @override
+  String get volunteersEmpty => 'No volunteers found';
+
+  @override
+  String volunteersEmptySearch(String query) {
+    return 'No volunteers match \"$query\"';
+  }
+
+  @override
+  String volunteersEmptyLocation(String location) {
+    return 'No volunteers in $location';
+  }
+
+  @override
+  String get registerUser => 'Register User';
+
+  @override
+  String get volunteersMenuTitle => 'Volunteers';
+
+  @override
+  String get volunteersMenuSubtitle => 'View community members';
+
+  @override
+  String get mySchedule => 'My Schedule';
+
+  @override
+  String get myScheduleSubtitle => 'View your tasks and roles';
+
+  @override
+  String get userProfileLeaderBadge => 'Leader';
+
+  @override
+  String get userProfileAdminBadge => 'Admin';
+
+  @override
+  String get userProfileUpcomingTasks => 'Upcoming tasks';
+
+  @override
+  String get userProfileNoUpcomingTasks => 'No upcoming tasks assigned.';
+
+  @override
+  String get userProfileViewFullSchedule => 'View full schedule';
+
+  @override
+  String get userProfileViewPosts => 'View posts';
+
+  @override
+  String get userProfileEditUser => 'Edit user';
+
+  @override
+  String get userProfileUntitledEvent => 'Untitled event';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get userTagsFilterClear => 'Clear tags';
+
+  @override
+  String get userTagsAssignLabel => 'Teams & tags';
+
+  @override
+  String get userTagsNoneAvailable =>
+      'No tags defined yet. Area admins can create tags in Admin Tools.';
+
+  @override
+  String get manageUserTagsTitle => 'Manage Tags';
+
+  @override
+  String get manageUserTagsAdd => 'Add tag';
+
+  @override
+  String get manageUserTagsEmpty =>
+      'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.';
+
+  @override
+  String get manageUserTagsSeedDefaults => 'Add starter tags';
+
+  @override
+  String get manageUserTagsActive => 'Active';
+
+  @override
+  String get manageUserTagsInactive => 'Inactive';
+
+  @override
+  String get manageUserTagsMoveUp => 'Move up';
+
+  @override
+  String get manageUserTagsMoveDown => 'Move down';
+
+  @override
+  String get manageUserTagsEdit => 'Edit';
+
+  @override
+  String get manageUserTagsDeactivate => 'Deactivate';
+
+  @override
+  String get manageUserTagsActivate => 'Activate';
+
+  @override
+  String get manageUserTagsDelete => 'Delete';
+
+  @override
+  String get manageUserTagsNameLabel => 'Tag name';
+
+  @override
+  String get manageUserTagsColorLabel => 'Color (optional)';
+
+  @override
+  String get manageUserTagsCreate => 'Create';
+
+  @override
+  String manageUserTagsDeleteConfirm(String name) {
+    return 'Delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String manageUserTagsDeleteBlocked(int count) {
+    return 'Cannot delete — $count volunteers still have this tag. Deactivate it instead.';
+  }
+
+  @override
+  String get manageUserTagsMenuTitle => 'Volunteer Tags';
+
+  @override
+  String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
+
+  @override
+  String get volunteersEmptyTags => 'No volunteers match the selected tags';
+
+  @override
+  String get selectUsersTitle => 'Select members';
+
+  @override
+  String get selectUsersDone => 'Done';
+
+  @override
+  String selectUsersSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectUsersManageMembers => 'Manage members';
+
+  @override
+  String get selectUsersContributorsTitle => 'Select contributors';
+
+  @override
+  String get selectUsersManageContributors => 'Manage contributors';
+
+  @override
+  String get volunteersSortLabel => 'Sort';
+
+  @override
+  String get volunteersSortSurname => 'Surname';
+
+  @override
+  String get volunteersSortTags => 'Team';
 }

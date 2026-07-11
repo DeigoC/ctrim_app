@@ -71,11 +71,11 @@ class EventSupplementalDBManager {
   }
 
   Future<void> addProgram(EventProgram program) async {
-    _colRef.doc('program').set(program.toJson());
+    await _colRef.doc('program').set(program.toJson());
   }
 
   Future<void> updateProgram(EventProgram program) async {
-    _colRef.doc('program').update(program.toJson());
+    await _colRef.doc('program').update(program.toJson());
   }
 
   // * Supplemental - MetaData

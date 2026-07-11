@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_post_involvement.dart';
+import 'package:ctrim_app/models/user_role_assignment.dart';
 
 void main() {
   group('User', () {
@@ -38,6 +40,7 @@ void main() {
         expect(user.isAreaAdmin, true);
         expect(user.isLeader, true);
         expect(user.authID, 'auth-abc');
+        expect(user.tagIDs, isEmpty);
       });
     });
 
@@ -51,6 +54,7 @@ void main() {
           'IsLeader': true,
           'AuthID': 'auth-xyz',
           'ImgSrc': 'https://example.com/alice.png',
+          'Tags': ['tag-1', 'tag-2'],
         };
 
         final user = User.fromMap('99', map);
@@ -63,6 +67,20 @@ void main() {
         expect(user.isLeader, true);
         expect(user.authID, 'auth-xyz');
         expect(user.imgSrc, 'https://example.com/alice.png');
+        expect(user.tagIDs, ['tag-1', 'tag-2']);
+      });
+
+      test('fromMap defaults Tags to empty list when missing', () {
+        final user = User.fromMap('1', {
+          'Forename': 'A',
+          'Surname': 'B',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+        });
+        expect(user.tagIDs, isEmpty);
       });
     });
 
@@ -88,6 +106,18 @@ void main() {
         expect(json['IsLeader'], true);
         expect(json['ImgSrc'], 'img.png');
         expect(json['AuthID'], 'auth-1');
+        expect(json['Tags'], isEmpty);
+      });
+
+      test('serialises tag IDs', () {
+        final user = User(
+          id: '1',
+          forname: 'John',
+          surname: 'Smith',
+          tagIDs: ['a', 'b'],
+        );
+        final json = user.toJson() as Map<String, dynamic>;
+        expect(json['Tags'], ['a', 'b']);
       });
     });
 
@@ -131,49 +161,86 @@ void main() {
 
       test('setRoles stores and returns an unmodifiable list', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
-        final roles = [
-          {'postID': 'p1', 'title': 'Leader'},
-        ];
-        user.setRoles(roles);
+        user.setRoles([
+          UserRoleAssignment(
+            postID: 'p1',
+            roleID: 1,
+            start: DateTime(2024, 6, 15, 10),
+            end: DateTime(2024, 6, 15, 11),
+            title: 'Leader',
+          ),
+        ]);
 
         expect(user.roles, isNotNull);
         expect(user.roles!.length, 1);
-        expect(() => user.roles!.add({}), throwsUnsupportedError);
+        expect(user.roles!.first.title, 'Leader');
+        expect(() => user.roles!.add(user.roles!.first), throwsUnsupportedError);
       });
 
       test('setPosts stores and returns an unmodifiable list', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          {'id': 'post-1'},
+          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
         ]);
 
         expect(user.posts, isNotNull);
         expect(user.posts!.length, 1);
-        expect(() => user.posts!.add({}), throwsUnsupportedError);
+        expect(user.posts!.first.postID, 'post-1');
+        expect(() => user.posts!.add(user.posts!.first), throwsUnsupportedError);
       });
 
       test('removeRoles removes matching entries', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setRoles([
-          {'postID': 'p1'},
-          {'postID': 'p2'},
+          UserRoleAssignment(
+            postID: 'p1',
+            roleID: 1,
+            start: DateTime(2024, 6, 15, 10),
+            end: DateTime(2024, 6, 15, 11),
+            title: 'A',
+          ),
+          UserRoleAssignment(
+            postID: 'p2',
+            roleID: 2,
+            start: DateTime(2024, 6, 16, 10),
+            end: DateTime(2024, 6, 16, 11),
+            title: 'B',
+          ),
         ]);
         user.removeRoles(['p1']);
 
         expect(user.roles!.length, 1);
-        expect(user.roles!.first['postID'], 'p2');
+        expect(user.roles!.first.postID, 'p2');
       });
 
       test('removeAllPosts removes matching entries', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          {'id': 'post-1'},
-          {'id': 'post-2'},
+          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
+          UserPostInvolvement(postID: 'post-2', ownership: PostOwnership.contributor),
         ]);
         user.removeAllPosts(['post-1']);
 
         expect(user.posts!.length, 1);
-        expect(user.posts!.first['id'], 'post-2');
+        expect(user.posts!.first.postID, 'post-2');
+      });
+    });
+
+    group('tag IDs', () {
+      test('setTagIDs stores unmodifiable list', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith');
+        user.setTagIDs(['t1', 't2']);
+
+        expect(user.tagIDs, ['t1', 't2']);
+        expect(() => user.tagIDs.add('t3'), throwsUnsupportedError);
+      });
+
+      test('hasTag and hasAnyTag work', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith', tagIDs: ['worship', 'tech']);
+        expect(user.hasTag('worship'), isTrue);
+        expect(user.hasTag('usher'), isFalse);
+        expect(user.hasAnyTag(['usher', 'tech']), isTrue);
+        expect(user.hasAnyTag(['usher']), isFalse);
       });
     });
 

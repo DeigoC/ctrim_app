@@ -119,11 +119,11 @@ class EventContext {
     _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': now});
 
     await headDBManager.saveNewHead(headToUpload);
-    dbManager.addBody(_body.json);
-    dbManager.addMedia(_media);
-    dbManager.addMetadata(_metadata);
-    dbManager.setLog(_log);
-    dbManager.addProgram(_program);
+    await dbManager.addBody(_body.json);
+    await dbManager.addMedia(_media);
+    await dbManager.addMetadata(_metadata);
+    await dbManager.setLog(_log);
+    await dbManager.addProgram(_program);
     return newID;
   }
 
@@ -135,13 +135,22 @@ class EventContext {
     _head.setRecentDate(now);
     metadata.setLastUID(uid);
 
-    dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
+    await dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
 
     await headDBManager.updateHead(_head);
-    dbManager.updateBody(_body.decodedJson);
-    dbManager.updateMetadata(_metadata);
-    dbManager.updateProgram(_program);
-    dbManager.updateMedia(_media);
+    await dbManager.updateBody(_body.decodedJson);
+    await dbManager.updateMetadata(_metadata);
+    await dbManager.updateProgram(_program);
+    await dbManager.updateMedia(_media);
+  }
+
+  /// User IDs removed from program roles during the current edit (for CF role sync).
+  List<String> collectRoleRemovalUserIds() {
+    final uids = <String>{};
+    for (final removed in _roleRemovals.values) {
+      uids.addAll(removed);
+    }
+    return uids.toList();
   }
 
   String get id => _head.id;
@@ -450,6 +459,29 @@ class EventContext {
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
+
+  /// Replaces contributor UIDs and updates addition/removal tracking for save notifications.
+  void applyContributorUIDs(List<String> newUIDs) {
+    final previous = Set<String>.from(_metadata.contributorUIDs);
+    final next = Set<String>.from(newUIDs);
+
+    _metadata.contributorUIDs
+      ..clear()
+      ..addAll(newUIDs);
+
+    for (final added in next.difference(previous)) {
+      if (!_contributorAdditionUIDs.contains(added)) {
+        _contributorAdditionUIDs.add(added);
+      }
+      _contributorRemovalUIDs.remove(added);
+    }
+    for (final removed in previous.difference(next)) {
+      _contributorAdditionUIDs.remove(removed);
+      if (!_contributorRemovalUIDs.contains(removed)) {
+        _contributorRemovalUIDs.add(removed);
+      }
+    }
+  }
 
   // template subtitles
   List<String>? get templateSubtitles => _templateSubtitles;

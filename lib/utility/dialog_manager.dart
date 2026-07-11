@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../models/user.dart';
+import '../utility/app_context.dart';
+import '../utility/user_tag_helpers.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/user_tag_chip.dart';
 import 'responsive_layout.dart';
 
 /// Modern dialog manager with Material 3 design patterns
@@ -16,6 +20,10 @@ class DialogManager {
     Widget buildVerticalUserViewer(User selectedUser) {
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
+      final userTags = UserTagHelpers.tagsForUser(
+        user: selectedUser,
+        allTags: Provider.of<AppContext>(context, listen: false).allTags,
+      );
 
       return Container(
         constraints: BoxConstraints(
@@ -91,6 +99,10 @@ class DialogManager {
                 ],
               ],
             ),
+            if (userTags.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              UserTagChipRow(tags: userTags, alignment: WrapAlignment.center),
+            ],
             const SizedBox(height: 24),
           ],
         ),
@@ -100,6 +112,10 @@ class DialogManager {
     Widget buildHorizontalUserViewer(User selectedUser) {
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
+      final userTags = UserTagHelpers.tagsForUser(
+        user: selectedUser,
+        allTags: Provider.of<AppContext>(context, listen: false).allTags,
+      );
 
       return Container(
         constraints: BoxConstraints(
@@ -181,6 +197,10 @@ class DialogManager {
                       ],
                     ],
                   ),
+                  if (userTags.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    UserTagChipRow(tags: userTags),
+                  ],
                 ],
               ),
             ),

@@ -1,17 +1,16 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../utility/notification_debug.dart';
-import '../utility/notification_token_resolver.dart';
+import '../utility/notification_send_result.dart';
 import 'messaging_manager.dart';
 
 class CloudFunctionManager {
   static final _inst = FirebaseFunctions.instanceFor(region: 'europe-west1');
-  final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
 
   CloudFunctionManager();
 
   /// Send to native topic subscribers plus web tokens stored for [topic] in Firestore.
-  Future<void> sendToTopic({
+  Future<NotificationSendResult> sendToTopic({
     required String topic,
     required String title,
     required String body,
@@ -34,7 +33,7 @@ class CloudFunctionManager {
     };
 
     await _callCloudFunction('send_to_topic', callParams);
-    await _sendToWebTokens(
+    final webResult = await _sendToWebTokens(
       topic: topic,
       title: title,
       body: body,
@@ -42,42 +41,17 @@ class CloudFunctionManager {
       androidImage: androidImage,
       iOSImage: iOSImage,
     );
-  }
 
-  /// Direct send: merges everyone device_tokens + web tokens per auth ID.
-  Future<void> sendMessageToAuthUsers({
-    required List<String> authIDs,
-    required String title,
-    required String body,
-    required Map<String, String> data,
-    String? androidImage,
-    String? iOSImage,
-  }) async {
-    NotificationDebug.section('sendMessageToAuthUsers');
-    NotificationDebug.log('authIDs=$authIDs title=$title');
-
-    final tokens = <String>{};
-    for (final authID in authIDs) {
-      if (authID.isEmpty) continue;
-      tokens.addAll(await _tokenResolver.resolveForAuthID(authID));
-    }
-
-    if (tokens.isEmpty) {
-      NotificationDebug.warn('sendMessageToAuthUsers: no tokens');
-      return;
-    }
-
-    await sendMessageToSelectedTokens(
-      tokens: tokens.toList(),
-      title: title,
-      body: body,
-      data: data,
-      androidImage: androidImage,
-      iOSImage: iOSImage,
+    return NotificationSendResult(
+      topicSent: true,
+      successCount: webResult.successCount,
+      failureCount: webResult.failureCount,
+      invalidTokenCount: webResult.invalidTokenCount,
+      webRecipientCount: webResult.webRecipientCount,
     );
   }
 
-  Future<void> sendMessageToSelectedTokens({
+  Future<NotificationSendResult> sendMessageToSelectedTokens({
     required List<String> tokens,
     required String title,
     required String body,
@@ -87,7 +61,7 @@ class CloudFunctionManager {
   }) async {
     if (tokens.isEmpty) {
       NotificationDebug.warn('sendMessageToSelectedTokens: empty token list');
-      return;
+      return const NotificationSendResult(skippedEmpty: true);
     }
 
     final uniqueTokens = tokens.toSet().toList();
@@ -108,10 +82,11 @@ class CloudFunctionManager {
       NotificationDebug.token('  recipient', t);
     }
 
-    await _callCloudFunction('send_notification_to_multiple_tokens', callParams);
+    final raw = await _callCloudFunction('send_notification_to_multiple_tokens', callParams);
+    return _parseSendResult(raw, fallbackSuccess: uniqueTokens.length);
   }
 
-  Future<void> _sendToWebTokens({
+  Future<NotificationSendResult> _sendToWebTokens({
     required String topic,
     required String title,
     required String body,
@@ -126,10 +101,10 @@ class CloudFunctionManager {
       final webTokens = await MessagingManager.getWebTokensForTopic(topic);
       if (webTokens.isEmpty) {
         NotificationDebug.warn('No web tokens for topic "$topic"');
-        return;
+        return const NotificationSendResult();
       }
 
-      await sendMessageToSelectedTokens(
+      final result = await sendMessageToSelectedTokens(
         tokens: webTokens,
         title: title,
         body: body,
@@ -137,19 +112,74 @@ class CloudFunctionManager {
         androidImage: androidImage,
         iOSImage: iOSImage,
       );
+      return NotificationSendResult(
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        invalidTokenCount: result.invalidTokenCount,
+        webRecipientCount: webTokens.length,
+        skippedEmpty: result.skippedEmpty,
+      );
     } catch (e) {
       NotificationDebug.error('Error sending to web tokens', e);
+      return const NotificationSendResult(failureCount: 1);
     }
   }
 
-  Future<void> _callCloudFunction(String name, Map<String, String> callParams) async {
+  Future<Map<String, dynamic>> _callCloudFunction(
+    String name,
+    Map<String, String> callParams,
+  ) async {
     try {
       final callable = _inst.httpsCallable(name);
       final result = await callable.call(callParams);
       NotificationDebug.log('$name result: ${result.data}');
+      final data = result.data;
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+      return {};
     } catch (e) {
       NotificationDebug.error('$name failed', e);
       rethrow;
+    }
+  }
+
+  NotificationSendResult _parseSendResult(
+    Map<String, dynamic> raw, {
+    required int fallbackSuccess,
+  }) {
+    final success = _asInt(raw['success_count']) ?? fallbackSuccess;
+    final failure = _asInt(raw['failure_count']) ?? 0;
+    final invalid = _asInt(raw['invalid_token_count']) ?? 0;
+    return NotificationSendResult(
+      successCount: success,
+      failureCount: failure,
+      invalidTokenCount: invalid,
+    );
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '');
+  }
+
+  /// Sync supplemental user roles from the saved event program (Phase 4 CF).
+  Future<void> syncUserRolesForPost({
+    required String postId,
+    List<String> removedUserIds = const [],
+  }) async {
+    try {
+      NotificationDebug.section('syncUserRolesForPost');
+      NotificationDebug.log('postId=$postId removed=${removedUserIds.length}');
+      final callable = _inst.httpsCallable('sync_user_roles_for_post');
+      final result = await callable.call({
+        'PostID': postId,
+        'RemovedUIDs': removedUserIds.join(','),
+      });
+      NotificationDebug.log('sync_user_roles_for_post result: ${result.data}');
+    } catch (e) {
+      NotificationDebug.error('sync_user_roles_for_post failed', e);
     }
   }
 
