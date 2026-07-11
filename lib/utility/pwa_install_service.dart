@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_html/js.dart' as js;
@@ -14,43 +16,20 @@ class PwaInstallService {
 
   static final PwaInstallService instance = PwaInstallService._();
 
-  dynamic get _bridge {
+  js.JsObject? get _bridge {
     if (!kIsWeb) return null;
-    return js.context['ctrimPwaInstall'];
+    final bridge = js.context['ctrimPwaInstall'];
+    return bridge is js.JsObject ? bridge : null;
   }
 
-  bool get isInstalled {
-    if (!kIsWeb) return false;
-    try {
-      final bridge = _bridge;
-      if (bridge == null) return false;
-      return js.callMethod(bridge, 'isStandalone', []) == true;
-    } catch (_) {
-      return false;
-    }
-  }
+  bool get isInstalled => _callBridgeBool('isStandalone');
 
   bool get canPromptInstall {
     if (!kIsWeb || isInstalled) return false;
-    try {
-      final bridge = _bridge;
-      if (bridge == null) return false;
-      return js.callMethod(bridge, 'canPrompt', []) == true;
-    } catch (_) {
-      return false;
-    }
+    return _callBridgeBool('canPrompt');
   }
 
-  bool get isIosBrowser {
-    if (!kIsWeb) return false;
-    try {
-      final bridge = _bridge;
-      if (bridge == null) return false;
-      return js.callMethod(bridge, 'isIos', []) == true;
-    } catch (_) {
-      return false;
-    }
-  }
+  bool get isIosBrowser => _callBridgeBool('isIos');
 
   bool get shouldShowInstallOption => kIsWeb && !isInstalled;
 
@@ -71,16 +50,33 @@ class PwaInstallService {
 
   Future<PwaInstallResult> promptInstall() async {
     if (!kIsWeb) return PwaInstallResult.unavailable;
+
+    final bridge = _bridge;
+    if (bridge == null) return PwaInstallResult.unavailable;
+
+    final completer = Completer<PwaInstallResult>();
+
+    void onResult(html.Event event) {
+      html.window.removeEventListener('ctrim-pwa-install-result', onResult);
+      final detail = event is html.CustomEvent ? event.detail?.toString() : null;
+      if (!completer.isCompleted) {
+        completer.complete(_resultFromJs(detail));
+      }
+    }
+
+    html.window.addEventListener('ctrim-pwa-install-result', onResult);
+    bridge.callMethod('promptInstall', []);
+    return completer.future;
+  }
+
+  bool _callBridgeBool(String methodName) {
+    if (!kIsWeb) return false;
     try {
       final bridge = _bridge;
-      if (bridge == null) return PwaInstallResult.unavailable;
-
-      final outcome = await js.promiseToFuture(
-        js.callMethod(bridge, 'promptInstall', []),
-      );
-      return _resultFromJs(outcome?.toString());
+      if (bridge == null) return false;
+      return bridge.callMethod(methodName, []) == true;
     } catch (_) {
-      return PwaInstallResult.unavailable;
+      return false;
     }
   }
 

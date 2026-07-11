@@ -38,16 +38,23 @@
     },
     isStandalone: isStandalone,
     isIos: isIosBrowser,
-    promptInstall: async function () {
-      if (!deferredPrompt) {
-        return 'unavailable';
-      }
+    promptInstall: function () {
+      (async function () {
+        if (!deferredPrompt) {
+          window.dispatchEvent(
+            new CustomEvent('ctrim-pwa-install-result', { detail: 'unavailable' }),
+          );
+          return;
+        }
 
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      notifyAvailability();
-      return choice.outcome;
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        notifyAvailability();
+        window.dispatchEvent(
+          new CustomEvent('ctrim-pwa-install-result', { detail: choice.outcome }),
+        );
+      })();
     },
   };
 })();
