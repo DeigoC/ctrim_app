@@ -39,7 +39,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const String _powerpointGeneratorUrl = 'https://ctrim-powerpoint-generator.streamlit.app';
+  static const String _slideDeckGeneratorUrl = 'https://church-slidedeck-utils.streamlit.app/';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
