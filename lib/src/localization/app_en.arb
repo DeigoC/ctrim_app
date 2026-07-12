@@ -248,5 +248,17 @@
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
     "description": "Sort volunteers by primary team tag"
+  },
+  "volunteersFiltersTitle": "Filters",
+  "@volunteersFiltersTitle": {
+    "description": "Title for the volunteers filter bottom sheet"
+  },
+  "volunteersLocationFilterLabel": "Location",
+  "@volunteersLocationFilterLabel": {
+    "description": "Section label for location filters on the volunteers list"
+  },
+  "volunteersFiltersReset": "Reset filters",
+  "@volunteersFiltersReset": {
+    "description": "Button to clear all volunteer list filters"
   }
 }

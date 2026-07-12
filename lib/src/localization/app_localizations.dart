@@ -423,6 +423,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Team'**
   String get volunteersSortTags;
+
+  /// Title for the volunteers filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get volunteersFiltersTitle;
+
+  /// Section label for location filters on the volunteers list
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get volunteersLocationFilterLabel;
+
+  /// Button to clear all volunteer list filters
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get volunteersFiltersReset;
 }
 
 class _AppLocalizationsDelegate

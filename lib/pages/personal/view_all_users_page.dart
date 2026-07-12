@@ -10,7 +10,6 @@ import 'package:ctrim_app/utility/volunteer_locations.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:ctrim_app/widgets/user_tag_chip.dart';
-import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -54,6 +53,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
+      final activeFiltersSummary = _buildActiveFiltersSummary(l10n, appContext, webHorizontalPadding);
 
       return Scaffold(
           appBar: AppBar(
@@ -71,6 +71,16 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   )
                 : Text(_pageTitle(l10n)),
             actions: [
+              IconButton(
+                tooltip: l10n.volunteersFiltersTitle,
+                icon: Badge(
+                  isLabelVisible: _hasActiveFilters(
+                    VolunteerLocations.defaultFilterForUser(appContext.currentUser.location),
+                  ),
+                  child: const Icon(Icons.filter_list),
+                ),
+                onPressed: () => _showFilterSheet(appContext, l10n),
+              ),
               IconButton(
                 icon: Icon(_isSearching ? Icons.close : Icons.search),
                 onPressed: () {
@@ -97,57 +107,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(webHorizontalPadding, 8, webHorizontalPadding, 8),
-                child: Row(
-                  children: VolunteerLocations.filterOptions.map((location) {
-                    final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(label),
-                        selected: _locationFilter == location,
-                        onSelected: (_) => setState(() => _locationFilter = location),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              UserTagFilterBar(
-                tags: appContext.allTags,
-                selectedTagIDs: _selectedTagIDs,
-                horizontalPadding: webHorizontalPadding,
-                onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(webHorizontalPadding, 0, webHorizontalPadding, 8),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-                      child: Text(
-                        l10n.volunteersSortLabel,
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(l10n.volunteersSortSurname),
-                        selected: _sortMode == _VolunteerSortMode.surname,
-                        onSelected: (_) => setState(() => _sortMode = _VolunteerSortMode.surname),
-                      ),
-                    ),
-                    FilterChip(
-                      label: Text(l10n.volunteersSortTags),
-                      selected: _sortMode == _VolunteerSortMode.tags,
-                      onSelected: (_) => setState(() => _sortMode = _VolunteerSortMode.tags),
-                    ),
-                  ],
-                ),
-              ),
+              if (activeFiltersSummary != null) activeFiltersSummary,
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
@@ -236,6 +196,197 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       return l10n.volunteersEmptyLocation(_locationFilter);
     }
     return l10n.volunteersEmpty;
+  }
+
+  bool _hasActiveFilters(String defaultLocation) {
+    return _locationFilter != defaultLocation ||
+        _selectedTagIDs.isNotEmpty ||
+        _sortMode != _VolunteerSortMode.surname;
+  }
+
+  Widget? _buildActiveFiltersSummary(
+    AppLocalizations l10n,
+    AppContext appContext,
+    double horizontalPadding,
+  ) {
+    final defaultLocation = VolunteerLocations.defaultFilterForUser(appContext.currentUser.location);
+    if (!_hasActiveFilters(defaultLocation)) return null;
+
+    final summary = _activeFiltersDescription(l10n, appContext);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      child: InkWell(
+        onTap: () => _showFilterSheet(appContext, l10n),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
+          child: Row(
+            children: [
+              Icon(Icons.filter_list, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  summary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 20, color: colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _activeFiltersDescription(AppLocalizations l10n, AppContext appContext) {
+    final defaultLocation = VolunteerLocations.defaultFilterForUser(appContext.currentUser.location);
+    final parts = <String>[];
+
+    if (_locationFilter != defaultLocation) {
+      parts.add(_locationFilter == VolunteerLocations.all ? l10n.volunteersFilterAll : _locationFilter);
+    }
+
+    if (_selectedTagIDs.isNotEmpty) {
+      final tagNames = appContext.allTags
+          .where((tag) => _selectedTagIDs.contains(tag.id))
+          .map((tag) => tag.name)
+          .toList();
+      if (tagNames.isNotEmpty) {
+        parts.add(tagNames.join(', '));
+      }
+    }
+
+    if (_sortMode == _VolunteerSortMode.tags) {
+      parts.add('${l10n.volunteersSortLabel}: ${l10n.volunteersSortTags}');
+    }
+
+    return parts.join(' · ');
+  }
+
+  Future<void> _showFilterSheet(AppContext appContext, AppLocalizations l10n) async {
+    final defaultLocation = VolunteerLocations.defaultFilterForUser(appContext.currentUser.location);
+    final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void updateFilters(VoidCallback apply) {
+              setState(apply);
+              setSheetState(() {});
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.volunteersFiltersTitle,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(l10n.volunteersLocationFilterLabel, style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: VolunteerLocations.filterOptions.map((location) {
+                        final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
+                        return FilterChip(
+                          label: Text(label),
+                          selected: _locationFilter == location,
+                          onSelected: (_) => updateFilters(() => _locationFilter = location),
+                        );
+                      }).toList(),
+                    ),
+                    if (activeTags.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Text(l10n.userTagsAssignLabel, style: Theme.of(context).textTheme.labelLarge),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: activeTags.map((tag) {
+                          final selected = _selectedTagIDs.contains(tag.id);
+                          return UserTagChip(
+                            tag: tag,
+                            selected: selected,
+                            onTap: () {
+                              updateFilters(() {
+                                final next = Set<String>.from(_selectedTagIDs);
+                                if (selected) {
+                                  next.remove(tag.id);
+                                } else {
+                                  next.add(tag.id);
+                                }
+                                _selectedTagIDs = next;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      if (_selectedTagIDs.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: () => updateFilters(() => _selectedTagIDs = {}),
+                            child: Text(l10n.userTagsFilterClear),
+                          ),
+                        ),
+                      ],
+                    ],
+                    const SizedBox(height: 20),
+                    Text(l10n.volunteersSortLabel, style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilterChip(
+                          label: Text(l10n.volunteersSortSurname),
+                          selected: _sortMode == _VolunteerSortMode.surname,
+                          onSelected: (_) => updateFilters(() => _sortMode = _VolunteerSortMode.surname),
+                        ),
+                        FilterChip(
+                          label: Text(l10n.volunteersSortTags),
+                          selected: _sortMode == _VolunteerSortMode.tags,
+                          onSelected: (_) => updateFilters(() => _sortMode = _VolunteerSortMode.tags),
+                        ),
+                      ],
+                    ),
+                    if (_hasActiveFilters(defaultLocation)) ...[
+                      const SizedBox(height: 20),
+                      OutlinedButton(
+                        onPressed: () {
+                          updateFilters(() {
+                            _locationFilter = defaultLocation;
+                            _selectedTagIDs = {};
+                            _sortMode = _VolunteerSortMode.surname;
+                          });
+                        },
+                        child: Text(l10n.volunteersFiltersReset),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _addUserClick() {

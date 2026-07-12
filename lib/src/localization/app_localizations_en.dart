@@ -186,4 +186,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersSortTags => 'Team';
+
+  @override
+  String get volunteersFiltersTitle => 'Filters';
+
+  @override
+  String get volunteersLocationFilterLabel => 'Location';
+
+  @override
+  String get volunteersFiltersReset => 'Reset filters';
 }
