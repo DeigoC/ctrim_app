@@ -19,12 +19,14 @@ class SelectPostTemplatePage extends StatefulWidget {
     this.bulkMode = false,
     this.sourcePostId,
     this.sourcePostParentId,
+    this.sourcePostEventDate,
   });
   static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
   final bool bulkMode;
   final String? sourcePostId;
   final String? sourcePostParentId;
+  final DateTime? sourcePostEventDate;
 
   @override
   State<SelectPostTemplatePage> createState() => _SelectPostTemplatePageState();
@@ -633,6 +635,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           template: template,
           sourcePostId: widget.sourcePostId,
           sourcePostParentId: widget.sourcePostParentId,
+          sourcePostEventDate: widget.sourcePostEventDate,
         ),
       ),
     );
