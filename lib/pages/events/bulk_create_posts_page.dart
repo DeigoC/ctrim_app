@@ -9,6 +9,7 @@ import '../../models/event/event_head.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
+import '../../utility/bulk_post_dates.dart';
 import '../../utility/post_template_mapper.dart';
 
 enum _BulkPostRelation { child, sibling }
@@ -20,12 +21,14 @@ class BulkCreatePostsPage extends StatefulWidget {
     this.parentID,
     this.sourcePostId,
     this.sourcePostParentId,
+    this.sourcePostEventDate,
   });
 
   final PostTemplate template;
   final String? parentID;
   final String? sourcePostId;
   final String? sourcePostParentId;
+  final DateTime? sourcePostEventDate;
 
   @override
   State<BulkCreatePostsPage> createState() => _BulkCreatePostsPageState();
@@ -61,7 +64,11 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   void _regeneratePreviews() {
     if (_selectedDayOfWeek == null) return;
 
-    final dates = _computeDates(_selectedDayOfWeek!, _selectedWeeks);
+    final dates = computeBulkPostDates(
+      dayOfWeek: _selectedDayOfWeek!,
+      weeks: _selectedWeeks,
+      anchorDate: widget.sourcePostEventDate,
+    );
     setState(() {
       _previews = [];
       for (final date in dates) {
@@ -74,13 +81,6 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         _previews.add(_PostPreview(title: title, subtitle: subtitle, date: date));
       }
     });
-  }
-
-  List<DateTime> _computeDates(int dayOfWeek, int weeks) {
-    final base = DateTime.now().add(const Duration(days: 1));
-    int daysUntil = (dayOfWeek - base.weekday + 7) % 7;
-    final firstDate = base.add(Duration(days: daysUntil));
-    return List.generate(weeks, (i) => firstDate.add(Duration(days: 7 * i)));
   }
 
   void _shuffleSubtitle(int index) {
