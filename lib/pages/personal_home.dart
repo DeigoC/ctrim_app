@@ -14,6 +14,7 @@ import '../utility/app_context.dart';
 import '../utility/user_schedule_service.dart';
 import '../utility/web_notification_lifecycle.dart';
 import '../utility/notification_topics.dart';
+import '../utility/pwa_install_service.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/personal/personal_first_time_dialog.dart';
@@ -42,9 +43,16 @@ class _PersonalHomeState extends State<PersonalHome> {
   static const String _powerpointGeneratorUrl = 'https://ctrim-powerpoint-generator.streamlit.app';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
+  final PwaInstallService _pwaInstallService = PwaInstallService.instance;
+
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) {
+      _pwaInstallService.listenForAvailability(() {
+        if (mounted) setState(() {});
+      });
+    }
     // Show first-time dialog if user hasn't seen it
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!widget.appContext.sharedPref.hasSeenPersonalDialog) {
@@ -469,9 +477,27 @@ class _PersonalHomeState extends State<PersonalHome> {
               ),
               child: Column(
                 children: [
+                  if (kIsWeb && _pwaInstallService.shouldShowInstallOption) ...[
+                    _buildModernListTile(
+                      icon: Icons.install_mobile_rounded,
+                      title: 'Install App',
+                      subtitle: _pwaInstallService.installSubtitle,
+                      onTap: _onInstallAppClick,
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      iconColor: colorScheme.primary,
+                      isFirst: true,
+                    ),
+                    const Divider(height: 1, indent: 72),
+                  ],
                   // Startup Tab Preference (authenticated users only)
                   if (!appContext.isCurrentUserGuest) ...[
-                    _buildStartupTabPreference(appContext, theme, colorScheme),
+                    _buildStartupTabPreference(
+                      appContext,
+                      theme,
+                      colorScheme,
+                      isFirst: !(_pwaInstallService.shouldShowInstallOption),
+                    ),
                     const Divider(height: 1, indent: 72),
                   ],
                   _buildModernListTile(
@@ -482,7 +508,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                     theme: theme,
                     colorScheme: colorScheme,
                     iconColor: colorScheme.tertiary,
-                    isFirst: appContext.isCurrentUserGuest,
+                    isFirst: appContext.isCurrentUserGuest && !(_pwaInstallService.shouldShowInstallOption),
                   ),
                   const Divider(height: 1, indent: 72),
                   _buildModernListTile(
@@ -525,7 +551,12 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
   }
 
-  Widget _buildStartupTabPreference(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildStartupTabPreference(
+    AppContext appContext,
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    bool isFirst = true,
+  }) {
     final currentTab = appContext.sharedPref.preferredStartupTab;
     final tabName = currentTab == 0 ? 'Events' : 'Information';
 
@@ -536,7 +567,9 @@ class _PersonalHomeState extends State<PersonalHome> {
           HapticFeedback.lightImpact();
           _showStartupTabDialog(appContext, theme, colorScheme);
         },
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(16) : Radius.zero,
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
@@ -872,6 +905,57 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   void _openShareOpenBetaClick() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ShareOpenBetaPage()));
+  }
+
+  Future<void> _onInstallAppClick() async {
+    if (_pwaInstallService.canPromptInstall) {
+      final result = await _pwaInstallService.promptInstall();
+      if (!mounted) return;
+
+      final message = switch (result) {
+        PwaInstallResult.accepted => 'CTRIM App installed successfully.',
+        PwaInstallResult.dismissed => 'Install cancelled.',
+        PwaInstallResult.unavailable => 'Install is not available right now. Try again from your browser menu.',
+      };
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+      setState(() {});
+      return;
+    }
+
+    if (_pwaInstallService.isIosBrowser) {
+      _showIosInstallInstructions();
+      return;
+    }
+
+    _showBrowserInstallInstructions();
+  }
+
+  void _showIosInstallInstructions() {
+    DialogManager.showAlertDialog(
+      context: context,
+      title: 'Add to Home Screen',
+      content:
+          'To install CTRIM on your iPhone or iPad:\n\n'
+          '1. Tap the Share button at the bottom of Safari\n'
+          '2. Scroll down and tap Add to Home Screen\n'
+          '3. Tap Add in the top right corner',
+      icon: Icons.ios_share_rounded,
+    );
+  }
+
+  void _showBrowserInstallInstructions() {
+    DialogManager.showAlertDialog(
+      context: context,
+      title: 'Install App',
+      content:
+          'To install CTRIM as an app:\n\n'
+          '• Chrome or Edge: open the browser menu and choose Install app, or use the install icon in the address bar\n'
+          '• Other browsers: look for Add to Home Screen or Install in the browser menu',
+      icon: Icons.install_desktop_rounded,
+    );
   }
 
   void _openViewTemplatesClick() {
