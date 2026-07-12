@@ -39,7 +39,7 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const String _slideDeckGeneratorUrl = 'https://church-slidedeck-utils.streamlit.app/';
+  static const String _slideDeckUtilsUrl = 'https://church-slidedeck-utils.streamlit.app/';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
@@ -486,10 +486,10 @@ class _PersonalHomeState extends State<PersonalHome> {
                   ),
                   const Divider(height: 1, indent: 72),
                   _buildModernListTile(
-                    icon: Icons.build_rounded,
-                    title: 'PowerPoint Generator',
+                    icon: Icons.slideshow_rounded,
+                    title: 'Slide Deck Generator',
                     subtitle: 'Create service slides easily',
-                    onTap: () => launchUrlString(_powerpointGeneratorUrl),
+                    onTap: () => launchUrlString(_slideDeckGeneratorUrl),
                     theme: theme,
                     colorScheme: colorScheme,
                     iconColor: colorScheme.primary,
