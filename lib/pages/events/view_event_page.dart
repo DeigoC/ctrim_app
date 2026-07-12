@@ -552,7 +552,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                     parentID: _eventContext.id),
                 bulkMode: true,
                 sourcePostId: _eventContext.id,
-                sourcePostParentId: _eventContext.metadata.parentID))).then((_) {
+                sourcePostParentId: _eventContext.metadata.parentID,
+                sourcePostEventDate: _eventContext.head.eventDate))).then((_) {
       _syncChildrenMetadataFromAppContext();
       setState(() {});
     });
