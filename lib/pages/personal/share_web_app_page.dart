@@ -12,8 +12,7 @@ class ShareWebAppPage extends StatefulWidget {
 
   static const String webAppLink = 'https://ctrim.app';
 
-  static const String shareMessage =
-      'Join CTRIM at https://ctrim.app — open in your browser. '
+  static const String shareMessage = 'Join CTRIM at https://ctrim.app — open in your browser. '
       'On mobile, you can add it to your home screen for an app-like experience.';
 
   @override
@@ -367,11 +366,10 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     if (kIsWeb) {
       try {
         final result = await SharePlus.instance.share(
-          const ShareParams(text: ShareWebAppPage.shareMessage),
+          ShareParams(text: ShareWebAppPage.shareMessage),
         );
         if (!context.mounted) return;
-        if (result.status == ShareResultStatus.dismissed ||
-            result.status == ShareResultStatus.unavailable) {
+        if (result.status == ShareResultStatus.dismissed || result.status == ShareResultStatus.unavailable) {
           _onLinkCopyClick(ShareWebAppPage.shareMessage, context, successText: 'Message copied to clipboard!');
         }
         return;
@@ -399,8 +397,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
       final message = switch (result) {
         PwaInstallResult.accepted => 'CTRIM App installed successfully.',
         PwaInstallResult.dismissed => 'Install cancelled.',
-        PwaInstallResult.unavailable =>
-          'Install is not available right now. Try again from your browser menu.',
+        PwaInstallResult.unavailable => 'Install is not available right now. Try again from your browser menu.',
       };
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -422,8 +419,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     DialogManager.showAlertDialog(
       context: context,
       title: 'Add to Home Screen',
-      content:
-          'To install CTRIM on your iPhone or iPad:\n\n'
+      content: 'To install CTRIM on your iPhone or iPad:\n\n'
           '1. Tap the Share button at the bottom of Safari\n'
           '2. Scroll down and tap Add to Home Screen\n'
           '3. Tap Add in the top right corner',
@@ -435,8 +431,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     DialogManager.showAlertDialog(
       context: context,
       title: 'Install App',
-      content:
-          'To install CTRIM as an app:\n\n'
+      content: 'To install CTRIM as an app:\n\n'
           '• Chrome or Edge: open the browser menu and choose Install app, or use the install icon in the address bar\n'
           '• Other browsers: look for Add to Home Screen or Install in the browser menu',
       icon: Icons.install_desktop_rounded,

@@ -48,13 +48,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-14** — Personal tab (web only): first visit shows `AddToHomeScreenDialog` instead of the old personal hub explainer; skipped on native and when already installed (`hasSeenPwaHomeScreenPrompt`).
 - **2026-07-12** — Personal share: `ShareWebAppPage` replaces beta TestFlight/Android page; web link share + Add to Home Screen on that page (`PwaInstallService` + `web/pwa_install.js`).
 - **2026-07-11** — Bulk post dates: `BulkPostDates` anchors bulk-created posts to the source post's event date (#18).
 - **2026-07-11** — Web Hosting CI: merge to `main` deploys via `.github/workflows/firebase-hosting-merge.yml`; PRs get preview channels via `firebase-hosting-pull-request.yml` (secret `FIREBASE_SERVICE_ACCOUNT_CTRIM_APP`). Flutter pinned to `3.41.9` (quill 11.5.0 incompatible with 3.44).
 - **2026-07-09** — Broadcast notify compose page: `SendBroadcastNotificationPage` + `EventNotificationCopy` (preset / subtitle / custom body); `Notify: Broadcast` opens the page instead of sending subtitle immediately.
-- **2026-07-09** — Notification Phase 2: leader snackbar feedback from send results; CF prunes invalid FCM tokens; web deep links via `/?postId=` + SW `NOTIFICATION_CLICKED`; removed dead `sendMessageToAuthUsers` / `userWriteTest`.
-- **2026-07-09** — Push notification hardening: CF `send_to_topic` / `send_notification_to_multiple_tokens` require worker auth; web topic migration on FCM token refresh; startup topic reconciliation; `getInitialMessage` cold-start fix; mobile enable saves `device_tokens`; `NotificationTopics` + `NotificationSubscriptionService`.
-- **2026-07-05** — Post schedule save on web: workers need read access to `everyone/.../device_tokens` + `notification_tokens` for role-assignment notifications; `EventLogDialog` no longer fails the save when notification follow-ups error.
 
 ## Commands
 

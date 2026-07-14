@@ -16,7 +16,8 @@ import '../utility/web_notification_lifecycle.dart';
 import '../utility/notification_topics.dart';
 import '../utility/dialog_manager.dart';
 import '../widgets/user_avatar.dart';
-import '../widgets/personal/personal_first_time_dialog.dart';
+import '../utility/pwa_install_service.dart';
+import '../widgets/personal/add_to_home_screen_dialog.dart';
 import 'events/post_templates/view_templates_page.dart';
 import 'personal/guest_registration_page.dart';
 import 'personal/current_user_page.dart';
@@ -45,11 +46,12 @@ class _PersonalHomeState extends State<PersonalHome> {
   @override
   void initState() {
     super.initState();
-    // Show first-time dialog if user hasn't seen it
+    // Web-only: suggest adding the PWA to the home screen once.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!widget.appContext.sharedPref.hasSeenPersonalDialog) {
-        _showPersonalFirstTimeDialog();
-      }
+      if (!kIsWeb) return;
+      if (PwaInstallService.instance.isInstalled) return;
+      if (widget.appContext.sharedPref.hasSeenPwaHomeScreenPrompt) return;
+      _showAddToHomeScreenDialog();
     });
   }
 
@@ -781,13 +783,13 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   // * Logic
-  void _showPersonalFirstTimeDialog() {
+  void _showAddToHomeScreenDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => const PersonalFirstTimeDialog(),
+      barrierDismissible: true,
+      builder: (_) => const AddToHomeScreenDialog(),
     ).then((_) {
-      widget.appContext.sharedPref.setHasSeenPersonalDialog();
+      widget.appContext.sharedPref.setHasSeenPwaHomeScreenPrompt();
     });
   }
 
