@@ -156,6 +156,127 @@ void main() {
       });
     });
 
+    group('cascade timing', () {
+      EventProgram buildSequentialProgram() {
+        final program = EventProgram();
+        program.addRole(
+          uids: [],
+          title: 'Welcome',
+          start: DateTime(2024, 6, 15, 10, 0),
+          end: DateTime(2024, 6, 15, 10, 15),
+          id: 1,
+        );
+        program.addRole(
+          uids: [],
+          title: 'Worship',
+          start: DateTime(2024, 6, 15, 10, 15),
+          end: DateTime(2024, 6, 15, 10, 45),
+          id: 2,
+        );
+        program.addRole(
+          uids: [],
+          title: 'Message',
+          start: DateTime(2024, 6, 15, 10, 45),
+          end: DateTime(2024, 6, 15, 11, 30),
+          id: 3,
+        );
+        return program;
+      }
+
+      test('countRolesStartingAtOrAfter excludes the edited role', () {
+        final program = buildSequentialProgram();
+        expect(
+          program.countRolesStartingAtOrAfter(DateTime(2024, 6, 15, 10, 15), excludeRoleId: 1),
+          2,
+        );
+      });
+
+      test('updateRoleTiming with shiftFollowing pushes later items', () {
+        final program = buildSequentialProgram();
+        program.updateRoleTiming(
+          roleId: 1,
+          newStart: DateTime(2024, 6, 15, 10, 0),
+          newEnd: DateTime(2024, 6, 15, 10, 25),
+          shiftFollowing: true,
+        );
+
+        expect(program.roles[0]['end'], DateTime(2024, 6, 15, 10, 25));
+        expect(program.roles[1]['start'], DateTime(2024, 6, 15, 10, 25));
+        expect(program.roles[1]['end'], DateTime(2024, 6, 15, 10, 55));
+        expect(program.roles[2]['start'], DateTime(2024, 6, 15, 10, 55));
+        expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 40));
+      });
+
+      test('updateRoleTiming without shiftFollowing leaves later items alone', () {
+        final program = buildSequentialProgram();
+        program.updateRoleTiming(
+          roleId: 1,
+          newStart: DateTime(2024, 6, 15, 10, 0),
+          newEnd: DateTime(2024, 6, 15, 10, 25),
+          shiftFollowing: false,
+        );
+
+        expect(program.roles[0]['end'], DateTime(2024, 6, 15, 10, 25));
+        expect(program.roles[1]['start'], DateTime(2024, 6, 15, 10, 15));
+        expect(program.roles[2]['start'], DateTime(2024, 6, 15, 10, 45));
+      });
+
+      test('updateRoleTiming does not shift overlapping parallel roles', () {
+        final program = buildSequentialProgram();
+        program.addRole(
+          uids: [],
+          title: 'Tech',
+          start: DateTime(2024, 6, 15, 10, 0),
+          end: DateTime(2024, 6, 15, 11, 30),
+          id: 4,
+        );
+
+        program.updateRoleTiming(
+          roleId: 1,
+          newStart: DateTime(2024, 6, 15, 10, 0),
+          newEnd: DateTime(2024, 6, 15, 10, 25),
+          shiftFollowing: true,
+        );
+
+        final tech = program.roles.firstWhere((role) => role['id'] == 4);
+        expect(tech['start'], DateTime(2024, 6, 15, 10, 0));
+        expect(tech['end'], DateTime(2024, 6, 15, 11, 30));
+      });
+
+      test('applyInsertShift pushes items at or after the insert start', () {
+        final program = buildSequentialProgram();
+        program.applyInsertShift(
+          start: DateTime(2024, 6, 15, 10, 15),
+          end: DateTime(2024, 6, 15, 10, 30),
+          shiftFollowing: true,
+        );
+
+        expect(program.roles[1]['title'], 'Worship');
+        expect(program.roles[1]['start'], DateTime(2024, 6, 15, 10, 30));
+        expect(program.roles[2]['start'], DateTime(2024, 6, 15, 11, 0));
+      });
+
+      test('moveRoleInOrder swaps adjacent items and preserves durations', () {
+        final program = buildSequentialProgram();
+        final moved = program.moveRoleInOrder(2, -1);
+
+        expect(moved, true);
+        expect(program.roles[0]['title'], 'Worship');
+        expect(program.roles[0]['start'], DateTime(2024, 6, 15, 10, 0));
+        expect(program.roles[0]['end'], DateTime(2024, 6, 15, 10, 30));
+        expect(program.roles[1]['title'], 'Welcome');
+        expect(program.roles[1]['start'], DateTime(2024, 6, 15, 10, 30));
+        expect(program.roles[1]['end'], DateTime(2024, 6, 15, 10, 45));
+        expect(program.roles[2]['start'], DateTime(2024, 6, 15, 10, 45));
+      });
+
+      test('moveRoleInOrder returns false at list edges', () {
+        final program = buildSequentialProgram();
+        expect(program.moveRoleInOrder(1, -1), false);
+        expect(program.moveRoleInOrder(3, 1), false);
+      });
+    });
+
     group('toString', () {
       test('includes finish time when set', () {
         final program = EventProgram();
