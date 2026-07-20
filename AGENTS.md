@@ -44,16 +44,16 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Ongoing work
 
+- **Post attendance & interest** — V1 design locked in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md) (staff attendees + public interest, guest count-only privacy). Continue across chats from that doc.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
 
 ## Recent agent-relevant changes
 
+- **2026-07-20** — Post attendance/interest: design + V1 plan in `docs/post-attendance-interest.md` (counts on head, private lists, interest wraps bookmarks).
 - **2026-07-20** — Progress dialogs: use `DialogManager.runWithProgressDialog` (not bare `showProgressDialog`) so failures swap to an error + Close instead of stuck spinners.
 - **2026-07-14** — Personal tab (web only): first visit shows `AddToHomeScreenDialog` instead of the old personal hub explainer; skipped on native and when already installed (`hasSeenPwaHomeScreenPrompt`).
 - **2026-07-12** — Personal share: `ShareWebAppPage` replaces beta TestFlight/Android page; web link share + Add to Home Screen on that page (`PwaInstallService` + `web/pwa_install.js`).
 - **2026-07-11** — Bulk post dates: `BulkPostDates` anchors bulk-created posts to the source post's event date (#18).
-- **2026-07-11** — Web Hosting CI: merge to `main` deploys via `.github/workflows/firebase-hosting-merge.yml`; PRs get preview channels via `firebase-hosting-pull-request.yml` (secret `FIREBASE_SERVICE_ACCOUNT_CTRIM_APP`). Flutter pinned to `3.41.9` (quill 11.5.0 incompatible with 3.44).
-- **2026-07-09** — Broadcast notify compose page: `SendBroadcastNotificationPage` + `EventNotificationCopy` (preset / subtitle / custom body); `Notify: Broadcast` opens the page instead of sending subtitle immediately.
 
 ## Commands
 

@@ -963,7 +963,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     }
   }
 
-  Future<bool> _attemptToLogi  Future<bool> _attemptToLogin() async {
+  Future<bool> _attemptToLogin() async {
     return DialogManager.runWithProgressDialog(
       context: context,
       title: 'Signing In',
@@ -1187,7 +1187,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
-lData() async {
+  Future<void> _fetchEssentialData() async {
     final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
     final allUsers = await _fetchUsers();
     final heads = await eventHeadDBManager.fetchEventHeads();
