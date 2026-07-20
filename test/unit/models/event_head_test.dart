@@ -18,6 +18,9 @@ void main() {
         expect(head.hasEventDate, false);
         expect(head.hasMedia, false);
         expect(head.mediaCount, 0);
+        expect(head.interestedCount, 0);
+        expect(head.attendeeCount, 0);
+        expect(head.hasAttendanceCounts, false);
       });
 
       test('creates with all parameters', () {
@@ -46,6 +49,8 @@ void main() {
           'Media': <Map<String, dynamic>>[],
           'RecentDate': Timestamp.fromDate(now),
           'EventDate': Timestamp.fromDate(eventDate),
+          'InterestedCount': 3,
+          'AttendeeCount': 5,
         };
 
         final head = EventHead.fromMap('event-3', map);
@@ -56,6 +61,24 @@ void main() {
         expect(head.location, 'Belfast');
         expect(head.recentDate, now);
         expect(head.eventDate, eventDate);
+        expect(head.interestedCount, 3);
+        expect(head.attendeeCount, 5);
+        expect(head.hasAttendanceCounts, true);
+      });
+
+      test('fromMap defaults missing attendance counts to zero', () {
+        final map = {
+          'Title': 'Legacy Event',
+          'Subtitle': '',
+          'Location': 'Belfast',
+          'Media': <Map<String, dynamic>>[],
+          'RecentDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+          'EventDate': null,
+        };
+
+        final head = EventHead.fromMap('legacy-1', map);
+        expect(head.interestedCount, 0);
+        expect(head.attendeeCount, 0);
       });
 
       test('creates from a map with null EventDate', () {
@@ -133,6 +156,18 @@ void main() {
         head.removeEventDate();
         expect(head.eventDate, isNull);
         expect(head.hasEventDate, false);
+      });
+
+      test('setInterestedCount and setAttendeeCount clamp negatives', () {
+        final head = EventHead(id: 'e1');
+        head.setInterestedCount(4);
+        head.setAttendeeCount(2);
+        expect(head.interestedCount, 4);
+        expect(head.attendeeCount, 2);
+        head.setInterestedCount(-1);
+        head.setAttendeeCount(-3);
+        expect(head.interestedCount, 0);
+        expect(head.attendeeCount, 0);
       });
     });
 
@@ -307,6 +342,8 @@ void main() {
         expect(json['Media'], isA<List>());
         expect(json['RecentDate'], isA<Timestamp>());
         expect(json['EventDate'], isNull);
+        expect(json['InterestedCount'], 0);
+        expect(json['AttendeeCount'], 0);
       });
 
       test('toJson includes EventDate when set', () {

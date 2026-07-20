@@ -13,6 +13,33 @@ service cloud.firestore {
         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true;
     }
 
+    function isLeader() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;
+    }
+
+    /// Head count fields only — used so any signed-in user can sync interest/attendee denorm.
+    function isAttendanceCountOnlyUpdate() {
+      return request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['InterestedCount', 'AttendeeCount']);
+    }
+
+    /// Self-serve interest: attendees unchanged; only the caller's interested map key may change.
+    function onlyOwnInterestChanged() {
+      return request.auth != null &&
+        request.resource.data.get('attendees', []) == resource.data.get('attendees', []) &&
+        request.resource.data.interested.diff(resource.data.get('interested', {}))
+          .affectedKeys().hasOnly([request.auth.uid]);
+    }
+
+    function isOwnInterestCreate() {
+      return request.auth != null &&
+        request.resource.data.keys().hasOnly(['interested', 'attendees']) &&
+        request.resource.data.attendees.size() == 0 &&
+        request.resource.data.interested.keys().hasOnly([request.auth.uid]);
+    }
+
     // Default: deny all deletes, allow reads only with more specific rules below
     match /{document=**} {
       allow delete: if false;
@@ -42,15 +69,25 @@ service cloud.firestore {
       }
     }
 
-    match /events/{documents=**}{
-      // Allow anyone to read events (guest-friendly)
+    // Events: split head vs supplemental so attendance names stay signed-in-only.
+    match /events/{eventId} {
       allow read: if true;
-      
-      // only leaders (and ergo admins) can create new posts
-      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;  
-      
-      // allow workers to edit these posts (this covers leaders and admins)
-      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true;   
+      allow create: if isLeader();
+      allow update: if isWorker() || isAttendanceCountOnlyUpdate();
+
+      match /supplemental/{docId} {
+        allow read: if docId == 'attendance'
+          ? request.auth != null
+          : true;
+
+        allow create: if docId == 'attendance'
+          ? (isWorker() || isOwnInterestCreate())
+          : isWorker();
+
+        allow update: if docId == 'attendance'
+          ? (isWorker() || onlyOwnInterestChanged())
+          : isWorker();
+      }
     }
     
     match /users/{userId}{

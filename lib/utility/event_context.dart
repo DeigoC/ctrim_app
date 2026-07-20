@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
+import '../models/event/event_attendance.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_log.dart';
@@ -17,6 +18,7 @@ class EventContext {
   late final EventMedia _media; // ? doesn't have to be late
   late final String _currentUID;
   final EventBody _body = EventBody();
+  EventAttendance? _attendance;
 
   bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
 
@@ -85,6 +87,15 @@ class EventContext {
   EventLog get log => _log;
   void setFetchedLogs(final EventLog log) => _log = log;
 
+  // * Attendance Related (private supplemental; null until fetched / signed-in load)
+  EventAttendance? get attendance => _attendance;
+  bool get hasLoadedAttendance => _attendance != null;
+  void setFetchedAttendance(final EventAttendance attendance) {
+    _attendance = attendance;
+    _head.setInterestedCount(attendance.interestedCount);
+    _head.setAttendeeCount(attendance.attendeeCount);
+  }
+
   // * General logic
 
   Future<String> addNewPost({
@@ -124,6 +135,7 @@ class EventContext {
     await dbManager.addMetadata(_metadata);
     await dbManager.setLog(_log);
     await dbManager.addProgram(_program);
+    await dbManager.setAttendance(EventAttendance());
     return newID;
   }
 

@@ -122,6 +122,10 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
                             _buildSubtitle(theme, colorScheme),
                             const SizedBox(height: 12),
                           ],
+                          if (widget.thisHead.hasAttendanceCounts) ...[
+                            _buildAttendanceCounts(theme, colorScheme),
+                            const SizedBox(height: 12),
+                          ],
                           _buildActionRow(theme, colorScheme),
                         ],
                       ),
@@ -297,6 +301,25 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
       ),
       maxLines: 3,
       overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildAttendanceCounts(ThemeData theme, ColorScheme colorScheme) {
+    final parts = <String>[];
+    if (widget.thisHead.interestedCount > 0) {
+      parts.add('${widget.thisHead.interestedCount} interested');
+    }
+    if (widget.thisHead.attendeeCount > 0) {
+      parts.add('${widget.thisHead.attendeeCount} attending');
+    }
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Text(
+      parts.join(' · '),
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: colorScheme.primary,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 

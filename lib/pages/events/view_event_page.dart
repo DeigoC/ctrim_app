@@ -22,6 +22,7 @@ import '../../utility/notification_topics.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_metadata_section.dart';
+import '../../widgets/posts/view_attendance_tab.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
@@ -371,6 +372,13 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       updateBody: _updateWholePostBody,
       currentUID: _currentUID,
     ));
+
+    _bodyTabs.add(ViewAttendanceTab(
+      eventContext: _eventContext,
+      onChanged: _updateWholePostBody,
+    ));
+    _appBarTabs.add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
+    length++;
 
     if (_eventContext.head.eventDate != null || isAuthor) {
       _bodyTabs.add(ViewAllPrograms(

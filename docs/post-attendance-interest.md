@@ -2,7 +2,7 @@
 
 > **Purpose:** Living handoff for adding attendees + public interest on event posts.  
 > **Created:** 2026-07-20  
-> **Status:** Design locked for V1 — implementation not started  
+> **Status:** V1 implemented (client + rules) — deploy `firestore.rules` before testing privacy  
 > **Start here in a new chat:** “Continue post attendance/interest from `docs/post-attendance-interest.md`”
 
 ---
@@ -184,39 +184,49 @@ Do not put business logic in `build`. Follow existing `EventContext` patterns fo
 
 ## Suggested V1 implementation phases
 
-Use these as checklist items in the implementing chat.
-
 ### Phase A — Models & storage
 
-- [ ] `EventHead`: `interestedCount` / `attendeeCount` (+ `fromMap` / `toJson` / tests)
-- [ ] New model(s) for attendance supplemental (interested entry, attendee user/external)
-- [ ] DB manager methods on event supplemental (fetch/save or mutate)
-- [ ] Firestore rules: private doc signed-in read; public counts on head
-- [ ] Decide CF vs client transactions for interest toggle + count bump
+- [x] `EventHead`: `interestedCount` / `attendeeCount` (+ `fromMap` / `toJson` / tests)
+- [x] New model(s) for attendance supplemental (`event_attendance.dart`; interested map keyed by authId)
+- [x] DB manager methods on event supplemental (fetch / setOwnInterest / removeInterest / saveAttendees)
+- [x] Firestore rules: private `attendance` signed-in read; public counts on head; self-serve interest writes
+- [x] Decision: **client transactions + rules** (no CF in this repo); interested stored as map for rule-friendly self-toggles
 
 ### Phase B — Interest (self-serve)
 
-- [ ] Signed-in toggle on view event page
-- [ ] Wrap bookmark + `post-{id}` subscribe/unsubscribe
-- [ ] Guest UI: count + CTA (reuse registration/login entry points)
-- [ ] Author/contributor can remove an interested entry
-- [ ] Keep counts consistent
+- [x] Signed-in toggle on view event **People** tab
+- [x] Wrap bookmark + `post-{id}` subscribe/unsubscribe
+- [x] Guest UI: count + CTA to create account
+- [x] Author/contributor can remove an interested entry
+- [x] Keep counts consistent (transaction updates head)
 
 ### Phase C — Attendees (staff-managed)
 
-- [ ] Author/contributor UI: add/remove registered user from directory
-- [ ] Add/remove free-text external guest
-- [ ] Optional: promote from interested → attendee
-- [ ] Counts on head
+- [x] Author/contributor UI: add/remove registered user from directory
+- [x] Add/remove free-text external guest
+- [ ] Optional: promote from interested → attendee (deferred)
+- [x] Counts on head
 
 ### Phase D — Polish & verify
 
-- [ ] Card chips on events home
-- [ ] Unit tests for models
-- [ ] `flutter analyze` / relevant tests
-- [ ] Manual: guest vs signed-in vs author paths; confirm guests cannot read name doc via rules
-- [ ] Update this doc status + `AGENTS.md` when shipped
-- [ ] Run `maintain-agent-docs` if patterns become standing conventions
+- [x] Card chips on events home (`PostHead`)
+- [x] Unit tests for models
+- [x] Analyzer / unit tests for models
+- [ ] Manual: guest vs signed-in vs author paths; confirm guests cannot read name doc via rules (**requires deploying rules**)
+- [x] Update this doc status
+- [ ] Run `maintain-agent-docs` after real-world feel / any convention tweaks
+
+### Implementation notes (2026-07-20)
+
+| Choice | What we shipped |
+|--------|-----------------|
+| Storage | One doc `events/{id}/supplemental/attendance` |
+| Interested shape | Map keyed by `authId` (not array) for Firestore self-write rules |
+| Mutations | Client `runTransaction` in `EventSupplementalDBManager` |
+| UI | Always-on **People** tab on `ViewEventPage`; counts on `PostHead` |
+| New post | Empty attendance doc created in `EventContext.addNewPost` |
+
+**Deploy:** `firestore.rules` must be deployed for name privacy. Until then, old catch-all read still applies if an older ruleset is live.
 
 ---
 
