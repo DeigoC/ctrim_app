@@ -107,24 +107,19 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     if (!confirmation || !mounted) return;
 
-    DialogManager.showProgressDialog(context: context, title: 'Uploading Changes');
-    try {
-      await _performUpdate(_appContext.currentUser.id);
-      if (!mounted) return;
-      _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
-      widget.eventContext.resetSavingOfTheEdit();
-      widget.updatePage();
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
-    } catch (e) {
-      debugPrint('Error saving post: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to save changes: $e'), behavior: SnackBarBehavior.floating));
-    }
+    final saved = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Uploading Changes',
+      errorTitle: 'Could not save changes',
+      action: () => _performUpdate(_appContext.currentUser.id),
+    );
+    if (!mounted || !saved) return;
+    _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+    widget.eventContext.resetSavingOfTheEdit();
+    widget.updatePage();
+    Navigator.of(context).pop();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
   }
 
   Future<void> _performUpdate(final String uid) async {

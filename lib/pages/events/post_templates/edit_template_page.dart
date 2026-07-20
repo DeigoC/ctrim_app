@@ -734,21 +734,16 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?');
     if (!confirm || !mounted) return;
 
-    DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
-    try {
-      await _performTemplateSave();
-      if (!mounted) return;
-      // pop progress dialog. pop the settings. pop the page
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-    } catch (e) {
-      debugPrint('Error saving template: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to save template: $e'), behavior: SnackBarBehavior.floating));
-    }
+    final saved = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Saving PostTemplate',
+      errorTitle: 'Could not save template',
+      action: _performTemplateSave,
+    );
+    if (!mounted || !saved) return;
+    // pop the settings. pop the page
+    Navigator.of(context).pop();
+    Navigator.of(context).pop();
   }
 
   Future<void> _performTemplateSave() async {

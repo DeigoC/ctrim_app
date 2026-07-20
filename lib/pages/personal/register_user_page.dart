@@ -189,12 +189,19 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                 TextButton(
                     onPressed: () async {
                       Navigator.of(context).pop();
-                      _showAttemptingToSaveDialog();
-                      final newUser = await _registerUser();
-                      if (!mounted) return;
-                      Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
+                      final saved = await DialogManager.runWithProgressDialog(
+                        context: context,
+                        title: 'Attempting to Register User',
+                        subtitle: 'Please wait...',
+                        errorTitle: 'Could not register user',
+                        action: () async {
+                          final newUser = await _registerUser();
+                          if (!mounted) return;
+                          Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
+                        },
+                      );
+                      if (!mounted || !saved) return;
                       _isSaved = true;
-                      Navigator.of(context).pop(); // pop the progress indicator
                       _popRouteAfterAllowing();
                     },
                     child: const Text('Save')),
@@ -224,21 +231,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     _everyoneDBManager.setAsUser(_tecAuthID.text, _isLeader);
     await userDBManager.addUser(newUser);
     return newUser;
-  }
-
-  void _showAttemptingToSaveDialog() {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) {
-          return const Dialog(
-            child: ListTile(
-              title: Text('Attempting to Register User'),
-              subtitle: Text('Please wait...'),
-              trailing: CircularProgressIndicator(),
-            ),
-          );
-        });
   }
 
   void _areFieldsGood(String _) {

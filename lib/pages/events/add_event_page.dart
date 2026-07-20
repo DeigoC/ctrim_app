@@ -196,20 +196,15 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final confirmed = await _confirmSave();
     if (!confirmed || !mounted) return;
 
-    DialogManager.showProgressDialog(context: context, title: 'Uploading Post');
-    try {
-      await _savePost();
-      if (!mounted) return;
-      Navigator.of(context).pop(); // pop the progress dialog
-      Navigator.of(context).pop(); // pop this add page
-      Navigator.of(context).pop(); // pop the template page
-    } catch (e) {
-      debugPrint('Error saving post: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to upload post: $e'), behavior: SnackBarBehavior.floating));
-    }
+    final saved = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Uploading Post',
+      errorTitle: 'Could not upload post',
+      action: _savePost,
+    );
+    if (!mounted || !saved) return;
+    Navigator.of(context).pop(); // pop this add page
+    Navigator.of(context).pop(); // pop the template page
   }
 
   Future<bool> _confirmSave() async {
