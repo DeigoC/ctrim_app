@@ -8,6 +8,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    function isAreaAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true;
+    }
+
     function isWorker() {
       return request.auth != null &&
         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true;
@@ -46,10 +51,11 @@ service cloud.firestore {
     }
 
     match /everyone/{auth_id}{
-      // Only authenticated users can read their own auth document, or admins can read any
+      // Own doc, global admins, or area admins (e.g. view email when editing volunteers)
       allow read: if request.auth != null && (
         auth_id == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        isAreaAdmin()
       );
       
       // allow authenticated users to create their own document 
@@ -135,9 +141,9 @@ service cloud.firestore {
     match /post_templates/{documents=**}{
       // Allow anyone to read post templates (guest-friendly)
       allow read: if true;
-      
-      // only leaders can create and edit post templates
-      allow create, write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;
+
+      // Leaders can create and edit post templates (manage UI is gated on isLeader)
+      allow create, write: if isLeader();
     }
 
     match /information/{sectionId} {

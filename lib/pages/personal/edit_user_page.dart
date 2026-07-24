@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
+import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
@@ -25,6 +26,7 @@ class EditUserPage extends StatefulWidget {
 
 class _EditUserPageState extends State<EditUserPage> {
   final UserDBManager _userDBManager = UserDBManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   final RegExp _driveRegExp = RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
 
   late final TextEditingController _tecForename;
@@ -40,6 +42,8 @@ class _EditUserPageState extends State<EditUserPage> {
   bool _canSave = false;
   bool _hasChanges = false;
   bool _imageValidated = true;
+
+  Future<String?>? _emailFuture;
 
   @override
   void initState() {
@@ -58,6 +62,8 @@ class _EditUserPageState extends State<EditUserPage> {
     _tecSurname.addListener(_updateChangeState);
     _tecLocation.addListener(_updateChangeState);
     _tecImgSrc.addListener(_updateChangeState);
+
+    _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(widget.user.authID);
   }
 
   @override
@@ -124,6 +130,45 @@ class _EditUserPageState extends State<EditUserPage> {
           label: const Text('Save Changes'),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return FutureBuilder<String?>(
+      future: _emailFuture,
+      builder: (context, snap) {
+        final colorScheme = Theme.of(context).colorScheme;
+        String display;
+        if (snap.connectionState == ConnectionState.waiting) {
+          display = 'Loading…';
+        } else if (snap.hasError) {
+          display = 'Unable to load email';
+        } else if (snap.data == null || snap.data!.isEmpty) {
+          display = widget.user.authID.isEmpty ? 'No account linked' : 'No email on file';
+        } else {
+          display = snap.data!;
+        }
+
+        return InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Email',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.email_outlined),
+            helperText: 'View only — from their account registration',
+            helperMaxLines: 2,
+            filled: true,
+            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          ),
+          child: Text(
+            display,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: snap.hasData && snap.data != null && snap.data!.isNotEmpty
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+                ),
+          ),
+        );
+      },
     );
   }
 
@@ -231,6 +276,8 @@ class _EditUserPageState extends State<EditUserPage> {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _buildEmailField(),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _tecLocation,

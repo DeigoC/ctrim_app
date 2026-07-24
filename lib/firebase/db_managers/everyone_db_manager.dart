@@ -56,4 +56,14 @@ class EveryoneDBManager {
     }
     return null;
   }
+
+  /// Email stored on `everyone/{authID}` at registration. Null if missing or unreadable.
+  Future<String?> fetchEmailFromAuthID(final String authID) async {
+    if (authID.isEmpty) return null;
+    final doc = await _ref.doc(authID).get();
+    final data = doc.data() as Map<String, dynamic>?;
+    final email = data?[_email];
+    if (email is String && email.trim().isNotEmpty) return email.trim();
+    return null;
+  }
 }

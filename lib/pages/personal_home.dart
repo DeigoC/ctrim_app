@@ -131,8 +131,8 @@ class _PersonalHomeState extends State<PersonalHome> {
 
                   const SizedBox(height: 24),
 
-                  // Admin Section (if admin)
-                  if (appContext.currentUser.isAreaAdmin) ...[
+                  // Leader / admin tools (templates for leaders; tags for area admins)
+                  if (appContext.currentUser.isLeader || appContext.currentUser.isAreaAdmin) ...[
                     _buildAdminSection(appContext, theme, colorScheme),
                     const SizedBox(height: 24),
                   ],
@@ -378,6 +378,14 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   Widget _buildAdminSection(AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    final showTemplates = appContext.currentUser.isLeader;
+    final showUserTags = appContext.currentUser.isAreaAdmin;
+    final sectionTitle = showUserTags && !showTemplates
+        ? 'Admin Tools'
+        : showTemplates && !showUserTags
+            ? 'Leader Tools'
+            : 'Admin Tools';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -392,7 +400,7 @@ class _PersonalHomeState extends State<PersonalHome> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Admin Tools',
+                sectionTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.onSurface,
@@ -413,29 +421,32 @@ class _PersonalHomeState extends State<PersonalHome> {
           ),
           child: Column(
             children: [
-              _buildModernListTile(
-                icon: Icons.newspaper_rounded,
-                title: 'Post Templates',
-                subtitle: 'Manage post templates',
-                onTap: _openViewTemplatesClick,
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.primary,
-                isFirst: true,
-                isLast: false,
-              ),
-              Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-              _buildModernListTile(
-                icon: Icons.label_rounded,
-                title: AppLocalizations.of(context)!.manageUserTagsMenuTitle,
-                subtitle: AppLocalizations.of(context)!.manageUserTagsMenuSubtitle,
-                onTap: _openManageUserTagsClick,
-                theme: theme,
-                colorScheme: colorScheme,
-                iconColor: colorScheme.primary,
-                isFirst: false,
-                isLast: true,
-              ),
+              if (showTemplates)
+                _buildModernListTile(
+                  icon: Icons.newspaper_rounded,
+                  title: 'Post Templates',
+                  subtitle: 'Create and edit post templates',
+                  onTap: _openViewTemplatesClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.primary,
+                  isFirst: true,
+                  isLast: !showUserTags,
+                ),
+              if (showTemplates && showUserTags)
+                Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              if (showUserTags)
+                _buildModernListTile(
+                  icon: Icons.label_rounded,
+                  title: AppLocalizations.of(context)!.manageUserTagsMenuTitle,
+                  subtitle: AppLocalizations.of(context)!.manageUserTagsMenuSubtitle,
+                  onTap: _openManageUserTagsClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.primary,
+                  isFirst: !showTemplates,
+                  isLast: true,
+                ),
             ],
           ),
         ),
