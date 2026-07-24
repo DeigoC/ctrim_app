@@ -13,6 +13,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notification_topics.dart';
+import '../user_avatar.dart';
 
 /// People tab: interested (self-serve) + attendees (author/contributor managed).
 class ViewAttendanceTab extends StatefulWidget {
@@ -109,55 +110,73 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final isInterested = attendance.hasInterest(authId);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         _buildInterestToggle(theme, colorScheme, isInterested),
-        const SizedBox(height: 24),
-        _buildSectionHeader(
+        const SizedBox(height: 20),
+        _buildSectionCard(
           theme,
           colorScheme,
           icon: Icons.favorite_outline,
           title: 'Interested (${attendance.interestedCount})',
+          child: attendance.interested.isEmpty
+              ? _buildEmptyState(theme, colorScheme, 'No one has marked interest yet.')
+              : Column(
+                  children: [
+                    for (final entry in attendance.interested.values)
+                      _buildInterestedTile(
+                        theme,
+                        colorScheme,
+                        appContext,
+                        entry,
+                        canManage: canManage,
+                        alreadyAttending: _isAlreadyAttending(attendance, entry),
+                      ),
+                  ],
+                ),
         ),
-        const SizedBox(height: 8),
-        if (attendance.interested.isEmpty)
-          _buildEmptyLine(theme, colorScheme, 'No one has marked interest yet.')
-        else
-          ...attendance.interested.values.map(
-            (entry) => _buildInterestedTile(theme, colorScheme, entry, canManage: canManage),
-          ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: _buildSectionHeader(
-                theme,
-                colorScheme,
-                icon: Icons.groups_outlined,
-                title: 'Attending (${attendance.attendeeCount})',
-              ),
-            ),
-            if (canManage)
-              IconButton(
-                tooltip: 'Manage attendees',
-                onPressed: _busy ? null : _showManageAttendeesSheet,
-                icon: const Icon(Icons.person_add_alt_1),
-              ),
-          ],
+        const SizedBox(height: 16),
+        _buildSectionCard(
+          theme,
+          colorScheme,
+          icon: Icons.groups_outlined,
+          title: 'Attending (${attendance.attendeeCount})',
+          trailing: canManage
+              ? IconButton(
+                  tooltip: 'Manage attendees',
+                  onPressed: _busy ? null : _showManageAttendeesSheet,
+                  icon: const Icon(Icons.person_add_alt_1),
+                )
+              : null,
+          child: attendance.attendees.isEmpty
+              ? _buildEmptyState(
+                  theme,
+                  colorScheme,
+                  canManage ? 'Add people who are attending this event.' : 'No attendees listed yet.',
+                  action: canManage
+                      ? FilledButton.tonalIcon(
+                          onPressed: _busy ? null : _showManageAttendeesSheet,
+                          icon: const Icon(Icons.person_add_alt_1, size: 18),
+                          label: const Text('Add attendees'),
+                        )
+                      : null,
+                )
+              : Column(
+                  children: [
+                    for (final entry in attendance.attendees)
+                      _buildAttendeeTile(theme, colorScheme, appContext, entry, canManage: canManage),
+                  ],
+                ),
         ),
-        const SizedBox(height: 8),
-        if (attendance.attendees.isEmpty)
-          _buildEmptyLine(
-            theme,
-            colorScheme,
-            canManage ? 'Add people who are attending this event.' : 'No attendees listed yet.',
-          )
-        else
-          ...attendance.attendees.map(
-            (entry) => _buildAttendeeTile(theme, colorScheme, entry, canManage: canManage),
-          ),
       ],
     );
+  }
+
+  bool _isAlreadyAttending(EventAttendance attendance, InterestedEntry entry) {
+    if (entry.userId != null) {
+      return attendance.attendees.any((a) => a.isUser && a.userId == entry.userId);
+    }
+    return false;
   }
 
   Widget _buildGuestBody(ThemeData theme, ColorScheme colorScheme, int interested, int attending) {
@@ -217,47 +236,91 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     );
   }
 
-  Widget _buildSectionHeader(
+  Widget _buildSectionCard(
     ThemeData theme,
     ColorScheme colorScheme, {
     required IconData icon,
     required String title,
+    required Widget child,
+    Widget? trailing,
   }) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: colorScheme.primary),
-        const SizedBox(width: 8),
-        Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-      ],
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 8, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 20, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+            const SizedBox(height: 8),
+            child,
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildEmptyLine(ThemeData theme, ColorScheme colorScheme, String text) {
+  Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme, String text, {Widget? action}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Column(
+        children: [
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          if (action != null) ...[
+            const SizedBox(height: 12),
+            action,
+          ],
+        ],
+      ),
     );
   }
 
   Widget _buildInterestedTile(
     ThemeData theme,
     ColorScheme colorScheme,
+    AppContext appContext,
     InterestedEntry entry, {
     required bool canManage,
+    required bool alreadyAttending,
   }) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: colorScheme.secondaryContainer,
-        child: Text(_initials(entry.displayName)),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      leading: _avatarForUserId(appContext, entry.userId, entry.displayName, colorScheme.secondaryContainer),
       title: Text(entry.displayName),
-      subtitle: const Text('Interested'),
+      subtitle: Text(alreadyAttending ? 'Interested · also attending' : 'Interested'),
       trailing: canManage
-          ? IconButton(
-              tooltip: 'Remove interest',
-              icon: const Icon(Icons.close),
-              onPressed: _busy ? null : () => _removeInterest(entry.authId),
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!alreadyAttending && _canPromote(entry, appContext))
+                  IconButton(
+                    tooltip: 'Mark as attending',
+                    icon: const Icon(Icons.person_add_alt_1),
+                    onPressed: _busy ? null : () => _promoteToAttendee(entry),
+                  ),
+                IconButton(
+                  tooltip: 'Remove interest',
+                  icon: const Icon(Icons.close),
+                  onPressed: _busy ? null : () => _removeInterest(entry.authId),
+                ),
+              ],
             )
           : null,
     );
@@ -266,15 +329,18 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   Widget _buildAttendeeTile(
     ThemeData theme,
     ColorScheme colorScheme,
+    AppContext appContext,
     AttendeeEntry entry, {
     required bool canManage,
   }) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: colorScheme.tertiaryContainer,
-        child: Icon(entry.isExternal ? Icons.person_outline : Icons.person, size: 20),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      leading: entry.isUser
+          ? _avatarForUserId(appContext, entry.userId, entry.displayName, colorScheme.tertiaryContainer)
+          : CircleAvatar(
+              backgroundColor: colorScheme.tertiaryContainer,
+              child: const Icon(Icons.person_outline, size: 20),
+            ),
       title: Text(entry.displayName),
       subtitle: Text(entry.isExternal
           ? (entry.note?.isNotEmpty == true ? entry.note! : 'Guest (not registered)')
@@ -287,6 +353,39 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             )
           : null,
     );
+  }
+
+  Widget _avatarForUserId(
+    AppContext appContext,
+    String? userId,
+    String displayName,
+    Color fallbackColor,
+  ) {
+    if (userId != null) {
+      try {
+        final user = appContext.getUserFromID(userId);
+        return MyUserAvatar(user, radius: 20);
+      } catch (_) {
+        // fall through
+      }
+    }
+    return CircleAvatar(
+      backgroundColor: fallbackColor,
+      child: Text(_initials(displayName)),
+    );
+  }
+
+  bool _canPromote(InterestedEntry entry, AppContext appContext) {
+    return _resolveUserIdForInterest(entry, appContext) != null;
+  }
+
+  String? _resolveUserIdForInterest(InterestedEntry entry, AppContext appContext) {
+    if (entry.userId != null && entry.userId!.isNotEmpty) return entry.userId;
+    try {
+      return appContext.allUsers.firstWhere((u) => u.authID == entry.authId).id;
+    } catch (_) {
+      return null;
+    }
   }
 
   String _initials(String name) {
@@ -357,6 +456,32 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     if (ok) widget.onChanged();
   }
 
+  Future<void> _promoteToAttendee(InterestedEntry entry) async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final userId = _resolveUserIdForInterest(entry, appContext);
+    if (userId == null) return;
+
+    final attendance = widget.eventContext.attendance ?? EventAttendance();
+    if (attendance.attendees.any((a) => a.isUser && a.userId == userId)) {
+      return;
+    }
+
+    User? user;
+    try {
+      user = appContext.getUserFromID(userId);
+    } catch (_) {
+      user = null;
+    }
+
+    final next = List<AttendeeEntry>.from(attendance.attendees)
+      ..add(AttendeeEntry.user(
+        userId: userId,
+        displayName: user?.fullname ?? entry.displayName,
+        addedBy: appContext.currentUser.id,
+      ));
+    await _persistAttendees(next);
+  }
+
   Future<void> _removeAttendee(String id) async {
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final next = attendance.attendees.where((e) => e.id != id).toList();
@@ -379,35 +504,118 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   }
 
   void _showManageAttendeesSheet() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
       builder: (sheetContext) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.person_search),
-                title: const Text('Add registered users'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _addRegisteredUsers();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: const Text('Add guest by name'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _addExternalGuest();
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.groups_outlined, color: colorScheme.primary, size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Manage attendees',
+                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Add registered users or guests by name',
+                              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _manageOption(
+                  theme,
+                  colorScheme,
+                  icon: Icons.person_search,
+                  color: Colors.blue,
+                  title: 'Add registered users',
+                  subtitle: 'Pick from people already in the app',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _addRegisteredUsers();
+                  },
+                ),
+                _manageOption(
+                  theme,
+                  colorScheme,
+                  icon: Icons.person_outline,
+                  color: Colors.teal,
+                  title: 'Add guest by name',
+                  subtitle: 'Someone who is not registered yet',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _addExternalGuest();
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _manageOption(
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+        trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+      ),
     );
   }
 

@@ -33,7 +33,7 @@ Non-goals for V1: capacity/waitlist, personal Going/Interested home filter (phas
 | 9 | Interest vs bookmark | Interest **wraps** bookmark for posts that support it (one public action). Keep legacy bookmark UX where needed; full migration optional later. |
 | 10 | Who manages attendees | Author / contributors (same soft gate as edit UI today). Free-text is **staff-owned**, not self-serve. |
 | 11 | Who manages interest | Self-serve add/remove for signed-in; **author/contributors may remove** someone’s interest (moderation). Authors do **not** add interest on behalf of others. |
-| 12 | Promote interested → attendee | Nice-to-have one-tap for author; optional in V1 if cheap. |
+| 12 | Promote interested → attendee | Implemented: one-tap for author/contributor; keeps interest (both lists allowed). |
 | 13 | Capacity / waitlist | **Out of scope** for V1. |
 | 14 | Personal “Going / Interested” filter | **Phase 2** (needs user-side denorm). |
 | 15 | Free-text merge on later register | **Deferred** — leave duplicate possible for V1. |
@@ -204,7 +204,7 @@ Do not put business logic in `build`. Follow existing `EventContext` patterns fo
 
 - [x] Author/contributor UI: add/remove registered user from directory
 - [x] Add/remove free-text external guest
-- [ ] Optional: promote from interested → attendee (deferred)
+- [x] Promote from interested → attendee (author/contributor one-tap; keeps interest)
 - [x] Counts on head
 
 ### Phase D — Polish & verify

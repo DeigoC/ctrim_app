@@ -75,8 +75,8 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
       }
 
       final int itemCount = defaultFilter ? appContext.eventHeads.length : eventHeads.length;
-      final double webHorizontalPadding =
-          ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, style: GutterStyle.wide, narrowPadding: 0);
+      final List<EventHead> heads =
+          defaultFilter ? appContext.eventHeads : eventHeads;
 
       return RefreshIndicator(
         edgeOffset: kToolbarHeight + 20,
@@ -105,128 +105,184 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             duration: const Duration(seconds: 2),
           ));
         }),
-        child: CustomScrollView(
-            controller: widget.scrollController,
-            key: const PageStorageKey<String>('events_page'),
-            slivers: [
-              SliverAppBar(
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.campaign,
-                      color: colorScheme.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Bulletin',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double contentWidth = constraints.maxWidth;
+            final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+            final double maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+            final double horizontalPadding = isWideScreen
+                ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+                : 8.0;
+
+            return CustomScrollView(
+              controller: widget.scrollController,
+              key: const PageStorageKey<String>('events_page'),
+              slivers: [
+                SliverAppBar(
+                  title: Row(
+                    children: [
+                      Icon(
+                        Icons.campaign,
+                        color: colorScheme.primary,
+                        size: 28,
                       ),
-                    ),
-                  ],
-                ),
-                centerTitle: false,
-                floating: true,
-                snap: true,
-                expandedHeight: 100,
-                backgroundColor: colorScheme.surface,
-                surfaceTintColor: colorScheme.surfaceTint,
-                actions: [
-                  AnimatedBuilder(
-                    animation: _refreshAnimation,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _refreshAnimation.value * 2 * 3.14159,
-                        child: IconButton(
-                          onPressed: () => _showFilterModel(context),
-                          icon: const Icon(Icons.sort),
-                          tooltip: 'Sort & Filter',
-                          style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                            foregroundColor: colorScheme.primary,
-                          ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Bulletin',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      ViewEventsHome._ctrimLogo,
-                      fit: BoxFit.contain,
-                      height: kToolbarHeight,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
+                  centerTitle: false,
+                  floating: true,
+                  snap: true,
+                  expandedHeight: 100,
+                  backgroundColor: colorScheme.surface,
+                  surfaceTintColor: colorScheme.surfaceTint,
+                  actions: [
+                    AnimatedBuilder(
+                      animation: _refreshAnimation,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _refreshAnimation.value * 2 * 3.14159,
+                          child: IconButton(
+                            onPressed: () => _showFilterModel(context),
+                            icon: const Icon(Icons.sort),
+                            tooltip: 'Sort & Filter',
+                            style: IconButton.styleFrom(
+                              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                              foregroundColor: colorScheme.primary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  leading: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.shadow.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                        child: Icon(
-                          Icons.church,
-                          color: colorScheme.primary,
-                          size: 24,
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        ViewEventsHome._ctrimLogo,
+                        fit: BoxFit.contain,
+                        height: kToolbarHeight,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.church,
+                            color: colorScheme.primary,
+                            size: 24,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              // Filter Indicator as separate sliver
-              if (appContext.postSortIndex != 0)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: _buildFilterIndicator(appContext, colorScheme),
+                if (appContext.postSortIndex != 0)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      child: _buildFilterIndicator(appContext, colorScheme),
+                    ),
                   ),
-                ),
-              SliverPadding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: webHorizontalPadding + 8,
-                  vertical: 8,
-                ),
-                sliver: itemCount == 0
-                    ? _buildEmptyState(colorScheme, theme)
-                    : SliverList.separated(
-                        itemCount: itemCount,
-                        itemBuilder: (_, index) => Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorScheme.shadow.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 8,
+                  ),
+                  sliver: itemCount == 0
+                      ? _buildEmptyState(colorScheme, theme)
+                      : isWideScreen
+                          ? SliverToBoxAdapter(
+                              child: _buildWidePostColumns(colorScheme, heads),
+                            )
+                          : SliverList.separated(
+                              itemCount: itemCount,
+                              itemBuilder: (_, index) => _buildPostCard(
+                                colorScheme,
+                                heads[index],
                               ),
-                            ],
-                          ),
-                          child: PostHead(
-                            thisHead: defaultFilter ? appContext.eventHeads[index] : eventHeads[index],
-                            updatePost: () => widget.rebuildFunction(),
-                          ),
-                        ),
-                        separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 8),
-                      ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 80)), // Bottom padding
-            ]),
+                              separatorBuilder: (BuildContext context, int index) =>
+                                  const SizedBox(height: 8),
+                            ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            );
+          },
+        ),
       );
     });
+  }
+
+  /// Two columns with intrinsic card heights (avoids fixed-aspect dead space).
+  Widget _buildWidePostColumns(ColorScheme colorScheme, List<EventHead> heads) {
+    final List<EventHead> left = [];
+    final List<EventHead> right = [];
+    for (var i = 0; i < heads.length; i++) {
+      (i.isEven ? left : right).add(heads[i]);
+    }
+
+    Widget column(List<EventHead> columnHeads) {
+      return Column(
+        children: [
+          for (var i = 0; i < columnHeads.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            _buildPostCard(colorScheme, columnHeads[i], verticalMargin: 0),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: column(left)),
+        const SizedBox(width: 16),
+        Expanded(child: column(right)),
+      ],
+    );
+  }
+
+  Widget _buildPostCard(
+    ColorScheme colorScheme,
+    EventHead head, {
+    double verticalMargin = 4,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: verticalMargin),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: PostHead(
+        thisHead: head,
+        updatePost: () => widget.rebuildFunction(),
+      ),
+    );
   }
 
   Widget _buildFilterIndicator(AppContext appContext, ColorScheme colorScheme) {
