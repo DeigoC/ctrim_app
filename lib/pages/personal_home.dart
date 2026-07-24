@@ -20,7 +20,7 @@ import '../utility/pwa_install_service.dart';
 import '../widgets/personal/add_to_home_screen_dialog.dart';
 import 'events/post_templates/view_templates_page.dart';
 import 'personal/guest_registration_page.dart';
-import 'personal/current_user_page.dart';
+import 'personal/edit_profile_picture_page.dart';
 import 'personal/login_page.dart';
 import 'personal/notification_management_page.dart';
 import 'personal/share_web_app_page.dart';
@@ -168,7 +168,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ),
       ),
       child: InkWell(
-        onTap: kIsWeb ? null : _onUserProfileClick,
+        onTap: appContext.isCurrentUserGuest ? null : _onUserProfileClick,
         borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -216,6 +216,15 @@ class _PersonalHomeState extends State<PersonalHome> {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    if (!appContext.isCurrentUserGuest) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tap to edit profile picture',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
                     if (appContext.currentUser.isAreaAdmin) ...[
                       const SizedBox(height: 4),
                       Container(
@@ -237,7 +246,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                 ),
               ),
 
-              if (!kIsWeb)
+              if (!appContext.isCurrentUserGuest)
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
@@ -332,6 +341,16 @@ class _PersonalHomeState extends State<PersonalHome> {
                   colorScheme: colorScheme,
                   iconColor: colorScheme.tertiary,
                   isFirst: kIsWeb,
+                ),
+                const Divider(height: 1, indent: 72),
+                _buildModernListTile(
+                  icon: Icons.account_circle_outlined,
+                  title: 'Profile picture',
+                  subtitle: 'Update your photo URL',
+                  onTap: _onUserProfileClick,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  iconColor: colorScheme.primary,
                 ),
                 const Divider(height: 1, indent: 72),
                 _buildModernListTile(
@@ -869,10 +888,8 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   void _onUserProfileClick() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const CurrentUserPage())).then((_) {
-      setState(() {
-        // update incase user has changed their image
-      });
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfilePicturePage())).then((_) {
+      if (mounted) setState(() {});
     });
   }
 

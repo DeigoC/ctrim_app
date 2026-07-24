@@ -49,11 +49,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-24** — Volunteers can edit their own profile picture URL (`EditProfilePicturePage`); Personal home entry (card + Quick Actions); Firestore self-update limited to `ImgSrc`.
 - **2026-07-24** — Volunteer Auth link: placeholders without AuthID on Register User; Edit User can Link / Reassign / Unlink Auth (`user_auth_link.dart`); `EveryoneDBManager.clearAsUser` + `setAsUser` always writes `isLeader`.
 - **2026-07-24** — Post templates: leaders can create/edit/duplicate; load shows step progress like posts (`PostTemplateLoader` + `LoadProgressBody`); `post_templates` rules use `isLeader()`; Hive upsert on save.
 - **2026-07-20** — Post attendance/interest V1: `EventAttendance` supplemental + head counts; People tab; rules split for signed-in names. See `docs/post-attendance-interest.md` (deploy `firestore.rules`).
 - **2026-07-20** — Progress dialogs: use `DialogManager.runWithProgressDialog` (not bare `showProgressDialog`) so failures swap to an error + Close instead of stuck spinners.
-- **2026-07-14** — Personal tab (web only): first visit shows `AddToHomeScreenDialog` instead of the old personal hub explainer; skipped on native and when already installed (`hasSeenPwaHomeScreenPrompt`).
 
 ## Commands
 

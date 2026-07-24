@@ -19,6 +19,11 @@ class UserDBManager {
     await _ref.doc(user.id).update(user.toJson());
   }
 
+  /// Self-serve profile photo update — only touches `ImgSrc`.
+  Future<void> updateUserImgSrc(final String uid, final String imgSrc) async {
+    await _ref.doc(uid).update({'ImgSrc': imgSrc});
+  }
+
   Future<List<User>> fetchAllUsers() async {
     final collection = await _ref.get();
     return List<User>.from(collection.docs.map((doc) => doc.data()).toList());
