@@ -815,13 +815,13 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     // Save to DB
     debugPrint('---- begin saving template ID (${updatedTemplate.id}) to DB');
     final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    await postTemplateDBManager.updateTemplate(updatedTemplate);
+    final int lastUpdate = await postTemplateDBManager.updateTemplate(updatedTemplate);
 
-    // Save Locally
+    // Upsert locally — do not clear the whole box (would wipe other templates).
     debugPrint('---- begin saving locally');
     final LocalDataManager localDataManager = LocalDataManager();
-    localDataManager.clearPostTemplateDir();
     await localDataManager.writePostTemplateData(updatedTemplate);
+    await localDataManager.writeLastPostTemplateUpdate(lastUpdate);
     debugPrint('---- FINISHED UPDATING POST TEMPLATE');
   }
 

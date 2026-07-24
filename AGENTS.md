@@ -49,11 +49,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-24** — Post templates: admins can create/duplicate via `ViewTemplatesPage`; save upserts Hive (no full-box clear); edit uses real `currentUser.id` (not `'1'`). `addPostTemplate` returns `(id, lastUpdate)`.
 - **2026-07-20** — Post attendance/interest V1: `EventAttendance` supplemental + head counts; People tab; rules split for signed-in names. See `docs/post-attendance-interest.md` (deploy `firestore.rules`).
 - **2026-07-20** — Progress dialogs: use `DialogManager.runWithProgressDialog` (not bare `showProgressDialog`) so failures swap to an error + Close instead of stuck spinners.
 - **2026-07-14** — Personal tab (web only): first visit shows `AddToHomeScreenDialog` instead of the old personal hub explainer; skipped on native and when already installed (`hasSeenPwaHomeScreenPrompt`).
 - **2026-07-12** — Personal share: `ShareWebAppPage` replaces beta TestFlight/Android page; web link share + Add to Home Screen on that page (`PwaInstallService` + `web/pwa_install.js`).
-- **2026-07-11** — Bulk post dates: `BulkPostDates` anchors bulk-created posts to the source post's event date (#18).
 
 ## Commands
 

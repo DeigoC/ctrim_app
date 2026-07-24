@@ -616,12 +616,11 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       final List<PostTemplate> templates = await postTemplateDBManager.fetchAllTemplates();
       for (final PostTemplate template in templates) {
         debugPrint('writing PostTemplate ID ${template.id}');
-        dataManager.writePostTemplateData(template);
+        await dataManager.writePostTemplateData(template);
       }
 
-      final int newUpdateTime = DateTime.now().millisecondsSinceEpoch;
-      postTemplateDBManager.updateLastUpdateTime(newUpdateTime);
-      dataManager.writeLastPostTemplateUpdate(newUpdateTime);
+      // Mirror remote lastUpdate locally — do not bump it on fetch.
+      await dataManager.writeLastPostTemplateUpdate(dbUpdateValue);
       return templates;
     } else {
       return await dataManager.readAllPostTemplates();
