@@ -45,8 +45,19 @@ class EveryoneDBManager {
   // ! user related
 
   Future<void> setAsUser(final String authID, final bool isLeader) async {
-    final Map<String, dynamic> data = isLeader ? {'isLeader': true, 'isUser': true} : {'isUser': true};
-    await _ref.doc(authID).update(data);
+    await _ref.doc(authID).update({
+      'isUser': true,
+      'isLeader': isLeader,
+    });
+  }
+
+  /// Clears volunteer flags after Auth is unlinked or reassigned away from this identity.
+  Future<void> clearAsUser(final String authID) async {
+    if (authID.isEmpty) return;
+    await _ref.doc(authID).update({
+      'isUser': false,
+      'isLeader': false,
+    });
   }
 
   Future<String?> fetchAuthIDFromEmail(final String email) async {

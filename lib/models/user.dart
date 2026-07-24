@@ -38,7 +38,7 @@ class User {
         _location = data['Location'],
         _isAreaAdmin = data['IsAreaAdmin'],
         _isLeader = data['IsLeader'],
-        _authID = data['AuthID'],
+        _authID = (data['AuthID'] as String?) ?? '',
         _imgSrc = data['ImgSrc'],
         _tagIDs = _parseTagIDs(data['Tags']);
 

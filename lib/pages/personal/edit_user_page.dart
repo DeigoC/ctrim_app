@@ -11,6 +11,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/user_auth_link.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_picker.dart';
 import '../../utility/responsive_layout.dart';
@@ -27,6 +28,7 @@ class EditUserPage extends StatefulWidget {
 class _EditUserPageState extends State<EditUserPage> {
   final UserDBManager _userDBManager = UserDBManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final UserAuthLinkService _authLinkService = UserAuthLinkService();
   final RegExp _driveRegExp = RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
 
   late final TextEditingController _tecForename;
@@ -37,11 +39,13 @@ class _EditUserPageState extends State<EditUserPage> {
   late bool _isAreaAdmin;
   late bool _isLeader;
   late String _src;
+  late String _authID;
   late Set<String> _selectedTagIDs;
   bool _testing = false;
   bool _canSave = false;
   bool _hasChanges = false;
   bool _imageValidated = true;
+  bool _authLinkChanged = false;
 
   Future<String?>? _emailFuture;
 
@@ -56,6 +60,7 @@ class _EditUserPageState extends State<EditUserPage> {
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _src = widget.user.imgSrc;
+    _authID = widget.user.authID;
     _selectedTagIDs = Set<String>.from(widget.user.tagIDs);
 
     _tecForename.addListener(_updateChangeState);
@@ -63,7 +68,7 @@ class _EditUserPageState extends State<EditUserPage> {
     _tecLocation.addListener(_updateChangeState);
     _tecImgSrc.addListener(_updateChangeState);
 
-    _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(widget.user.authID);
+    _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
   }
 
   @override
@@ -106,12 +111,19 @@ class _EditUserPageState extends State<EditUserPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit User'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).pop(_authLinkChanged || result == true);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit User'),
+        ),
+        body: _buildBody(),
+        bottomNavigationBar: _buildSaveBar(),
       ),
-      body: _buildBody(),
-      bottomNavigationBar: _buildSaveBar(),
     );
   }
 
@@ -144,29 +156,54 @@ class _EditUserPageState extends State<EditUserPage> {
         } else if (snap.hasError) {
           display = 'Unable to load email';
         } else if (snap.data == null || snap.data!.isEmpty) {
-          display = widget.user.authID.isEmpty ? 'No account linked' : 'No email on file';
+          display = _authID.isEmpty ? 'No account linked' : 'No email on file';
         } else {
           display = snap.data!;
         }
 
-        return InputDecorator(
-          decoration: InputDecoration(
-            labelText: 'Email',
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.email_outlined),
-            helperText: 'View only — from their account registration',
-            helperMaxLines: 2,
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-          ),
-          child: Text(
-            display,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: snap.hasData && snap.data != null && snap.data!.isNotEmpty
-                      ? colorScheme.onSurface
-                      : colorScheme.onSurfaceVariant,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.email_outlined),
+                helperText: _authID.isEmpty
+                    ? 'No login linked — use Link account after they register'
+                    : 'Linked account — reassign if they registered with a new email',
+                helperMaxLines: 2,
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              ),
+              child: Text(
+                display,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: snap.hasData && snap.data != null && snap.data!.isNotEmpty
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _onLinkAccountClick,
+                  icon: Icon(_authID.isEmpty ? Icons.link : Icons.swap_horiz),
+                  label: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
                 ),
-          ),
+                if (_authID.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: _onUnlinkAccountClick,
+                    icon: const Icon(Icons.link_off),
+                    label: const Text('Unlink'),
+                  ),
+              ],
+            ),
+          ],
         );
       },
     );
@@ -362,7 +399,7 @@ class _EditUserPageState extends State<EditUserPage> {
                   ),
                   ListTile(
                     title: const Text('Auth ID'),
-                    subtitle: Text(widget.user.authID),
+                    subtitle: Text(_authID.isEmpty ? '(none — placeholder)' : _authID),
                     dense: true,
                   ),
                 ],
@@ -375,6 +412,157 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   // * Logic
+
+  User _userSnapshot({String? authID}) {
+    return User(
+      id: widget.user.id,
+      forname: _tecForename.text.trim().isEmpty ? widget.user.forname : _tecForename.text.trim(),
+      surname: _tecSurname.text.trim().isEmpty ? widget.user.surname : _tecSurname.text.trim(),
+      imgSrc: _src,
+      location: _tecLocation.text.trim().isEmpty ? widget.user.location : _tecLocation.text.trim(),
+      isAreaAdmin: _isAreaAdmin,
+      isLeader: _isLeader,
+      authID: authID ?? _authID,
+      tagIDs: _selectedTagIDs.toList(),
+    );
+  }
+
+  void _replaceUserInAppContext(User updated) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final allUsers = appContext.allUsers;
+    final index = allUsers.indexWhere((u) => u.id == updated.id);
+    if (index == -1) return;
+
+    final existing = allUsers[index];
+    if (existing.roles != null) updated.setRoles(existing.roles!.toList());
+    if (existing.posts != null) updated.setPosts(existing.posts!.toList());
+    allUsers[index] = updated;
+
+    if (appContext.currentUser.id == updated.id) {
+      appContext.setCurrentUser(updated);
+    }
+  }
+
+  Future<void> _onLinkAccountClick() async {
+    final emailController = TextEditingController();
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _authID.isEmpty
+                    ? 'Enter the email they used when registering in the app. '
+                        'Their Auth ID will be linked to this volunteer profile.'
+                    : 'Enter the new account email. The previous Auth link will be cleared '
+                        '(temp accounts are not deleted automatically).',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(emailController.text.trim()),
+              child: const Text('Search'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || email == null || email.isEmpty) return;
+
+    final linked = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Linking account',
+      subtitle: 'Looking up $email…',
+      errorTitle: 'Could not link account',
+      action: () async {
+        final authID = await _everyoneDBManager.fetchAuthIDFromEmail(email);
+        if (authID == null || authID.isEmpty) {
+          throw StateError('No account found for that email. Ask them to register first.');
+        }
+        final updated = await _authLinkService.linkAuth(
+          user: _userSnapshot(),
+          newAuthID: authID,
+          isLeader: _isLeader,
+        );
+        if (!mounted) return;
+        _replaceUserInAppContext(updated);
+        setState(() {
+          _authID = updated.authID;
+          _authLinkChanged = true;
+          _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
+        });
+      },
+    );
+
+    if (!mounted || !linked) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account linked successfully'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _onUnlinkAccountClick() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Unlink account'),
+        content: const Text(
+          'Remove the login link from this profile? They will not be able to sign in as this '
+          'volunteer until you link an account again. Schedule and profile data are kept.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Unlink')),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    final unlinked = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Unlinking account',
+      subtitle: 'Please wait…',
+      errorTitle: 'Could not unlink account',
+      action: () async {
+        final updated = await _authLinkService.unlinkAuth(user: _userSnapshot());
+        if (!mounted) return;
+        _replaceUserInAppContext(updated);
+        setState(() {
+          _authID = '';
+          _authLinkChanged = true;
+          _emailFuture = Future.value(null);
+        });
+      },
+    );
+
+    if (!mounted || !unlinked) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account unlinked'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   Future<Uint8List> _fetchFile() async {
     final imageUrl = NetworkImageHelper.getImageUrl(_src);
@@ -443,7 +631,7 @@ class _EditUserPageState extends State<EditUserPage> {
       location: _tecLocation.text.trim(),
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
-      authID: widget.user.authID,
+      authID: _authID,
       tagIDs: _selectedTagIDs.toList(),
     );
 
@@ -468,6 +656,9 @@ class _EditUserPageState extends State<EditUserPage> {
         tagIDs: tagIDsToSave,
       );
       await _userDBManager.updateUser(userToSave);
+      if (userToSave.authID.isNotEmpty) {
+        await _everyoneDBManager.setAsUser(userToSave.authID, userToSave.isLeader);
+      }
 
       // Update local image data if image changed
       if (_src != widget.user.imgSrc && _src.isNotEmpty) {
@@ -476,38 +667,14 @@ class _EditUserPageState extends State<EditUserPage> {
 
       // Update in app context if this is the current user or in all users list
       if (mounted) {
-        final appContext = Provider.of<AppContext>(context, listen: false);
-
-        // Update in all users list
-        final allUsers = appContext.allUsers;
-        final index = allUsers.indexWhere((u) => u.id == widget.user.id);
-        if (index != -1) {
-          final existing = allUsers[index];
-          final replacement = User(
-            id: userToSave.id,
-            forname: userToSave.forname,
-            surname: userToSave.surname,
-            imgSrc: userToSave.imgSrc,
-            location: userToSave.location,
-            isAreaAdmin: userToSave.isAreaAdmin,
-            isLeader: userToSave.isLeader,
-            authID: userToSave.authID,
-            tagIDs: userToSave.tagIDs,
-          );
-          if (existing.roles != null) replacement.setRoles(existing.roles!.toList());
-          if (existing.posts != null) replacement.setPosts(existing.posts!.toList());
-          allUsers[index] = replacement;
-
-          if (appContext.currentUser.id == widget.user.id) {
-            appContext.setCurrentUser(replacement);
-          }
-        }
+        _replaceUserInAppContext(userToSave);
 
         setState(() {
           _canSave = false;
           _testing = false;
           _hasChanges = false;
           _imageValidated = true;
+          _authLinkChanged = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(

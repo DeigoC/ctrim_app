@@ -37,6 +37,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
   String _currentLocation = VolunteerLocations.belfast;
 
+  bool get _hasLinkedAuth => _tecAuthID.text.trim().isNotEmpty;
+
   @override
   void dispose() {
     _tecForename.dispose();
@@ -85,17 +87,46 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         const SizedBox(height: 16),
         _buildLocationSelector(),
         const SizedBox(height: 16),
+        const Divider(),
+        Text('Account (optional)', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        Text(
+          'Leave blank to create a placeholder profile (e.g. for schedules). '
+          'Link their real account later from Edit User after they register.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 12),
         TextField(
-            decoration: const InputDecoration(label: Text('Email'), hintText: 'Enter email please'),
+            decoration: const InputDecoration(
+              label: Text('Email'),
+              hintText: 'Their registered account email',
+            ),
             controller: _tecEmail,
             onChanged: _areFieldsGood,
             focusNode: _fnEmail),
         TextField(
-            decoration:
-                const InputDecoration(label: Text('AuthID'), hintText: '...search for existing authenticated user'),
+            decoration: const InputDecoration(
+              label: Text('AuthID'),
+              hintText: 'Found after searching email…',
+            ),
             controller: _tecAuthID,
             readOnly: true),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        ElevatedButton(
+            onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
+            child: const Text('Search for AuthID')),
+        ElevatedButton(
+            onPressed: _tecAuthID.text.isNotEmpty
+                ? () {
+                    setState(() {
+                      _tecAuthID.clear();
+                    });
+                    _areFieldsGood('');
+                  }
+                : null,
+            child: const Text('Clear AuthID')),
         const Divider(),
         SwitchListTile(
             title: const Text('Are they a leader?'),
@@ -115,21 +146,9 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         ),
         const SizedBox(height: 16),
         ElevatedButton(
-            onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
-            child: const Text('Search for AuthID')),
-        ElevatedButton(
-            onPressed: _tecAuthID.text.isNotEmpty
-                ? () {
-                    setState(() {
-                      _tecAuthID.clear();
-                    });
-                  }
-                : null,
-            child: const Text('Clear AuthID')),
-        ElevatedButton(
           onPressed: _canSave ? () => _saveUserClick() : null,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: const Text('Save'),
+          child: Text(_hasLinkedAuth ? 'Save' : 'Save placeholder'),
         ),
       ],
     );
@@ -156,16 +175,21 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
   // * Logic
   void _onSearchForAuthIDClick() {
-    // ? For improvements: make sure we're not looking for an already existing email in the users collection
-    _everyoneDBManager.fetchAuthIDFromEmail(_tecEmail.text.trim()).then((auth) {
+    final email = _tecEmail.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Enter an email to search'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+    _everyoneDBManager.fetchAuthIDFromEmail(email).then((auth) {
       debugPrint('auth is $auth');
       if (auth != null) {
         setState(() {
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            _areFieldsGood('');
-          });
-          _tecAuthID = TextEditingController(text: auth);
+          _tecAuthID.text = auth;
         });
+        _areFieldsGood('');
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -177,75 +201,75 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   void _saveUserClick() {
-    if (_tecAuthID.text.isNotEmpty) {
-      showDialog(
-          context: context,
-          builder: (_) {
-            return AlertDialog.adaptive(
-              title: const Text('Save User'),
-              content: const Text('Are you sure all details are finished?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                TextButton(
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      final saved = await DialogManager.runWithProgressDialog(
-                        context: context,
-                        title: 'Attempting to Register User',
-                        subtitle: 'Please wait...',
-                        errorTitle: 'Could not register user',
-                        action: () async {
-                          final newUser = await _registerUser();
-                          if (!mounted) return;
-                          Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
-                        },
-                      );
-                      if (!mounted || !saved) return;
-                      _isSaved = true;
-                      _popRouteAfterAllowing();
-                    },
-                    child: const Text('Save')),
-              ],
-            );
-          });
-    } else {
-      DialogManager.showAlertDialog(
-          context: context, title: 'Registration error', content: 'Please look for email of user you want to register');
-    }
+    final isPlaceholder = !_hasLinkedAuth;
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog.adaptive(
+            title: Text(isPlaceholder ? 'Save placeholder' : 'Save User'),
+            content: Text(isPlaceholder
+                ? 'Create a profile with no login account? You can link their email later from Edit User.'
+                : 'Are you sure all details are finished?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    final saved = await DialogManager.runWithProgressDialog(
+                      context: context,
+                      title: isPlaceholder ? 'Creating placeholder' : 'Attempting to Register User',
+                      subtitle: 'Please wait...',
+                      errorTitle: 'Could not register user',
+                      action: () async {
+                        final newUser = await _registerUser();
+                        if (!mounted) return;
+                        Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
+                      },
+                    );
+                    if (!mounted || !saved) return;
+                    _isSaved = true;
+                    _popRouteAfterAllowing();
+                  },
+                  child: const Text('Save')),
+            ],
+          );
+        });
   }
 
   Future<ctrim.User> _registerUser() async {
     final IDTrackerDBManager idTracker = IDTrackerDBManager();
     final UserDBManager userDBManager = UserDBManager();
+    final authID = _tecAuthID.text.trim();
+
+    if (authID.isNotEmpty) {
+      final existing = await userDBManager.fetchUserByAuthID(authID);
+      if (existing != null) {
+        throw StateError('That account is already linked to ${existing.fullname}.');
+      }
+    }
 
     final String newID = await idTracker.getAndIncrementUserID();
     final ctrim.User newUser = ctrim.User(
         id: newID,
         forname: _tecForename.text.trim(),
         surname: _tecSurname.text.trim(),
-        authID: _tecAuthID.text,
+        authID: authID,
         location: _currentLocation,
         isLeader: _isLeader,
         tagIDs: _selectedTagIDs.toList());
 
-    _everyoneDBManager.setAsUser(_tecAuthID.text, _isLeader);
+    if (authID.isNotEmpty) {
+      await _everyoneDBManager.setAsUser(authID, _isLeader);
+    }
     await userDBManager.addUser(newUser);
     return newUser;
   }
 
   void _areFieldsGood(String _) {
-    if (!_canSave &&
-        _tecForename.text.isNotEmpty &&
-        _tecSurname.text.isNotEmpty &&
-        _tecEmail.text.isNotEmpty &&
-        _tecAuthID.text.isNotEmpty) {
+    final namesOk = _tecForename.text.trim().isNotEmpty && _tecSurname.text.trim().isNotEmpty;
+    if (_canSave != namesOk) {
       setState(() {
-        _canSave = true;
-      });
-    } else if (_canSave &&
-        (_tecForename.text.isEmpty || _tecSurname.text.isEmpty || _tecEmail.text.isEmpty || _tecAuthID.text.isEmpty)) {
-      setState(() {
-        _canSave = false;
+        _canSave = namesOk;
       });
     }
   }
