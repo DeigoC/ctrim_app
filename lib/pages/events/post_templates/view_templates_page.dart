@@ -459,6 +459,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'Location': location,
       'Topics': [location],
       'Contributors': <String>[],
+      'LeadSpeakerUID': null,
       'Subtitles': <String>[],
       'AllDay': false,
       'Online': false,
@@ -496,6 +497,10 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
+    if (postTemplate.leadSpeakerUID != null && postTemplate.leadSpeakerUID!.isNotEmpty) {
+      eventContext.metadata.setLeadSpeakerUID(postTemplate.leadSpeakerUID);
+      eventContext.syncLeadSpeakerHeadFromUsers(_appContext.allUsers);
+    }
 
     for (final role in postTemplate.roles) {
       eventContext.program.addRole(

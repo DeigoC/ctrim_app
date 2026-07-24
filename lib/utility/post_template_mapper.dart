@@ -1,4 +1,5 @@
 import '../models/post_template.dart';
+import '../models/user.dart';
 import 'event_context.dart';
 
 class PostTemplateMapper {
@@ -7,6 +8,7 @@ class PostTemplateMapper {
     required PostTemplate template,
     required String currentUserID,
     String? parentID,
+    Iterable<User> allUsers = const [],
   }) {
     final EventContext eventContext = EventContext.adding(currentUserID: currentUserID, parentID: parentID);
 
@@ -61,6 +63,10 @@ class PostTemplateMapper {
     eventContext.metadata.contributorUIDs.addAll(template.contributors);
     if (template.contributors.isNotEmpty) {
       eventContext.contributorAdditionUIDs.addAll(template.contributors);
+    }
+    if (template.leadSpeakerUID != null && template.leadSpeakerUID!.isNotEmpty) {
+      eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
+      eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
 
     // program related

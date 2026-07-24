@@ -117,6 +117,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           template: widget.template,
           currentUserID: uid,
           parentID: parentID,
+          allUsers: appContext.allUsers,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
 

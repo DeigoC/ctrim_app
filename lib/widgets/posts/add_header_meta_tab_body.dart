@@ -1,9 +1,11 @@
 import 'dart:math';
+import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/personal/select_users_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/widgets/my_avatar_stack.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -210,11 +212,146 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             ),
           ),
 
-          // Contributors Section
+          // Lead speaker + Contributors
+          _buildLeadSpeakerSection(),
           _buildContributorSection(),
         ],
       ),
     );
+  }
+
+  Widget _buildLeadSpeakerSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final User? speaker = _resolveLeadSpeaker(appContext);
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.record_voice_over_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  'Lead speaker',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (speaker == null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'No lead speaker selected',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else ...[
+                  Center(child: MyUserAvatar(speaker, radius: 36)),
+                  const SizedBox(height: 8),
+                  Text(
+                    speaker.fullname,
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (speaker.imgSrc.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'No profile picture — card will show initials only',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _onManageLeadSpeakerTap,
+                  icon: const Icon(Icons.person_search, size: 18),
+                  label: Text(speaker == null ? 'Select lead speaker' : 'Change lead speaker'),
+                ),
+                if (speaker != null) ...[
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        widget.eventContext.applyLeadSpeaker(uid: null);
+                      });
+                      widget.onRequiredFieldChange('');
+                    },
+                    child: const Text('Clear'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  User? _resolveLeadSpeaker(AppContext appContext) {
+    final uid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
+    if (uid == null || uid.isEmpty) return null;
+    try {
+      return appContext.getUserFromID(uid);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _onManageLeadSpeakerTap() async {
+    final currentUid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
+          includeCurrentUser: true,
+          maxSelection: 1,
+          title: 'Select lead speaker',
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    setState(() {
+      if (result.isEmpty) {
+        widget.eventContext.applyLeadSpeaker(uid: null);
+      } else {
+        final user = appContext.getUserFromID(result.first);
+        widget.eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+      }
+    });
+    widget.onRequiredFieldChange('');
   }
 
   Widget _buildHeadMediaPoolSelector(List<Map<String, dynamic>> pool) {

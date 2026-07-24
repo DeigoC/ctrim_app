@@ -61,6 +61,25 @@ void main() {
         final meta = EventMetadata.fromMap(map);
 
         expect(meta.topics, isEmpty);
+        expect(meta.leadSpeakerUID, isNull);
+        expect(meta.hasLeadSpeaker, false);
+      });
+
+      test('creates from a map with LeadSpeakerUID', () {
+        final map = {
+          'AuthorUID': 'user-1',
+          'LastUID': 'user-1',
+          'ParentID': null,
+          'ContributorUIDs': <String>[],
+          'ChildrenIDs': <String>[],
+          'Topics': <String>[],
+          'LeadSpeakerUID': 'speaker-9',
+        };
+
+        final meta = EventMetadata.fromMap(map);
+
+        expect(meta.leadSpeakerUID, 'speaker-9');
+        expect(meta.hasLeadSpeaker, true);
       });
     });
 
@@ -69,6 +88,7 @@ void main() {
         final meta = EventMetadata(authorUID: 'user-1', parentID: 'parent-1');
         meta.addAllTopics(['youth', 'mission']);
         meta.setLastUID('user-2');
+        meta.setLeadSpeakerUID('speaker-1');
 
         final json = meta.toJson() as Map<String, dynamic>;
 
@@ -78,6 +98,7 @@ void main() {
         expect(json['Topics'], ['youth', 'mission']);
         expect(json['ContributorUIDs'], isEmpty);
         expect(json['ChildrenIDs'], isEmpty);
+        expect(json['LeadSpeakerUID'], 'speaker-1');
       });
     });
 

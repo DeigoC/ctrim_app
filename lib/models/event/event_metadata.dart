@@ -6,6 +6,7 @@ class EventMetadata {
   late String _lastUID;
   late final String? _parentID;
   late final List<String> _childrenIDs, _topics;
+  String? _leadSpeakerUID;
 
   EventMetadata({required String authorUID, final String? parentID}) {
     _authorUID = authorUID;
@@ -22,7 +23,8 @@ class EventMetadata {
         _parentID = data['ParentID'],
         _contributorUIDs = List<String>.from(data['ContributorUIDs']),
         _childrenIDs = List<String>.from(data['ChildrenIDs']),
-        _topics = List<String>.from(data['Topics'] ?? []);
+        _topics = List<String>.from(data['Topics'] ?? []),
+        _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
 
   Map<String, Object?> toJson() {
     return {
@@ -31,13 +33,16 @@ class EventMetadata {
       'ContributorUIDs': _contributorUIDs,
       'ParentID': _parentID,
       'ChildrenIDs': _childrenIDs,
-      'Topics': _topics
+      'Topics': _topics,
+      'LeadSpeakerUID': _leadSpeakerUID,
     };
   }
 
   String get lastUID => _lastUID;
   String get authorUID => _authorUID;
   String? get parentID => _parentID;
+  String? get leadSpeakerUID => _leadSpeakerUID;
+  bool get hasLeadSpeaker => _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
   bool get hasChildren => _childrenIDs.isNotEmpty;
   bool get hasParent => _parentID != null;
 
@@ -49,4 +54,6 @@ class EventMetadata {
   void clearTopics() => _topics.clear();
   void addAllTopics(final List<String> newTopics) => _topics.addAll(newTopics);
   void setLastUID(final String newLastUID) => _lastUID = newLastUID;
+  void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
+  void clearLeadSpeakerUID() => _leadSpeakerUID = null;
 }

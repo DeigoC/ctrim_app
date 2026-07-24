@@ -10,6 +10,7 @@ class EventHead {
   late DateTime _recentDate;
   DateTime? _eventDate;
   late int _interestedCount, _attendeeCount;
+  String? _leadSpeakerUID, _leadSpeakerImgSrc, _leadSpeakerName;
 
   EventHead({
     required String id,
@@ -37,6 +38,9 @@ class EventHead {
     _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
     _interestedCount = (data['InterestedCount'] as num?)?.toInt() ?? 0;
     _attendeeCount = (data['AttendeeCount'] as num?)?.toInt() ?? 0;
+    _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
+    _leadSpeakerImgSrc = data['LeadSpeakerImgSrc'] as String?;
+    _leadSpeakerName = data['LeadSpeakerName'] as String?;
   }
 
   List<Map<String, dynamic>> _toMedia(List<Map<String, dynamic>> data) {
@@ -59,6 +63,9 @@ class EventHead {
       'EventDate': _eventDate == null ? null : Timestamp.fromDate(_eventDate!),
       'InterestedCount': _interestedCount,
       'AttendeeCount': _attendeeCount,
+      'LeadSpeakerUID': _leadSpeakerUID,
+      'LeadSpeakerImgSrc': _leadSpeakerImgSrc,
+      'LeadSpeakerName': _leadSpeakerName,
     };
   }
 
@@ -71,6 +78,14 @@ class EventHead {
   int get interestedCount => _interestedCount;
   int get attendeeCount => _attendeeCount;
   bool get hasAttendanceCounts => _interestedCount > 0 || _attendeeCount > 0;
+  String? get leadSpeakerUID => _leadSpeakerUID;
+  String? get leadSpeakerImgSrc => _leadSpeakerImgSrc;
+  String? get leadSpeakerName => _leadSpeakerName;
+  bool get hasLeadSpeaker => _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
+  bool get hasLeadSpeakerPortrait =>
+      hasLeadSpeaker &&
+      ((_leadSpeakerImgSrc != null && _leadSpeakerImgSrc!.isNotEmpty) ||
+          (_leadSpeakerName != null && _leadSpeakerName!.isNotEmpty));
   TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
   List<Map<String, dynamic>> get media => UnmodifiableListView(_media);
 
@@ -79,6 +94,9 @@ class EventHead {
       if (entry['type']!.compareTo('img') == 0) {
         return entry['src'];
       }
+    }
+    if (_leadSpeakerImgSrc != null && _leadSpeakerImgSrc!.isNotEmpty) {
+      return _leadSpeakerImgSrc;
     }
     return null;
   }
@@ -91,6 +109,18 @@ class EventHead {
   void setLocation(final String newLocation) => _location = newLocation;
   void setInterestedCount(final int count) => _interestedCount = count < 0 ? 0 : count;
   void setAttendeeCount(final int count) => _attendeeCount = count < 0 ? 0 : count;
+
+  void setLeadSpeaker({String? uid, String? imgSrc, String? name}) {
+    _leadSpeakerUID = uid;
+    _leadSpeakerImgSrc = imgSrc;
+    _leadSpeakerName = name;
+  }
+
+  void clearLeadSpeaker() {
+    _leadSpeakerUID = null;
+    _leadSpeakerImgSrc = null;
+    _leadSpeakerName = null;
+  }
 
   bool containsMediaItem(final String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
   void addMediaItem({required String type, required String src, String title = '', String thumbnail = ''}) {

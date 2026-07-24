@@ -5,17 +5,26 @@ import 'package:intl/intl.dart';
 import '../../models/event/event_head.dart';
 import '../../pages/events/view_event_page.dart';
 import '../../pages/view_gallery_page.dart';
+import '../../utility/network_image_helper.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
+
+/// Relationship of a post relative to the currently viewed post.
+/// Only used on [PostHead] in related-posts views — not the main bulletin.
+enum PostRelationTag { parent, sibling, child }
 
 class PostHead extends StatefulWidget {
   final EventHead thisHead;
   final VoidCallback updatePost;
 
+  /// When set (related-posts tab only), shows a Parent / Sibling / Child badge.
+  final PostRelationTag? relationTag;
+
   const PostHead({
     super.key,
     required this.thisHead,
     required this.updatePost,
+    this.relationTag,
   });
 
   @override
@@ -135,6 +144,9 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
                     if (widget.thisHead.hasMedia) ...[
                       const SizedBox(height: 12),
                       _buildMediaGrid(context),
+                    ] else if (widget.thisHead.hasLeadSpeakerPortrait) ...[
+                      const SizedBox(height: 12),
+                      _buildLeadSpeakerPortrait(theme, colorScheme),
                     ],
 
                     const SizedBox(height: 16),
@@ -145,6 +157,73 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLeadSpeakerPortrait(ThemeData theme, ColorScheme colorScheme) {
+    final imgSrc = widget.thisHead.leadSpeakerImgSrc;
+    final name = widget.thisHead.leadSpeakerName ?? 'Lead speaker';
+    final hasImage = imgSrc != null && imgSrc.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            if (hasImage)
+              ClipOval(
+                child: Image.network(
+                  NetworkImageHelper.getImageUrl(imgSrc),
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _leadSpeakerInitialsAvatar(theme, colorScheme, name),
+                ),
+              )
+            else
+              _leadSpeakerInitialsAvatar(theme, colorScheme, name),
+            const SizedBox(height: 12),
+            Text(
+              name,
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Lead speaker',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _leadSpeakerInitialsAvatar(ThemeData theme, ColorScheme colorScheme, String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    final initials = parts.isEmpty
+        ? '?'
+        : parts.take(2).map((p) => p.isNotEmpty ? p[0].toUpperCase() : '').join();
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: colorScheme.primaryContainer,
+      child: Text(
+        initials,
+        style: theme.textTheme.headlineMedium?.copyWith(
+          color: colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -221,6 +300,10 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
   Widget _buildStatusRow(ThemeData theme, ColorScheme colorScheme) {
     return Row(
       children: [
+        if (widget.relationTag != null) ...[
+          _buildRelationBadge(theme, colorScheme, widget.relationTag!),
+          const SizedBox(width: 8),
+        ],
         // Event Status Badge
         if (widget.thisHead.hasEventDate)
           Container(
@@ -274,6 +357,40 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildRelationBadge(ThemeData theme, ColorScheme colorScheme, PostRelationTag tag) {
+    final (label, icon, color) = switch (tag) {
+      PostRelationTag.parent => ('Parent', Icons.arrow_upward, colorScheme.primary),
+      PostRelationTag.sibling => ('Sibling', Icons.compare_arrows, colorScheme.tertiary),
+      PostRelationTag.child => ('Child', Icons.arrow_downward, colorScheme.secondary),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
+import '../models/user.dart';
 
 class EventContext {
   late final EventHead _head;
@@ -284,6 +285,7 @@ class EventContext {
     result += '\n${_metadata.parentID ?? 'null'}';
     result += '\n${_metadata.childrenPostIDs}';
     result += '\n${_metadata.topics}';
+    result += '\n${_metadata.leadSpeakerUID ?? 'null'}';
     result += '\n----META_END----';
 
     return result;
@@ -349,6 +351,10 @@ class EventContext {
     String rawTopicsData = lines.elementAt(metadataStartIndex + 6);
     if (!rawTopicsData.contains('----META_END----')) {
       _metadata.addAllTopics(_getListFromData(rawTopicsData));
+      final String rawLeadSpeaker = lines.elementAt(metadataStartIndex + 7);
+      if (!rawLeadSpeaker.contains('----META_END----') && rawLeadSpeaker != 'null') {
+        _metadata.setLeadSpeakerUID(rawLeadSpeaker);
+      }
     }
   }
 
@@ -493,6 +499,42 @@ class EventContext {
         _contributorRemovalUIDs.add(removed);
       }
     }
+  }
+
+  /// Sets or clears the lead speaker on metadata + head denormalized portrait fields.
+  void applyLeadSpeaker({
+    required String? uid,
+    String? imgSrc,
+    String? name,
+  }) {
+    if (uid == null || uid.isEmpty) {
+      _metadata.clearLeadSpeakerUID();
+      _head.clearLeadSpeaker();
+      return;
+    }
+    _metadata.setLeadSpeakerUID(uid);
+    _head.setLeadSpeaker(
+      uid: uid,
+      imgSrc: (imgSrc != null && imgSrc.isNotEmpty) ? imgSrc : null,
+      name: (name != null && name.isNotEmpty) ? name : null,
+    );
+  }
+
+  /// Resolves [metadata.leadSpeakerUID] against [users] into head portrait fields.
+  void syncLeadSpeakerHeadFromUsers(Iterable<User> users) {
+    final uid = _metadata.leadSpeakerUID;
+    if (uid == null || uid.isEmpty) {
+      _head.clearLeadSpeaker();
+      return;
+    }
+    for (final user in users) {
+      if (user.id == uid) {
+        applyLeadSpeaker(uid: uid, imgSrc: user.imgSrc, name: user.fullname);
+        return;
+      }
+    }
+    // Keep UID even if user list does not contain them yet.
+    _head.setLeadSpeaker(uid: uid, imgSrc: _head.leadSpeakerImgSrc, name: _head.leadSpeakerName);
   }
 
   // template subtitles

@@ -24,6 +24,7 @@ class SelectUsersPage extends StatefulWidget {
     this.includeCurrentUser = false,
     this.allowTaskCheck = false,
     this.title,
+    this.maxSelection,
   });
 
   final List<String> selectedUIDs;
@@ -31,6 +32,10 @@ class SelectUsersPage extends StatefulWidget {
   final bool includeCurrentUser;
   final bool allowTaskCheck;
   final String? title;
+
+  /// When set, selection is capped (e.g. `1` for lead speaker). Selecting
+  /// beyond the limit replaces the oldest selection.
+  final int? maxSelection;
 
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
@@ -254,9 +259,13 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     setState(() {
       if (_selectedUIDs.contains(uid)) {
         _selectedUIDs.remove(uid);
-      } else {
-        _selectedUIDs.add(uid);
+        return;
       }
+      final max = widget.maxSelection;
+      if (max != null && _selectedUIDs.length >= max) {
+        _selectedUIDs.clear();
+      }
+      _selectedUIDs.add(uid);
     });
   }
 

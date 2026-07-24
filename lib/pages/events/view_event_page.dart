@@ -35,6 +35,7 @@ import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
+import '../personal/select_users_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class ViewEventPage extends StatefulWidget {
@@ -581,6 +582,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         onAddSchedule: _onAddScheduleItem,
         onEditMedia: _onEditMediaClick,
         onManageContributors: _onManageContributorsFromSheet,
+        onManageLeadSpeaker: _onManageLeadSpeakerFromSheet,
         onOpenPeopleTab: _onOpenPeopleTabFromSheet,
         onCreateSibling: () => _onAddPost(_eventContext.metadata.parentID!),
         onCreateChild: () => _onAddPost(_eventContext.id),
@@ -602,6 +604,33 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       context,
       MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: _eventContext)),
     ).then((_) => setState(() {}));
+  }
+
+  Future<void> _onManageLeadSpeakerFromSheet() async {
+    Navigator.of(context).pop();
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final currentUid = _eventContext.metadata.leadSpeakerUID ?? _eventContext.head.leadSpeakerUID;
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
+          includeCurrentUser: true,
+          maxSelection: 1,
+          title: 'Select lead speaker',
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    if (result.isEmpty) {
+      _eventContext.applyLeadSpeaker(uid: null);
+    } else {
+      final user = appContext.getUserFromID(result.first);
+      _eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+    }
+    _eventContext.allowSavingOfTheEdit();
+    setState(() {});
   }
 
   void _onOpenPeopleTabFromSheet() {

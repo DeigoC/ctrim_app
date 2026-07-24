@@ -11,6 +11,7 @@ class PostEditSheet extends StatelessWidget {
     required this.onAddSchedule,
     required this.onEditMedia,
     required this.onManageContributors,
+    required this.onManageLeadSpeaker,
     required this.onOpenPeopleTab,
     required this.onCreateSibling,
     required this.onCreateChild,
@@ -26,6 +27,7 @@ class PostEditSheet extends StatelessWidget {
   final VoidCallback onAddSchedule;
   final VoidCallback onEditMedia;
   final VoidCallback onManageContributors;
+  final VoidCallback onManageLeadSpeaker;
   final VoidCallback onOpenPeopleTab;
   final VoidCallback onCreateSibling;
   final VoidCallback onCreateChild;
@@ -141,6 +143,15 @@ class PostEditSheet extends StatelessWidget {
                 onTap: onEditMedia,
               ),
               _sectionLabel(theme, colorScheme, 'People & team'),
+              _option(
+                theme,
+                colorScheme,
+                icon: Icons.record_voice_over_outlined,
+                color: Colors.deepPurple,
+                title: 'Lead speaker',
+                subtitle: 'Person sharing the message (card portrait)',
+                onTap: onManageLeadSpeaker,
+              ),
               _option(
                 theme,
                 colorScheme,

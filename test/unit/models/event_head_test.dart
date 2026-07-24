@@ -323,6 +323,24 @@ void main() {
         expect(head.getKeyGraphic(), isNull);
       });
 
+      test('getKeyGraphic falls back to lead speaker image', () {
+        final head = EventHead(id: 'e1');
+        head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
+
+        expect(head.getKeyGraphic(), 'speaker.jpg');
+        expect(head.hasLeadSpeakerPortrait, true);
+      });
+
+      test('clearLeadSpeaker removes denormalized fields', () {
+        final head = EventHead(id: 'e1');
+        head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
+        head.clearLeadSpeaker();
+
+        expect(head.hasLeadSpeaker, false);
+        expect(head.leadSpeakerImgSrc, isNull);
+        expect(head.getKeyGraphic(), isNull);
+      });
+
       test('media getter returns an unmodifiable view', () {
         final head = EventHead(id: 'e1');
         expect(() => head.media.add({}), throwsUnsupportedError);
@@ -344,6 +362,9 @@ void main() {
         expect(json['EventDate'], isNull);
         expect(json['InterestedCount'], 0);
         expect(json['AttendeeCount'], 0);
+        expect(json['LeadSpeakerUID'], isNull);
+        expect(json['LeadSpeakerImgSrc'], isNull);
+        expect(json['LeadSpeakerName'], isNull);
       });
 
       test('toJson includes EventDate when set', () {

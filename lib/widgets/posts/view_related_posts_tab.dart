@@ -215,11 +215,12 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   List<PostHead> _getAllPosts() {
     final List<PostHead> relatedPosts = List.empty(growable: true);
 
-    relatedPosts.addAll(_buildChildrenPosts());
+    // Parent → siblings → children so hierarchy reads top-down with relation tags.
     if (widget.eventContext.metadata.hasParent) {
-      relatedPosts.addAll(_getSiblingPosts());
       relatedPosts.add(_getParentPostHead());
+      relatedPosts.addAll(_getSiblingPosts());
     }
+    relatedPosts.addAll(_buildChildrenPosts());
 
     return relatedPosts;
   }
@@ -230,6 +231,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
         _appContext.eventHeads.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.parentID!) == 0);
     return PostHead(
         thisHead: thisParent,
+        relationTag: PostRelationTag.parent,
         updatePost: () {
           setState(() {});
         });
@@ -242,6 +244,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return sublingPosts
         .map((e) => PostHead(
             thisHead: e,
+            relationTag: PostRelationTag.sibling,
             updatePost: () {
               setState(() {});
             }))
@@ -254,6 +257,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return childrenHeads
         .map((e) => PostHead(
             thisHead: e,
+            relationTag: PostRelationTag.child,
             updatePost: () {
               setState(() {});
             }))

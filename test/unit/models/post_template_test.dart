@@ -19,6 +19,7 @@ void main() {
         'Location': 'Belfast',
         'Topics': <String>['Belfast'],
         'Contributors': <String>[],
+        'LeadSpeakerUID': null,
         'Subtitles': <String>['Welcome'],
         'AllDay': false,
         'Online': false,
@@ -63,6 +64,15 @@ void main() {
         expect(template.headMedia.single['src'], 'cover.jpg');
         expect(template.roles.single['title'], 'Host');
         expect(template.roles.single['start'], isA<DateTime>());
+        expect(template.leadSpeakerUID, isNull);
+      });
+
+      test('parses LeadSpeakerUID when present', () {
+        final map = baseLocalMap();
+        map['LeadSpeakerUID'] = 'speaker-1';
+        final template = PostTemplate.fromMap(true, 'tpl-speaker', map);
+
+        expect(template.leadSpeakerUID, 'speaker-1');
       });
 
       test('accepts Hive-style Map<dynamic, dynamic> nested entries', () {

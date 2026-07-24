@@ -4,6 +4,7 @@ class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
   late List<String> _topics, _contributorUIDs, _subtitles;
   late List<Map<String, dynamic>> _headMedia, _media, _headMediaPool, _bodyMediaPool;
+  String? _leadSpeakerUID;
 
   // * Event Program related
   late DateTime? _startTime, _finishTime;
@@ -23,6 +24,7 @@ class PostTemplate {
     _contributorUIDs = List.from(data['Contributors']);
     _subtitles = data['Subtitles'] != null ? List<String>.from(data['Subtitles']) : <String>[];
     _location = data['Location'];
+    _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
 
     // body
     _body = data['Body'];
@@ -83,6 +85,7 @@ class PostTemplate {
       'Location': _location,
       'Topics': _topics,
       'Contributors': _contributorUIDs,
+      'LeadSpeakerUID': _leadSpeakerUID,
       'Subtitles': _subtitles,
       'AllDay': _allDay,
       'Online': _online,
@@ -123,6 +126,7 @@ class PostTemplate {
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
   List<String> get subtitles => _subtitles;
+  String? get leadSpeakerUID => _leadSpeakerUID;
 
   // setters
   void setTitle(final String title) => _title = title;
@@ -133,6 +137,7 @@ class PostTemplate {
   void setOnline(final bool newState) => _online = newState;
   void setMapLink(final String mapLink) => _mapLink = mapLink;
   void setAddress(final String address) => _address = address;
+  void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
 
   void setStartTime(final DateTime? start) => _startTime = start;
   void setEndtime(final DateTime? end) => _finishTime = end;

@@ -277,6 +277,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       'Location': 'Belfast',
       'Topics': ['Belfast'],
       'Contributors': [],
+      'LeadSpeakerUID': null,
       'AllDay': false,
       'Online': false,
       'Address': '',
@@ -590,11 +591,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
-    final currentUserID = Provider.of<AppContext>(context, listen: false).currentUser.id;
+    final appContext = Provider.of<AppContext>(context, listen: false);
     final EventContext eventContext = PostTemplateMapper.mapTemplateToEventContext(
       template: postTemplate,
-      currentUserID: currentUserID,
+      currentUserID: appContext.currentUser.id,
       parentID: widget.eventContext.metadata.parentID,
+      allUsers: appContext.allUsers,
     );
 
     if (eventContext.head.eventDate != null) {

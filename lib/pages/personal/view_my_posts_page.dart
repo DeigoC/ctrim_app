@@ -62,20 +62,76 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         .map((e) => e.postID)
         .toList();
 
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double contentWidth = constraints.maxWidth;
+        final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final double horizontalPadding = isWideScreen
+            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) / 2)
+                .clamp(16.0, double.infinity)
+            : 8.0;
 
-    return ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-        itemCount: postIDs.length,
-        itemBuilder: (_, index) {
-          final thisHead = _appContext.getPostHead(postIDs[index]);
-          return PostHead(
-              thisHead: thisHead,
-              updatePost: () {
-                setState(() {});
-              });
-        });
+        if (!isWideScreen) {
+          return ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+            itemCount: postIDs.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, index) => _buildPostCard(postIDs[index]),
+          );
+        }
+
+        final left = <String>[];
+        final right = <String>[];
+        for (var i = 0; i < postIDs.length; i++) {
+          (i.isEven ? left : right).add(postIDs[i]);
+        }
+
+        Widget column(List<String> ids) {
+          return Column(
+            children: [
+              for (var i = 0; i < ids.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
+                _buildPostCard(ids[i]),
+              ],
+            ],
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: column(left)),
+              const SizedBox(width: 16),
+              Expanded(child: column(right)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPostCard(String postID) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: PostHead(
+        thisHead: _appContext.getPostHead(postID),
+        updatePost: () {
+          setState(() {});
+        },
+      ),
+    );
   }
 
   void _onHelpClick() {
