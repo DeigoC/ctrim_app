@@ -32,7 +32,7 @@ class PostTemplate {
     _online = data['Online'];
     _address = data['Address'];
     _mapLink = data['MapLink'];
-    _roles = _parseRoles(forLocal, List<Map<String, dynamic>>.from(data['Roles']));
+    _roles = _parseRoles(forLocal, _asStringKeyedMapList(data['Roles']));
 
     if (data['StartTime'] != null) {
       if (forLocal) {
@@ -53,14 +53,14 @@ class PostTemplate {
       _finishTime = null;
     }
 
-    // media
-    _headMedia = _parseMedia(List<Map<String, dynamic>>.from(data['HeadMedia']));
-    _media = _parseMedia(List<Map<String, dynamic>>.from(data['Media']));
+    // media — nested Hive/JSON maps are often Map<dynamic, dynamic>
+    _headMedia = _parseMedia(_asStringKeyedMapList(data['HeadMedia']));
+    _media = _parseMedia(_asStringKeyedMapList(data['Media']));
     _headMediaPool = data['HeadMediaPool'] != null
-        ? _parseMedia(List<Map<String, dynamic>>.from(data['HeadMediaPool']))
+        ? _parseMedia(_asStringKeyedMapList(data['HeadMediaPool']))
         : <Map<String, dynamic>>[];
     _bodyMediaPool = data['BodyMediaPool'] != null
-        ? _parseMedia(List<Map<String, dynamic>>.from(data['BodyMediaPool']))
+        ? _parseMedia(_asStringKeyedMapList(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
     _defaultDayOfWeek = data['DefaultDayOfWeek'] != null ? data['DefaultDayOfWeek'] as int? : null;
   }
@@ -192,6 +192,15 @@ class PostTemplate {
   }
 
   // private methods
+
+  /// Hive (and some JSON paths) yield [Map]<dynamic, dynamic>; cast each entry.
+  static List<Map<String, dynamic>> _asStringKeyedMapList(final dynamic raw) {
+    if (raw == null) return <Map<String, dynamic>>[];
+    return (raw as List)
+        .map((entry) => Map<String, dynamic>.from(entry as Map))
+        .toList();
+  }
+
   List<Map<String, dynamic>> _parseRoles(final bool forLocal, final List<Map<String, dynamic>> rawData) {
     final List<Map<String, dynamic>> result = List.empty(growable: true);
     for (final entry in rawData) {
