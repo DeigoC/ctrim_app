@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../pages/events/edit_gallery_page.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
@@ -33,11 +34,17 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
     }
   }
 
+  bool get _canEditGallery =>
+      widget.eventContext.isUserAuthor(widget.currentUID) ||
+      widget.eventContext.isUserContributor(widget.currentUID);
+
   @override
   Widget build(BuildContext context) {
     final bodyMediaPool = widget.eventContext.templateBodyMediaPool;
     final hasTemplateMedia = bodyMediaPool != null && bodyMediaPool.isNotEmpty;
     final media = _getMedia();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return MediaQuery.removePadding(
       context: context,
@@ -47,30 +54,69 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_canEditGallery)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: Material(
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: _openEditGallery,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Icon(Icons.photo_library_outlined, size: 20, color: colorScheme.primary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Edit gallery',
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          Text(
+                            'Add or manage media',
+                            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (hasTemplateMedia) _buildTemplateMediaSelector(bodyMediaPool),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
-                    itemCount: media.length,
-                    itemBuilder: (itemContext, index) {
-                      final Map<String, dynamic> entry = media[index];
-                      if (entry['type']!.compareTo('img') == 0) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: ImageMediaSlot(
-                              mediaEntry: entry, onTap: () => _onMediaTap(index, itemContext), postID: widget.eventContext.id),
-                        );
-                      }
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: VideoMediaSlot(
-                            mediaEntry: entry, postId: widget.eventContext.id, onTap: () => _onMediaTap(index, itemContext)),
-                      );
-                    }),
-              ),
+              child: media.isEmpty
+                  ? _buildEmptyMedia(theme, colorScheme)
+                  : Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: GridView.builder(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
+                          itemCount: media.length,
+                          itemBuilder: (itemContext, index) {
+                            final Map<String, dynamic> entry = media[index];
+                            if (entry['type']!.compareTo('img') == 0) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: ImageMediaSlot(
+                                    mediaEntry: entry,
+                                    onTap: () => _onMediaTap(index, itemContext),
+                                    postID: widget.eventContext.id),
+                              );
+                            }
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: VideoMediaSlot(
+                                  mediaEntry: entry,
+                                  postId: widget.eventContext.id,
+                                  onTap: () => _onMediaTap(index, itemContext)),
+                            );
+                          }),
+                    ),
             ),
           ],
         ),
@@ -78,13 +124,61 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
     );
   }
 
+  Widget _buildEmptyMedia(ThemeData theme, ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.photo_library_outlined, size: 48, color: colorScheme.onSurfaceVariant),
+            const SizedBox(height: 12),
+            Text(
+              'No media yet',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _canEditGallery
+                  ? 'Add images or videos to this post’s gallery.'
+                  : 'Media for this post will appear here.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            ),
+            if (_canEditGallery) ...[
+              const SizedBox(height: 16),
+              FilledButton.tonalIcon(
+                onPressed: _openEditGallery,
+                icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                label: const Text('Edit gallery'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openEditGallery() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)),
+    ).then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
   Widget _buildTemplateMediaSelector(List<Map<String, dynamic>> templateMedia) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: 1,
+      elevation: 0,
       margin: const EdgeInsets.all(8.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

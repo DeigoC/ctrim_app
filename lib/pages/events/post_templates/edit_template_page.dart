@@ -4,8 +4,9 @@ import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:ctrim_app/utility/network_image_helper.dart';
+import 'package:ctrim_app/utility/responsive_layout.dart';
+import 'package:ctrim_app/widgets/posts/template_edit_sheet.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../utility/app_context.dart';
@@ -34,6 +35,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   int? _defaultDayOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
 
+  static const int _aboutTabIndex = 1;
+  static const int _scheduleTabIndex = 2;
+  static const int _mediaTabIndex = 3;
+
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
@@ -61,11 +66,17 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
-          return _buildHeaderSliver();
+          return _buildHeaderSliver(webHorizontalPadding);
         },
-        body: _buildTabBody());
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          child: _buildTabBody(),
+        ));
   }
 
   Widget _buildTabBody() {
@@ -624,79 +635,94 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  List<Widget> _buildHeaderSliver() {
-    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+  List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasKeyGraphic = widget.eventContext.head.getKeyGraphic() != null;
 
     return [
       SliverAppBar(
-        expandedHeight: MediaQuery.of(context).size.height * 0.33,
+        expandedHeight: hasKeyGraphic ? MediaQuery.of(context).size.height * 0.33 : null,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        title: Text(
+          widget.oldTemplate.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
-          ElevatedButton.icon(
-              onPressed: () => _showSettings(),
-              icon: const Icon(Icons.more_horiz, color: Colors.white),
-              label: const Text('Edit', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withValues(alpha: 0.55))),
-          const SizedBox(width: 8)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: FilledButton.tonalIcon(
+              onPressed: () => _onSavePostTemplateClick(fromSheet: false),
+              icon: const Icon(Icons.save, size: 18),
+              label: const Text('Save'),
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.tertiaryContainer,
+                foregroundColor: colorScheme.onTertiaryContainer,
+              ),
+            ),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: _showSettings,
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Edit'),
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+              foregroundColor: colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       SliverPadding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 0),
-          sliver: SliverList(
-              delegate: SliverChildListDelegate([
+        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
+        sliver: SliverList(
+          delegate: SliverChildListDelegate([
             TabBar(
-              labelColor: onDark ? Colors.white : Colors.black,
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              indicatorColor: colorScheme.primary,
+              indicatorWeight: 3,
               controller: _tabController,
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
-                Tab(icon: Icon(Icons.note), text: 'Info'),
+                Tab(icon: Icon(Icons.article_outlined), text: 'About'),
                 Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'),
-                Tab(icon: Icon(Icons.photo_album), text: 'Media')
+                Tab(icon: Icon(Icons.photo_album), text: 'Media'),
               ],
-            )
-          ])))
+            ),
+          ]),
+        ),
+      ),
     ];
   }
 
   Widget? _buildAppBarBackground() {
-    // * If there are no images, we should just remove the expanded height
-    if (widget.eventContext.head.getKeyGraphic() == null) {
-      return null;
-    }
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        Positioned.fill(
-            child: Image.network(NetworkImageHelper.getImageUrl(widget.eventContext.head.getKeyGraphic()!),
-                fit: BoxFit.cover))
-      ],
+    final keyGraphic = widget.eventContext.head.getKeyGraphic();
+    if (keyGraphic == null) return null;
+    return Image.network(
+      NetworkImageHelper.getImageUrl(keyGraphic),
+      fit: BoxFit.cover,
     );
   }
 
-  // * LOGIC
-
   void _showSettings() {
     showModalBottomSheet(
-        showDragHandle: true,
-        context: context,
-        builder: (_) => SingleChildScrollView(
-                child: SafeArea(
-                    child: Column(children: [
-              ListTile(title: const Text('Edit About'), leading: const Icon(Icons.edit), onTap: _onEditBodyClick),
-              ListTile(
-                title: const Text('Add Schedule Item'),
-                leading: const Icon(Icons.edit_calendar),
-                onTap: _onAddScheduleItem,
-              ),
-              ListTile(
-                  title: const Text('Edit Media Items'),
-                  leading: const Icon(Icons.photo_library),
-                  onTap: _onEditMediaTap),
-              ListTile(
-                  title: const Text('Save Post Template'),
-                  leading: const Icon(Icons.save_rounded),
-                  onTap: _onSavePostTemplateClick),
-            ]))));
+      showDragHandle: true,
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
+      builder: (_) => TemplateEditSheet(
+        onEditAbout: _onEditBodyClick,
+        onAddSchedule: _onAddScheduleItem,
+        onEditMedia: _onEditMediaTap,
+        onSave: () => _onSavePostTemplateClick(fromSheet: true),
+      ),
+    );
   }
 
   void _onEditBodyClick() {
@@ -704,6 +730,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {});
+      _tabController.animateTo(_aboutTabIndex);
     });
   }
 
@@ -713,7 +740,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
       setState(() {});
-    }).then((_) {});
+      _tabController.animateTo(_scheduleTabIndex);
+    });
   }
 
   void _onEditMediaTap() {
@@ -721,15 +749,19 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {});
+      _tabController.animateTo(_mediaTabIndex);
     });
   }
 
   void _updateBody() {
     setState(() {});
-    // _onRequiredFieldTextChange('');
   }
 
-  void _onSavePostTemplateClick() async {
+  void _onSavePostTemplateClick({required bool fromSheet}) async {
+    if (fromSheet && mounted) {
+      Navigator.of(context).pop();
+    }
+
     final confirm = await DialogManager.showConfirmationDialog(
         context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?');
     if (!confirm || !mounted) return;
@@ -741,8 +773,6 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       action: _performTemplateSave,
     );
     if (!mounted || !saved) return;
-    // pop the settings. pop the page
-    Navigator.of(context).pop();
     Navigator.of(context).pop();
   }
 

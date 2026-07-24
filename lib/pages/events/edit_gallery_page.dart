@@ -38,6 +38,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return PopScope(
         onPopInvokedWithResult: (didPop, result) {
           if (!widget.eventContext.canSaveTheEditing) {
@@ -45,19 +47,14 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           }
         },
         child: Scaffold(
+          backgroundColor: colorScheme.surface,
           body: _buildBody(),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: _onAddMediaTap,
-            label: const Text('Add Media'),
-            icon: const Icon(Icons.add_photo_alternate),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            elevation: 4,
-          ),
         ));
   }
 
   Widget _buildBody() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final double webHorizontalPadding =
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
@@ -69,8 +66,20 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             snap: true,
             floating: true,
             title: const Text('Edit Gallery'),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            foregroundColor: Theme.of(context).colorScheme.onSurface,
+            backgroundColor: colorScheme.surface,
+            foregroundColor: colorScheme.onSurface,
+            actions: [
+              FilledButton.tonalIcon(
+                onPressed: _showAddMediaSheet,
+                icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                label: const Text('Add'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+                  foregroundColor: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
@@ -78,8 +87,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
               delegate: SliverChildListDelegate([
                 // Key Media Section
                 Card(
-                  elevation: 2,
+                  elevation: 0,
                   margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -90,12 +103,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primaryContainer,
+                                color: colorScheme.primaryContainer,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
                                 Icons.star,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                color: colorScheme.onPrimaryContainer,
                                 size: 20,
                               ),
                             ),
@@ -106,14 +119,14 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 children: [
                                   Text(
                                     'Key Media',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    style: theme.textTheme.titleMedium?.copyWith(
                                           fontWeight: FontWeight.bold,
                                         ),
                                   ),
                                   Text(
-                                    '${widget.eventContext.head.media.length}/4 items',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                    '${widget.eventContext.head.media.length}/4 items · shown on the post card',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                                         ),
                                   ),
                                 ],
@@ -123,7 +136,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                               onPressed: _onKeyMediaHelpClick,
                               icon: Icon(
                                 Icons.help_outline,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: colorScheme.primary,
                               ),
                               tooltip: 'Learn about Key Media',
                             ),
@@ -144,30 +157,31 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                                color: colorScheme.outline.withValues(alpha: 0.3),
                               ),
                               borderRadius: BorderRadius.circular(12),
-                              color: Theme.of(context).colorScheme.surface,
+                              color: colorScheme.surface,
                             ),
                             child: Column(
                               children: [
                                 Icon(
                                   Icons.star_border,
                                   size: 48,
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'No Key Media Yet',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                                       ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Add media files and mark them as key media',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                                  'Add media below, then mark items as key media',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onSurface.withValues(alpha: 0.5),
                                       ),
                                 ),
                               ],
@@ -178,62 +192,60 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-                // Post Media Section
+                // Post Media Section header
                 Card(
-                  elevation: 2,
+                  elevation: 0,
                   margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.photo_library,
-                                color: Theme.of(context).colorScheme.onSecondaryContainer,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Post Media',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                  Text(
-                                    '${widget.eventContext.media.allMedia.length} items',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: _onPostMediaHelpClick,
-                              icon: Icon(
-                                Icons.help_outline,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              tooltip: 'Learn about Post Media',
-                            ),
-                          ],
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.photo_library,
+                            color: colorScheme.onSecondaryContainer,
+                            size: 20,
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Post Media',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              Text(
+                                '${widget.eventContext.media.allMedia.length} items · gallery on the Media tab',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _onPostMediaHelpClick,
+                          icon: Icon(
+                            Icons.help_outline,
+                            color: colorScheme.primary,
+                          ),
+                          tooltip: 'Learn about Post Media',
+                        ),
                       ],
                     ),
                   ),
@@ -241,68 +253,68 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
               ]),
             ),
           ),
-          // Post Media Grid
-          widget.eventContext.media.allMedia.isEmpty
-              ? SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-                  sliver: SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.add_photo_alternate_outlined,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No Media Files Yet',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tap the + button to add your first image or video',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                                ),
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: _onAddMediaTap,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add First Media'),
-                          ),
-                        ],
-                      ),
+          // Post Media list
+          if (widget.eventContext.media.allMedia.isEmpty)
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+              sliver: SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: colorScheme.outline.withValues(alpha: 0.3),
                     ),
+                    borderRadius: BorderRadius.circular(16),
+                    color: colorScheme.surfaceContainerLow,
                   ),
-                )
-              : SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-                  sliver: SliverList.separated(
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemCount: widget.eventContext.media.allMedia.length,
-                    itemBuilder: (_, index) {
-                      final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
-                      return _buildMediaBox(thisEntry, false);
-                    },
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 64,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No Media Files Yet',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add an image or video from a URL (Google Drive links work too).',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.tonalIcon(
+                        onPressed: _showAddMediaSheet,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add media'),
+                      ),
+                    ],
                   ),
                 ),
-          // Bottom padding for FAB
+              ),
+            )
+          else
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+              sliver: SliverList.separated(
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemCount: widget.eventContext.media.allMedia.length,
+                itemBuilder: (_, index) {
+                  final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
+                  return _buildMediaBox(thisEntry, false);
+                },
+              ),
+            ),
           const SliverToBoxAdapter(
-            child: SizedBox(height: 80),
+            child: SizedBox(height: 32),
           ),
         ],
       ),
@@ -314,8 +326,11 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
     return Card(
       margin: EdgeInsets.zero,
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -577,12 +592,129 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   // * Logic
 
-  void _onAddMediaTap() {
+  void _showAddMediaSheet() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.add_photo_alternate_outlined, color: colorScheme.primary, size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Add media',
+                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Paste an image or video URL (Google Drive supported)',
+                              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _addMediaOption(
+                  theme,
+                  colorScheme,
+                  icon: Icons.image_outlined,
+                  color: Colors.blue,
+                  title: 'Add image',
+                  subtitle: 'JPEG, PNG, or WebP from a public URL',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _onAddMediaTap(initialIsVideo: false);
+                  },
+                ),
+                _addMediaOption(
+                  theme,
+                  colorScheme,
+                  icon: Icons.videocam_outlined,
+                  color: Colors.purple,
+                  title: 'Add video',
+                  subtitle: 'MP4 or similar from a public URL',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _onAddMediaTap(initialIsVideo: true);
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _addMediaOption(
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+        trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
+  void _onAddMediaTap({bool initialIsVideo = false}) {
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (_) => AddMediaFilePage(
                   eventContext: widget.eventContext,
+                  initialIsVideo: initialIsVideo,
                 ))).then((_) {
       setState(() {});
     });

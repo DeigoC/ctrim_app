@@ -11,8 +11,13 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 
 class AddMediaFilePage extends StatefulWidget {
-  const AddMediaFilePage({super.key, required this.eventContext});
+  const AddMediaFilePage({
+    super.key,
+    required this.eventContext,
+    this.initialIsVideo = false,
+  });
   final EventContext eventContext;
+  final bool initialIsVideo;
 
   @override
   State<AddMediaFilePage> createState() => _AddMediaFilePageState();
@@ -29,10 +34,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   File? _tmpFile;
   int? _mediaFileSizeBytes;
 
-  // * Test data
-  // Image: https://i.pinimg.com/1200x/bb/12/03/bb12038681429c0e313c3001a973ef0f.jpg
-  // Video: https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4
-  // video: https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4
+  @override
+  void initState() {
+    super.initState();
+    _isVideo = widget.initialIsVideo;
+  }
 
   @override
   void dispose() {
@@ -47,15 +53,38 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Add media'),
-          actions: [IconButton(onPressed: _showHelp, icon: const Icon(Icons.help))],
-        ),
-        body: _buildBody());
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        title: Text(_isVideo ? 'Add video' : 'Add image'),
+        backgroundColor: colorScheme.surface,
+        actions: [
+          if (_canSave)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: FilledButton.tonalIcon(
+                onPressed: _onSaveClick,
+                icon: const Icon(Icons.check, size: 18),
+                label: const Text('Add'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.tertiaryContainer,
+                  foregroundColor: colorScheme.onTertiaryContainer,
+                ),
+              ),
+            ),
+          IconButton(onPressed: _showHelp, icon: const Icon(Icons.help_outline), tooltip: 'Help'),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: _buildBody(),
+    );
   }
 
   Widget _buildBody() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final double webHorizontalPadding =
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
@@ -64,9 +93,38 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Material(
+            color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: colorScheme.onPrimaryContainer),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '1. Paste a public URL  ·  2. Choose type  ·  3. Test & preview  ·  4. Add',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Media Preview Card
           Card(
-            elevation: 2,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+            ),
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.3,
               child: _buildMediaTestSlot(),
@@ -76,7 +134,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
           // URL Input Card
           Card(
-            elevation: 2,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -84,22 +146,27 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.link, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.link, color: colorScheme.primary),
                       const SizedBox(width: 8),
                       Text(
-                        'Media Source',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        'Media source',
+                        style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Google Drive share links are converted automatically.',
+                    style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _tecSrc,
                     onChanged: _onSrcTextChange,
                     decoration: InputDecoration(
-                      hintText: 'https://example.com/media.jpg',
+                      hintText: _isVideo ? 'https://…/video.mp4' : 'https://…/image.jpg',
                       label: const Text('Media URL*'),
                       border: const OutlineInputBorder(),
                       prefixIcon: Icon(_isVideo ? Icons.videocam : Icons.image),
@@ -126,7 +193,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
           // Media Type Card
           Card(
-            elevation: 2,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -134,11 +205,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.category, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.category_outlined, color: colorScheme.primary),
                       const SizedBox(width: 8),
                       Text(
-                        'Media Type',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        'Media type',
+                        style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -218,13 +289,13 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: _canSave ? _onSaveClick : null,
-            icon: const Icon(Icons.save),
-            label: const Text('Save Media'),
+            icon: const Icon(Icons.add),
+            label: Text(_isVideo ? 'Add video to gallery' : 'Add image to gallery'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );
