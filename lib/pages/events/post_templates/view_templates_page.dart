@@ -7,7 +7,9 @@ import '../../../utility/app_context.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import '../../../utility/post_template_loader.dart';
 import '../../../utility/responsive_layout.dart';
+import '../../../widgets/load_progress_body.dart';
 import 'edit_template_page.dart';
 
 class ViewTemplatesPage extends StatefulWidget {
@@ -19,19 +21,63 @@ class ViewTemplatesPage extends StatefulWidget {
 
 class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   late final AppContext _appContext;
-  late Future<List<PostTemplate>> _templatesFuture;
+
+  bool _loading = true;
+  Object? _loadError;
+  List<PostTemplate> _templates = const [];
+  String _loadStatusMessage = 'Checking local cache…';
+  int _loadCompletedSteps = 0;
+  int _loadTotalSteps = 4;
 
   @override
   void initState() {
     super.initState();
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _templatesFuture = _getTemplates();
+    _loadTemplates();
   }
 
-  void _reloadTemplates() {
+  void _updateLoadProgress({
+    required int completed,
+    required int total,
+    required String message,
+  }) {
+    if (!mounted) return;
     setState(() {
-      _templatesFuture = _getTemplates();
+      _loadCompletedSteps = completed;
+      _loadTotalSteps = total;
+      _loadStatusMessage = message;
     });
+  }
+
+  Future<void> _loadTemplates() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+      _loadStatusMessage = 'Checking local cache…';
+      _loadCompletedSteps = 0;
+      _loadTotalSteps = 4;
+    });
+
+    try {
+      final templates = await PostTemplateLoader.load(
+        onProgress: ({required completed, required total, required message}) {
+          _updateLoadProgress(completed: completed, total: total, message: message);
+        },
+      );
+      if (!mounted) return;
+      templates.sort((a, b) => a.headTitle.compareTo(b.headTitle));
+      setState(() {
+        _templates = templates;
+        _loading = false;
+      });
+    } catch (e, st) {
+      debugPrint('Error loading templates: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loadError = e;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -47,46 +93,26 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         scrolledUnderElevation: 1,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _onCreateTemplateTap,
+        onPressed: _loading ? null : _onCreateTemplateTap,
         icon: const Icon(Icons.add),
         label: const Text('New template'),
       ),
-      body: _buildFBBody(),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildFBBody() {
-    return FutureBuilder<List<PostTemplate>>(
-      future: _templatesFuture,
-      builder: (_, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snap.hasError) {
-          debugPrint('Error: ${snap.error}');
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline, size: 40, color: Theme.of(context).colorScheme.error),
-                  const SizedBox(height: 12),
-                  Text('Something went wrong:\n${snap.error}', textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  FilledButton.tonal(onPressed: _reloadTemplates, child: const Text('Retry')),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final templates = List<PostTemplate>.from(snap.data ?? const []);
-        templates.sort((a, b) => a.headTitle.compareTo(b.headTitle));
-        return _buildBodyWithData(templates);
-      },
-    );
+  Widget _buildBody() {
+    if (_loading || _loadError != null) {
+      return LoadProgressBody(
+        message: _loadStatusMessage,
+        completedSteps: _loadCompletedSteps,
+        totalSteps: _loadTotalSteps,
+        error: _loadError,
+        errorTitle: 'Could not load templates',
+        onRetry: _loadTemplates,
+      );
+    }
+    return _buildBodyWithData(_templates);
   }
 
   Widget _buildBodyWithData(final List<PostTemplate> templates) {
@@ -290,7 +316,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
 
     if (!mounted || !created || createdTemplate == null) return;
-    _reloadTemplates();
+    await _loadTemplates();
+    if (!mounted) return;
     await _openEditTemplate(createdTemplate!);
   }
 
@@ -323,7 +350,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
 
     if (!mounted || !created || duplicated == null) return;
-    _reloadTemplates();
+    await _loadTemplates();
+    if (!mounted) return;
     await _openEditTemplate(duplicated!);
   }
 
@@ -493,34 +521,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       ),
     ));
     if (mounted) {
-      _reloadTemplates();
-    }
-  }
-
-  Future<List<PostTemplate>> _getTemplates() async {
-    final LocalDataManager dataManager = LocalDataManager();
-    final bool checkedToday = await dataManager.haveCheckedTemplateUpdates();
-
-    if (checkedToday) {
-      return await dataManager.readAllPostTemplates();
-    }
-
-    final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    final int localUpdateValue = await dataManager.readLastPostTemplateUpdate();
-    final int dbUpdateValue = await postTemplateDBManager.fetchLastUpdateTime();
-
-    if (localUpdateValue != dbUpdateValue) {
-      debugPrint('values dont match, time to update!');
-      final List<PostTemplate> templates = await postTemplateDBManager.fetchAllTemplates();
-      for (final PostTemplate template in templates) {
-        await dataManager.writePostTemplateData(template);
-      }
-
-      // Do not bump remote lastUpdate on fetch — only mirror the remote value locally.
-      await dataManager.writeLastPostTemplateUpdate(dbUpdateValue);
-      return templates;
-    } else {
-      return await dataManager.readAllPostTemplates();
+      await _loadTemplates();
     }
   }
 }

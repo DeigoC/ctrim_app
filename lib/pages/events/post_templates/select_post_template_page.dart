@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/event_context.dart';
-import '../../../utility/local_data_manager.dart';
+import '../../../utility/post_template_loader.dart';
 import '../../../utility/post_template_mapper.dart';
 import '../../../widgets/app_search_bar.dart';
+import '../../../widgets/load_progress_body.dart';
 import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
 
@@ -33,23 +33,78 @@ class SelectPostTemplatePage extends StatefulWidget {
 }
 
 class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
-  final LocalDataManager _localDataManager = LocalDataManager();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedCategory = 'All';
   List<PostTemplate> _allTemplates = [];
   List<PostTemplate> _filteredTemplates = [];
 
+  bool _loading = true;
+  Object? _loadError;
+  String _loadStatusMessage = 'Checking local cache…';
+  int _loadCompletedSteps = 0;
+  int _loadTotalSteps = 4;
+
   @override
   void initState() {
-    _localDataManager.readLastPostTemplateUpdate();
     super.initState();
+    _loadTemplates();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _updateLoadProgress({
+    required int completed,
+    required int total,
+    required String message,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      _loadCompletedSteps = completed;
+      _loadTotalSteps = total;
+      _loadStatusMessage = message;
+    });
+  }
+
+  Future<void> _loadTemplates() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+      _loadStatusMessage = 'Checking local cache…';
+      _loadCompletedSteps = 0;
+      _loadTotalSteps = 4;
+    });
+
+    try {
+      final templates = await PostTemplateLoader.load(
+        onProgress: ({required completed, required total, required message}) {
+          _updateLoadProgress(completed: completed, total: total, message: message);
+        },
+      );
+      if (!mounted) return;
+
+      templates.sort((a, b) => a.headTitle.compareTo(b.headTitle));
+      if (!widget.bulkMode) {
+        templates.add(_createBlankSlate());
+      }
+
+      setState(() {
+        _allTemplates = templates;
+        _filteredTemplates = _getFilteredTemplates(templates);
+        _loading = false;
+      });
+    } catch (e, st) {
+      debugPrint('Error fetching templates: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loadError = e;
+        _loading = false;
+      });
+    }
   }
 
   final TextStyle _cardTitleStyle = const TextStyle(
@@ -83,8 +138,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       ),
       body: Column(
         children: [
-          _buildSearchAndFilters(colorScheme),
-          Expanded(child: _buildFBBody()),
+          if (!_loading && _loadError == null) _buildSearchAndFilters(colorScheme),
+          Expanded(child: _buildBody()),
         ],
       ),
     );
@@ -154,92 +209,23 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     );
   }
 
-  Widget _buildFBBody() {
-    return FutureBuilder(
-        future: _getTemplates(),
-        builder: (_, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return _buildLoadingState();
-          }
+  Widget _buildBody() {
+    if (_loading || _loadError != null) {
+      return LoadProgressBody(
+        message: _loadStatusMessage,
+        completedSteps: _loadCompletedSteps,
+        totalSteps: _loadTotalSteps,
+        error: _loadError,
+        errorTitle: 'Could not load templates',
+        onRetry: _loadTemplates,
+      );
+    }
 
-          if (snap.hasError) {
-            debugPrint('Error fetching templates: ${snap.error}');
-            return _buildErrorState(snap.error.toString());
-          }
+    if (_filteredTemplates.isEmpty) {
+      return _buildEmptyState();
+    }
 
-          if (snap.hasData) {
-            final List<PostTemplate> data = snap.data!;
-            data.sort((a, b) => a.headTitle.compareTo(b.headTitle));
-            if (!widget.bulkMode) {
-              data.add(_createBlankSlate());
-            }
-
-            _allTemplates = data;
-            _filteredTemplates = _getFilteredTemplates(data);
-
-            if (_filteredTemplates.isEmpty) {
-              return _buildEmptyState();
-            }
-
-            return _buildBodyWithData(_filteredTemplates);
-          }
-
-          return _buildLoadingState();
-        });
-  }
-
-  Widget _buildLoadingState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text(
-            'Loading templates...',
-            style: TextStyle(fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => setState(() {}),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
-            ),
-          ],
-        ),
-      ),
-    );
+    return _buildBodyWithData(_filteredTemplates);
   }
 
   Widget _buildEmptyState() {
@@ -588,43 +574,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         initialDate: DateTime.now(),
         firstDate: DateTime.now().subtract(const Duration(days: 30)),
         lastDate: DateTime.now().add(const Duration(days: 60)));
-  }
-
-  Future<List<PostTemplate>> _getTemplates() async {
-    final LocalDataManager dataManager = LocalDataManager();
-    final bool checkedToday = await dataManager.haveCheckedTemplateUpdates();
-
-    if (checkedToday) {
-      // read locally
-      final List<PostTemplate> cachedTemplates = await dataManager.readAllPostTemplates();
-      // If cache is empty but we've checked today, something went wrong - force refresh
-      if (cachedTemplates.isEmpty) {
-        debugPrint('Cache returned empty, forcing refresh...');
-        await dataManager.clearPostTemplateDir();
-        return _getTemplates(); // Retry which will fetch from Firestore
-      }
-      return cachedTemplates;
-    }
-
-    final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    final int localUpdateValue = await dataManager.readLastPostTemplateUpdate();
-    final int dbUpdateValue = await postTemplateDBManager.fetchLastUpdateTime();
-
-    if (localUpdateValue != dbUpdateValue) {
-      debugPrint('values dont match, time to update!');
-      // perfrom the update
-      final List<PostTemplate> templates = await postTemplateDBManager.fetchAllTemplates();
-      for (final PostTemplate template in templates) {
-        debugPrint('writing PostTemplate ID ${template.id}');
-        await dataManager.writePostTemplateData(template);
-      }
-
-      // Mirror remote lastUpdate locally — do not bump it on fetch.
-      await dataManager.writeLastPostTemplateUpdate(dbUpdateValue);
-      return templates;
-    } else {
-      return await dataManager.readAllPostTemplates();
-    }
   }
 
   void _onBulkAddPostTap(final PostTemplate template) {

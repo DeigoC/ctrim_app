@@ -108,66 +108,64 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final canManage = widget.eventContext.isUserAdminOfPost(appContext.currentUser.id);
     final authId = _authManager.currentAuthUID;
     final isInterested = attendance.hasInterest(authId);
+    final hasInterested = attendance.interested.isNotEmpty;
+    final hasAttendees = attendance.attendees.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         _buildInterestToggle(theme, colorScheme, isInterested),
-        const SizedBox(height: 20),
-        _buildSectionCard(
-          theme,
-          colorScheme,
-          icon: Icons.favorite_outline,
-          title: 'Interested (${attendance.interestedCount})',
-          child: attendance.interested.isEmpty
-              ? _buildEmptyState(theme, colorScheme, 'No one has marked interest yet.')
-              : Column(
-                  children: [
-                    for (final entry in attendance.interested.values)
-                      _buildInterestedTile(
-                        theme,
-                        colorScheme,
-                        appContext,
-                        entry,
-                        canManage: canManage,
-                        alreadyAttending: _isAlreadyAttending(attendance, entry),
-                      ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 16),
-        _buildSectionCard(
-          theme,
-          colorScheme,
-          icon: Icons.groups_outlined,
-          title: 'Attending (${attendance.attendeeCount})',
-          trailing: canManage
-              ? IconButton(
-                  tooltip: 'Manage attendees',
-                  onPressed: _busy ? null : _showManageAttendeesSheet,
-                  icon: const Icon(Icons.person_add_alt_1),
-                )
-              : null,
-          child: attendance.attendees.isEmpty
-              ? _buildEmptyState(
-                  theme,
-                  colorScheme,
-                  canManage ? 'Add people who are attending this event.' : 'No attendees listed yet.',
-                  action: canManage
-                      ? FilledButton.tonalIcon(
-                          onPressed: _busy ? null : _showManageAttendeesSheet,
-                          icon: const Icon(Icons.person_add_alt_1, size: 18),
-                          label: const Text('Add attendees'),
-                        )
-                      : null,
-                )
-              : Column(
-                  children: [
-                    for (final entry in attendance.attendees)
-                      _buildAttendeeTile(theme, colorScheme, appContext, entry, canManage: canManage),
-                  ],
-                ),
-        ),
+        if (hasInterested) ...[
+          const SizedBox(height: 20),
+          _buildSectionCard(
+            theme,
+            colorScheme,
+            icon: Icons.favorite_outline,
+            title: 'Interested (${attendance.interestedCount})',
+            child: Column(
+              children: [
+                for (final entry in attendance.interested.values)
+                  _buildInterestedTile(
+                    theme,
+                    colorScheme,
+                    appContext,
+                    entry,
+                    canManage: canManage,
+                    alreadyAttending: _isAlreadyAttending(attendance, entry),
+                  ),
+              ],
+            ),
+          ),
+        ],
+        if (hasAttendees) ...[
+          const SizedBox(height: 16),
+          _buildSectionCard(
+            theme,
+            colorScheme,
+            icon: Icons.groups_outlined,
+            title: 'Attending (${attendance.attendeeCount})',
+            trailing: canManage
+                ? IconButton(
+                    tooltip: 'Manage attendees',
+                    onPressed: _busy ? null : _showManageAttendeesSheet,
+                    icon: const Icon(Icons.person_add_alt_1),
+                  )
+                : null,
+            child: Column(
+              children: [
+                for (final entry in attendance.attendees)
+                  _buildAttendeeTile(theme, colorScheme, appContext, entry, canManage: canManage),
+              ],
+            ),
+          ),
+        ] else if (canManage) ...[
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : _showManageAttendeesSheet,
+            icon: const Icon(Icons.person_add_alt_1, size: 18),
+            label: const Text('Add attendees'),
+          ),
+        ],
       ],
     );
   }
@@ -269,25 +267,6 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             child,
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme, String text, {Widget? action}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Column(
-        children: [
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          if (action != null) ...[
-            const SizedBox(height: 12),
-            action,
-          ],
-        ],
       ),
     );
   }
