@@ -427,7 +427,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
       parts.add('${widget.thisHead.interestedCount} interested');
     }
     if (widget.thisHead.attendeeCount > 0) {
-      parts.add('${widget.thisHead.attendeeCount} attending');
+      final attendeeWord = widget.thisHead.isRecent ? 'attended' : 'attending';
+      parts.add('${widget.thisHead.attendeeCount} $attendeeWord');
     }
     if (parts.isEmpty) return const SizedBox.shrink();
 

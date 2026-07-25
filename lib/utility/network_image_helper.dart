@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart';
 /// The proxy is only applied for Google Drive hosts. Public image CDNs that
 /// already send usable CORS headers are left unchanged.
 class NetworkImageHelper {
-  static const String _corsProxy = 'https://hidden-meadow-a566.diegocollado117.workers.dev/?url=';
+  static const String _corsProxy =
+      'https://ctrim-image-proxy.diegocollado117-729.workers.dev/?url=';
 
   /// Drive share/download hosts that commonly lack browser-friendly CORS.
   static final RegExp _driveHostPattern = RegExp(

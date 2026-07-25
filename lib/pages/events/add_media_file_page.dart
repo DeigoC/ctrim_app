@@ -1,7 +1,8 @@
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
@@ -452,12 +453,29 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                 ),
           ),
           const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+          SelectionArea(
+            child: SelectableText(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: message));
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error copied to clipboard'),
+                  behavior: SnackBarBehavior.floating,
                 ),
+              );
+            },
+            icon: const Icon(Icons.copy, size: 18),
+            label: const Text('Copy error'),
           ),
         ],
       ),
@@ -623,7 +641,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            return _buildErrorState('Failed to load image');
+            return _buildErrorState('Failed to load image: $error');
           },
         ),
       );

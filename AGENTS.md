@@ -49,12 +49,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-25** — Web Drive images via CORS proxy `ctrim-image-proxy.diegocollado117-729.workers.dev`; worker must strip upstream CORP/COEP/COOP/CSP (`cloudflare-worker.js`). Update URL in `network_image_helper.dart` / worship `image_url_helper.dart` if redeployed.
 - **2026-07-24** — Lead speaker on posts: `LeadSpeakerUID` on metadata + denorm `LeadSpeakerUID`/`ImgSrc`/`Name` on `EventHead`; picker on add/edit/template Header; `PostHead` portrait fallback when no media; `SelectUsersPage.maxSelection`.
 - **2026-07-24** — Volunteers can edit their own profile picture URL (`EditProfilePicturePage`); Personal home entry (card + Quick Actions); Firestore self-update limited to `ImgSrc`.
 - **2026-07-24** — Volunteer Auth link: placeholders without AuthID on Register User; Edit User can Link / Reassign / Unlink Auth (`user_auth_link.dart`); `EveryoneDBManager.clearAsUser` + `setAsUser` always writes `isLeader`.
 - **2026-07-24** — Post templates: leaders can create/edit/duplicate; load shows step progress like posts (`PostTemplateLoader` + `LoadProgressBody`); `post_templates` rules use `isLeader()`; Hive upsert on save.
-- **2026-07-20** — Post attendance/interest V1: `EventAttendance` supplemental + head counts; People tab; rules split for signed-in names. See `docs/post-attendance-interest.md` (deploy `firestore.rules`).
-- **2026-07-20** — Progress dialogs: use `DialogManager.runWithProgressDialog` (not bare `showProgressDialog`) so failures swap to an error + Close instead of stuck spinners.
 
 ## Commands
 

@@ -110,6 +110,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final isInterested = attendance.hasInterest(authId);
     final hasInterested = attendance.interested.isNotEmpty;
     final hasAttendees = attendance.attendees.isNotEmpty;
+    final attendeeLabel = widget.eventContext.head.isRecent ? 'Attended' : 'Attending';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -143,7 +144,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             theme,
             colorScheme,
             icon: Icons.groups_outlined,
-            title: 'Attending (${attendance.attendeeCount})',
+            title: '$attendeeLabel (${attendance.attendeeCount})',
             trailing: canManage
                 ? IconButton(
                     tooltip: 'Manage attendees',
@@ -178,6 +179,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   }
 
   Widget _buildGuestBody(ThemeData theme, ColorScheme colorScheme, int interested, int attending) {
+    final attendeeWord = widget.eventContext.head.isRecent ? 'attended' : 'attending';
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -191,7 +193,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         Text(
           interested == 0 && attending == 0
               ? 'Create an account or sign in to mark interest, follow updates, and see names.'
-              : '$interested interested · $attending attending.\n'
+              : '$interested interested · $attending $attendeeWord.\n'
                   'Sign in to see names and mark your own interest.',
           style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
@@ -283,14 +285,18 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       leading: _avatarForUserId(appContext, entry.userId, entry.displayName, colorScheme.secondaryContainer),
       title: Text(entry.displayName),
-      subtitle: Text(alreadyAttending ? 'Interested · also attending' : 'Interested'),
+      subtitle: Text(
+        alreadyAttending
+            ? (widget.eventContext.head.isRecent ? 'Interested · also attended' : 'Interested · also attending')
+            : 'Interested',
+      ),
       trailing: canManage
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!alreadyAttending && _canPromote(entry, appContext))
                   IconButton(
-                    tooltip: 'Mark as attending',
+                    tooltip: widget.eventContext.head.isRecent ? 'Mark as attended' : 'Mark as attending',
                     icon: const Icon(Icons.person_add_alt_1),
                     onPressed: _busy ? null : () => _promoteToAttendee(entry),
                   ),

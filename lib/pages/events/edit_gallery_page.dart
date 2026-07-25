@@ -68,18 +68,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             title: const Text('Edit Gallery'),
             backgroundColor: colorScheme.surface,
             foregroundColor: colorScheme.onSurface,
-            actions: [
-              FilledButton.tonalIcon(
-                onPressed: _showAddMediaSheet,
-                icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-                label: const Text('Add'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
-                  foregroundColor: colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
           ),
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
@@ -194,7 +182,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 ),
                 const SizedBox(height: 8),
 
-                // Post Media Section header
+                // Post Media Section header + add actions
                 Card(
                   elevation: 0,
                   margin: const EdgeInsets.symmetric(vertical: 8),
@@ -204,47 +192,72 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.photo_library,
-                            color: colorScheme.onSecondaryContainer,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Post Media',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: colorScheme.secondaryContainer,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              Text(
-                                '${widget.eventContext.media.allMedia.length} items · gallery on the Media tab',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                    ),
+                              child: Icon(
+                                Icons.photo_library,
+                                color: colorScheme.onSecondaryContainer,
+                                size: 20,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Post Media',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    '${widget.eventContext.media.allMedia.length} items · gallery on the Media tab',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _onPostMediaHelpClick,
+                              icon: Icon(
+                                Icons.help_outline,
+                                color: colorScheme.primary,
+                              ),
+                              tooltip: 'Learn about Post Media',
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          onPressed: _onPostMediaHelpClick,
-                          icon: Icon(
-                            Icons.help_outline,
-                            color: colorScheme.primary,
-                          ),
-                          tooltip: 'Learn about Post Media',
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _onAddMediaTap(initialIsVideo: false),
+                                icon: const Icon(Icons.image_outlined, size: 18),
+                                label: const Text('Add image'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _onAddMediaTap(initialIsVideo: true),
+                                icon: const Icon(Icons.videocam_outlined, size: 18),
+                                label: const Text('Add video'),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -289,12 +302,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                         style: theme.textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.tonalIcon(
-                        onPressed: _showAddMediaSheet,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add media'),
                       ),
                     ],
                   ),
@@ -591,122 +598,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   // * Logic
-
-  void _showAddMediaSheet() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.add_photo_alternate_outlined, color: colorScheme.primary, size: 24),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Add media',
-                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Paste an image or video URL (Google Drive supported)',
-                              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _addMediaOption(
-                  theme,
-                  colorScheme,
-                  icon: Icons.image_outlined,
-                  color: Colors.blue,
-                  title: 'Add image',
-                  subtitle: 'JPEG, PNG, or WebP from a public URL',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _onAddMediaTap(initialIsVideo: false);
-                  },
-                ),
-                _addMediaOption(
-                  theme,
-                  colorScheme,
-                  icon: Icons.videocam_outlined,
-                  color: Colors.purple,
-                  title: 'Add video',
-                  subtitle: 'MP4 or similar from a public URL',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _onAddMediaTap(initialIsVideo: true);
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _addMediaOption(
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-        trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
-      ),
-    );
-  }
 
   void _onAddMediaTap({bool initialIsVideo = false}) {
     Navigator.push(
