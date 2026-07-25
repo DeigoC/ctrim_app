@@ -54,6 +54,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late final List<Map<String, dynamic>> _originalHeadMedia;
   late final String _originalTitle, _originalSubtitle, _currentUID;
   late final DateTime? _originalEventDate;
+  late final String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
 
   final List<Widget> _bodyTabs = List.empty(growable: true);
   final List<Widget> _appBarTabs = [
@@ -81,6 +82,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;
+    _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
+    _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
+    _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
 
     super.initState();
     _loadPost();
@@ -98,6 +102,18 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       widget.eventHead.setTitle(_originalTitle);
       widget.eventHead.setSubtitle(_originalSubtitle);
       widget.eventHead.setEventDate(_originalEventDate);
+      widget.eventHead.setLeadSpeaker(
+        uid: _originalLeadSpeakerUID,
+        imgSrc: _originalLeadSpeakerImgSrc,
+        name: _originalLeadSpeakerName,
+      );
+      if (_haveFetchedPost) {
+        if (_originalLeadSpeakerUID == null || _originalLeadSpeakerUID!.isEmpty) {
+          _eventContext.metadata.clearLeadSpeakerUID();
+        } else {
+          _eventContext.metadata.setLeadSpeakerUID(_originalLeadSpeakerUID);
+        }
+      }
     }
     super.dispose();
   }

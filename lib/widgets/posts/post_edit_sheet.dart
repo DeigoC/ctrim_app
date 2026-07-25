@@ -121,7 +121,7 @@ class PostEditSheet extends StatelessWidget {
                 icon: Icons.title,
                 color: Colors.indigo,
                 title: 'Edit title & details',
-                subtitle: 'Title, subtitle, and cover image',
+                subtitle: 'Title, subtitle, and lead speaker',
                 onTap: onEditTitle,
               ),
               _option(
