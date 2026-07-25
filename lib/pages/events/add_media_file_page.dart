@@ -26,6 +26,7 @@ class AddMediaFilePage extends StatefulWidget {
 
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController(), _tecThumbnailSrc = TextEditingController();
+  final FocusNode _srcFocusNode = FocusNode();
   final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
   final int _maxImageSizeKB = 1536; // 1.5mb
   final int _maxVideoSizeMB = 128;
@@ -47,6 +48,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       debugPrint('Disposing the video player!');
       _videoPlayerController!.dispose();
     }
+    _srcFocusNode.dispose();
     _tecSrc.dispose();
     _tecThumbnailSrc.clear();
     super.dispose();
@@ -159,15 +161,17 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Google Drive share links are converted automatically.',
+                    'Tap the field to paste a link from your clipboard. Google Drive share links are converted automatically.',
                     style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _tecSrc,
+                    focusNode: _srcFocusNode,
                     onChanged: _onSrcTextChange,
+                    onTap: _pasteMediaUrlFromClipboardIfEmpty,
                     decoration: InputDecoration(
-                      hintText: _isVideo ? 'https://…/video.mp4' : 'https://…/image.jpg',
+                      hintText: 'Tap to paste URL from clipboard',
                       label: const Text('Media URL*'),
                       border: const OutlineInputBorder(),
                       prefixIcon: Icon(_isVideo ? Icons.videocam : Icons.image),
@@ -177,9 +181,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                               icon: const Icon(Icons.clear),
                               tooltip: 'Clear URL',
                             )
-                          : _isValidUrl(_tecSrc.text)
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
+                          : IconButton(
+                              onPressed: _pasteMediaUrlFromClipboardIfEmpty,
+                              icon: const Icon(Icons.content_paste),
+                              tooltip: 'Paste from clipboard',
+                            ),
                     ),
                     keyboardType: TextInputType.url,
                     textInputAction: TextInputAction.done,
@@ -900,6 +906,33 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       _canTestSrc = true;
       _tecSrc.clear();
     });
+  }
+
+  /// On tap / paste icon: fill from clipboard when the field is empty.
+  Future<void> _pasteMediaUrlFromClipboardIfEmpty() async {
+    if (_tecSrc.text.trim().isNotEmpty) return;
+
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = data?.text?.trim() ?? '';
+      if (text.isEmpty) return;
+      if (!_isValidUrl(text) && !_driveRegExp.hasMatch(text)) return;
+
+      _tecSrc.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+      _onSrcTextChange(text);
+    } catch (e) {
+      debugPrint('Clipboard paste failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not read clipboard. Paste manually (⌘V / Ctrl+V).'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _onClearThumbnailSrc() {
