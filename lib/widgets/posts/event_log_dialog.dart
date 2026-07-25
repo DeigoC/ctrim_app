@@ -107,11 +107,12 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     if (!confirmation || !mounted) return;
 
-    final saved = await DialogManager.runWithProgressDialog(
+    final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Uploading Changes',
+      initialMessage: 'Saving post…',
       errorTitle: 'Could not save changes',
-      action: () => _performUpdate(_appContext.currentUser.id),
+      action: (onProgress) => _performUpdate(_appContext.currentUser.id, onProgress),
     );
     if (!mounted || !saved) return;
     _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
@@ -122,7 +123,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
         .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
   }
 
-  Future<void> _performUpdate(final String uid) async {
+  Future<void> _performUpdate(final String uid, LoadProgressReporter onProgress) async {
+    const total = 3;
+    onProgress(completed: 0, total: total, message: 'Saving post…');
     final LocalDataManager localDataManager = LocalDataManager();
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
@@ -131,12 +134,16 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
     try {
       if (widget.eventContext.head.eventDate != null) {
+        onProgress(completed: 1, total: total, message: 'Syncing schedule roles…');
         await _cloudFunctionManager.syncUserRolesForPost(
           postId: widget.eventContext.id,
           removedUserIds: widget.eventContext.collectRoleRemovalUserIds(),
         );
+      } else {
+        onProgress(completed: 1, total: total, message: 'Sending notifications…');
       }
 
+      onProgress(completed: 2, total: total, message: 'Sending notifications…');
       final List<Future<void>> tasks = [
         _sendContributorAdditionNotificaitons(),
         _sendContributorRemovalNotificaitons(),

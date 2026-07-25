@@ -870,32 +870,22 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     }
   }
 
-  /// Validate media on web without downloading (use HEAD request)
+  /// Validate media on web without writing a temp file.
+  ///
+  /// Uses GET (not HEAD) and no custom headers: Flutter web's browser client
+  /// often fails CORS preflight when sending User-Agent / HEAD to the proxy.
   Future<File?> _validateMediaOnWeb(bool isImage) async {
     try {
       _src = _sanitiseSrc();
       final srcUrl = NetworkImageHelper.getImageUrl(_src);
       debugPrint('Validating web media from: $srcUrl');
 
-      // Use HEAD request to get content length without downloading
-      final response = await http.head(
-        Uri.parse(srcUrl),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Media-Fetcher/1.0)',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http.get(Uri.parse(srcUrl)).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
-        final contentLength = response.headers['content-length'];
-        if (contentLength != null) {
-          _mediaFileSizeBytes = int.parse(contentLength);
-          debugPrint('Media size on web: $_mediaFileSizeBytes bytes');
-        } else {
-          // Fallback: If no content-length, do a range request for first byte
-          _mediaFileSizeBytes = 0; // Will allow saving but can't validate size
-          debugPrint('Warning: Could not determine file size on web');
-        }
-        return null; // Return null to indicate web mode (no file caching)
+        _mediaFileSizeBytes = response.bodyBytes.length;
+        debugPrint('Media size on web: $_mediaFileSizeBytes bytes');
+        return null; // Web mode: no local file cache
       } else {
         throw Exception('HTTP ${response.statusCode}: Failed to validate media');
       }

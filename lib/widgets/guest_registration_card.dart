@@ -485,7 +485,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       final signedIn = await DialogManager.runWithProgressDialog(
         context: context,
         title: 'Signing In',
-        subtitle: 'Please wait...',
+        subtitle: 'Signing you in…',
         errorTitle: 'Login Error',
         action: () async {
           try {
@@ -549,7 +549,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     final checked = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Checking Verification',
-      subtitle: 'Please wait...',
+      subtitle: 'Checking your email verification…',
       errorTitle: 'Verification check failed',
       action: () async {
         verified = await _authManager.hasUserVerifiedEmail();
@@ -577,32 +577,35 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
   }
 
   Future<void> _completeAuthentication(bool isNewUser) async {
-    await DialogManager.runWithProgressDialog(
+    await DialogManager.runWithSteppedProgressDialog(
       title: 'Welcome to CTRIM!',
-      subtitle: 'Setting up your experience...',
+      initialMessage: 'Saving credentials…',
       context: context,
       errorTitle: 'Could not complete setup',
-      action: () async {
+      action: (onProgress) async {
+        const total = 4;
         final appContext = Provider.of<AppContext>(context, listen: false);
 
-        // Save credentials
+        onProgress(completed: 0, total: total, message: 'Saving credentials…');
         appContext.sharedPref.saveCreds(
           _emailController.text.trim(),
           _passwordController.text,
         );
 
-        // Create user in Firestore if new registration
         if (isNewUser) {
+          onProgress(completed: 1, total: total, message: 'Creating your profile…');
           await _everyoneDBManager.createUser(
             _authManager.currentAuthUID,
             _emailController.text.trim(),
           );
+        } else {
+          onProgress(completed: 1, total: total, message: 'Setting up notifications…');
         }
 
-        // Migrate guest FCM token if exists
+        onProgress(completed: 2, total: total, message: 'Setting up notifications…');
         await _migrateFCMToken();
 
-        // Fetch essential data
+        onProgress(completed: 3, total: total, message: 'Loading posts and people…');
         await _fetchEssentialData();
 
         appContext.sharedPref.setLoggedOut(false);
@@ -711,7 +714,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     final sent = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Sending Reset Link',
-      subtitle: 'Please wait...',
+      subtitle: 'Sending email…',
       errorTitle: 'Could not send reset link',
       action: () async {
         try {

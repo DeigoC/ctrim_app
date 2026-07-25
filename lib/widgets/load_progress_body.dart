@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Status + determinate progress used while loading posts / templates.
+/// Status + determinate progress used while loading posts / templates / setup.
 class LoadProgressBody extends StatelessWidget {
   const LoadProgressBody({
     super.key,
@@ -10,6 +10,7 @@ class LoadProgressBody extends StatelessWidget {
     this.error,
     this.onRetry,
     this.errorTitle = 'Something went wrong',
+    this.padding = const EdgeInsets.all(24),
   });
 
   final String message;
@@ -18,6 +19,7 @@ class LoadProgressBody extends StatelessWidget {
   final Object? error;
   final VoidCallback? onRetry;
   final String errorTitle;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +27,7 @@ class LoadProgressBody extends StatelessWidget {
       final colorScheme = Theme.of(context).colorScheme;
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: padding,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(
@@ -61,12 +63,11 @@ class LoadProgressBody extends StatelessWidget {
       );
     }
 
-    final double? progress =
-        totalSteps > 0 ? (completedSteps / totalSteps).clamp(0.0, 1.0) : null;
+    final double? progress = totalSteps > 0 ? (completedSteps / totalSteps).clamp(0.0, 1.0) : null;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: padding,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
           child: Column(

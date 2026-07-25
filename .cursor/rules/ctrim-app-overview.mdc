@@ -27,6 +27,7 @@ Church/community Flutter app: events, information pages, personal section, bulle
 - Localize user-visible strings (`flutter_localizations` / `intl`)
 - Quill: `QuillEditorWidget` / `QuillViewerWidget` in `lib/widgets/quill_editor_wrapper.dart`
 - Images: `photo_view`; video: `video_player`
+- Progress: `DialogManager.runWithProgressDialog` for single-shot work; `runWithSteppedProgressDialog` + `LoadProgressBody` when the action has distinct phases (same pattern as post load)
 
 ## Constraints
 

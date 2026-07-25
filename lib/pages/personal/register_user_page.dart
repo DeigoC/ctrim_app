@@ -215,13 +215,13 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
               TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    final saved = await DialogManager.runWithProgressDialog(
+                    final saved = await DialogManager.runWithSteppedProgressDialog(
                       context: context,
-                      title: isPlaceholder ? 'Creating placeholder' : 'Attempting to Register User',
-                      subtitle: 'Please wait...',
+                      title: isPlaceholder ? 'Creating placeholder' : 'Registering user',
+                      initialMessage: isPlaceholder ? 'Creating profile…' : 'Checking account…',
                       errorTitle: 'Could not register user',
-                      action: () async {
-                        final newUser = await _registerUser();
+                      action: (onProgress) async {
+                        final newUser = await _registerUser(onProgress);
                         if (!mounted) return;
                         Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
                       },
@@ -236,11 +236,13 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         });
   }
 
-  Future<ctrim.User> _registerUser() async {
+  Future<ctrim.User> _registerUser(LoadProgressReporter onProgress) async {
+    const total = 3;
     final IDTrackerDBManager idTracker = IDTrackerDBManager();
     final UserDBManager userDBManager = UserDBManager();
     final authID = _tecAuthID.text.trim();
 
+    onProgress(completed: 0, total: total, message: authID.isEmpty ? 'Creating profile…' : 'Checking account…');
     if (authID.isNotEmpty) {
       final existing = await userDBManager.fetchUserByAuthID(authID);
       if (existing != null) {
@@ -248,6 +250,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       }
     }
 
+    onProgress(completed: 1, total: total, message: 'Creating profile…');
     final String newID = await idTracker.getAndIncrementUserID();
     final ctrim.User newUser = ctrim.User(
         id: newID,
@@ -259,7 +262,10 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         tagIDs: _selectedTagIDs.toList());
 
     if (authID.isNotEmpty) {
+      onProgress(completed: 2, total: total, message: 'Linking login account…');
       await _everyoneDBManager.setAsUser(authID, _isLeader);
+    } else {
+      onProgress(completed: 2, total: total, message: 'Finishing…');
     }
     await userDBManager.addUser(newUser);
     return newUser;

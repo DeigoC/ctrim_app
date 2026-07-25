@@ -302,13 +302,17 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
 
     PostTemplate? createdTemplate;
-    final created = await DialogManager.runWithProgressDialog(
+    final created = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Creating template',
+      initialMessage: 'Creating template…',
       errorTitle: 'Could not create template',
-      action: () async {
+      action: (onProgress) async {
+        const total = 2;
+        onProgress(completed: 0, total: total, message: 'Creating template…');
         final result = await PostTemplateDBManager().addPostTemplate(draft);
         createdTemplate = PostTemplate.fromMap(true, result.id, draft.toJson(true));
+        onProgress(completed: 1, total: total, message: 'Saving local copy…');
         final local = LocalDataManager();
         await local.writePostTemplateData(createdTemplate!);
         await local.writeLastPostTemplateUpdate(result.lastUpdate);
@@ -332,17 +336,21 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     if (!confirm || !mounted) return;
 
     PostTemplate? duplicated;
-    final created = await DialogManager.runWithProgressDialog(
+    final created = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Duplicating template',
+      initialMessage: 'Duplicating template…',
       errorTitle: 'Could not duplicate template',
-      action: () async {
+      action: (onProgress) async {
+        const total = 2;
+        onProgress(completed: 0, total: total, message: 'Duplicating template…');
         final copyData = source.toJson(true);
         copyData['Title'] = 'Copy of ${source.title}';
         copyData['HeadTitle'] = source.headTitle.isEmpty ? copyData['Title'] : 'Copy of ${source.headTitle}';
         final draft = PostTemplate.fromMap(true, 'temp', copyData);
         final result = await PostTemplateDBManager().addPostTemplate(draft);
         duplicated = PostTemplate.fromMap(true, result.id, draft.toJson(true));
+        onProgress(completed: 1, total: total, message: 'Saving local copy…');
         final local = LocalDataManager();
         await local.writePostTemplateData(duplicated!);
         await local.writeLastPostTemplateUpdate(result.lastUpdate);

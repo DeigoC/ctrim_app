@@ -487,16 +487,19 @@ class _EditUserPageState extends State<EditUserPage> {
 
     if (!mounted || email == null || email.isEmpty) return;
 
-    final linked = await DialogManager.runWithProgressDialog(
+    final linked = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Linking account',
-      subtitle: 'Looking up $email…',
+      initialMessage: 'Looking up $email…',
       errorTitle: 'Could not link account',
-      action: () async {
+      action: (onProgress) async {
+        const total = 2;
+        onProgress(completed: 0, total: total, message: 'Looking up $email…');
         final authID = await _everyoneDBManager.fetchAuthIDFromEmail(email);
         if (authID == null || authID.isEmpty) {
           throw StateError('No account found for that email. Ask them to register first.');
         }
+        onProgress(completed: 1, total: total, message: 'Linking account…');
         final updated = await _authLinkService.linkAuth(
           user: _userSnapshot(),
           newAuthID: authID,
@@ -541,7 +544,7 @@ class _EditUserPageState extends State<EditUserPage> {
     final unlinked = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Unlinking account',
-      subtitle: 'Please wait…',
+      subtitle: 'Removing login link…',
       errorTitle: 'Could not unlink account',
       action: () async {
         final updated = await _authLinkService.unlinkAuth(user: _userSnapshot());
@@ -579,12 +582,10 @@ class _EditUserPageState extends State<EditUserPage> {
     _updateChangeState();
 
     try {
-      // Test if the image is accessible via HEAD request
+      // GET without custom headers — Flutter web CORS fails on User-Agent / HEAD preflight.
       final imageUrl = NetworkImageHelper.getImageUrl(_src);
-      final response = await http.head(
-        Uri.parse(imageUrl),
-        headers: {'User-Agent': 'Mozilla/5.0 (compatible; Image-Validator/1.0)'},
-      ).timeout(const Duration(seconds: 10));
+      final response =
+          await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         setState(() {

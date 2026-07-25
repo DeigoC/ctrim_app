@@ -241,35 +241,26 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
 
     try {
       final imageUrl = NetworkImageHelper.getImageUrl(sanitized);
-      final response = await http
-          .head(
-            Uri.parse(imageUrl),
-            headers: {'User-Agent': 'Mozilla/5.0 (compatible; Image-Validator/1.0)'},
-          )
-          .timeout(const Duration(seconds: 10));
+      // No custom headers: Flutter web CORS preflight fails if User-Agent is set.
+      final response =
+          await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}');
       }
 
-      final contentLength = response.headers['content-length'];
-      if (contentLength != null) {
-        final sizeKb = int.parse(contentLength) / 1024;
-        if (sizeKb > 512) {
-          if (!mounted) return;
-          setState(() {
-            _testing = false;
-            _imageValidated = false;
-            _canSave = false;
-            _validationMessage =
-                'File is ${sizeKb.toStringAsFixed(0)} KB (max 512 KB). Compress it, then try again.';
-          });
-          return;
-        }
+      final sizeKb = response.bodyBytes.length / 1024;
+      if (sizeKb > 512) {
+        if (!mounted) return;
+        setState(() {
+          _testing = false;
+          _imageValidated = false;
+          _canSave = false;
+          _validationMessage =
+              'File is ${sizeKb.toStringAsFixed(0)} KB (max 512 KB). Compress it, then try again.';
+        });
+        return;
       }
-
-      // Confirm the image actually loads (HEAD can succeed for HTML error pages).
-      await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
       setState(() {
@@ -294,13 +285,16 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
     final sanitized = _sanitiseSrc();
     if (!_imageValidated || sanitized.isEmpty) return;
 
-    final saved = await DialogManager.runWithProgressDialog(
+    final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Saving photo',
-      subtitle: 'Please wait…',
+      initialMessage: 'Updating profile…',
       errorTitle: 'Could not save photo',
-      action: () async {
+      action: (onProgress) async {
+        const total = 2;
+        onProgress(completed: 0, total: total, message: 'Updating profile…');
         await _userDBManager.updateUserImgSrc(_appContext.currentUser.id, sanitized);
+        onProgress(completed: 1, total: total, message: 'Caching photo…');
         await _cacheLocalImage(sanitized);
         if (!mounted) return;
         _appContext.setNewUserImage(sanitized);

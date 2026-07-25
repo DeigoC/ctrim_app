@@ -372,26 +372,43 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       _isLoading = true;
     });
 
-    final success = await DialogManager.runWithProgressDialog(
+    final success = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Signing In',
-      subtitle: 'Please wait while we authenticate you...',
+      initialMessage: 'Signing in…',
       errorTitle: 'Login Error',
-      action: () async {
+      action: (onProgress) async {
+        const total = 3;
+        onProgress(completed: 0, total: total, message: 'Signing in…');
         final authID = await _attemptToLogin();
-        await _logUserToApp(authID);
+
+        onProgress(completed: 1, total: total, message: 'Loading your profile…');
+        await _logUserToApp(authID, onProgress: onProgress, totalSteps: total);
       },
     );
 
     if (!mounted) return;
+    if (!success) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    // PopScope reads canPop from the last build. Update _loggedIn via setState,
+    // then pop on the next frame so canPop is true and the route can close.
     setState(() {
       _isLoading = false;
+      _loggedIn = true;
     });
-    if (!success) return;
-    Navigator.of(context).pop(); // Close login page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
   }
 
-  Future<void> _logUserToApp(final String authID) async {
+  Future<void> _logUserToApp(
+    final String authID, {
+    LoadProgressReporter? onProgress,
+    int totalSteps = 3,
+  }) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
 
     // Defer token registration on first open; HomePage shows welcome before any prompt.
@@ -417,12 +434,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
+    if (user == null) {
+      throw Exception('No user profile found for this account. Please contact an admin.');
+    }
 
+    onProgress?.call(completed: 2, total: totalSteps, message: 'Finishing…');
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);
     appContext.sharedPref.setLoggedOut(false);
     appContext.analytics.logLogin(loginMethod: 'in-app login page');
-    _loggedIn = true;
   }
 
   Future<String> _attemptToLogin() async {
@@ -466,7 +486,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       final sent = await DialogManager.runWithProgressDialog(
         context: context,
         title: 'Sending Reset Link',
-        subtitle: 'Please wait...',
+        subtitle: 'Sending email…',
         errorTitle: 'Could not send reset link',
         action: () async {
           try {

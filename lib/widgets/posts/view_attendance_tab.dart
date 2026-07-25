@@ -400,10 +400,17 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final webAuthId = kIsWeb ? authId : null;
 
     setState(() => _busy = true);
-    final ok = await DialogManager.runWithProgressDialog(
+    final ok = await DialogManager.runWithSteppedProgressDialog(
       context: context,
-      title: interested ? 'Marking interest…' : 'Removing interest…',
-      action: () async {
+      title: interested ? 'Marking interest' : 'Removing interest',
+      initialMessage: interested ? 'Saving interest…' : 'Removing interest…',
+      action: (onProgress) async {
+        const total = 2;
+        onProgress(
+          completed: 0,
+          total: total,
+          message: interested ? 'Saving interest…' : 'Removing interest…',
+        );
         final updated = await EventSupplementalDBManager(widget.eventContext.id).setOwnInterest(
           authId: authId,
           displayName: displayName,
@@ -412,6 +419,11 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         );
         widget.eventContext.setFetchedAttendance(updated);
 
+        onProgress(
+          completed: 1,
+          total: total,
+          message: interested ? 'Subscribing to updates…' : 'Unsubscribing from updates…',
+        );
         if (interested) {
           appContext.sharedPref.addPostBookmark(widget.eventContext.id);
           await _messagingManager.subscribeToTopic(topic, authId: webAuthId);

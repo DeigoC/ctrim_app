@@ -1016,7 +1016,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       final sent = await DialogManager.runWithProgressDialog(
         context: context,
         title: 'Sending Reset Link',
-        subtitle: 'Please wait...',
+        subtitle: 'Sending email…',
         errorTitle: 'Could not send reset link',
         action: () async {
           try {
@@ -1128,7 +1128,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     final checked = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Checking Verification',
-      subtitle: 'Please wait...',
+      subtitle: 'Checking your email verification…',
       errorTitle: 'Verification check failed',
       action: () async {
         verified = await _authManager.hasUserVerifiedEmail();
@@ -1164,18 +1164,27 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<void> _instantiateTheRest(bool fromRegistration) async {
-    final ready = await DialogManager.runWithProgressDialog(
+    final ready = await DialogManager.runWithSteppedProgressDialog(
       title: 'Welcome to CTRIM!',
-      subtitle: 'Setting up your experience...',
+      initialMessage: 'Saving credentials…',
       context: context,
       errorTitle: 'Could not complete setup',
-      action: () async {
+      action: (onProgress) async {
+        const total = 4;
+        onProgress(completed: 0, total: total, message: 'Saving credentials…');
         _saveCreds(fromRegistration);
 
         if (fromRegistration) {
+          onProgress(completed: 1, total: total, message: 'Creating your profile…');
           await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+        } else {
+          onProgress(completed: 1, total: total, message: 'Setting up notifications…');
         }
+
+        onProgress(completed: 2, total: total, message: 'Setting up notifications…');
         _saveFCMToken();
+
+        onProgress(completed: 3, total: total, message: 'Loading posts and people…');
         await _fetchEssentialData();
         _appContext.sharedPref.setLoggedOut(false);
       },

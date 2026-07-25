@@ -49,11 +49,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-25** — Multi-step progress dialogs use `DialogManager.runWithSteppedProgressDialog` + `LoadProgressBody` (welcome setup, login, post upload/save, templates, register user, logout, interest toggle); single-call flows keep `runWithProgressDialog` with clearer subtitles.
 - **2026-07-25** — Web Drive images via CORS proxy `ctrim-image-proxy.diegocollado117-729.workers.dev`; worker must strip upstream CORP/COEP/COOP/CSP (`cloudflare-worker.js`). Update URL in `network_image_helper.dart` / worship `image_url_helper.dart` if redeployed.
 - **2026-07-24** — Lead speaker on posts: `LeadSpeakerUID` on metadata + denorm `LeadSpeakerUID`/`ImgSrc`/`Name` on `EventHead`; picker on add/edit/template Header; `PostHead` portrait fallback when no media; `SelectUsersPage.maxSelection`.
 - **2026-07-24** — Volunteers can edit their own profile picture URL (`EditProfilePicturePage`); Personal home entry (card + Quick Actions); Firestore self-update limited to `ImgSrc`.
 - **2026-07-24** — Volunteer Auth link: placeholders without AuthID on Register User; Edit User can Link / Reassign / Unlink Auth (`user_auth_link.dart`); `EveryoneDBManager.clearAsUser` + `setAsUser` always writes `isLeader`.
-- **2026-07-24** — Post templates: leaders can create/edit/duplicate; load shows step progress like posts (`PostTemplateLoader` + `LoadProgressBody`); `post_templates` rules use `isLeader()`; Hive upsert on save.
 
 ## Commands
 

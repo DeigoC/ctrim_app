@@ -766,17 +766,20 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?');
     if (!confirm || !mounted) return;
 
-    final saved = await DialogManager.runWithProgressDialog(
+    final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
-      title: 'Saving PostTemplate',
+      title: 'Saving template',
+      initialMessage: 'Preparing template…',
       errorTitle: 'Could not save template',
-      action: _performTemplateSave,
+      action: (onProgress) => _performTemplateSave(onProgress),
     );
     if (!mounted || !saved) return;
     Navigator.of(context).pop();
   }
 
-  Future<void> _performTemplateSave() async {
+  Future<void> _performTemplateSave(LoadProgressReporter onProgress) async {
+    const total = 3;
+    onProgress(completed: 0, total: total, message: 'Preparing template…');
     debugPrint('---- begin converting to post template');
     // Convert to PostTemplate again
     dynamic startTime = widget.eventContext.head.eventDate;
@@ -814,11 +817,13 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final PostTemplate updatedTemplate = PostTemplate.fromMap(true, widget.eventContext.id, templateData);
 
     // Save to DB
+    onProgress(completed: 1, total: total, message: 'Saving to cloud…');
     debugPrint('---- begin saving template ID (${updatedTemplate.id}) to DB');
     final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
     final int lastUpdate = await postTemplateDBManager.updateTemplate(updatedTemplate);
 
     // Upsert locally — do not clear the whole box (would wipe other templates).
+    onProgress(completed: 2, total: total, message: 'Updating local copy…');
     debugPrint('---- begin saving locally');
     final LocalDataManager localDataManager = LocalDataManager();
     await localDataManager.writePostTemplateData(updatedTemplate);

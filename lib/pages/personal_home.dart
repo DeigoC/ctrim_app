@@ -837,14 +837,14 @@ class _PersonalHomeState extends State<PersonalHome> {
     if (confirmed) {
       if (!mounted) return;
 
-      final signedOut = await DialogManager.runWithProgressDialog(
+      final signedOut = await DialogManager.runWithSteppedProgressDialog(
         context: context,
         title: 'Signing Out',
-        subtitle: 'Please wait...',
+        initialMessage: 'Removing notification token…',
         errorTitle: 'Could not sign out',
-        action: () async {
+        action: (onProgress) async {
           widget.appContext.analytics.logEvent(name: 'logout');
-          await _logout();
+          await _logout(onProgress);
         },
       );
       if (!mounted || !signedOut) return;
@@ -854,22 +854,27 @@ class _PersonalHomeState extends State<PersonalHome> {
     }
   }
 
-  Future<void> _logout() async {
+  Future<void> _logout(LoadProgressReporter onProgress) async {
+    const total = 3;
     final AuthManager authManager = AuthManager();
     final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
     final token = widget.appContext.sharedPref.fcmToken;
     debugPrint('token to remove is $token');
 
+    onProgress(completed: 0, total: total, message: 'Removing notification token…');
     if (kIsWeb && token.isNotEmpty) {
       await WebNotificationLifecycle().unregister(authId: authManager.currentAuthUID, token: token);
     } else if (token.isNotEmpty) {
       await everyoneDBManager.removeTokenForAuthID(authManager.currentAuthUID, token);
     }
 
+    onProgress(completed: 1, total: total, message: 'Clearing local session…');
     widget.appContext.sharedPref.clearCreds();
     widget.appContext.setUserToGuest();
     widget.appContext.rebuildPlease();
     widget.appContext.sharedPref.setLoggedOut(true);
+
+    onProgress(completed: 2, total: total, message: 'Signing out…');
     await authManager.signOut();
   }
 

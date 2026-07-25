@@ -196,11 +196,12 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final confirmed = await _confirmSave();
     if (!confirmed || !mounted) return;
 
-    final saved = await DialogManager.runWithProgressDialog(
+    final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Uploading Post',
+      initialMessage: 'Creating post…',
       errorTitle: 'Could not upload post',
-      action: _savePost,
+      action: (onProgress) => _savePost(onProgress),
     );
     if (!mounted || !saved) return;
     Navigator.of(context).pop(); // pop this add page
@@ -227,7 +228,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     return result;
   }
 
-  Future<void> _savePost() async {
+  Future<void> _savePost(LoadProgressReporter onProgress) async {
+    const total = 4;
+    onProgress(completed: 0, total: total, message: 'Creating post…');
     final newID = await widget.eventContext
         .addNewPost(
             title: _tecTitle.text.trim(),
@@ -242,14 +245,19 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       return newID;
     });
 
+    onProgress(completed: 1, total: total, message: 'Updating involvement…');
     // notify all that needs this
     _updateAllUserPostInvolvement(newID);
     _notifyContributorAdditions(newID);
 
     if (widget.eventContext.head.eventDate != null) {
+      onProgress(completed: 2, total: total, message: 'Syncing schedule roles…');
       await _cloudFunctionManager.syncUserRolesForPost(postId: newID);
+    } else {
+      onProgress(completed: 2, total: total, message: 'Sending notifications…');
     }
 
+    onProgress(completed: 3, total: total, message: 'Sending notifications…');
     if (widget.eventContext.notifyScheduledMembers) {
       debugPrint('---- NOTIFYING SCHEDULED MEMBERS ----');
       _notifyProgramRoleAddtitions(newID);
