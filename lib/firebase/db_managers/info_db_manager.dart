@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/info/church_info.dart';
 import '../../models/info/ctrim_info.dart';
-import '../../models/info/testimonial_into.dart';
+import '../../models/info/testimonial_info.dart';
 
 typedef InfoFactory<T> = T Function(String id, Map<String, dynamic> data);
 typedef InfoSerializer<T> = Map<String, dynamic> Function(T model);

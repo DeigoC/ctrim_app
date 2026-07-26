@@ -10,6 +10,18 @@ class NotificationTopics {
   static const String overnightPrayer = 'belfast-overnight-prayer';
   static const String youthCaregroup = 'belfast-youth-cg';
 
+  static const String belfastUmbrellaLabel = 'All Belfast updates';
+
+  /// Display labels for [serviceTopics], keyed by topic id.
+  static const Map<String, String> serviceTopicLabels = {
+    sundayService: 'Sunday Worship Service',
+    midweekService: 'Midweek Service',
+    growthMentoring: 'Growth Mentoring',
+    dawnWatch: 'Dawn Watch',
+    overnightPrayer: 'Overnight Prayer',
+    youthCaregroup: 'Youth Online Caregroup',
+  };
+
   static const List<String> serviceTopics = [
     sundayService,
     midweekService,
@@ -25,4 +37,9 @@ class NotificationTopics {
   ];
 
   static String postTopic(String postId) => 'post-$postId';
+
+  static String labelFor(String topic) {
+    if (topic == belfastUmbrella) return belfastUmbrellaLabel;
+    return serviceTopicLabels[topic] ?? topic;
+  }
 }

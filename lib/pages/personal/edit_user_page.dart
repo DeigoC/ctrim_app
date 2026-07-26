@@ -12,6 +12,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/user_auth_link.dart';
+import '../../utility/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_picker.dart';
 import '../../utility/responsive_layout.dart';
@@ -33,13 +34,13 @@ class _EditUserPageState extends State<EditUserPage> {
 
   late final TextEditingController _tecForename;
   late final TextEditingController _tecSurname;
-  late final TextEditingController _tecLocation;
   late final TextEditingController _tecImgSrc;
 
   late bool _isAreaAdmin;
   late bool _isLeader;
   late String _src;
   late String _authID;
+  late String _currentLocation;
   late Set<String> _selectedTagIDs;
   bool _testing = false;
   bool _canSave = false;
@@ -54,18 +55,17 @@ class _EditUserPageState extends State<EditUserPage> {
     super.initState();
     _tecForename = TextEditingController(text: widget.user.forname);
     _tecSurname = TextEditingController(text: widget.user.surname);
-    _tecLocation = TextEditingController(text: widget.user.location);
     _tecImgSrc = TextEditingController(text: widget.user.imgSrc);
 
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _src = widget.user.imgSrc;
     _authID = widget.user.authID;
+    _currentLocation = widget.user.location;
     _selectedTagIDs = Set<String>.from(widget.user.tagIDs);
 
     _tecForename.addListener(_updateChangeState);
     _tecSurname.addListener(_updateChangeState);
-    _tecLocation.addListener(_updateChangeState);
     _tecImgSrc.addListener(_updateChangeState);
 
     _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
@@ -75,7 +75,6 @@ class _EditUserPageState extends State<EditUserPage> {
   void dispose() {
     _tecForename.dispose();
     _tecSurname.dispose();
-    _tecLocation.dispose();
     _tecImgSrc.dispose();
     super.dispose();
   }
@@ -84,13 +83,13 @@ class _EditUserPageState extends State<EditUserPage> {
     final sanitizedImg = _sanitiseSrc();
     final hasTextChanges = _tecForename.text != widget.user.forname ||
         _tecSurname.text != widget.user.surname ||
-        _tecLocation.text != widget.user.location;
+        _currentLocation != widget.user.location;
     final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin || _isLeader != widget.user.isLeader;
     final hasTagChanges = !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
     final requiredFieldsFilled = _tecForename.text.trim().isNotEmpty &&
         _tecSurname.text.trim().isNotEmpty &&
-        _tecLocation.text.trim().isNotEmpty;
+        _currentLocation.trim().isNotEmpty;
 
     if (!hasImgFieldChange) {
       _imageValidated = true;
@@ -316,12 +315,23 @@ class _EditUserPageState extends State<EditUserPage> {
                   const SizedBox(height: 12),
                   _buildEmailField(),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _tecLocation,
+                  DropdownButtonFormField<String>(
+                    value: _locationDropdownValue(context),
                     decoration: const InputDecoration(
                       labelText: 'Location*',
                       border: OutlineInputBorder(),
                     ),
+                    items: _locationOptions(context)
+                        .map((location) => DropdownMenuItem<String>(
+                              value: location,
+                              child: Text(location),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _currentLocation = value);
+                      _updateChangeState();
+                    },
                   ),
                 ],
               ),
@@ -419,7 +429,7 @@ class _EditUserPageState extends State<EditUserPage> {
       forname: _tecForename.text.trim().isEmpty ? widget.user.forname : _tecForename.text.trim(),
       surname: _tecSurname.text.trim().isEmpty ? widget.user.surname : _tecSurname.text.trim(),
       imgSrc: _src,
-      location: _tecLocation.text.trim().isEmpty ? widget.user.location : _tecLocation.text.trim(),
+      location: _currentLocation.trim().isEmpty ? widget.user.location : _currentLocation.trim(),
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
       authID: authID ?? _authID,
@@ -613,7 +623,7 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   void _onSaveChangesClick() async {
-    if (_tecForename.text.trim().isEmpty || _tecSurname.text.trim().isEmpty || _tecLocation.text.trim().isEmpty) {
+    if (_tecForename.text.trim().isEmpty || _tecSurname.text.trim().isEmpty || _currentLocation.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
@@ -629,7 +639,7 @@ class _EditUserPageState extends State<EditUserPage> {
       forname: _tecForename.text.trim(),
       surname: _tecSurname.text.trim(),
       imgSrc: _src,
-      location: _tecLocation.text.trim(),
+      location: _currentLocation.trim(),
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
       authID: _authID,
@@ -730,5 +740,22 @@ class _EditUserPageState extends State<EditUserPage> {
           '• Any publicly accessible image URL\n\n'
           'Recommended: Max image size is 512 KB',
     );
+  }
+
+  List<String> _locationOptions(BuildContext context) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final options = List<String>.from(
+      VolunteerLocations.assignableFrom(appContext.allLocations),
+    );
+    if (_currentLocation.isNotEmpty && !options.contains(_currentLocation)) {
+      options.insert(0, _currentLocation);
+    }
+    return options;
+  }
+
+  String _locationDropdownValue(BuildContext context) {
+    final options = _locationOptions(context);
+    if (options.contains(_currentLocation)) return _currentLocation;
+    return options.isNotEmpty ? options.first : _currentLocation;
   }
 }

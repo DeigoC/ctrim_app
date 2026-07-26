@@ -129,6 +129,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    match /user_locations/{locationId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null &&
+        (isAreaAdmin() || isAdmin());
+    }
+
     match /id_tracker/{documents=**}{
       // Allow anyone to read tracker (needed for guest user caching)
       allow read: if true;

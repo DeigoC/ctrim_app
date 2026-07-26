@@ -96,6 +96,8 @@ class QuillEditorWidget extends StatefulWidget {
     this.showCodeBlock = true,
     this.multiRowsDisplay = true,
     this.editorPadding,
+    this.placeholder,
+    this.minHeight = 160,
   });
 
   final List<dynamic> jsonContent;
@@ -106,6 +108,8 @@ class QuillEditorWidget extends StatefulWidget {
   final bool showCodeBlock;
   final bool multiRowsDisplay;
   final EdgeInsetsGeometry? editorPadding;
+  final String? placeholder;
+  final double minHeight;
 
   @override
   State<QuillEditorWidget> createState() => QuillEditorWidgetState();
@@ -138,6 +142,15 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final editor = quill.QuillEditor.basic(
+      controller: _controller,
+      config: quill.QuillEditorConfig(
+        placeholder: widget.placeholder,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        minHeight: widget.minHeight,
+      ),
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -154,9 +167,9 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
         widget.editorPadding != null
             ? Padding(
                 padding: widget.editorPadding!,
-                child: quill.QuillEditor.basic(controller: _controller),
+                child: editor,
               )
-            : quill.QuillEditor.basic(controller: _controller),
+            : editor,
       ],
     );
   }

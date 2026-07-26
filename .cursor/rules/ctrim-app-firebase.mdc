@@ -11,3 +11,5 @@ alwaysApply: false
 - `cloud_firestore` types only in `firebase/` and `models/`
 
 Info content: `InfoRepository` (`lib/utility/info_repository.dart`) + `info_db_manager.dart` for churches, testimonials, ctrim_info. `assets/info/` JSON is legacy seed/reference only.
+
+Admin catalogs: `user_tags` / `user_locations` via their DB managers; users store tag IDs and location **names**.

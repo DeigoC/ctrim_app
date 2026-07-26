@@ -37,7 +37,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   void initState() {
     super.initState();
     final appContext = Provider.of<AppContext>(context, listen: false);
-    _locationFilter = VolunteerLocations.defaultFilterForUser(appContext.currentUser.location);
+    final assignable = VolunteerLocations.assignableFrom(appContext.allLocations);
+    _locationFilter = VolunteerLocations.defaultFilterForUser(
+      appContext.currentUser.location,
+      assignable,
+    );
   }
 
   @override
@@ -49,11 +53,15 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
+    // Wide: modest insets so the grid can fill the viewport.
+    // Narrow: flush with the screen edge (ListTiles provide their own padding).
+    final double horizontalPadding = isWide ? 16 : 0;
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
+      final canEdit = appContext.currentUser.isAreaAdmin;
 
       return Scaffold(
           appBar: AppBar(
@@ -87,7 +95,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               ),
             ],
           ),
-          floatingActionButton: appContext.currentUser.isAreaAdmin
+          floatingActionButton: canEdit
               ? FloatingActionButton.extended(
                   icon: const Icon(Icons.person_add),
                   onPressed: _addUserClick,
@@ -99,9 +107,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             children: [
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(webHorizontalPadding, 8, webHorizontalPadding, 8),
+                padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
                 child: Row(
-                  children: VolunteerLocations.filterOptions.map((location) {
+                  children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
                     final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -117,12 +125,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               UserTagFilterBar(
                 tags: appContext.allTags,
                 selectedTagIDs: _selectedTagIDs,
-                horizontalPadding: webHorizontalPadding,
+                horizontalPadding: horizontalPadding,
                 onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
               ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(webHorizontalPadding, 0, webHorizontalPadding, 8),
+                padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
                 child: Row(
                   children: [
                     Padding(
@@ -157,36 +165,111 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                           textAlign: TextAlign.center,
                         ),
                       )
-                    : ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-                        itemCount: filteredUsers.length,
-                        itemBuilder: (_, index) {
-                          final thisUser = filteredUsers[index];
-                          final userTags = UserTagHelpers.tagsForUser(user: thisUser, allTags: appContext.allTags);
-                          return ListTile(
-                            title: Text(thisUser.fullname),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(thisUser.location),
-                                if (userTags.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: UserTagChipRow(tags: userTags, dense: true),
-                                  ),
-                              ],
-                            ),
-                            isThreeLine: userTags.isNotEmpty,
-                            leading: MyUserAvatar(thisUser),
-                            onTap: () => _onUserTap(thisUser),
-                            onLongPress:
-                                appContext.currentUser.isAreaAdmin ? () => _navigateToEditUser(thisUser) : null,
-                          );
-                        }),
+                    : isWide
+                        ? _buildWideUserGrid(
+                            users: filteredUsers,
+                            allTags: appContext.allTags,
+                            canEdit: canEdit,
+                            horizontalPadding: horizontalPadding,
+                          )
+                        : ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (_, index) {
+                              final user = filteredUsers[index];
+                              final userTags =
+                                  UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
+                              return ListTile(
+                                title: Text(user.fullname),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(user.location),
+                                    if (userTags.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: UserTagChipRow(tags: userTags, dense: true),
+                                      ),
+                                  ],
+                                ),
+                                isThreeLine: userTags.isNotEmpty,
+                                leading: MyUserAvatar(user),
+                                onTap: () => _onUserTap(user),
+                                onLongPress: canEdit ? () => _navigateToEditUser(user) : null,
+                              );
+                            },
+                          ),
               ),
             ],
           ));
     });
+  }
+
+  Widget _buildWideUserGrid({
+    required List<User> users,
+    required List<UserTag> allTags,
+    required bool canEdit,
+    required double horizontalPadding,
+  }) {
+    return GridView.builder(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 88),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 420,
+        mainAxisExtent: 108,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: users.length,
+      itemBuilder: (_, index) {
+        final user = users[index];
+        final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+        final theme = Theme.of(context);
+        return Card(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _onUserTap(user),
+            onLongPress: canEdit ? () => _navigateToEditUser(user) : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  MyUserAvatar(user, radius: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          user.fullname,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user.location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (userTags.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          UserTagChipRow(tags: userTags, dense: true),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   List<User> _filteredUsers(List<User> allUsers, List<UserTag> allTags) {

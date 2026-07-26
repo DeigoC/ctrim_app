@@ -224,7 +224,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ViewUserRolesPage(selectedUser: widget.selectedUser),
+        builder: (_) => ViewUserRolesPage(
+          selectedUser: widget.selectedUser,
+          allowPostView: true,
+        ),
       ),
     );
   }

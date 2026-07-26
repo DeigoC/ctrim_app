@@ -204,6 +204,97 @@
   "@manageUserTagsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing tags"
   },
+  "manageUserLocationsTitle": "Manage Locations",
+  "@manageUserLocationsTitle": {
+    "description": "Title for the admin page that manages volunteer location definitions"
+  },
+  "manageUserLocationsAdd": "Add location",
+  "@manageUserLocationsAdd": {
+    "description": "Action to create a new volunteer location"
+  },
+  "manageUserLocationsEmpty": "No locations yet. Add places like Belfast, Portadown, or North Coast.",
+  "@manageUserLocationsEmpty": {
+    "description": "Empty state on the manage locations page"
+  },
+  "manageUserLocationsSeedDefaults": "Add starter locations",
+  "@manageUserLocationsSeedDefaults": {
+    "description": "Button to seed default volunteer locations"
+  },
+  "manageUserLocationsActive": "Active",
+  "@manageUserLocationsActive": {
+    "description": "Status label for an active location"
+  },
+  "manageUserLocationsInactive": "Inactive",
+  "@manageUserLocationsInactive": {
+    "description": "Status label for a deactivated location"
+  },
+  "manageUserLocationsMoveUp": "Move up",
+  "@manageUserLocationsMoveUp": {
+    "description": "Reorder a location higher in the list"
+  },
+  "manageUserLocationsMoveDown": "Move down",
+  "@manageUserLocationsMoveDown": {
+    "description": "Reorder a location lower in the list"
+  },
+  "manageUserLocationsEdit": "Edit",
+  "@manageUserLocationsEdit": {
+    "description": "Edit an existing location"
+  },
+  "manageUserLocationsDeactivate": "Deactivate",
+  "@manageUserLocationsDeactivate": {
+    "description": "Deactivate a location so it cannot be assigned"
+  },
+  "manageUserLocationsActivate": "Activate",
+  "@manageUserLocationsActivate": {
+    "description": "Reactivate a deactivated location"
+  },
+  "manageUserLocationsDelete": "Delete",
+  "@manageUserLocationsDelete": {
+    "description": "Delete a location definition"
+  },
+  "manageUserLocationsNameLabel": "Location name",
+  "@manageUserLocationsNameLabel": {
+    "description": "Label for the location name field"
+  },
+  "manageUserLocationsCreate": "Create",
+  "@manageUserLocationsCreate": {
+    "description": "Create a new location"
+  },
+  "manageUserLocationsDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@manageUserLocationsDeleteConfirm": {
+    "description": "Confirmation before deleting a location",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageUserLocationsDeleteBlocked": "Cannot delete — {count} volunteers still have this location. Deactivate it instead.",
+  "@manageUserLocationsDeleteBlocked": {
+    "description": "Error when trying to delete a location that is still assigned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "manageUserLocationsDuplicate": "A location named \"{name}\" already exists.",
+  "@manageUserLocationsDuplicate": {
+    "description": "Error when creating or renaming to a duplicate location name",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageUserLocationsMenuTitle": "Volunteer Locations",
+  "@manageUserLocationsMenuTitle": {
+    "description": "Personal home admin menu item for managing locations"
+  },
+  "manageUserLocationsMenuSubtitle": "Create and edit place labels",
+  "@manageUserLocationsMenuSubtitle": {
+    "description": "Personal home admin menu subtitle for managing locations"
+  },
   "volunteersEmptyTags": "No volunteers match the selected tags",
   "@volunteersEmptyTags": {
     "description": "Empty state when tag filter returns no volunteers"

@@ -80,16 +80,17 @@ void main() {
       ]);
     });
 
-    test('fromMap falls back to plain text delta when body string is not JSON', () {
-      final info = ChurchInfo.fromMap('legacy_plain_text', {
-        'title': 'Legacy',
-        'analyticTitle': 'Legacy',
-        'body': 'This is legacy text body',
+    test('fromMap accepts numeric displayOrder from Firestore', () {
+      final info = ChurchInfo.fromMap('order_num', {
+        'title': 'Order',
+        'analyticTitle': 'Order',
+        'body': [
+          {'insert': 'Hi\n'}
+        ],
+        'displayOrder': 3.0,
       });
 
-      expect(info.body, [
-        {'insert': 'This is legacy text body\n'}
-      ]);
+      expect(info.displayOrder, 3);
     });
   });
 }

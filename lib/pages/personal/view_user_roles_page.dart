@@ -102,38 +102,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   Widget _buildScheduleBodyWithData() {
     debugPrint('using existing roles');
 
-    final Map<String, int> roleConterPerPost = {};
-
-    for (final roleEntry in widget.selectedUser.roles!) {
-      final String thisPostID = roleEntry.postID;
-      roleConterPerPost[thisPostID] = (roleConterPerPost[thisPostID] ?? 0) + 1;
+    final roles = widget.selectedUser.roles;
+    if (roles == null || roles.isEmpty) {
+      return _buildEmptySchedule();
     }
 
-    if (roleConterPerPost.isEmpty) {
-      return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'No tasks assigned... for now! 😎',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-            TextButton.icon(
-              onPressed: () async {
-                await _refreshRoles();
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
-              },
-              label: const Text('Refresh'),
-              icon: const Icon(Icons.refresh),
-            )
-          ]);
-    }
-
-    final sortedPostIDs = roleConterPerPost.keys.toList();
-    debugPrint('pre sort: $sortedPostIDs');
     final stalePostIDs = UserScheduleService.staleRolePostIDs(
       user: widget.selectedUser,
       eventHeads: _appContext.eventHeads,
@@ -141,29 +114,99 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     if (stalePostIDs.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: false));
     }
-    sortedPostIDs.removeWhere(stalePostIDs.contains);
-    sortedPostIDs
-        .sort((a, b) => _appContext.getPostHead(a).eventDate!.compareTo(_appContext.getPostHead(b).eventDate!));
-    debugPrint('post sort: $sortedPostIDs');
 
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
+    final upcomingPostIDs = UserScheduleService.upcomingSchedulePostIDs(
+      user: widget.selectedUser,
+      eventHeads: _appContext.eventHeads,
+    );
+    final recentPastPostIDs = UserScheduleService.recentPastSchedulePostIDs(
+      user: widget.selectedUser,
+      eventHeads: _appContext.eventHeads,
+    );
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _refreshRoles();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+    if (upcomingPostIDs.isEmpty && recentPastPostIDs.isEmpty) {
+      return _buildEmptySchedule();
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentWidth = constraints.maxWidth;
+        final isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final horizontalPadding = isWideScreen
+            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) / 2)
+                .clamp(16.0, double.infinity)
+            : 8.0;
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            await _refreshRoles();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+          },
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 24),
+            children: [
+              if (upcomingPostIDs.isNotEmpty) ...[
+                _buildSectionHeader('Upcoming'),
+                const SizedBox(height: 8),
+                for (var i = 0; i < upcomingPostIDs.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  _buildTile(upcomingPostIDs[i], isPast: false),
+                ],
+              ],
+              if (recentPastPostIDs.isNotEmpty) ...[
+                if (upcomingPostIDs.isNotEmpty) const SizedBox(height: 24),
+                _buildSectionHeader('Recent'),
+                const SizedBox(height: 4),
+                Text(
+                  'Last ${UserScheduleService.roleRetention.inDays} days',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                for (var i = 0; i < recentPastPostIDs.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  _buildTile(recentPastPostIDs[i], isPast: true),
+                ],
+              ],
+            ],
+          ),
+        );
       },
-      child: ListView.separated(
-          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-          itemCount: sortedPostIDs.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 8),
-          itemBuilder: (_, index) {
-            final postID = sortedPostIDs[index];
-            return _buildTile(postID, roleConterPerPost[postID]!);
-          }),
+    );
+  }
+
+  Widget _buildEmptySchedule() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'No tasks assigned... for now! 😎',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
+        TextButton.icon(
+          onPressed: () async {
+            await _refreshRoles();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+          },
+          label: const Text('Refresh'),
+          icon: const Icon(Icons.refresh),
+        )
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    final theme = Theme.of(context);
+    return Text(
+      title,
+      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 
@@ -207,38 +250,50 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       );
     }
 
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentWidth = constraints.maxWidth;
+        final isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final horizontalPadding = isWideScreen
+            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) / 2)
+                .clamp(16.0, double.infinity)
+            : 8.0;
 
-    return ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-        itemCount: postIDs.length,
-        itemBuilder: (_, index) {
-          final thisHead = _appContext.getPostHead(postIDs[index]);
-          return PostHead(
+        return ListView.separated(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+          itemCount: postIDs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, index) {
+            final thisHead = _appContext.getPostHead(postIDs[index]);
+            return PostHead(
               thisHead: thisHead,
               updatePost: () {
                 setState(() {});
-              });
-        });
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
-  Widget _buildTile(final String postID, final int roleCount) {
+  Widget _buildTile(final String postID, {required bool isPast}) {
     if (_appContext.eventHeads.any((e) => e.id == postID)) {
-      debugPrint('building with existing post head');
-      return _buildTileWithData(postID, roleCount);
+      return _buildScheduleCard(postID, isPast: isPast);
     }
 
     final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-    debugPrint('fetching post head');
     return FutureBuilder(
         future: eventHeadDBManager.fetchHead(postID),
         builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
+          Widget result = const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          );
 
           if (snap.hasData) {
             _appContext.addAllEventHeads([snap.data!]);
-            result = _buildTileWithData(postID, roleCount);
+            result = _buildScheduleCard(postID, isPast: isPast);
           } else if (snap.hasError) {
             debugPrint('Something with fetching head: ${snap.error}');
             result = const Center(child: Text('Something went wrong!'));
@@ -248,37 +303,114 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         });
   }
 
-  Widget _buildTileWithData(final String postID, final int roleCount) {
+  Widget _buildScheduleCard(final String postID, {required bool isPast}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final postHead = _appContext.eventHeads.firstWhere((e) => e.id == postID);
-    final List<Widget> roleChildren = [];
+    final userRoles = widget.selectedUser.roles!.where((e) => e.postID == postID).toList()
+      ..sort((a, b) => a.start.compareTo(b.start));
+    final roleCount = userRoles.length;
+    final dateLabel = postHead.eventDate != null ? _eventDateFormat.format(postHead.eventDate!) : 'Date TBC';
 
-    final userRoles = widget.selectedUser.roles!.where((e) => e.postID == postID).toList();
-    userRoles.sort(((a, b) => a.start.compareTo(b.start)));
-
-    for (final roleElement in userRoles) {
-      final String timeString = '${_timeFormat.format(roleElement.start)} - ${_timeFormat.format(roleElement.end)}';
-      roleChildren.add(ListTile(
-        title: Text(roleElement.title),
-        subtitle: Text(timeString),
-        leading: const Icon(Icons.event),
-      ));
-    }
-    return Card(
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => _onPostTap(postHead),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ListTile(
-                title: Text(postHead.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(_eventDateFormat.format(postHead.eventDate!)),
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              const Divider(indent: 8, endIndent: 8),
-              ...roleChildren,
             ],
+          ),
+          child: Opacity(
+            opacity: isPast ? 0.72 : 1,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              dateLabel,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              postHead.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (roleCount > 1) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '$roleCount roles',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSecondaryContainer,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+                    ],
+                  ),
+                  if (userRoles.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.12)),
+                    ),
+                    for (var i = 0; i < userRoles.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              userRoles[i].title,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${_timeFormat.format(userRoles[i].start)} – ${_timeFormat.format(userRoles[i].end)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

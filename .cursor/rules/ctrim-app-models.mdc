@@ -13,7 +13,6 @@ alwaysApply: false
 - Private `_` fields; public getters/setters
 - List getters return `UnmodifiableListView`
 - `Timestamp` from `cloud_firestore`; convert to/from `DateTime` inside the model
-
-Note: testimonial model file is `lib/models/info/testimonial_into.dart` (historical typo — do not rename without a dedicated refactor).
+- Info models share Quill/image parsing via `lib/models/info/info_parsing.dart`
 
 When adding or changing a model, add/update `test/unit/models/<name>_test.dart`.

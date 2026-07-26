@@ -61,6 +61,7 @@ class User {
   }
 
   void setImgSrc(final String newImgSrc) => _imgSrc = newImgSrc;
+  void setLocation(final String location) => _location = location;
   void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
 
   void setRoles(final List<UserRoleAssignment> newRoles) => _roles = newRoles;

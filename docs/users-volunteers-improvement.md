@@ -429,6 +429,7 @@ Extend `User` with `List<String> tagIDs` (or typed `List<UserTagAssignment>` if 
 | 2026-07-04 | Phase 4 | CF `sync_user_roles_on_program_write`; client role writes removed on post save |
 | 2026-07-04 | Phase 3 | `ViewUserProfilePage`, location filter on volunteers list, badge fix, l10n |
 | 2026-07-04 | Phase 5 | Admin-managed user tags: `UserTag`, `UserTagDBManager`, manage page, assignment, filters, chips |
+| 2026-07-26 | Follow-up | Admin-managed locations: `UserLocation`, `UserLocationDBManager`, `ManageUserLocationsPage` (area admin); filters/register/edit use catalog |
 | 2026-07-04 | Planning | Admin-managed user tags (Phase 5) — design added; not implemented |
 
 *(Append rows as work progresses.)*

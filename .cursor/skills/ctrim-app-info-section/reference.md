@@ -5,30 +5,36 @@
 | Page | Role |
 |------|------|
 | `information_home.dart` | Shell: nav + tabs; loads futures via `InfoRepository` |
-| `information/about_tab.dart` | About tab content |
-| `information/churches_tab.dart` | Churches list/grid |
-| `information/testimonials_tab.dart` | Testimonials list/grid |
-| `information/ctrim_info_list_tab.dart` | CTRIM topics list/grid |
-| `information/info_tab_widgets.dart` | Shared cards, empty/error states |
-| `church_info_page.dart` | Single church; loads content via repository |
-| `ctrim_info_page.dart` | CTRIM org topics |
-| `testimonial_info_page.dart` | Testimonial detail |
-| `edit_info_body_page.dart` | Debug/admin Quill editing |
+| `information/about_tab.dart` | About tab content (still has hardcoded Drive image URLs) |
+| `information/churches_tab.dart` | Thin wrapper around `InfoSectionListTab` |
+| `information/testimonials_tab.dart` | Thin wrapper around `InfoSectionListTab` |
+| `information/ctrim_info_list_tab.dart` | Thin wrapper; hero cards when image present on wide |
+| `information/info_tab_widgets.dart` | Shared list shell, cards, empty/error states |
+| `information/info_detail_scaffold.dart` | Shared detail loader + layout |
+| `church_info_page.dart` / `testimonial_info_page.dart` / `ctrim_info_page.dart` | Detail pages via `InfoDetailLoader` |
+| `edit_info_body_page.dart` | Admin Quill + metadata edit/delete |
 
-## Model fields (typical)
+## Models (`lib/models/info/`)
 
-- `_body` — List&lt;dynamic&gt; Quill JSON
-- `_imgSrc` — image URL
-Models: `ChurchInfo`, `CtrimInfo`, `TestimonialInfo` in `lib/models/info/`.
+- `church_info.dart`, `ctrim_info.dart`, `testimonial_info.dart`
+- Shared parsing: `info_parsing.dart` (`parseBody`, `parseImageSources`, `parseUpdatedAt`, `parseDisplayOrder`)
+- Typical fields: Quill `_body`, `imageSources` (legacy `imgSrc` fallback), `displayOrder`, `updatedAt`/`updatedBy`
+- Church/Testimonial: `summary`; CTRIM: `description`; Church/CTRIM: `analyticsTitle`
 
-**Filename note:** `testimonial_into.dart` (typo) — class is `TestimonialInfo`; do not rename without a dedicated refactor.
+## Wide / web layout DNA
 
-## Known gaps / TODOs in codebase
+- List tabs: center content with `ResponsiveLayout.maxContentWidth`, 16px gutters on narrow
+- Detail: `ResponsiveLayout.horizontalGutter` + Quill column capped at `chordMaxWidth`
+- Carousel (`InfoImageCarousel`) probes image bytes via `CachedImageLoader` + `ImageOrientationHelper` and switches:
+  - landscape → full-width cover banner
+  - portrait → centered contained frame (better for people photos)
+- Gallery tiles use `AdaptiveInfoGalleryImage` with the same probe
 
-- Topic-specific images for CTRIM info cards
-- Replace remaining hardcoded image URLs in home tab builders
-- Ensure admin edit flows persist through Firestore managers (not clipboard-only)
+## Known gaps / TODOs
+
+- Replace hardcoded Drive image URLs in `about_tab.dart` with Firestore-backed content
 
 ## Firestore managers
 
 `ChurchInfoDBManager`, `TestimonialInfoDBManager`, `CtrimInfoDBManager` in `info_db_manager.dart`.
+Deletes must also clear the Hive entry via `LocalDataManager.delete*InfoData` and sync `lastUpdate`.

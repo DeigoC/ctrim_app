@@ -27,8 +27,10 @@ Architecture context: see `docs/users-volunteers-improvement.md` (Phases 0–5 l
 - Program role assignments are denormalized to `users/{uid}/supplemental/roles`.
 - Cloud Function `sync_user_roles_for_post` syncs roles when a post program is saved.
 - `UserScheduleService` centralizes stale cleanup and badge counting.
-- Own schedule (`allowPostView: true`): **Schedule** + **Posts** tabs.
-- Volunteer profiles link into the same schedule view via `ViewUserProfilePage`.
+- Own My Schedule from Personal: **roles only** (no Posts tab — editable posts live under **My Posts**).
+- Volunteer profiles: `allowPostView: true` → **Schedule** + **Posts** tabs (or jump straight to Posts).
+- Role retention: prune after **28 days** past `eventDate`; UI shows **Upcoming** + **Recent** (last 28 days).
+- Badge / profile preview still count **upcoming** only.
 
 ---
 
@@ -93,9 +95,9 @@ In program role user picker (`select_users_page.dart`), schedule icon opens the 
 | Area | Current | Suggestion |
 |------|---------|------------|
 | Date format | `EEE d MMM` (no ordinals) | Match bulk-create style (`5th Jul`) |
-| Past vs upcoming | Past roles auto-pruned after event + 1 day | Optional “Upcoming” / “Past” sections before prune |
+| Past vs upcoming | Past roles pruned after 28 days | UI: Upcoming + Recent sections (done) |
 | Profile preview | Next 3 tasks don’t tap through to post | Make preview tiles open `ViewEventPage` |
-| Posts tab | Duplicates “My Posts” for self | OK for self; useful for other users — optional pull-to-refresh |
+| Posts tab | Was duplicating My Posts for self | Fixed: self schedule is roles-only; Posts tab remains on other users’ profiles |
 | Localization | Menu localized; page strings hardcoded | Move empty states, tabs, errors into `app_en.arb` |
 | Help | My Posts has help dialog; My Schedule doesn’t | Short explainer for assigned program roles |
 | Title | Self: full name + tabs; others: `"{forname}'s Schedule"` | Minor inconsistency |
@@ -143,7 +145,7 @@ Use this checklist across chats. Update status when items complete.
 - [ ] Localize hardcoded strings on `ViewUserRolesPage`
 - [ ] Help dialog (mirror `ViewMyPostsPage`)
 - [ ] Tap-through on profile preview task tiles
-- [ ] Optional **Upcoming / Past** sections (past collapsible; align with prune rules)
+- [x] Optional **Upcoming / Past** sections (Recent = last 28 days; prune aligned)
 
 ### Priority 5 — Larger feature (optional)
 

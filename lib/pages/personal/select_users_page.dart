@@ -55,7 +55,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     super.initState();
     _selectedUIDs = Set<String>.from(widget.selectedUIDs);
     final appContext = Provider.of<AppContext>(context, listen: false);
-    _locationFilter = VolunteerLocations.defaultFilterForUser(appContext.currentUser.location);
+    final assignable = VolunteerLocations.assignableFrom(appContext.allLocations);
+    _locationFilter = VolunteerLocations.defaultFilterForUser(
+      appContext.currentUser.location,
+      assignable,
+    );
   }
 
   @override
@@ -122,7 +126,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.fromLTRB(webHorizontalPadding, 8, webHorizontalPadding, 8),
               child: Row(
-                children: VolunteerLocations.filterOptions.map((location) {
+                children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
                   final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),

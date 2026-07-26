@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:ctrim_app/models/info/church_info.dart';
 import 'package:ctrim_app/models/info/ctrim_info.dart';
-import 'package:ctrim_app/models/info/testimonial_into.dart';
+import 'package:ctrim_app/models/info/testimonial_info.dart';
 import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -251,6 +251,11 @@ class LocalDataManager {
     await box.clear();
   }
 
+  Future<void> deleteChurchInfoData(final String id) async {
+    final box = Hive.box(_churchInfoBox);
+    await box.delete(id);
+  }
+
   Future<void> writeCtrimInfoData(final CtrimInfo info) async {
     final box = Hive.box(_ctrimInfoBox);
     await box.put(info.id, info.toCacheJson());
@@ -275,6 +280,11 @@ class LocalDataManager {
     await box.clear();
   }
 
+  Future<void> deleteCtrimInfoData(final String id) async {
+    final box = Hive.box(_ctrimInfoBox);
+    await box.delete(id);
+  }
+
   Future<void> writeTestimonialInfoData(final TestimonialInfo info) async {
     final box = Hive.box(_testimonialInfoBox);
     await box.put(info.id, info.toCacheJson());
@@ -297,6 +307,11 @@ class LocalDataManager {
   Future<void> clearTestimonialInfo() async {
     final box = Hive.box(_testimonialInfoBox);
     await box.clear();
+  }
+
+  Future<void> deleteTestimonialInfoData(final String id) async {
+    final box = Hive.box(_testimonialInfoBox);
+    await box.delete(id);
   }
 
   Future<int> readInfoCollectionLastUpdate(final String sectionKey) async {

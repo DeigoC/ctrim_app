@@ -156,6 +156,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
 
   @override
+  String get manageUserLocationsTitle => 'Manage Locations';
+
+  @override
+  String get manageUserLocationsAdd => 'Add location';
+
+  @override
+  String get manageUserLocationsEmpty =>
+      'No locations yet. Add places like Belfast, Portadown, or North Coast.';
+
+  @override
+  String get manageUserLocationsSeedDefaults => 'Add starter locations';
+
+  @override
+  String get manageUserLocationsActive => 'Active';
+
+  @override
+  String get manageUserLocationsInactive => 'Inactive';
+
+  @override
+  String get manageUserLocationsMoveUp => 'Move up';
+
+  @override
+  String get manageUserLocationsMoveDown => 'Move down';
+
+  @override
+  String get manageUserLocationsEdit => 'Edit';
+
+  @override
+  String get manageUserLocationsDeactivate => 'Deactivate';
+
+  @override
+  String get manageUserLocationsActivate => 'Activate';
+
+  @override
+  String get manageUserLocationsDelete => 'Delete';
+
+  @override
+  String get manageUserLocationsNameLabel => 'Location name';
+
+  @override
+  String get manageUserLocationsCreate => 'Create';
+
+  @override
+  String manageUserLocationsDeleteConfirm(String name) {
+    return 'Delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String manageUserLocationsDeleteBlocked(int count) {
+    return 'Cannot delete — $count volunteers still have this location. Deactivate it instead.';
+  }
+
+  @override
+  String manageUserLocationsDuplicate(String name) {
+    return 'A location named \"$name\" already exists.';
+  }
+
+  @override
+  String get manageUserLocationsMenuTitle => 'Volunteer Locations';
+
+  @override
+  String get manageUserLocationsMenuSubtitle => 'Create and edit place labels';
+
+  @override
   String get volunteersEmptyTags => 'No volunteers match the selected tags';
 
   @override

@@ -364,6 +364,120 @@ abstract class AppLocalizations {
   /// **'Create and edit team labels'**
   String get manageUserTagsMenuSubtitle;
 
+  /// Title for the admin page that manages volunteer location definitions
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Locations'**
+  String get manageUserLocationsTitle;
+
+  /// Action to create a new volunteer location
+  ///
+  /// In en, this message translates to:
+  /// **'Add location'**
+  String get manageUserLocationsAdd;
+
+  /// Empty state on the manage locations page
+  ///
+  /// In en, this message translates to:
+  /// **'No locations yet. Add places like Belfast, Portadown, or North Coast.'**
+  String get manageUserLocationsEmpty;
+
+  /// Button to seed default volunteer locations
+  ///
+  /// In en, this message translates to:
+  /// **'Add starter locations'**
+  String get manageUserLocationsSeedDefaults;
+
+  /// Status label for an active location
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get manageUserLocationsActive;
+
+  /// Status label for a deactivated location
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get manageUserLocationsInactive;
+
+  /// Reorder a location higher in the list
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get manageUserLocationsMoveUp;
+
+  /// Reorder a location lower in the list
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get manageUserLocationsMoveDown;
+
+  /// Edit an existing location
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get manageUserLocationsEdit;
+
+  /// Deactivate a location so it cannot be assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get manageUserLocationsDeactivate;
+
+  /// Reactivate a deactivated location
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get manageUserLocationsActivate;
+
+  /// Delete a location definition
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get manageUserLocationsDelete;
+
+  /// Label for the location name field
+  ///
+  /// In en, this message translates to:
+  /// **'Location name'**
+  String get manageUserLocationsNameLabel;
+
+  /// Create a new location
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get manageUserLocationsCreate;
+
+  /// Confirmation before deleting a location
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? This cannot be undone.'**
+  String manageUserLocationsDeleteConfirm(String name);
+
+  /// Error when trying to delete a location that is still assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete — {count} volunteers still have this location. Deactivate it instead.'**
+  String manageUserLocationsDeleteBlocked(int count);
+
+  /// Error when creating or renaming to a duplicate location name
+  ///
+  /// In en, this message translates to:
+  /// **'A location named \"{name}\" already exists.'**
+  String manageUserLocationsDuplicate(String name);
+
+  /// Personal home admin menu item for managing locations
+  ///
+  /// In en, this message translates to:
+  /// **'Volunteer Locations'**
+  String get manageUserLocationsMenuTitle;
+
+  /// Personal home admin menu subtitle for managing locations
+  ///
+  /// In en, this message translates to:
+  /// **'Create and edit place labels'**
+  String get manageUserLocationsMenuSubtitle;
+
   /// Empty state when tag filter returns no volunteers
   ///
   /// In en, this message translates to:

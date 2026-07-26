@@ -21,7 +21,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   final TextEditingController _tecForename = TextEditingController(),
       _tecSurname = TextEditingController(),
       _tecEmail = TextEditingController();
-  TextEditingController _tecAuthID = TextEditingController();
+  final TextEditingController _tecAuthID = TextEditingController();
   final FocusNode _fnSurname = FocusNode(), _fnEmail = FocusNode();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
 
@@ -155,16 +155,20 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   Widget _buildLocationSelector() {
+    final appContext = Provider.of<AppContext>(context);
+    final options = VolunteerLocations.assignableFrom(appContext.allLocations);
+    final value = options.contains(_currentLocation) ? _currentLocation : options.first;
+
     return DropdownButton<String>(
         icon: const Icon(Icons.map_sharp),
         hint: const Text('Location'),
-        items: VolunteerLocations.assignable
+        items: options
             .map((e) => DropdownMenuItem<String>(
                   value: e,
                   child: Text(e),
                 ))
             .toList(),
-        value: _currentLocation,
+        value: value,
         onChanged: (newLocation) {
           setState(() {
             _currentLocation = newLocation!;
@@ -252,12 +256,16 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
     onProgress(completed: 1, total: total, message: 'Creating profile…');
     final String newID = await idTracker.getAndIncrementUserID();
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final locationOptions = VolunteerLocations.assignableFrom(appContext.allLocations);
+    final location =
+        locationOptions.contains(_currentLocation) ? _currentLocation : locationOptions.first;
     final ctrim.User newUser = ctrim.User(
         id: newID,
         forname: _tecForename.text.trim(),
         surname: _tecSurname.text.trim(),
         authID: authID,
-        location: _currentLocation,
+        location: location,
         isLeader: _isLeader,
         tagIDs: _selectedTagIDs.toList());
 

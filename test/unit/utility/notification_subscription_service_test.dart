@@ -9,6 +9,24 @@ void main() {
     test('postTopic prefixes post id', () {
       expect(NotificationTopics.postTopic('abc123'), 'post-abc123');
     });
+
+    test('labelFor returns display names for managed topics', () {
+      expect(NotificationTopics.labelFor(NotificationTopics.belfastUmbrella),
+          'All Belfast updates');
+      expect(
+        NotificationTopics.labelFor(NotificationTopics.sundayService),
+        'Sunday Worship Service',
+      );
+      expect(NotificationTopics.labelFor('unknown-topic'), 'unknown-topic');
+    });
+
+    test('serviceTopicLabels covers every service topic', () {
+      for (final topic in NotificationTopics.serviceTopics) {
+        expect(
+            NotificationTopics.serviceTopicLabels.containsKey(topic), isTrue);
+        expect(NotificationTopics.labelFor(topic), isNotEmpty);
+      }
+    });
   });
 
   group('NotificationSubscriptionService', () {
@@ -16,7 +34,8 @@ void main() {
 
     setUpAll(() async {
       SharedPreferences.setMockInitialValues({});
-      prefs = AppSharedPreferences(preferences: await SharedPreferences.getInstance());
+      prefs = AppSharedPreferences(
+          preferences: await SharedPreferences.getInstance());
     });
 
     setUp(() async {
@@ -24,7 +43,9 @@ void main() {
       await instance.clear();
     });
 
-    test('topicsFromPrefs includes opted-in service topics and Belfast umbrella', () {
+    test(
+        'topicsFromPrefs includes opted-in service topics and Belfast umbrella',
+        () {
       prefs.setSubscribedToTopic(NotificationTopics.sundayService, true);
       prefs.setSubscribedToTopic(NotificationTopics.midweekService, false);
       prefs.setSubscribedToBelfast(true);
