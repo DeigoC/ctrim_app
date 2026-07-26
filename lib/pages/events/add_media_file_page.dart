@@ -16,9 +16,13 @@ class AddMediaFilePage extends StatefulWidget {
     super.key,
     required this.eventContext,
     this.initialIsVideo = false,
+    /// When true, pops with the tested/sanitised media map instead of
+    /// writing into [eventContext.media] (used by template media pools).
+    this.returnResultOnly = false,
   });
   final EventContext eventContext;
   final bool initialIsVideo;
+  final bool returnResultOnly;
 
   @override
   State<AddMediaFilePage> createState() => _AddMediaFilePageState();
@@ -297,7 +301,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           FilledButton.icon(
             onPressed: _canSave ? _onSaveClick : null,
             icon: const Icon(Icons.add),
-            label: Text(_isVideo ? 'Add video to gallery' : 'Add image to gallery'),
+            label: Text(_addButtonLabel),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
             ),
@@ -942,6 +946,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   void _onSaveClick() {
+    final String mediaKind = _isVideo ? 'video' : 'image';
+    final String confirmMessage = widget.returnResultOnly
+        ? 'Add this $mediaKind to the template media pool?'
+        : 'Save this $mediaKind to the event media?';
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -950,14 +959,14 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           children: [
             Icon(Icons.save, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
-            const Text('Save Media'),
+            Text(widget.returnResultOnly ? 'Add Media' : 'Save Media'),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Save this ${_isVideo ? 'video' : 'image'} to the event media?'),
+            Text(confirmMessage),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -1011,15 +1020,22 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                 'src': _src,
                 'type': _isVideo ? 'vid' : 'img',
               };
-              if (_isVideo && _tecThumbnailSrc.text.trim().isNotEmpty) {
-                data['thumbnailSrc'] = _tecThumbnailSrc.text.trim();
+              final thumbnail = _sanitiseUrl(_tecThumbnailSrc.text);
+              if (_isVideo && thumbnail.isNotEmpty) {
+                data['thumbnailSrc'] = thumbnail;
+              }
+
+              if (widget.returnResultOnly) {
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(data); // Return media map
+                return;
               }
 
               widget.eventContext.media.addMediaFile(data);
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(context).pop(); // Close page
             },
-            child: const Text('Save'),
+            child: Text(widget.returnResultOnly ? 'Add' : 'Save'),
           ),
         ],
       ),
@@ -1072,14 +1088,25 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     });
   }
 
-  String _sanitiseSrc() {
-    RegExpMatch? match = _driveRegExp.firstMatch(_tecSrc.text.trim());
+  String get _addButtonLabel {
+    if (widget.returnResultOnly) {
+      return _isVideo ? 'Add video to pool' : 'Add image to pool';
+    }
+    return _isVideo ? 'Add video to gallery' : 'Add image to gallery';
+  }
+
+  String _sanitiseSrc() => _sanitiseUrl(_tecSrc.text);
+
+  /// Converts Google Drive share links to direct `uc?id=` URLs; otherwise trims.
+  String _sanitiseUrl(String raw) {
+    final trimmed = raw.trim();
+    final match = _driveRegExp.firstMatch(trimmed);
     if (match != null) {
-      String id = match.group(1)!;
+      final id = match.group(1)!;
       debugPrint('Link is a GoogleDrive Share link. Parsing now. ID is $id');
       return 'https://drive.google.com/uc?id=$id';
     }
-    return _tecSrc.text.trim();
+    return trimmed;
   }
 
   void _showHelp() {

@@ -14,6 +14,7 @@ import '../../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../../widgets/posts/view_all_programs.dart';
 import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
+import '../add_media_file_page.dart';
 import '../add_program_role_page.dart';
 import '../edit_body_page.dart';
 import '../edit_gallery_page.dart';
@@ -378,7 +379,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
             ),
             const SizedBox(height: 8),
             Text(
-              'Add multiple cover images that can be randomly or manually selected when creating posts from this template.',
+              'Add multiple cover images that can be randomly or manually selected when creating posts from this template. '
+              'URLs are tested first; Google Drive share links are converted automatically.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -437,7 +439,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
             ),
             const SizedBox(height: 8),
             Text(
-              'Add media items that can be randomly or manually added to the gallery when creating posts from this template.',
+              'Add media items that can be randomly or manually added to the gallery when creating posts from this template. '
+              'URLs are tested first; Google Drive share links are converted automatically.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -517,7 +520,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final displaySrc = isVideo ? thumbnailSrc : src;
     if (displaySrc != null && displaySrc.isNotEmpty) {
       return Image.network(
-        displaySrc,
+        NetworkImageHelper.getImageUrl(displaySrc),
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _poolItemFallbackIcon(isVideo),
       );
@@ -535,104 +538,31 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  void _onAddMediaPoolItem({required bool isHead}) {
-    final srcController = TextEditingController();
-    final thumbnailController = TextEditingController();
-    final titleController = TextEditingController();
-    String selectedType = 'img';
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text(isHead ? 'Add Head Media Item' : 'Add Body Media Item'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: srcController,
-                  decoration: const InputDecoration(
-                    labelText: 'Media URL',
-                    hintText: 'https://...',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title (optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLength: 64,
-                ),
-                const SizedBox(height: 4),
-                Text('Type', style: Theme.of(context).textTheme.labelMedium),
-                RadioGroup<String>(
-                  groupValue: selectedType,
-                  onChanged: (value) {
-                    if (value != null) {
-                      setDialogState(() => selectedType = value);
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      const Radio<String>(value: 'img'),
-                      const Text('Image'),
-                      const SizedBox(width: 16),
-                      const Radio<String>(value: 'vid'),
-                      const Text('Video'),
-                    ],
-                  ),
-                ),
-                if (selectedType == 'vid') ...[
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: thumbnailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Thumbnail URL (optional)',
-                      hintText: 'https://...',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.url,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final src = srcController.text.trim();
-                if (src.isEmpty) return;
-                final item = {
-                  'src': src,
-                  'type': selectedType,
-                  'title': titleController.text.trim(),
-                  'thumbnailSrc': thumbnailController.text.trim(),
-                };
-                setState(() {
-                  if (isHead) {
-                    _headMediaPool.add(item);
-                  } else {
-                    _bodyMediaPool.add(item);
-                  }
-                });
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Add'),
-            ),
-          ],
+  Future<void> _onAddMediaPoolItem({required bool isHead}) async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddMediaFilePage(
+          eventContext: widget.eventContext,
+          returnResultOnly: true,
         ),
       ),
     );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      final item = {
+        'src': result['src'] ?? '',
+        'type': result['type'] ?? 'img',
+        'title': result['title'] ?? '',
+        'thumbnailSrc': result['thumbnailSrc'] ?? '',
+      };
+      if (isHead) {
+        _headMediaPool.add(item);
+      } else {
+        _bodyMediaPool.add(item);
+      }
+    });
   }
 
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
