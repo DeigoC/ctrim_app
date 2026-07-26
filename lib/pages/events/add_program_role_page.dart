@@ -417,15 +417,31 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   void _onStartTimeTap() {
     showTimePicker(
             context: context,
-            initialTime: widget.eventContext.head.startTimeOfEvent,
+            initialTime: _start != null
+                ? TimeOfDay.fromDateTime(_start!)
+                : widget.eventContext.head.startTimeOfEvent,
             helpText: 'When does the role start?')
         .then((selectedStartTime) async {
       if (selectedStartTime != null) {
-        setState(() {
-          _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
-              widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
-        });
-        _onEndTimeTap();
+        final DateTime newStart = DateTime(
+            widget.eventContext.head.eventDate!.year,
+            widget.eventContext.head.eventDate!.month,
+            widget.eventContext.head.eventDate!.day,
+            selectedStartTime.hour,
+            selectedStartTime.minute);
+        if (_end != null && _start != null) {
+          final Duration duration = _end!.difference(_start!);
+          setState(() {
+            _start = newStart;
+            _end = _start!.add(duration);
+          });
+          _onRequirementsChange('');
+        } else {
+          setState(() {
+            _start = newStart;
+          });
+          _onEndTimeTap();
+        }
       }
     });
   }
@@ -556,27 +572,31 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     });
   }
 
-  void _onSaveClick() {
-    showDialog(
+  Future<void> _onSaveClick() async {
+    bool shiftFollowing = false;
+    final int affectedCount =
+        widget.eventContext.program.countRolesStartingAtOrAfter(_start!);
+    if (affectedCount > 0) {
+      final bool? choice = await DialogManager.askShiftFollowingScheduleItems(
         context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text('Save Program Details'),
-            content: const Text('Are you sure the details are correct?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () {
-                    _addProgramRoleToEventContext();
-                    widget.eventContext.allowSavingOfTheEdit();
-                    _isSaved = true;
-                    Navigator.of(context).pop();
-                    _popRouteAfterAllowing();
-                  },
-                  child: const Text('Save')),
-            ],
-          );
-        });
+        affectedCount: affectedCount,
+      );
+      if (choice == null || !mounted) return;
+      shiftFollowing = choice;
+    } else {
+      final bool confirmed = await DialogManager.showConfirmationDialog(
+        context: context,
+        title: 'Save Program Details',
+        content: 'Are you sure the details are correct?',
+        confirmText: 'Save',
+      );
+      if (!confirmed || !mounted) return;
+    }
+
+    _addProgramRoleToEventContext(shiftFollowing: shiftFollowing);
+    widget.eventContext.allowSavingOfTheEdit();
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 
   bool _isEndTimeValid(final TimeOfDay end) {
@@ -591,13 +611,18 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     return false;
   }
 
-  void _addProgramRoleToEventContext() {
+  void _addProgramRoleToEventContext({required bool shiftFollowing}) {
     final int id = DateTime.now().millisecondsSinceEpoch;
     debugPrint('sending the role addition to the following: $_selectedUsers');
     if (_selectedUsers.isNotEmpty) {
       widget.eventContext.addRoleAdditionNotification(_selectedUsers, id);
     }
 
+    widget.eventContext.program.applyInsertShift(
+      start: _start!,
+      end: _end!,
+      shiftFollowing: shiftFollowing,
+    );
     widget.eventContext.program.addRole(
         uids: _selectedUsers,
         title: _tecTitle.text.trim(),
@@ -607,5 +632,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
         forGuests: _forGuests,
         priority: 1,
         id: id);
+    widget.eventContext.program.orderProgramsByStartTime();
   }
 }

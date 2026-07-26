@@ -367,7 +367,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     if (kIsWeb) {
       try {
         final result = await SharePlus.instance.share(
-          const ShareParams(text: ShareWebAppPage.shareMessage),
+          ShareParams(text: ShareWebAppPage.shareMessage),
         );
         if (!context.mounted) return;
         if (result.status == ShareResultStatus.dismissed ||
