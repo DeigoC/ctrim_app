@@ -110,6 +110,100 @@ class EventProgram {
 
   void removeRole(final int id) => _roles.removeWhere((entry) => entry['id'] == id);
 
+  /// Roles whose start is at or after [threshold], optionally excluding one role.
+  int countRolesStartingAtOrAfter(DateTime threshold, {int? excludeRoleId}) {
+    return _roles.where((role) {
+      if (excludeRoleId != null && role['id'] == excludeRoleId) return false;
+      final start = role['start'] as DateTime?;
+      return start != null && !start.isBefore(threshold);
+    }).length;
+  }
+
+  /// Shifts start/end of roles with start >= [threshold] by [delta].
+  void shiftRolesStartingAtOrAfter(DateTime threshold, Duration delta, {int? excludeRoleId}) {
+    if (delta == Duration.zero) return;
+    for (final role in _roles) {
+      if (excludeRoleId != null && role['id'] == excludeRoleId) continue;
+      final start = role['start'] as DateTime?;
+      final end = role['end'] as DateTime?;
+      if (start == null || end == null || start.isBefore(threshold)) continue;
+      role['start'] = start.add(delta);
+      role['end'] = end.add(delta);
+    }
+  }
+
+  /// Updates one role's timing. When [shiftFollowing] is true, roles that started
+  /// at or after the previous end are shifted by (newEnd - oldEnd), preserving gaps.
+  void updateRoleTiming({
+    required int roleId,
+    required DateTime newStart,
+    required DateTime newEnd,
+    required bool shiftFollowing,
+  }) {
+    final role = _roles.firstWhere((entry) => entry['id'] == roleId);
+    final DateTime oldEnd = role['end'] as DateTime;
+    role['start'] = newStart;
+    role['end'] = newEnd;
+    if (shiftFollowing) {
+      shiftRolesStartingAtOrAfter(oldEnd, newEnd.difference(oldEnd), excludeRoleId: roleId);
+    }
+    orderProgramsByStartTime();
+  }
+
+  /// When inserting a new item at [start]–[end], optionally push later items by its duration.
+  void applyInsertShift({
+    required DateTime start,
+    required DateTime end,
+    required bool shiftFollowing,
+  }) {
+    if (!shiftFollowing) return;
+    shiftRolesStartingAtOrAfter(start, end.difference(start));
+  }
+
+  /// Moves a role one place earlier (-1) or later (+1) in start-time order.
+  /// Swaps time slots with the neighbor while preserving each duration and the gap.
+  /// Returns false if the move is not possible.
+  bool moveRoleInOrder(int roleId, int direction) {
+    if (direction != -1 && direction != 1) return false;
+    orderProgramsByStartTime();
+    final int index = _roles.indexWhere((entry) => entry['id'] == roleId);
+    final int newIndex = index + direction;
+    if (index < 0 || newIndex < 0 || newIndex >= _roles.length) return false;
+
+    final int earlierIndex = index < newIndex ? index : newIndex;
+    final int laterIndex = index < newIndex ? newIndex : index;
+    final Map<String, dynamic> earlier = _roles[earlierIndex];
+    final Map<String, dynamic> later = _roles[laterIndex];
+
+    final DateTime earlierStart = earlier['start'] as DateTime;
+    final DateTime earlierEnd = earlier['end'] as DateTime;
+    final DateTime laterStart = later['start'] as DateTime;
+    final DateTime laterEnd = later['end'] as DateTime;
+    final Duration earlierDuration = earlierEnd.difference(earlierStart);
+    final Duration laterDuration = laterEnd.difference(laterStart);
+    final Duration gap = laterStart.difference(earlierEnd);
+
+    // Neighbor takes the earlier slot; original earlier item follows with the same gap.
+    final DateTime swappedEarlierStart = earlierStart;
+    final DateTime swappedEarlierEnd = swappedEarlierStart.add(laterDuration);
+    final DateTime swappedLaterStart = swappedEarlierEnd.add(gap);
+    final DateTime swappedLaterEnd = swappedLaterStart.add(earlierDuration);
+
+    earlier['start'] = swappedLaterStart;
+    earlier['end'] = swappedLaterEnd;
+    later['start'] = swappedEarlierStart;
+    later['end'] = swappedEarlierEnd;
+
+    orderProgramsByStartTime();
+    return true;
+  }
+
+  /// Sorted index of [roleId], or -1 if missing / missing start.
+  int indexOfRole(int roleId) {
+    orderProgramsByStartTime();
+    return _roles.indexWhere((entry) => entry['id'] == roleId);
+  }
+
   @override
   String toString() {
     final String finishString = _finishTime == null ? 'No finish datetime' : 'Finish datetime is $_finishTime';

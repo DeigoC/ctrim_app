@@ -18,13 +18,21 @@ class ProgramTile extends StatelessWidget {
       required this.selected,
       required this.assignedUsers,
       required this.canEdit,
-      required this.onEditClick});
+      required this.onEditClick,
+      this.onMoveUp,
+      this.onMoveDown,
+      this.canMoveUp = false,
+      this.canMoveDown = false});
   final Function(Map<String, dynamic>) onTap;
   final Function() onEditClick;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
   final Map<String, dynamic> programEntry;
   final bool selected;
   final List<User> assignedUsers;
   final bool canEdit;
+  final bool canMoveUp;
+  final bool canMoveDown;
 
   static final DateFormat _timeFormat = DateFormat('HH:mm');
 
@@ -121,30 +129,57 @@ class ProgramTile extends StatelessWidget {
     if (canEdit) {
       children.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Column(
             children: [
-              FilledButton.tonal(
-                onPressed: () => onTap(programEntry),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.expand_less, size: 18),
-                    SizedBox(width: 4),
-                    Text('Show Less'),
-                  ],
+              if (canMoveUp || canMoveDown)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: canMoveUp ? onMoveUp : null,
+                          icon: const Icon(Icons.arrow_upward, size: 18),
+                          label: const Text('Move earlier'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: canMoveDown ? onMoveDown : null,
+                          icon: const Icon(Icons.arrow_downward, size: 18),
+                          label: const Text('Move later'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              FilledButton.tonal(
-                onPressed: () => onEditClick(),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit, size: 18),
-                    SizedBox(width: 4),
-                    Text('Edit Task'),
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: () => onTap(programEntry),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.expand_less, size: 18),
+                        SizedBox(width: 4),
+                        Text('Show Less'),
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: () => onEditClick(),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit, size: 18),
+                        SizedBox(width: 4),
+                        Text('Edit Task'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           )));

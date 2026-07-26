@@ -402,12 +402,13 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_start), helpText: 'When does the role start?')
         .then((selectedStartTime) async {
       if (selectedStartTime != null) {
+        final Duration duration = _end.difference(_start);
         setState(() {
           _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
               widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
+          _end = _start.add(duration);
         });
         _hasAnythingChanged();
-        _onEndTimeTap();
       }
     });
   }
@@ -576,38 +577,57 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     _hasAnythingChanged();
   }
 
-  void _onSaveClick() {
-    showDialog(
+  Future<void> _onSaveClick() async {
+    bool shiftFollowing = false;
+    if (!_areTimesTheSame()) {
+      final DateTime oldEnd = widget.programEntry['end'] as DateTime;
+      final int affectedCount = widget.eventContext.program
+          .countRolesStartingAtOrAfter(oldEnd, excludeRoleId: widget.programEntry['id'] as int);
+      if (affectedCount > 0) {
+        final bool? choice = await DialogManager.askShiftFollowingScheduleItems(
+          context: context,
+          affectedCount: affectedCount,
+        );
+        if (choice == null || !mounted) return;
+        shiftFollowing = choice;
+      } else {
+        final bool confirmed = await DialogManager.showConfirmationDialog(
+          context: context,
+          title: 'Save Program Details',
+          content: 'Are you sure the details are correct?',
+          confirmText: 'Save',
+        );
+        if (!confirmed || !mounted) return;
+      }
+    } else {
+      final bool confirmed = await DialogManager.showConfirmationDialog(
         context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text('Save Program Details'),
-            content: const Text('Are you sure the details are correct?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () {
-                    _saveAllChanges();
-                    widget.eventContext.allowSavingOfTheEdit();
-                    _isSaved = true;
-                    Navigator.of(context).pop();
-                    _popRouteAfterAllowing();
-                  },
-                  child: const Text('Save')),
-            ],
-          );
-        });
+        title: 'Save Program Details',
+        content: 'Are you sure the details are correct?',
+        confirmText: 'Save',
+      );
+      if (!confirmed || !mounted) return;
+    }
+
+    _saveAllChanges(shiftFollowing: shiftFollowing);
+    widget.eventContext.allowSavingOfTheEdit();
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 
-  void _saveAllChanges() {
+  void _saveAllChanges({required bool shiftFollowing}) {
     _sortNotifications();
     widget.programEntry['uids'] = _selectedUsers;
     widget.programEntry['detail'] = _tecDetail.text.trim();
     widget.programEntry['title'] = _tecTitle.text.trim();
-    widget.programEntry['start'] = _start;
-    widget.programEntry['end'] = _end;
     widget.programEntry['for_guests'] = _forGuests;
     widget.programEntry['priority'] = 1;
+    widget.eventContext.program.updateRoleTiming(
+      roleId: widget.programEntry['id'] as int,
+      newStart: _start,
+      newEnd: _end,
+      shiftFollowing: shiftFollowing,
+    );
   }
 
   void _sortNotifications() {
