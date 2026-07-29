@@ -26,17 +26,20 @@ class PostTemplateMapper {
       eventContext.setTemplateSubtitles(List<String>.from(template.subtitles));
     }
 
-    // head media pool - auto-select one random item if pool exists, otherwise use fixed headMedia
-    if (template.headMediaPool.isNotEmpty) {
-      final randomHeadMedia = template.getRandomHeadMediaPoolItem();
-      if (randomHeadMedia != null) {
+    // Cover / key graphic: prefer body media pool (intended cover pool),
+    // fall back to head media pool, else fixed headMedia.
+    final coverPool = template.keyGraphicPool;
+    if (coverPool.isNotEmpty) {
+      final randomCover = template.getRandomKeyGraphicPoolItem();
+      if (randomCover != null) {
         eventContext.head.addMediaItem(
-            type: randomHeadMedia['type']!,
-            src: randomHeadMedia['src']!,
-            title: randomHeadMedia['title'] ?? '',
-            thumbnail: randomHeadMedia['thumbnailSrc'] ?? '');
+            type: randomCover['type']!,
+            src: randomCover['src']!,
+            title: randomCover['title'] ?? '',
+            thumbnail: randomCover['thumbnailSrc'] ?? '');
       }
-      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(template.headMediaPool));
+      // Expose on the head-pool selector so cover can be changed while adding a post.
+      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(coverPool));
     } else {
       for (final headMediaItem in template.headMedia) {
         eventContext.head.addMediaItem(
@@ -47,12 +50,7 @@ class PostTemplateMapper {
       }
     }
 
-    // body media pool
-    if (template.bodyMediaPool.isNotEmpty) {
-      eventContext.setTemplateBodyMediaPool(List<Map<String, dynamic>>.from(template.bodyMediaPool));
-    }
-
-    // body and fixed media
+    // body and fixed media (fixed Media only — body pool is for covers, not gallery)
     eventContext.setFetchedBody(template.body);
     if (template.media.isNotEmpty) {
       eventContext.media.addAllMediaFiles(template.media);

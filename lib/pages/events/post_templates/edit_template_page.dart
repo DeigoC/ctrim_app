@@ -93,7 +93,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   Widget _buildMediaTab() {
     return Column(
       children: [
-        _buildBodyMediaPoolEditor(),
+        _buildCoverMediaPoolEditor(),
         Expanded(child: ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)),
       ],
     );
@@ -113,8 +113,6 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         _buildSubtitleListEditor(),
         const Divider(height: 32),
         _buildDayOfWeekPicker(),
-        const SizedBox(height: 16),
-        _buildHeadMediaPoolEditor(),
         const SizedBox(height: 16),
       ],
     );
@@ -357,10 +355,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  // * Head Media Pool Editor
+  // * Cover Image Pool (stored as BodyMediaPool)
 
-  Widget _buildHeadMediaPoolEditor() {
+  Widget _buildCoverMediaPoolEditor() {
     return Card(
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -372,75 +371,15 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 const Icon(Icons.image_outlined, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Template Head Media Pool',
+                  'Cover Image Pool',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Add multiple cover images that can be randomly or manually selected when creating posts from this template. '
-              'URLs are tested first; Google Drive share links are converted automatically.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            if (_headMediaPool.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Center(
-                  child: Text(
-                    'No head media items added yet',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ),
-              )
-            else
-              ..._headMediaPool.asMap().entries.map((entry) => _buildPoolMediaItem(
-                    entry.value,
-                    onDelete: () => setState(() => _headMediaPool.removeAt(entry.key)),
-                  )),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _onAddMediaPoolItem(isHead: true),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Media Item'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // * Body Media Pool Editor
-
-  Widget _buildBodyMediaPoolEditor() {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.photo_library_outlined, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Template Body Media Pool',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add media items that can be randomly or manually added to the gallery when creating posts from this template. '
-              'URLs are tested first; Google Drive share links are converted automatically.',
+              'Add cover images that are randomly or manually picked as the post key graphic when creating posts '
+              '(including bulk create). URLs are tested first; Google Drive share links are converted automatically.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -452,7 +391,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
                   child: Text(
-                    'No body media items added yet',
+                    'No cover images added yet',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -466,9 +405,9 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                   )),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => _onAddMediaPoolItem(isHead: false),
+              onPressed: _onAddCoverPoolItem,
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Media Item'),
+              label: const Text('Add Cover Image'),
             ),
           ],
         ),
@@ -538,7 +477,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  Future<void> _onAddMediaPoolItem({required bool isHead}) async {
+  Future<void> _onAddCoverPoolItem() async {
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
@@ -551,17 +490,12 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     if (!mounted || result == null) return;
 
     setState(() {
-      final item = {
+      _bodyMediaPool.add({
         'src': result['src'] ?? '',
         'type': result['type'] ?? 'img',
         'title': result['title'] ?? '',
         'thumbnailSrc': result['thumbnailSrc'] ?? '',
-      };
-      if (isHead) {
-        _headMediaPool.add(item);
-      } else {
-        _bodyMediaPool.add(item);
-      }
+      });
     });
   }
 

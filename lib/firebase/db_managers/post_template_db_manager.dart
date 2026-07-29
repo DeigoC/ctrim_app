@@ -21,6 +21,13 @@ class PostTemplateDBManager {
         .toList();
   }
 
+  Future<PostTemplate?> fetchTemplate(final String id) async {
+    final doc = await _ref.doc(id).get();
+    final data = doc.data();
+    if (!doc.exists || data == null || data is! Map<String, dynamic>) return null;
+    return PostTemplate.fromMap(false, doc.id, data);
+  }
+
   /// Updates an existing template. Returns the new `lastUpdate` epoch ms.
   Future<int> updateTemplate(final PostTemplate template) async {
     final now = DateTime.now().millisecondsSinceEpoch;

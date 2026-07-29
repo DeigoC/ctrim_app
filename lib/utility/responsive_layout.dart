@@ -23,6 +23,10 @@ abstract final class ResponsiveLayout {
   static const double dialogMaxWidth = 420;
   static const double dialogAvatarMaxRadius = 120;
 
+  /// Desktop content column cap — also used for modal bottom sheets.
+  static const double desktopContentMaxWidth = 1400;
+  static const double tabletContentMaxWidth = 1000;
+
   static bool isCompact(double width) => width < compact;
 
   static bool isWideScreen(double width) => width >= tablet;
@@ -42,10 +46,18 @@ abstract final class ResponsiveLayout {
   }
 
   static double maxContentWidth(double width) {
-    if (width >= desktop) return 1400;
-    if (width >= tablet) return 1000;
+    if (width >= desktop) return desktopContentMaxWidth;
+    if (width >= tablet) return tabletContentMaxWidth;
     return width;
   }
+
+  /// Caps modal bottom sheets to the same width as main content on wide screens.
+  /// On phones this resolves to the full screen width (no visual change).
+  static BoxConstraints bottomSheetConstraints(double width) =>
+      BoxConstraints(maxWidth: maxContentWidth(width));
+
+  static BoxConstraints bottomSheetConstraintsOf(BuildContext context) =>
+      bottomSheetConstraints(MediaQuery.sizeOf(context).width);
 
   static int crossAxisCount(double width, {int max = 3}) {
     if (width >= desktop) return max;

@@ -22,27 +22,45 @@ class PostTemplateLoader {
 
     final dataManager = LocalDataManager();
 
+    final dbManager = PostTemplateDBManager();
+
     if (!forceRemote) {
       report(0, 4, 'Checking local cache…');
       final checkedToday = await dataManager.haveCheckedTemplateUpdates();
 
       if (checkedToday) {
-        report(2, 4, 'Reading saved templates…');
-        final cached = await dataManager.readAllPostTemplates();
-        if (cached.isEmpty) {
-          report(1, 4, 'Cache empty — fetching from server…');
-          await dataManager.clearPostTemplateDir();
+        // Still compare lastUpdate so same-day template edits (e.g. media pools)
+        // are not skipped until tomorrow.
+        report(1, 4, 'Checking for updates…');
+        try {
+          final localUpdateValue = await dataManager.readLastPostTemplateUpdate();
+          final dbUpdateValue = await dbManager.fetchLastUpdateTime();
+          if (localUpdateValue == dbUpdateValue) {
+            report(2, 4, 'Reading saved templates…');
+            final cached = await dataManager.readAllPostTemplates();
+            if (cached.isEmpty) {
+              report(1, 4, 'Cache empty — fetching from server…');
+              await dataManager.clearPostTemplateDir();
+              return load(onProgress: onProgress, forceRemote: true);
+            }
+            report(4, 4, 'Ready');
+            return cached;
+          }
+        } catch (_) {
+          report(2, 4, 'Reading saved templates…');
+          final cached = await dataManager.readAllPostTemplates();
+          if (cached.isNotEmpty) {
+            report(4, 4, 'Ready');
+            return cached;
+          }
           return load(onProgress: onProgress, forceRemote: true);
         }
-        report(4, 4, 'Ready');
-        return cached;
       }
     } else {
       report(0, 4, 'Fetching from server…');
     }
 
     report(1, 4, 'Checking for updates…');
-    final dbManager = PostTemplateDBManager();
     final localUpdateValue = await dataManager.readLastPostTemplateUpdate();
     final dbUpdateValue = await dbManager.fetchLastUpdateTime();
 

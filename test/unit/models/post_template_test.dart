@@ -125,6 +125,37 @@ void main() {
         expect(template.roles.single['uids'], ['u1']);
         expect(template.roles.single['id'], 42);
       });
+      test('keyGraphicPool prefers body media pool over head media pool', () {
+        final template = PostTemplate.fromMap(
+          true,
+          'key-pool',
+          baseLocalMap(
+            headMediaPool: [
+              {'title': 'Head', 'src': 'head.jpg', 'type': 'img', 'thumbnailSrc': null},
+            ],
+            bodyMediaPool: [
+              {'title': 'Body', 'src': 'body.jpg', 'type': 'img', 'thumbnailSrc': null},
+            ],
+          ),
+        );
+
+        expect(template.keyGraphicPool.single['src'], 'body.jpg');
+        expect(template.getRandomKeyGraphicPoolItem()?['src'], 'body.jpg');
+      });
+
+      test('keyGraphicPool falls back to head media pool', () {
+        final template = PostTemplate.fromMap(
+          true,
+          'key-pool-fallback',
+          baseLocalMap(
+            headMediaPool: [
+              {'title': 'Head', 'src': 'head.jpg', 'type': 'img', 'thumbnailSrc': null},
+            ],
+          ),
+        );
+
+        expect(template.keyGraphicPool.single['src'], 'head.jpg');
+      });
     });
 
     group('toJson', () {

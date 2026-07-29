@@ -122,6 +122,11 @@ class PostTemplate {
   List<Map<String, dynamic>> get media => _media;
   List<Map<String, dynamic>> get headMediaPool => _headMediaPool;
   List<Map<String, dynamic>> get bodyMediaPool => _bodyMediaPool;
+
+  /// Cover / key-graphic candidates. Prefer [bodyMediaPool] (the intended cover pool);
+  /// fall back to [headMediaPool] for older templates.
+  List<Map<String, dynamic>> get keyGraphicPool =>
+      _bodyMediaPool.isNotEmpty ? _bodyMediaPool : _headMediaPool;
   List<Map<String, dynamic>> get roles => _roles;
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
@@ -194,6 +199,13 @@ class PostTemplate {
     if (_bodyMediaPool.isEmpty) return null;
     final index = DateTime.now().millisecondsSinceEpoch % _bodyMediaPool.length;
     return _bodyMediaPool[index];
+  }
+
+  Map<String, dynamic>? getRandomKeyGraphicPoolItem() {
+    final pool = keyGraphicPool;
+    if (pool.isEmpty) return null;
+    final index = DateTime.now().millisecondsSinceEpoch % pool.length;
+    return Map<String, dynamic>.from(pool[index]);
   }
 
   // private methods

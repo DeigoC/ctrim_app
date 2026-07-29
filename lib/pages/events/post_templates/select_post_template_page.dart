@@ -81,6 +81,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
     try {
       final templates = await PostTemplateLoader.load(
+        forceRemote: widget.bulkMode,
         onProgress: ({required completed, required total, required message}) {
           _updateLoadProgress(completed: completed, total: total, message: message);
         },
