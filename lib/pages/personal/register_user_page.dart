@@ -8,6 +8,7 @@ import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
 import '../../utility/volunteer_locations.dart';
+import '../../widgets/responsive_content.dart';
 import '../../widgets/user_tag_picker.dart';
 
 class RegisterUserPage extends StatefulWidget {
@@ -70,87 +71,90 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   Widget _buildBody() {
-    return ListView(
-      padding: const EdgeInsets.all(8),
-      children: [
-        TextField(
-            decoration: const InputDecoration(label: Text('Forename'), hintText: 'Enter first name please'),
-            controller: _tecForename,
-            onChanged: _areFieldsGood,
-            onSubmitted: (_) => _fnSurname.requestFocus()),
-        TextField(
-            decoration: const InputDecoration(label: Text('Surname'), hintText: 'Enter second name please'),
-            controller: _tecSurname,
-            onChanged: _areFieldsGood,
-            focusNode: _fnSurname,
-            onSubmitted: (_) => _fnEmail.requestFocus()),
-        const SizedBox(height: 16),
-        _buildLocationSelector(),
-        const SizedBox(height: 16),
-        const Divider(),
-        Text('Account (optional)', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          'Leave blank to create a placeholder profile (e.g. for schedules). '
-          'Link their real account later from Edit User after they register.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-            decoration: const InputDecoration(
-              label: Text('Email'),
-              hintText: 'Their registered account email',
-            ),
-            controller: _tecEmail,
-            onChanged: _areFieldsGood,
-            focusNode: _fnEmail),
-        TextField(
-            decoration: const InputDecoration(
-              label: Text('AuthID'),
-              hintText: 'Found after searching email…',
-            ),
-            controller: _tecAuthID,
-            readOnly: true),
-        const SizedBox(height: 8),
-        ElevatedButton(
-            onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
-            child: const Text('Search for AuthID')),
-        ElevatedButton(
-            onPressed: _tecAuthID.text.isNotEmpty
-                ? () {
-                    setState(() {
-                      _tecAuthID.clear();
-                    });
-                    _areFieldsGood('');
-                  }
-                : null,
-            child: const Text('Clear AuthID')),
-        const Divider(),
-        SwitchListTile(
-            title: const Text('Are they a leader?'),
-            subtitle: const Text('Can create posts'),
-            value: _isLeader,
-            onChanged: (value) => setState(() {
-                  _isLeader = value;
-                })),
-        const Divider(),
-        const SizedBox(height: 16),
-        Consumer<AppContext>(
-          builder: (context, appContext, _) => UserTagPicker(
-            allTags: appContext.allTags,
-            selectedTagIDs: _selectedTagIDs,
-            onChanged: (selected) => setState(() => _selectedTagIDs = selected),
+    return ResponsiveContent(
+      narrowPadding: 8,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          TextField(
+              decoration: const InputDecoration(label: Text('Forename'), hintText: 'Enter first name please'),
+              controller: _tecForename,
+              onChanged: _areFieldsGood,
+              onSubmitted: (_) => _fnSurname.requestFocus()),
+          TextField(
+              decoration: const InputDecoration(label: Text('Surname'), hintText: 'Enter second name please'),
+              controller: _tecSurname,
+              onChanged: _areFieldsGood,
+              focusNode: _fnSurname,
+              onSubmitted: (_) => _fnEmail.requestFocus()),
+          const SizedBox(height: 16),
+          _buildLocationSelector(),
+          const SizedBox(height: 16),
+          const Divider(),
+          Text('Account (optional)', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Leave blank to create a placeholder profile (e.g. for schedules). '
+            'Link their real account later from Edit User after they register.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _canSave ? () => _saveUserClick() : null,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: Text(_hasLinkedAuth ? 'Save' : 'Save placeholder'),
-        ),
-      ],
+          const SizedBox(height: 12),
+          TextField(
+              decoration: const InputDecoration(
+                label: Text('Email'),
+                hintText: 'Their registered account email',
+              ),
+              controller: _tecEmail,
+              onChanged: _areFieldsGood,
+              focusNode: _fnEmail),
+          TextField(
+              decoration: const InputDecoration(
+                label: Text('AuthID'),
+                hintText: 'Found after searching email…',
+              ),
+              controller: _tecAuthID,
+              readOnly: true),
+          const SizedBox(height: 8),
+          ElevatedButton(
+              onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
+              child: const Text('Search for AuthID')),
+          ElevatedButton(
+              onPressed: _tecAuthID.text.isNotEmpty
+                  ? () {
+                      setState(() {
+                        _tecAuthID.clear();
+                      });
+                      _areFieldsGood('');
+                    }
+                  : null,
+              child: const Text('Clear AuthID')),
+          const Divider(),
+          SwitchListTile(
+              title: const Text('Are they a leader?'),
+              subtitle: const Text('Can create posts'),
+              value: _isLeader,
+              onChanged: (value) => setState(() {
+                    _isLeader = value;
+                  })),
+          const Divider(),
+          const SizedBox(height: 16),
+          Consumer<AppContext>(
+            builder: (context, appContext, _) => UserTagPicker(
+              allTags: appContext.allTags,
+              selectedTagIDs: _selectedTagIDs,
+              onChanged: (selected) => setState(() => _selectedTagIDs = selected),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _canSave ? () => _saveUserClick() : null,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: Text(_hasLinkedAuth ? 'Save' : 'Save placeholder'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -42,8 +42,11 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final horizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
+    final horizontalPadding = isWide
+        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
+        : 0.0;
 
     return Scaffold(
       appBar: AppBar(

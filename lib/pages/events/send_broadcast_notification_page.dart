@@ -5,7 +5,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/event_notification_copy.dart';
 import '../../utility/notification_send_result.dart';
-import '../../utility/responsive_layout.dart';
+import '../../widgets/responsive_content.dart';
 
 /// Compose and send a broadcast push for a post.
 ///
@@ -64,20 +64,17 @@ class _SendBroadcastNotificationPageState
 
   @override
   Widget build(BuildContext context) {
-    final gutter = ResponsiveLayout.horizontalGutter(
-      MediaQuery.sizeOf(context).width,
-      narrowPadding: 16,
-    );
-
     return Scaffold(
       appBar: AppBar(title: const Text('Send Broadcast')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 32),
-        children: [
-          _buildPreviewCard(context),
-          const SizedBox(height: 24),
-          Text(
-            'Notification body',
+      body: ResponsiveContent(
+        narrowPadding: 16,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
+          children: [
+            _buildPreviewCard(context),
+            const SizedBox(height: 24),
+            Text(
+              'Notification body',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -144,6 +141,7 @@ class _SendBroadcastNotificationPageState
             label: Text(_sending ? 'Sending…' : 'Send notification'),
           ),
         ],
+        ),
       ),
     );
   }

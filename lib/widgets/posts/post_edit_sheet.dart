@@ -10,6 +10,7 @@ class PostEditSheet extends StatelessWidget {
     required this.onEditTitle,
     required this.onAddSchedule,
     required this.onEditMedia,
+    required this.onChangeCover,
     required this.onManageContributors,
     required this.onManageLeadSpeaker,
     required this.onOpenPeopleTab,
@@ -26,6 +27,7 @@ class PostEditSheet extends StatelessWidget {
   final VoidCallback onEditTitle;
   final VoidCallback onAddSchedule;
   final VoidCallback onEditMedia;
+  final VoidCallback onChangeCover;
   final VoidCallback onManageContributors;
   final VoidCallback onManageLeadSpeaker;
   final VoidCallback onOpenPeopleTab;
@@ -132,6 +134,15 @@ class PostEditSheet extends StatelessWidget {
                 title: 'Add Schedule',
                 subtitle: 'Add a program role or time slot',
                 onTap: onAddSchedule,
+              ),
+              _option(
+                theme,
+                colorScheme,
+                icon: Icons.image_outlined,
+                color: Colors.deepOrange,
+                title: 'Change cover',
+                subtitle: 'Key graphic from a template cover pool',
+                onTap: onChangeCover,
               ),
               _option(
                 theme,

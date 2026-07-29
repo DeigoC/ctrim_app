@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../utility/dialog_manager.dart';
 import '../../utility/pwa_install_service.dart';
+import '../../widgets/responsive_content.dart';
 
 class ShareWebAppPage extends StatefulWidget {
   const ShareWebAppPage({super.key});
@@ -44,59 +45,62 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                colorScheme.primaryContainer,
-                colorScheme.secondaryContainer,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.language_rounded,
-                size: 48,
-                color: colorScheme.onPrimaryContainer,
+    return ResponsiveContent(
+      narrowPadding: 16,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primaryContainer,
+                  colorScheme.secondaryContainer,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Share the CTRIM Web App',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.language_rounded,
+                  size: 48,
                   color: colorScheme.onPrimaryContainer,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Invite others to open CTRIM in their browser and add it to their home screen.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                const SizedBox(height: 12),
+                Text(
+                  'Share the CTRIM Web App',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Invite others to open CTRIM in their browser and add it to their home screen.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-        _buildShareActions(context),
-        const SizedBox(height: 24),
-        _buildQrSection(context),
-        if (_shouldShowInstallSection) ...[
           const SizedBox(height: 24),
-          _buildInstallSection(context),
+          _buildShareActions(context),
+          const SizedBox(height: 24),
+          _buildQrSection(context),
+          if (_shouldShowInstallSection) ...[
+            const SizedBox(height: 24),
+            _buildInstallSection(context),
+          ],
+          const SizedBox(height: 32),
         ],
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 

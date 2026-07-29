@@ -7,8 +7,10 @@ import '../../../utility/app_context.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/post_template_mapper.dart';
+import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/load_progress_body.dart';
+import '../../../widgets/responsive_content.dart';
 import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
 
@@ -37,7 +39,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
   List<PostTemplate> _allTemplates = [];
-  List<PostTemplate> _filteredTemplates = [];
 
   bool _loading = true;
   Object? _loadError;
@@ -95,7 +96,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
       setState(() {
         _allTemplates = templates;
-        _filteredTemplates = _getFilteredTemplates(templates);
         _loading = false;
       });
     } catch (e, st) {
@@ -148,7 +148,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
   Widget _buildSearchAndFilters(ColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
@@ -158,18 +157,22 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
           ),
         ),
       ),
-      child: Column(
-        children: [
-          // Search Bar
-          AppSearchBar(
-            controller: _searchController,
-            hintText: 'Search templates...',
-            onChanged: _onSearchChanged,
+      child: ResponsiveContent(
+        narrowPadding: 16,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            children: [
+              AppSearchBar(
+                controller: _searchController,
+                hintText: 'Search templates...',
+                onChanged: _onSearchChanged,
+              ),
+              const SizedBox(height: 12),
+              if (_allTemplates.isNotEmpty) _buildCategoryFilter(colorScheme),
+            ],
           ),
-          const SizedBox(height: 12),
-          // Category Filter
-          if (_allTemplates.isNotEmpty) _buildCategoryFilter(colorScheme),
-        ],
+        ),
       ),
     );
   }
@@ -222,11 +225,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       );
     }
 
-    if (_filteredTemplates.isEmpty) {
+    final filtered = _getFilteredTemplates(_allTemplates);
+    if (filtered.isEmpty) {
       return _buildEmptyState();
     }
 
-    return _buildBodyWithData(_filteredTemplates);
+    return _buildBodyWithData(filtered);
   }
 
   Widget _buildEmptyState() {
@@ -294,11 +298,53 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   Widget _buildBodyWithData(final List<PostTemplate> templates) {
-    return ListView.separated(
-        padding: const EdgeInsets.all(16),
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemCount: templates.length,
-        itemBuilder: (_, index) => _buildTemplateTile(templates[index]));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isWide = ResponsiveLayout.isWideScreen(width);
+        final horizontalPadding = isWide
+            ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2).clamp(16.0, double.infinity)
+            : 16.0;
+
+        if (!isWide) {
+          return ListView.separated(
+            padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemCount: templates.length,
+            itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
+          );
+        }
+
+        final left = <PostTemplate>[];
+        final right = <PostTemplate>[];
+        for (var i = 0; i < templates.length; i++) {
+          (i.isEven ? left : right).add(templates[i]);
+        }
+
+        Widget column(List<PostTemplate> items) {
+          return Column(
+            children: [
+              for (var i = 0; i < items.length; i++) ...[
+                if (i > 0) const SizedBox(height: 12),
+                _buildTemplateTile(items[i]),
+              ],
+            ],
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: column(left)),
+              const SizedBox(width: 16),
+              Expanded(child: column(right)),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildTemplateTile(final PostTemplate template) {

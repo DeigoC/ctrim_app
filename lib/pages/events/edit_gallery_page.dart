@@ -6,6 +6,7 @@ import '../../utility/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
 import 'add_media_file_page.dart';
+import 'select_template_cover_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditGalleryPage extends StatefulWidget {
@@ -166,7 +167,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Add media below, then mark items as key media',
+                                  'Choose a cover from a template pool, or add media below and mark it as key',
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                         color: colorScheme.onSurface.withValues(alpha: 0.5),
@@ -176,6 +177,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: _onChooseTemplateCover,
+                          icon: const Icon(Icons.photo_library_outlined, size: 18),
+                          label: const Text('Choose from template cover pool'),
+                        ),
                       ],
                     ),
                   ),
@@ -609,6 +616,34 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 ))).then((_) {
       setState(() {});
     });
+  }
+
+  Future<void> _onChooseTemplateCover() async {
+    final selected = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectTemplateCoverPage(
+          preferredTitle: widget.eventContext.head.title,
+          preferredLocation: widget.eventContext.head.location,
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    setState(() {
+      widget.eventContext.head.clearMedia();
+      widget.eventContext.head.addMediaItem(
+        type: selected['type'] ?? 'img',
+        src: selected['src'] ?? '',
+        title: selected['title'] ?? '',
+        thumbnail: selected['thumbnailSrc'] ?? '',
+      );
+    });
+    widget.eventContext.allowSavingOfTheEdit();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Key graphic updated from template pool')),
+    );
   }
 
   bool _canBeKeyMedia(final String src) {
