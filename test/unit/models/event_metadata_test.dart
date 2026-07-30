@@ -143,6 +143,20 @@ void main() {
         expect(meta.topics, isEmpty);
       });
 
+      test('addTopic is idempotent', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addTopic('Belfast');
+        meta.addTopic('Belfast');
+        expect(meta.topics, ['Belfast']);
+      });
+
+      test('removeTopic removes matching topic', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addAllTopics(['Belfast', 'belfast-sunday-service']);
+        meta.removeTopic('Belfast');
+        expect(meta.topics, ['belfast-sunday-service']);
+      });
+
       test('topics getter returns an unmodifiable view', () {
         final meta = EventMetadata(authorUID: 'user-1');
         meta.addAllTopics(['prayer']);

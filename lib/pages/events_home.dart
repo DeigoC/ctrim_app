@@ -5,9 +5,10 @@ import '../firebase/db_managers/event_db_manager.dart';
 import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../widgets/posts/post_head.dart';
+import '../utility/responsive_layout.dart';
+import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
-import '../../utility/responsive_layout.dart';
+import '../widgets/posts/post_head.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -497,91 +498,17 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.sort,
-                      color: colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sort & Filter',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Choose how to organize your events',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.outline.withValues(alpha: 0.1),
-                    colorScheme.outline.withValues(alpha: 0.3),
-                    colorScheme.outline.withValues(alpha: 0.1),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Filter Options
-            ..._buildFilterOptions(theme, colorScheme),
-
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+    return ActionSheetShell(
+      icon: Icons.sort,
+      title: 'Sort & Filter',
+      subtitle: 'Choose how to organize your events',
+      children: [
+        ActionSheetOptionGrid(children: _buildFilterOptions()),
+      ],
     );
   }
 
-  List<Widget> _buildFilterOptions(ThemeData theme, ColorScheme colorScheme) {
+  List<Widget> _buildFilterOptions() {
     final List<Map<String, dynamic>> options = [
       {
         'index': 0,
@@ -617,71 +544,29 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
     return options.map((option) {
       final index = option['index'] as int;
       final isSelected = _sortIndex == index;
+      final colorScheme = Theme.of(context).colorScheme;
 
       return SlideTransition(
         position: _slideAnimations[index],
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? colorScheme.primary.withValues(alpha: 0.3) : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: ListTile(
-            title: Text(
-              option['title'] as String,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-              ),
-            ),
-            subtitle: Text(
-              option['subtitle'] as String,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: isSelected ? colorScheme.onPrimaryContainer.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
-              ),
-            ),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? (option['color'] as Color).withValues(alpha: 0.2)
-                    : (option['color'] as Color).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                option['icon'] as IconData,
-                color: option['color'] as Color,
-                size: 20,
-              ),
-            ),
-            trailing: option['hasHelp'] == true
-                ? IconButton(
-                    icon: Icon(
-                      Icons.help_outline,
-                      size: 20,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    onPressed: _onBookmarkedHelp,
-                    tooltip: 'Learn about bookmarks',
-                  )
-                : isSelected
-                    ? Icon(
-                        Icons.check_circle,
-                        color: colorScheme.primary,
-                        size: 20,
-                      )
-                    : null,
-            selected: isSelected,
-            onTap: () => _onSortClick(index),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
+        child: ActionSheetOption(
+          icon: option['icon'] as IconData,
+          color: option['color'] as Color,
+          title: option['title'] as String,
+          subtitle: option['subtitle'] as String,
+          selected: isSelected,
+          showChevron: false,
+          onTap: () => _onSortClick(index),
+          trailing: option['hasHelp'] == true
+              ? IconButton(
+                  icon: Icon(
+                    Icons.help_outline,
+                    size: 20,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: _onBookmarkedHelp,
+                  tooltip: 'Learn about bookmarks',
+                )
+              : null,
         ),
       );
     }).toList();

@@ -53,6 +53,15 @@ class EventMetadata {
 
   void clearTopics() => _topics.clear();
   void addAllTopics(final List<String> newTopics) => _topics.addAll(newTopics);
+
+  /// Adds [topic] if not already present.
+  void addTopic(final String topic) {
+    if (!_topics.contains(topic)) _topics.add(topic);
+  }
+
+  /// Removes [topic] if present.
+  void removeTopic(final String topic) => _topics.remove(topic);
+
   void setLastUID(final String newLastUID) => _lastUID = newLastUID;
   void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
   void clearLeadSpeakerUID() => _leadSpeakerUID = null;

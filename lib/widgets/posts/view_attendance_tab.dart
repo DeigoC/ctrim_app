@@ -13,6 +13,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notification_topics.dart';
+import '../action_sheet.dart';
 import '../user_avatar.dart';
 
 /// People tab: interested (self-serve) + attendees (author/contributor managed).
@@ -501,58 +502,22 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   }
 
   void _showManageAttendeesSheet() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
       ),
       builder: (sheetContext) {
-        return SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        return ActionSheetShell(
+          icon: Icons.groups_outlined,
+          title: 'Manage attendees',
+          subtitle: 'Add registered users or guests by name',
+          children: [
+            ActionSheetOptionGrid(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.groups_outlined, color: colorScheme.primary, size: 24),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Manage attendees',
-                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Add registered users or guests by name',
-                              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _manageOption(
-                  theme,
-                  colorScheme,
+                ActionSheetOption(
                   icon: Icons.person_search,
                   color: Colors.blue,
                   title: 'Add registered users',
@@ -562,9 +527,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
                     _addRegisteredUsers();
                   },
                 ),
-                _manageOption(
-                  theme,
-                  colorScheme,
+                ActionSheetOption(
                   icon: Icons.person_outline,
                   color: Colors.teal,
                   title: 'Add guest by name',
@@ -574,45 +537,11 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
                     _addExternalGuest();
                   },
                 ),
-                const SizedBox(height: 16),
               ],
             ),
-          ),
+          ],
         );
       },
-    );
-  }
-
-  Widget _manageOption(
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-        trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
-      ),
     );
   }
 

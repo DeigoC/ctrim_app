@@ -3,7 +3,9 @@ import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/personal/select_users_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/event_context.dart';
+import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:ctrim_app/widgets/my_avatar_stack.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
@@ -714,15 +716,45 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   }
 
   List<Widget> _buildNotificationControls() {
+    final topics = widget.eventContext.metadata.topics;
+    final notifyBroadcast = widget.eventContext.notifyBroadcast;
+    final includeBelfast = BroadcastAudience.includesBelfastUmbrella(topics);
+    final audience = BroadcastAudience.resolve(
+      postTopics: topics,
+      includeBelfastUmbrella: includeBelfast,
+    );
+
     return [
       CheckboxListTile(
-          title: const Text('Notify Broadcast'),
-          value: widget.eventContext.notifyBroadcast,
-          onChanged: (newState) => _onNotifyBroadcastChange(newState!)),
+        title: const Text('Notify Broadcast'),
+        subtitle: notifyBroadcast
+            ? Text(
+                audience.isEmpty
+                    ? 'Choose an audience below'
+                    : 'Will notify: ${BroadcastAudience.describe(audience)}',
+              )
+            : null,
+        value: notifyBroadcast,
+        onChanged: (newState) => _onNotifyBroadcastChange(newState!),
+      ),
+      if (notifyBroadcast)
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: CheckboxListTile(
+            title: Text(NotificationTopics.belfastUmbrellaLabel),
+            subtitle: const Text(
+              'Also reach everyone opted into All Belfast updates',
+            ),
+            value: includeBelfast,
+            onChanged: (newState) =>
+                _onNotifyBelfastUmbrellaChange(newState!),
+          ),
+        ),
       CheckboxListTile(
-          title: const Text('Notify Scheduled Members'),
-          value: widget.eventContext.notifyScheduledMembers,
-          onChanged: (newState) => _onNotifyScheduledMembersChange(newState!)),
+        title: const Text('Notify Scheduled Members'),
+        value: widget.eventContext.notifyScheduledMembers,
+        onChanged: (newState) => _onNotifyScheduledMembersChange(newState!),
+      ),
     ];
   }
 
@@ -747,9 +779,19 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
 
   void _onNotifyBroadcastChange(final bool newState) {
     setState(() {
-      final List<String> topics = widget.eventContext.metadata.topics;
-      debugPrint('----- topics during adding are $topics');
       widget.eventContext.setNotifyBroadcast(newState);
+    });
+  }
+
+  void _onNotifyBelfastUmbrellaChange(final bool include) {
+    setState(() {
+      if (include) {
+        widget.eventContext.metadata
+            .addTopic(NotificationTopics.belfastUmbrella);
+      } else {
+        widget.eventContext.metadata
+            .removeTopic(NotificationTopics.belfastUmbrella);
+      }
     });
   }
 

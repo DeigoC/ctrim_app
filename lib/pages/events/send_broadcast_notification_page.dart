@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../firebase/functions_manager.dart';
+import '../../utility/broadcast_audience.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/event_notification_copy.dart';
 import '../../utility/notification_send_result.dart';
+import '../../utility/notification_topics.dart';
 import '../../widgets/responsive_content.dart';
 
 /// Compose and send a broadcast push for a post.
 ///
 /// Body can be the post subtitle, a reminder preset, or free-form text.
+/// Audience can optionally include the Belfast umbrella topic for this send.
 class SendBroadcastNotificationPage extends StatefulWidget {
   const SendBroadcastNotificationPage({super.key, required this.eventContext});
 
@@ -26,6 +29,7 @@ class _SendBroadcastNotificationPageState
   late final List<String> _presets;
   late BroadcastBodySource _source;
   late String _selectedPreset;
+  late bool _includeBelfastUmbrella;
   bool _sending = false;
 
   @override
@@ -44,6 +48,9 @@ class _SendBroadcastNotificationPageState
     _tecCustomBody = TextEditingController(
       text: head.eventDate != null ? _presets.first : head.subtitle,
     );
+    _includeBelfastUmbrella = BroadcastAudience.includesBelfastUmbrella(
+      widget.eventContext.metadata.topics,
+    );
   }
 
   @override
@@ -59,8 +66,13 @@ class _SendBroadcastNotificationPageState
         selectedPreset: _selectedPreset,
       );
 
+  List<String> get _resolvedTopics => BroadcastAudience.resolve(
+        postTopics: widget.eventContext.metadata.topics,
+        includeBelfastUmbrella: _includeBelfastUmbrella,
+      );
+
   bool get _canSend =>
-      widget.eventContext.metadata.topics.isNotEmpty && _resolvedBody.isNotEmpty;
+      _resolvedTopics.isNotEmpty && _resolvedBody.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -73,76 +85,139 @@ class _SendBroadcastNotificationPageState
           children: [
             _buildPreviewCard(context),
             const SizedBox(height: 24),
+            _buildAudienceSection(context),
+            const SizedBox(height: 24),
             Text(
               'Notification body',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 8),
-          _buildSourceOption(
-            source: BroadcastBodySource.preset,
-            title: 'Reminder preset',
-            subtitle: widget.eventContext.head.hasEventDate
-                ? 'Upcoming-event wording with the date and time'
-                : 'Short generic update lines',
-          ),
-          if (_source == BroadcastBodySource.preset) _buildPresetPicker(context),
-          _buildSourceOption(
-            source: BroadcastBodySource.subtitle,
-            title: 'Post subtitle',
-            subtitle: widget.eventContext.head.subtitle.trim().isEmpty
-                ? 'No subtitle on this post'
-                : widget.eventContext.head.subtitle,
-          ),
-          _buildSourceOption(
-            source: BroadcastBodySource.custom,
-            title: 'Custom message',
-            subtitle: 'Write your own notification body',
-          ),
-          if (_source == BroadcastBodySource.custom) ...[
-            const SizedBox(height: 8),
-            TextField(
-              controller: _tecCustomBody,
-              maxLength: 180,
-              maxLines: 4,
-              minLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Body',
-                hintText: 'What should the notification say?',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-          ],
-          if (widget.eventContext.metadata.topics.isEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              'This post has no broadcast topics. Add topics in post settings before sending.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
             ),
-          ],
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: !_canSend || _sending ? null : _onSendPressed,
-            icon: _sending
-                ? SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Theme.of(context).colorScheme.onPrimary,
+            const SizedBox(height: 8),
+            _buildSourceOption(
+              source: BroadcastBodySource.preset,
+              title: 'Reminder preset',
+              subtitle: widget.eventContext.head.hasEventDate
+                  ? 'Upcoming-event wording with the date and time'
+                  : 'Short generic update lines',
+            ),
+            if (_source == BroadcastBodySource.preset) _buildPresetPicker(context),
+            _buildSourceOption(
+              source: BroadcastBodySource.subtitle,
+              title: 'Post subtitle',
+              subtitle: widget.eventContext.head.subtitle.trim().isEmpty
+                  ? 'No subtitle on this post'
+                  : widget.eventContext.head.subtitle,
+            ),
+            _buildSourceOption(
+              source: BroadcastBodySource.custom,
+              title: 'Custom message',
+              subtitle: 'Write your own notification body',
+            ),
+            if (_source == BroadcastBodySource.custom) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _tecCustomBody,
+                maxLength: 180,
+                maxLines: 4,
+                minLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Body',
+                  hintText: 'What should the notification say?',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ],
+            if (_resolvedTopics.isEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'No broadcast audience selected. Enable All Belfast updates '
+                'or add topics in post settings.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
                     ),
-                  )
-                : const Icon(Icons.send),
-            label: Text(_sending ? 'Sending…' : 'Send notification'),
-          ),
-        ],
+              ),
+            ],
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: !_canSend || _sending ? null : _onSendPressed,
+              icon: _sending
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    )
+                  : const Icon(Icons.send),
+              label: Text(_sending ? 'Sending…' : 'Send notification'),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAudienceSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseTopics = BroadcastAudience.resolve(
+      postTopics: widget.eventContext.metadata.topics,
+      includeBelfastUmbrella: false,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Audience',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (baseTopics.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              'Post topics: ${BroadcastAudience.describe(baseTopics)}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              'This post has no service topics — use All Belfast updates below, '
+              'or add topics in post settings.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(NotificationTopics.belfastUmbrellaLabel),
+          subtitle: const Text(
+            'Also notify everyone opted into All Belfast updates',
+          ),
+          value: _includeBelfastUmbrella,
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _includeBelfastUmbrella = value);
+          },
+        ),
+        Text(
+          'Will notify: ${BroadcastAudience.describe(_resolvedTopics)}',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 
@@ -238,13 +313,15 @@ class _SendBroadcastNotificationPageState
 
   Future<void> _onSendPressed() async {
     final body = _resolvedBody;
-    if (body.isEmpty) return;
+    final topics = _resolvedTopics;
+    if (body.isEmpty || topics.isEmpty) return;
 
     final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
       title: 'Send broadcast?',
       content:
-          'This will notify people subscribed to this post\'s topics:\n\n'
+          'This will notify people subscribed to:\n'
+          '${BroadcastAudience.describe(topics)}\n\n'
           '${widget.eventContext.head.title}\n$body',
       confirmText: 'Send',
       icon: Icons.notifications_active,
@@ -254,7 +331,6 @@ class _SendBroadcastNotificationPageState
     setState(() => _sending = true);
 
     final cloudFunctionManager = CloudFunctionManager();
-    final topics = widget.eventContext.metadata.topics;
     final title = widget.eventContext.head.title;
     final image = widget.eventContext.head.getKeyGraphic();
     var combined = const NotificationSendResult();

@@ -49,11 +49,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-07-30** — Action bottom sheets use shared `ActionSheetShell` / `ActionSheetOptionGrid` (2-col on wide): post admin, template edit, bulletin sort, add-event, manage attendees.
+- **2026-07-30** — Broadcast audience: create meta + Send Broadcast can opt into `Belfast` umbrella (`BroadcastAudience`); does not mean every Belfast account — only opted-in subscribers.
 - **2026-07-29** — Wide-screen: prefer `ResponsiveContent` / `maxContentWidth` centering; template pickers use a 2-column card grid (`select_post_template_page`, same as `view_templates_page`).
 - **2026-07-29** — Template **BodyMediaPool** is the cover/key-graphic pool (`keyGraphicPool`); used for random covers in map/bulk create. Gallery no longer uses the body pool selector. Published posts: **Change cover** / Edit Media can pick from template cover pools (`SelectTemplateCoverPage`).
 - **2026-07-26** — Admin-managed volunteer locations (`user_locations`, `ManageUserLocationsPage`) mirror tags; Personal Admin Tools for area admins; deploy `firestore.rules`.
-- **2026-07-26** — My Schedule: wide-screen capped list + refreshed cards; roles retained **28 days** after event with Upcoming/Recent sections (`UserScheduleService.roleRetention`).
-- **2026-07-26** — Push notification prefs: `MessagingManager.subscribeToTopic` / `unsubscribeFromTopic` return `Future<bool>`; only update prefs after success. Topic labels on `NotificationTopics` (`labelFor` / `serviceTopicLabels`); UI in `notification_management_page.dart`.
 
 ## Commands
 

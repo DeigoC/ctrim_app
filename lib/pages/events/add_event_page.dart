@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
+
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../utility/notification_token_resolver.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
+import '../../utility/broadcast_audience.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/notification_token_resolver.dart';
+import '../../utility/responsive_layout.dart';
+import '../../widgets/action_sheet.dart';
 import '../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
@@ -17,7 +21,6 @@ import '../../widgets/posts/view_post_body.dart';
 import 'add_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
-import '../../utility/responsive_layout.dart';
 
 class AddEventPage extends StatefulWidget {
   const AddEventPage({super.key, required this.eventContext});
@@ -265,7 +268,13 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
     if (widget.eventContext.notifyBroadcast) {
       debugPrint('---- NOTIFYING BROADCAST TOPICS ----');
-      for (final String topic in widget.eventContext.metadata.topics) {
+      final topics = BroadcastAudience.resolve(
+        postTopics: widget.eventContext.metadata.topics,
+        includeBelfastUmbrella: BroadcastAudience.includesBelfastUmbrella(
+          widget.eventContext.metadata.topics,
+        ),
+      );
+      for (final String topic in topics) {
         _notifyOfNewPost(newID, topic);
       }
     }
@@ -392,29 +401,47 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   void _showSettings() {
     showModalBottomSheet(
-        showDragHandle: true,
-        context: context,
-        builder: (_) => SingleChildScrollView(
-                child: SafeArea(
-                    child: Column(children: [
-              ListTile(
-                title: const Text('Edit About'),
-                leading: const Icon(Icons.edit),
+      showDragHandle: true,
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
+      builder: (_) => ActionSheetShell(
+        icon: Icons.edit_note,
+        title: 'Edit draft',
+        subtitle: 'Update content while creating this post',
+        children: [
+          const ActionSheetSectionLabel('Content'),
+          ActionSheetOptionGrid(
+            children: [
+              ActionSheetOption(
+                icon: Icons.article_outlined,
+                color: Colors.blue,
+                title: 'Edit About',
+                subtitle: 'Update the post body and details',
                 onTap: _onEditBodyClick,
               ),
-              widget.eventContext.head.eventDate != null
-                  ? ListTile(
-                      title: const Text('Add Schedule Item'),
-                      leading: const Icon(Icons.edit_calendar),
-                      onTap: _onAddScheduleItem,
-                    )
-                  : Container(),
-              ListTile(
-                title: const Text('Edit Media Items'),
-                leading: const Icon(Icons.photo_library),
+              if (widget.eventContext.head.eventDate != null)
+                ActionSheetOption(
+                  icon: Icons.event,
+                  color: Colors.teal,
+                  title: 'Add Schedule Item',
+                  subtitle: 'Add a program role or time slot',
+                  onTap: _onAddScheduleItem,
+                ),
+              ActionSheetOption(
+                icon: Icons.photo_library_outlined,
+                color: Colors.purple,
+                title: 'Edit Media Items',
+                subtitle: 'Manage photos and videos',
                 onTap: _onEditMediaTap,
               ),
-            ]))));
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void _onEditBodyClick() {
