@@ -46,9 +46,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
+- **Stakeholder documentation** — product-facing drafts in [`docs/stakeholders/`](docs/stakeholders/). Continue with: “Continue stakeholder documentation from `docs/stakeholders/overview.md`”.
 
 ## Recent agent-relevant changes
 
+- **2026-07-30** — Stakeholder docs live under `docs/stakeholders/` (not a separate Documentation folder); agent handoffs stay in `docs/*.md`.
 - **2026-07-30** — Template create (singular + bulk) syncs assigned program roles via `syncUserRolesForPost` so My Schedule updates; role push stays opt-in (`notifyScheduledMembers` defaults false; bulk never notifies).
 - **2026-07-30** — Full-page loads use `LoadProgressBody` (schedule/roles, my posts, profile, related posts, attendance, info, bulk create) instead of bare spinners; avoid inline `FutureBuilder(future: fetch…)` in `build`.
 - **2026-07-30** — Push Notifications → **This device**: status (permission/token/PWA), Re-register, Send test to me; web enable awaits reconcile + iOS Home Screen gate (`NotificationDeviceStatusService`).
