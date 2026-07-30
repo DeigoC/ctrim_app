@@ -339,5 +339,30 @@
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
     "description": "Sort volunteers by primary team tag"
+  },
+  "volunteersFilterTags": "Tags",
+  "@volunteersFilterTags": {
+    "description": "Button that opens the volunteer tag filter sheet"
+  },
+  "volunteersFilterTagsCount": "Tags ({count})",
+  "@volunteersFilterTagsCount": {
+    "description": "Tag filter button when one or more tags are selected",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "volunteersFilterTagsSheetTitle": "Filter by tags",
+  "@volunteersFilterTagsSheetTitle": {
+    "description": "Title for the volunteer tag filter bottom sheet"
+  },
+  "volunteersFilterTagsSheetSubtitle": "Show people with any of these team tags",
+  "@volunteersFilterTagsSheetSubtitle": {
+    "description": "Subtitle for the volunteer tag filter bottom sheet"
+  },
+  "volunteersSortTooltip": "Sort volunteers",
+  "@volunteersSortTooltip": {
+    "description": "Tooltip for the volunteers sort menu in the app bar"
   }
 }

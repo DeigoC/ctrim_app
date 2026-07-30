@@ -537,6 +537,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Team'**
   String get volunteersSortTags;
+
+  /// Button that opens the volunteer tag filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get volunteersFilterTags;
+
+  /// Tag filter button when one or more tags are selected
+  ///
+  /// In en, this message translates to:
+  /// **'Tags ({count})'**
+  String volunteersFilterTagsCount(int count);
+
+  /// Title for the volunteer tag filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by tags'**
+  String get volunteersFilterTagsSheetTitle;
+
+  /// Subtitle for the volunteer tag filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Show people with any of these team tags'**
+  String get volunteersFilterTagsSheetSubtitle;
+
+  /// Tooltip for the volunteers sort menu in the app bar
+  ///
+  /// In en, this message translates to:
+  /// **'Sort volunteers'**
+  String get volunteersSortTooltip;
 }
 
 class _AppLocalizationsDelegate

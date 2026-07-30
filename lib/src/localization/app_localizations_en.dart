@@ -250,4 +250,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersSortTags => 'Team';
+
+  @override
+  String get volunteersFilterTags => 'Tags';
+
+  @override
+  String volunteersFilterTagsCount(int count) {
+    return 'Tags ($count)';
+  }
+
+  @override
+  String get volunteersFilterTagsSheetTitle => 'Filter by tags';
+
+  @override
+  String get volunteersFilterTagsSheetSubtitle =>
+      'Show people with any of these team tags';
+
+  @override
+  String get volunteersSortTooltip => 'Sort volunteers';
 }

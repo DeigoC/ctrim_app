@@ -5,16 +5,15 @@ import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
+import 'package:ctrim_app/widgets/action_sheet.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:ctrim_app/widgets/user_tag_chip.dart';
-import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../utility/responsive_layout.dart';
 
 enum _VolunteerSortMode { surname, tags }
 
@@ -55,13 +54,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isWide = ResponsiveLayout.isWideScreen(screenWidth);
-    // Wide: modest insets so the grid can fill the viewport.
-    // Narrow: flush with the screen edge (ListTiles provide their own padding).
     final double horizontalPadding = isWide ? 16 : 0;
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
       final canEdit = appContext.currentUser.isAreaAdmin;
+      final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
 
       return Scaffold(
           appBar: AppBar(
@@ -79,6 +77,25 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   )
                 : Text(_pageTitle(l10n)),
             actions: [
+              if (!_isSearching)
+                PopupMenuButton<_VolunteerSortMode>(
+                  icon: const Icon(Icons.sort),
+                  tooltip: l10n.volunteersSortTooltip,
+                  initialValue: _sortMode,
+                  onSelected: (mode) => setState(() => _sortMode = mode),
+                  itemBuilder: (context) => [
+                    CheckedPopupMenuItem(
+                      value: _VolunteerSortMode.surname,
+                      checked: _sortMode == _VolunteerSortMode.surname,
+                      child: Text(l10n.volunteersSortSurname),
+                    ),
+                    CheckedPopupMenuItem(
+                      value: _VolunteerSortMode.tags,
+                      checked: _sortMode == _VolunteerSortMode.tags,
+                      child: Text(l10n.volunteersSortTags),
+                    ),
+                  ],
+                ),
               IconButton(
                 icon: Icon(_isSearching ? Icons.close : Icons.search),
                 onPressed: () {
@@ -109,53 +126,42 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
                 child: Row(
-                  children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
-                    final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(label),
-                        selected: _locationFilter == location,
-                        onSelected: (_) => setState(() => _locationFilter = location),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              UserTagFilterBar(
-                tags: appContext.allTags,
-                selectedTagIDs: _selectedTagIDs,
-                horizontalPadding: horizontalPadding,
-                onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
-                child: Row(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-                      child: Text(
-                        l10n.volunteersSortLabel,
-                        style: Theme.of(context).textTheme.labelLarge,
+                    ...VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
+                      final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(label),
+                          selected: _locationFilter == location,
+                          onSelected: (_) => setState(() => _locationFilter = location),
+                        ),
+                      );
+                    }),
+                    if (activeTags.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      FilterChip(
+                        avatar: Icon(
+                          Icons.label_outline,
+                          size: 18,
+                          color: _selectedTagIDs.isNotEmpty
+                              ? Theme.of(context).colorScheme.onSecondaryContainer
+                              : null,
+                        ),
+                        label: Text(
+                          _selectedTagIDs.isEmpty
+                              ? l10n.volunteersFilterTags
+                              : l10n.volunteersFilterTagsCount(_selectedTagIDs.length),
+                        ),
+                        selected: _selectedTagIDs.isNotEmpty,
+                        onSelected: (_) => _showTagFilterSheet(activeTags),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(l10n.volunteersSortSurname),
-                        selected: _sortMode == _VolunteerSortMode.surname,
-                        onSelected: (_) => setState(() => _sortMode = _VolunteerSortMode.surname),
-                      ),
-                    ),
-                    FilterChip(
-                      label: Text(l10n.volunteersSortTags),
-                      selected: _sortMode == _VolunteerSortMode.tags,
-                      onSelected: (_) => setState(() => _sortMode = _VolunteerSortMode.tags),
-                    ),
+                    ],
                   ],
                 ),
               ),
+              if (_selectedTagIDs.isNotEmpty)
+                _buildSelectedTagsSummary(activeTags, horizontalPadding, l10n),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
@@ -203,6 +209,108 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             ],
           ));
     });
+  }
+
+  Widget _buildSelectedTagsSummary(
+    List<UserTag> activeTags,
+    double horizontalPadding,
+    AppLocalizations l10n,
+  ) {
+    final selected = activeTags.where((tag) => _selectedTagIDs.contains(tag.id)).toList();
+    if (selected.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          ...selected.map(
+            (tag) => UserTagChip(
+              tag: tag,
+              selected: true,
+              onTap: () {
+                setState(() {
+                  _selectedTagIDs = Set<String>.from(_selectedTagIDs)..remove(tag.id);
+                });
+              },
+            ),
+          ),
+          ActionChip(
+            label: Text(l10n.userTagsFilterClear),
+            onPressed: () => setState(() => _selectedTagIDs = {}),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTagFilterSheet(List<UserTag> activeTags) {
+    final l10n = AppLocalizations.of(context)!;
+    var draft = Set<String>.from(_selectedTagIDs);
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return ActionSheetShell(
+              icon: Icons.label_outline,
+              title: l10n.volunteersFilterTagsSheetTitle,
+              subtitle: l10n.volunteersFilterTagsSheetSubtitle,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: activeTags.map((tag) {
+                      final selected = draft.contains(tag.id);
+                      return UserTagChip(
+                        tag: tag,
+                        selected: selected,
+                        onTap: () {
+                          setSheetState(() {
+                            draft = Set<String>.from(draft);
+                            if (selected) {
+                              draft.remove(tag.id);
+                            } else {
+                              draft.add(tag.id);
+                            }
+                          });
+                          setState(() => _selectedTagIDs = Set<String>.from(draft));
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                if (draft.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () {
+                          setSheetState(() => draft = {});
+                          setState(() => _selectedTagIDs = {});
+                        },
+                        child: Text(l10n.userTagsFilterClear),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildWideUserGrid({
@@ -339,7 +447,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     );
   }
 
-  void _navigateToEditUser(final User selectedUser) async {
+  Future<void> _navigateToEditUser(final User selectedUser) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
