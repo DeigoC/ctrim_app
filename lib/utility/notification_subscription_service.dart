@@ -1,6 +1,20 @@
 import '../firebase/messaging_manager.dart';
 import 'app_shared_preferences.dart';
+import 'notification_debug.dart';
 import 'notification_topics.dart';
+
+/// Outcome of aligning topic subscriptions with local prefs.
+class NotificationReconcileResult {
+  const NotificationReconcileResult({
+    this.attempted = 0,
+    this.succeeded = 0,
+    this.failed = 0,
+  });
+
+  final int attempted;
+  final int succeeded;
+  final int failed;
+}
 
 /// Keeps FCM / Firestore web topic subscriptions aligned with local prefs.
 class NotificationSubscriptionService {
@@ -30,13 +44,30 @@ class NotificationSubscriptionService {
   }
 
   /// Re-subscribe to every topic implied by prefs and bookmarks.
-  Future<void> reconcile({
+  Future<NotificationReconcileResult> reconcile({
     required AppSharedPreferences prefs,
     String? webAuthId,
   }) async {
-    for (final topic in allSubscribedTopics(prefs)) {
-      await _messagingManager.subscribeToTopic(topic, authId: webAuthId);
+    final topics = allSubscribedTopics(prefs);
+    var succeeded = 0;
+    var failed = 0;
+
+    for (final topic in topics) {
+      final ok =
+          await _messagingManager.subscribeToTopic(topic, authId: webAuthId);
+      if (ok) {
+        succeeded++;
+      } else {
+        failed++;
+        NotificationDebug.warn('reconcile: failed to subscribe to $topic');
+      }
     }
+
+    return NotificationReconcileResult(
+      attempted: topics.length,
+      succeeded: succeeded,
+      failed: failed,
+    );
   }
 
   /// After a web FCM token refresh, move topic memberships to the new token.

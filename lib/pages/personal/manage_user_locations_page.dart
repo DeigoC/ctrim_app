@@ -7,6 +7,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/volunteer_locations.dart';
+import '../../widgets/load_progress_body.dart';
 
 class ManageUserLocationsPage extends StatefulWidget {
   const ManageUserLocationsPage({super.key});
@@ -62,7 +63,11 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
       body: Consumer<AppContext>(
         builder: (context, appContext, _) {
           if (_loading) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadProgressBody(
+              message: 'Loading locations…',
+              completedSteps: 0,
+              totalSteps: 1,
+            );
           }
 
           final locations = appContext.allLocations;

@@ -14,6 +14,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notification_topics.dart';
 import '../action_sheet.dart';
+import '../load_progress_body.dart';
 import '../user_avatar.dart';
 
 /// People tab: interested (self-serve) + attendees (author/contributor managed).
@@ -85,23 +86,14 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       return _buildGuestBody(theme, colorScheme, head.interestedCount, head.attendeeCount);
     }
 
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_loadError != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Could not load attendance.\n$_loadError', textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              FilledButton(onPressed: _loadAttendance, child: const Text('Retry')),
-            ],
-          ),
-        ),
+    if (_loading || _loadError != null) {
+      return LoadProgressBody(
+        message: 'Loading attendance…',
+        completedSteps: _loading ? 0 : 1,
+        totalSteps: 1,
+        error: _loadError,
+        errorTitle: 'Could not load attendance',
+        onRetry: _loadAttendance,
       );
     }
 

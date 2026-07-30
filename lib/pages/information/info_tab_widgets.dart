@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 
 class InfoSectionCard extends StatelessWidget {
@@ -514,7 +515,11 @@ class InfoSectionListTab<T> extends StatelessWidget {
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const LoadProgressBody(
+            message: 'Loading…',
+            completedSteps: 0,
+            totalSteps: 1,
+          );
         }
 
         if (snapshot.hasError) {

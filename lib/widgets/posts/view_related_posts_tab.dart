@@ -5,6 +5,7 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_metadata.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
+import '../load_progress_body.dart';
 import 'post_head.dart';
 
 class ViewRelatedPostsTab extends StatefulWidget {
@@ -22,10 +23,53 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   final EventHeadDBManager _headDbManager = EventHeadDBManager();
   RelatedPostFilter _currentFilter = RelatedPostFilter.all;
 
+  bool _loading = false;
+  bool _loaded = false;
+  Object? _loadError;
+  String _statusMessage = 'Loading related posts…';
+  int _completedSteps = 0;
+  int _totalSteps = 1;
+
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     super.initState();
+    if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) {
+      _loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadRelatedPosts();
+      });
+    } else {
+      _loaded = true;
+    }
+  }
+
+  Future<void> _loadRelatedPosts() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+      _statusMessage = 'Fetching related posts…';
+      _completedSteps = 0;
+      _totalSteps = 1;
+    });
+
+    try {
+      await _fetchAllRelatedPosts();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loaded = true;
+        _completedSteps = 1;
+        _statusMessage = 'Done';
+      });
+    } catch (e, st) {
+      debugPrint('error with fetching all related posts: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e;
+      });
+    }
   }
 
   @override
@@ -44,47 +88,40 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   }
 
   Widget _buildBody() {
-    if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) {
-      return _buildRelatedFB();
+    if (!(widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren)) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.library_books_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No related posts',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      );
     }
 
-    // Empty state with better design
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.library_books_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No related posts',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
+    if (_loading || _loadError != null || !_loaded) {
+      return LoadProgressBody(
+        message: _statusMessage,
+        completedSteps: _completedSteps,
+        totalSteps: _totalSteps,
+        error: _loadError,
+        errorTitle: 'Could not load related posts',
+        onRetry: _loadRelatedPosts,
+      );
+    }
 
-  Widget _buildRelatedFB() {
-    return FutureBuilder(
-        future: _fetchAllRelatedPosts(),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
-
-          if (snap.hasData) {
-            result = _buildBodyWithData();
-          } else if (snap.hasError) {
-            debugPrint('error with fetching all related posts: ${snap.error}');
-            result = const Center(child: Text('Something went wrong'));
-          }
-
-          return result;
-        });
+    return _buildBodyWithData();
   }
 
   Widget _buildFilterSection() {

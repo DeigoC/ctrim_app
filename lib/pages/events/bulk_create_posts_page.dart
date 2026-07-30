@@ -6,15 +6,18 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/db_managers/post_template_db_manager.dart';
+import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/bulk_post_dates.dart';
+import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/post_template_mapper.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/load_progress_body.dart';
 
 enum _BulkPostRelation { child, sibling }
 
@@ -159,6 +162,14 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 
+  /// True when the program has at least one role with assigned user IDs.
+  bool _programHasRoleAssignees(EventContext eventContext) {
+    return eventContext.program.roles.any((role) {
+      final uids = role['uids'];
+      return uids is List && uids.isNotEmpty;
+    });
+  }
+
   Future<void> _createAllPosts() async {
     setState(() {
       _isCreating = true;
@@ -169,6 +180,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     final uid = appContext.currentUser.id;
     final location = _template.location;
     final headDBManager = EventHeadDBManager();
+    final cloudFunctionManager = CloudFunctionManager();
 
     final String? parentID = _effectiveParentID;
     EventSupplementalDBManager? parentDbManager;
@@ -198,6 +210,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           location: location,
           eventDate: preview.date,
         );
+
+        // Denormalize program role assignees onto users/{uid}/supplemental/roles
+        // so My Schedule picks them up. No push — bulk create never notifies.
+        if (_programHasRoleAssignees(eventContext)) {
+          await cloudFunctionManager.syncUserRolesForPost(postId: newID);
+        }
 
         if (parentID != null && parentMetadata != null && parentDbManager != null) {
           await _updateParentMetadata(
@@ -280,16 +298,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     if (_isCreating) {
       return Scaffold(
         appBar: AppBar(title: const Text('Bulk Create Posts')),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 24),
-              Text('Creating $_createdCount of ${_previews.length} posts…',
-                  style: Theme.of(context).textTheme.bodyLarge),
-            ],
-          ),
+        body: LoadProgressBody(
+          message: 'Creating $_createdCount of ${_previews.length} posts…',
+          completedSteps: _createdCount,
+          totalSteps: _previews.isEmpty ? 1 : _previews.length,
         ),
       );
     }
@@ -297,7 +309,11 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     if (_isRefreshingTemplate) {
       return Scaffold(
         appBar: AppBar(title: const Text('Bulk Create Posts')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const LoadProgressBody(
+          message: 'Refreshing template…',
+          completedSteps: 0,
+          totalSteps: 1,
+        ),
       );
     }
 

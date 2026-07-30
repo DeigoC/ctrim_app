@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/information/info_image_carousel.dart';
+import '../../widgets/load_progress_body.dart';
 import '../../widgets/quill_editor_wrapper.dart';
 
 /// Shared detail layout for church / testimonial / CTRIM info pages.
@@ -216,18 +217,28 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+            body: LoadProgressBody(
+              message: 'Loading…',
+              completedSteps: 0,
+              totalSteps: 1,
+            ),
+          );
         }
 
         if (snapshot.hasError) {
           return Scaffold(
             appBar: AppBar(title: Text(widget.pageTitleFallback)),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('Something went wrong: ${snapshot.error}',
-                    textAlign: TextAlign.center),
-              ),
+            body: LoadProgressBody(
+              message: '',
+              completedSteps: 0,
+              totalSteps: 1,
+              error: snapshot.error,
+              errorTitle: 'Could not load page',
+              onRetry: () {
+                setState(() {
+                  _future = _load(forceRefresh: true);
+                });
+              },
             ),
           );
         }

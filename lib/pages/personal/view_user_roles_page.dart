@@ -8,6 +8,7 @@ import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
+import '../../widgets/load_progress_body.dart';
 import '../../widgets/posts/post_head.dart';
 import '../events/view_event_page.dart';
 
@@ -29,17 +30,123 @@ class ViewUserRolesPage extends StatefulWidget {
 class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   late final AppContext _appContext;
   final UserScheduleService _scheduleService = UserScheduleService();
+  final EventHeadDBManager _eventHeadDBManager = EventHeadDBManager();
+  final Map<String, Future<EventHead>> _headFutures = {};
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
+
+  bool _loadingRoles = false;
+  Object? _rolesError;
+  String _rolesStatusMessage = 'Loading schedule…';
+  int _rolesCompletedSteps = 0;
+  int _rolesTotalSteps = 2;
+
+  bool _loadingPosts = false;
+  Object? _postsError;
+  String _postsStatusMessage = 'Loading posts…';
+  int _postsCompletedSteps = 0;
+  int _postsTotalSteps = 2;
 
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
+    super.initState();
 
-    if (widget.selectedUser.roles != null) {
+    if (widget.selectedUser.roles == null) {
+      _loadingRoles = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadRoles();
+      });
+    } else {
       WidgetsBinding.instance.addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: true));
     }
-    super.initState();
+
+    if (widget.allowPostView && widget.selectedUser.posts == null) {
+      _loadingPosts = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadPosts();
+      });
+    }
+  }
+
+  Future<void> _loadRoles() async {
+    setState(() {
+      _loadingRoles = true;
+      _rolesError = null;
+      _rolesStatusMessage = 'Fetching assignments…';
+      _rolesCompletedSteps = 0;
+      _rolesTotalSteps = 2;
+    });
+
+    try {
+      final roles = await _scheduleService.fetchRoles(widget.selectedUser.id);
+      if (!mounted) return;
+
+      setState(() {
+        _rolesCompletedSteps = 1;
+        _rolesStatusMessage = 'Cleaning up schedule…';
+      });
+
+      widget.selectedUser.setRoles(roles);
+      await _scheduleService.pruneStaleRoles(
+        user: widget.selectedUser,
+        eventHeads: _appContext.eventHeads,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _loadingRoles = false;
+        _rolesCompletedSteps = 2;
+        _rolesStatusMessage = 'Done';
+      });
+    } catch (e, st) {
+      debugPrint('Error fetching roles: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loadingRoles = false;
+        _rolesError = e;
+      });
+    }
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() {
+      _loadingPosts = true;
+      _postsError = null;
+      _postsStatusMessage = 'Fetching posts…';
+      _postsCompletedSteps = 0;
+      _postsTotalSteps = 2;
+    });
+
+    try {
+      final posts = await _scheduleService.fetchPosts(widget.selectedUser.id);
+      if (!mounted) return;
+
+      setState(() {
+        _postsCompletedSteps = 1;
+        _postsStatusMessage = 'Cleaning up posts…';
+      });
+
+      widget.selectedUser.setPosts(posts);
+      await _scheduleService.pruneStalePostInvolvements(
+        user: widget.selectedUser,
+        eventHeads: _appContext.eventHeads,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _loadingPosts = false;
+        _postsCompletedSteps = 2;
+        _postsStatusMessage = 'Done';
+      });
+    } catch (e, st) {
+      debugPrint('Error fetching posts: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loadingPosts = false;
+        _postsError = e;
+      });
+    }
   }
 
   @override
@@ -75,33 +182,30 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   }
 
   Widget _buildScheduleBody() {
-    return widget.selectedUser.roles == null ? _buildScheduleFBBody() : _buildScheduleBodyWithData();
-  }
+    if (_loadingRoles || _rolesError != null) {
+      return LoadProgressBody(
+        message: _rolesStatusMessage,
+        completedSteps: _rolesCompletedSteps,
+        totalSteps: _rolesTotalSteps,
+        error: _rolesError,
+        errorTitle: 'Could not load schedule',
+        onRetry: _loadRoles,
+      );
+    }
 
-  Widget _buildScheduleFBBody() {
-    debugPrint('fetching roles');
-    return FutureBuilder(
-        future: _scheduleService.fetchRoles(widget.selectedUser.id),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
+    if (widget.selectedUser.roles == null) {
+      return LoadProgressBody(
+        message: 'Loading schedule…',
+        completedSteps: 0,
+        totalSteps: 1,
+        onRetry: _loadRoles,
+      );
+    }
 
-          if (snap.hasData) {
-            widget.selectedUser.setRoles(snap.data!);
-            result = _buildScheduleBodyWithData();
-
-            WidgetsBinding.instance.addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: true));
-          } else if (snap.hasError) {
-            debugPrint('something with fetching roles: ${snap.error}');
-            result = const Center(child: Text('Something went wrong!'));
-          }
-
-          return result;
-        });
+    return _buildScheduleBodyWithData();
   }
 
   Widget _buildScheduleBodyWithData() {
-    debugPrint('using existing roles');
-
     final roles = widget.selectedUser.roles;
     if (roles == null || roles.isEmpty) {
       return _buildEmptySchedule();
@@ -211,28 +315,27 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   }
 
   Widget _buildPostsBody() {
-    if (widget.selectedUser.posts == null) {
-      return _buildPostsFBBody();
+    if (_loadingPosts || _postsError != null) {
+      return LoadProgressBody(
+        message: _postsStatusMessage,
+        completedSteps: _postsCompletedSteps,
+        totalSteps: _postsTotalSteps,
+        error: _postsError,
+        errorTitle: 'Could not load posts',
+        onRetry: _loadPosts,
+      );
     }
+
+    if (widget.selectedUser.posts == null) {
+      return LoadProgressBody(
+        message: 'Loading posts…',
+        completedSteps: 0,
+        totalSteps: 1,
+        onRetry: _loadPosts,
+      );
+    }
+
     return _buildPostsBodyWithData();
-  }
-
-  Widget _buildPostsFBBody() {
-    return FutureBuilder(
-        future: _scheduleService.fetchPosts(widget.selectedUser.id),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator.adaptive());
-
-          if (snap.hasData) {
-            widget.selectedUser.setPosts(snap.data!);
-            result = _buildPostsBodyWithData();
-            WidgetsBinding.instance.addPostFrameCallback((_) => _runPostCleanup());
-          } else if (snap.hasError) {
-            result = Center(child: Text('Something went wrong!\n\n${snap.error}'));
-          }
-
-          return result;
-        });
   }
 
   Widget _buildPostsBodyWithData() {
@@ -282,25 +385,40 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       return _buildScheduleCard(postID, isPast: isPast);
     }
 
-    final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-    return FutureBuilder(
-        future: eventHeadDBManager.fetchHead(postID),
-        builder: (_, snap) {
-          Widget result = const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
+    final future = _headFutures.putIfAbsent(postID, () => _eventHeadDBManager.fetchHead(postID));
+    return FutureBuilder<EventHead>(
+      future: future,
+      builder: (_, snap) {
+        if (snap.hasData) {
+          _appContext.addAllEventHeads([snap.data!]);
+          return _buildScheduleCard(postID, isPast: isPast);
+        }
+        if (snap.hasError) {
+          return LoadProgressBody(
+            message: '',
+            completedSteps: 0,
+            totalSteps: 1,
+            error: snap.error,
+            errorTitle: 'Could not load this event',
+            onRetry: () {
+              setState(() {
+                _headFutures[postID] = _eventHeadDBManager.fetchHead(postID);
+              });
+            },
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           );
-
-          if (snap.hasData) {
-            _appContext.addAllEventHeads([snap.data!]);
-            result = _buildScheduleCard(postID, isPast: isPast);
-          } else if (snap.hasError) {
-            debugPrint('Something with fetching head: ${snap.error}');
-            result = const Center(child: Text('Something went wrong!'));
-          }
-
-          return result;
-        });
+        }
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: LoadProgressBody(
+            message: 'Loading event…',
+            completedSteps: 0,
+            totalSteps: 1,
+            padding: EdgeInsets.zero,
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildScheduleCard(final String postID, {required bool isPast}) {
@@ -447,15 +565,6 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Updated Schedule!'), behavior: SnackBarBehavior.floating));
     }
-  }
-
-  Future<void> _runPostCleanup() async {
-    final removed = await _scheduleService.pruneStalePostInvolvements(
-      user: widget.selectedUser,
-      eventHeads: _appContext.eventHeads,
-    );
-    if (!mounted || !removed) return;
-    setState(() {});
   }
 
   void _onPostTap(final EventHead head) =>
