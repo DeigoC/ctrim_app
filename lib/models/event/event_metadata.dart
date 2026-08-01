@@ -5,7 +5,7 @@ class EventMetadata {
   late final List<String> _contributorUIDs;
   late String _lastUID;
   late final String? _parentID;
-  late final List<String> _childrenIDs, _topics;
+  late final List<String> _childrenIDs, _topics, _tagIDs;
   String? _leadSpeakerUID;
 
   EventMetadata({required String authorUID, final String? parentID}) {
@@ -15,6 +15,7 @@ class EventMetadata {
     _contributorUIDs = List<String>.empty(growable: true);
     _childrenIDs = List<String>.empty(growable: true);
     _topics = List.empty(growable: true);
+    _tagIDs = List.empty(growable: true);
   }
 
   EventMetadata.fromMap(final Map<String, dynamic> data)
@@ -24,6 +25,7 @@ class EventMetadata {
         _contributorUIDs = List<String>.from(data['ContributorUIDs']),
         _childrenIDs = List<String>.from(data['ChildrenIDs']),
         _topics = List<String>.from(data['Topics'] ?? []),
+        _tagIDs = List<String>.from(data['TagIDs'] ?? []),
         _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
 
   Map<String, Object?> toJson() {
@@ -34,6 +36,7 @@ class EventMetadata {
       'ParentID': _parentID,
       'ChildrenIDs': _childrenIDs,
       'Topics': _topics,
+      'TagIDs': _tagIDs,
       'LeadSpeakerUID': _leadSpeakerUID,
     };
   }
@@ -50,6 +53,7 @@ class EventMetadata {
   List<String> get contributorUIDs => _contributorUIDs;
   List<String> get childrenPostIDs => _childrenIDs;
   List<String> get topics => UnmodifiableListView(_topics);
+  List<String> get tagIDs => UnmodifiableListView(_tagIDs);
 
   void clearTopics() => _topics.clear();
   void addAllTopics(final List<String> newTopics) => _topics.addAll(newTopics);
@@ -61,6 +65,14 @@ class EventMetadata {
 
   /// Removes [topic] if present.
   void removeTopic(final String topic) => _topics.remove(topic);
+
+  void setTagIDs(final List<String> tagIDs) {
+    _tagIDs
+      ..clear()
+      ..addAll(tagIDs);
+  }
+
+  void clearTagIDs() => _tagIDs.clear();
 
   void setLastUID(final String newLastUID) => _lastUID = newLastUID;
   void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;

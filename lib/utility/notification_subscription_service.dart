@@ -20,23 +20,52 @@ class NotificationReconcileResult {
 class NotificationSubscriptionService {
   final MessagingManager _messagingManager = MessagingManager();
 
-  /// Topics the user opted into via prefs (service toggles + Belfast umbrella).
-  static List<String> topicsFromPrefs(AppSharedPreferences prefs) {
+  /// Topics the user opted into via prefs (location umbrellas + service streams).
+  ///
+  /// Defaults keep Belfast behaviour identical to the pre-multi-location era.
+  static List<String> topicsFromPrefs(
+    AppSharedPreferences prefs, {
+    Iterable<String> locationNames = const ['Belfast'],
+    Iterable<String> streamKinds = NotificationTopics.serviceStreamKinds,
+  }) {
     final topics = <String>[];
-    for (final topic in NotificationTopics.serviceTopics) {
-      if (prefs.isSubscribedToTopic(topic)) {
-        topics.add(topic);
+    final seen = <String>{};
+
+    for (final location in locationNames) {
+      final umbrella = NotificationTopics.locationUmbrella(location);
+      final umbrellaOn = umbrella == NotificationTopics.belfastUmbrella
+          ? prefs.subscribedToBelfast
+          : prefs.isSubscribedToTopic(umbrella);
+      if (umbrellaOn && seen.add(umbrella)) {
+        topics.add(umbrella);
+      }
+
+      for (final kind in streamKinds) {
+        final topic = NotificationTopics.streamTopic(
+          locationName: location,
+          streamKind: kind,
+        );
+        if (topic.isEmpty) continue;
+        if (prefs.isSubscribedToTopic(topic) && seen.add(topic)) {
+          topics.add(topic);
+        }
       }
     }
-    if (prefs.subscribedToBelfast) {
-      topics.add(NotificationTopics.belfastUmbrella);
-    }
+
     return topics;
   }
 
   /// Service + bookmark topics the user should be subscribed to.
-  static List<String> allSubscribedTopics(AppSharedPreferences prefs) {
-    final topics = topicsFromPrefs(prefs).toList();
+  static List<String> allSubscribedTopics(
+    AppSharedPreferences prefs, {
+    Iterable<String> locationNames = const ['Belfast'],
+    Iterable<String> streamKinds = NotificationTopics.serviceStreamKinds,
+  }) {
+    final topics = topicsFromPrefs(
+      prefs,
+      locationNames: locationNames,
+      streamKinds: streamKinds,
+    ).toList();
     for (final postId in prefs.bookmarkedPosts) {
       topics.add(NotificationTopics.postTopic(postId));
     }
@@ -47,8 +76,14 @@ class NotificationSubscriptionService {
   Future<NotificationReconcileResult> reconcile({
     required AppSharedPreferences prefs,
     String? webAuthId,
+    Iterable<String> locationNames = const ['Belfast'],
+    Iterable<String> streamKinds = NotificationTopics.serviceStreamKinds,
   }) async {
-    final topics = allSubscribedTopics(prefs);
+    final topics = allSubscribedTopics(
+      prefs,
+      locationNames: locationNames,
+      streamKinds: streamKinds,
+    );
     var succeeded = 0;
     var failed = 0;
 
@@ -75,13 +110,19 @@ class NotificationSubscriptionService {
     required String oldToken,
     required String newToken,
     required AppSharedPreferences prefs,
+    Iterable<String> locationNames = const ['Belfast'],
+    Iterable<String> streamKinds = NotificationTopics.serviceStreamKinds,
   }) async {
     if (oldToken.isEmpty || oldToken == newToken) return;
 
     await _messagingManager.migrateWebTopicToken(
       oldToken: oldToken,
       newToken: newToken,
-      topics: allSubscribedTopics(prefs),
+      topics: allSubscribedTopics(
+        prefs,
+        locationNames: locationNames,
+        streamKinds: streamKinds,
+      ),
     );
   }
 }

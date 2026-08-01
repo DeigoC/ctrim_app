@@ -57,6 +57,21 @@ void main() {
       expect(topics, contains(NotificationTopics.belfastUmbrella));
     });
 
+    test('topicsFromPrefs supports non-Belfast locations', () {
+      prefs.setSubscribedToTopic('portadown-sunday-service', true);
+      prefs.setSubscribedToTopic('Portadown', true);
+      prefs.setSubscribedToBelfast(false);
+
+      final topics = NotificationSubscriptionService.topicsFromPrefs(
+        prefs,
+        locationNames: const ['Portadown'],
+      );
+
+      expect(topics, contains('portadown-sunday-service'));
+      expect(topics, contains('Portadown'));
+      expect(topics, isNot(contains(NotificationTopics.belfastUmbrella)));
+    });
+
     test('allSubscribedTopics adds bookmark post topics', () {
       prefs.setSubscribedToTopic(NotificationTopics.sundayService, true);
       prefs.addPostBookmark('event-42');

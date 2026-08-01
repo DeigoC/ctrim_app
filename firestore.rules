@@ -135,6 +135,12 @@ service cloud.firestore {
         (isAreaAdmin() || isAdmin());
     }
 
+    match /post_tags/{tagId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null &&
+        (isAreaAdmin() || isAdmin() || isLeader());
+    }
+
     match /id_tracker/{documents=**}{
       // Allow anyone to read tracker (needed for guest user caching)
       allow read: if true;

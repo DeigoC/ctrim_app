@@ -8,7 +8,9 @@ import '../utility/dialog_manager.dart';
 import '../utility/responsive_layout.dart';
 import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
+import '../widgets/post_tag_filter_bar.dart';
 import '../widgets/posts/post_head.dart';
+import '../utility/post_tag_helpers.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -24,6 +26,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   late final AppContext _appContext;
   late AnimationController _refreshAnimationController;
   late Animation<double> _refreshAnimation;
+  final Set<String> _selectedPostTagIDs = {};
 
   @override
   void initState() {
@@ -62,7 +65,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final bool defaultFilter = appContext.postSortIndex == 0;
       final List<EventHead> eventHeads =
-          defaultFilter ? List.empty() : List.from(appContext.eventHeads, growable: true);
+          defaultFilter ? List.from(appContext.eventHeads, growable: true) : List.from(appContext.eventHeads, growable: true);
 
       if (!defaultFilter) {
         if (appContext.postSortIndex == 1) {
@@ -75,9 +78,17 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
         }
       }
 
-      final int itemCount = defaultFilter ? appContext.eventHeads.length : eventHeads.length;
-      final List<EventHead> heads =
-          defaultFilter ? appContext.eventHeads : eventHeads;
+      if (_selectedPostTagIDs.isNotEmpty) {
+        eventHeads.removeWhere(
+          (e) => !PostTagHelpers.headMatchesTagFilter(
+            head: e,
+            selectedTagIDs: _selectedPostTagIDs,
+          ),
+        );
+      }
+
+      final int itemCount = eventHeads.length;
+      final List<EventHead> heads = eventHeads;
 
       return RefreshIndicator(
         edgeOffset: kToolbarHeight + 20,
@@ -201,6 +212,21 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       child: _buildFilterIndicator(appContext, colorScheme),
+                    ),
+                  ),
+                if (appContext.activePostTags.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: PostTagFilterBar(
+                      tags: appContext.activePostTags,
+                      selectedTagIDs: _selectedPostTagIDs,
+                      horizontalPadding: horizontalPadding,
+                      onSelectionChanged: (selected) {
+                        setState(() {
+                          _selectedPostTagIDs
+                            ..clear()
+                            ..addAll(selected);
+                        });
+                      },
                     ),
                   ),
                 SliverPadding(

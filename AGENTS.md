@@ -44,12 +44,15 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Ongoing work
 
+- **Post tags & notify streams** — V1 in place; handoff in [`docs/post-tags-notification-streams.md`](docs/post-tags-notification-streams.md). Deploy `firestore.rules` for `post_tags`; seed starter tags from Manage Post Tags.
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
 - **Stakeholder documentation** — product-facing drafts in [`docs/stakeholders/`](docs/stakeholders/). Continue with: “Continue stakeholder documentation from `docs/stakeholders/overview.md`”.
 
 ## Recent agent-relevant changes
 
+- **2026-08-01** — Post content tags (`post_tags`) + bulletin filter; FCM streams derived from location + tag `StreamKind` (Belfast IDs frozen). Design: `docs/post-tags-notification-streams.md`. Deploy `firestore.rules` for `post_tags`.
+- **2026-08-01** — Web push: SW no longer re-shows FCM `notification` payloads (fixes duplicate banners); re-register also strips stale tokens from `web_topics`.
 - **2026-07-30** — Stakeholder docs live under `docs/stakeholders/` (not a separate Documentation folder); agent handoffs stay in `docs/*.md`.
 - **2026-07-30** — Template create (singular + bulk) syncs assigned program roles via `syncUserRolesForPost` so My Schedule updates; role push stays opt-in (`notifyScheduledMembers` defaults false; bulk never notifies).
 - **2026-07-30** — Full-page loads use `LoadProgressBody` (schedule/roles, my posts, profile, related posts, attendance, info, bulk create) instead of bare spinners; avoid inline `FutureBuilder(future: fetch…)` in `build`.

@@ -1,3 +1,4 @@
+import 'package:ctrim_app/models/post_tag.dart';
 import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -84,6 +85,64 @@ void main() {
         ]),
         '${NotificationTopics.labelFor(NotificationTopics.sundayService)}, '
         '${NotificationTopics.belfastUmbrellaLabel}',
+      );
+    });
+
+    test('streamTopic keeps Belfast IDs frozen', () {
+      expect(
+        NotificationTopics.streamTopic(
+          locationName: 'Belfast',
+          streamKind: 'sunday-service',
+        ),
+        NotificationTopics.sundayService,
+      );
+      expect(
+        NotificationTopics.streamTopic(
+          locationName: 'Belfast (Online)',
+          streamKind: 'sunday-service',
+        ),
+        NotificationTopics.sundayService,
+      );
+      expect(
+        NotificationTopics.streamTopic(
+          locationName: 'Portadown',
+          streamKind: 'sunday-service',
+        ),
+        'portadown-sunday-service',
+      );
+    });
+
+    test('resolveFromPost derives streams from tags + location', () {
+      final tags = [
+        PostTag(
+          id: 'sun',
+          name: 'Sunday',
+          streamKind: NotificationTopics.kindSundayService,
+        ),
+        PostTag(id: 'filter-only', name: 'Special'),
+      ];
+
+      expect(
+        BroadcastAudience.resolveFromPost(
+          location: 'Portadown',
+          tagIDs: ['sun', 'filter-only'],
+          allTags: tags,
+          includeLocationUmbrella: true,
+        ),
+        ['portadown-sunday-service', 'Portadown'],
+      );
+    });
+
+    test('resolveFromPost falls back to legacy topics', () {
+      expect(
+        BroadcastAudience.resolveFromPost(
+          location: 'Belfast',
+          tagIDs: const [],
+          allTags: const [],
+          includeLocationUmbrella: false,
+          legacyTopics: [NotificationTopics.sundayService, 'Belfast'],
+        ),
+        [NotificationTopics.sundayService],
       );
     });
   });

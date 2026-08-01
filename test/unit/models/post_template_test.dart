@@ -18,6 +18,7 @@ void main() {
         'Body': r'[{"insert":"Hello\n"}]',
         'Location': 'Belfast',
         'Topics': <String>['Belfast'],
+        'TagIDs': <String>[],
         'Contributors': <String>[],
         'LeadSpeakerUID': null,
         'Subtitles': <String>['Welcome'],

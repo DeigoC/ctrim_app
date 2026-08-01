@@ -199,6 +199,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           currentUserID: uid,
           parentID: parentID,
           allUsers: appContext.allUsers,
+          allPostTags: appContext.allPostTags,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
         _applyPreviewHeadMedia(eventContext.head, preview.headMedia);

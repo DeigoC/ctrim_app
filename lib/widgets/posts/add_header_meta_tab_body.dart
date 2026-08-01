@@ -7,6 +7,7 @@ import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:ctrim_app/widgets/my_avatar_stack.dart';
+import 'package:ctrim_app/widgets/post_tag_picker.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -706,7 +707,13 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
                 ),
                 const Divider(height: 32),
-                ..._buildNotificationControls(),
+                PostTagPicker(
+                  allTags: appContext.allPostTags,
+                  selectedTagIDs: Set<String>.from(widget.eventContext.head.tagIDs),
+                  onChanged: (selected) => _onTagsChanged(appContext, selected),
+                ),
+                const Divider(height: 32),
+                ..._buildNotificationControls(appContext),
               ],
             ),
           ),
@@ -715,13 +722,20 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     );
   }
 
-  List<Widget> _buildNotificationControls() {
+  List<Widget> _buildNotificationControls(AppContext appContext) {
+    final location = widget.eventContext.head.location;
     final topics = widget.eventContext.metadata.topics;
     final notifyBroadcast = widget.eventContext.notifyBroadcast;
-    final includeBelfast = BroadcastAudience.includesBelfastUmbrella(topics);
-    final audience = BroadcastAudience.resolve(
-      postTopics: topics,
-      includeBelfastUmbrella: includeBelfast,
+    final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
+      topics: topics,
+      locationName: location,
+    );
+    final audience = BroadcastAudience.resolveFromPost(
+      location: location,
+      tagIDs: widget.eventContext.head.tagIDs,
+      allTags: appContext.allPostTags,
+      includeLocationUmbrella: includeUmbrella,
+      legacyTopics: topics,
     );
 
     return [
@@ -741,13 +755,13 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         Padding(
           padding: const EdgeInsets.only(left: 16),
           child: CheckboxListTile(
-            title: Text(NotificationTopics.belfastUmbrellaLabel),
-            subtitle: const Text(
-              'Also reach everyone opted into All Belfast updates',
+            title: Text(NotificationTopics.locationUmbrellaLabel(location)),
+            subtitle: Text(
+              'Also reach everyone opted into All $location updates',
             ),
-            value: includeBelfast,
+            value: includeUmbrella,
             onChanged: (newState) =>
-                _onNotifyBelfastUmbrellaChange(newState!),
+                _onNotifyLocationUmbrellaChange(appContext, newState!),
           ),
         ),
       CheckboxListTile(
@@ -783,15 +797,26 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     });
   }
 
-  void _onNotifyBelfastUmbrellaChange(final bool include) {
+  void _onTagsChanged(final AppContext appContext, final Set<String> selected) {
     setState(() {
-      if (include) {
-        widget.eventContext.metadata
-            .addTopic(NotificationTopics.belfastUmbrella);
-      } else {
-        widget.eventContext.metadata
-            .removeTopic(NotificationTopics.belfastUmbrella);
-      }
+      final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
+        topics: widget.eventContext.metadata.topics,
+        locationName: widget.eventContext.head.location,
+      );
+      widget.eventContext.applyTagIDs(selected.toList());
+      widget.eventContext.syncNotificationTopics(
+        allTags: appContext.allPostTags,
+        includeLocationUmbrella: includeUmbrella,
+      );
+    });
+  }
+
+  void _onNotifyLocationUmbrellaChange(final AppContext appContext, final bool include) {
+    setState(() {
+      widget.eventContext.syncNotificationTopics(
+        allTags: appContext.allPostTags,
+        includeLocationUmbrella: include,
+      );
     });
   }
 

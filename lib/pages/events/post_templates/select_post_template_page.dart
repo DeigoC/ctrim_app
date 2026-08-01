@@ -281,6 +281,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': 'Belfast',
       'Topics': ['Belfast'],
+      'TagIDs': <String>[],
       'Contributors': [],
       'LeadSpeakerUID': null,
       'AllDay': false,
@@ -644,6 +645,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       currentUserID: appContext.currentUser.id,
       parentID: widget.eventContext.metadata.parentID,
       allUsers: appContext.allUsers,
+      allPostTags: appContext.allPostTags,
     );
 
     if (eventContext.head.eventDate != null) {

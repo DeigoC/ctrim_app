@@ -156,6 +156,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
 
   @override
+  String get postTagsFilterClear => 'Clear tags';
+
+  @override
+  String get postTagsAssignLabel => 'Content tags';
+
+  @override
+  String get postTagsNoneAvailable =>
+      'No post tags yet. Leaders can create tags in Admin Tools.';
+
+  @override
+  String get managePostTagsTitle => 'Manage Post Tags';
+
+  @override
+  String get managePostTagsAdd => 'Add tag';
+
+  @override
+  String get managePostTagsEmpty =>
+      'No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.';
+
+  @override
+  String get managePostTagsSeedDefaults => 'Add starter tags';
+
+  @override
+  String get managePostTagsActive => 'Active';
+
+  @override
+  String get managePostTagsInactive => 'Inactive';
+
+  @override
+  String get managePostTagsMoveUp => 'Move up';
+
+  @override
+  String get managePostTagsMoveDown => 'Move down';
+
+  @override
+  String get managePostTagsEdit => 'Edit';
+
+  @override
+  String get managePostTagsDeactivate => 'Deactivate';
+
+  @override
+  String get managePostTagsActivate => 'Activate';
+
+  @override
+  String get managePostTagsDelete => 'Delete';
+
+  @override
+  String get managePostTagsNameLabel => 'Tag name';
+
+  @override
+  String get managePostTagsColorLabel => 'Color (optional)';
+
+  @override
+  String get managePostTagsStreamKindLabel => 'Notify stream kind (optional)';
+
+  @override
+  String get managePostTagsStreamKindHelper =>
+      'Combined with post location, e.g. sunday-service → belfast-sunday-service';
+
+  @override
+  String managePostTagsStreamKindHint(String kind) {
+    return 'Notifies: $kind';
+  }
+
+  @override
+  String get managePostTagsNoStream => 'Filter only (no notifications)';
+
+  @override
+  String get managePostTagsCreate => 'Create';
+
+  @override
+  String managePostTagsDeleteConfirm(String name) {
+    return 'Delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String managePostTagsDeleteBlocked(int count) {
+    return 'Cannot delete — $count posts still have this tag. Deactivate it instead.';
+  }
+
+  @override
+  String get managePostTagsMenuTitle => 'Post Tags';
+
+  @override
+  String get managePostTagsMenuSubtitle =>
+      'Labels for bulletin filtering & notify streams';
+
+  @override
   String get manageUserLocationsTitle => 'Manage Locations';
 
   @override

@@ -204,6 +204,125 @@
   "@manageUserTagsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing tags"
   },
+  "postTagsFilterClear": "Clear tags",
+  "@postTagsFilterClear": {
+    "description": "Button to clear selected post tag filters on the bulletin"
+  },
+  "postTagsAssignLabel": "Content tags",
+  "@postTagsAssignLabel": {
+    "description": "Section label for assigning content tags to a post or template"
+  },
+  "postTagsNoneAvailable": "No post tags yet. Leaders can create tags in Admin Tools.",
+  "@postTagsNoneAvailable": {
+    "description": "Message when no post tags exist for assignment"
+  },
+  "managePostTagsTitle": "Manage Post Tags",
+  "@managePostTagsTitle": {
+    "description": "Title for the admin page that manages post content tag definitions"
+  },
+  "managePostTagsAdd": "Add tag",
+  "@managePostTagsAdd": {
+    "description": "Action to create a new post content tag"
+  },
+  "managePostTagsEmpty": "No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.",
+  "@managePostTagsEmpty": {
+    "description": "Empty state on the manage post tags page"
+  },
+  "managePostTagsSeedDefaults": "Add starter tags",
+  "@managePostTagsSeedDefaults": {
+    "description": "Button to seed default post tags with Belfast stream kinds"
+  },
+  "managePostTagsActive": "Active",
+  "@managePostTagsActive": {
+    "description": "Status label for an active post tag"
+  },
+  "managePostTagsInactive": "Inactive",
+  "@managePostTagsInactive": {
+    "description": "Status label for a deactivated post tag"
+  },
+  "managePostTagsMoveUp": "Move up",
+  "@managePostTagsMoveUp": {
+    "description": "Reorder a post tag higher in the list"
+  },
+  "managePostTagsMoveDown": "Move down",
+  "@managePostTagsMoveDown": {
+    "description": "Reorder a post tag lower in the list"
+  },
+  "managePostTagsEdit": "Edit",
+  "@managePostTagsEdit": {
+    "description": "Edit an existing post tag"
+  },
+  "managePostTagsDeactivate": "Deactivate",
+  "@managePostTagsDeactivate": {
+    "description": "Deactivate a post tag so it cannot be assigned"
+  },
+  "managePostTagsActivate": "Activate",
+  "@managePostTagsActivate": {
+    "description": "Reactivate a deactivated post tag"
+  },
+  "managePostTagsDelete": "Delete",
+  "@managePostTagsDelete": {
+    "description": "Delete a post tag definition"
+  },
+  "managePostTagsNameLabel": "Tag name",
+  "@managePostTagsNameLabel": {
+    "description": "Label for the post tag name field"
+  },
+  "managePostTagsColorLabel": "Color (optional)",
+  "@managePostTagsColorLabel": {
+    "description": "Label for the optional post tag color hex field"
+  },
+  "managePostTagsStreamKindLabel": "Notify stream kind (optional)",
+  "@managePostTagsStreamKindLabel": {
+    "description": "Label for optional FCM stream kind on a post tag"
+  },
+  "managePostTagsStreamKindHelper": "Combined with post location, e.g. sunday-service → belfast-sunday-service",
+  "@managePostTagsStreamKindHelper": {
+    "description": "Helper text explaining location + stream kind FCM topic derivation"
+  },
+  "managePostTagsStreamKindHint": "Notifies: {kind}",
+  "@managePostTagsStreamKindHint": {
+    "description": "Shows the stream kind on a post tag list tile",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "managePostTagsNoStream": "Filter only (no notifications)",
+  "@managePostTagsNoStream": {
+    "description": "Shown when a post tag has no stream kind"
+  },
+  "managePostTagsCreate": "Create",
+  "@managePostTagsCreate": {
+    "description": "Create a new post tag"
+  },
+  "managePostTagsDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@managePostTagsDeleteConfirm": {
+    "description": "Confirmation before deleting a post tag",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "managePostTagsDeleteBlocked": "Cannot delete — {count} posts still have this tag. Deactivate it instead.",
+  "@managePostTagsDeleteBlocked": {
+    "description": "Error when trying to delete a post tag that is still assigned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "managePostTagsMenuTitle": "Post Tags",
+  "@managePostTagsMenuTitle": {
+    "description": "Personal home admin menu item for managing post tags"
+  },
+  "managePostTagsMenuSubtitle": "Labels for bulletin filtering & notify streams",
+  "@managePostTagsMenuSubtitle": {
+    "description": "Personal home admin menu subtitle for managing post tags"
+  },
   "manageUserLocationsTitle": "Manage Locations",
   "@manageUserLocationsTitle": {
     "description": "Title for the admin page that manages volunteer location definitions"

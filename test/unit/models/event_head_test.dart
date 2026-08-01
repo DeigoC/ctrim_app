@@ -14,6 +14,7 @@ void main() {
         expect(head.title, '');
         expect(head.subtitle, '');
         expect(head.location, 'Belfast');
+        expect(head.tagIDs, isEmpty);
         expect(head.eventDate, isNull);
         expect(head.hasEventDate, false);
         expect(head.hasMedia, false);

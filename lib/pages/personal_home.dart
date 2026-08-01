@@ -30,6 +30,7 @@ import 'personal/view_my_posts_page.dart';
 import 'personal/view_user_roles_page.dart';
 import 'personal/manage_user_locations_page.dart';
 import 'personal/manage_user_tags_page.dart';
+import 'personal/manage_post_tags_page.dart';
 import '../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
@@ -486,6 +487,17 @@ class _PersonalHomeState extends State<PersonalHome> {
         ),
       );
     }
+    if (appContext.currentUser.isLeader || appContext.currentUser.isAreaAdmin) {
+      actions.add(
+        _PersonalAction(
+          icon: Icons.style_rounded,
+          title: l10n.managePostTagsMenuTitle,
+          subtitle: l10n.managePostTagsMenuSubtitle,
+          onTap: _openManagePostTagsClick,
+          iconColor: colorScheme.primary,
+        ),
+      );
+    }
     return actions;
   }
 
@@ -498,9 +510,11 @@ class _PersonalHomeState extends State<PersonalHome> {
   }) {
     final showTemplates = appContext.currentUser.isLeader;
     final showUserTags = appContext.currentUser.isAreaAdmin;
-    final sectionTitle = showUserTags && !showTemplates
+    final showPostTags =
+        appContext.currentUser.isLeader || appContext.currentUser.isAreaAdmin;
+    final sectionTitle = (showUserTags || showPostTags) && !showTemplates
         ? 'Admin Tools'
-        : showTemplates && !showUserTags
+        : showTemplates && !showUserTags && !showPostTags
             ? 'Leader Tools'
             : 'Admin Tools';
     final actions = _adminActions(appContext, colorScheme);
@@ -1059,6 +1073,11 @@ class _PersonalHomeState extends State<PersonalHome> {
   void _openManageUserLocationsClick() {
     Navigator.push(context,
         MaterialPageRoute(builder: (_) => const ManageUserLocationsPage()));
+  }
+
+  void _openManagePostTagsClick() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => const ManagePostTagsPage()));
   }
 
   void _onRegisterAccountClick() {

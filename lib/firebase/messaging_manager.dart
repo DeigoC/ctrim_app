@@ -71,14 +71,22 @@ class MessagingManager {
       final existing = _parseTokenEntries(doc.data());
 
       final staleDeletes = <String, dynamic>{};
+      final staleTokens = <String>[];
       for (final entry in existing.entries) {
         if (entry.value['authId'] == authId && entry.key != token) {
           staleDeletes[entry.key] = FieldValue.delete();
+          staleTokens.add(entry.key);
         }
       }
 
       if (staleDeletes.isNotEmpty) {
         await docRef.set({'entries': staleDeletes}, SetOptions(merge: true));
+        for (final stale in staleTokens) {
+          await _removeTokenFromAllWebTopics(stale);
+        }
+        NotificationDebug.log(
+          'Pruned ${staleTokens.length} stale web token(s) for authId=$authId',
+        );
       }
 
       await docRef.set(

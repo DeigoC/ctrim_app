@@ -9,7 +9,9 @@ import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
+import '../models/post_tag.dart';
 import '../models/user.dart';
+import 'broadcast_audience.dart';
 
 class EventContext {
   late final EventHead _head;
@@ -77,6 +79,12 @@ class EventContext {
   EventMetadata get metadata => _metadata;
   void setFetchedMetadata(final EventMetadata data) {
     _metadata = data;
+    // Prefer metadata TagIDs; fall back to head if metadata predates the field.
+    if (data.tagIDs.isNotEmpty) {
+      _head.setTagIDs(data.tagIDs);
+    } else if (_head.tagIDs.isNotEmpty) {
+      _metadata.setTagIDs(_head.tagIDs);
+    }
     _initialiseInternalLists();
   }
 
@@ -120,6 +128,7 @@ class EventContext {
     headToUpload.setRecentDate(now);
     headToUpload.setEventDate(_head.eventDate);
     headToUpload.setLocation(location);
+    headToUpload.setTagIDs(_head.tagIDs);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }
@@ -196,6 +205,32 @@ class EventContext {
 
   bool isUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
   bool isUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+
+  /// Keeps head and metadata [TagIDs] in sync.
+  void applyTagIDs(final List<String> tagIDs) {
+    _head.setTagIDs(tagIDs);
+    _metadata.setTagIDs(tagIDs);
+  }
+
+  /// Recomputes FCM [Topics] from location + notifiable tags (+ optional location umbrella).
+  ///
+  /// When no notifiable tags are present, preserves non-umbrella entries from current Topics
+  /// so legacy posts keep working.
+  void syncNotificationTopics({
+    required List<PostTag> allTags,
+    required bool includeLocationUmbrella,
+  }) {
+    final legacy = List<String>.from(_metadata.topics);
+    final resolved = BroadcastAudience.resolveFromPost(
+      location: _head.location,
+      tagIDs: _metadata.tagIDs.isNotEmpty ? _metadata.tagIDs : _head.tagIDs,
+      allTags: allTags,
+      includeLocationUmbrella: includeLocationUmbrella,
+      legacyTopics: legacy,
+    );
+    _metadata.clearTopics();
+    _metadata.addAllTopics(resolved);
+  }
 
   void _initialiseInternalLists() {
     if (_metadata.authorUID == _currentUID || _metadata.contributorUIDs.contains(_currentUID)) {

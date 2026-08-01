@@ -466,6 +466,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': location,
       'Topics': [location],
+      'TagIDs': <String>[],
       'Contributors': <String>[],
       'LeadSpeakerUID': null,
       'Subtitles': <String>[],
@@ -504,6 +505,10 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.setFetchedBody(postTemplate.body);
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
+    eventContext.applyTagIDs(List<String>.from(postTemplate.tagIDs));
+    if (postTemplate.tagIDs.isEmpty && postTemplate.topics.isNotEmpty) {
+      eventContext.metadata.addAllTopics(postTemplate.topics);
+    }
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
     if (postTemplate.leadSpeakerUID != null && postTemplate.leadSpeakerUID!.isNotEmpty) {
       eventContext.metadata.setLeadSpeakerUID(postTemplate.leadSpeakerUID);

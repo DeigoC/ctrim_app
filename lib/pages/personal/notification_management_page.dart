@@ -106,25 +106,7 @@ class _NotificationManagementPageState
                   _buildTokenWarning(theme, colorScheme),
                 ],
                 const SizedBox(height: 24),
-                _buildSectionHeader(theme, colorScheme, 'Belfast'),
-                const SizedBox(height: 8),
-                _buildTopicCard(
-                  theme: theme,
-                  colorScheme: colorScheme,
-                  children: [
-                    _buildTopicSwitch(
-                      topic: NotificationTopics.belfastUmbrella,
-                      title: NotificationTopics.belfastUmbrellaLabel,
-                      subtitle: 'General Belfast church announcements',
-                      value: _appContext.sharedPref.subscribedToBelfast,
-                      updateBelfastPref: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildSectionHeader(theme, colorScheme, 'Services & Groups'),
-                const SizedBox(height: 8),
-                _buildServiceTopicsSection(
+                ..._buildLocationNotifySections(
                   theme: theme,
                   colorScheme: colorScheme,
                   wide: isWide,
@@ -134,6 +116,73 @@ class _NotificationManagementPageState
           },
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildLocationNotifySections({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required bool wide,
+  }) {
+    final locations = _appContext.activeLocations;
+    final locationNames = locations.isNotEmpty
+        ? locations.map((l) => l.name).toList()
+        : <String>['Belfast'];
+
+    final streamKinds = _streamKindsForPrefs();
+    final widgets = <Widget>[];
+
+    for (final locationName in locationNames) {
+      widgets.add(_buildSectionHeader(theme, colorScheme, locationName));
+      widgets.add(const SizedBox(height: 8));
+      widgets.add(
+        _buildTopicCard(
+          theme: theme,
+          colorScheme: colorScheme,
+          children: [
+            _buildLocationUmbrellaSwitch(locationName),
+          ],
+        ),
+      );
+      widgets.add(const SizedBox(height: 16));
+      widgets.add(_buildSectionHeader(theme, colorScheme, '$locationName services'));
+      widgets.add(const SizedBox(height: 8));
+      widgets.add(
+        _buildServiceTopicsSection(
+          theme: theme,
+          colorScheme: colorScheme,
+          wide: wide,
+          locationName: locationName,
+          streamKinds: streamKinds,
+        ),
+      );
+      widgets.add(const SizedBox(height: 24));
+    }
+
+    return widgets;
+  }
+
+  List<String> _streamKindsForPrefs() {
+    final fromTags = _appContext.allPostTags
+        .where((t) => t.isActive && t.isNotifiable)
+        .map((t) => t.streamKind!)
+        .toSet()
+        .toList();
+    if (fromTags.isNotEmpty) return fromTags;
+    return NotificationTopics.serviceStreamKinds;
+  }
+
+  Widget _buildLocationUmbrellaSwitch(String locationName) {
+    final umbrella = NotificationTopics.locationUmbrella(locationName);
+    final isBelfast = umbrella == NotificationTopics.belfastUmbrella;
+    return _buildTopicSwitch(
+      topic: umbrella,
+      title: NotificationTopics.locationUmbrellaLabel(locationName),
+      subtitle: 'General $locationName church announcements',
+      value: isBelfast
+          ? _appContext.sharedPref.subscribedToBelfast
+          : _appContext.sharedPref.isSubscribedToTopic(umbrella),
+      updateBelfastPref: isBelfast,
     );
   }
 
@@ -288,8 +337,18 @@ class _NotificationManagementPageState
     required ThemeData theme,
     required ColorScheme colorScheme,
     required bool wide,
+    required String locationName,
+    required List<String> streamKinds,
   }) {
-    final topics = NotificationTopics.serviceTopics;
+    final topics = streamKinds
+        .map(
+          (kind) => NotificationTopics.streamTopic(
+            locationName: locationName,
+            streamKind: kind,
+          ),
+        )
+        .where((t) => t.isNotEmpty)
+        .toList();
 
     List<Widget> switchesFor(List<String> topicIds) {
       return [
@@ -503,7 +562,7 @@ class _NotificationManagementPageState
         tokens: [token],
         title: 'CTRIM test notification',
         body: 'If you can read this, push is working on this device.',
-        data: const {},
+        data: const {'TestNotif': '1'},
       );
 
       if (!mounted) return;

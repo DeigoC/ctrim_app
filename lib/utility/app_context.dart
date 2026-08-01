@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/event/event_head.dart';
 import '../models/event/event_metadata.dart';
+import '../models/post_tag.dart';
 import '../models/user.dart';
 import '../models/user_location.dart';
 import '../models/user_tag.dart';
@@ -19,6 +20,7 @@ class AppContext extends ChangeNotifier {
   static late final List<EventHead> _eventHeads;
   static late final List<User> _allUsers;
   static late final List<UserTag> _allTags;
+  static late final List<PostTag> _allPostTags;
   static late final List<UserLocation> _allLocations;
 
   // there's an interesting idea for optimisation to do with the recentDate and writing to file
@@ -44,11 +46,13 @@ class AppContext extends ChangeNotifier {
       List<EventHead>? heads,
       List<User>? allUsers,
       List<UserTag>? allTags,
+      List<PostTag>? allPostTags,
       List<UserLocation>? allLocations,
       User? user}) {
     _eventHeads = heads ?? List<EventHead>.empty(growable: true);
     _allUsers = allUsers ?? List<User>.empty(growable: true);
     _allTags = allTags ?? List<UserTag>.empty(growable: true);
+    _allPostTags = allPostTags ?? List<PostTag>.empty(growable: true);
     _allLocations = allLocations ?? List<UserLocation>.empty(growable: true);
     _currentUser = user ?? _guest;
     _analytics = analytics;
@@ -234,6 +238,44 @@ class AppContext extends ChangeNotifier {
 
   UserTag? tagById(final String tagId) {
     for (final tag in _allTags) {
+      if (tag.id == tagId) return tag;
+    }
+    return null;
+  }
+
+  List<PostTag> get allPostTags => UnmodifiableListView(_allPostTags);
+  List<PostTag> get activePostTags => _allPostTags.where((tag) => tag.isActive).toList();
+
+  void setAllPostTags(final List<PostTag> tags) {
+    _allPostTags
+      ..clear()
+      ..addAll(tags);
+    _allPostTags.sort((a, b) {
+      final orderCompare = a.displayOrder.compareTo(b.displayOrder);
+      if (orderCompare != 0) return orderCompare;
+      return a.name.compareTo(b.name);
+    });
+    notifyListeners();
+  }
+
+  void addOrUpdatePostTag(final PostTag tag) {
+    _allPostTags.removeWhere((t) => t.id == tag.id);
+    _allPostTags.add(tag);
+    _allPostTags.sort((a, b) {
+      final orderCompare = a.displayOrder.compareTo(b.displayOrder);
+      if (orderCompare != 0) return orderCompare;
+      return a.name.compareTo(b.name);
+    });
+    notifyListeners();
+  }
+
+  void removePostTag(final String tagId) {
+    _allPostTags.removeWhere((t) => t.id == tagId);
+    notifyListeners();
+  }
+
+  PostTag? postTagById(final String tagId) {
+    for (final tag in _allPostTags) {
       if (tag.id == tagId) return tag;
     }
     return null;

@@ -364,6 +364,162 @@ abstract class AppLocalizations {
   /// **'Create and edit team labels'**
   String get manageUserTagsMenuSubtitle;
 
+  /// Button to clear selected post tag filters on the bulletin
+  ///
+  /// In en, this message translates to:
+  /// **'Clear tags'**
+  String get postTagsFilterClear;
+
+  /// Section label for assigning content tags to a post or template
+  ///
+  /// In en, this message translates to:
+  /// **'Content tags'**
+  String get postTagsAssignLabel;
+
+  /// Message when no post tags exist for assignment
+  ///
+  /// In en, this message translates to:
+  /// **'No post tags yet. Leaders can create tags in Admin Tools.'**
+  String get postTagsNoneAvailable;
+
+  /// Title for the admin page that manages post content tag definitions
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Post Tags'**
+  String get managePostTagsTitle;
+
+  /// Action to create a new post content tag
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get managePostTagsAdd;
+
+  /// Empty state on the manage post tags page
+  ///
+  /// In en, this message translates to:
+  /// **'No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.'**
+  String get managePostTagsEmpty;
+
+  /// Button to seed default post tags with Belfast stream kinds
+  ///
+  /// In en, this message translates to:
+  /// **'Add starter tags'**
+  String get managePostTagsSeedDefaults;
+
+  /// Status label for an active post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get managePostTagsActive;
+
+  /// Status label for a deactivated post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get managePostTagsInactive;
+
+  /// Reorder a post tag higher in the list
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get managePostTagsMoveUp;
+
+  /// Reorder a post tag lower in the list
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get managePostTagsMoveDown;
+
+  /// Edit an existing post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get managePostTagsEdit;
+
+  /// Deactivate a post tag so it cannot be assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get managePostTagsDeactivate;
+
+  /// Reactivate a deactivated post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get managePostTagsActivate;
+
+  /// Delete a post tag definition
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get managePostTagsDelete;
+
+  /// Label for the post tag name field
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get managePostTagsNameLabel;
+
+  /// Label for the optional post tag color hex field
+  ///
+  /// In en, this message translates to:
+  /// **'Color (optional)'**
+  String get managePostTagsColorLabel;
+
+  /// Label for optional FCM stream kind on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Notify stream kind (optional)'**
+  String get managePostTagsStreamKindLabel;
+
+  /// Helper text explaining location + stream kind FCM topic derivation
+  ///
+  /// In en, this message translates to:
+  /// **'Combined with post location, e.g. sunday-service → belfast-sunday-service'**
+  String get managePostTagsStreamKindHelper;
+
+  /// Shows the stream kind on a post tag list tile
+  ///
+  /// In en, this message translates to:
+  /// **'Notifies: {kind}'**
+  String managePostTagsStreamKindHint(String kind);
+
+  /// Shown when a post tag has no stream kind
+  ///
+  /// In en, this message translates to:
+  /// **'Filter only (no notifications)'**
+  String get managePostTagsNoStream;
+
+  /// Create a new post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get managePostTagsCreate;
+
+  /// Confirmation before deleting a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? This cannot be undone.'**
+  String managePostTagsDeleteConfirm(String name);
+
+  /// Error when trying to delete a post tag that is still assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete — {count} posts still have this tag. Deactivate it instead.'**
+  String managePostTagsDeleteBlocked(int count);
+
+  /// Personal home admin menu item for managing post tags
+  ///
+  /// In en, this message translates to:
+  /// **'Post Tags'**
+  String get managePostTagsMenuTitle;
+
+  /// Personal home admin menu subtitle for managing post tags
+  ///
+  /// In en, this message translates to:
+  /// **'Labels for bulletin filtering & notify streams'**
+  String get managePostTagsMenuSubtitle;
+
   /// Title for the admin page that manages volunteer location definitions
   ///
   /// In en, this message translates to:

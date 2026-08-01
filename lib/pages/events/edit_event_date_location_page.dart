@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../../utility/app_context.dart';
+import '../../utility/broadcast_audience.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -719,6 +722,16 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       final String newLocation = _location + (_online ? ' (Online)' : '');
       widget.eventContext.head.setLocation(newLocation);
       widget.eventContext.head.setEventDate(_start);
+
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
+        topics: widget.eventContext.metadata.topics,
+        locationName: newLocation,
+      );
+      widget.eventContext.syncNotificationTopics(
+        allTags: appContext.allPostTags,
+        includeLocationUmbrella: includeUmbrella,
+      );
 
       widget.eventContext.allowSavingOfTheEdit();
     }

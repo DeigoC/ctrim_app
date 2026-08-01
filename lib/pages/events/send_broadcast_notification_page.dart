@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../firebase/functions_manager.dart';
+import '../../utility/app_context.dart';
 import '../../utility/broadcast_audience.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -12,7 +14,7 @@ import '../../widgets/responsive_content.dart';
 /// Compose and send a broadcast push for a post.
 ///
 /// Body can be the post subtitle, a reminder preset, or free-form text.
-/// Audience can optionally include the Belfast umbrella topic for this send.
+/// Audience can optionally include the location umbrella topic for this send.
 class SendBroadcastNotificationPage extends StatefulWidget {
   const SendBroadcastNotificationPage({super.key, required this.eventContext});
 
@@ -29,7 +31,7 @@ class _SendBroadcastNotificationPageState
   late final List<String> _presets;
   late BroadcastBodySource _source;
   late String _selectedPreset;
-  late bool _includeBelfastUmbrella;
+  late bool _includeLocationUmbrella;
   bool _sending = false;
 
   @override
@@ -48,8 +50,9 @@ class _SendBroadcastNotificationPageState
     _tecCustomBody = TextEditingController(
       text: head.eventDate != null ? _presets.first : head.subtitle,
     );
-    _includeBelfastUmbrella = BroadcastAudience.includesBelfastUmbrella(
-      widget.eventContext.metadata.topics,
+    _includeLocationUmbrella = BroadcastAudience.includesLocationUmbrella(
+      topics: widget.eventContext.metadata.topics,
+      locationName: head.location,
     );
   }
 
@@ -66,10 +69,16 @@ class _SendBroadcastNotificationPageState
         selectedPreset: _selectedPreset,
       );
 
-  List<String> get _resolvedTopics => BroadcastAudience.resolve(
-        postTopics: widget.eventContext.metadata.topics,
-        includeBelfastUmbrella: _includeBelfastUmbrella,
-      );
+  List<String> get _resolvedTopics {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    return BroadcastAudience.resolveFromPost(
+      location: widget.eventContext.head.location,
+      tagIDs: widget.eventContext.head.tagIDs,
+      allTags: appContext.allPostTags,
+      includeLocationUmbrella: _includeLocationUmbrella,
+      legacyTopics: widget.eventContext.metadata.topics,
+    );
+  }
 
   bool get _canSend =>
       _resolvedTopics.isNotEmpty && _resolvedBody.isNotEmpty;
@@ -163,9 +172,14 @@ class _SendBroadcastNotificationPageState
 
   Widget _buildAudienceSection(BuildContext context) {
     final theme = Theme.of(context);
-    final baseTopics = BroadcastAudience.resolve(
-      postTopics: widget.eventContext.metadata.topics,
-      includeBelfastUmbrella: false,
+    final location = widget.eventContext.head.location;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final baseTopics = BroadcastAudience.resolveFromPost(
+      location: location,
+      tagIDs: widget.eventContext.head.tagIDs,
+      allTags: appContext.allPostTags,
+      includeLocationUmbrella: false,
+      legacyTopics: widget.eventContext.metadata.topics,
     );
 
     return Column(
@@ -182,7 +196,7 @@ class _SendBroadcastNotificationPageState
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
-              'Post topics: ${BroadcastAudience.describe(baseTopics)}',
+              'Post streams: ${BroadcastAudience.describe(baseTopics)}',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -192,8 +206,8 @@ class _SendBroadcastNotificationPageState
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
-              'This post has no service topics — use All Belfast updates below, '
-              'or add topics in post settings.',
+              'This post has no notify streams — use All $location updates below, '
+              'or add content tags with a stream kind in post settings.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -201,14 +215,14 @@ class _SendBroadcastNotificationPageState
           ),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(NotificationTopics.belfastUmbrellaLabel),
-          subtitle: const Text(
-            'Also notify everyone opted into All Belfast updates',
+          title: Text(NotificationTopics.locationUmbrellaLabel(location)),
+          subtitle: Text(
+            'Also notify everyone opted into All $location updates',
           ),
-          value: _includeBelfastUmbrella,
+          value: _includeLocationUmbrella,
           onChanged: (value) {
             if (value == null) return;
-            setState(() => _includeBelfastUmbrella = value);
+            setState(() => _includeLocationUmbrella = value);
           },
         ),
         Text(

@@ -1,8 +1,10 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
-  late List<String> _topics, _contributorUIDs, _subtitles;
+  late List<String> _topics, _tagIDs, _contributorUIDs, _subtitles;
   late List<Map<String, dynamic>> _headMedia, _media, _headMediaPool, _bodyMediaPool;
   String? _leadSpeakerUID;
 
@@ -21,6 +23,7 @@ class PostTemplate {
     _description = data['Description'];
     _headTitle = data['HeadTitle'];
     _topics = List.from(data['Topics']);
+    _tagIDs = data['TagIDs'] != null ? List<String>.from(data['TagIDs']) : <String>[];
     _contributorUIDs = List.from(data['Contributors']);
     _subtitles = data['Subtitles'] != null ? List<String>.from(data['Subtitles']) : <String>[];
     _location = data['Location'];
@@ -84,6 +87,7 @@ class PostTemplate {
       'Body': _body,
       'Location': _location,
       'Topics': _topics,
+      'TagIDs': _tagIDs,
       'Contributors': _contributorUIDs,
       'LeadSpeakerUID': _leadSpeakerUID,
       'Subtitles': _subtitles,
@@ -130,8 +134,11 @@ class PostTemplate {
   List<Map<String, dynamic>> get roles => _roles;
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
+  List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   List<String> get subtitles => _subtitles;
   String? get leadSpeakerUID => _leadSpeakerUID;
+
+  void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
 
   // setters
   void setTitle(final String title) => _title = title;

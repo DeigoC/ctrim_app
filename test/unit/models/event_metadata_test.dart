@@ -16,6 +16,7 @@ void main() {
         expect(meta.contributorUIDs, isEmpty);
         expect(meta.childrenPostIDs, isEmpty);
         expect(meta.topics, isEmpty);
+        expect(meta.tagIDs, isEmpty);
       });
 
       test('creates with optional parentID', () {
@@ -61,6 +62,7 @@ void main() {
         final meta = EventMetadata.fromMap(map);
 
         expect(meta.topics, isEmpty);
+        expect(meta.tagIDs, isEmpty);
         expect(meta.leadSpeakerUID, isNull);
         expect(meta.hasLeadSpeaker, false);
       });
@@ -96,6 +98,7 @@ void main() {
         expect(json['LastUID'], 'user-2');
         expect(json['ParentID'], 'parent-1');
         expect(json['Topics'], ['youth', 'mission']);
+        expect(json['TagIDs'], isEmpty);
         expect(json['ContributorUIDs'], isEmpty);
         expect(json['ChildrenIDs'], isEmpty);
         expect(json['LeadSpeakerUID'], 'speaker-1');
