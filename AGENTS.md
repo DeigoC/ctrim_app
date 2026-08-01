@@ -44,6 +44,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Ongoing work
 
+- **Caregroups** — planning only; handoff in [`docs/caregroups.md`](docs/caregroups.md). Durable group entities + main nav section (roster, leadership, meeting attendance trends); bulletin posts remain optional weekly surface. Continue with: “Continue caregroups from `docs/caregroups.md`”.
 - **Post tags & notify streams** — V1 in place; handoff in [`docs/post-tags-notification-streams.md`](docs/post-tags-notification-streams.md). Deploy `firestore.rules` for `post_tags`; seed starter tags from Manage Post Tags.
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.

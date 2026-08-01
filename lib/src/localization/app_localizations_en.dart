@@ -163,7 +163,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get postTagsNoneAvailable =>
-      'No post tags yet. Leaders can create tags in Admin Tools.';
+      'No post tags yet. Area admins can create tags in Admin Tools.';
 
   @override
   String get managePostTagsTitle => 'Manage Post Tags';

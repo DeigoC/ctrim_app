@@ -379,7 +379,7 @@ abstract class AppLocalizations {
   /// Message when no post tags exist for assignment
   ///
   /// In en, this message translates to:
-  /// **'No post tags yet. Leaders can create tags in Admin Tools.'**
+  /// **'No post tags yet. Area admins can create tags in Admin Tools.'**
   String get postTagsNoneAvailable;
 
   /// Title for the admin page that manages post content tag definitions

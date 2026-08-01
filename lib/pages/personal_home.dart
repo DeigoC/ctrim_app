@@ -479,21 +479,19 @@ class _PersonalHomeState extends State<PersonalHome> {
       );
       actions.add(
         _PersonalAction(
-          icon: Icons.location_on_rounded,
-          title: l10n.manageUserLocationsMenuTitle,
-          subtitle: l10n.manageUserLocationsMenuSubtitle,
-          onTap: _openManageUserLocationsClick,
-          iconColor: colorScheme.primary,
-        ),
-      );
-    }
-    if (appContext.currentUser.isLeader || appContext.currentUser.isAreaAdmin) {
-      actions.add(
-        _PersonalAction(
           icon: Icons.style_rounded,
           title: l10n.managePostTagsMenuTitle,
           subtitle: l10n.managePostTagsMenuSubtitle,
           onTap: _openManagePostTagsClick,
+          iconColor: colorScheme.primary,
+        ),
+      );
+      actions.add(
+        _PersonalAction(
+          icon: Icons.location_on_rounded,
+          title: l10n.manageUserLocationsMenuTitle,
+          subtitle: l10n.manageUserLocationsMenuSubtitle,
+          onTap: _openManageUserLocationsClick,
           iconColor: colorScheme.primary,
         ),
       );
@@ -510,11 +508,9 @@ class _PersonalHomeState extends State<PersonalHome> {
   }) {
     final showTemplates = appContext.currentUser.isLeader;
     final showUserTags = appContext.currentUser.isAreaAdmin;
-    final showPostTags =
-        appContext.currentUser.isLeader || appContext.currentUser.isAreaAdmin;
-    final sectionTitle = (showUserTags || showPostTags) && !showTemplates
+    final sectionTitle = showUserTags && !showTemplates
         ? 'Admin Tools'
-        : showTemplates && !showUserTags && !showPostTags
+        : showTemplates && !showUserTags
             ? 'Leader Tools'
             : 'Admin Tools';
     final actions = _adminActions(appContext, colorScheme);

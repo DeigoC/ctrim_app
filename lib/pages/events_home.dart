@@ -6,11 +6,13 @@ import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/responsive_layout.dart';
+import '../models/post_tag.dart';
 import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
-import '../widgets/post_tag_filter_bar.dart';
+import '../widgets/post_tag_chip.dart';
 import '../widgets/posts/post_head.dart';
 import '../utility/post_tag_helpers.dart';
+import '../src/localization/app_localizations.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -207,26 +209,11 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     ),
                   ),
                 ),
-                if (appContext.postSortIndex != 0)
+                if (appContext.postSortIndex != 0 || _selectedPostTagIDs.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       child: _buildFilterIndicator(appContext, colorScheme),
-                    ),
-                  ),
-                if (appContext.activePostTags.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: PostTagFilterBar(
-                      tags: appContext.activePostTags,
-                      selectedTagIDs: _selectedPostTagIDs,
-                      horizontalPadding: horizontalPadding,
-                      onSelectionChanged: (selected) {
-                        setState(() {
-                          _selectedPostTagIDs
-                            ..clear()
-                            ..addAll(selected);
-                        });
-                      },
                     ),
                   ),
                 SliverPadding(
@@ -313,43 +300,53 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   }
 
   Widget _buildFilterIndicator(AppContext appContext, ColorScheme colorScheme) {
-    if (appContext.postSortIndex == 0) return const SizedBox.shrink();
-
     final Map<int, Map<String, dynamic>> filterInfo = {
       1: {'label': 'Upcoming Events', 'icon': Icons.upcoming, 'color': Colors.green},
       2: {'label': 'Recent Events', 'icon': Icons.history, 'color': Colors.orange},
       3: {'label': 'Bookmarked', 'icon': Icons.bookmark, 'color': Colors.purple},
     };
 
-    final info = filterInfo[appContext.postSortIndex];
-    if (info == null) return const SizedBox.shrink();
+    final sortInfo = filterInfo[appContext.postSortIndex];
+    final selectedTags = PostTagHelpers.resolveTags(
+      tagIDs: _selectedPostTagIDs.toList(),
+      allTags: appContext.allPostTags,
+    );
+    if (sortInfo == null && selectedTags.isEmpty) return const SizedBox.shrink();
+
+    final Color accent = (sortInfo?['color'] as Color?) ?? colorScheme.primary;
+    final parts = <String>[];
+    if (sortInfo != null) parts.add(sortInfo['label'] as String);
+    if (selectedTags.isNotEmpty) {
+      parts.add(selectedTags.map((t) => t.name).join(', '));
+    }
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: (info['color'] as Color).withValues(alpha: 0.1),
+        color: accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (info['color'] as Color).withValues(alpha: 0.3),
+          color: accent.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            info['icon'] as IconData,
+            sortInfo != null ? sortInfo['icon'] as IconData : Icons.label_outline,
             size: 16,
-            color: info['color'] as Color,
+            color: accent,
           ),
           const SizedBox(width: 8),
-          Text(
-            'Showing: ${info['label']}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: info['color'] as Color,
+          Expanded(
+            child: Text(
+              'Showing: ${parts.join(' · ')}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: accent,
+              ),
             ),
           ),
         ],
@@ -415,6 +412,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     HapticFeedback.lightImpact();
     showModalBottomSheet(
         showDragHandle: true,
+        isScrollControlled: true,
         context: context,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
@@ -423,6 +421,15 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
         builder: (_) => SafeArea(
                 child: BulletinSettingSheet(
               sortIndex: _appContext.postSortIndex,
+              availableTags: _appContext.activePostTags,
+              selectedTagIDs: Set<String>.from(_selectedPostTagIDs),
+              onTagSelectionChanged: (selected) {
+                setState(() {
+                  _selectedPostTagIDs
+                    ..clear()
+                    ..addAll(selected);
+                });
+              },
               relevancySort: () => _onSortPosts(0),
               descendingEventDate: () => _onSortPosts(1),
               ascendingEventDate: () => _onSortPosts(2),
@@ -471,14 +478,22 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
 }
 
 class BulletinSettingSheet extends StatefulWidget {
-  const BulletinSettingSheet(
-      {super.key,
-      required this.sortIndex,
-      required this.relevancySort,
-      required this.descendingEventDate,
-      required this.ascendingEventDate,
-      required this.showBookmarks});
+  const BulletinSettingSheet({
+    super.key,
+    required this.sortIndex,
+    required this.availableTags,
+    required this.selectedTagIDs,
+    required this.onTagSelectionChanged,
+    required this.relevancySort,
+    required this.descendingEventDate,
+    required this.ascendingEventDate,
+    required this.showBookmarks,
+  });
+
   final int sortIndex;
+  final List<PostTag> availableTags;
+  final Set<String> selectedTagIDs;
+  final void Function(Set<String> selected) onTagSelectionChanged;
   final void Function() relevancySort, descendingEventDate, ascendingEventDate, showBookmarks;
 
   @override
@@ -487,12 +502,14 @@ class BulletinSettingSheet extends StatefulWidget {
 
 class _BulletinSettingSheetState extends State<BulletinSettingSheet> with TickerProviderStateMixin {
   int _sortIndex = 0;
+  late Set<String> _selectedTagIDs;
   late AnimationController _animationController;
   late List<Animation<Offset>> _slideAnimations;
 
   @override
   void initState() {
     _sortIndex = widget.sortIndex;
+    _selectedTagIDs = Set<String>.from(widget.selectedTagIDs);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -524,14 +541,76 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
     return ActionSheetShell(
       icon: Icons.sort,
       title: 'Sort & Filter',
       subtitle: 'Choose how to organize your events',
       children: [
         ActionSheetOptionGrid(children: _buildFilterOptions()),
+        if (widget.availableTags.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+            child: Text(
+              l10n.postTagsAssignLabel,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Text(
+              'Narrow the bulletin by content type',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (_selectedTagIDs.isNotEmpty)
+                  ActionChip(
+                    label: Text(l10n.postTagsFilterClear),
+                    onPressed: () => _onTagsChanged({}),
+                  ),
+                ...widget.availableTags.map((tag) {
+                  final selected = _selectedTagIDs.contains(tag.id);
+                  return PostTagChip(
+                    tag: tag,
+                    selected: selected,
+                    onTap: () {
+                      final next = Set<String>.from(_selectedTagIDs);
+                      if (selected) {
+                        next.remove(tag.id);
+                      } else {
+                        next.add(tag.id);
+                      }
+                      _onTagsChanged(next);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  void _onTagsChanged(Set<String> selected) {
+    HapticFeedback.selectionClick();
+    setState(() => _selectedTagIDs = selected);
+    widget.onTagSelectionChanged(selected);
   }
 
   List<Widget> _buildFilterOptions() {

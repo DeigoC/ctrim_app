@@ -212,7 +212,7 @@
   "@postTagsAssignLabel": {
     "description": "Section label for assigning content tags to a post or template"
   },
-  "postTagsNoneAvailable": "No post tags yet. Leaders can create tags in Admin Tools.",
+  "postTagsNoneAvailable": "No post tags yet. Area admins can create tags in Admin Tools.",
   "@postTagsNoneAvailable": {
     "description": "Message when no post tags exist for assignment"
   },

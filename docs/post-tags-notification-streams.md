@@ -37,6 +37,11 @@ Same shape as `UserTag`, plus optional:
 1. `TagIDs` denormalized on **EventHead** (bulletin filter) and **EventMetadata** (source of truth with Topics).
 2. On save / tag change / location change: recompute `metadata.Topics` from location + notifiable tags (+ optional location umbrella), preserving legacy Topics only when there are no notifiable tags.
 3. Templates store `TagIDs`; mapper copies them and syncs Topics.
+4. **Edit existing posts:** Title & details (`EditHeadDetailsPage`) — same picker as create/template; save via normal post update.
+
+## Caching
+
+Tag/location **catalogs** are small and loaded once per session into `AppContext`. Hive caching is optional/overkill until cold-start cost is noticeable. Assigned `TagIDs` ride on event heads already fetched for the bulletin.
 
 ## User prefs
 
@@ -44,5 +49,5 @@ Prefs keys remain `topic_{fcmTopicId}`. UI groups by location (from `user_locati
 
 ## Deploy
 
-- Deploy `firestore.rules` for `post_tags` before admin CRUD in production.
-- Seed starter tags from Manage Post Tags (includes stream kinds matching current Belfast services).
+- Deploy `firestore.rules` for `post_tags` before admin CRUD in production (`isAreaAdmin || isAdmin`, same as `user_locations`).
+- Seed starter tags from Manage Post Tags (area admins; includes stream kinds matching current Belfast services).

@@ -138,7 +138,7 @@ service cloud.firestore {
     match /post_tags/{tagId} {
       allow read: if true;
       allow create, update, delete: if request.auth != null &&
-        (isAreaAdmin() || isAdmin() || isLeader());
+        (isAreaAdmin() || isAdmin());
     }
 
     match /id_tracker/{documents=**}{
