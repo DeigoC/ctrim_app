@@ -52,10 +52,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   late final TabController _tabController;
   late final EventContext _eventContext;
-  late final List<Map<String, dynamic>> _originalHeadMedia;
-  late final String _originalTitle, _originalSubtitle, _currentUID;
-  late final DateTime? _originalEventDate;
-  late final String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
+  late List<Map<String, dynamic>> _originalHeadMedia;
+  late String _originalTitle, _originalSubtitle;
+  late final String _currentUID;
+  late DateTime? _originalEventDate;
+  late String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
 
   final List<Widget> _bodyTabs = List.empty(growable: true);
   final List<Widget> _appBarTabs = [
@@ -79,16 +80,21 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'post-${widget.eventHead.id}');
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
-    _originalHeadMedia = List<Map<String, dynamic>>.from(widget.eventHead.media);
+    _captureOriginalHeadState();
+
+    super.initState();
+    _loadPost();
+  }
+
+  /// Deep-copies current head fields so discard-on-exit can restore last saved state.
+  void _captureOriginalHeadState() {
+    _originalHeadMedia = widget.eventHead.media.map((e) => Map<String, dynamic>.from(e)).toList();
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;
     _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
     _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
     _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
-
-    super.initState();
-    _loadPost();
   }
 
   @override
@@ -97,7 +103,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       _tabController.dispose();
     }
 
-    // ! temporary fix for the issue below
+    // Discard unsaved in-memory edits on the shared AppContext head when leaving.
+    // After a successful save, [_captureOriginalHeadState] is refreshed so this
+    // reverts to the last saved Media/title — not the values from page open.
     if (_canSaveEditing) {
       widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
       widget.eventHead.setTitle(_originalTitle);
@@ -578,6 +586,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             originalTitle: _originalTitle,
             topic: _topic,
             updatePage: () {
+              // Baseline for discard-on-exit must match what was just written to Firebase.
+              _captureOriginalHeadState();
               setState(() {});
             }));
   }
@@ -700,8 +710,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (!mounted || selected == null) return;
 
     setState(() {
-      _eventContext.head.clearMedia();
-      _eventContext.head.addMediaItem(
+      _eventContext.head.replaceKeyGraphic(
         type: selected['type'] ?? 'img',
         src: selected['src'] ?? '',
         title: selected['title'] ?? '',

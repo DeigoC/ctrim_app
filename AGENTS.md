@@ -52,14 +52,11 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-08-02** — Key graphic save: `getKeyGraphic` is the first head `Media` image — “Set as Key Media” now prepends (`prependMediaItem`); Change cover uses `replaceKeyGraphic`. After save, ViewEventPage refreshes discard baseline so dispose does not restore pre-edit Media.
 - **2026-08-01** — Post content tags (`post_tags`) + bulletin filter; FCM streams derived from location + tag `StreamKind` (Belfast IDs frozen). Design: `docs/post-tags-notification-streams.md`. Deploy `firestore.rules` for `post_tags`.
 - **2026-08-01** — Web push: SW no longer re-shows FCM `notification` payloads (fixes duplicate banners); re-register also strips stale tokens from `web_topics`.
 - **2026-07-30** — Stakeholder docs live under `docs/stakeholders/` (not a separate Documentation folder); agent handoffs stay in `docs/*.md`.
 - **2026-07-30** — Template create (singular + bulk) syncs assigned program roles via `syncUserRolesForPost` so My Schedule updates; role push stays opt-in (`notifyScheduledMembers` defaults false; bulk never notifies).
-- **2026-07-30** — Full-page loads use `LoadProgressBody` (schedule/roles, my posts, profile, related posts, attendance, info, bulk create) instead of bare spinners; avoid inline `FutureBuilder(future: fetch…)` in `build`.
-- **2026-07-30** — Push Notifications → **This device**: status (permission/token/PWA), Re-register, Send test to me; web enable awaits reconcile + iOS Home Screen gate (`NotificationDeviceStatusService`).
-- **2026-07-30** — Action bottom sheets use shared `ActionSheetShell` / `ActionSheetOptionGrid` (2-col on wide): post admin, template edit, bulletin sort, add-event, manage attendees.
-- **2026-07-30** — Broadcast audience: create meta + Send Broadcast can opt into `Belfast` umbrella (`BroadcastAudience`); does not mean every Belfast account — only opted-in subscribers.
 
 ## Commands
 

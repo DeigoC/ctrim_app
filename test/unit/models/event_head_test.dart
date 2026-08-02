@@ -317,6 +317,40 @@ void main() {
         expect(head.getKeyGraphic(), 'photo.jpg');
       });
 
+      test('prependMediaItem makes the new image the key graphic', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'old.jpg');
+        head.prependMediaItem(type: 'img', src: 'new.jpg', title: 'Cover');
+
+        expect(head.mediaCount, 2);
+        expect(head.media.first['src'], 'new.jpg');
+        expect(head.getKeyGraphic(), 'new.jpg');
+      });
+
+      test('replaceKeyGraphic clears prior media and sets the cover', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'old-a.jpg');
+        head.addMediaItem(type: 'img', src: 'old-b.jpg');
+        head.replaceKeyGraphic(type: 'img', src: 'cover.jpg', title: 'New cover');
+
+        expect(head.mediaCount, 1);
+        expect(head.getKeyGraphic(), 'cover.jpg');
+        expect(head.toJson()['Media'], [
+          {'type': 'img', 'src': 'cover.jpg', 'title': 'New cover', 'thumbnailSrc': null},
+        ]);
+      });
+
+      test('resetMediaWithOriginal deep-copies so later mutations do not alter the snapshot', () {
+        final head = EventHead(id: 'e1');
+        final original = [
+          {'src': 'snap.jpg', 'type': 'img', 'title': 't', 'thumbnailSrc': null}
+        ];
+        head.resetMediaWithOriginal(original);
+        head.media.first['title'] = 'mutated';
+
+        expect(original.first['title'], 't');
+      });
+
       test('getKeyGraphic returns null when no images exist', () {
         final head = EventHead(id: 'e1');
         head.addMediaItem(type: 'video', src: 'clip.mp4');
