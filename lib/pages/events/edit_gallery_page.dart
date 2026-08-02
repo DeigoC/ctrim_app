@@ -631,8 +631,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     if (!mounted || selected == null) return;
 
     setState(() {
-      widget.eventContext.head.clearMedia();
-      widget.eventContext.head.addMediaItem(
+      widget.eventContext.head.replaceKeyGraphic(
         type: selected['type'] ?? 'img',
         src: selected['src'] ?? '',
         title: selected['title'] ?? '',
@@ -642,7 +641,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     widget.eventContext.allowSavingOfTheEdit();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Key graphic updated from template pool')),
+      const SnackBar(content: Text('Key graphic updated — save the post to keep the change')),
     );
   }
 
@@ -685,9 +684,15 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   void _addMediaAsKeyClick(final Map<String, dynamic> thisEntry) {
     setState(() {
-      widget.eventContext.head
-          .addMediaItem(type: thisEntry['type']!, src: thisEntry['src']!, title: thisEntry['title']!);
+      // Prepend so getKeyGraphic / bulletin thumbnail use this item (first image wins).
+      widget.eventContext.head.prependMediaItem(
+        type: thisEntry['type']!,
+        src: thisEntry['src']!,
+        title: thisEntry['title'] ?? '',
+        thumbnail: thisEntry['thumbnailSrc'] ?? '',
+      );
     });
+    widget.eventContext.allowSavingOfTheEdit();
   }
 
   void _deleteMediaClick(final Map<String, dynamic> thisEntry, final bool isKey) {

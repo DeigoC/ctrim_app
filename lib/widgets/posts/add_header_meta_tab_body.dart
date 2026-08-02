@@ -436,8 +436,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   }
 
   void _applyHeadMediaItem(Map<String, dynamic> item) {
-    widget.eventContext.head.clearMedia();
-    widget.eventContext.head.addMediaItem(
+    widget.eventContext.head.replaceKeyGraphic(
       type: item['type']!,
       src: item['src']!,
       title: item['title'] ?? '',

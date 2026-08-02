@@ -53,10 +53,10 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 ## Recent agent-relevant changes
 
 - **2026-08-02** — Cell Groups companion user model locked in `docs/cell-groups.md`: placeholder `users` (empty `AuthID`), `CreatedByUserID`, scoped Auth link (creator/admin), post-link freeze, hide placeholders from pickers.
+- **2026-08-02** — Key graphic save: `getKeyGraphic` is the first head `Media` image — “Set as Key Media” now prepends (`prependMediaItem`); Change cover uses `replaceKeyGraphic`. After save, ViewEventPage refreshes discard baseline so dispose does not restore pre-edit Media.
 - **2026-08-01** — Post content tags (`post_tags`) + bulletin filter; FCM streams derived from location + tag `StreamKind` (Belfast IDs frozen). Design: `docs/post-tags-notification-streams.md`. Deploy `firestore.rules` for `post_tags`.
 - **2026-08-01** — Web push: SW no longer re-shows FCM `notification` payloads (fixes duplicate banners); re-register also strips stale tokens from `web_topics`.
 - **2026-07-30** — Stakeholder docs live under `docs/stakeholders/` (not a separate Documentation folder); agent handoffs stay in `docs/*.md`.
-- **2026-07-30** — Template create (singular + bulk) syncs assigned program roles via `syncUserRolesForPost` so My Schedule updates; role push stays opt-in (`notifyScheduledMembers` defaults false; bulk never notifies).
 
 ## Commands
 

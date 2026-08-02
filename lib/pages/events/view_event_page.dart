@@ -52,17 +52,21 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   late final TabController _tabController;
   late final EventContext _eventContext;
-  late final List<Map<String, dynamic>> _originalHeadMedia;
-  late final String _originalTitle, _originalSubtitle, _currentUID;
-  late final DateTime? _originalEventDate;
-  late final String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
+  late List<Map<String, dynamic>> _originalHeadMedia;
+  late String _originalTitle, _originalSubtitle;
+  late final String _currentUID;
+  late DateTime? _originalEventDate;
+  late String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
 
-  final List<Widget> _bodyTabs = List.empty(growable: true);
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
   ];
 
   bool _haveFetchedPost = false;
+  bool _allowPop = false;
+  bool _showScheduleTab = false;
+  bool _showMediaTab = false;
+  bool _showRelatedTab = false;
   Object? _loadError;
   String _loadStatusMessage = 'Checking saved copy…';
   int _loadCompletedSteps = 0;
@@ -74,21 +78,33 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   static const int _remoteFetchStepCount = 5;
 
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
   @override
   void initState() {
     Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'post-${widget.eventHead.id}');
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
-    _originalHeadMedia = List<Map<String, dynamic>>.from(widget.eventHead.media);
+    _captureOriginalHeadState();
+
+    super.initState();
+    _loadPost();
+  }
+
+  /// Deep-copies current head fields so discard-on-exit can restore last saved state.
+  void _captureOriginalHeadState() {
+    _originalHeadMedia = widget.eventHead.media.map((e) => Map<String, dynamic>.from(e)).toList();
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;
     _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
     _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
     _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
-
-    super.initState();
-    _loadPost();
   }
 
   @override
@@ -97,7 +113,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       _tabController.dispose();
     }
 
-    // ! temporary fix for the issue below
+    // Discard unsaved in-memory edits on the shared AppContext head when leaving.
+    // After a successful save, [_captureOriginalHeadState] is refreshed so this
+    // reverts to the last saved Media/title — not the values from page open.
     if (_canSaveEditing) {
       widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
       widget.eventHead.setTitle(_originalTitle);
@@ -121,7 +139,16 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _allowPop || !_canSaveEditing,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || !_canSaveEditing) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
         appBar: _haveFetchedPost
             ? null
             : AppBar(
@@ -131,7 +158,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-        body: _haveFetchedPost ? _buildBodyWithData() : _buildLoadingOrErrorBody());
+        body: _haveFetchedPost ? _buildBodyWithData() : _buildLoadingOrErrorBody(),
+      ),
+    );
   }
 
   Widget _buildLoadingOrErrorBody() {
@@ -375,7 +404,37 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildTabBody() {
-    return TabBarView(controller: _tabController, children: _bodyTabs);
+    // Build children each rebuild so edits (e.g. About body) aren't stuck on
+    // cached Widget instances that Flutter would short-circuit.
+    return TabBarView(controller: _tabController, children: _buildBodyTabChildren());
+  }
+
+  List<Widget> _buildBodyTabChildren() {
+    final tabs = <Widget>[
+      ViewPostBody(
+        key: ValueKey(_eventContext.encodedBody),
+        eventContext: _eventContext,
+        updateBody: _updateWholePostBody,
+        currentUID: _currentUID,
+      ),
+      ViewAttendanceTab(
+        eventContext: _eventContext,
+        onChanged: _updateWholePostBody,
+      ),
+    ];
+    if (_showScheduleTab) {
+      tabs.add(ViewAllPrograms(
+        eventContext: _eventContext,
+        onProgramChanged: _updateWholePostBody,
+      ));
+    }
+    if (_showMediaTab) {
+      tabs.add(ViewEventMediaTab(eventContext: _eventContext, currentUID: _currentUID));
+    }
+    if (_showRelatedTab) {
+      tabs.add(ViewRelatedPostsTab(eventContext: _eventContext));
+    }
+    return tabs;
   }
 
   List<Widget>? _buildAppBarActions() {
@@ -501,45 +560,35 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final bool isContributor = _eventContext.metadata.contributorUIDs.contains(_currentUID);
     final bool isLeader = Provider.of<AppContext>(context, listen: false).currentUser.isLeader;
 
-    _bodyTabs.clear();
+    _showScheduleTab = _eventContext.head.eventDate != null || isAuthor;
+    _showMediaTab = _eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor;
+    _showRelatedTab =
+        _eventContext.metadata.hasChildren || _eventContext.metadata.hasParent || isLeader;
+
     _appBarTabs
       ..clear()
       ..add(const Tab(icon: Icon(Icons.info_outline), text: 'About'));
 
     int length = 0;
     _aboutTabIndex = length;
-    _bodyTabs.add(ViewPostBody(
-      eventContext: _eventContext,
-      updateBody: _updateWholePostBody,
-      currentUID: _currentUID,
-    ));
     length++;
 
     _peopleTabIndex = length;
-    _bodyTabs.add(ViewAttendanceTab(
-      eventContext: _eventContext,
-      onChanged: _updateWholePostBody,
-    ));
     _appBarTabs.add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
     length++;
 
-    if (_eventContext.head.eventDate != null || isAuthor) {
-      _bodyTabs.add(ViewAllPrograms(
-          eventContext: _eventContext,
-          onProgramChanged: _updateWholePostBody));
+    if (_showScheduleTab) {
       _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
     }
 
     _mediaTabIndex = null;
-    if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {
+    if (_showMediaTab) {
       _mediaTabIndex = length;
-      _bodyTabs.add(ViewEventMediaTab(eventContext: _eventContext, currentUID: _currentUID));
       _appBarTabs.add(const Tab(icon: Icon(Icons.photo_album), text: 'Media'));
       length++;
     }
-    if (_eventContext.metadata.hasChildren || _eventContext.metadata.hasParent || isLeader) {
-      _bodyTabs.add(ViewRelatedPostsTab(eventContext: _eventContext));
+    if (_showRelatedTab) {
       _appBarTabs.add(const Tab(icon: Icon(Icons.library_books), text: 'Related'));
       length++;
     }
@@ -578,6 +627,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             originalTitle: _originalTitle,
             topic: _topic,
             updatePage: () {
+              // Baseline for discard-on-exit must match what was just written to Firebase.
+              _captureOriginalHeadState();
               setState(() {});
             }));
   }
@@ -700,8 +751,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (!mounted || selected == null) return;
 
     setState(() {
-      _eventContext.head.clearMedia();
-      _eventContext.head.addMediaItem(
+      _eventContext.head.replaceKeyGraphic(
         type: selected['type'] ?? 'img',
         src: selected['src'] ?? '',
         title: selected['title'] ?? '',
