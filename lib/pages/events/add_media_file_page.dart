@@ -443,7 +443,13 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     );
   }
 
+  bool _isGoogleDriveUrl(String url) => url.contains('drive.google.com');
+
   Widget _buildErrorState(String message) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bool showDriveHint =
+        _isGoogleDriveUrl(_src) || _isGoogleDriveUrl(_tecSrc.text);
+
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -468,10 +474,42 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
             ),
           ),
+          if (showDriveHint) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: colorScheme.primary.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.link, size: 18, color: colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Google Drive files must be shared as “Anyone with the link” '
+                      '(Viewer). Open the file in Drive → Share → General access, '
+                      'then paste the link and test again.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withValues(alpha: 0.85),
+                            height: 1.35,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           TextButton.icon(
             onPressed: () async {
