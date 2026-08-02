@@ -17,6 +17,7 @@ void main() {
         expect(user.location, 'Belfast');
         expect(user.isAreaAdmin, false);
         expect(user.isLeader, false);
+        expect(user.canManageInfo, false);
         expect(user.authID, '');
       });
 
@@ -39,8 +40,36 @@ void main() {
         expect(user.location, 'Dublin');
         expect(user.isAreaAdmin, true);
         expect(user.isLeader, true);
+        expect(user.canManageInfo, true);
         expect(user.authID, 'auth-abc');
         expect(user.tagIDs, isEmpty);
+      });
+    });
+
+    group('canManageInfo', () {
+      test('is true for area admin only', () {
+        final user = User(
+          id: '1',
+          forname: 'A',
+          surname: 'B',
+          isAreaAdmin: true,
+        );
+        expect(user.canManageInfo, true);
+      });
+
+      test('is true for leader only', () {
+        final user = User(
+          id: '1',
+          forname: 'A',
+          surname: 'B',
+          isLeader: true,
+        );
+        expect(user.canManageInfo, true);
+      });
+
+      test('is false for regular users', () {
+        final user = User(id: '1', forname: 'A', surname: 'B');
+        expect(user.canManageInfo, false);
       });
     });
 

@@ -12,7 +12,7 @@
 | `information/info_tab_widgets.dart` | Shared list shell, cards, empty/error states |
 | `information/info_detail_scaffold.dart` | Shared detail loader + layout |
 | `church_info_page.dart` / `testimonial_info_page.dart` / `ctrim_info_page.dart` | Detail pages via `InfoDetailLoader` |
-| `edit_info_body_page.dart` | Admin Quill + metadata edit/delete |
+| `edit_info_body_page.dart` | Area admin / leader Quill + metadata edit/delete (`User.canManageInfo`) |
 
 ## Models (`lib/models/info/`)
 

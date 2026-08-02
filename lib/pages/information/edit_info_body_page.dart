@@ -72,6 +72,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   bool _isDeleting = false;
   bool _isSaved = false;
   bool _allowPop = false;
+  bool _checkedAccess = false;
 
   void _popRouteAfterAllowing({final Object? result}) {
     setState(() => _allowPop = true);
@@ -96,6 +97,27 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     _summaryController = TextEditingController(text: _initialSummary);
     _imagesController = TextEditingController(text: _initialImages);
     _displayOrderController = TextEditingController(text: _initialDisplayOrder);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_checkedAccess) return;
+    _checkedAccess = true;
+    final canManage =
+        Provider.of<AppContext>(context, listen: false).currentUser.canManageInfo;
+    if (!canManage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Only area admins and leaders can edit this content.'),
+          ),
+        );
+        _popRouteAfterAllowing();
+      });
+    }
   }
 
   @override
@@ -304,10 +326,11 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     }
 
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!appContext.currentUser.isAreaAdmin) {
+    if (!appContext.currentUser.canManageInfo) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Only area admin users can edit this content.')),
+            content: Text(
+                'Only area admins and leaders can edit this content.')),
       );
       return;
     }
@@ -403,7 +426,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
 
   Future<void> _delete() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!appContext.currentUser.isAreaAdmin) {
+    if (!appContext.currentUser.canManageInfo) {
       return;
     }
 

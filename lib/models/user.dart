@@ -81,6 +81,10 @@ class User {
   String get authID => _authID;
   bool get isAreaAdmin => _isAreaAdmin;
   bool get isLeader => _isLeader;
+
+  /// Churches, testimonials, and CTRIM info add/edit/delete.
+  bool get canManageInfo => _isAreaAdmin || _isLeader;
+
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
 
   bool hasTag(final String tagId) => _tagIDs.contains(tagId);

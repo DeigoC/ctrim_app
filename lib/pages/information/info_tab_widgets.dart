@@ -422,7 +422,7 @@ class InfoErrorState extends StatelessWidget {
   const InfoErrorState({
     super.key,
     required this.error,
-    required this.isAreaAdmin,
+    required this.canManageInfo,
     required this.addLabel,
     required this.addDescription,
     required this.onRetry,
@@ -430,7 +430,7 @@ class InfoErrorState extends StatelessWidget {
   });
 
   final Object? error;
-  final bool isAreaAdmin;
+  final bool canManageInfo;
   final String addLabel;
   final String addDescription;
   final VoidCallback onRetry;
@@ -462,7 +462,7 @@ class InfoErrorState extends StatelessWidget {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
-              if (isAreaAdmin) ...[
+              if (canManageInfo) ...[
                 const SizedBox(height: 16),
                 InfoAddContentCard(
                   label: addLabel,
@@ -508,8 +508,8 @@ class InfoSectionListTab<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isAreaAdmin =
-        Provider.of<AppContext>(context).currentUser.isAreaAdmin;
+    final bool canManageInfo =
+        Provider.of<AppContext>(context).currentUser.canManageInfo;
 
     return FutureBuilder<List<T>>(
       future: future,
@@ -525,7 +525,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
         if (snapshot.hasError) {
           return InfoErrorState(
             error: snapshot.error,
-            isAreaAdmin: isAreaAdmin,
+            canManageInfo: canManageInfo,
             addLabel: addLabel,
             addDescription: addDescription,
             onRetry: onRefresh,
@@ -534,7 +534,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
         }
 
         final items = snapshot.data ?? <T>[];
-        if (items.isEmpty && !isAreaAdmin) {
+        if (items.isEmpty && !canManageInfo) {
           return InfoEmptyState(message: emptyMessage);
         }
 
@@ -550,7 +550,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
                 : 16.0;
             final int crossAxisCount =
                 ResponsiveLayout.crossAxisCount(contentWidth);
-            final int itemCount = items.length + (isAreaAdmin ? 1 : 0);
+            final int itemCount = items.length + (canManageInfo ? 1 : 0);
 
             if (isWideScreen) {
               return GridView.builder(
@@ -565,7 +565,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
                 ),
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
-                  if (isAreaAdmin && index == items.length) {
+                  if (canManageInfo && index == items.length) {
                     return InfoAddContentCard(
                       label: addLabel,
                       description: addDescription,
@@ -587,7 +587,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
                 itemCount: itemCount,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  if (isAreaAdmin && index == items.length) {
+                  if (canManageInfo && index == items.length) {
                     return InfoAddContentCard(
                       label: addLabel,
                       description: addDescription,

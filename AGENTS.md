@@ -52,6 +52,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-08-02** — Info section add/edit/delete (churches, testimonials, CTRIM info) gated by `User.canManageInfo` (`isAreaAdmin || isLeader`); guests and regular users never see Add/Edit UI. Deploy `firestore.rules` for leader writes on `information`.
 - **2026-08-02** — Period parents side track: `IsPeriodParent` on metadata (+ head denorm) and templates; editable `ParentID` with bidirectional `ChildrenIDs` sync on Title & details (`EditHeadDetailsPage` / `SelectPeriodParentPage`). Author or area admin only. See `docs/cell-groups.md` Phase 0.5.
 - **2026-08-02** — Post templates embed change history `Logs` (`uid`/`log`/`ts`) on the doc; save uses `TemplateLogDialog`; viewer is `view_template_logs_page.dart`.
 - **2026-08-02** — Cell Groups Phase 0 locked in `docs/cell-groups.md`: placeholders + `IsPlaceholder`/`CreatedByUserID`, shared `SelectUsersPage` create gate, period-parent side track.

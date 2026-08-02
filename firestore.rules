@@ -161,19 +161,24 @@ service cloud.firestore {
 
     match /information/{sectionId} {
       allow read: if true;
+      // Area admins and leaders (UI gated via User.canManageInfo)
       allow create, write: if request.auth != null &&
-        (request.auth.token.isAreaAdmin == true ||
-         request.auth.token.isAdmin == true ||
-         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true ||
-         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true);
+        (isLeader() ||
+         isAreaAdmin() ||
+         isAdmin() ||
+         request.auth.token.isLeader == true ||
+         request.auth.token.isAreaAdmin == true ||
+         request.auth.token.isAdmin == true);
 
       match /items/{documentId} {
         allow read: if true;
         allow create, write: if request.auth != null &&
-          (request.auth.token.isAreaAdmin == true ||
-           request.auth.token.isAdmin == true ||
-           get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAreaAdmin == true ||
-           get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true);
+          (isLeader() ||
+           isAreaAdmin() ||
+           isAdmin() ||
+           request.auth.token.isLeader == true ||
+           request.auth.token.isAreaAdmin == true ||
+           request.auth.token.isAdmin == true);
       }
     }
 

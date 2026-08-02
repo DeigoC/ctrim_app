@@ -36,7 +36,7 @@ Registration creates both (`RegisterUserPage` → `UserDBManager.addUser` + `Eve
 | `ImgSrc` | String | Profile photo URL (often Google Drive) |
 | `AuthID` | String | Links to `everyone/{authID}` |
 | `IsAreaAdmin` | bool | Admin UI, info editing, register/edit users |
-| `IsLeader` | bool | Create/edit events |
+| `IsLeader` | bool | Create/edit events; churches / testimonials / CTRIM info editing |
 
 ### Supplemental subcollection (`users/{uid}/supplemental/`)
 
@@ -153,8 +153,8 @@ flowchart LR
 
 | Flag | Effect |
 |------|--------|
-| `isLeader` | Create events (home FAB) |
-| `isAreaAdmin` | Register/edit users, admin section, edit info pages |
+| `isLeader` | Create events (home FAB); edit churches / testimonials / CTRIM info |
+| `isAreaAdmin` | Register/edit users, admin section, edit churches / testimonials / CTRIM info |
 
 ---
 
