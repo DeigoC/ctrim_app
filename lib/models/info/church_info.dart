@@ -1,7 +1,8 @@
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'info_parsing.dart';
 
 class ChurchInfo {
   late String _id, _title, _analyticsTitle, _summary, _updatedBy;
@@ -35,14 +36,17 @@ class ChurchInfo {
   factory ChurchInfo.fromMap(final String id, final Map<String, dynamic> data) {
     return ChurchInfo(
       id: id,
-      title: (data['title'] ?? data['Title'] ?? data['analyticTitle'] ?? '').toString(),
-      analyticsTitle: (data['analyticTitle'] ?? data['title'] ?? data['Title'] ?? '').toString(),
-      body: _parseBody(data['body']),
-      imageSources: _parseImageSources(data),
+      title: (data['title'] ?? data['Title'] ?? data['analyticTitle'] ?? '')
+          .toString(),
+      analyticsTitle:
+          (data['analyticTitle'] ?? data['title'] ?? data['Title'] ?? '')
+              .toString(),
+      body: InfoParsing.parseBody(data['body']),
+      imageSources: InfoParsing.parseImageSources(data),
       summary: (data['summary'] ?? '').toString(),
       updatedBy: (data['updatedBy'] ?? '').toString(),
-      updatedAt: _parseUpdatedAt(data['updatedAt']),
-      displayOrder: (data['displayOrder'] ?? 0) as int,
+      updatedAt: InfoParsing.parseUpdatedAt(data['updatedAt']),
+      displayOrder: InfoParsing.parseDisplayOrder(data['displayOrder']),
     );
   }
 
@@ -87,177 +91,10 @@ class ChurchInfo {
   void setAnalyticsTitle(final String value) => _analyticsTitle = value;
   void setBody(final List<dynamic> value) => _body = List<dynamic>.from(value);
   void setDisplayOrder(final int value) => _displayOrder = value;
-  void setImageSources(final List<String> value) => _imageSources = List<String>.from(value);
+  void setImageSources(final List<String> value) =>
+      _imageSources = List<String>.from(value);
   void setSummary(final String value) => _summary = value;
   void setTitle(final String value) => _title = value;
   void setUpdatedAt(final DateTime value) => _updatedAt = value;
   void setUpdatedBy(final String value) => _updatedBy = value;
-
-  static List<String> _parseImageSources(final Map<String, dynamic> data) {
-    final dynamic imageSources = data['imageSources'];
-    if (imageSources is List) {
-      return imageSources.map((e) => e.toString()).where((e) => e.isNotEmpty && e.toUpperCase() != 'TODO').toList();
-    }
-
-    final String fallback = (data['imgSrc'] ?? '').toString();
-    if (fallback.isEmpty || fallback.toUpperCase() == 'TODO') {
-      return <String>[];
-    }
-    return <String>[fallback];
-  }
-
-  static List<dynamic> _parseBody(final dynamic rawBody) {
-    if (rawBody == null) {
-      return _defaultBody();
-    }
-    if (rawBody is List) {
-      return _normalizeBody(List<dynamic>.from(rawBody));
-    }
-    if (rawBody is Map) {
-      final ops = rawBody['ops'];
-      if (ops is List) {
-        return _normalizeBody(List<dynamic>.from(ops));
-      }
-    }
-    if (rawBody is String) {
-      final parsed = _parseBodyString(rawBody);
-      if (parsed != null) {
-        return parsed;
-      }
-
-      final text = rawBody.trim();
-      if (text.isNotEmpty) {
-        return <dynamic>[
-          <String, dynamic>{'insert': '$text\n'}
-        ];
-      }
-    }
-    return _defaultBody();
-  }
-
-  static List<dynamic>? _parseBodyString(final String rawBody) {
-    final trimmed = rawBody.trim();
-    if (trimmed.isEmpty) {
-      return null;
-    }
-
-    // Handles legacy payloads like "[{\"insert\":\"...\"}]".
-    if (trimmed.startsWith('"[') && trimmed.endsWith(']"')) {
-      final candidate = trimmed.substring(1, trimmed.length - 1).replaceAll('\\"', '"');
-      final decodedLegacy = _tryJsonDecode(candidate);
-      if (decodedLegacy is List) {
-        return _normalizeBody(List<dynamic>.from(decodedLegacy));
-      }
-      if (decodedLegacy is Map) {
-        final legacyOps = decodedLegacy['ops'];
-        if (legacyOps is List) {
-          return _normalizeBody(List<dynamic>.from(legacyOps));
-        }
-      }
-    }
-
-    dynamic decoded = trimmed;
-    for (int i = 0; i < 3; i++) {
-      if (decoded is! String) {
-        break;
-      }
-
-      final parsed = _tryJsonDecode(decoded.trim());
-      if (parsed != null) {
-        decoded = parsed;
-        continue;
-      }
-
-      final unwrapped = _unwrapQuoted(decoded.trim());
-      if (unwrapped != decoded.trim()) {
-        decoded = unwrapped;
-        continue;
-      }
-
-      final unescaped = _unescapeLegacyString(decoded.trim());
-      if (unescaped != decoded.trim()) {
-        decoded = unescaped;
-        continue;
-      }
-      break;
-    }
-
-    if (decoded is List) {
-      return _normalizeBody(List<dynamic>.from(decoded));
-    }
-    if (decoded is Map) {
-      final ops = decoded['ops'];
-      if (ops is List) {
-        return _normalizeBody(List<dynamic>.from(ops));
-      }
-    }
-
-    return null;
-  }
-
-  static dynamic _tryJsonDecode(final String value) {
-    try {
-      return jsonDecode(value);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static String _unwrapQuoted(final String value) {
-    if (value.length < 2) {
-      return value;
-    }
-
-    final startsWithDoubleQuote = value.startsWith('"') && value.endsWith('"');
-    final startsWithSingleQuote = value.startsWith('\'') && value.endsWith('\'');
-    if (startsWithDoubleQuote || startsWithSingleQuote) {
-      return value.substring(1, value.length - 1);
-    }
-    return value;
-  }
-
-  static String _unescapeLegacyString(final String value) {
-    return value.replaceAll('\\\\', '\\').replaceAll('\\"', '"').replaceAll("\\'", "'");
-  }
-
-  static List<dynamic> _normalizeBody(final List<dynamic> body) {
-    if (body.isEmpty) {
-      return _defaultBody();
-    }
-
-    final normalized = <dynamic>[];
-    for (final op in body) {
-      if (op is Map && op['insert'] is String && (op['insert'] as String).isEmpty) {
-        continue;
-      }
-      normalized.add(op);
-    }
-
-    if (normalized.isEmpty) {
-      return _defaultBody();
-    }
-
-    final lastOp = normalized.last;
-    if (lastOp is Map && lastOp['insert'] is String && !(lastOp['insert'] as String).endsWith('\n')) {
-      normalized.add(const <String, dynamic>{'insert': '\n'});
-    }
-
-    return normalized;
-  }
-
-  static List<dynamic> _defaultBody() {
-    return <dynamic>[
-      <String, dynamic>{'insert': '\n'}
-    ];
-  }
-
-  static DateTime _parseUpdatedAt(final dynamic rawValue) {
-    if (rawValue is Timestamp) {
-      return rawValue.toDate();
-    }
-    if (rawValue is int) {
-      return DateTime.fromMillisecondsSinceEpoch(rawValue);
-    }
-    return DateTime.now();
-  }
 }

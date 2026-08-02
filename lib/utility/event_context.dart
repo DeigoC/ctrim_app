@@ -2,12 +2,16 @@ import 'dart:collection';
 
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
+import '../models/event/event_attendance.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
+import '../models/post_tag.dart';
+import '../models/user.dart';
+import 'broadcast_audience.dart';
 
 class EventContext {
   late final EventHead _head;
@@ -17,6 +21,7 @@ class EventContext {
   late final EventMedia _media; // ? doesn't have to be late
   late final String _currentUID;
   final EventBody _body = EventBody();
+  EventAttendance? _attendance;
 
   bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
 
@@ -74,6 +79,12 @@ class EventContext {
   EventMetadata get metadata => _metadata;
   void setFetchedMetadata(final EventMetadata data) {
     _metadata = data;
+    // Prefer metadata TagIDs; fall back to head if metadata predates the field.
+    if (data.tagIDs.isNotEmpty) {
+      _head.setTagIDs(data.tagIDs);
+    } else if (_head.tagIDs.isNotEmpty) {
+      _metadata.setTagIDs(_head.tagIDs);
+    }
     _initialiseInternalLists();
   }
 
@@ -84,6 +95,15 @@ class EventContext {
   // * Logs Related
   EventLog get log => _log;
   void setFetchedLogs(final EventLog log) => _log = log;
+
+  // * Attendance Related (private supplemental; null until fetched / signed-in load)
+  EventAttendance? get attendance => _attendance;
+  bool get hasLoadedAttendance => _attendance != null;
+  void setFetchedAttendance(final EventAttendance attendance) {
+    _attendance = attendance;
+    _head.setInterestedCount(attendance.interestedCount);
+    _head.setAttendeeCount(attendance.attendeeCount);
+  }
 
   // * General logic
 
@@ -108,6 +128,7 @@ class EventContext {
     headToUpload.setRecentDate(now);
     headToUpload.setEventDate(_head.eventDate);
     headToUpload.setLocation(location);
+    headToUpload.setTagIDs(_head.tagIDs);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }
@@ -124,6 +145,7 @@ class EventContext {
     await dbManager.addMetadata(_metadata);
     await dbManager.setLog(_log);
     await dbManager.addProgram(_program);
+    await dbManager.setAttendance(EventAttendance());
     return newID;
   }
 
@@ -183,6 +205,32 @@ class EventContext {
 
   bool isUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
   bool isUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+
+  /// Keeps head and metadata [TagIDs] in sync.
+  void applyTagIDs(final List<String> tagIDs) {
+    _head.setTagIDs(tagIDs);
+    _metadata.setTagIDs(tagIDs);
+  }
+
+  /// Recomputes FCM [Topics] from location + notifiable tags (+ optional location umbrella).
+  ///
+  /// When no notifiable tags are present, preserves non-umbrella entries from current Topics
+  /// so legacy posts keep working.
+  void syncNotificationTopics({
+    required List<PostTag> allTags,
+    required bool includeLocationUmbrella,
+  }) {
+    final legacy = List<String>.from(_metadata.topics);
+    final resolved = BroadcastAudience.resolveFromPost(
+      location: _head.location,
+      tagIDs: _metadata.tagIDs.isNotEmpty ? _metadata.tagIDs : _head.tagIDs,
+      allTags: allTags,
+      includeLocationUmbrella: includeLocationUmbrella,
+      legacyTopics: legacy,
+    );
+    _metadata.clearTopics();
+    _metadata.addAllTopics(resolved);
+  }
 
   void _initialiseInternalLists() {
     if (_metadata.authorUID == _currentUID || _metadata.contributorUIDs.contains(_currentUID)) {
@@ -272,6 +320,7 @@ class EventContext {
     result += '\n${_metadata.parentID ?? 'null'}';
     result += '\n${_metadata.childrenPostIDs}';
     result += '\n${_metadata.topics}';
+    result += '\n${_metadata.leadSpeakerUID ?? 'null'}';
     result += '\n----META_END----';
 
     return result;
@@ -337,6 +386,10 @@ class EventContext {
     String rawTopicsData = lines.elementAt(metadataStartIndex + 6);
     if (!rawTopicsData.contains('----META_END----')) {
       _metadata.addAllTopics(_getListFromData(rawTopicsData));
+      final String rawLeadSpeaker = lines.elementAt(metadataStartIndex + 7);
+      if (!rawLeadSpeaker.contains('----META_END----') && rawLeadSpeaker != 'null') {
+        _metadata.setLeadSpeakerUID(rawLeadSpeaker);
+      }
     }
   }
 
@@ -481,6 +534,42 @@ class EventContext {
         _contributorRemovalUIDs.add(removed);
       }
     }
+  }
+
+  /// Sets or clears the lead speaker on metadata + head denormalized portrait fields.
+  void applyLeadSpeaker({
+    required String? uid,
+    String? imgSrc,
+    String? name,
+  }) {
+    if (uid == null || uid.isEmpty) {
+      _metadata.clearLeadSpeakerUID();
+      _head.clearLeadSpeaker();
+      return;
+    }
+    _metadata.setLeadSpeakerUID(uid);
+    _head.setLeadSpeaker(
+      uid: uid,
+      imgSrc: (imgSrc != null && imgSrc.isNotEmpty) ? imgSrc : null,
+      name: (name != null && name.isNotEmpty) ? name : null,
+    );
+  }
+
+  /// Resolves [metadata.leadSpeakerUID] against [users] into head portrait fields.
+  void syncLeadSpeakerHeadFromUsers(Iterable<User> users) {
+    final uid = _metadata.leadSpeakerUID;
+    if (uid == null || uid.isEmpty) {
+      _head.clearLeadSpeaker();
+      return;
+    }
+    for (final user in users) {
+      if (user.id == uid) {
+        applyLeadSpeaker(uid: uid, imgSrc: user.imgSrc, name: user.fullname);
+        return;
+      }
+    }
+    // Keep UID even if user list does not contain them yet.
+    _head.setLeadSpeaker(uid: uid, imgSrc: _head.leadSpeakerImgSrc, name: _head.leadSpeakerName);
   }
 
   // template subtitles

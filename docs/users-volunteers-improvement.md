@@ -191,7 +191,8 @@ flowchart LR
 | Location ignored in Volunteers list | Medium | Register supports 3 locations; list does not filter |
 | My Schedule badge | Low | Counts role **entries**, not distinct upcoming posts |
 | `forname` typo | Low | Wide rename; entrenched in Firestore keys and Dart API |
-| Email not on User | Medium | Only in `everyone`; not visible on volunteer profile |
+| Email not on User | Medium | Only in `everyone`; Edit User shows linked email + Link/Reassign |
+| Placeholder / temp Auth | Low | Prefer empty `AuthID` placeholders; reassign when they register |
 | No user tags / teams | Medium | **Planned Phase 5** — only `isLeader` / `isAreaAdmin` / `location` today |
 | No tests for supplemental models | Low | Covered in Phase 1 |
 | Role refresh throttled 2 min | Low | Pull-to-refresh may no-op with “Fake Refreshing” |
@@ -331,6 +332,8 @@ See [Admin-managed user tags](#admin-managed-user-tags) below for full design no
 ### Phase 6 — Profile enrichment (future)
 
 - [ ] `availabilityNotes`, `isActive` (hide inactive from picker), optional admin-only `phone`
+- [x] **Auth link / placeholders** — Register User can save with empty `AuthID`; Edit User Link / Reassign / Unlink via `lib/utility/user_auth_link.dart` (does not delete temp Firebase Auth accounts)
+- [ ] **CG companion (planned)** — `CreatedByUserID` + **`IsPlaceholder`** on `users`; CG leaders create placeholders + scoped Auth link (creator or area admin; freeze reassign after link; clear `IsPlaceholder` on link). Full design in [`docs/cell-groups.md`](cell-groups.md#companion-user-model-change). Hide placeholders from Volunteers / pickers by default.
 - [ ] Unify or document `users` vs `everyone` email visibility
 
 ---
@@ -427,6 +430,7 @@ Extend `User` with `List<String> tagIDs` (or typed `List<UserTagAssignment>` if 
 | 2026-07-04 | Phase 4 | CF `sync_user_roles_on_program_write`; client role writes removed on post save |
 | 2026-07-04 | Phase 3 | `ViewUserProfilePage`, location filter on volunteers list, badge fix, l10n |
 | 2026-07-04 | Phase 5 | Admin-managed user tags: `UserTag`, `UserTagDBManager`, manage page, assignment, filters, chips |
+| 2026-07-26 | Follow-up | Admin-managed locations: `UserLocation`, `UserLocationDBManager`, `ManageUserLocationsPage` (area admin); filters/register/edit use catalog |
 | 2026-07-04 | Planning | Admin-managed user tags (Phase 5) — design added; not implemented |
 
 *(Append rows as work progresses.)*

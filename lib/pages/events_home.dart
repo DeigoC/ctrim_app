@@ -5,9 +5,14 @@ import '../firebase/db_managers/event_db_manager.dart';
 import '../models/event/event_head.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../widgets/posts/post_head.dart';
+import '../utility/responsive_layout.dart';
+import '../models/post_tag.dart';
+import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
-import '../../utility/responsive_layout.dart';
+import '../widgets/post_tag_chip.dart';
+import '../widgets/posts/post_head.dart';
+import '../utility/post_tag_helpers.dart';
+import '../src/localization/app_localizations.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
@@ -23,6 +28,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   late final AppContext _appContext;
   late AnimationController _refreshAnimationController;
   late Animation<double> _refreshAnimation;
+  final Set<String> _selectedPostTagIDs = {};
 
   @override
   void initState() {
@@ -61,7 +67,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final bool defaultFilter = appContext.postSortIndex == 0;
       final List<EventHead> eventHeads =
-          defaultFilter ? List.empty() : List.from(appContext.eventHeads, growable: true);
+          defaultFilter ? List.from(appContext.eventHeads, growable: true) : List.from(appContext.eventHeads, growable: true);
 
       if (!defaultFilter) {
         if (appContext.postSortIndex == 1) {
@@ -74,9 +80,17 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
         }
       }
 
-      final int itemCount = defaultFilter ? appContext.eventHeads.length : eventHeads.length;
-      final double webHorizontalPadding =
-          ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, style: GutterStyle.wide, narrowPadding: 0);
+      if (_selectedPostTagIDs.isNotEmpty) {
+        eventHeads.removeWhere(
+          (e) => !PostTagHelpers.headMatchesTagFilter(
+            head: e,
+            selectedTagIDs: _selectedPostTagIDs,
+          ),
+        );
+      }
+
+      final int itemCount = eventHeads.length;
+      final List<EventHead> heads = eventHeads;
 
       return RefreshIndicator(
         edgeOffset: kToolbarHeight + 20,
@@ -105,168 +119,234 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             duration: const Duration(seconds: 2),
           ));
         }),
-        child: CustomScrollView(
-            controller: widget.scrollController,
-            key: const PageStorageKey<String>('events_page'),
-            slivers: [
-              SliverAppBar(
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.campaign,
-                      color: colorScheme.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Bulletin',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double contentWidth = constraints.maxWidth;
+            final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+            final double maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+            final double horizontalPadding = isWideScreen
+                ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+                : 8.0;
+
+            return CustomScrollView(
+              controller: widget.scrollController,
+              key: const PageStorageKey<String>('events_page'),
+              slivers: [
+                SliverAppBar(
+                  title: Row(
+                    children: [
+                      Icon(
+                        Icons.campaign,
+                        color: colorScheme.primary,
+                        size: 28,
                       ),
-                    ),
-                  ],
-                ),
-                centerTitle: false,
-                floating: true,
-                snap: true,
-                expandedHeight: 100,
-                backgroundColor: colorScheme.surface,
-                surfaceTintColor: colorScheme.surfaceTint,
-                actions: [
-                  AnimatedBuilder(
-                    animation: _refreshAnimation,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _refreshAnimation.value * 2 * 3.14159,
-                        child: IconButton(
-                          onPressed: () => _showFilterModel(context),
-                          icon: const Icon(Icons.sort),
-                          tooltip: 'Sort & Filter',
-                          style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                            foregroundColor: colorScheme.primary,
-                          ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Bulletin',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      ViewEventsHome._ctrimLogo,
-                      fit: BoxFit.contain,
-                      height: kToolbarHeight,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
+                  centerTitle: false,
+                  floating: true,
+                  snap: true,
+                  expandedHeight: 100,
+                  backgroundColor: colorScheme.surface,
+                  surfaceTintColor: colorScheme.surfaceTint,
+                  actions: [
+                    AnimatedBuilder(
+                      animation: _refreshAnimation,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _refreshAnimation.value * 2 * 3.14159,
+                          child: IconButton(
+                            onPressed: () => _showFilterModel(context),
+                            icon: const Icon(Icons.sort),
+                            tooltip: 'Sort & Filter',
+                            style: IconButton.styleFrom(
+                              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                              foregroundColor: colorScheme.primary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  leading: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.shadow.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                        child: Icon(
-                          Icons.church,
-                          color: colorScheme.primary,
-                          size: 24,
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        ViewEventsHome._ctrimLogo,
+                        fit: BoxFit.contain,
+                        height: kToolbarHeight,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.church,
+                            color: colorScheme.primary,
+                            size: 24,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              // Filter Indicator as separate sliver
-              if (appContext.postSortIndex != 0)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: _buildFilterIndicator(appContext, colorScheme),
+                if (appContext.postSortIndex != 0 || _selectedPostTagIDs.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      child: _buildFilterIndicator(appContext, colorScheme),
+                    ),
                   ),
-                ),
-              SliverPadding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: webHorizontalPadding + 8,
-                  vertical: 8,
-                ),
-                sliver: itemCount == 0
-                    ? _buildEmptyState(colorScheme, theme)
-                    : SliverList.separated(
-                        itemCount: itemCount,
-                        itemBuilder: (_, index) => Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorScheme.shadow.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 8,
+                  ),
+                  sliver: itemCount == 0
+                      ? _buildEmptyState(colorScheme, theme)
+                      : isWideScreen
+                          ? SliverToBoxAdapter(
+                              child: _buildWidePostColumns(colorScheme, heads),
+                            )
+                          : SliverList.separated(
+                              itemCount: itemCount,
+                              itemBuilder: (_, index) => _buildPostCard(
+                                colorScheme,
+                                heads[index],
                               ),
-                            ],
-                          ),
-                          child: PostHead(
-                            thisHead: defaultFilter ? appContext.eventHeads[index] : eventHeads[index],
-                            updatePost: () => widget.rebuildFunction(),
-                          ),
-                        ),
-                        separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 8),
-                      ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 80)), // Bottom padding
-            ]),
+                              separatorBuilder: (BuildContext context, int index) =>
+                                  const SizedBox(height: 8),
+                            ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            );
+          },
+        ),
       );
     });
   }
 
-  Widget _buildFilterIndicator(AppContext appContext, ColorScheme colorScheme) {
-    if (appContext.postSortIndex == 0) return const SizedBox.shrink();
+  /// Two columns with intrinsic card heights (avoids fixed-aspect dead space).
+  Widget _buildWidePostColumns(ColorScheme colorScheme, List<EventHead> heads) {
+    final List<EventHead> left = [];
+    final List<EventHead> right = [];
+    for (var i = 0; i < heads.length; i++) {
+      (i.isEven ? left : right).add(heads[i]);
+    }
 
+    Widget column(List<EventHead> columnHeads) {
+      return Column(
+        children: [
+          for (var i = 0; i < columnHeads.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            _buildPostCard(colorScheme, columnHeads[i], verticalMargin: 0),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: column(left)),
+        const SizedBox(width: 16),
+        Expanded(child: column(right)),
+      ],
+    );
+  }
+
+  Widget _buildPostCard(
+    ColorScheme colorScheme,
+    EventHead head, {
+    double verticalMargin = 4,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: verticalMargin),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: PostHead(
+        thisHead: head,
+        updatePost: () => widget.rebuildFunction(),
+      ),
+    );
+  }
+
+  Widget _buildFilterIndicator(AppContext appContext, ColorScheme colorScheme) {
     final Map<int, Map<String, dynamic>> filterInfo = {
       1: {'label': 'Upcoming Events', 'icon': Icons.upcoming, 'color': Colors.green},
       2: {'label': 'Recent Events', 'icon': Icons.history, 'color': Colors.orange},
       3: {'label': 'Bookmarked', 'icon': Icons.bookmark, 'color': Colors.purple},
     };
 
-    final info = filterInfo[appContext.postSortIndex];
-    if (info == null) return const SizedBox.shrink();
+    final sortInfo = filterInfo[appContext.postSortIndex];
+    final selectedTags = PostTagHelpers.resolveTags(
+      tagIDs: _selectedPostTagIDs.toList(),
+      allTags: appContext.allPostTags,
+    );
+    if (sortInfo == null && selectedTags.isEmpty) return const SizedBox.shrink();
+
+    final Color accent = (sortInfo?['color'] as Color?) ?? colorScheme.primary;
+    final parts = <String>[];
+    if (sortInfo != null) parts.add(sortInfo['label'] as String);
+    if (selectedTags.isNotEmpty) {
+      parts.add(selectedTags.map((t) => t.name).join(', '));
+    }
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: (info['color'] as Color).withValues(alpha: 0.1),
+        color: accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (info['color'] as Color).withValues(alpha: 0.3),
+          color: accent.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            info['icon'] as IconData,
+            sortInfo != null ? sortInfo['icon'] as IconData : Icons.label_outline,
             size: 16,
-            color: info['color'] as Color,
+            color: accent,
           ),
           const SizedBox(width: 8),
-          Text(
-            'Showing: ${info['label']}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: info['color'] as Color,
+          Expanded(
+            child: Text(
+              'Showing: ${parts.join(' · ')}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: accent,
+              ),
             ),
           ),
         ],
@@ -332,6 +412,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     HapticFeedback.lightImpact();
     showModalBottomSheet(
         showDragHandle: true,
+        isScrollControlled: true,
         context: context,
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: const RoundedRectangleBorder(
@@ -340,6 +421,15 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
         builder: (_) => SafeArea(
                 child: BulletinSettingSheet(
               sortIndex: _appContext.postSortIndex,
+              availableTags: _appContext.activePostTags,
+              selectedTagIDs: Set<String>.from(_selectedPostTagIDs),
+              onTagSelectionChanged: (selected) {
+                setState(() {
+                  _selectedPostTagIDs
+                    ..clear()
+                    ..addAll(selected);
+                });
+              },
               relevancySort: () => _onSortPosts(0),
               descendingEventDate: () => _onSortPosts(1),
               ascendingEventDate: () => _onSortPosts(2),
@@ -388,14 +478,22 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
 }
 
 class BulletinSettingSheet extends StatefulWidget {
-  const BulletinSettingSheet(
-      {super.key,
-      required this.sortIndex,
-      required this.relevancySort,
-      required this.descendingEventDate,
-      required this.ascendingEventDate,
-      required this.showBookmarks});
+  const BulletinSettingSheet({
+    super.key,
+    required this.sortIndex,
+    required this.availableTags,
+    required this.selectedTagIDs,
+    required this.onTagSelectionChanged,
+    required this.relevancySort,
+    required this.descendingEventDate,
+    required this.ascendingEventDate,
+    required this.showBookmarks,
+  });
+
   final int sortIndex;
+  final List<PostTag> availableTags;
+  final Set<String> selectedTagIDs;
+  final void Function(Set<String> selected) onTagSelectionChanged;
   final void Function() relevancySort, descendingEventDate, ascendingEventDate, showBookmarks;
 
   @override
@@ -404,12 +502,14 @@ class BulletinSettingSheet extends StatefulWidget {
 
 class _BulletinSettingSheetState extends State<BulletinSettingSheet> with TickerProviderStateMixin {
   int _sortIndex = 0;
+  late Set<String> _selectedTagIDs;
   late AnimationController _animationController;
   late List<Animation<Offset>> _slideAnimations;
 
   @override
   void initState() {
     _sortIndex = widget.sortIndex;
+    _selectedTagIDs = Set<String>.from(widget.selectedTagIDs);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -443,89 +543,77 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.sort,
-                      color: colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sort & Filter',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Choose how to organize your events',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+    return ActionSheetShell(
+      icon: Icons.sort,
+      title: 'Sort & Filter',
+      subtitle: 'Choose how to organize your events',
+      children: [
+        ActionSheetOptionGrid(children: _buildFilterOptions()),
+        if (widget.availableTags.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+            child: Text(
+              l10n.postTagsAssignLabel,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
               ),
             ),
-
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.outline.withValues(alpha: 0.1),
-                    colorScheme.outline.withValues(alpha: 0.3),
-                    colorScheme.outline.withValues(alpha: 0.1),
-                  ],
-                ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Text(
+              'Narrow the bulletin by content type',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            // Filter Options
-            ..._buildFilterOptions(theme, colorScheme),
-
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (_selectedTagIDs.isNotEmpty)
+                  ActionChip(
+                    label: Text(l10n.postTagsFilterClear),
+                    onPressed: () => _onTagsChanged({}),
+                  ),
+                ...widget.availableTags.map((tag) {
+                  final selected = _selectedTagIDs.contains(tag.id);
+                  return PostTagChip(
+                    tag: tag,
+                    selected: selected,
+                    onTap: () {
+                      final next = Set<String>.from(_selectedTagIDs);
+                      if (selected) {
+                        next.remove(tag.id);
+                      } else {
+                        next.add(tag.id);
+                      }
+                      _onTagsChanged(next);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 
-  List<Widget> _buildFilterOptions(ThemeData theme, ColorScheme colorScheme) {
+  void _onTagsChanged(Set<String> selected) {
+    HapticFeedback.selectionClick();
+    setState(() => _selectedTagIDs = selected);
+    widget.onTagSelectionChanged(selected);
+  }
+
+  List<Widget> _buildFilterOptions() {
     final List<Map<String, dynamic>> options = [
       {
         'index': 0,
@@ -561,71 +649,29 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
     return options.map((option) {
       final index = option['index'] as int;
       final isSelected = _sortIndex == index;
+      final colorScheme = Theme.of(context).colorScheme;
 
       return SlideTransition(
         position: _slideAnimations[index],
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? colorScheme.primary.withValues(alpha: 0.3) : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: ListTile(
-            title: Text(
-              option['title'] as String,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-              ),
-            ),
-            subtitle: Text(
-              option['subtitle'] as String,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: isSelected ? colorScheme.onPrimaryContainer.withValues(alpha: 0.8) : colorScheme.onSurfaceVariant,
-              ),
-            ),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? (option['color'] as Color).withValues(alpha: 0.2)
-                    : (option['color'] as Color).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                option['icon'] as IconData,
-                color: option['color'] as Color,
-                size: 20,
-              ),
-            ),
-            trailing: option['hasHelp'] == true
-                ? IconButton(
-                    icon: Icon(
-                      Icons.help_outline,
-                      size: 20,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    onPressed: _onBookmarkedHelp,
-                    tooltip: 'Learn about bookmarks',
-                  )
-                : isSelected
-                    ? Icon(
-                        Icons.check_circle,
-                        color: colorScheme.primary,
-                        size: 20,
-                      )
-                    : null,
-            selected: isSelected,
-            onTap: () => _onSortClick(index),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
+        child: ActionSheetOption(
+          icon: option['icon'] as IconData,
+          color: option['color'] as Color,
+          title: option['title'] as String,
+          subtitle: option['subtitle'] as String,
+          selected: isSelected,
+          showChevron: false,
+          onTap: () => _onSortClick(index),
+          trailing: option['hasHelp'] == true
+              ? IconButton(
+                  icon: Icon(
+                    Icons.help_outline,
+                    size: 20,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: _onBookmarkedHelp,
+                  tooltip: 'Learn about bookmarks',
+                )
+              : null,
         ),
       );
     }).toList();

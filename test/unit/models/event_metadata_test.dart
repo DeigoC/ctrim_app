@@ -16,6 +16,7 @@ void main() {
         expect(meta.contributorUIDs, isEmpty);
         expect(meta.childrenPostIDs, isEmpty);
         expect(meta.topics, isEmpty);
+        expect(meta.tagIDs, isEmpty);
       });
 
       test('creates with optional parentID', () {
@@ -61,6 +62,26 @@ void main() {
         final meta = EventMetadata.fromMap(map);
 
         expect(meta.topics, isEmpty);
+        expect(meta.tagIDs, isEmpty);
+        expect(meta.leadSpeakerUID, isNull);
+        expect(meta.hasLeadSpeaker, false);
+      });
+
+      test('creates from a map with LeadSpeakerUID', () {
+        final map = {
+          'AuthorUID': 'user-1',
+          'LastUID': 'user-1',
+          'ParentID': null,
+          'ContributorUIDs': <String>[],
+          'ChildrenIDs': <String>[],
+          'Topics': <String>[],
+          'LeadSpeakerUID': 'speaker-9',
+        };
+
+        final meta = EventMetadata.fromMap(map);
+
+        expect(meta.leadSpeakerUID, 'speaker-9');
+        expect(meta.hasLeadSpeaker, true);
       });
     });
 
@@ -69,6 +90,7 @@ void main() {
         final meta = EventMetadata(authorUID: 'user-1', parentID: 'parent-1');
         meta.addAllTopics(['youth', 'mission']);
         meta.setLastUID('user-2');
+        meta.setLeadSpeakerUID('speaker-1');
 
         final json = meta.toJson() as Map<String, dynamic>;
 
@@ -76,8 +98,10 @@ void main() {
         expect(json['LastUID'], 'user-2');
         expect(json['ParentID'], 'parent-1');
         expect(json['Topics'], ['youth', 'mission']);
+        expect(json['TagIDs'], isEmpty);
         expect(json['ContributorUIDs'], isEmpty);
         expect(json['ChildrenIDs'], isEmpty);
+        expect(json['LeadSpeakerUID'], 'speaker-1');
       });
     });
 
@@ -120,6 +144,20 @@ void main() {
         meta.addAllTopics(['prayer', 'worship']);
         meta.clearTopics();
         expect(meta.topics, isEmpty);
+      });
+
+      test('addTopic is idempotent', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addTopic('Belfast');
+        meta.addTopic('Belfast');
+        expect(meta.topics, ['Belfast']);
+      });
+
+      test('removeTopic removes matching topic', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addAllTopics(['Belfast', 'belfast-sunday-service']);
+        meta.removeTopic('Belfast');
+        expect(meta.topics, ['belfast-sunday-service']);
       });
 
       test('topics getter returns an unmodifiable view', () {

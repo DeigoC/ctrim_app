@@ -67,7 +67,8 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
                   if (mounted) {
                     setState(() {
                       _retryCount++;
-                      debugPrint('Retrying image download (attempt $_retryCount/$_maxRetries)');
+                      debugPrint(
+                          'Retrying image download (attempt $_retryCount/$_maxRetries)');
                     });
                   }
                 });
@@ -93,7 +94,8 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
               if (mounted) {
                 setState(() {
                   _retryCount++;
-                  debugPrint('Retrying image download after error (attempt $_retryCount/$_maxRetries)');
+                  debugPrint(
+                      'Retrying image download after error (attempt $_retryCount/$_maxRetries)');
                 });
               }
             });
@@ -177,23 +179,38 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
   }
 
   // * Logic
-  Future<Uint8List> _fetchCachedImage() async {
-    final localDataManager = LocalDataManager();
-    final sanitisedKey = widget.imageUrl.replaceAll(RegExp(r'[^\w]'), '');
+  Future<Uint8List> _fetchCachedImage() =>
+      CachedImageLoader.fetchBytes(widget.imageUrl);
 
-    // Check if image exists in cache
+  Future<void> _deleteCachedImage() async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = CachedImageLoader.cacheKeyFor(widget.imageUrl);
+    debugPrint('Deleting corrupted/broken cached image: $sanitisedKey');
+    await localDataManager.deleteMediaImage(sanitisedKey);
+  }
+}
+
+/// Shared download/cache path used by [CachedImageWidget] and orientation probes.
+abstract final class CachedImageLoader {
+  static String cacheKeyFor(final String imageUrl) {
+    return imageUrl.replaceAll(RegExp(r'[^\w]'), '');
+  }
+
+  static Future<Uint8List> fetchBytes(final String imageUrl) async {
+    final localDataManager = LocalDataManager();
+    final sanitisedKey = cacheKeyFor(imageUrl);
+
     final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
     if (cachedImage != null && cachedImage.isNotEmpty) {
       debugPrint('Using cached image for: $sanitisedKey');
       return cachedImage;
     }
 
-    // Download and cache the image
-    debugPrint('Downloading image from: ${widget.imageUrl}');
+    debugPrint('Downloading image from: $imageUrl');
     try {
-      final imageUrl = NetworkImageHelper.getImageUrl(widget.imageUrl);
+      final resolvedUrl = NetworkImageHelper.getImageUrl(imageUrl);
       final response = await http.get(
-        Uri.parse(imageUrl),
+        Uri.parse(resolvedUrl),
         headers: {'Accept': 'image/*'},
       ).timeout(
         const Duration(seconds: 30),
@@ -203,33 +220,23 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
       );
 
       if (response.statusCode != 200) {
-        throw HttpException('Failed to download image: HTTP ${response.statusCode}');
+        throw HttpException(
+            'Failed to download image: HTTP ${response.statusCode}');
       }
 
       final imageBytes = response.bodyBytes;
-
       if (imageBytes.isEmpty) {
         throw Exception('Downloaded image is empty');
       }
 
-      // Cache the image
       await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
       debugPrint('Cached image for: $sanitisedKey');
-
       return imageBytes;
     } catch (e) {
       debugPrint('Error downloading image: $e');
-      // Clean up partial cache if it exists
       await localDataManager.deleteMediaImage(sanitisedKey);
       rethrow;
     }
-  }
-
-  Future<void> _deleteCachedImage() async {
-    final localDataManager = LocalDataManager();
-    final sanitisedKey = widget.imageUrl.replaceAll(RegExp(r'[^\w]'), '');
-    debugPrint('Deleting corrupted/broken cached image: $sanitisedKey');
-    await localDataManager.deleteMediaImage(sanitisedKey);
   }
 }
 

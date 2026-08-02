@@ -27,6 +27,9 @@ Church/community Flutter app: events, information pages, personal section, bulle
 - Localize user-visible strings (`flutter_localizations` / `intl`)
 - Quill: `QuillEditorWidget` / `QuillViewerWidget` in `lib/widgets/quill_editor_wrapper.dart`
 - Images: `photo_view`; video: `video_player`
+- Progress: `DialogManager.runWithProgressDialog` for single-shot work; `runWithSteppedProgressDialog` + `LoadProgressBody` when the action has distinct phases (same pattern as post load)
+- Full-page loads: use `LoadProgressBody` (status + steps + error/retry) — never a bare `CircularProgressIndicator` for screen-level fetches. Do not create `FutureBuilder(future: fetch...)` inline in `build` (restarts the future every rebuild); load in `initState` / a stored `Future` instead. Keep `CircularProgressIndicator` only for inline button/media placeholders.
+- Wide screens: wrap page bodies in `ResponsiveContent` (or center with `ResponsiveLayout.maxContentWidth`); list-of-cards screens may use a 2-column layout when `isWideScreen` (see `view_templates_page` / `select_post_template_page`); action bottom sheets use `ActionSheetOptionGrid` (`lib/widgets/action_sheet.dart`) for a 2-column option layout on wide sheets
 
 ## Constraints
 

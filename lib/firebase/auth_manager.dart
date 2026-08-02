@@ -30,6 +30,12 @@ class AuthManager {
 
   String get currentAuthUID => _auth.currentUser!.uid;
 
+  bool get isSignedIn => _auth.currentUser != null;
+
+  String? get currentAuthUIDOrNull => _auth.currentUser?.uid;
+
+  String? get currentEmailOrNull => _auth.currentUser?.email;
+
   String whoAmI() {
     String message = 'The current auth user is ${_auth.currentUser}';
     debugPrint(message);

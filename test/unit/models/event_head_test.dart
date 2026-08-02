@@ -14,10 +14,14 @@ void main() {
         expect(head.title, '');
         expect(head.subtitle, '');
         expect(head.location, 'Belfast');
+        expect(head.tagIDs, isEmpty);
         expect(head.eventDate, isNull);
         expect(head.hasEventDate, false);
         expect(head.hasMedia, false);
         expect(head.mediaCount, 0);
+        expect(head.interestedCount, 0);
+        expect(head.attendeeCount, 0);
+        expect(head.hasAttendanceCounts, false);
       });
 
       test('creates with all parameters', () {
@@ -46,6 +50,8 @@ void main() {
           'Media': <Map<String, dynamic>>[],
           'RecentDate': Timestamp.fromDate(now),
           'EventDate': Timestamp.fromDate(eventDate),
+          'InterestedCount': 3,
+          'AttendeeCount': 5,
         };
 
         final head = EventHead.fromMap('event-3', map);
@@ -56,6 +62,24 @@ void main() {
         expect(head.location, 'Belfast');
         expect(head.recentDate, now);
         expect(head.eventDate, eventDate);
+        expect(head.interestedCount, 3);
+        expect(head.attendeeCount, 5);
+        expect(head.hasAttendanceCounts, true);
+      });
+
+      test('fromMap defaults missing attendance counts to zero', () {
+        final map = {
+          'Title': 'Legacy Event',
+          'Subtitle': '',
+          'Location': 'Belfast',
+          'Media': <Map<String, dynamic>>[],
+          'RecentDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+          'EventDate': null,
+        };
+
+        final head = EventHead.fromMap('legacy-1', map);
+        expect(head.interestedCount, 0);
+        expect(head.attendeeCount, 0);
       });
 
       test('creates from a map with null EventDate', () {
@@ -133,6 +157,18 @@ void main() {
         head.removeEventDate();
         expect(head.eventDate, isNull);
         expect(head.hasEventDate, false);
+      });
+
+      test('setInterestedCount and setAttendeeCount clamp negatives', () {
+        final head = EventHead(id: 'e1');
+        head.setInterestedCount(4);
+        head.setAttendeeCount(2);
+        expect(head.interestedCount, 4);
+        expect(head.attendeeCount, 2);
+        head.setInterestedCount(-1);
+        head.setAttendeeCount(-3);
+        expect(head.interestedCount, 0);
+        expect(head.attendeeCount, 0);
       });
     });
 
@@ -281,10 +317,62 @@ void main() {
         expect(head.getKeyGraphic(), 'photo.jpg');
       });
 
+      test('prependMediaItem makes the new image the key graphic', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'old.jpg');
+        head.prependMediaItem(type: 'img', src: 'new.jpg', title: 'Cover');
+
+        expect(head.mediaCount, 2);
+        expect(head.media.first['src'], 'new.jpg');
+        expect(head.getKeyGraphic(), 'new.jpg');
+      });
+
+      test('replaceKeyGraphic clears prior media and sets the cover', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'old-a.jpg');
+        head.addMediaItem(type: 'img', src: 'old-b.jpg');
+        head.replaceKeyGraphic(type: 'img', src: 'cover.jpg', title: 'New cover');
+
+        expect(head.mediaCount, 1);
+        expect(head.getKeyGraphic(), 'cover.jpg');
+        expect(head.toJson()['Media'], [
+          {'type': 'img', 'src': 'cover.jpg', 'title': 'New cover', 'thumbnailSrc': null},
+        ]);
+      });
+
+      test('resetMediaWithOriginal deep-copies so later mutations do not alter the snapshot', () {
+        final head = EventHead(id: 'e1');
+        final original = [
+          {'src': 'snap.jpg', 'type': 'img', 'title': 't', 'thumbnailSrc': null}
+        ];
+        head.resetMediaWithOriginal(original);
+        head.media.first['title'] = 'mutated';
+
+        expect(original.first['title'], 't');
+      });
+
       test('getKeyGraphic returns null when no images exist', () {
         final head = EventHead(id: 'e1');
         head.addMediaItem(type: 'video', src: 'clip.mp4');
 
+        expect(head.getKeyGraphic(), isNull);
+      });
+
+      test('getKeyGraphic falls back to lead speaker image', () {
+        final head = EventHead(id: 'e1');
+        head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
+
+        expect(head.getKeyGraphic(), 'speaker.jpg');
+        expect(head.hasLeadSpeakerPortrait, true);
+      });
+
+      test('clearLeadSpeaker removes denormalized fields', () {
+        final head = EventHead(id: 'e1');
+        head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
+        head.clearLeadSpeaker();
+
+        expect(head.hasLeadSpeaker, false);
+        expect(head.leadSpeakerImgSrc, isNull);
         expect(head.getKeyGraphic(), isNull);
       });
 
@@ -307,6 +395,11 @@ void main() {
         expect(json['Media'], isA<List>());
         expect(json['RecentDate'], isA<Timestamp>());
         expect(json['EventDate'], isNull);
+        expect(json['InterestedCount'], 0);
+        expect(json['AttendeeCount'], 0);
+        expect(json['LeadSpeakerUID'], isNull);
+        expect(json['LeadSpeakerImgSrc'], isNull);
+        expect(json['LeadSpeakerName'], isNull);
       });
 
       test('toJson includes EventDate when set', () {

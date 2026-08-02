@@ -6,14 +6,14 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../utility/dialog_manager.dart';
 import '../../utility/pwa_install_service.dart';
+import '../../widgets/responsive_content.dart';
 
 class ShareWebAppPage extends StatefulWidget {
   const ShareWebAppPage({super.key});
 
   static const String webAppLink = 'https://ctrim.app';
 
-  static const String shareMessage =
-      'Join CTRIM at https://ctrim.app — open in your browser. '
+  static const String shareMessage = 'Join CTRIM at https://ctrim.app — open in your browser. '
       'On mobile, you can add it to your home screen for an app-like experience.';
 
   @override
@@ -45,59 +45,62 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                colorScheme.primaryContainer,
-                colorScheme.secondaryContainer,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.language_rounded,
-                size: 48,
-                color: colorScheme.onPrimaryContainer,
+    return ResponsiveContent(
+      narrowPadding: 16,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primaryContainer,
+                  colorScheme.secondaryContainer,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Share the CTRIM Web App',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.language_rounded,
+                  size: 48,
                   color: colorScheme.onPrimaryContainer,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Invite others to open CTRIM in their browser and add it to their home screen.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                const SizedBox(height: 12),
+                Text(
+                  'Share the CTRIM Web App',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Invite others to open CTRIM in their browser and add it to their home screen.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-        _buildShareActions(context),
-        const SizedBox(height: 24),
-        _buildQrSection(context),
-        if (_shouldShowInstallSection) ...[
           const SizedBox(height: 24),
-          _buildInstallSection(context),
+          _buildShareActions(context),
+          const SizedBox(height: 24),
+          _buildQrSection(context),
+          if (_shouldShowInstallSection) ...[
+            const SizedBox(height: 24),
+            _buildInstallSection(context),
+          ],
+          const SizedBox(height: 32),
         ],
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 
@@ -370,8 +373,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
           ShareParams(text: ShareWebAppPage.shareMessage),
         );
         if (!context.mounted) return;
-        if (result.status == ShareResultStatus.dismissed ||
-            result.status == ShareResultStatus.unavailable) {
+        if (result.status == ShareResultStatus.dismissed || result.status == ShareResultStatus.unavailable) {
           _onLinkCopyClick(ShareWebAppPage.shareMessage, context, successText: 'Message copied to clipboard!');
         }
         return;
@@ -399,8 +401,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
       final message = switch (result) {
         PwaInstallResult.accepted => 'CTRIM App installed successfully.',
         PwaInstallResult.dismissed => 'Install cancelled.',
-        PwaInstallResult.unavailable =>
-          'Install is not available right now. Try again from your browser menu.',
+        PwaInstallResult.unavailable => 'Install is not available right now. Try again from your browser menu.',
       };
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -422,8 +423,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     DialogManager.showAlertDialog(
       context: context,
       title: 'Add to Home Screen',
-      content:
-          'To install CTRIM on your iPhone or iPad:\n\n'
+      content: 'To install CTRIM on your iPhone or iPad:\n\n'
           '1. Tap the Share button at the bottom of Safari\n'
           '2. Scroll down and tap Add to Home Screen\n'
           '3. Tap Add in the top right corner',
@@ -435,8 +435,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     DialogManager.showAlertDialog(
       context: context,
       title: 'Install App',
-      content:
-          'To install CTRIM as an app:\n\n'
+      content: 'To install CTRIM as an app:\n\n'
           '• Chrome or Edge: open the browser menu and choose Install app, or use the install icon in the address bar\n'
           '• Other browsers: look for Add to Home Screen or Install in the browser menu',
       icon: Icons.install_desktop_rounded,

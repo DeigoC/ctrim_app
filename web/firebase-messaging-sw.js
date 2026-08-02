@@ -21,7 +21,7 @@ function buildNotificationOptions(payload) {
     icon: '/icons/Icon-192.png',
     badge: '/icons/Icon-192.png',
     data: appData,
-    tag: appData.PostID || appData.InfoPage || 'ctrim-notification',
+    tag: appData.PostID || appData.InfoPage || appData.TestNotif || 'ctrim-notification',
     requireInteraction: false,
     vibrate: [200, 100, 200],
   };
@@ -30,7 +30,14 @@ function buildNotificationOptions(payload) {
 messaging.onBackgroundMessage((payload) => {
   console.log('[NOTIF] SW onBackgroundMessage', payload);
 
-  const notificationTitle = payload.notification?.title || payload.data?.title || 'CTRIM App Notification';
+  // When the FCM payload includes a `notification` block, the browser already
+  // displays it. Showing again here doubles the banner (common on iOS PWA / Safari).
+  if (payload.notification?.title || payload.notification?.body) {
+    console.log('[NOTIF] SW skip showNotification — browser handles notification payload');
+    return;
+  }
+
+  const notificationTitle = payload.data?.title || 'CTRIM App Notification';
   const notificationOptions = buildNotificationOptions(payload);
 
   return self.registration.showNotification(notificationTitle, notificationOptions)

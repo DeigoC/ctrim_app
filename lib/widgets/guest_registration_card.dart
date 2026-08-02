@@ -444,34 +444,29 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     });
 
     try {
-      DialogManager.showProgressDialog(
+      final created = await DialogManager.runWithProgressDialog(
         context: context,
         title: 'Creating Account',
         subtitle: 'Setting up your account...',
+        errorTitle: 'Registration Error',
+        action: () async {
+          try {
+            await _authManager.registerUserAndSendVerification(
+              _emailController.text.trim(),
+              _passwordController.text,
+            );
+          } on auth.FirebaseAuthException catch (e) {
+            throw Exception(_firebaseAuthMessage(e));
+          }
+        },
       );
 
-      await _authManager.registerUserAndSendVerification(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (!mounted) return;
+      if (!mounted || !created) return;
 
       final appContext = Provider.of<AppContext>(context, listen: false);
       appContext.analytics.logEvent(name: 'register email');
 
-      Navigator.of(context).pop(); // Close progress dialog
-
-      // Show verification dialog
       await _showVerificationDialog();
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleFirebaseException(e);
-      }
-    } catch (e) {
-      if (mounted) {
-        _handleException(e, 'Registration Error!');
-      }
     } finally {
       if (mounted) {
         setState(() {
@@ -487,30 +482,26 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     });
 
     try {
-      DialogManager.showProgressDialog(
+      final signedIn = await DialogManager.runWithProgressDialog(
         context: context,
         title: 'Signing In',
-        subtitle: 'Please wait...',
+        subtitle: 'Signing you in…',
+        errorTitle: 'Login Error',
+        action: () async {
+          try {
+            await _authManager.loginAndReturnAuthID(
+              _emailController.text.trim(),
+              _passwordController.text,
+            );
+          } on auth.FirebaseAuthException catch (e) {
+            throw Exception(_firebaseAuthMessage(e));
+          }
+        },
       );
 
-      await _authManager.loginAndReturnAuthID(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop(); // Close progress dialog
+      if (!mounted || !signedIn) return;
 
       await _completeAuthentication(false);
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleFirebaseException(e);
-      }
-    } catch (e) {
-      if (mounted) {
-        _handleException(e, 'Login Error!');
-      }
     } finally {
       if (mounted) {
         setState(() {
@@ -554,91 +545,76 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
   }
 
   Future<void> _checkVerificationAndComplete() async {
-    DialogManager.showProgressDialog(
+    var verified = false;
+    final checked = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Checking Verification',
-      subtitle: 'Please wait...',
+      subtitle: 'Checking your email verification…',
+      errorTitle: 'Verification check failed',
+      action: () async {
+        verified = await _authManager.hasUserVerifiedEmail();
+      },
     );
 
-    try {
-      final verified = await _authManager.hasUserVerifiedEmail();
+    if (!mounted || !checked) return;
 
-      if (!mounted) return;
-
-      Navigator.of(context).pop(); // Close progress dialog
-
-      if (!verified) {
-        DialogManager.showAlertDialog(
-          context: context,
-          title: 'Email Not Verified',
-          content:
-              'Email verification is not complete yet. Please check your inbox at ${_emailController.text.trim()} and click the verification link.',
-          icon: Icons.mark_email_unread_outlined,
-          isError: true,
-        );
-        return;
-      }
-
-      final appContext = Provider.of<AppContext>(context, listen: false);
-      appContext.analytics.logSignUp(signUpMethod: 'email-verified');
-
-      await _completeAuthentication(true);
-    } catch (e) {
-      debugPrint('Error checking verification: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Verification check failed: $e'), behavior: SnackBarBehavior.floating));
+    if (!verified) {
+      DialogManager.showAlertDialog(
+        context: context,
+        title: 'Email Not Verified',
+        content:
+            'Email verification is not complete yet. Please check your inbox at ${_emailController.text.trim()} and click the verification link.',
+        icon: Icons.mark_email_unread_outlined,
+        isError: true,
+      );
+      return;
     }
+
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    appContext.analytics.logSignUp(signUpMethod: 'email-verified');
+
+    await _completeAuthentication(true);
   }
 
   Future<void> _completeAuthentication(bool isNewUser) async {
-    DialogManager.showProgressDialog(
+    await DialogManager.runWithSteppedProgressDialog(
       title: 'Welcome to CTRIM!',
-      subtitle: 'Setting up your experience...',
+      initialMessage: 'Saving credentials…',
       context: context,
+      errorTitle: 'Could not complete setup',
+      action: (onProgress) async {
+        const total = 4;
+        final appContext = Provider.of<AppContext>(context, listen: false);
+
+        onProgress(completed: 0, total: total, message: 'Saving credentials…');
+        appContext.sharedPref.saveCreds(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+
+        if (isNewUser) {
+          onProgress(completed: 1, total: total, message: 'Creating your profile…');
+          await _everyoneDBManager.createUser(
+            _authManager.currentAuthUID,
+            _emailController.text.trim(),
+          );
+        } else {
+          onProgress(completed: 1, total: total, message: 'Setting up notifications…');
+        }
+
+        onProgress(completed: 2, total: total, message: 'Setting up notifications…');
+        await _migrateFCMToken();
+
+        onProgress(completed: 3, total: total, message: 'Loading posts and people…');
+        await _fetchEssentialData();
+
+        appContext.sharedPref.setLoggedOut(false);
+        appContext.sharedPref.setDismissedGuestBanner(true);
+      },
     );
 
-    try {
-      final appContext = Provider.of<AppContext>(context, listen: false);
-
-      // Save credentials
-      appContext.sharedPref.saveCreds(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      // Create user in Firestore if new registration
-      if (isNewUser) {
-        await _everyoneDBManager.createUser(
-          _authManager.currentAuthUID,
-          _emailController.text.trim(),
-        );
-      }
-
-      // Migrate guest FCM token if exists
-      await _migrateFCMToken();
-
-      // Fetch essential data
-      await _fetchEssentialData();
-
-      if (!mounted) return;
-
-      appContext.sharedPref.setLoggedOut(false);
-      appContext.sharedPref.setDismissedGuestBanner(true);
-
-      Navigator.of(context).pop(); // Close progress dialog
-
-      // Rebuild UI to show authenticated state
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (e) {
-      debugPrint('Error completing authentication: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to complete setup: $e'), behavior: SnackBarBehavior.floating));
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -735,104 +711,54 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     if (!confirmed) return;
     if (!mounted) return;
 
-    try {
-      DialogManager.showProgressDialog(
-        context: context,
-        title: 'Sending Reset Link',
-        subtitle: 'Please wait...',
-      );
+    final sent = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Sending Reset Link',
+      subtitle: 'Sending email…',
+      errorTitle: 'Could not send reset link',
+      action: () async {
+        try {
+          await _authManager.sendPasswordResetEmail(_emailController.text.trim());
+        } on auth.FirebaseAuthException catch (e) {
+          throw Exception(_firebaseAuthMessage(e));
+        }
+      },
+    );
 
-      await _authManager.sendPasswordResetEmail(_emailController.text.trim());
+    if (!mounted || !sent) return;
 
-      if (!mounted) return;
-
-      Navigator.of(context).pop(); // Close progress dialog
-
-      DialogManager.showSnackBar(
-        context: context,
-        message: 'Password reset link sent to ${_emailController.text.trim()}',
-        actionLabel: 'Got it',
-        onActionPressed: () {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        },
-      );
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleFirebaseException(e);
-      }
-    }
+    DialogManager.showSnackBar(
+      context: context,
+      message: 'Password reset link sent to ${_emailController.text.trim()}',
+      actionLabel: 'Got it',
+      onActionPressed: () {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      },
+    );
   }
 
-  void _handleFirebaseException(auth.FirebaseAuthException e) {
-    Navigator.of(context).pop(); // Close any progress dialog
-
-    String title = 'Authentication Error';
-    String content = 'Something went wrong during authentication.';
-    IconData icon = Icons.error_outline;
-
+  String _firebaseAuthMessage(auth.FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
-        title = 'Invalid Email';
-        content = 'The email address is badly formatted. Please enter a valid email address.';
-        icon = Icons.email_outlined;
-        break;
+        return 'The email address is badly formatted. Please enter a valid email address.';
       case 'email-already-in-use':
-        title = 'Email Already Registered';
-        content = 'This email is already registered. Please try signing in instead.';
-        icon = Icons.person_outline;
-        break;
+        return 'This email is already registered. Please try signing in instead.';
       case 'weak-password':
-        title = 'Weak Password';
-        content = 'The password is too weak. Please choose a stronger password with at least 6 characters.';
-        icon = Icons.lock_outline;
-        break;
+        return 'The password is too weak. Please choose a stronger password with at least 6 characters.';
       case 'user-disabled':
-        title = 'Account Disabled';
-        content = 'This account has been disabled. Please contact support for assistance.';
-        icon = Icons.block;
-        break;
+        return 'This account has been disabled. Please contact support for assistance.';
       case 'user-not-found':
-        title = 'Account Not Found';
-        content = 'No account found with this email address. Please check your email or create a new account.';
-        icon = Icons.person_search;
-        break;
+        return 'No account found with this email address. Please check your email or create a new account.';
       case 'wrong-password':
-        title = 'Incorrect Password';
-        content = 'The password is incorrect. Please try again or reset your password if you\'ve forgotten it.';
-        icon = Icons.lock_outline;
-        break;
+        return 'The password is incorrect. Please try again or reset your password if you\'ve forgotten it.';
       case 'too-many-requests':
-        title = 'Too Many Attempts';
-        content = 'Too many failed attempts. Please wait a moment before trying again.';
-        icon = Icons.timer;
-        break;
+        return 'Too many failed attempts. Please wait a moment before trying again.';
       case 'network-request-failed':
-        title = 'Connection Error';
-        content = 'Unable to connect to the server. Please check your internet connection and try again.';
-        icon = Icons.wifi_off;
-        break;
+        return 'Unable to connect to the server. Please check your internet connection and try again.';
       default:
-        content = 'An unexpected error occurred. Please try again later.\n\nError: ${e.message}';
-        break;
+        return e.message?.isNotEmpty == true
+            ? e.message!
+            : 'An unexpected error occurred. Please try again later.';
     }
-
-    DialogManager.showAlertDialog(
-      context: context,
-      title: title,
-      content: content,
-      icon: icon,
-      isError: true,
-    );
-  }
-
-  void _handleException(Object e, String title) {
-    Navigator.of(context).pop(); // Close any progress dialog
-    DialogManager.showAlertDialog(
-      context: context,
-      title: title,
-      content: 'An unexpected error occurred. Please try again.\n\nError details: $e',
-      icon: Icons.error_outline,
-      isError: true,
-    );
   }
 }

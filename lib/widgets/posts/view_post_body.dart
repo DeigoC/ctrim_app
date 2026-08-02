@@ -60,8 +60,9 @@ class ViewPostBody extends StatelessWidget {
                 ],
               ),
             ),
-            // Content
+            // Content — key forces QuillEditor recreation when body JSON changes
             QuillViewerWidget(
+              key: ValueKey(eventContext.encodedBody),
               jsonContent: eventContext.body,
               padding: const EdgeInsets.all(16.0),
             ),

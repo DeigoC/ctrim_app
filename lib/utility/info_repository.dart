@@ -1,7 +1,7 @@
 import '../firebase/db_managers/info_db_manager.dart';
 import '../models/info/church_info.dart';
 import '../models/info/ctrim_info.dart';
-import '../models/info/testimonial_into.dart';
+import '../models/info/testimonial_info.dart';
 import 'local_data_manager.dart';
 
 class InfoRepository {
@@ -57,6 +57,9 @@ class InfoRepository {
 
   Future<void> deleteChurchInfo(final String id) async {
     await _churchInfoDBManager.delete(id);
+    await _localDataManager.deleteChurchInfoData(id);
+    final lastUpdate = await _churchInfoDBManager.fetchLastUpdate();
+    await _localDataManager.writeInfoCollectionLastUpdate(churchesSection, lastUpdate);
   }
 
   Future<List<TestimonialInfo>> fetchTestimonials({bool forceRefresh = false}) async {
@@ -92,6 +95,9 @@ class InfoRepository {
 
   Future<void> deleteTestimonialInfo(final String id) async {
     await _testimonialInfoDBManager.delete(id);
+    await _localDataManager.deleteTestimonialInfoData(id);
+    final lastUpdate = await _testimonialInfoDBManager.fetchLastUpdate();
+    await _localDataManager.writeInfoCollectionLastUpdate(testimonialsSection, lastUpdate);
   }
 
   Future<List<CtrimInfo>> fetchCtrimInfo({bool forceRefresh = false}) async {
@@ -127,6 +133,9 @@ class InfoRepository {
 
   Future<void> deleteCtrimInfo(final String id) async {
     await _ctrimInfoDBManager.delete(id);
+    await _localDataManager.deleteCtrimInfoData(id);
+    final lastUpdate = await _ctrimInfoDBManager.fetchLastUpdate();
+    await _localDataManager.writeInfoCollectionLastUpdate(ctrimInfoSection, lastUpdate);
   }
 
   Future<List<T>> _loadCollection<T>({

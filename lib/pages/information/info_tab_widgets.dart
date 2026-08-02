@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../utility/app_context.dart';
+import '../../utility/responsive_layout.dart';
+import '../../widgets/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 
 class InfoSectionCard extends StatelessWidget {
@@ -95,9 +100,10 @@ class InfoAddContentCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: LayoutBuilder(
@@ -207,6 +213,195 @@ class InfoCardImage extends StatelessWidget {
   }
 }
 
+/// Image hero card used by churches and testimonials (and wide CTRIM when image-led).
+class InfoHeroOverlayCard extends StatelessWidget {
+  const InfoHeroOverlayCard({
+    super.key,
+    required this.imageUrl,
+    required this.heroTag,
+    required this.onTap,
+    required this.overlay,
+    this.imageAlignment = Alignment.center,
+    this.height,
+  });
+
+  final String imageUrl;
+  final String heroTag;
+  final VoidCallback onTap;
+  final Widget overlay;
+  final Alignment imageAlignment;
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    final card = Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            InfoCardImage(
+              imageUrl: imageUrl,
+              heroTag: heroTag,
+              alignment: imageAlignment,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x00000000),
+                    Color(0xB3000000),
+                  ],
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: overlay,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (height == null) {
+      return card;
+    }
+
+    return SizedBox(height: height, width: double.infinity, child: card);
+  }
+}
+
+/// Title + description row card used for CTRIM topics.
+class InfoTopicListCard extends StatelessWidget {
+  const InfoTopicListCard({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.imageUrl,
+    required this.heroTag,
+    required this.onTap,
+    this.fallbackIcon = Icons.menu_book_outlined,
+  });
+
+  final String title;
+  final String description;
+  final String imageUrl;
+  final String heroTag;
+  final VoidCallback onTap;
+  final IconData fallbackIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              _TopicThumbnail(
+                imageUrl: imageUrl,
+                heroTag: heroTag,
+                fallbackIcon: fallbackIcon,
+                colorScheme: colorScheme,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios,
+                  color: colorScheme.outline, size: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopicThumbnail extends StatelessWidget {
+  const _TopicThumbnail({
+    required this.imageUrl,
+    required this.heroTag,
+    required this.fallbackIcon,
+    required this.colorScheme,
+  });
+
+  final String imageUrl;
+  final String heroTag;
+  final IconData fallbackIcon;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl.isEmpty) {
+      return Container(
+        height: 56,
+        width: 56,
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Icon(fallbackIcon, color: colorScheme.primary, size: 24),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 56,
+        width: 56,
+        child: CachedImageWidget(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          heroTag: heroTag,
+        ),
+      ),
+    );
+  }
+}
+
 class InfoEmptyState extends StatelessWidget {
   const InfoEmptyState({super.key, required this.message});
 
@@ -250,7 +445,8 @@ class InfoErrorState extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints:
+              const BoxConstraints(maxWidth: ResponsiveLayout.dialogMaxWidth),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -280,4 +476,161 @@ class InfoErrorState extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Shared grid/list shell for churches, testimonials, and CTRIM info tabs.
+class InfoSectionListTab<T> extends StatelessWidget {
+  const InfoSectionListTab({
+    super.key,
+    required this.future,
+    required this.onRefresh,
+    required this.storageKey,
+    required this.emptyMessage,
+    required this.addLabel,
+    required this.addDescription,
+    required this.onAdd,
+    required this.itemBuilder,
+    required this.gridAspectRatio,
+    this.mobileItemHeight,
+  });
+
+  final Future<List<T>> future;
+  final VoidCallback onRefresh;
+  final String storageKey;
+  final String emptyMessage;
+  final String addLabel;
+  final String addDescription;
+  final Future<void> Function(BuildContext context) onAdd;
+  final Widget Function(BuildContext context, T item, {required bool wide})
+      itemBuilder;
+  final double Function(int crossAxisCount) gridAspectRatio;
+  final double? mobileItemHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isAreaAdmin =
+        Provider.of<AppContext>(context).currentUser.isAreaAdmin;
+
+    return FutureBuilder<List<T>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadProgressBody(
+            message: 'Loading…',
+            completedSteps: 0,
+            totalSteps: 1,
+          );
+        }
+
+        if (snapshot.hasError) {
+          return InfoErrorState(
+            error: snapshot.error,
+            isAreaAdmin: isAreaAdmin,
+            addLabel: addLabel,
+            addDescription: addDescription,
+            onRetry: onRefresh,
+            onAdd: () => onAdd(context),
+          );
+        }
+
+        final items = snapshot.data ?? <T>[];
+        if (items.isEmpty && !isAreaAdmin) {
+          return InfoEmptyState(message: emptyMessage);
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final double contentWidth = constraints.maxWidth;
+            final bool isWideScreen =
+                ResponsiveLayout.isWideScreen(contentWidth);
+            final double maxWidth =
+                ResponsiveLayout.maxContentWidth(contentWidth);
+            final double horizontalPadding = isWideScreen
+                ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+                : 16.0;
+            final int crossAxisCount =
+                ResponsiveLayout.crossAxisCount(contentWidth);
+            final int itemCount = items.length + (isAreaAdmin ? 1 : 0);
+
+            if (isWideScreen) {
+              return GridView.builder(
+                key: PageStorageKey<String>(storageKey),
+                padding: EdgeInsets.fromLTRB(
+                    horizontalPadding, 16, horizontalPadding, 24),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: gridAspectRatio(crossAxisCount),
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: itemCount,
+                itemBuilder: (context, index) {
+                  if (isAreaAdmin && index == items.length) {
+                    return InfoAddContentCard(
+                      label: addLabel,
+                      description: addDescription,
+                      onTap: () => onAdd(context),
+                    );
+                  }
+                  return itemBuilder(context, items[index], wide: true);
+                },
+              );
+            }
+
+            return MediaQuery.removePadding(
+              removeTop: true,
+              context: context,
+              child: ListView.separated(
+                key: PageStorageKey<String>(storageKey),
+                padding: EdgeInsets.fromLTRB(
+                    horizontalPadding, 8, horizontalPadding, 24),
+                itemCount: itemCount,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  if (isAreaAdmin && index == items.length) {
+                    return InfoAddContentCard(
+                      label: addLabel,
+                      description: addDescription,
+                      onTap: () => onAdd(context),
+                    );
+                  }
+                  final item = itemBuilder(context, items[index], wide: false);
+                  if (mobileItemHeight == null) {
+                    return item;
+                  }
+                  return SizedBox(height: mobileItemHeight, child: item);
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+Future<void> openInfoEditorAndRefresh({
+  required BuildContext context,
+  required Widget editor,
+  required VoidCallback onRefresh,
+}) async {
+  final changed = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(builder: (_) => editor),
+  );
+  if (changed == true) {
+    onRefresh();
+  }
+}
+
+void openInfoDetailAndRefresh({
+  required BuildContext context,
+  required Widget page,
+  required VoidCallback onRefresh,
+}) {
+  HapticFeedback.lightImpact();
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => page),
+  ).then((_) => onRefresh());
 }

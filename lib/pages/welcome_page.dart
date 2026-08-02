@@ -953,10 +953,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     if (!mounted) return;
     if (loggedIn) {
       _appContext.analytics.logLogin(loginMethod: 'welcome page');
-      Navigator.of(context).pop();
       await _attemptToFetchAndSetUser();
       if (!mounted) return;
-      _instantiateTheRest(false);
+      await _instantiateTheRest(false);
     } else {
       setState(() {
         _isLoading = false;
@@ -965,46 +964,29 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<bool> _attemptToLogin() async {
-    try {
-      DialogManager.showProgressDialog(
-        context: context,
-        title: 'Signing In',
-        subtitle: 'Please wait while we authenticate you...',
-      );
+    return DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Signing In',
+      subtitle: 'Please wait while we authenticate you...',
+      errorTitle: 'Login Error',
+      action: () async {
+        try {
+          await _authManager.loginAndReturnAuthID(
+            _tecLoginEmail.text.trim(),
+            _tecLoginPassword.text,
+          );
+        } on auth.FirebaseAuthException catch (e) {
+          throw Exception(_firebaseAuthMessage(e));
+        }
 
-      await _authManager.loginAndReturnAuthID(
-        _tecLoginEmail.text.trim(),
-        _tecLoginPassword.text,
-      );
-
-      if (!await _authManager.hasUserVerifiedEmail()) {
-        await _authManager.signOut();
-        if (mounted) {
-          Navigator.of(context).pop(); // Close progress dialog
-          await DialogManager.showAlertDialog(
-            context: context,
-            title: 'Email Verification Required',
-            content: 'Please verify your email address before signing in. Check your inbox for the verification link.',
-            icon: Icons.mark_email_unread_outlined,
-            isError: true,
+        if (!await _authManager.hasUserVerifiedEmail()) {
+          await _authManager.signOut();
+          throw Exception(
+            'Please verify your email address before signing in. Check your inbox for the verification link.',
           );
         }
-        return false;
-      } else {
-        return true;
-      }
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleFirebaseException(e);
-      }
-      return false;
-    } on Exception catch (e) {
-      debugPrint('Something went really wrong for login: $e');
-      if (mounted) {
-        _handleException(e, 'Login Error!');
-      }
-      return false;
-    }
+      },
+    );
   }
 
   Future<void> _attemptToFetchAndSetUser() async {
@@ -1029,40 +1011,31 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       content: "Send password reset link to '${_tecLoginEmail.text.trim()}'?",
       icon: Icons.email_outlined,
       confirmText: 'Send Link',
-    ).then((confirm) {
-      if (confirm) {
-        _attemptToSendPasswordResetEmail().then((sent) {
-          if (sent && mounted) {
-            Navigator.of(context).pop(); // Close any open dialogs
-            DialogManager.showSnackBar(
-              context: context,
-              message: 'Password reset link sent to ${_tecLoginEmail.text.trim()}',
-              actionLabel: 'Got it',
-              onActionPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            );
-          }
-        });
-      }
-    });
-  }
-
-  Future<bool> _attemptToSendPasswordResetEmail() async {
-    try {
-      DialogManager.showProgressDialog(
+    ).then((confirm) async {
+      if (!confirm || !mounted) return;
+      final sent = await DialogManager.runWithProgressDialog(
         context: context,
         title: 'Sending Reset Link',
-        subtitle: 'Please wait...',
+        subtitle: 'Sending email…',
+        errorTitle: 'Could not send reset link',
+        action: () async {
+          try {
+            await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
+          } on auth.FirebaseAuthException catch (e) {
+            throw Exception(_firebaseAuthMessage(e));
+          }
+        },
       );
-      await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
-      return true;
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleFirebaseException(e);
-      }
-      return false;
-    }
+      if (!sent || !mounted) return;
+      DialogManager.showSnackBar(
+        context: context,
+        message: 'Password reset link sent to ${_tecLoginEmail.text.trim()}',
+        actionLabel: 'Got it',
+        onActionPressed: () {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        },
+      );
+    });
   }
 
   Future<void> _registerClick() async {
@@ -1090,7 +1063,6 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       if (!mounted) return;
       if (canVerifyEmail) {
         _appContext.analytics.logEvent(name: 'register email');
-        Navigator.of(context).pop();
         setState(() {
           _isWaitingForVerification = true;
           _isLoading = false;
@@ -1104,103 +1076,47 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<bool> _attemptToRegister() async {
-    try {
-      DialogManager.showProgressDialog(
-        context: context,
-        title: 'Creating Account',
-        subtitle: 'Setting up your account...',
-      );
-
-      await _authManager.registerUserAndSendVerification(
-        _tecRegistrationEmail.text.trim(),
-        _tecRegistrationPassword.text,
-      );
-      return true;
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleFirebaseException(e);
-      }
-      return false;
-    } on Exception catch (e) {
-      debugPrint('Something went really wrong for registration: $e');
-      if (mounted) {
-        _handleException(e, 'Registration Error!');
-      }
-      return false;
-    }
+    return DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Creating Account',
+      subtitle: 'Setting up your account...',
+      errorTitle: 'Registration Error',
+      action: () async {
+        try {
+          await _authManager.registerUserAndSendVerification(
+            _tecRegistrationEmail.text.trim(),
+            _tecRegistrationPassword.text,
+          );
+        } on auth.FirebaseAuthException catch (e) {
+          throw Exception(_firebaseAuthMessage(e));
+        }
+      },
+    );
   }
 
-  void _handleFirebaseException(auth.FirebaseAuthException e) {
-    Navigator.of(context).pop(); // Close any progress dialog
-
-    String title = 'Authentication Error';
-    String content = 'Something went wrong during authentication.';
-    IconData icon = Icons.error_outline;
-
+  String _firebaseAuthMessage(auth.FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
-        title = 'Invalid Email';
-        content = 'The email address is badly formatted. Please enter a valid email address.';
-        icon = Icons.email_outlined;
-        break;
+        return 'The email address is badly formatted. Please enter a valid email address.';
       case 'email-already-in-use':
-        title = 'Email Already Registered';
-        content = 'This email is already registered. Please try signing in instead.';
-        icon = Icons.person_outline;
-        break;
+        return 'This email is already registered. Please try signing in instead.';
       case 'weak-password':
-        title = 'Weak Password';
-        content = 'The password is too weak. Please choose a stronger password with at least 6 characters.';
-        icon = Icons.lock_outline;
-        break;
+        return 'The password is too weak. Please choose a stronger password with at least 6 characters.';
       case 'user-disabled':
-        title = 'Account Disabled';
-        content = 'This account has been disabled. Please contact support for assistance.';
-        icon = Icons.block;
-        break;
+        return 'This account has been disabled. Please contact support for assistance.';
       case 'user-not-found':
-        title = 'Account Not Found';
-        content = 'No account found with this email address. Please check your email or create a new account.';
-        icon = Icons.person_search;
-        break;
+        return 'No account found with this email address. Please check your email or create a new account.';
       case 'wrong-password':
-        title = 'Incorrect Password';
-        content = 'The password is incorrect. Please try again or reset your password if you\'ve forgotten it.';
-        icon = Icons.lock_outline;
-        break;
+        return 'The password is incorrect. Please try again or reset your password if you\'ve forgotten it.';
       case 'too-many-requests':
-        title = 'Too Many Attempts';
-        content = 'Too many failed attempts. Please wait a moment before trying again.';
-        icon = Icons.timer;
-        break;
+        return 'Too many failed attempts. Please wait a moment before trying again.';
       case 'network-request-failed':
-        title = 'Connection Error';
-        content = 'Unable to connect to the server. Please check your internet connection and try again.';
-        icon = Icons.wifi_off;
-        break;
+        return 'Unable to connect to the server. Please check your internet connection and try again.';
       default:
-        content = 'An unexpected error occurred. Please try again later.\n\nError: ${e.message}';
-        break;
+        return e.message?.isNotEmpty == true
+            ? e.message!
+            : 'An unexpected error occurred. Please try again later.';
     }
-
-    DialogManager.showAlertDialog(
-      context: context,
-      title: title,
-      content: content,
-      icon: icon,
-      isError: true,
-    );
-  }
-
-  void _handleException(Exception e, String title) {
-    Navigator.of(context).pop(); // Close any progress dialog
-    DialogManager.showAlertDialog(
-      context: context,
-      title: title,
-      content: 'An unexpected error occurred. Please try again.\n\nError details: $e',
-      icon: Icons.error_outline,
-      isError: true,
-    );
   }
 
   Future<void> _onRefreshVerificationClick() async {
@@ -1208,76 +1124,76 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       _isLoading = true;
     });
 
-    DialogManager.showProgressDialog(
+    var verified = false;
+    final checked = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Checking Verification',
-      subtitle: 'Please wait...',
+      subtitle: 'Checking your email verification…',
+      errorTitle: 'Verification check failed',
+      action: () async {
+        verified = await _authManager.hasUserVerifiedEmail();
+      },
     );
 
-    try {
-      final verified = await _authManager.hasUserVerifiedEmail();
-      if (!mounted) return;
-
-      if (!verified) {
-        Navigator.of(context).pop();
-        DialogManager.showAlertDialog(
-          context: context,
-          title: 'Email Not Verified',
-          content:
-              'Email verification is not complete yet. Please check your inbox at ${_tecRegistrationEmail.text} and click the verification link.',
-          icon: Icons.mark_email_unread_outlined,
-          isError: true,
-        );
-        setState(() {
-          _isLoading = false;
-        });
-      } else {
-        _appContext.analytics.logSignUp(signUpMethod: 'email-verified');
-        debugPrint('creating user with auth: ${_authManager.currentAuthUID}');
-        Navigator.of(context).pop();
-        _instantiateTheRest(true);
-      }
-    } catch (e) {
-      debugPrint('Error checking verification: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
+    if (!mounted) return;
+    if (!checked) {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Verification check failed: $e'), behavior: SnackBarBehavior.floating));
+      return;
     }
+
+    if (!verified) {
+      DialogManager.showAlertDialog(
+        context: context,
+        title: 'Email Not Verified',
+        content:
+            'Email verification is not complete yet. Please check your inbox at ${_tecRegistrationEmail.text} and click the verification link.',
+        icon: Icons.mark_email_unread_outlined,
+        isError: true,
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    _appContext.analytics.logSignUp(signUpMethod: 'email-verified');
+    debugPrint('creating user with auth: ${_authManager.currentAuthUID}');
+    await _instantiateTheRest(true);
   }
 
   Future<void> _instantiateTheRest(bool fromRegistration) async {
-    DialogManager.showProgressDialog(
+    final ready = await DialogManager.runWithSteppedProgressDialog(
       title: 'Welcome to CTRIM!',
-      subtitle: 'Setting up your experience...',
+      initialMessage: 'Saving credentials…',
       context: context,
+      errorTitle: 'Could not complete setup',
+      action: (onProgress) async {
+        const total = 4;
+        onProgress(completed: 0, total: total, message: 'Saving credentials…');
+        _saveCreds(fromRegistration);
+
+        if (fromRegistration) {
+          onProgress(completed: 1, total: total, message: 'Creating your profile…');
+          await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+        } else {
+          onProgress(completed: 1, total: total, message: 'Setting up notifications…');
+        }
+
+        onProgress(completed: 2, total: total, message: 'Setting up notifications…');
+        _saveFCMToken();
+
+        onProgress(completed: 3, total: total, message: 'Loading posts and people…');
+        await _fetchEssentialData();
+        _appContext.sharedPref.setLoggedOut(false);
+      },
     );
 
-    try {
-      _saveCreds(fromRegistration);
-
-      if (fromRegistration) {
-        await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
-      }
-      _saveFCMToken();
-      await _fetchEssentialData();
-
-      if (!mounted) return;
-      debugPrint('opened home page here');
-      _appContext.sharedPref.setLoggedOut(false);
-      Navigator.of(context).pop(); // pop the progress dialog
-      Navigator.of(context).pop(); // pop twice to close this page and then load the home page as the first?
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
-    } catch (e) {
-      debugPrint('Error setting up: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to complete setup: $e'), behavior: SnackBarBehavior.floating));
-    }
+    if (!mounted || !ready) return;
+    debugPrint('opened home page here');
+    Navigator.of(context).pop(); // pop this page
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
   Future<void> _fetchEssentialData() async {

@@ -11,7 +11,9 @@ import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/event_db_manager.dart';
 import 'firebase/db_managers/id_tracker.dart';
 import 'firebase/db_managers/user_db_manager.dart';
+import 'firebase/db_managers/user_location_db_manager.dart';
 import 'firebase/db_managers/user_tag_db_manager.dart';
+import 'firebase/db_managers/post_tag_db_manager.dart';
 import 'firebase_options.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
@@ -135,6 +137,18 @@ Future<void> _fetchEssentialDataInBackground(
       guestContext.setAllTags(allTags);
     } catch (e) {
       debugPrint('Error fetching user tags (deploy firestore.rules if needed): $e');
+    }
+    try {
+      final allPostTags = await PostTagDBManager().fetchAllTags();
+      guestContext.setAllPostTags(allPostTags);
+    } catch (e) {
+      debugPrint('Error fetching post tags (deploy firestore.rules if needed): $e');
+    }
+    try {
+      final allLocations = await UserLocationDBManager().fetchAllLocations();
+      guestContext.setAllLocations(allLocations);
+    } catch (e) {
+      debugPrint('Error fetching user locations (deploy firestore.rules if needed): $e');
     }
     guestContext.sortPostsByIndex();
     guestContext.rebuildPlease();

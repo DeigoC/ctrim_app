@@ -21,7 +21,7 @@ class AppSharedPreferences {
       _dismissedGuestBanner = 'dismissedGuestBanner',
       _guestFcmToken = 'guestFcmToken',
       _hasSeenBulletinDialog = 'hasSeenBulletinDialog',
-      _hasSeenPersonalDialog = 'hasSeenPersonalDialog';
+      _hasSeenPwaHomeScreenPrompt = 'hasSeenPwaHomeScreenPrompt';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -143,8 +143,8 @@ class AppSharedPreferences {
   bool get hasSeenBulletinDialog => _pref.getBool(_hasSeenBulletinDialog) ?? false;
   void setHasSeenBulletinDialog() => _pref.setBool(_hasSeenBulletinDialog, true);
 
-  bool get hasSeenPersonalDialog => _pref.getBool(_hasSeenPersonalDialog) ?? false;
-  void setHasSeenPersonalDialog() => _pref.setBool(_hasSeenPersonalDialog, true);
+  bool get hasSeenPwaHomeScreenPrompt => _pref.getBool(_hasSeenPwaHomeScreenPrompt) ?? false;
+  void setHasSeenPwaHomeScreenPrompt() => _pref.setBool(_hasSeenPwaHomeScreenPrompt, true);
 
   // Note: Post data, post tracking, and user data caching is now handled by
   // LocalDataManager which uses Hive and works across all platforms (web, mobile, desktop)

@@ -1,9 +1,14 @@
 import 'dart:math';
+import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/personal/select_users_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/event_context.dart';
+import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:ctrim_app/widgets/my_avatar_stack.dart';
+import 'package:ctrim_app/widgets/post_tag_picker.dart';
+import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -210,11 +215,146 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             ),
           ),
 
-          // Contributors Section
+          // Lead speaker + Contributors
+          _buildLeadSpeakerSection(),
           _buildContributorSection(),
         ],
       ),
     );
+  }
+
+  Widget _buildLeadSpeakerSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final User? speaker = _resolveLeadSpeaker(appContext);
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.record_voice_over_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  'Lead speaker',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (speaker == null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'No lead speaker selected',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else ...[
+                  Center(child: MyUserAvatar(speaker, radius: 36)),
+                  const SizedBox(height: 8),
+                  Text(
+                    speaker.fullname,
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (speaker.imgSrc.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'No profile picture — card will show initials only',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _onManageLeadSpeakerTap,
+                  icon: const Icon(Icons.person_search, size: 18),
+                  label: Text(speaker == null ? 'Select lead speaker' : 'Change lead speaker'),
+                ),
+                if (speaker != null) ...[
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        widget.eventContext.applyLeadSpeaker(uid: null);
+                      });
+                      widget.onRequiredFieldChange('');
+                    },
+                    child: const Text('Clear'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  User? _resolveLeadSpeaker(AppContext appContext) {
+    final uid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
+    if (uid == null || uid.isEmpty) return null;
+    try {
+      return appContext.getUserFromID(uid);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _onManageLeadSpeakerTap() async {
+    final currentUid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
+          includeCurrentUser: true,
+          maxSelection: 1,
+          title: 'Select lead speaker',
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    setState(() {
+      if (result.isEmpty) {
+        widget.eventContext.applyLeadSpeaker(uid: null);
+      } else {
+        final user = appContext.getUserFromID(result.first);
+        widget.eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+      }
+    });
+    widget.onRequiredFieldChange('');
   }
 
   Widget _buildHeadMediaPoolSelector(List<Map<String, dynamic>> pool) {
@@ -296,8 +436,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   }
 
   void _applyHeadMediaItem(Map<String, dynamic> item) {
-    widget.eventContext.head.clearMedia();
-    widget.eventContext.head.addMediaItem(
+    widget.eventContext.head.replaceKeyGraphic(
       type: item['type']!,
       src: item['src']!,
       title: item['title'] ?? '',
@@ -567,7 +706,13 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
                 ),
                 const Divider(height: 32),
-                ..._buildNotificationControls(),
+                PostTagPicker(
+                  allTags: appContext.allPostTags,
+                  selectedTagIDs: Set<String>.from(widget.eventContext.head.tagIDs),
+                  onChanged: (selected) => _onTagsChanged(appContext, selected),
+                ),
+                const Divider(height: 32),
+                ..._buildNotificationControls(appContext),
               ],
             ),
           ),
@@ -576,16 +721,53 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     );
   }
 
-  List<Widget> _buildNotificationControls() {
+  List<Widget> _buildNotificationControls(AppContext appContext) {
+    final location = widget.eventContext.head.location;
+    final topics = widget.eventContext.metadata.topics;
+    final notifyBroadcast = widget.eventContext.notifyBroadcast;
+    final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
+      topics: topics,
+      locationName: location,
+    );
+    final audience = BroadcastAudience.resolveFromPost(
+      location: location,
+      tagIDs: widget.eventContext.head.tagIDs,
+      allTags: appContext.allPostTags,
+      includeLocationUmbrella: includeUmbrella,
+      legacyTopics: topics,
+    );
+
     return [
       CheckboxListTile(
-          title: const Text('Notify Broadcast'),
-          value: widget.eventContext.notifyBroadcast,
-          onChanged: (newState) => _onNotifyBroadcastChange(newState!)),
+        title: const Text('Notify Broadcast'),
+        subtitle: notifyBroadcast
+            ? Text(
+                audience.isEmpty
+                    ? 'Choose an audience below'
+                    : 'Will notify: ${BroadcastAudience.describe(audience)}',
+              )
+            : null,
+        value: notifyBroadcast,
+        onChanged: (newState) => _onNotifyBroadcastChange(newState!),
+      ),
+      if (notifyBroadcast)
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: CheckboxListTile(
+            title: Text(NotificationTopics.locationUmbrellaLabel(location)),
+            subtitle: Text(
+              'Also reach everyone opted into All $location updates',
+            ),
+            value: includeUmbrella,
+            onChanged: (newState) =>
+                _onNotifyLocationUmbrellaChange(appContext, newState!),
+          ),
+        ),
       CheckboxListTile(
-          title: const Text('Notify Scheduled Members'),
-          value: widget.eventContext.notifyScheduledMembers,
-          onChanged: (newState) => _onNotifyScheduledMembersChange(newState!)),
+        title: const Text('Notify Scheduled Members'),
+        value: widget.eventContext.notifyScheduledMembers,
+        onChanged: (newState) => _onNotifyScheduledMembersChange(newState!),
+      ),
     ];
   }
 
@@ -610,9 +792,30 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
 
   void _onNotifyBroadcastChange(final bool newState) {
     setState(() {
-      final List<String> topics = widget.eventContext.metadata.topics;
-      debugPrint('----- topics during adding are $topics');
       widget.eventContext.setNotifyBroadcast(newState);
+    });
+  }
+
+  void _onTagsChanged(final AppContext appContext, final Set<String> selected) {
+    setState(() {
+      final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
+        topics: widget.eventContext.metadata.topics,
+        locationName: widget.eventContext.head.location,
+      );
+      widget.eventContext.applyTagIDs(selected.toList());
+      widget.eventContext.syncNotificationTopics(
+        allTags: appContext.allPostTags,
+        includeLocationUmbrella: includeUmbrella,
+      );
+    });
+  }
+
+  void _onNotifyLocationUmbrellaChange(final AppContext appContext, final bool include) {
+    setState(() {
+      widget.eventContext.syncNotificationTopics(
+        allTags: appContext.allPostTags,
+        includeLocationUmbrella: include,
+      );
     });
   }
 

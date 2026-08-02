@@ -7,7 +7,6 @@ import '../../pages/personal/select_users_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
-import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -21,11 +20,11 @@ class ViewMetaLogsPage extends StatefulWidget {
 
 class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   late final AppContext _appContext;
-  late final List<String> _originalContribtors;
+  late final List<String> _originalContributors;
   static final DateFormat _dateFormat = DateFormat('d MMM yyyy. HH:mm');
   @override
   void initState() {
-    _originalContribtors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
+    _originalContributors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
     _appContext.analytics.logScreenView(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
     widget.eventContext.log.orderLogsBackwards(); // needed?
@@ -130,9 +129,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Container(
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final bool stackManage = constraints.maxWidth < 420;
+                        final headerIcon = Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -143,9 +143,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                             color: Theme.of(context).colorScheme.onSecondaryContainer,
                             size: 20,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
+                        );
+                        final titles = Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -163,18 +162,44 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                               ),
                             ],
                           ),
-                        ),
-                        if (isAuthor)
-                          FilledButton.icon(
-                            onPressed: _manageContributorsTap,
-                            icon: const Icon(Icons.group, size: 18),
-                            label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                              foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                            ),
-                          ),
-                      ],
+                        );
+                        final manageButton = isAuthor
+                            ? FilledButton.icon(
+                                onPressed: _manageContributorsTap,
+                                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                                label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                ),
+                              )
+                            : null;
+
+                        if (stackManage) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(children: [headerIcon, const SizedBox(width: 12), titles]),
+                              if (manageButton != null) ...[
+                                const SizedBox(height: 12),
+                                manageButton,
+                              ],
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            headerIcon,
+                            const SizedBox(width: 12),
+                            titles,
+                            if (manageButton != null) ...[
+                              const SizedBox(width: 8),
+                              manageButton,
+                            ],
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildContributors(selectedUsers, isAuthor: isAuthor),
@@ -308,68 +333,78 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   Widget _buildContributors(final List<User> selectedUsers, {required bool isAuthor}) {
     if (selectedUsers.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
-        child: Row(
+        child: Column(
           children: [
             Icon(
-              Icons.person_off,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-              size: 20,
+              Icons.person_off_outlined,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+              size: 32,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(height: 8),
             Text(
               'No contributors added yet',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontStyle: FontStyle.italic,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w600,
                   ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Contributors can edit this post alongside the author.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+            ),
+            if (isAuthor) ...[
+              const SizedBox(height: 16),
+              FilledButton.tonalIcon(
+                onPressed: _manageContributorsTap,
+                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                label: const Text('Add contributors'),
+              ),
+            ],
           ],
         ),
       );
     }
 
-    return InkWell(
-      onTap: () {
-        if (isAuthor) {
-          _manageContributorsTap();
-        } else {
-          _showContributors(selectedUsers);
-        }
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+    return Column(
+      children: [
+        for (var i = 0; i < selectedUsers.length; i++) ...[
+          if (i > 0) const Divider(height: 1),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: MyUserAvatar(selectedUsers[i]),
+            title: Text(
+              selectedUsers[i].fullname,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            subtitle: Text(
+              selectedUsers[i].location,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+            ),
+            trailing: isAuthor
+                ? IconButton(
+                    icon: Icon(Icons.remove_circle_outline, color: Theme.of(context).colorScheme.error),
+                    onPressed: () => _onRemoveContributorClick(selectedUsers[i]),
+                    tooltip: 'Remove contributor',
+                  )
+                : null,
           ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: MyAvatarStack(
-                users: selectedUsers,
-                appDir: _appContext.appDir,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
+        ],
+      ],
     );
   }
 
@@ -465,124 +500,6 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
             ));
   }
 
-  void _showContributors(final List<User> selectedUsers) {
-    showDialog(
-        context: context,
-        builder: (_) {
-          return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondaryContainer,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.group,
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Contributors',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).colorScheme.onSecondaryContainer,
-                                    ),
-                              ),
-                              Text(
-                                '${selectedUsers.length} contributor${selectedUsers.length == 1 ? '' : 's'}',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(alpha: 0.8),
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Content
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.4,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: selectedUsers.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (_, index) {
-                        final thisU = selectedUsers[index];
-                        return Card(
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            title: Text(
-                              thisU.fullname,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                            leading: MyUserAvatar(thisU),
-                            subtitle: Text(
-                              thisU.location,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                                  ),
-                            ),
-                            trailing: (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
-                                    widget.eventContext.isUserContributor(_appContext.currentUser.id))
-                                ? IconButton(
-                                    icon: Icon(
-                                      Icons.remove_circle_outline,
-                                      color: Theme.of(context).colorScheme.error,
-                                    ),
-                                    onPressed: () => _onRemoveContributorClick(thisU),
-                                    tooltip: 'Remove contributor',
-                                  )
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  // Actions
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        FilledButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Close'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ));
-        });
-  }
-
   void _onRemoveContributorClick(final User thisU) {
     showDialog(
       context: context,
@@ -656,7 +573,6 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                 widget.eventContext.allowSavingOfTheEdit();
               });
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
             },
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
@@ -689,11 +605,11 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   void _checkForChangesToContributors() {
     bool haveContributorsChange = false;
-    if (_originalContribtors.length != widget.eventContext.metadata.contributorUIDs.length) {
+    if (_originalContributors.length != widget.eventContext.metadata.contributorUIDs.length) {
       haveContributorsChange = true;
     } else {
       for (final newContributorID in widget.eventContext.metadata.contributorUIDs) {
-        if (!_originalContribtors.contains(newContributorID)) {
+        if (!_originalContributors.contains(newContributorID)) {
           haveContributorsChange = true;
           break;
         }

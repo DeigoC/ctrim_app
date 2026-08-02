@@ -109,13 +109,18 @@ class _HomePageState extends State<HomePage>
     final authID = AuthManager().currentAuthUID;
     if (authID.isEmpty) return;
 
-    WebNotificationLifecycle().register(
+    // Await register (it reconciles topics once a token exists).
+    WebNotificationLifecycle()
+        .register(
       authId: authID,
       onTokenSaved: _appContext.sharedPref.saveFCMToken,
       prefs: _appContext.sharedPref,
       webAuthId: authID,
-    );
-    _reconcileNotificationSubscriptions();
+    )
+        .then((_) {
+      // Native + any edge case where register skipped reconcile.
+      return _reconcileNotificationSubscriptions();
+    });
   }
 
   Future<void> _reconcileNotificationSubscriptions() async {

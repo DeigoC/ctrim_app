@@ -4,9 +4,17 @@ import 'package:provider/provider.dart';
 import '../models/user.dart';
 import '../utility/app_context.dart';
 import '../utility/user_tag_helpers.dart';
+import '../widgets/load_progress_body.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/user_tag_chip.dart';
 import 'responsive_layout.dart';
+
+/// Reports determinate load progress for stepped dialogs.
+typedef LoadProgressReporter = void Function({
+  required int completed,
+  required int total,
+  required String message,
+});
 
 /// Modern dialog manager with Material 3 design patterns
 /// Used to show consistent dialogs throughout the app
@@ -448,60 +456,94 @@ class DialogManager {
     );
   }
 
-  /// Shows a modern progress dialog with Material 3 design
+  /// Prefer [runWithProgressDialog] for async work so failures are not stuck.
   static void showProgressDialog({
     required BuildContext context,
     required String title,
     String? subtitle,
   }) {
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
+        return _ProgressDialogBody(title: title, subtitle: subtitle);
+      },
+    );
+  }
 
-        return Dialog(
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: ResponsiveLayout.dialogMaxWidth),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(
-                    strokeWidth: 3,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
+  /// Shows a non-dismissible progress dialog, runs [action], then:
+  /// - on success: dismisses and returns `true`
+  /// - on error: swaps to an error message with [closeLabel]; returns `false`
+  ///   after the user closes
+  static Future<bool> runWithProgressDialog({
+    required BuildContext context,
+    required String title,
+    required Future<void> Function() action,
+    String? subtitle,
+    String errorTitle = 'Something went wrong',
+    String Function(Object error)? errorDescription,
+    String closeLabel = 'Close',
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return _ProgressTaskDialog(
+          title: title,
+          subtitle: subtitle,
+          action: (_) => action(),
+          errorTitle: errorTitle,
+          errorDescription: errorDescription ?? defaultErrorDescription,
+          closeLabel: closeLabel,
         );
       },
     );
+    return result ?? false;
+  }
+
+  /// Like [runWithProgressDialog], but shows a determinate bar and step labels
+  /// (same pattern as post / template load progress). Call [LoadProgressReporter]
+  /// from [action] as work advances.
+  static Future<bool> runWithSteppedProgressDialog({
+    required BuildContext context,
+    required String title,
+    required Future<void> Function(LoadProgressReporter onProgress) action,
+    String initialMessage = 'Please wait…',
+    String errorTitle = 'Something went wrong',
+    String Function(Object error)? errorDescription,
+    String closeLabel = 'Close',
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return _ProgressTaskDialog(
+          title: title,
+          subtitle: initialMessage,
+          action: action,
+          errorTitle: errorTitle,
+          errorDescription: errorDescription ?? defaultErrorDescription,
+          closeLabel: closeLabel,
+          stepped: true,
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  static String defaultErrorDescription(Object error) {
+    var message = error.toString().trim();
+    const prefixes = ['Exception: ', 'Error: ', 'FirebaseException: '];
+    for (final prefix in prefixes) {
+      if (message.startsWith(prefix)) {
+        message = message.substring(prefix.length).trim();
+        break;
+      }
+    }
+    if (message.isEmpty) {
+      return 'An unexpected error occurred. You can close this and try again.';
+    }
+    return message;
   }
 
   /// Shows a modern snackbar with better styling (bonus utility)
@@ -540,6 +582,231 @@ class DialogManager {
               )
             : null,
       ),
+    );
+  }
+}
+
+class _ProgressDialogBody extends StatelessWidget {
+  const _ProgressDialogBody({
+    required this.title,
+    this.subtitle,
+    this.completedSteps = 0,
+    this.totalSteps = 0,
+    this.stepped = false,
+  });
+
+  final String title;
+  final String? subtitle;
+  final int completedSteps;
+  final int totalSteps;
+  final bool stepped;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Dialog(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: ResponsiveLayout.dialogMaxWidth),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (stepped) ...[
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                LoadProgressBody(
+                  message: subtitle ?? 'Please wait…',
+                  completedSteps: completedSteps,
+                  totalSteps: totalSteps,
+                  padding: EdgeInsets.zero,
+                ),
+              ] else ...[
+                CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressErrorBody extends StatelessWidget {
+  const _ProgressErrorBody({
+    required this.title,
+    required this.description,
+    required this.closeLabel,
+    required this.onClose,
+  });
+
+  final String title;
+  final String description;
+  final String closeLabel;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Dialog(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: ResponsiveLayout.dialogMaxWidth),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, color: colorScheme.error, size: 40),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.error,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: onClose,
+                  child: Text(closeLabel),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressTaskDialog extends StatefulWidget {
+  const _ProgressTaskDialog({
+    required this.title,
+    required this.action,
+    required this.errorTitle,
+    required this.errorDescription,
+    required this.closeLabel,
+    this.subtitle,
+    this.stepped = false,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Future<void> Function(LoadProgressReporter onProgress) action;
+  final String errorTitle;
+  final String Function(Object error) errorDescription;
+  final String closeLabel;
+  final bool stepped;
+
+  @override
+  State<_ProgressTaskDialog> createState() => _ProgressTaskDialogState();
+}
+
+class _ProgressTaskDialogState extends State<_ProgressTaskDialog> {
+  Object? _error;
+  late String _message;
+  int _completedSteps = 0;
+  int _totalSteps = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _message = widget.subtitle ?? 'Please wait…';
+    _run();
+  }
+
+  void _onProgress({
+    required int completed,
+    required int total,
+    required String message,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      _completedSteps = completed;
+      _totalSteps = total;
+      _message = message;
+    });
+  }
+
+  Future<void> _run() async {
+    try {
+      await widget.action(_onProgress);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e, st) {
+      debugPrint('runWithProgressDialog failed: $e\n$st');
+      if (!mounted) return;
+      setState(() => _error = e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final error = _error;
+    if (error != null) {
+      return _ProgressErrorBody(
+        title: widget.errorTitle,
+        description: widget.errorDescription(error),
+        closeLabel: widget.closeLabel,
+        onClose: () => Navigator.of(context).pop(false),
+      );
+    }
+    return _ProgressDialogBody(
+      title: widget.title,
+      subtitle: _message,
+      completedSteps: _completedSteps,
+      totalSteps: _totalSteps,
+      stepped: widget.stepped,
     );
   }
 }

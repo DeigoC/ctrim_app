@@ -5,12 +5,19 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/post_template_db_manager.dart';
+import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/bulk_post_dates.dart';
+import '../../utility/event_context.dart';
+import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
 import '../../utility/post_template_mapper.dart';
+import '../../utility/responsive_layout.dart';
+import '../../widgets/load_progress_body.dart';
 
 enum _BulkPostRelation { child, sibling }
 
@@ -38,11 +45,13 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   static const _dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   final _random = Random();
 
+  late PostTemplate _template;
   int _selectedWeeks = 4;
   int? _selectedDayOfWeek;
   _BulkPostRelation _selectedRelation = _BulkPostRelation.child;
   List<_PostPreview> _previews = [];
   bool _isCreating = false;
+  bool _isRefreshingTemplate = true;
   int _createdCount = 0;
 
   String? get _effectiveParentID {
@@ -52,13 +61,57 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     return widget.parentID;
   }
 
+  List<Map<String, dynamic>> get _coverPool => _template.keyGraphicPool;
+
+  bool get _hasCoverPool => _coverPool.isNotEmpty;
+
+  bool get _hasSubtitles => _template.subtitles.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
-    _selectedDayOfWeek = widget.template.defaultDayOfWeek;
+    _template = widget.template;
+    _selectedDayOfWeek = _template.defaultDayOfWeek;
+    _refreshTemplateAndPreviews();
+  }
+
+  Future<void> _refreshTemplateAndPreviews() async {
+    setState(() => _isRefreshingTemplate = true);
+    try {
+      final fresh = await PostTemplateDBManager().fetchTemplate(widget.template.id);
+      if (fresh != null && mounted) {
+        _template = fresh;
+        // Keep local cache in sync so the next select list sees pool items too.
+        await LocalDataManager().writePostTemplateData(fresh);
+        debugPrint(
+          'BulkCreate: refreshed template "${fresh.title}" '
+          'bodyMediaPool=${fresh.bodyMediaPool.length} '
+          'headMediaPool=${fresh.headMediaPool.length} keyGraphicPool=${fresh.keyGraphicPool.length}',
+        );
+      } else {
+        debugPrint(
+          'BulkCreate: using passed template "${_template.title}" '
+          'keyGraphicPool=${_template.keyGraphicPool.length}',
+        );
+      }
+    } catch (e) {
+      debugPrint('BulkCreate: template refresh failed: $e');
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isRefreshingTemplate = false;
+      _selectedDayOfWeek ??= _template.defaultDayOfWeek;
+    });
     if (_selectedDayOfWeek != null) {
       _regeneratePreviews();
     }
+  }
+
+  Map<String, dynamic>? _pickRandomCover() {
+    if (!_hasCoverPool) return null;
+    final item = _coverPool[_random.nextInt(_coverPool.length)];
+    return Map<String, dynamic>.from(item);
   }
 
   void _regeneratePreviews() {
@@ -70,23 +123,50 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       anchorDate: widget.sourcePostEventDate,
     );
     setState(() {
-      _previews = [];
-      for (final date in dates) {
-        final subtitle = widget.template.subtitles.isNotEmpty
-            ? widget.template.subtitles[_random.nextInt(widget.template.subtitles.length)]
-            : '';
-        final titleDate = _formatBulkPostTitleDate(date);
-        final baseTitle = widget.template.title;
-        final title = '$baseTitle – $titleDate';
-        _previews.add(_PostPreview(title: title, subtitle: subtitle, date: date));
-      }
+      _previews = [
+        for (final date in dates)
+          _PostPreview(
+            title: '${_template.title} – ${_formatBulkPostTitleDate(date)}',
+            subtitle: _hasSubtitles
+                ? _template.subtitles[_random.nextInt(_template.subtitles.length)]
+                : '',
+            date: date,
+            headMedia: _pickRandomCover(),
+          ),
+      ];
     });
   }
 
   void _shuffleSubtitle(int index) {
-    if (widget.template.subtitles.isEmpty) return;
+    if (!_hasSubtitles) return;
     setState(() {
-      _previews[index].subtitle = widget.template.subtitles[_random.nextInt(widget.template.subtitles.length)];
+      _previews[index].subtitle = _template.subtitles[_random.nextInt(_template.subtitles.length)];
+    });
+  }
+
+  void _shuffleHeadMedia(int index) {
+    if (!_hasCoverPool) return;
+    setState(() {
+      _previews[index].headMedia = _pickRandomCover();
+    });
+  }
+
+  void _applyPreviewHeadMedia(EventHead head, Map<String, dynamic>? headMedia) {
+    if (headMedia == null) return;
+    head.clearMedia();
+    head.addMediaItem(
+      type: headMedia['type'] ?? 'img',
+      src: headMedia['src'] ?? '',
+      title: headMedia['title'] ?? '',
+      thumbnail: headMedia['thumbnailSrc'] ?? '',
+    );
+  }
+
+  /// True when the program has at least one role with assigned user IDs.
+  bool _programHasRoleAssignees(EventContext eventContext) {
+    return eventContext.program.roles.any((role) {
+      final uids = role['uids'];
+      return uids is List && uids.isNotEmpty;
     });
   }
 
@@ -98,8 +178,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
     final appContext = Provider.of<AppContext>(context, listen: false);
     final uid = appContext.currentUser.id;
-    final location = widget.template.location;
+    final location = _template.location;
     final headDBManager = EventHeadDBManager();
+    final cloudFunctionManager = CloudFunctionManager();
 
     final String? parentID = _effectiveParentID;
     EventSupplementalDBManager? parentDbManager;
@@ -114,11 +195,14 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       for (int i = 0; i < _previews.length; i++) {
         final preview = _previews[i];
         final eventContext = PostTemplateMapper.mapTemplateToEventContext(
-          template: widget.template,
+          template: _template,
           currentUserID: uid,
           parentID: parentID,
+          allUsers: appContext.allUsers,
+          allPostTags: appContext.allPostTags,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
+        _applyPreviewHeadMedia(eventContext.head, preview.headMedia);
 
         final newID = await eventContext.addNewPost(
           title: preview.title,
@@ -127,6 +211,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           location: location,
           eventDate: preview.date,
         );
+
+        // Denormalize program role assignees onto users/{uid}/supplemental/roles
+        // so My Schedule picks them up. No push — bulk create never notifies.
+        if (_programHasRoleAssignees(eventContext)) {
+          await cloudFunctionManager.syncUserRolesForPost(postId: newID);
+        }
 
         if (parentID != null && parentMetadata != null && parentDbManager != null) {
           await _updateParentMetadata(
@@ -209,16 +299,21 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     if (_isCreating) {
       return Scaffold(
         appBar: AppBar(title: const Text('Bulk Create Posts')),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 24),
-              Text('Creating $_createdCount of ${_previews.length} posts…',
-                  style: Theme.of(context).textTheme.bodyLarge),
-            ],
-          ),
+        body: LoadProgressBody(
+          message: 'Creating $_createdCount of ${_previews.length} posts…',
+          completedSteps: _createdCount,
+          totalSteps: _previews.isEmpty ? 1 : _previews.length,
+        ),
+      );
+    }
+
+    if (_isRefreshingTemplate) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Bulk Create Posts')),
+        body: const LoadProgressBody(
+          message: 'Refreshing template…',
+          completedSteps: 0,
+          totalSteps: 1,
         ),
       );
     }
@@ -235,127 +330,424 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
               icon: const Icon(Icons.check),
               label: Text('Create ${_previews.length} Posts'),
             ),
-      body: Column(
-        children: [
-          // Day picker (if template has no default)
-          if (_selectedDayOfWeek == null) _buildDayPicker(colorScheme),
-          // Template header
-          Container(
-            width: double.infinity,
-            color: colorScheme.surfaceContainerLow,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.description_outlined, color: colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.template.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      if (_selectedDayOfWeek != null)
-                        Text('Every $dayName',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
-                    ],
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final contentWidth = constraints.maxWidth;
+          final isWide = ResponsiveLayout.isWideScreen(contentWidth);
+          final maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+          final horizontalPadding = isWide
+              ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+              : 0.0;
+
+          return Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Column(
+                  children: [
+                    _buildTemplateHeader(colorScheme, dayName),
+                    if (widget.sourcePostId != null) _buildRelationPicker(colorScheme),
+                    _buildDayOfWeekSelector(colorScheme),
+                    if (_selectedDayOfWeek != null) _buildWeeksSelector(),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          if (widget.sourcePostId != null) _buildRelationPicker(colorScheme),
-          // Weeks selector
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: _selectedDayOfWeek == null
+                      ? Center(
+                          child: Text(
+                            'Choose a day of the week to preview posts.',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        )
+                      : _buildPreviewList(colorScheme, contentWidth: maxWidth.clamp(0, contentWidth)),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTemplateHeader(ColorScheme colorScheme, String dayName) {
+    return Container(
+      width: double.infinity,
+      color: colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(Icons.description_outlined, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$_selectedWeeks ${_selectedWeeks == 1 ? 'week' : 'weeks'} • ${_previews.length} ${_previews.length == 1 ? 'post' : 'posts'}',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  _template.title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                Slider(
-                  value: _selectedWeeks.toDouble(),
-                  min: 1,
-                  max: 12,
-                  divisions: 11,
-                  label: '$_selectedWeeks weeks',
-                  onChanged: (value) {
-                    _selectedWeeks = value.round();
-                    _regeneratePreviews();
-                  },
+                if (_selectedDayOfWeek != null)
+                  Text('Every $dayName',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
+                const SizedBox(height: 4),
+                Text(
+                  _hasCoverPool
+                      ? 'Cover images randomly chosen from media pool (${_coverPool.length})'
+                      : 'No cover media pool on this template — add covers under Media → Cover Image Pool',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: _hasCoverPool ? colorScheme.onSurfaceVariant : colorScheme.error,
+                      ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
-          // Preview list
-          Expanded(
-            child: _previews.isEmpty
-                ? Center(
-                    child: Text(
-                      'No upcoming dates found.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
-                    itemCount: _previews.length,
-                    itemBuilder: (context, index) {
-                      final preview = _previews[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  _formatBulkPostPreviewDate(preview.date),
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                        color: colorScheme.onPrimaryContainer,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(preview.title,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(fontWeight: FontWeight.w600)),
-                                    if (preview.subtitle.isNotEmpty) ...[
-                                      const SizedBox(height: 2),
-                                      Text(preview.subtitle, style: Theme.of(context).textTheme.bodySmall),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              if (widget.template.subtitles.isNotEmpty)
-                                IconButton(
-                                  icon: const Icon(Icons.shuffle, size: 18),
-                                  tooltip: 'Randomise subtitle',
-                                  onPressed: () => _shuffleSubtitle(index),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayOfWeekSelector(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Day of week',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _selectedDayOfWeek == null
+                ? 'Choose which day to create posts for.'
+                : 'Posts will be scheduled every ${_dayNames[_selectedDayOfWeek! - 1]}.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(7, (i) {
+              final day = i + 1;
+              final selected = _selectedDayOfWeek == day;
+              return FilterChip(
+                label: Text(_dayNames[i]),
+                selected: selected,
+                onSelected: (_) {
+                  setState(() => _selectedDayOfWeek = day);
+                  _regeneratePreviews();
+                },
+              );
+            }),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWeeksSelector() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$_selectedWeeks ${_selectedWeeks == 1 ? 'week' : 'weeks'} • ${_previews.length} ${_previews.length == 1 ? 'post' : 'posts'}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          Slider(
+            value: _selectedWeeks.toDouble(),
+            min: 1,
+            max: 12,
+            divisions: 11,
+            label: '$_selectedWeeks weeks',
+            onChanged: (value) {
+              _selectedWeeks = value.round();
+              _regeneratePreviews();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewList(ColorScheme colorScheme, {required double contentWidth}) {
+    if (_previews.isEmpty) {
+      return Center(
+        child: Text(
+          'No upcoming dates found.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      );
+    }
+
+    final isWide = ResponsiveLayout.isWideScreen(contentWidth);
+    final columns = contentWidth >= ResponsiveLayout.desktop
+        ? 3
+        : (isWide ? 2 : 1);
+
+    if (columns == 1) {
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+        itemCount: _previews.length,
+        itemBuilder: (context, index) => _buildPreviewCard(
+          index,
+          colorScheme,
+          wideLayout: false,
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: columns >= 3 ? 0.92 : 1.0,
+      ),
+      itemCount: _previews.length,
+      itemBuilder: (context, index) => _buildPreviewCard(
+        index,
+        colorScheme,
+        wideLayout: true,
+      ),
+    );
+  }
+
+  Widget _buildPreviewCard(int index, ColorScheme colorScheme, {required bool wideLayout}) {
+    final preview = _previews[index];
+    if (wideLayout) {
+      return Card(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 5,
+              child: _buildCoverImage(
+                preview,
+                colorScheme,
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatBulkPostPreviewDate(preview.date),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      preview.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    if (preview.subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: Text(
+                          preview.subtitle,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ] else
+                      const Spacer(),
+                    if (_hasSubtitles || _hasCoverPool)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Wrap(
+                          spacing: 4,
+                          children: [
+                            if (_hasCoverPool)
+                              TextButton.icon(
+                                onPressed: () => _shuffleHeadMedia(index),
+                                icon: const Icon(Icons.image_outlined, size: 16),
+                                label: const Text('Cover'),
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                            if (_hasSubtitles)
+                              TextButton.icon(
+                                onPressed: () => _shuffleSubtitle(index),
+                                icon: const Icon(Icons.shuffle, size: 16),
+                                label: const Text('Subtitle'),
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 96,
+              height: 96,
+              child: _buildCoverImage(preview, colorScheme),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatBulkPostPreviewDate(preview.date),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(preview.title,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  if (preview.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(preview.subtitle, style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ],
+              ),
+            ),
+            if (_hasSubtitles || _hasCoverPool)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_hasCoverPool)
+                    IconButton(
+                      icon: const Icon(Icons.image_outlined, size: 18),
+                      tooltip: 'Randomise cover',
+                      onPressed: () => _shuffleHeadMedia(index),
+                    ),
+                  if (_hasSubtitles)
+                    IconButton(
+                      icon: const Icon(Icons.shuffle, size: 18),
+                      tooltip: 'Randomise subtitle',
+                      onPressed: () => _shuffleSubtitle(index),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoverImage(
+    _PostPreview preview,
+    ColorScheme colorScheme, {
+    BorderRadius? borderRadius,
+  }) {
+    final media = preview.headMedia;
+    final radius = borderRadius ?? BorderRadius.circular(8);
+
+    if (media == null) {
+      return ClipRRect(
+        borderRadius: radius,
+        child: ColoredBox(
+          color: colorScheme.primaryContainer,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                _formatBulkPostPreviewDate(preview.date),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final bool isVideo = media['type'] == 'vid';
+    final String? thumbnailSrc = media['thumbnailSrc'] as String?;
+    final String src = (media['src'] as String?) ?? '';
+    final displaySrc = (isVideo ? thumbnailSrc : src)?.trim();
+    final imageUrl =
+        displaySrc != null && displaySrc.isNotEmpty ? NetworkImageHelper.getImageUrl(displaySrc) : null;
+
+    return ClipRRect(
+      borderRadius: radius,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (imageUrl != null)
+            Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _coverFallback(isVideo, colorScheme),
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return ColoredBox(
+                  color: colorScheme.surfaceContainerHighest,
+                  child: const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              },
+            )
+          else
+            _coverFallback(isVideo, colorScheme),
+          if (isVideo)
+            const Positioned(
+              right: 8,
+              bottom: 8,
+              child: Icon(Icons.play_circle_fill, size: 28, color: Colors.white),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _coverFallback(bool isVideo, ColorScheme colorScheme) {
+    return ColoredBox(
+      color: colorScheme.surfaceContainerHighest,
+      child: Icon(
+        isVideo ? Icons.videocam_outlined : Icons.image_outlined,
+        color: colorScheme.onSurfaceVariant,
+        size: 32,
       ),
     );
   }
@@ -399,54 +791,6 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       ],
     );
   }
-
-  Widget _buildDayPicker(ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      color: colorScheme.secondaryContainer,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline, color: colorScheme.onSecondaryContainer, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Select day of week',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSecondaryContainer,
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'This template doesn\'t have a default day. Choose which day of the week to create posts for:',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSecondaryContainer),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: List.generate(7, (i) {
-              final day = i + 1;
-              return FilterChip(
-                label: Text(_dayNames[i]),
-                selected: false,
-                onSelected: (_) {
-                  setState(() {
-                    _selectedDayOfWeek = day;
-                    _regeneratePreviews();
-                  });
-                },
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 String _dayWithOrdinal(int day) {
@@ -473,6 +817,12 @@ class _PostPreview {
   String title;
   String subtitle;
   final DateTime date;
+  Map<String, dynamic>? headMedia;
 
-  _PostPreview({required this.title, required this.subtitle, required this.date});
+  _PostPreview({
+    required this.title,
+    required this.subtitle,
+    required this.date,
+    this.headMedia,
+  });
 }

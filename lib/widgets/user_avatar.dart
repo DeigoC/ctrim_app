@@ -38,11 +38,10 @@ class MyUserAvatar extends StatelessWidget {
   }
 
   Widget _buildFileImage(final String appDir) {
+    final double size = (radius ?? 20) * 2;
     return FutureBuilder(
         future: _fetchFileImage(appDir),
         builder: (_, snap) {
-          Widget result = const CircularProgressIndicator();
-
           if (snap.hasData) {
             return CircleAvatar(
               backgroundImage: FileImage(snap.data!),
@@ -54,11 +53,20 @@ class MyUserAvatar extends StatelessWidget {
                 });
               },
             );
-          } else if (snap.hasError) {
-            debugPrint('ID ${_user.id} - user image error: ${snap.error}');
-            result = const Center(child: Text('!'));
           }
-          return result;
+          if (snap.hasError) {
+            debugPrint('ID ${_user.id} - user image error: ${snap.error}');
+            return SizedBox(
+              width: size,
+              height: size,
+              child: const Center(child: Text('!')),
+            );
+          }
+          return SizedBox(
+            width: size,
+            height: size,
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
         });
   }
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../models/event/event_attendance.dart';
 import '../../models/event/event_head.dart';
 import '../../models/event/event_log.dart';
 import '../../models/event/event_media.dart';
@@ -36,12 +37,26 @@ class EventHeadDBManager {
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
   }
+
+  /// Updates only attendance counts on the head (public denorm for guest-visible cards).
+  Future<void> updateAttendanceCounts({
+    required String id,
+    required int interestedCount,
+    required int attendeeCount,
+  }) async {
+    await _ref.doc(id).update({
+      'InterestedCount': interestedCount < 0 ? 0 : interestedCount,
+      'AttendeeCount': attendeeCount < 0 ? 0 : attendeeCount,
+    });
+  }
 }
 
 class EventSupplementalDBManager {
   late final CollectionReference _colRef;
+  late final String _postId;
 
   EventSupplementalDBManager(String id) {
+    _postId = id;
     _colRef = FirebaseFirestore.instance.collection('events').doc(id).collection('supplemental');
   }
 
@@ -122,5 +137,105 @@ class EventSupplementalDBManager {
     final log = await fetchLog();
     log.addLog(log: logMessage, uid: uid, ts: ts);
     await _colRef.doc('logs').update(log.toJson());
+  }
+
+  // * Attendance (private lists; counts live on EventHead)
+
+  Future<EventAttendance> fetchAttendance() async {
+    final doc = await _colRef.doc('attendance').get();
+    if (!doc.exists || doc.data() == null) {
+      return EventAttendance();
+    }
+    return EventAttendance.fromMap(doc.data() as Map<String, dynamic>);
+  }
+
+  Future<void> setAttendance(final EventAttendance attendance) async {
+    await _colRef.doc('attendance').set(attendance.toJson());
+  }
+
+  /// Adds or removes the caller's interest and syncs counts on the head.
+  Future<EventAttendance> setOwnInterest({
+    required String authId,
+    required String displayName,
+    String? userId,
+    required bool interested,
+  }) async {
+    final firestore = FirebaseFirestore.instance;
+    final headRef = firestore.collection('events').doc(_postId);
+    final attRef = _colRef.doc('attendance');
+
+    return firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      final attendance = attSnap.exists && attSnap.data() != null
+          ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
+          : EventAttendance();
+
+      if (interested) {
+        attendance.putInterest(InterestedEntry(
+          authId: authId,
+          displayName: displayName,
+          userId: userId,
+        ));
+      } else {
+        attendance.removeInterest(authId);
+      }
+
+      tx.set(attRef, attendance.toJson());
+      tx.update(headRef, {
+        'InterestedCount': attendance.interestedCount,
+        'AttendeeCount': attendance.attendeeCount,
+      });
+      return attendance;
+    });
+  }
+
+  /// Removes any interest entry (moderation by workers / post admins).
+  Future<EventAttendance> removeInterestForAuthId(final String authId) async {
+    final firestore = FirebaseFirestore.instance;
+    final headRef = firestore.collection('events').doc(_postId);
+    final attRef = _colRef.doc('attendance');
+
+    return firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      if (!attSnap.exists || attSnap.data() == null) {
+        return EventAttendance();
+      }
+      final attendance = EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
+      attendance.removeInterest(authId);
+      tx.set(attRef, attendance.toJson());
+      tx.update(headRef, {
+        'InterestedCount': attendance.interestedCount,
+        'AttendeeCount': attendance.attendeeCount,
+      });
+      return attendance;
+    });
+  }
+
+  /// Replaces the full attendee list and syncs [AttendeeCount] (staff-managed).
+  Future<EventAttendance> saveAttendees(final List<AttendeeEntry> attendees) async {
+    final firestore = FirebaseFirestore.instance;
+    final headRef = firestore.collection('events').doc(_postId);
+    final attRef = _colRef.doc('attendance');
+
+    return firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      final attendance = attSnap.exists && attSnap.data() != null
+          ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
+          : EventAttendance();
+
+      final updated = EventAttendance.fromMap({
+        'interested': {
+          for (final e in attendance.interested.entries) e.key: e.value.toJson(),
+        },
+        'attendees': attendees.map((e) => e.toJson()).toList(),
+      });
+
+      tx.set(attRef, updated.toJson());
+      tx.update(headRef, {
+        'InterestedCount': updated.interestedCount,
+        'AttendeeCount': updated.attendeeCount,
+      });
+      return updated;
+    });
   }
 }

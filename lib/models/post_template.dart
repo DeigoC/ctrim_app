@@ -1,9 +1,13 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
-  late List<String> _topics, _contributorUIDs, _subtitles;
+  late List<String> _topics, _tagIDs, _contributorUIDs, _subtitles;
   late List<Map<String, dynamic>> _headMedia, _media, _headMediaPool, _bodyMediaPool;
+  late List<Map<String, dynamic>> _logs;
+  String? _leadSpeakerUID;
 
   // * Event Program related
   late DateTime? _startTime, _finishTime;
@@ -20,9 +24,11 @@ class PostTemplate {
     _description = data['Description'];
     _headTitle = data['HeadTitle'];
     _topics = List.from(data['Topics']);
+    _tagIDs = data['TagIDs'] != null ? List<String>.from(data['TagIDs']) : <String>[];
     _contributorUIDs = List.from(data['Contributors']);
     _subtitles = data['Subtitles'] != null ? List<String>.from(data['Subtitles']) : <String>[];
     _location = data['Location'];
+    _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
 
     // body
     _body = data['Body'];
@@ -32,7 +38,7 @@ class PostTemplate {
     _online = data['Online'];
     _address = data['Address'];
     _mapLink = data['MapLink'];
-    _roles = _parseRoles(forLocal, List<Map<String, dynamic>>.from(data['Roles']));
+    _roles = _parseRoles(forLocal, _asStringKeyedMapList(data['Roles']));
 
     if (data['StartTime'] != null) {
       if (forLocal) {
@@ -53,16 +59,17 @@ class PostTemplate {
       _finishTime = null;
     }
 
-    // media
-    _headMedia = _parseMedia(List<Map<String, dynamic>>.from(data['HeadMedia']));
-    _media = _parseMedia(List<Map<String, dynamic>>.from(data['Media']));
+    // media — nested Hive/JSON maps are often Map<dynamic, dynamic>
+    _headMedia = _parseMedia(_asStringKeyedMapList(data['HeadMedia']));
+    _media = _parseMedia(_asStringKeyedMapList(data['Media']));
     _headMediaPool = data['HeadMediaPool'] != null
-        ? _parseMedia(List<Map<String, dynamic>>.from(data['HeadMediaPool']))
+        ? _parseMedia(_asStringKeyedMapList(data['HeadMediaPool']))
         : <Map<String, dynamic>>[];
     _bodyMediaPool = data['BodyMediaPool'] != null
-        ? _parseMedia(List<Map<String, dynamic>>.from(data['BodyMediaPool']))
+        ? _parseMedia(_asStringKeyedMapList(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
     _defaultDayOfWeek = data['DefaultDayOfWeek'] != null ? data['DefaultDayOfWeek'] as int? : null;
+    _logs = _parseLogs(forLocal, data['Logs']);
   }
 
   Map<String, dynamic> toJson(final bool forLocal) {
@@ -82,7 +89,9 @@ class PostTemplate {
       'Body': _body,
       'Location': _location,
       'Topics': _topics,
+      'TagIDs': _tagIDs,
       'Contributors': _contributorUIDs,
+      'LeadSpeakerUID': _leadSpeakerUID,
       'Subtitles': _subtitles,
       'AllDay': _allDay,
       'Online': _online,
@@ -96,6 +105,7 @@ class PostTemplate {
       'StartTime': startTime,
       'FinishTime': endTime,
       'Roles': _rolesToJson(forLocal),
+      'Logs': _logsToJson(forLocal),
     };
   }
 
@@ -119,10 +129,29 @@ class PostTemplate {
   List<Map<String, dynamic>> get media => _media;
   List<Map<String, dynamic>> get headMediaPool => _headMediaPool;
   List<Map<String, dynamic>> get bodyMediaPool => _bodyMediaPool;
+
+  /// Cover / key-graphic candidates. Prefer [bodyMediaPool] (the intended cover pool);
+  /// fall back to [headMediaPool] for older templates.
+  List<Map<String, dynamic>> get keyGraphicPool =>
+      _bodyMediaPool.isNotEmpty ? _bodyMediaPool : _headMediaPool;
   List<Map<String, dynamic>> get roles => _roles;
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
+  List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   List<String> get subtitles => _subtitles;
+  String? get leadSpeakerUID => _leadSpeakerUID;
+
+  /// Change history entries: `{uid, log, ts}` — newest first after [addLog].
+  List<Map<String, dynamic>> get logs => UnmodifiableListView(_logs);
+
+  void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
+
+  /// Prepends a change-history entry (same shape as post [EventLog] entries).
+  void addLog({required String log, required String uid, required DateTime ts}) =>
+      _logs.insert(0, {'log': log, 'uid': uid, 'ts': ts});
+
+  void setLogs(final List<Map<String, dynamic>> logs) =>
+      _logs = logs.map((e) => Map<String, dynamic>.from(e)).toList();
 
   // setters
   void setTitle(final String title) => _title = title;
@@ -133,6 +162,7 @@ class PostTemplate {
   void setOnline(final bool newState) => _online = newState;
   void setMapLink(final String mapLink) => _mapLink = mapLink;
   void setAddress(final String address) => _address = address;
+  void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
 
   void setStartTime(final DateTime? start) => _startTime = start;
   void setEndtime(final DateTime? end) => _finishTime = end;
@@ -191,7 +221,23 @@ class PostTemplate {
     return _bodyMediaPool[index];
   }
 
+  Map<String, dynamic>? getRandomKeyGraphicPoolItem() {
+    final pool = keyGraphicPool;
+    if (pool.isEmpty) return null;
+    final index = DateTime.now().millisecondsSinceEpoch % pool.length;
+    return Map<String, dynamic>.from(pool[index]);
+  }
+
   // private methods
+
+  /// Hive (and some JSON paths) yield [Map]<dynamic, dynamic>; cast each entry.
+  static List<Map<String, dynamic>> _asStringKeyedMapList(final dynamic raw) {
+    if (raw == null) return <Map<String, dynamic>>[];
+    return (raw as List)
+        .map((entry) => Map<String, dynamic>.from(entry as Map))
+        .toList();
+  }
+
   List<Map<String, dynamic>> _parseRoles(final bool forLocal, final List<Map<String, dynamic>> rawData) {
     final List<Map<String, dynamic>> result = List.empty(growable: true);
     for (final entry in rawData) {
@@ -252,6 +298,44 @@ class PostTemplate {
       });
     }
 
+    return result;
+  }
+
+  List<Map<String, dynamic>> _parseLogs(final bool forLocal, final dynamic raw) {
+    if (raw == null) return <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> result = <Map<String, dynamic>>[];
+    for (final entry in _asStringKeyedMapList(raw)) {
+      final dynamic rawTs = entry['ts'];
+      late final DateTime ts;
+      if (forLocal) {
+        ts = DateTime.fromMillisecondsSinceEpoch(rawTs as int);
+      } else if (rawTs is Timestamp) {
+        ts = rawTs.toDate();
+      } else if (rawTs is int) {
+        // Defensive: some paths may already store epoch ms remotely.
+        ts = DateTime.fromMillisecondsSinceEpoch(rawTs);
+      } else {
+        continue;
+      }
+      result.add({
+        'uid': entry['uid'] as String? ?? '',
+        'log': entry['log'] as String? ?? '',
+        'ts': ts,
+      });
+    }
+    return result;
+  }
+
+  List<Map<String, dynamic>> _logsToJson(final bool forLocal) {
+    final List<Map<String, dynamic>> result = <Map<String, dynamic>>[];
+    for (final entry in _logs) {
+      final DateTime ts = entry['ts'] as DateTime;
+      result.add({
+        'uid': entry['uid'],
+        'log': entry['log'],
+        'ts': forLocal ? ts.millisecondsSinceEpoch : Timestamp.fromDate(ts),
+      });
+    }
     return result;
   }
 }

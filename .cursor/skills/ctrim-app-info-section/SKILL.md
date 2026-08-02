@@ -12,13 +12,18 @@ Firestore via `InfoRepository` + `info_db_manager.dart`, cached by `LocalDataMan
 
 Sections: `churches`, `testimonials`, `ctrim_info`.
 
-Models: `ChurchInfo`, `CtrimInfo`, `TestimonialInfo` in `lib/models/info/`. Testimonial file: `testimonial_into.dart` (typo in filename).
+Models: `ChurchInfo`, `CtrimInfo`, `TestimonialInfo` in `lib/models/info/`. Shared Quill/image parsing in `info_parsing.dart`.
 
 Pages: `lib/pages/information_home.dart`, `lib/pages/information/`.
 
+Shared UI:
+- List shell: `InfoSectionListTab` in `info_tab_widgets.dart` (centered `maxContentWidth` on wide web)
+- Detail shell: `InfoDetailLoader` + `InfoDetailPageScaffold` in `info_detail_scaffold.dart` (gutters + constrained Quill column)
+- Cards: `InfoHeroOverlayCard`, `InfoTopicListCard`
+
 ## Quill
 
-Use `QuillEditorWidget` / `QuillViewerWidget` from `lib/widgets/quill_editor_wrapper.dart`. Harden empty deltas before `Document.fromJson`.
+Use `QuillEditorWidget` / `QuillViewerWidget` from `lib/widgets/quill_editor_wrapper.dart`. Harden empty deltas before `Document.fromJson` (via `InfoParsing`).
 
 ## Legacy
 

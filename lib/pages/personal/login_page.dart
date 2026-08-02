@@ -372,40 +372,43 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       _isLoading = true;
     });
 
-    DialogManager.showProgressDialog(
+    final success = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Signing In',
-      subtitle: 'Please wait while we authenticate you...',
+      initialMessage: 'Signing in…',
+      errorTitle: 'Login Error',
+      action: (onProgress) async {
+        const total = 3;
+        onProgress(completed: 0, total: total, message: 'Signing in…');
+        final authID = await _attemptToLogin();
+
+        onProgress(completed: 1, total: total, message: 'Loading your profile…');
+        await _logUserToApp(authID, onProgress: onProgress, totalSteps: total);
+      },
     );
 
-    final authID = await _attemptToLogin();
-
-    if (authID != null) {
-      try {
-        await _logUserToApp(authID);
-        if (mounted) {
-          Navigator.of(context).pop(); // Close progress dialog
-          Navigator.of(context).pop(); // Close login page
-        }
-      } catch (e) {
-        debugPrint('Error logging in user: $e');
-        if (mounted) {
-          Navigator.of(context).pop(); // dismiss progress dialog
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to complete login: $e'), behavior: SnackBarBehavior.floating));
-        }
-      }
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
+    if (!mounted) return;
+    if (!success) {
+      setState(() => _isLoading = false);
+      return;
     }
+
+    // PopScope reads canPop from the last build. Update _loggedIn via setState,
+    // then pop on the next frame so canPop is true and the route can close.
+    setState(() {
+      _isLoading = false;
+      _loggedIn = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
   }
 
-  Future<void> _logUserToApp(final String authID) async {
+  Future<void> _logUserToApp(
+    final String authID, {
+    LoadProgressReporter? onProgress,
+    int totalSteps = 3,
+  }) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
 
     // Defer token registration on first open; HomePage shows welcome before any prompt.
@@ -431,15 +434,18 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     final UserDBManager userDBManager = UserDBManager();
     final user = await userDBManager.fetchUserByAuthID(authID);
+    if (user == null) {
+      throw Exception('No user profile found for this account. Please contact an admin.');
+    }
 
+    onProgress?.call(completed: 2, total: totalSteps, message: 'Finishing…');
     appContext.sharedPref.saveCreds(_tecEmail.text.trim(), _tecPassword.text);
     appContext.setCurrentUser(user);
     appContext.sharedPref.setLoggedOut(false);
     appContext.analytics.logLogin(loginMethod: 'in-app login page');
-    _loggedIn = true;
   }
 
-  Future<String?> _attemptToLogin() async {
+  Future<String> _attemptToLogin() async {
     try {
       final String authID = await _authManager.loginAndReturnAuthID(
         _tecEmail.text.trim(),
@@ -448,25 +454,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
       if (!await _authManager.hasUserVerifiedEmail()) {
         await _authManager.signOut();
-        if (mounted) {
-          Navigator.of(context).pop(); // Close progress dialog
-          await DialogManager.showAlertDialog(
-            context: context,
-            title: 'Email Verification Required',
-            content: 'Please verify your email address before signing in. Check your inbox for the verification link.',
-            icon: Icons.mark_email_unread_outlined,
-            isError: true,
-          );
-        }
-        return null;
-      } else {
-        return authID;
+        throw Exception(
+          'Please verify your email address before signing in. Check your inbox for the verification link.',
+        );
       }
+      return authID;
     } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleException(e);
-      }
-      return null;
+      throw Exception(_firebaseAuthMessage(e));
     }
   }
 
@@ -487,102 +481,56 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       content: "Send password reset link to '${_tecEmail.text.trim()}'?",
       icon: Icons.email_outlined,
       confirmText: 'Send Link',
-    ).then((confirm) {
-      if (confirm) {
-        _attemptToSendPasswordResetEmail().then((sent) {
-          if (sent && mounted) {
-            Navigator.of(context).pop(); // Close any open dialogs
-            DialogManager.showSnackBar(
-              context: context,
-              message: 'Password reset link sent to ${_tecEmail.text.trim()}',
-              actionLabel: 'Got it',
-              onActionPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            );
+    ).then((confirm) async {
+      if (!confirm || !mounted) return;
+      final sent = await DialogManager.runWithProgressDialog(
+        context: context,
+        title: 'Sending Reset Link',
+        subtitle: 'Sending email…',
+        errorTitle: 'Could not send reset link',
+        action: () async {
+          try {
+            await _authManager.sendPasswordResetEmail(_tecEmail.text.trim());
+          } on auth.FirebaseAuthException catch (e) {
+            throw Exception(_firebaseAuthMessage(e));
           }
-        });
-      }
+        },
+      );
+      if (!sent || !mounted) return;
+      DialogManager.showSnackBar(
+        context: context,
+        message: 'Password reset link sent to ${_tecEmail.text.trim()}',
+        actionLabel: 'Got it',
+        onActionPressed: () {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        },
+      );
     });
   }
 
-  Future<bool> _attemptToSendPasswordResetEmail() async {
-    try {
-      DialogManager.showProgressDialog(
-        context: context,
-        title: 'Sending Reset Link',
-        subtitle: 'Please wait...',
-      );
-      await _authManager.sendPasswordResetEmail(_tecEmail.text.trim());
-      return true;
-    } on auth.FirebaseAuthException catch (e) {
-      if (mounted) {
-        _handleException(e);
-      }
-      return false;
-    }
-  }
-
-  void _handleException(auth.FirebaseAuthException e) {
-    Navigator.of(context).pop(); // Close any progress dialog
-
-    String title = 'Authentication Error';
-    String content = 'Something went wrong during authentication.';
-    IconData icon = Icons.error_outline;
-
+  String _firebaseAuthMessage(auth.FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
-        title = 'Invalid Email';
-        content = 'The email address is badly formatted. Please enter a valid email address.';
-        icon = Icons.email_outlined;
-        break;
+        return 'The email address is badly formatted. Please enter a valid email address.';
       case 'email-already-in-use':
-        title = 'Email In Use';
-        content = 'This email is already registered. Please try signing in instead.';
-        icon = Icons.person_outline;
-        break;
+        return 'This email is already registered. Please try signing in instead.';
       case 'weak-password':
-        title = 'Weak Password';
-        content = 'The password is too weak. Please choose a stronger password.';
-        icon = Icons.lock_outline;
-        break;
+        return 'The password is too weak. Please choose a stronger password.';
       case 'user-disabled':
-        title = 'Account Disabled';
-        content = 'This account has been disabled. Please contact support for assistance.';
-        icon = Icons.block;
-        break;
+        return 'This account has been disabled. Please contact support for assistance.';
       case 'user-not-found':
-        title = 'Account Not Found';
-        content = 'No account found with this email address. Please check your email or create a new account.';
-        icon = Icons.person_search;
-        break;
+        return 'No account found with this email address. Please check your email or create a new account.';
       case 'wrong-password':
-        title = 'Incorrect Password';
-        content = 'The password is incorrect. Please try again or reset your password.';
-        icon = Icons.lock_outline;
-        break;
+        return 'Incorrect password. Please try again or reset your password.';
       case 'too-many-requests':
-        title = 'Too Many Attempts';
-        content = 'Too many failed login attempts. Please wait a moment before trying again.';
-        icon = Icons.timer;
-        break;
+        return 'Too many failed login attempts. Please wait a moment before trying again.';
       case 'network-request-failed':
-        title = 'Connection Error';
-        content = 'Unable to connect to the server. Please check your internet connection and try again.';
-        icon = Icons.wifi_off;
-        break;
+        return 'Unable to connect to the server. Please check your internet connection and try again.';
       default:
-        content = 'An unexpected error occurred. Please try again later.\n\nError: ${e.message}';
-        break;
+        return e.message?.isNotEmpty == true
+            ? e.message!
+            : 'An unexpected error occurred. Please try again later.';
     }
-
-    DialogManager.showAlertDialog(
-      context: context,
-      title: title,
-      content: content,
-      icon: icon,
-      isError: true,
-    );
   }
 
   Future<bool> _onWillPop() async {
