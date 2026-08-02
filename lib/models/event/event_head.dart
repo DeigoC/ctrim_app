@@ -137,16 +137,46 @@ class EventHead {
   }
 
   bool containsMediaItem(final String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
+
+  Map<String, dynamic> _mediaItem({
+    required String type,
+    required String src,
+    String title = '',
+    String thumbnail = '',
+  }) {
+    return <String, dynamic>{
+      'type': type,
+      'src': src,
+      'title': title,
+      'thumbnailSrc': thumbnail.isEmpty ? null : thumbnail,
+    };
+  }
+
   void addMediaItem({required String type, required String src, String title = '', String thumbnail = ''}) {
-    final Map<String, dynamic> item =
-        Map<String, dynamic>.from({'type': type, 'src': src, 'title': title, 'thumbnailSrc': null});
-    _media.add(item);
+    _media.add(_mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
+  }
+
+  /// Inserts at the front so [getKeyGraphic] / card thumbnail pick this image first.
+  void prependMediaItem({required String type, required String src, String title = '', String thumbnail = ''}) {
+    _media.insert(0, _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
+  }
+
+  /// Replaces all key media with a single cover item (used by Change cover).
+  void replaceKeyGraphic({
+    required String type,
+    required String src,
+    String title = '',
+    String thumbnail = '',
+  }) {
+    _media
+      ..clear()
+      ..add(_mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
   }
 
   void removeMediaItem(final Map<String, dynamic> thisEntry) => _media.remove(thisEntry);
   void resetMediaWithOriginal(List<Map<String, dynamic>> original) {
     _media.clear();
-    _media.addAll(original);
+    _media.addAll(original.map((e) => Map<String, dynamic>.from(e)));
   }
 
   void clearMedia() => _media.clear();
