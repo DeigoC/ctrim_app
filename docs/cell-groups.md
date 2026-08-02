@@ -2,7 +2,7 @@
 
 > **Purpose:** Living design for a first-class **Cell Group** section and data model (beyond bulletin posts alone).  
 > **Created:** 2026-08-01  
-> **Status:** Planning — some product decisions locked; meeting↔bulletin model still open  
+> **Status:** Planning — product + companion user-model (temp profiles) largely locked; some IA / tier details still open  
 > **Start here in a new chat:** “Continue cell groups from `docs/cell-groups.md`”  
 > **Supersedes:** earlier draft named `docs/caregroups.md` (renamed after product language lock)
 
@@ -29,10 +29,10 @@ Today the app only touches cell groups lightly:
 
 1. **Catalogue cell groups** — name, location/church link, meeting pattern, status (active / paused / archived).
 2. **Leadership** — senior leader (and possibly co-leaders / hosts) as first-class fields, preferably linked to `users` when they have an app account.
-3. **Membership** — regulars/members of *this* group: **registered users and free-text** people (same dual model as post attendees). Distinct from one-off post RSVP.
+3. **Membership** — regulars/members of *this* group: **registered users**, **leader-created placeholder users**, and **free-text** one-offs. Distinct from one-off post RSVP.
 4. **Main app section** — dedicated nav destination with **tiered visibility** (guests see least; admins see most).
 5. **Bulletin as meeting proof** — weekly (or per-meeting) posts linked to a cell group are the main content trail that the CG met; exact linking UX still being hashed out.
-6. **Companion user-model work** — ship alongside a planned user-model change (details TBD in this doc / users handoff). Roster design should not paint us into a corner before that lands.
+6. **Companion user-model work** — ship with CG: placeholder `users` profiles + scoped Auth link via `CreatedByUserID` (see [Companion: user model change](#companion-user-model-change)).
 
 ### Non-goals for V1
 
@@ -241,13 +241,13 @@ Collection id **`cell_groups`** (snake) unless we prefer camel; confirm at imple
 
 ### Roster (private)
 
-Both **registered** and **free-text** entries.
+Prefer a **`users` uid** (registered or placeholder). Keep **free-text** only for never-register one-offs.
 
 | Field | Notes |
 |-------|--------|
-| `UserId` | `users` uid if registered — shape may change with user-model work |
-| `AuthId` | if we key by Auth like interest |
-| `DisplayName` | required for free-text |
+| `UserId` | `users` uid when linked to a profile (registered **or** placeholder) |
+| `AuthId` | optional; usually derived from linked user when present |
+| `DisplayName` | required for free-text rows; otherwise display from `User` |
 | `Role` | `member` / `leader` / `host` / … |
 | `JoinedAt` | optional |
 | `Status` | `active` / `inactive` |
@@ -266,15 +266,60 @@ Post attendance can still record who came that week when useful; membership rost
 
 ## Companion: user model change
 
-**Intent:** a user-model change will land **with** this feature (not as an afterthought).
+**Intent:** ship with Cell Groups (not as an afterthought). Builds on the existing placeholder Auth pattern in [`docs/users-volunteers-improvement.md`](users-volunteers-improvement.md) (`AuthID` empty → Link / Reassign via `UserAuthLinkService`).
 
-Capture the desired change here as it is decided (or link a dedicated section / doc). Until then:
+### Problem
 
-- Prefer referencing people by stable ids the new model will keep.
-- Allow free-text roster rows so non-app people are not blocked.
-- Re-read [`docs/users-volunteers-improvement.md`](users-volunteers-improvement.md) when designing leader/member links.
+CG leaders need names on the roster **before** someone has registered with email. Free-text alone does not give a stable identity to promote later. Today only **area admins** can Link / Reassign Auth on Edit User — too narrow for CG ops, too wide if every leader could edit every placeholder.
 
-**Open:** what exactly changes on `User` / `users` / `everyone` for cell groups? (roles? `CellGroupIds` on user? new capability flags?)
+### Locked approach: leader-created placeholder users
+
+| Idea | Decision |
+|------|----------|
+| **What a “temp account” is** | A real `users/{uid}` doc with **empty `AuthID`** (same placeholder shape Register User already supports). Not a separate collection. |
+| **Who creates** | A **CG leader/owner** (of a group they lead) may create a placeholder profile for roster use. Area admins keep full Register User. |
+| **`CreatedByUserID`** | New field on `users/{uid}`: volunteer **`users` uid** of the creator (not Auth UID — stable if the creator later re-links). Set once at create; do not rewrite when Auth is linked. |
+| **Who may link / reassign Auth** | **Creator** (`CreatedByUserID` matches their `users` id) **or area admin**. Not every CG leader app-wide. |
+| **After successful link** | Prefer **freeze** further Auth changes on that profile to **area admins only** (stops a leader quietly re-pointing a live account). Creator may still correct **name** on placeholders they own. |
+| **What creator must not do** | Set `IsLeader` / `IsAreaAdmin`, edit unrelated users, or broadly edit Volunteers directory fields beyond name (+ Auth link while still a placeholder). |
+| **Directory / pickers** | Hide empty-`AuthID` placeholders from Belfast Volunteers list and program role pickers by default (admin opt-in later if needed). Avoid directory pollution. |
+| **Free-text on CG roster** | **Keep** for true one-offs who will never register. Prefer a **placeholder `User`** when you expect them to get an app account later. |
+| **Claim / promote flow** | Person registers with email → creates `everyone/{authId}` → leader opens the placeholder → Link account by email → reuse `UserAuthLinkService` (existing conflict checks: email must exist; Auth not already owned by another `users` doc). |
+| **Rules** | Enforce “creator or area admin may write `AuthID` on a placeholder they own” in **`firestore.rules`** — client-only gating is not enough. |
+| **Co-leader orphan gap** | V1: if the creating leader leaves, only an **area admin** can claim that placeholder. **Later (not V1):** optionally allow other leaders of a CG that already has this uid on its roster. |
+
+### `User` field additions (lean)
+
+| Field | Type | Notes |
+|-------|------|--------|
+| `CreatedByUserID` | string | Creator’s `users/{uid}`; empty/absent for admin-created or legacy profiles |
+| *(optional)* `IsPlaceholder` | bool | Explicit flag if empty `AuthID` alone is too ambiguous in queries; otherwise derive `authID.isEmpty` |
+
+No requirement in V1 for `CellGroupIds` on the user doc (roster remains on the CG). Revisit if “My cell group” on Personal needs a reverse index.
+
+### Permission matrix (Auth link)
+
+| Actor | Create placeholder | Edit name on placeholder | Link / reassign Auth (while unlinked) | Reassign Auth after linked | Set Leader/Admin flags |
+|-------|--------------------|---------------------------|----------------------------------------|----------------------------|------------------------|
+| Creating CG leader | Yes (for roster) | Own creations | Own creations only | No (admin) | No |
+| Other CG leader | Own placeholders only | Own creations only | Own creations only | No | No |
+| Area admin | Yes | Any | Any | Yes | Yes |
+| Signed-in member | No | No | No | No | No |
+
+### Implementation notes (when coding)
+
+1. Extend `User` + `User.fromMap` / `toJson` with `CreatedByUserID` (PascalCase Firestore key).
+2. CG (or Personal) “Add member” flow: create placeholder with `CreatedByUserID = currentUser.id`, empty `AuthID`, then add uid to CG roster.
+3. Scoped Link UI for creators (not full Edit User) — call `UserAuthLinkService.linkAuth`.
+4. Filter `allUsers` / selectors: exclude empty Auth unless admin or “include placeholders”.
+5. Unit tests for model + auth-link permission helper; rules tests if you have them.
+6. Cross-update Phase 6 notes in the users/volunteers handoff when this ships.
+
+### Still open (user model)
+
+- Exact UI entry points (CG roster only vs also a limited Personal tool).
+- Whether `IsPlaceholder` is stored or derived.
+- Self-claim / “this is me” merge — out of scope for V1.
 
 ---
 
@@ -294,9 +339,9 @@ Map tiers onto `everyone.isUser`, admin flags, and any new cell-leader capabilit
 
 ## Phased delivery
 
-### Phase 0 — Product lock (this chat) — in progress
+### Phase 0 — Product lock — mostly done
 
-Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion change.
+Lock decisions; bulletin↔CG mechanics + companion user-model (placeholders / `CreatedByUserID`) captured below. Remaining open questions are mostly IA / tier matrix / location scope.
 
 ### Phase 0.5 — Period parents + editable `ParentID` (side track / precursor)
 
@@ -311,10 +356,11 @@ Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion chan
 - `CellGroup` model + `cell_groups` collection + tiered `firestore.rules`
 - Cell Groups main section: list + detail (tiered)
 - Admin / leader create/edit (leadership, cadence, status)
-- Roster CRUD (registered + free-text)
+- Roster CRUD (registered + placeholder users + free-text)
+- Placeholder user create + scoped Auth link (`CreatedByUserID`); hide placeholders from global pickers
 - `CellGroupIDs` on metadata + head; templates store/pre-fill them
 - Meeting trail on CG detail via head query
-- Unit tests; align with user-model change
+- Unit tests; ship user-model companion with this phase
 
 ### Phase 2 — Operating rhythm
 
@@ -338,7 +384,7 @@ Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion chan
 |---|--------|----------|------|
 | 1 | Product name | **Cell Group** (UI/docs). Short: CG. | 2026-08-01 |
 | 2 | Section visibility | **Everyone** can open the section; **tiered detail** (guest least → admin most). Enforce in rules. | 2026-08-01 |
-| 3 | Roster identity | **Registered users and free-text**; design with upcoming **user model change**. | 2026-08-01 |
+| 3 | Roster identity | **Registered users**, **leader-created placeholder `users`**, and **free-text** one-offs. | 2026-08-01 |
 | 4 | Meeting proof | **Bulletin posts** are the main content/proof that CGs happened. | 2026-08-01 |
 | 5 | Trends in V1 | **Out of scope** for V1. | 2026-08-01 |
 | 6 | Posting rhythm | Leaders **strongly encouraged** to create meeting posts; **not** hard-required. | 2026-08-01 |
@@ -351,6 +397,12 @@ Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion chan
 | 13 | Season hierarchy | Meeting posts hang under a **period/season parent post**; create-from-CG deferred because parent selection is the hard part. | 2026-08-01 |
 | 14 | Editable parent | **Wanted:** posts can edit `ParentID` (reparent / attach to season). Today immutable at create. Side track / precursor. | 2026-08-01 |
 | 15 | Period parent marker | **Yes** — supplemental field on metadata (lean: bool `IsPeriodParent` / similar). Not inferred from children; not a post tag. | 2026-08-01 |
+| 16 | Placeholder users | CG leaders may create `users` with empty `AuthID` for roster names; promote later via Auth link. | 2026-08-02 |
+| 17 | `CreatedByUserID` | On `users/{uid}`: creator’s volunteer uid. Only **creator** or **area admin** may link Auth while still a placeholder. | 2026-08-02 |
+| 18 | Post-link Auth freeze | After a successful Auth link, further Auth reassign is **area admin only**. | 2026-08-02 |
+| 19 | Placeholder visibility | Hide empty-`AuthID` profiles from Volunteers list / program pickers by default. | 2026-08-02 |
+| 20 | Free-text vs placeholder | Free-text for never-register one-offs; placeholder `User` when a real account is expected. | 2026-08-02 |
+| 21 | Co-leader claim | **Not V1** — orphan placeholders after creator leaves → area admin only; optional later: other leaders of a CG that already lists that uid. | 2026-08-02 |
 
 ---
 
@@ -364,11 +416,11 @@ Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion chan
 
 ### People
 
-4. ~~Registered vs free-text?~~ → **Both** (locked).
+4. ~~Registered vs free-text?~~ → **Registered + placeholder users + free-text** (locked).
 5. Can someone belong to **multiple** cell groups?
 6. ~~One senior leader vs many?~~ → **1+ leaders/owners** (locked). Optional primary contact later.
 7. Do members self-join, or is roster **leader-managed only**?
-8. **User model change** — what fields/roles/capabilities are we adding? Document under Companion section when known.
+8. ~~User model change?~~ → **Placeholder `users` + `CreatedByUserID` + scoped Auth link** (locked — see Companion). Remaining: UI entry points; `IsPlaceholder` stored vs derived.
 
 ### Meetings & bulletin
 
@@ -399,17 +451,18 @@ Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion chan
 ## Implementation checklist (for later chat)
 
 ```
-- [ ] Finish Phase 0 (bulletin mechanics + user-model companion notes)
-- [ ] Model: lib/models/… + unit tests
+- [x] Phase 0 companion user-model notes (placeholders / CreatedByUserID) — 2026-08-02
+- [ ] Finish remaining Phase 0 open questions (location scope, tier field matrix, self-join)
+- [ ] Model: CellGroup + User.CreatedByUserID + unit tests
 - [ ] DB manager: lib/firebase/db_managers/
-- [ ] firestore.rules (tiered public vs private)
+- [ ] firestore.rules (tiered CG public vs private; placeholder Auth write = creator or area admin)
 - [ ] AppContext or CellGroupContext if list caching needed
 - [ ] Pages: lib/pages/cell_groups/ + home_page nav destination
+- [ ] Scoped Link-account UI for creators (reuse UserAuthLinkService); hide placeholders from pickers
 - [ ] EventMetadata + EventHead `CellGroupIDs` (list; joint sessions); keep in sync like TagIDs
 - [ ] PostTemplate (+ mapper): store / apply `CellGroupIDs`
 - [ ] `IsPeriodParent` (or agreed name) on EventMetadata + edit/template UI
 - [ ] Editable `ParentID` (mutable metadata + ChildrenIDs sync + UI; picker can filter period posts) — side track
-- [ ] Coordinate user-model change
 - [ ] flutter analyze && flutter test test/unit/
 - [ ] Update AGENTS.md Recent changes when shipped
 ```
@@ -437,3 +490,4 @@ Lock decisions; finish bulletin↔CG mechanics; sketch user-model companion chan
 | 2026-08-01 | Clarified UX: main path is multi-select on post create/edit; post owner can include other CG ids. Create-from-CG and template pre-fill are optional conveniences, not the permission model. |
 | 2026-08-01 | Templates **will** pre-fill `CellGroupIDs`. Season **parent** posts group CG meetings for a period; create-from-CG deferred. Wanted: **editable ParentID** (today set-once at create; needs ChildrenIDs rewiring). |
 | 2026-08-01 | Agreed: designated period/season posts get an explicit **supplemental metadata field** (lean bool); not tags, not “has children”. Pairs with editable ParentID picker. |
+| 2026-08-02 | Companion user model: CG leaders create **placeholder `users`** (empty `AuthID`); **`CreatedByUserID`** scopes who may Link Auth; post-link freeze to area admins; hide placeholders from global pickers; keep free-text for one-offs; co-leader orphan claim deferred. |
