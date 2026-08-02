@@ -333,7 +333,7 @@ See [Admin-managed user tags](#admin-managed-user-tags) below for full design no
 
 - [ ] `availabilityNotes`, `isActive` (hide inactive from picker), optional admin-only `phone`
 - [x] **Auth link / placeholders** — Register User can save with empty `AuthID`; Edit User Link / Reassign / Unlink via `lib/utility/user_auth_link.dart` (does not delete temp Firebase Auth accounts)
-- [ ] **CG companion (planned)** — `CreatedByUserID` on `users`; CG leaders create placeholders + scoped Auth link (creator or area admin; freeze reassign after link). Full design in [`docs/cell-groups.md`](cell-groups.md#companion-user-model-change). Hide empty-`AuthID` from Volunteers / pickers by default.
+- [ ] **CG companion (planned)** — `CreatedByUserID` + **`IsPlaceholder`** on `users`; CG leaders create placeholders + scoped Auth link (creator or area admin; freeze reassign after link; clear `IsPlaceholder` on link). Full design in [`docs/cell-groups.md`](cell-groups.md#companion-user-model-change). Hide placeholders from Volunteers / pickers by default.
 - [ ] Unify or document `users` vs `everyone` email visibility
 
 ---

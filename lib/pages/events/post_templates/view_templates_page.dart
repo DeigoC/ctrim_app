@@ -300,6 +300,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       headTitle: details.headTitle,
       location: location,
     );
+    draft.addLog(
+      log: 'Created',
+      uid: _appContext.currentUser.id,
+      ts: DateTime.now(),
+    );
 
     PostTemplate? createdTemplate;
     final created = await DialogManager.runWithSteppedProgressDialog(
@@ -347,7 +352,14 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         final copyData = source.toJson(true);
         copyData['Title'] = 'Copy of ${source.title}';
         copyData['HeadTitle'] = source.headTitle.isEmpty ? copyData['Title'] : 'Copy of ${source.headTitle}';
+        // Fresh history for the new document — do not copy source Logs.
+        copyData['Logs'] = <Map<String, dynamic>>[];
         final draft = PostTemplate.fromMap(true, 'temp', copyData);
+        draft.addLog(
+          log: 'Duplicated from "${source.title}"',
+          uid: _appContext.currentUser.id,
+          ts: DateTime.now(),
+        );
         final result = await PostTemplateDBManager().addPostTemplate(draft);
         duplicated = PostTemplate.fromMap(true, result.id, draft.toJson(true));
         onProgress(completed: 1, total: total, message: 'Saving local copy…');

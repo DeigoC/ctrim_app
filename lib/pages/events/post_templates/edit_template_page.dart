@@ -14,10 +14,12 @@ import '../../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../../widgets/posts/view_all_programs.dart';
 import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
+import '../../../widgets/posts/template_log_dialog.dart';
 import '../add_media_file_page.dart';
 import '../add_program_role_page.dart';
 import '../edit_body_page.dart';
 import '../edit_gallery_page.dart';
+import 'view_template_logs_page.dart';
 
 class EditTemplatePage extends StatefulWidget {
   const EditTemplatePage({super.key, required this.eventContext, required this.oldTemplate});
@@ -516,6 +518,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          IconButton(
+            tooltip: 'Change history',
+            onPressed: _openChangeHistory,
+            icon: const Icon(Icons.history),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: FilledButton.tonalIcon(
@@ -621,27 +628,39 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     setState(() {});
   }
 
+  void _openChangeHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ViewTemplateLogsPage(template: widget.oldTemplate)),
+    );
+  }
+
   void _onSavePostTemplateClick({required bool fromSheet}) async {
     if (fromSheet && mounted) {
       Navigator.of(context).pop();
     }
 
-    final confirm = await DialogManager.showConfirmationDialog(
-        context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?');
-    if (!confirm || !mounted) return;
+    final String? logMessage = await showDialog<String>(
+      context: context,
+      builder: (_) => const TemplateLogDialog(),
+    );
+    if (logMessage == null || !mounted) return;
 
     final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Saving template',
       initialMessage: 'Preparing template…',
       errorTitle: 'Could not save template',
-      action: (onProgress) => _performTemplateSave(onProgress),
+      action: (onProgress) => _performTemplateSave(onProgress, logMessage: logMessage),
     );
     if (!mounted || !saved) return;
     Navigator.of(context).pop();
   }
 
-  Future<void> _performTemplateSave(LoadProgressReporter onProgress) async {
+  Future<void> _performTemplateSave(
+    LoadProgressReporter onProgress, {
+    required String logMessage,
+  }) async {
     const total = 3;
     onProgress(completed: 0, total: total, message: 'Preparing template…');
     debugPrint('---- begin converting to post template');
@@ -678,8 +697,14 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'BodyMediaPool': _bodyMediaPool,
       'Roles': _rolesToJson(),
       'DefaultDayOfWeek': _defaultDayOfWeek,
+      'Logs': widget.oldTemplate.toJson(true)['Logs'],
     };
     final PostTemplate updatedTemplate = PostTemplate.fromMap(true, widget.eventContext.id, templateData);
+    updatedTemplate.addLog(
+      log: logMessage,
+      uid: _appContext.currentUser.id,
+      ts: DateTime.now(),
+    );
 
     // Save to DB
     onProgress(completed: 1, total: total, message: 'Saving to cloud…');

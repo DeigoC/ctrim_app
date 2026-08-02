@@ -34,6 +34,7 @@ void main() {
         'HeadMediaPool': headMediaPool,
         'BodyMediaPool': bodyMediaPool,
         'DefaultDayOfWeek': 0,
+        'Logs': <Map<String, dynamic>>[],
       };
     }
 
@@ -157,6 +158,49 @@ void main() {
 
         expect(template.keyGraphicPool.single['src'], 'head.jpg');
       });
+
+      test('defaults Logs to empty when missing', () {
+        final map = baseLocalMap();
+        map.remove('Logs');
+        final template = PostTemplate.fromMap(true, 'no-logs', map);
+
+        expect(template.logs, isEmpty);
+      });
+
+      test('parses Logs with local epoch timestamps', () {
+        final map = baseLocalMap();
+        map['Logs'] = [
+          {
+            'uid': 'user-1',
+            'log': 'Created',
+            'ts': DateTime(2026, 8, 1, 10).millisecondsSinceEpoch,
+          },
+        ];
+        final template = PostTemplate.fromMap(true, 'with-logs', map);
+
+        expect(template.logs.length, 1);
+        expect(template.logs.single['uid'], 'user-1');
+        expect(template.logs.single['log'], 'Created');
+        expect(template.logs.single['ts'], DateTime(2026, 8, 1, 10));
+      });
+    });
+
+    group('addLog', () {
+      test('prepends a new log entry', () {
+        final template = PostTemplate.fromMap(true, 'add-log', baseLocalMap());
+        template.addLog(log: 'Created', uid: 'u1', ts: DateTime(2026, 8, 1));
+        template.addLog(log: 'Updated cover', uid: 'u2', ts: DateTime(2026, 8, 2));
+
+        expect(template.logs.length, 2);
+        expect(template.logs.first['log'], 'Updated cover');
+        expect(template.logs.first['uid'], 'u2');
+        expect(template.logs.last['log'], 'Created');
+      });
+
+      test('logs getter is unmodifiable', () {
+        final template = PostTemplate.fromMap(true, 'unmod', baseLocalMap());
+        expect(() => template.logs.add({}), throwsUnsupportedError);
+      });
     });
 
     group('toJson', () {
@@ -170,6 +214,7 @@ void main() {
             ],
           ),
         );
+        original.addLog(log: 'Created', uid: 'u1', ts: DateTime(2026, 8, 1, 12));
 
         final json = original.toJson(true);
         json['id'] = original.id;
@@ -178,6 +223,9 @@ void main() {
         expect(restored.title, original.title);
         expect(restored.headMedia.single['src'], 'cover.jpg');
         expect(restored.startTime, original.startTime);
+        expect(restored.logs.single['log'], 'Created');
+        expect(restored.logs.single['uid'], 'u1');
+        expect(restored.logs.single['ts'], DateTime(2026, 8, 1, 12));
       });
     });
   });
