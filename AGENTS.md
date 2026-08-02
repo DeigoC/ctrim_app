@@ -44,7 +44,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Ongoing work
 
-- **Cell Groups** — Phase 0 locked; [`docs/cell-groups.md`](docs/cell-groups.md). Period-parent side track shipped (`IsPeriodParent` + editable ParentID). Continue with: “Continue cell groups from `docs/cell-groups.md`”.
+- **Cell Groups** — Phase 0.5 shipped; next **placeholder user model**, then full CG section. Handoff: [`docs/cell-groups.md`](docs/cell-groups.md). Continue with: “Implement placeholder users from `docs/cell-groups.md`”.
 - **Post tags & notify streams** — V1 in place; handoff in [`docs/post-tags-notification-streams.md`](docs/post-tags-notification-streams.md). Deploy `firestore.rules` for `post_tags`; seed starter tags from Manage Post Tags.
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.

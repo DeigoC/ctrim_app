@@ -2,8 +2,8 @@
 
 > **Purpose:** Living design for a first-class **Cell Group** section and data model (beyond bulletin posts alone).  
 > **Created:** 2026-08-01  
-> **Status:** Phase 0 product lock **done**; Phase 0.5 period-parent side track **shipped** — ready for CG Phase 1  
-> **Start here in a new chat:** “Continue cell groups from `docs/cell-groups.md`” (or “Implement period parent + editable ParentID from `docs/cell-groups.md`”)
+> **Status:** Phase 0 lock **done**; Phase 0.5 period-parent **shipped**. Next: **user/placeholder model**, then full CG section.  
+> **Start here in a new chat:** “Implement placeholder users from `docs/cell-groups.md`” or “Continue cell groups from `docs/cell-groups.md`”
 
 ---
 
@@ -375,11 +375,17 @@ Map tiers onto `everyone.isUser`, admin flags, and any new cell-leader capabilit
 
 ## Phased delivery
 
+### Recommended build order
+
+1. ~~Period parent + editable `ParentID`~~ — **shipped** (Phase 0.5).
+2. **Companion user model** (placeholders) — **do next**, before the full CG section. Pays off for attendance / schedule pickers; CG roster reuses it.
+3. **Cell Groups section** (Phase 1) — catalogue, nav, roster, `CellGroupIDs`.
+
 ### Phase 0 — Product lock — **done** (2026-08-02)
 
-Enough locked for an implementing chat. Remaining nits are implement-time defaults (see “Deferred to implement chat” below).
+Enough locked for implementing chats. Remaining nits are implement-time defaults (see “Deferred to implement chat” below).
 
-### Phase 0.5 — Period parents + editable `ParentID` (side track) — **done** (2026-08-02)
+### Phase 0.5 — Period parents + editable `ParentID` — **done** (2026-08-02)
 
 - Metadata flag **`IsPeriodParent`** (+ head denorm for picker query)
 - Toggle on Title & details + template default on edit template
@@ -387,16 +393,26 @@ Enough locked for an implementing chat. Remaining nits are implement-time defaul
 - Parent picker UI: **title/subtitle edit page** (`EditHeadDetailsPage` / `SelectPeriodParentPage`) — **author or area admin** only; list = `IsPeriodParent` posts
 - Cycle guards via `ParentLink`
 
-### Phase 1 — Foundation (no trends)
+### Phase 0.75 — Companion user model (**next** — before full CG)
+
+- `User.IsPlaceholder` + `User.CreatedByUserID` + unit tests
+- Backfill empty Auth → `IsPlaceholder: true` (`CreatedByUserID` empty)
+- Callable CF: createPlaceholderUser (do not widen client `users` create)
+- Enhance `SelectUsersPage` create-when-missing (**medium gate:** CG leader / area admin / post author)
+- Harden Auth link; clear `IsPlaceholder` on success; post-link freeze to area admin
+- Hide placeholders from Volunteers / pickers by default; addressing queue for admins/creators
+
+Until CG Phase 1 exists, **area admin + post author** still unlock create-when-missing on attendance/roles (CG-leader gate becomes meaningful later).
+
+### Phase 1 — Cell Groups foundation (no trends)
 
 - `CellGroup` model + `cell_groups` collection + tiered `firestore.rules`
-- Cell Groups main section: list + detail (tiered)
-- Admin / leader create/edit (leadership, cadence, status)
-- Roster CRUD (registered + placeholder users + free-text)
-- Placeholder user create + scoped Auth link (`CreatedByUserID`); hide placeholders from global pickers
+- Cell Groups main section: list + detail (tiered); **`Icons.groups`**
+- Area-admin create/edit; leaders manage roster of their groups
+- Roster CRUD (registered + placeholder + free-text) via shared picker from 0.75
 - `CellGroupIDs` on metadata + head; templates store/pre-fill them
-- Meeting trail on CG detail via head query
-- Unit tests; ship user-model companion with this phase
+- Meeting trail (~3–4 posts) on CG detail via head query
+- Unit tests; **depends on Phase 0.75**
 
 ### Phase 2 — Operating rhythm
 
@@ -411,6 +427,7 @@ Enough locked for an implementing chat. Remaining nits are implement-time defaul
 - Oversight reports across all groups
 - Multiplication (parent/child groups)
 - Free-text → placeholder / registered merge (beyond V1 Auth link)
+- Co-leader orphan claim for placeholders
 
 ---
 
@@ -431,7 +448,7 @@ Enough locked for an implementing chat. Remaining nits are implement-time defaul
 | 11 | Who sets `CellGroupIDs` on a post | **Post owner/editor** (same edit rights as today) may set/change the full list, including other CGs for joint sessions. | 2026-08-01 |
 | 12 | Template pre-fill | Templates **will** store `CellGroupIDs` so leaders get a fast linked create path. | 2026-08-01 |
 | 13 | Season hierarchy | Meeting posts hang under a **period/season parent post**; create-from-CG deferred because parent selection is the hard part. | 2026-08-01 |
-| 14 | Editable parent | **Wanted:** posts can edit `ParentID` (reparent / attach to season). Today immutable at create. Side track / precursor. | 2026-08-01 |
+| 14 | Editable parent | **Shipped** with Phase 0.5 — edit on title/subtitle page; author/area admin. | 2026-08-02 |
 | 15 | Period parent marker | Metadata bool **`IsPeriodParent`**. Flag-only first (no required period dates). | 2026-08-02 |
 | 16 | Placeholder users | CG leaders may create `users` with **`IsPlaceholder: true`** + empty `AuthID` for roster names; promote later via Auth link (clears flag). | 2026-08-02 |
 | 17 | `CreatedByUserID` | On `users/{uid}`: creator’s volunteer uid. Only **creator** or **area admin** may link Auth while still a placeholder. | 2026-08-02 |
@@ -465,7 +482,7 @@ Enough locked for an implementing chat. Remaining nits are implement-time defaul
 
 ## Open questions
 
-**Phase 0 product lock is complete.** Nothing blocking another chat from implementing V1 + the period-parent side track.
+**Phase 0 product lock is complete.** Phase 0.5 shipped. **Next implement:** placeholder user model (0.75), then CG section (1).
 
 ### Deferred to implement chat (defaults OK — change only if awkward)
 
@@ -488,15 +505,10 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 ## Implementation checklist (for later chat)
 
 ```
-- [x] Phase 0 product + companion user-model locks — 2026-08-02
-- [x] Side track: IsPeriodParent + editable ParentID on title/subtitle edit page — 2026-08-02
-- [ ] Model: CellGroup + User.`CreatedByUserID` + User.`IsPlaceholder` + unit tests
-- [ ] Backfill: empty AuthID → IsPlaceholder true (CreatedByUserID empty)
-- [ ] Callable CF: createPlaceholderUser (+ harden Auth link as needed)
-- [ ] firestore.rules: CG tiers; placeholder paths; do not naively open users create
-- [ ] Enhance SelectUsersPage: create-when-missing (medium gate)
-- [ ] Pages: lib/pages/cell_groups/ + home_page (`Icons.groups`); area-admin create CG
-- [ ] EventMetadata/Head + templates: CellGroupIDs
+- [x] Phase 0 product locks — 2026-08-02
+- [x] Phase 0.5: IsPeriodParent + editable ParentID — 2026-08-02
+- [ ] Phase 0.75: User.IsPlaceholder + CreatedByUserID + CF create + SelectUsersPage + backfill + Auth link harden
+- [ ] Phase 1: CellGroup model/UI + CellGroupIDs + roster (after 0.75)
 - [ ] flutter analyze && flutter test test/unit/
 - [ ] Update AGENTS.md Recent changes when shipped
 ```
@@ -532,4 +544,5 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 | 2026-08-02 | Locked: multi-CG membership; leader-managed roster; shared SelectUsersPage create entry; legacy empty-Auth → IsPlaceholder backfill; `IsPeriodParent`; ParentID edit = author/area admin; side-track ship; Belfast-only; no Youth Online CG yet; `Icons.groups`; attendance = post attendance; trail ~3–4. |
 | 2026-08-02 | Placeholder create via shared **`SelectUsersPage`**; `cell_groups` + supplemental roster; **CF for placeholder create**, client+rules for CG content. |
 | 2026-08-02 | Final Phase 0: medium create-placeholder gate; legacy CreatedBy empty; parent picker on **title/subtitle edit**; guest cards name+cadence; Cell Groups tab home; area admin creates CG records. Phase 0 **done**. |
+| 2026-08-02 | Build order locked: **period parent/ParentID → user placeholders → full CG section**. User changes may ship before CG nav/roster. |
 | 2026-08-02 | **Phase 0.5 shipped:** `IsPeriodParent` (metadata + head denorm + template default); editable `ParentID` with ChildrenIDs sync + cycle guards; UI on `EditHeadDetailsPage` / `SelectPeriodParentPage` (author or area admin). |
