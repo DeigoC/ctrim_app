@@ -6,6 +6,7 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/load_progress_body.dart';
 import '../../widgets/user_tag_chip.dart';
 
 class ManageUserTagsPage extends StatefulWidget {
@@ -47,8 +48,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final horizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
+    final horizontalPadding = isWide
+        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
+        : 0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +68,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       body: Consumer<AppContext>(
         builder: (context, appContext, _) {
           if (_loading) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadProgressBody(
+              message: 'Loading tags…',
+              completedSteps: 0,
+              totalSteps: 1,
+            );
           }
 
           final tags = appContext.allTags;

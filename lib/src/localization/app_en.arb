@@ -204,6 +204,216 @@
   "@manageUserTagsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing tags"
   },
+  "postTagsFilterClear": "Clear tags",
+  "@postTagsFilterClear": {
+    "description": "Button to clear selected post tag filters on the bulletin"
+  },
+  "postTagsAssignLabel": "Content tags",
+  "@postTagsAssignLabel": {
+    "description": "Section label for assigning content tags to a post or template"
+  },
+  "postTagsNoneAvailable": "No post tags yet. Area admins can create tags in Admin Tools.",
+  "@postTagsNoneAvailable": {
+    "description": "Message when no post tags exist for assignment"
+  },
+  "managePostTagsTitle": "Manage Post Tags",
+  "@managePostTagsTitle": {
+    "description": "Title for the admin page that manages post content tag definitions"
+  },
+  "managePostTagsAdd": "Add tag",
+  "@managePostTagsAdd": {
+    "description": "Action to create a new post content tag"
+  },
+  "managePostTagsEmpty": "No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.",
+  "@managePostTagsEmpty": {
+    "description": "Empty state on the manage post tags page"
+  },
+  "managePostTagsSeedDefaults": "Add starter tags",
+  "@managePostTagsSeedDefaults": {
+    "description": "Button to seed default post tags with Belfast stream kinds"
+  },
+  "managePostTagsActive": "Active",
+  "@managePostTagsActive": {
+    "description": "Status label for an active post tag"
+  },
+  "managePostTagsInactive": "Inactive",
+  "@managePostTagsInactive": {
+    "description": "Status label for a deactivated post tag"
+  },
+  "managePostTagsMoveUp": "Move up",
+  "@managePostTagsMoveUp": {
+    "description": "Reorder a post tag higher in the list"
+  },
+  "managePostTagsMoveDown": "Move down",
+  "@managePostTagsMoveDown": {
+    "description": "Reorder a post tag lower in the list"
+  },
+  "managePostTagsEdit": "Edit",
+  "@managePostTagsEdit": {
+    "description": "Edit an existing post tag"
+  },
+  "managePostTagsDeactivate": "Deactivate",
+  "@managePostTagsDeactivate": {
+    "description": "Deactivate a post tag so it cannot be assigned"
+  },
+  "managePostTagsActivate": "Activate",
+  "@managePostTagsActivate": {
+    "description": "Reactivate a deactivated post tag"
+  },
+  "managePostTagsDelete": "Delete",
+  "@managePostTagsDelete": {
+    "description": "Delete a post tag definition"
+  },
+  "managePostTagsNameLabel": "Tag name",
+  "@managePostTagsNameLabel": {
+    "description": "Label for the post tag name field"
+  },
+  "managePostTagsColorLabel": "Color (optional)",
+  "@managePostTagsColorLabel": {
+    "description": "Label for the optional post tag color hex field"
+  },
+  "managePostTagsStreamKindLabel": "Notify stream kind (optional)",
+  "@managePostTagsStreamKindLabel": {
+    "description": "Label for optional FCM stream kind on a post tag"
+  },
+  "managePostTagsStreamKindHelper": "Combined with post location, e.g. sunday-service → belfast-sunday-service",
+  "@managePostTagsStreamKindHelper": {
+    "description": "Helper text explaining location + stream kind FCM topic derivation"
+  },
+  "managePostTagsStreamKindHint": "Notifies: {kind}",
+  "@managePostTagsStreamKindHint": {
+    "description": "Shows the stream kind on a post tag list tile",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "managePostTagsNoStream": "Filter only (no notifications)",
+  "@managePostTagsNoStream": {
+    "description": "Shown when a post tag has no stream kind"
+  },
+  "managePostTagsCreate": "Create",
+  "@managePostTagsCreate": {
+    "description": "Create a new post tag"
+  },
+  "managePostTagsDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@managePostTagsDeleteConfirm": {
+    "description": "Confirmation before deleting a post tag",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "managePostTagsDeleteBlocked": "Cannot delete — {count} posts still have this tag. Deactivate it instead.",
+  "@managePostTagsDeleteBlocked": {
+    "description": "Error when trying to delete a post tag that is still assigned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "managePostTagsMenuTitle": "Post Tags",
+  "@managePostTagsMenuTitle": {
+    "description": "Personal home admin menu item for managing post tags"
+  },
+  "managePostTagsMenuSubtitle": "Labels for bulletin filtering & notify streams",
+  "@managePostTagsMenuSubtitle": {
+    "description": "Personal home admin menu subtitle for managing post tags"
+  },
+  "manageUserLocationsTitle": "Manage Locations",
+  "@manageUserLocationsTitle": {
+    "description": "Title for the admin page that manages volunteer location definitions"
+  },
+  "manageUserLocationsAdd": "Add location",
+  "@manageUserLocationsAdd": {
+    "description": "Action to create a new volunteer location"
+  },
+  "manageUserLocationsEmpty": "No locations yet. Add places like Belfast, Portadown, or North Coast.",
+  "@manageUserLocationsEmpty": {
+    "description": "Empty state on the manage locations page"
+  },
+  "manageUserLocationsSeedDefaults": "Add starter locations",
+  "@manageUserLocationsSeedDefaults": {
+    "description": "Button to seed default volunteer locations"
+  },
+  "manageUserLocationsActive": "Active",
+  "@manageUserLocationsActive": {
+    "description": "Status label for an active location"
+  },
+  "manageUserLocationsInactive": "Inactive",
+  "@manageUserLocationsInactive": {
+    "description": "Status label for a deactivated location"
+  },
+  "manageUserLocationsMoveUp": "Move up",
+  "@manageUserLocationsMoveUp": {
+    "description": "Reorder a location higher in the list"
+  },
+  "manageUserLocationsMoveDown": "Move down",
+  "@manageUserLocationsMoveDown": {
+    "description": "Reorder a location lower in the list"
+  },
+  "manageUserLocationsEdit": "Edit",
+  "@manageUserLocationsEdit": {
+    "description": "Edit an existing location"
+  },
+  "manageUserLocationsDeactivate": "Deactivate",
+  "@manageUserLocationsDeactivate": {
+    "description": "Deactivate a location so it cannot be assigned"
+  },
+  "manageUserLocationsActivate": "Activate",
+  "@manageUserLocationsActivate": {
+    "description": "Reactivate a deactivated location"
+  },
+  "manageUserLocationsDelete": "Delete",
+  "@manageUserLocationsDelete": {
+    "description": "Delete a location definition"
+  },
+  "manageUserLocationsNameLabel": "Location name",
+  "@manageUserLocationsNameLabel": {
+    "description": "Label for the location name field"
+  },
+  "manageUserLocationsCreate": "Create",
+  "@manageUserLocationsCreate": {
+    "description": "Create a new location"
+  },
+  "manageUserLocationsDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@manageUserLocationsDeleteConfirm": {
+    "description": "Confirmation before deleting a location",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageUserLocationsDeleteBlocked": "Cannot delete — {count} volunteers still have this location. Deactivate it instead.",
+  "@manageUserLocationsDeleteBlocked": {
+    "description": "Error when trying to delete a location that is still assigned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "manageUserLocationsDuplicate": "A location named \"{name}\" already exists.",
+  "@manageUserLocationsDuplicate": {
+    "description": "Error when creating or renaming to a duplicate location name",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageUserLocationsMenuTitle": "Volunteer Locations",
+  "@manageUserLocationsMenuTitle": {
+    "description": "Personal home admin menu item for managing locations"
+  },
+  "manageUserLocationsMenuSubtitle": "Create and edit place labels",
+  "@manageUserLocationsMenuSubtitle": {
+    "description": "Personal home admin menu subtitle for managing locations"
+  },
   "volunteersEmptyTags": "No volunteers match the selected tags",
   "@volunteersEmptyTags": {
     "description": "Empty state when tag filter returns no volunteers"
@@ -248,5 +458,30 @@
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
     "description": "Sort volunteers by primary team tag"
+  },
+  "volunteersFilterTags": "Tags",
+  "@volunteersFilterTags": {
+    "description": "Button that opens the volunteer tag filter sheet"
+  },
+  "volunteersFilterTagsCount": "Tags ({count})",
+  "@volunteersFilterTagsCount": {
+    "description": "Tag filter button when one or more tags are selected",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "volunteersFilterTagsSheetTitle": "Filter by tags",
+  "@volunteersFilterTagsSheetTitle": {
+    "description": "Title for the volunteer tag filter bottom sheet"
+  },
+  "volunteersFilterTagsSheetSubtitle": "Show people with any of these team tags",
+  "@volunteersFilterTagsSheetSubtitle": {
+    "description": "Subtitle for the volunteer tag filter bottom sheet"
+  },
+  "volunteersSortTooltip": "Sort volunteers",
+  "@volunteersSortTooltip": {
+    "description": "Tooltip for the volunteers sort menu in the app bar"
   }
 }

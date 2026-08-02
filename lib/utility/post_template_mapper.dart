@@ -1,4 +1,7 @@
 import '../models/post_template.dart';
+import '../models/post_tag.dart';
+import '../models/user.dart';
+import 'broadcast_audience.dart';
 import 'event_context.dart';
 
 class PostTemplateMapper {
@@ -7,6 +10,8 @@ class PostTemplateMapper {
     required PostTemplate template,
     required String currentUserID,
     String? parentID,
+    Iterable<User> allUsers = const [],
+    List<PostTag> allPostTags = const [],
   }) {
     final EventContext eventContext = EventContext.adding(currentUserID: currentUserID, parentID: parentID);
 
@@ -24,17 +29,20 @@ class PostTemplateMapper {
       eventContext.setTemplateSubtitles(List<String>.from(template.subtitles));
     }
 
-    // head media pool - auto-select one random item if pool exists, otherwise use fixed headMedia
-    if (template.headMediaPool.isNotEmpty) {
-      final randomHeadMedia = template.getRandomHeadMediaPoolItem();
-      if (randomHeadMedia != null) {
+    // Cover / key graphic: prefer body media pool (intended cover pool),
+    // fall back to head media pool, else fixed headMedia.
+    final coverPool = template.keyGraphicPool;
+    if (coverPool.isNotEmpty) {
+      final randomCover = template.getRandomKeyGraphicPoolItem();
+      if (randomCover != null) {
         eventContext.head.addMediaItem(
-            type: randomHeadMedia['type']!,
-            src: randomHeadMedia['src']!,
-            title: randomHeadMedia['title'] ?? '',
-            thumbnail: randomHeadMedia['thumbnailSrc'] ?? '');
+            type: randomCover['type']!,
+            src: randomCover['src']!,
+            title: randomCover['title'] ?? '',
+            thumbnail: randomCover['thumbnailSrc'] ?? '');
       }
-      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(template.headMediaPool));
+      // Expose on the head-pool selector so cover can be changed while adding a post.
+      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(coverPool));
     } else {
       for (final headMediaItem in template.headMedia) {
         eventContext.head.addMediaItem(
@@ -45,22 +53,34 @@ class PostTemplateMapper {
       }
     }
 
-    // body media pool
-    if (template.bodyMediaPool.isNotEmpty) {
-      eventContext.setTemplateBodyMediaPool(List<Map<String, dynamic>>.from(template.bodyMediaPool));
-    }
-
-    // body and fixed media
+    // body and fixed media (fixed Media only — body pool is for covers, not gallery)
     eventContext.setFetchedBody(template.body);
     if (template.media.isNotEmpty) {
       eventContext.media.addAllMediaFiles(template.media);
     }
 
     // meta related
-    eventContext.metadata.addAllTopics(template.topics);
+    eventContext.applyTagIDs(List<String>.from(template.tagIDs));
+    if (template.tagIDs.isEmpty && template.topics.isNotEmpty) {
+      // Legacy templates: keep Topics as FCM audience until tags are assigned.
+      eventContext.metadata.addAllTopics(template.topics);
+    } else if (template.tagIDs.isNotEmpty && allPostTags.isNotEmpty) {
+      final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
+        topics: template.topics,
+        locationName: template.location,
+      );
+      eventContext.syncNotificationTopics(
+        allTags: allPostTags,
+        includeLocationUmbrella: includeUmbrella,
+      );
+    }
     eventContext.metadata.contributorUIDs.addAll(template.contributors);
     if (template.contributors.isNotEmpty) {
       eventContext.contributorAdditionUIDs.addAll(template.contributors);
+    }
+    if (template.leadSpeakerUID != null && template.leadSpeakerUID!.isNotEmpty) {
+      eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
+      eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
 
     // program related

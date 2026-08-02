@@ -41,10 +41,21 @@ void main() {
         );
       });
 
-      test('includes roles for events more than one day in the past', () {
+      test('keeps roles within the 28-day retention window', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
         final heads = [headWithDate('post-1', DateTime(2024, 1, 1))];
-        final now = DateTime(2024, 1, 3);
+        final now = DateTime(2024, 1, 20);
+
+        expect(
+          UserScheduleService.staleRolePostIDs(user: user, eventHeads: heads, now: now),
+          isEmpty,
+        );
+      });
+
+      test('includes roles beyond the 28-day retention window', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+        final heads = [headWithDate('post-1', DateTime(2024, 1, 1))];
+        final now = DateTime(2024, 1, 30);
 
         expect(
           UserScheduleService.staleRolePostIDs(user: user, eventHeads: heads, now: now),
@@ -79,6 +90,72 @@ void main() {
         expect(
           UserScheduleService.staleRolePostIDs(user: user, eventHeads: []),
           ['post-1'],
+        );
+      });
+    });
+
+    group('upcoming and recent past schedule posts', () {
+      test('splits upcoming and recent-past post IDs', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([
+            UserRoleAssignment(
+              postID: 'past-post',
+              roleID: 1,
+              start: DateTime(2024, 6, 1, 10),
+              end: DateTime(2024, 6, 1, 11),
+              title: 'Past',
+            ),
+            UserRoleAssignment(
+              postID: 'future-post',
+              roleID: 2,
+              start: DateTime(2024, 6, 20, 10),
+              end: DateTime(2024, 6, 20, 11),
+              title: 'Future',
+            ),
+          ]);
+        final heads = [
+          headWithDate('past-post', DateTime(2024, 6, 1)),
+          headWithDate('future-post', DateTime(2024, 6, 20)),
+        ];
+        final now = DateTime(2024, 6, 15);
+
+        expect(
+          UserScheduleService.upcomingSchedulePostIDs(user: user, eventHeads: heads, now: now),
+          ['future-post'],
+        );
+        expect(
+          UserScheduleService.recentPastSchedulePostIDs(user: user, eventHeads: heads, now: now),
+          ['past-post'],
+        );
+      });
+
+      test('sorts recent past most-recent first', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([
+            UserRoleAssignment(
+              postID: 'older',
+              roleID: 1,
+              start: DateTime(2024, 5, 20, 10),
+              end: DateTime(2024, 5, 20, 11),
+              title: 'Older',
+            ),
+            UserRoleAssignment(
+              postID: 'newer',
+              roleID: 2,
+              start: DateTime(2024, 6, 8, 10),
+              end: DateTime(2024, 6, 8, 11),
+              title: 'Newer',
+            ),
+          ]);
+        final heads = [
+          headWithDate('older', DateTime(2024, 5, 20)),
+          headWithDate('newer', DateTime(2024, 6, 8)),
+        ];
+        final now = DateTime(2024, 6, 15);
+
+        expect(
+          UserScheduleService.recentPastSchedulePostIDs(user: user, eventHeads: heads, now: now),
+          ['newer', 'older'],
         );
       });
     });
@@ -120,15 +197,16 @@ void main() {
         );
       });
     });
+
     group('upcomingRoles and upcomingPostCount', () {
-      test('upcomingRoles excludes stale assignments and respects limit', () {
+      test('upcomingRoles excludes past assignments and respects limit', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith')
           ..setRoles([
             UserRoleAssignment(
               postID: 'past-post',
               roleID: 1,
-              start: DateTime(2024, 1, 1, 10),
-              end: DateTime(2024, 1, 1, 11),
+              start: DateTime(2024, 6, 1, 10),
+              end: DateTime(2024, 6, 1, 11),
               title: 'Past',
             ),
             UserRoleAssignment(
@@ -146,7 +224,10 @@ void main() {
               title: 'Future 2',
             ),
           ]);
-        final heads = [headWithDate('past-post', DateTime(2024, 1, 1)), headWithDate('future-post', DateTime(2024, 6, 20))];
+        final heads = [
+          headWithDate('past-post', DateTime(2024, 6, 1)),
+          headWithDate('future-post', DateTime(2024, 6, 20)),
+        ];
         final now = DateTime(2024, 6, 15);
 
         expect(

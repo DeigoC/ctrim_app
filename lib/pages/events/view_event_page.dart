@@ -21,7 +21,9 @@ import '../../utility/notification_send_result.dart';
 import '../../utility/notification_topics.dart';
 import '../../utility/network_image_helper.dart';
 import '../../widgets/posts/event_log_dialog.dart';
+import '../../widgets/posts/post_edit_sheet.dart';
 import '../../widgets/posts/post_metadata_section.dart';
+import '../../widgets/posts/view_attendance_tab.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
@@ -31,7 +33,10 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
+import 'select_template_cover_page.dart';
 import 'send_broadcast_notification_page.dart';
+import 'view_meta_logs_page.dart';
+import '../personal/select_users_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class ViewEventPage extends StatefulWidget {
@@ -47,28 +52,59 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
 
   late final TabController _tabController;
   late final EventContext _eventContext;
-  late final List<Map<String, dynamic>> _originalHeadMedia;
-  late final String _originalTitle, _originalSubtitle, _currentUID;
-  late final DateTime? _originalEventDate;
+  late List<Map<String, dynamic>> _originalHeadMedia;
+  late String _originalTitle, _originalSubtitle;
+  late final String _currentUID;
+  late DateTime? _originalEventDate;
+  late String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
 
-  final List<Widget> _bodyTabs = List.empty(growable: true);
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
   ];
 
   bool _haveFetchedPost = false;
+  bool _allowPop = false;
+  bool _showScheduleTab = false;
+  bool _showMediaTab = false;
+  bool _showRelatedTab = false;
+  Object? _loadError;
+  String _loadStatusMessage = 'Checking saved copy…';
+  int _loadCompletedSteps = 0;
+  int _loadTotalSteps = 1;
+
+  int _aboutTabIndex = 0;
+  int _peopleTabIndex = 1;
+  int? _mediaTabIndex;
+
+  static const int _remoteFetchStepCount = 5;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
     Provider.of<AppContext>(context, listen: false).analytics.logScreenView(screenName: 'post-${widget.eventHead.id}');
     _currentUID = Provider.of<AppContext>(context, listen: false).currentUser.id;
 
-    _originalHeadMedia = List<Map<String, dynamic>>.from(widget.eventHead.media);
+    _captureOriginalHeadState();
+
+    super.initState();
+    _loadPost();
+  }
+
+  /// Deep-copies current head fields so discard-on-exit can restore last saved state.
+  void _captureOriginalHeadState() {
+    _originalHeadMedia = widget.eventHead.media.map((e) => Map<String, dynamic>.from(e)).toList();
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;
-
-    super.initState();
+    _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
+    _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
+    _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
   }
 
   @override
@@ -77,92 +113,164 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
       _tabController.dispose();
     }
 
-    // ! temporary fix for the issue below
+    // Discard unsaved in-memory edits on the shared AppContext head when leaving.
+    // After a successful save, [_captureOriginalHeadState] is refreshed so this
+    // reverts to the last saved Media/title — not the values from page open.
     if (_canSaveEditing) {
       widget.eventHead.resetMediaWithOriginal(_originalHeadMedia);
       widget.eventHead.setTitle(_originalTitle);
       widget.eventHead.setSubtitle(_originalSubtitle);
       widget.eventHead.setEventDate(_originalEventDate);
+      widget.eventHead.setLeadSpeaker(
+        uid: _originalLeadSpeakerUID,
+        imgSrc: _originalLeadSpeakerImgSrc,
+        name: _originalLeadSpeakerName,
+      );
+      if (_haveFetchedPost) {
+        if (_originalLeadSpeakerUID == null || _originalLeadSpeakerUID!.isEmpty) {
+          _eventContext.metadata.clearLeadSpeakerUID();
+        } else {
+          _eventContext.metadata.setLeadSpeakerUID(_originalLeadSpeakerUID);
+        }
+      }
     }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-        floatingActionButton: _buildSaveFAB(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        body: _haveFetchedPost ? _buildBodyWithData() : _buildCheckExistingPostBody());
+    return PopScope(
+      canPop: _allowPop || !_canSaveEditing,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || !_canSaveEditing) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
+        appBar: _haveFetchedPost
+            ? null
+            : AppBar(
+                title: Text(
+                  widget.eventHead.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+        body: _haveFetchedPost ? _buildBodyWithData() : _buildLoadingOrErrorBody(),
+      ),
+    );
   }
 
-  Widget _buildCheckExistingPostBody() {
-    return FutureBuilder(
-        future: _attemptToGetExistingPostData(),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
-          if (snap.hasData) {
-            // build with data, set the post context here
-            final List<String> data = snap.data!;
-
-            if (data.isNotEmpty) {
-              debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
-              _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data, currentUID: _currentUID);
-              _haveFetchedPost = true;
-
-              _figureOutTabs();
-              Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
-              _checkToUnbookForContributor();
-              result = _buildBodyWithData();
-            } else {
-              debugPrint('Fetching from DB for post ID: ${widget.eventHead.id}');
-              result = _buildFetchPostBody();
-            }
-          } else if (snap.hasError) {
-            result = Column(
+  Widget _buildLoadingOrErrorBody() {
+    if (_loadError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+                const SizedBox(height: 16),
                 Text(
-                  'Something went wrong with checking local data!\n\n${snap.error}',
+                  'Something went wrong loading this post.\n\n$_loadError',
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close Page'))
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close Page'),
+                ),
               ],
-            );
-          }
+            ),
+          ),
+        ),
+      );
+    }
 
-          return result;
-        });
+    final double? progress =
+        _loadTotalSteps > 0 ? (_loadCompletedSteps / _loadTotalSteps).clamp(0.0, 1.0) : null;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              LinearProgressIndicator(value: progress),
+              const SizedBox(height: 16),
+              Text(
+                _loadStatusMessage,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              if (_loadTotalSteps > 1) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '$_loadCompletedSteps of $_loadTotalSteps',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _buildFetchPostBody() {
-    return FutureBuilder(
-        future: _fetchEssentialPostData(),
-        builder: (_, snap) {
-          Widget result = const Center(child: CircularProgressIndicator());
+  void _updateLoadProgress({
+    required int completed,
+    required int total,
+    required String message,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      _loadCompletedSteps = completed;
+      _loadTotalSteps = total;
+      _loadStatusMessage = message;
+    });
+  }
 
-          if (snap.hasData) {
-            Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
-            _figureOutTabs();
-            _savePostDataToLocalStorage();
-            _haveFetchedPost = true;
-            _checkToUnbookForContributor();
-            result = _buildBodyWithData();
-          } else if (snap.hasError) {
-            debugPrint('Something with fetching the post ${snap.error}');
-            result = Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Something went wrong with fetching the post!\n\n${snap.error}', textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close Page'))
-                ]);
-          }
-          return result;
-        });
+  Future<void> _loadPost() async {
+    try {
+      _updateLoadProgress(completed: 0, total: 1, message: 'Checking saved copy…');
+      final List<String> data = await _attemptToGetExistingPostData();
+      if (!mounted) return;
+
+      if (data.isNotEmpty) {
+        debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
+        _eventContext = EventContext.viewing(eventHead: widget.eventHead, data: data, currentUID: _currentUID);
+        _figureOutTabs();
+        Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+        _checkToUnbookForContributor();
+        setState(() => _haveFetchedPost = true);
+        return;
+      }
+
+      debugPrint('Fetching from DB for post ID: ${widget.eventHead.id}');
+      await _fetchEssentialPostData();
+      if (!mounted) return;
+
+      Provider.of<AppContext>(context, listen: false).setMetadata(_eventContext.id, _eventContext.metadata);
+      _figureOutTabs();
+      _savePostDataToLocalStorage();
+      _checkToUnbookForContributor();
+      setState(() => _haveFetchedPost = true);
+    } catch (e, stack) {
+      debugPrint('Something went wrong loading the post: $e\n$stack');
+      if (!mounted) return;
+      setState(() => _loadError = e);
+    }
   }
 
   Widget _buildBodyWithData() {
@@ -194,13 +302,17 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
           backgroundColor: colorScheme.surface,
           surfaceTintColor: colorScheme.surfaceTint,
-          actions: _buildEditButton()),
+          actions: _buildAppBarActions()),
       SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         sliver: SliverList(
             delegate: SliverChildListDelegate([
           Padding(padding: const EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 8.0), child: _buildTitle()),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: metaChildren),
+          if (_canSaveEditing) ...[
+            const SizedBox(height: 8),
+            _buildUnsavedChangesBanner(theme, colorScheme),
+          ],
           const SizedBox(height: 8),
           TabBar(
               labelColor: colorScheme.primary,
@@ -212,6 +324,38 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         ])),
       )
     ];
+  }
+
+  Widget _buildUnsavedChangesBanner(ThemeData theme, ColorScheme colorScheme) {
+    return Material(
+      color: colorScheme.tertiaryContainer.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, size: 20, color: colorScheme.onTertiaryContainer),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'You have unsaved changes',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onTertiaryContainer,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _updateClick,
+              child: Text(
+                'Save',
+                style: TextStyle(color: colorScheme.onTertiaryContainer, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildBookmarkButton() {
@@ -260,38 +404,77 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   Widget _buildTabBody() {
-    return TabBarView(controller: _tabController, children: _bodyTabs);
+    // Build children each rebuild so edits (e.g. About body) aren't stuck on
+    // cached Widget instances that Flutter would short-circuit.
+    return TabBarView(controller: _tabController, children: _buildBodyTabChildren());
   }
 
-  List<Widget>? _buildEditButton() {
-    if (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID)) {
-      final colorScheme = Theme.of(context).colorScheme;
-      return [
-        FilledButton.tonalIcon(
-            onPressed: () => _showSettings(),
-            icon: const Icon(Icons.edit, size: 18),
-            label: const Text('Edit'),
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
-              foregroundColor: colorScheme.onPrimaryContainer,
-            )),
-        const SizedBox(width: 8)
-      ];
+  List<Widget> _buildBodyTabChildren() {
+    final tabs = <Widget>[
+      ViewPostBody(
+        key: ValueKey(_eventContext.encodedBody),
+        eventContext: _eventContext,
+        updateBody: _updateWholePostBody,
+        currentUID: _currentUID,
+      ),
+      ViewAttendanceTab(
+        eventContext: _eventContext,
+        onChanged: _updateWholePostBody,
+      ),
+    ];
+    if (_showScheduleTab) {
+      tabs.add(ViewAllPrograms(
+        eventContext: _eventContext,
+        onProgramChanged: _updateWholePostBody,
+      ));
     }
-    return null;
+    if (_showMediaTab) {
+      tabs.add(ViewEventMediaTab(eventContext: _eventContext, currentUID: _currentUID));
+    }
+    if (_showRelatedTab) {
+      tabs.add(ViewRelatedPostsTab(eventContext: _eventContext));
+    }
+    return tabs;
   }
 
-  Widget? _buildSaveFAB() {
-    if (_haveFetchedPost &&
-        (_eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID)) &&
-        _eventContext.canSaveTheEditing) {
-      return SizedBox(
-        width: MediaQuery.of(context).size.width * 0.7,
-        child: FloatingActionButton.extended(
-            onPressed: _updateClick, label: const Text('Save Changes'), icon: const Icon(Icons.save)),
+  List<Widget>? _buildAppBarActions() {
+    final bool canEdit =
+        _eventContext.isUserAuthor(_currentUID) || _eventContext.isUserContributor(_currentUID);
+    if (!canEdit) return null;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final actions = <Widget>[];
+
+    if (_canSaveEditing) {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: FilledButton.tonalIcon(
+            onPressed: _updateClick,
+            icon: const Icon(Icons.save, size: 18),
+            label: const Text('Save'),
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.tertiaryContainer,
+              foregroundColor: colorScheme.onTertiaryContainer,
+            ),
+          ),
+        ),
       );
     }
-    return null;
+
+    actions.addAll([
+      FilledButton.tonalIcon(
+        onPressed: _showSettings,
+        icon: const Icon(Icons.edit, size: 18),
+        label: const Text('Edit'),
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+          foregroundColor: colorScheme.onPrimaryContainer,
+        ),
+      ),
+      const SizedBox(width: 8),
+    ]);
+    return actions;
   }
 
   // * Logic
@@ -343,13 +526,26 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     }
   }
 
-  Future<bool> _fetchEssentialPostData() async {
+  Future<void> _fetchEssentialPostData() async {
     final EventSupplementalDBManager dbManager = EventSupplementalDBManager(widget.eventHead.id);
+    const total = _remoteFetchStepCount;
+
+    _updateLoadProgress(completed: 0, total: total, message: 'Loading media…');
     final media = await dbManager.fetchMedia();
+
+    _updateLoadProgress(completed: 1, total: total, message: 'Loading details…');
     final meta = await dbManager.fetchMetadata();
+
+    _updateLoadProgress(completed: 2, total: total, message: 'Loading schedule…');
     final program = await dbManager.fetchProgram();
+
+    _updateLoadProgress(completed: 3, total: total, message: 'Loading activity log…');
     final logs = await dbManager.fetchLog();
+
+    _updateLoadProgress(completed: 4, total: total, message: 'Loading post content…');
     final body = await dbManager.fetchBody();
+
+    _updateLoadProgress(completed: 5, total: total, message: 'Finishing…');
 
     _eventContext = EventContext.viewing(eventHead: widget.eventHead, currentUID: _currentUID);
     _eventContext.setFetchedMedia(media);
@@ -357,7 +553,6 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _eventContext.setFetchedProgram(program);
     _eventContext.setFetchedLogs(logs);
     _eventContext.setFetchedBody(body);
-    return true;
   }
 
   void _figureOutTabs() {
@@ -365,28 +560,35 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     final bool isContributor = _eventContext.metadata.contributorUIDs.contains(_currentUID);
     final bool isLeader = Provider.of<AppContext>(context, listen: false).currentUser.isLeader;
 
-    int length = 1;
-    _bodyTabs.add(ViewPostBody(
-      eventContext: _eventContext,
-      updateBody: _updateWholePostBody,
-      currentUID: _currentUID,
-    ));
+    _showScheduleTab = _eventContext.head.eventDate != null || isAuthor;
+    _showMediaTab = _eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor;
+    _showRelatedTab =
+        _eventContext.metadata.hasChildren || _eventContext.metadata.hasParent || isLeader;
 
-    if (_eventContext.head.eventDate != null || isAuthor) {
-      _bodyTabs.add(ViewAllPrograms(
-          // key: ValueKey(DateTime.now().millisecondsSinceEpoch),
-          eventContext: _eventContext,
-          onProgramChanged: _updateWholePostBody));
+    _appBarTabs
+      ..clear()
+      ..add(const Tab(icon: Icon(Icons.info_outline), text: 'About'));
+
+    int length = 0;
+    _aboutTabIndex = length;
+    length++;
+
+    _peopleTabIndex = length;
+    _appBarTabs.add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
+    length++;
+
+    if (_showScheduleTab) {
       _appBarTabs.add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
     }
-    if (_eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor) {
-      _bodyTabs.add(ViewEventMediaTab(eventContext: _eventContext, currentUID: _currentUID));
+
+    _mediaTabIndex = null;
+    if (_showMediaTab) {
+      _mediaTabIndex = length;
       _appBarTabs.add(const Tab(icon: Icon(Icons.photo_album), text: 'Media'));
       length++;
     }
-    if (_eventContext.metadata.hasChildren || _eventContext.metadata.hasParent || isLeader) {
-      _bodyTabs.add(ViewRelatedPostsTab(eventContext: _eventContext));
+    if (_showRelatedTab) {
       _appBarTabs.add(const Tab(icon: Icon(Icons.library_books), text: 'Related'));
       length++;
     }
@@ -425,95 +627,141 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             originalTitle: _originalTitle,
             topic: _topic,
             updatePage: () {
+              // Baseline for discard-on-exit must match what was just written to Firebase.
+              _captureOriginalHeadState();
               setState(() {});
             }));
   }
 
   void _showSettings() {
-    List<Widget> children = [
-      ListTile(
-        title: const Text('Edit About'),
-        leading: const Icon(Icons.edit),
-        onTap: _onEditBodyClick,
-      ),
-      ListTile(
-        title: const Text('Add Schedule'),
-        leading: const Icon(Icons.edit_calendar),
-        onTap: _onAddScheduleItem,
-      )
-    ];
-
-    children.add(ListTile(
-      title: const Text('Edit Media'),
-      leading: const Icon(Icons.photo_library),
-      onTap: _onEditMediaClick,
-    ));
-
-    if (Provider.of<AppContext>(context, listen: false).currentUser.isLeader) {
-      children.addAll([
-        const Divider(indent: 16, endIndent: 16),
-        ListTile(
-          title: const Text('Create Sibling Post'),
-          leading: const Icon(Icons.post_add),
-          onTap: () => _onAddPost(_eventContext.metadata.parentID!),
-        ),
-        ListTile(
-          title: const Text('Create Child Post'),
-          leading: const Icon(Icons.post_add),
-          onTap: () => _onAddPost(_eventContext.id),
-        ),
-        ListTile(
-          title: const Text('Bulk Create Related Posts'),
-          leading: const Icon(Icons.calendar_month),
-          onTap: _onBulkCreateRelatedPosts,
-        ),
-        const Divider(indent: 16, endIndent: 16),
-        ListTile(
-          title: const Text('Notify: Broadcast'),
-          leading: const Icon(Icons.notifications_active),
-          onTap: _notifyBroadcastClick,
-        ),
-        ListTile(
-          title: const Text('Notify: Scheduled Members'),
-          leading: const Icon(Icons.notifications_active),
-          onTap: _notifyScheduledMembersClick,
-        ),
-      ]);
-    }
-
+    final appContext = Provider.of<AppContext>(context, listen: false);
     showModalBottomSheet(
-        showDragHandle: true,
-        context: context,
-        builder: (_) => SingleChildScrollView(child: SafeArea(child: Column(children: children))));
+      showDragHandle: true,
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
+      builder: (_) => PostEditSheet(
+        isLeader: appContext.currentUser.isLeader,
+        hasParent: _eventContext.metadata.hasParent,
+        onEditAbout: _onEditBodyClick,
+        onEditTitle: _onEditTitleFromSheet,
+        onAddSchedule: _onAddScheduleItem,
+        onEditMedia: _onEditMediaClick,
+        onChangeCover: _onChangeCoverFromSheet,
+        onManageContributors: _onManageContributorsFromSheet,
+        onManageLeadSpeaker: _onManageLeadSpeakerFromSheet,
+        onOpenPeopleTab: _onOpenPeopleTabFromSheet,
+        onCreateSibling: () => _onAddPost(_eventContext.metadata.parentID!),
+        onCreateChild: () => _onAddPost(_eventContext.id),
+        onBulkCreate: _onBulkCreateRelatedPosts,
+        onNotifyBroadcast: _notifyBroadcastClick,
+        onNotifyScheduled: _notifyScheduledMembersClick,
+      ),
+    );
+  }
+
+  void _onEditTitleFromSheet() {
+    Navigator.of(context).pop();
+    _onTitleTap();
+  }
+
+  void _onManageContributorsFromSheet() {
+    Navigator.of(context).pop();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ViewMetaLogsPage(eventContext: _eventContext)),
+    ).then((_) => setState(() {}));
+  }
+
+  Future<void> _onManageLeadSpeakerFromSheet() async {
+    Navigator.of(context).pop();
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final currentUid = _eventContext.metadata.leadSpeakerUID ?? _eventContext.head.leadSpeakerUID;
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
+          includeCurrentUser: true,
+          maxSelection: 1,
+          title: 'Select lead speaker',
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    if (result.isEmpty) {
+      _eventContext.applyLeadSpeaker(uid: null);
+    } else {
+      final user = appContext.getUserFromID(result.first);
+      _eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+    }
+    _eventContext.allowSavingOfTheEdit();
+    setState(() {});
+  }
+
+  void _onOpenPeopleTabFromSheet() {
+    Navigator.of(context).pop();
+    _tabController.animateTo(_peopleTabIndex);
   }
 
   void _onEditBodyClick() {
     Navigator.of(context).pop();
-    _tabController.animateTo(1);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: _eventContext))).then((_) {
       setState(() {});
-      _tabController.animateTo(0);
+      _tabController.animateTo(_aboutTabIndex);
     });
   }
 
   void _onAddScheduleItem() {
     Navigator.of(context).pop();
-    // _tabController.animateTo(2);
     Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: _eventContext)))
         .then((_) {
       setState(() {});
       _eventContext.program.orderProgramsByStartTime();
-      // _tabController.animateTo(1);
     });
   }
 
   void _onEditMediaClick() {
     Navigator.of(context).pop();
-    _tabController.animateTo(0);
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: _eventContext))).then((_) {
       setState(() {});
-      _tabController.animateTo(2);
+      final mediaIndex = _mediaTabIndex;
+      if (mediaIndex != null) {
+        _tabController.animateTo(mediaIndex);
+      } else {
+        _tabController.animateTo(_aboutTabIndex);
+      }
     });
+  }
+
+  Future<void> _onChangeCoverFromSheet() async {
+    Navigator.of(context).pop();
+    final selected = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectTemplateCoverPage(
+          preferredTitle: _eventContext.head.title,
+          preferredLocation: _eventContext.head.location,
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    setState(() {
+      _eventContext.head.replaceKeyGraphic(
+        type: selected['type'] ?? 'img',
+        src: selected['src'] ?? '',
+        title: selected['title'] ?? '',
+        thumbnail: selected['thumbnailSrc'] ?? '',
+      );
+      _eventContext.allowSavingOfTheEdit();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cover updated — save the post to keep the change')),
+    );
   }
 
   void _onAddPost(final String parentID) {
@@ -614,6 +862,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   }
 
   void _notifyScheduledMembersClick() {
+    Navigator.of(context).pop();
     DialogManager.showConfirmationDialog(
             context: context,
             title: 'Notify Scheduled Members',

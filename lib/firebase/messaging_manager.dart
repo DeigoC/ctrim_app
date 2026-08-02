@@ -24,11 +24,13 @@ class MessagingManager {
         sound: true,
       );
 
-      NotificationDebug.log('permission status: ${settings.authorizationStatus}');
+      NotificationDebug.log(
+          'permission status: ${settings.authorizationStatus}');
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
-        final token = await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+        final token =
+            await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
         if (kIsWeb && token != null && authId != null && authId.isNotEmpty) {
           await registerWebToken(token: token, authId: authId);
         }
@@ -45,7 +47,8 @@ class MessagingManager {
 
   Future<String?> getToken({String? authId}) async {
     try {
-      final token = await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+      final token =
+          await _instance.getToken(vapidKey: kIsWeb ? _vapidKey : null);
       if (kIsWeb && token != null && authId != null && authId.isNotEmpty) {
         await registerWebToken(token: token, authId: authId);
       }
@@ -57,23 +60,33 @@ class MessagingManager {
   }
 
   /// Persist web token with auth metadata (replaces legacy flat array-only storage).
-  Future<void> registerWebToken({required String token, required String authId}) async {
+  Future<void> registerWebToken(
+      {required String token, required String authId}) async {
     if (!kIsWeb) return;
 
     try {
-      final docRef = _firestore.collection('notification_tokens').doc(_webTokensDoc);
+      final docRef =
+          _firestore.collection('notification_tokens').doc(_webTokensDoc);
       final doc = await docRef.get();
       final existing = _parseTokenEntries(doc.data());
 
       final staleDeletes = <String, dynamic>{};
+      final staleTokens = <String>[];
       for (final entry in existing.entries) {
         if (entry.value['authId'] == authId && entry.key != token) {
           staleDeletes[entry.key] = FieldValue.delete();
+          staleTokens.add(entry.key);
         }
       }
 
       if (staleDeletes.isNotEmpty) {
         await docRef.set({'entries': staleDeletes}, SetOptions(merge: true));
+        for (final stale in staleTokens) {
+          await _removeTokenFromAllWebTopics(stale);
+        }
+        NotificationDebug.log(
+          'Pruned ${staleTokens.length} stale web token(s) for authId=$authId',
+        );
       }
 
       await docRef.set(
@@ -101,7 +114,10 @@ class MessagingManager {
     if (!kIsWeb) return;
 
     try {
-      await _firestore.collection('notification_tokens').doc(_webTokensDoc).set({
+      await _firestore
+          .collection('notification_tokens')
+          .doc(_webTokensDoc)
+          .set({
         'entries': {token: FieldValue.delete()},
       }, SetOptions(merge: true));
 
@@ -114,7 +130,10 @@ class MessagingManager {
 
   Future<void> _removeTokenFromAllWebTopics(String token) async {
     try {
-      final doc = await _firestore.collection('notification_tokens').doc(_webTopicsDoc).get();
+      final doc = await _firestore
+          .collection('notification_tokens')
+          .doc(_webTopicsDoc)
+          .get();
       if (!doc.exists || doc.data() == null) return;
 
       final updates = <String, dynamic>{};
@@ -125,57 +144,76 @@ class MessagingManager {
       }
 
       if (updates.isNotEmpty) {
-        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).update(updates);
+        await _firestore
+            .collection('notification_tokens')
+            .doc(_webTopicsDoc)
+            .update(updates);
       }
     } catch (e) {
       NotificationDebug.warn('Could not remove token from web_topics: $e');
     }
   }
 
-  Future<void> subscribeToTopic(final String topic, {String? authId}) async {
+  /// Returns `true` when the subscribe succeeded; `false` on missing token or error.
+  Future<bool> subscribeToTopic(final String topic, {String? authId}) async {
     if (kIsWeb) {
       final token = await getToken(authId: authId);
-      if (token == null) return;
+      if (token == null) return false;
 
       try {
-        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).set({
+        await _firestore
+            .collection('notification_tokens')
+            .doc(_webTopicsDoc)
+            .set({
           topic: FieldValue.arrayUnion([token]),
         }, SetOptions(merge: true));
-        NotificationDebug.log('Web subscribed to topic "$topic" (Firestore web_topics)');
+        NotificationDebug.log(
+            'Web subscribed to topic "$topic" (Firestore web_topics)');
+        return true;
       } catch (e) {
         NotificationDebug.error('Error subscribing to web topic', e);
+        return false;
       }
-      return;
     }
 
     try {
       await _instance.subscribeToTopic(topic);
       NotificationDebug.log('Subscribed to FCM topic: $topic');
+      return true;
     } catch (e) {
       NotificationDebug.error('Error subscribing to topic', e);
+      return false;
     }
   }
 
-  Future<void> unsubscribeFromTopic(final String topic, {String? authId}) async {
+  /// Returns `true` when the unsubscribe succeeded; `false` on missing token or error.
+  Future<bool> unsubscribeFromTopic(final String topic,
+      {String? authId}) async {
     if (kIsWeb) {
       final token = await _instance.getToken(vapidKey: _vapidKey);
-      if (token == null) return;
+      if (token == null) return false;
 
       try {
-        await _firestore.collection('notification_tokens').doc(_webTopicsDoc).set({
+        await _firestore
+            .collection('notification_tokens')
+            .doc(_webTopicsDoc)
+            .set({
           topic: FieldValue.arrayRemove([token]),
         }, SetOptions(merge: true));
         NotificationDebug.log('Web unsubscribed from topic "$topic"');
+        return true;
       } catch (e) {
         NotificationDebug.error('Error unsubscribing from web topic', e);
+        return false;
       }
-      return;
     }
 
     try {
       await _instance.unsubscribeFromTopic(topic);
+      return true;
     } catch (e) {
       NotificationDebug.error('Error unsubscribing from topic', e);
+      return false;
     }
   }
 
@@ -208,7 +246,8 @@ class MessagingManager {
     }
   }
 
-  void listenForTokenRefresh({required String authId, required void Function(String) onRefreshed}) {
+  void listenForTokenRefresh(
+      {required String authId, required void Function(String) onRefreshed}) {
     _instance.onTokenRefresh.listen((newToken) async {
       NotificationDebug.section('onTokenRefresh');
       NotificationDebug.token('new token', newToken);
@@ -223,7 +262,10 @@ class MessagingManager {
 
   static Future<List<String>> getWebTokensForTopic(String topic) async {
     try {
-      final topicDoc = await _firestore.collection('notification_tokens').doc(_webTopicsDoc).get();
+      final topicDoc = await _firestore
+          .collection('notification_tokens')
+          .doc(_webTopicsDoc)
+          .get();
       final topicTokens = <String>{};
 
       if (topicDoc.exists && topicDoc.data() != null) {
@@ -241,7 +283,10 @@ class MessagingManager {
 
   static Future<List<String>> getWebTokensForAuthId(String authId) async {
     try {
-      final doc = await _firestore.collection('notification_tokens').doc(_webTokensDoc).get();
+      final doc = await _firestore
+          .collection('notification_tokens')
+          .doc(_webTokensDoc)
+          .get();
       final entries = _parseTokenEntries(doc.data());
       final tokens = _oneLatestTokenPerAuthId(entries, authId: authId);
       return tokens;
@@ -251,7 +296,8 @@ class MessagingManager {
     }
   }
 
-  static Map<String, Map<String, dynamic>> _parseTokenEntries(Map<String, dynamic>? data) {
+  static Map<String, Map<String, dynamic>> _parseTokenEntries(
+      Map<String, dynamic>? data) {
     if (data == null) return {};
 
     final parsed = <String, Map<String, dynamic>>{};
@@ -260,7 +306,8 @@ class MessagingManager {
     if (nested is Map) {
       for (final entry in nested.entries) {
         if (entry.value is Map) {
-          parsed[entry.key.toString()] = Map<String, dynamic>.from(entry.value as Map);
+          parsed[entry.key.toString()] =
+              Map<String, dynamic>.from(entry.value as Map);
         }
       }
     }
@@ -287,8 +334,9 @@ class MessagingManager {
 
       for (final entry in entries.entries) {
         if (entry.value['authId'] != authId) continue;
-        final lastActive = (entry.value['lastActive'] as Timestamp?)?.toDate() ??
-            DateTime.fromMillisecondsSinceEpoch(0);
+        final lastActive =
+            (entry.value['lastActive'] as Timestamp?)?.toDate() ??
+                DateTime.fromMillisecondsSinceEpoch(0);
         if (bestToken == null || lastActive.isAfter(bestActive)) {
           bestToken = entry.key;
           bestActive = lastActive;

@@ -4,8 +4,9 @@ import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/local_data_manager.dart';
 import 'package:ctrim_app/utility/network_image_helper.dart';
+import 'package:ctrim_app/utility/responsive_layout.dart';
+import 'package:ctrim_app/widgets/posts/template_edit_sheet.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../utility/app_context.dart';
@@ -13,9 +14,12 @@ import '../../../widgets/posts/add_header_meta_tab_body.dart';
 import '../../../widgets/posts/view_all_programs.dart';
 import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
+import '../../../widgets/posts/template_log_dialog.dart';
+import '../add_media_file_page.dart';
 import '../add_program_role_page.dart';
 import '../edit_body_page.dart';
 import '../edit_gallery_page.dart';
+import 'view_template_logs_page.dart';
 
 class EditTemplatePage extends StatefulWidget {
   const EditTemplatePage({super.key, required this.eventContext, required this.oldTemplate});
@@ -33,6 +37,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   late final List<String> _subtitles;
   int? _defaultDayOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
+
+  static const int _aboutTabIndex = 1;
+  static const int _scheduleTabIndex = 2;
+  static const int _mediaTabIndex = 3;
 
   @override
   void initState() {
@@ -61,11 +69,17 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   }
 
   Widget _buildBody() {
+    final double webHorizontalPadding =
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
-          return _buildHeaderSliver();
+          return _buildHeaderSliver(webHorizontalPadding);
         },
-        body: _buildTabBody());
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          child: _buildTabBody(),
+        ));
   }
 
   Widget _buildTabBody() {
@@ -81,7 +95,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   Widget _buildMediaTab() {
     return Column(
       children: [
-        _buildBodyMediaPoolEditor(),
+        _buildCoverMediaPoolEditor(),
         Expanded(child: ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)),
       ],
     );
@@ -101,8 +115,6 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         _buildSubtitleListEditor(),
         const Divider(height: 32),
         _buildDayOfWeekPicker(),
-        const SizedBox(height: 16),
-        _buildHeadMediaPoolEditor(),
         const SizedBox(height: 16),
       ],
     );
@@ -345,10 +357,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  // * Head Media Pool Editor
+  // * Cover Image Pool (stored as BodyMediaPool)
 
-  Widget _buildHeadMediaPoolEditor() {
+  Widget _buildCoverMediaPoolEditor() {
     return Card(
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -360,73 +373,15 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 const Icon(Icons.image_outlined, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Template Head Media Pool',
+                  'Cover Image Pool',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Add multiple cover images that can be randomly or manually selected when creating posts from this template.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            if (_headMediaPool.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Center(
-                  child: Text(
-                    'No head media items added yet',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ),
-              )
-            else
-              ..._headMediaPool.asMap().entries.map((entry) => _buildPoolMediaItem(
-                    entry.value,
-                    onDelete: () => setState(() => _headMediaPool.removeAt(entry.key)),
-                  )),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _onAddMediaPoolItem(isHead: true),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Media Item'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // * Body Media Pool Editor
-
-  Widget _buildBodyMediaPoolEditor() {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.photo_library_outlined, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Template Body Media Pool',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add media items that can be randomly or manually added to the gallery when creating posts from this template.',
+              'Add cover images that are randomly or manually picked as the post key graphic when creating posts '
+              '(including bulk create). URLs are tested first; Google Drive share links are converted automatically.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -438,7 +393,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
                   child: Text(
-                    'No body media items added yet',
+                    'No cover images added yet',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -452,9 +407,9 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                   )),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => _onAddMediaPoolItem(isHead: false),
+              onPressed: _onAddCoverPoolItem,
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Media Item'),
+              label: const Text('Add Cover Image'),
             ),
           ],
         ),
@@ -506,7 +461,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final displaySrc = isVideo ? thumbnailSrc : src;
     if (displaySrc != null && displaySrc.isNotEmpty) {
       return Image.network(
-        displaySrc,
+        NetworkImageHelper.getImageUrl(displaySrc),
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _poolItemFallbackIcon(isVideo),
       );
@@ -524,179 +479,121 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  void _onAddMediaPoolItem({required bool isHead}) {
-    final srcController = TextEditingController();
-    final thumbnailController = TextEditingController();
-    final titleController = TextEditingController();
-    String selectedType = 'img';
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text(isHead ? 'Add Head Media Item' : 'Add Body Media Item'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: srcController,
-                  decoration: const InputDecoration(
-                    labelText: 'Media URL',
-                    hintText: 'https://...',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title (optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLength: 64,
-                ),
-                const SizedBox(height: 4),
-                Text('Type', style: Theme.of(context).textTheme.labelMedium),
-                RadioGroup<String>(
-                  groupValue: selectedType,
-                  onChanged: (value) {
-                    if (value != null) {
-                      setDialogState(() => selectedType = value);
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      const Radio<String>(value: 'img'),
-                      const Text('Image'),
-                      const SizedBox(width: 16),
-                      const Radio<String>(value: 'vid'),
-                      const Text('Video'),
-                    ],
-                  ),
-                ),
-                if (selectedType == 'vid') ...[
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: thumbnailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Thumbnail URL (optional)',
-                      hintText: 'https://...',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.url,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final src = srcController.text.trim();
-                if (src.isEmpty) return;
-                final item = {
-                  'src': src,
-                  'type': selectedType,
-                  'title': titleController.text.trim(),
-                  'thumbnailSrc': thumbnailController.text.trim(),
-                };
-                setState(() {
-                  if (isHead) {
-                    _headMediaPool.add(item);
-                  } else {
-                    _bodyMediaPool.add(item);
-                  }
-                });
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Add'),
-            ),
-          ],
+  Future<void> _onAddCoverPoolItem() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddMediaFilePage(
+          eventContext: widget.eventContext,
+          returnResultOnly: true,
         ),
       ),
     );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _bodyMediaPool.add({
+        'src': result['src'] ?? '',
+        'type': result['type'] ?? 'img',
+        'title': result['title'] ?? '',
+        'thumbnailSrc': result['thumbnailSrc'] ?? '',
+      });
+    });
   }
 
-  List<Widget> _buildHeaderSliver() {
-    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+  List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasKeyGraphic = widget.eventContext.head.getKeyGraphic() != null;
 
     return [
       SliverAppBar(
-        expandedHeight: MediaQuery.of(context).size.height * 0.33,
+        expandedHeight: hasKeyGraphic ? MediaQuery.of(context).size.height * 0.33 : null,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        title: Text(
+          widget.oldTemplate.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
-          ElevatedButton.icon(
-              onPressed: () => _showSettings(),
-              icon: const Icon(Icons.more_horiz, color: Colors.white),
-              label: const Text('Edit', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withValues(alpha: 0.55))),
-          const SizedBox(width: 8)
+          IconButton(
+            tooltip: 'Change history',
+            onPressed: _openChangeHistory,
+            icon: const Icon(Icons.history),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: FilledButton.tonalIcon(
+              onPressed: () => _onSavePostTemplateClick(fromSheet: false),
+              icon: const Icon(Icons.save, size: 18),
+              label: const Text('Save'),
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.tertiaryContainer,
+                foregroundColor: colorScheme.onTertiaryContainer,
+              ),
+            ),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: _showSettings,
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Edit'),
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+              foregroundColor: colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       SliverPadding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 0),
-          sliver: SliverList(
-              delegate: SliverChildListDelegate([
+        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
+        sliver: SliverList(
+          delegate: SliverChildListDelegate([
             TabBar(
-              labelColor: onDark ? Colors.white : Colors.black,
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              indicatorColor: colorScheme.primary,
+              indicatorWeight: 3,
               controller: _tabController,
               tabs: const [
                 Tab(icon: Icon(Icons.info_outline), text: 'Header'),
-                Tab(icon: Icon(Icons.note), text: 'Info'),
+                Tab(icon: Icon(Icons.article_outlined), text: 'About'),
                 Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'),
-                Tab(icon: Icon(Icons.photo_album), text: 'Media')
+                Tab(icon: Icon(Icons.photo_album), text: 'Media'),
               ],
-            )
-          ])))
+            ),
+          ]),
+        ),
+      ),
     ];
   }
 
   Widget? _buildAppBarBackground() {
-    // * If there are no images, we should just remove the expanded height
-    if (widget.eventContext.head.getKeyGraphic() == null) {
-      return null;
-    }
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        Positioned.fill(
-            child: Image.network(NetworkImageHelper.getImageUrl(widget.eventContext.head.getKeyGraphic()!),
-                fit: BoxFit.cover))
-      ],
+    final keyGraphic = widget.eventContext.head.getKeyGraphic();
+    if (keyGraphic == null) return null;
+    return Image.network(
+      NetworkImageHelper.getImageUrl(keyGraphic),
+      fit: BoxFit.cover,
     );
   }
 
-  // * LOGIC
-
   void _showSettings() {
     showModalBottomSheet(
-        showDragHandle: true,
-        context: context,
-        builder: (_) => SingleChildScrollView(
-                child: SafeArea(
-                    child: Column(children: [
-              ListTile(title: const Text('Edit About'), leading: const Icon(Icons.edit), onTap: _onEditBodyClick),
-              ListTile(
-                title: const Text('Add Schedule Item'),
-                leading: const Icon(Icons.edit_calendar),
-                onTap: _onAddScheduleItem,
-              ),
-              ListTile(
-                  title: const Text('Edit Media Items'),
-                  leading: const Icon(Icons.photo_library),
-                  onTap: _onEditMediaTap),
-              ListTile(
-                  title: const Text('Save Post Template'),
-                  leading: const Icon(Icons.save_rounded),
-                  onTap: _onSavePostTemplateClick),
-            ]))));
+      showDragHandle: true,
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      ),
+      builder: (_) => TemplateEditSheet(
+        onEditAbout: _onEditBodyClick,
+        onAddSchedule: _onAddScheduleItem,
+        onEditMedia: _onEditMediaTap,
+        onSave: () => _onSavePostTemplateClick(fromSheet: true),
+      ),
+    );
   }
 
   void _onEditBodyClick() {
@@ -704,6 +601,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {});
+      _tabController.animateTo(_aboutTabIndex);
     });
   }
 
@@ -713,7 +611,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
       setState(() {});
-    }).then((_) {});
+      _tabController.animateTo(_scheduleTabIndex);
+    });
   }
 
   void _onEditMediaTap() {
@@ -721,37 +620,49 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
         .then((_) {
       setState(() {});
+      _tabController.animateTo(_mediaTabIndex);
     });
   }
 
   void _updateBody() {
     setState(() {});
-    // _onRequiredFieldTextChange('');
   }
 
-  void _onSavePostTemplateClick() async {
-    final confirm = await DialogManager.showConfirmationDialog(
-        context: context, title: 'Save Post Template', content: 'Do you wish to save the template as is?');
-    if (!confirm || !mounted) return;
+  void _openChangeHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ViewTemplateLogsPage(template: widget.oldTemplate)),
+    );
+  }
 
-    DialogManager.showProgressDialog(context: context, title: 'Saving PostTemplate');
-    try {
-      await _performTemplateSave();
-      if (!mounted) return;
-      // pop progress dialog. pop the settings. pop the page
+  void _onSavePostTemplateClick({required bool fromSheet}) async {
+    if (fromSheet && mounted) {
       Navigator.of(context).pop();
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-    } catch (e) {
-      debugPrint('Error saving template: $e');
-      if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss progress dialog
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to save template: $e'), behavior: SnackBarBehavior.floating));
     }
+
+    final String? logMessage = await showDialog<String>(
+      context: context,
+      builder: (_) => const TemplateLogDialog(),
+    );
+    if (logMessage == null || !mounted) return;
+
+    final saved = await DialogManager.runWithSteppedProgressDialog(
+      context: context,
+      title: 'Saving template',
+      initialMessage: 'Preparing template…',
+      errorTitle: 'Could not save template',
+      action: (onProgress) => _performTemplateSave(onProgress, logMessage: logMessage),
+    );
+    if (!mounted || !saved) return;
+    Navigator.of(context).pop();
   }
 
-  Future<void> _performTemplateSave() async {
+  Future<void> _performTemplateSave(
+    LoadProgressReporter onProgress, {
+    required String logMessage,
+  }) async {
+    const total = 3;
+    onProgress(completed: 0, total: total, message: 'Preparing template…');
     debugPrint('---- begin converting to post template');
     // Convert to PostTemplate again
     dynamic startTime = widget.eventContext.head.eventDate;
@@ -770,7 +681,9 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'Body': widget.eventContext.encodedBody,
       'Location': widget.eventContext.head.location,
       'Topics': widget.oldTemplate.topics,
+      'TagIDs': widget.eventContext.head.tagIDs,
       'Contributors': widget.eventContext.metadata.contributorUIDs,
+      'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
       'Subtitles': _subtitles,
       'AllDay': widget.eventContext.program.allDay,
       'Online': widget.eventContext.program.online,
@@ -784,19 +697,27 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'BodyMediaPool': _bodyMediaPool,
       'Roles': _rolesToJson(),
       'DefaultDayOfWeek': _defaultDayOfWeek,
+      'Logs': widget.oldTemplate.toJson(true)['Logs'],
     };
     final PostTemplate updatedTemplate = PostTemplate.fromMap(true, widget.eventContext.id, templateData);
+    updatedTemplate.addLog(
+      log: logMessage,
+      uid: _appContext.currentUser.id,
+      ts: DateTime.now(),
+    );
 
     // Save to DB
+    onProgress(completed: 1, total: total, message: 'Saving to cloud…');
     debugPrint('---- begin saving template ID (${updatedTemplate.id}) to DB');
     final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    await postTemplateDBManager.updateTemplate(updatedTemplate);
+    final int lastUpdate = await postTemplateDBManager.updateTemplate(updatedTemplate);
 
-    // Save Locally
+    // Upsert locally — do not clear the whole box (would wipe other templates).
+    onProgress(completed: 2, total: total, message: 'Updating local copy…');
     debugPrint('---- begin saving locally');
     final LocalDataManager localDataManager = LocalDataManager();
-    localDataManager.clearPostTemplateDir();
     await localDataManager.writePostTemplateData(updatedTemplate);
+    await localDataManager.writeLastPostTemplateUpdate(lastUpdate);
     debugPrint('---- FINISHED UPDATING POST TEMPLATE');
   }
 

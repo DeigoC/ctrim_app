@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctrim_app/models/info/testimonial_into.dart';
+import 'package:ctrim_app/models/info/testimonial_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

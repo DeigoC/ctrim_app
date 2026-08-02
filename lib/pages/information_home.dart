@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/info/church_info.dart';
 import '../models/info/ctrim_info.dart';
-import '../models/info/testimonial_into.dart';
+import '../models/info/testimonial_info.dart';
 import '../utility/info_repository.dart';
 import '../utility/responsive_layout.dart';
 import 'information/about_tab.dart';

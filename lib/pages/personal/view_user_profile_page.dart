@@ -9,6 +9,7 @@ import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/user_tag_helpers.dart';
+import '../../widgets/load_progress_body.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_chip.dart';
 import 'edit_user_page.dart';
@@ -35,6 +36,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   static final DateFormat _timeFormat = DateFormat('HH:mm');
 
   bool _loading = true;
+  Object? _loadError;
+  String _statusMessage = 'Loading profile…';
+  int _completedSteps = 0;
+  int _totalSteps = 2;
 
   @override
   void initState() {
@@ -44,15 +49,43 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   }
 
   Future<void> _loadProfileData() async {
-    if (widget.selectedUser.roles == null) {
-      widget.selectedUser.setRoles(await _scheduleService.fetchRoles(widget.selectedUser.id));
+    setState(() {
+      _loading = true;
+      _loadError = null;
+      _statusMessage = 'Fetching schedule…';
+      _completedSteps = 0;
+      _totalSteps = 2;
+    });
+
+    try {
+      if (widget.selectedUser.roles == null) {
+        widget.selectedUser.setRoles(await _scheduleService.fetchRoles(widget.selectedUser.id));
+      }
+      if (!mounted) return;
+
+      setState(() {
+        _completedSteps = 1;
+        _statusMessage = 'Updating schedule…';
+      });
+
+      await _scheduleService.pruneStaleRoles(
+        user: widget.selectedUser,
+        eventHeads: _appContext.eventHeads,
+      );
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _completedSteps = 2;
+        _statusMessage = 'Done';
+      });
+    } catch (e, st) {
+      debugPrint('Error loading profile: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e;
+      });
     }
-    await _scheduleService.pruneStaleRoles(
-      user: widget.selectedUser,
-      eventHeads: _appContext.eventHeads,
-    );
-    if (!mounted) return;
-    setState(() => _loading = false);
   }
 
   @override
@@ -74,8 +107,15 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
+      body: (_loading || _loadError != null)
+          ? LoadProgressBody(
+              message: _statusMessage,
+              completedSteps: _completedSteps,
+              totalSteps: _totalSteps,
+              error: _loadError,
+              errorTitle: 'Could not load profile',
+              onRetry: _loadProfileData,
+            )
           : _buildBody(context, l10n, theme, colorScheme),
     );
   }
@@ -224,7 +264,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ViewUserRolesPage(selectedUser: widget.selectedUser),
+        builder: (_) => ViewUserRolesPage(
+          selectedUser: widget.selectedUser,
+          allowPostView: true,
+        ),
       ),
     );
   }

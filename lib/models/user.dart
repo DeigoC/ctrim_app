@@ -38,7 +38,7 @@ class User {
         _location = data['Location'],
         _isAreaAdmin = data['IsAreaAdmin'],
         _isLeader = data['IsLeader'],
-        _authID = data['AuthID'],
+        _authID = (data['AuthID'] as String?) ?? '',
         _imgSrc = data['ImgSrc'],
         _tagIDs = _parseTagIDs(data['Tags']);
 
@@ -61,6 +61,7 @@ class User {
   }
 
   void setImgSrc(final String newImgSrc) => _imgSrc = newImgSrc;
+  void setLocation(final String location) => _location = location;
   void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
 
   void setRoles(final List<UserRoleAssignment> newRoles) => _roles = newRoles;

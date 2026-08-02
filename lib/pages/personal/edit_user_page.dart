@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
+import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/user_auth_link.dart';
+import '../../utility/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_picker.dart';
 import '../../utility/responsive_layout.dart';
@@ -25,46 +28,53 @@ class EditUserPage extends StatefulWidget {
 
 class _EditUserPageState extends State<EditUserPage> {
   final UserDBManager _userDBManager = UserDBManager();
+  final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
+  final UserAuthLinkService _authLinkService = UserAuthLinkService();
   final RegExp _driveRegExp = RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
 
   late final TextEditingController _tecForename;
   late final TextEditingController _tecSurname;
-  late final TextEditingController _tecLocation;
   late final TextEditingController _tecImgSrc;
 
   late bool _isAreaAdmin;
   late bool _isLeader;
   late String _src;
+  late String _authID;
+  late String _currentLocation;
   late Set<String> _selectedTagIDs;
   bool _testing = false;
   bool _canSave = false;
   bool _hasChanges = false;
   bool _imageValidated = true;
+  bool _authLinkChanged = false;
+
+  Future<String?>? _emailFuture;
 
   @override
   void initState() {
     super.initState();
     _tecForename = TextEditingController(text: widget.user.forname);
     _tecSurname = TextEditingController(text: widget.user.surname);
-    _tecLocation = TextEditingController(text: widget.user.location);
     _tecImgSrc = TextEditingController(text: widget.user.imgSrc);
 
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _src = widget.user.imgSrc;
+    _authID = widget.user.authID;
+    _currentLocation = widget.user.location;
     _selectedTagIDs = Set<String>.from(widget.user.tagIDs);
 
     _tecForename.addListener(_updateChangeState);
     _tecSurname.addListener(_updateChangeState);
-    _tecLocation.addListener(_updateChangeState);
     _tecImgSrc.addListener(_updateChangeState);
+
+    _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
   }
 
   @override
   void dispose() {
     _tecForename.dispose();
     _tecSurname.dispose();
-    _tecLocation.dispose();
     _tecImgSrc.dispose();
     super.dispose();
   }
@@ -73,13 +83,13 @@ class _EditUserPageState extends State<EditUserPage> {
     final sanitizedImg = _sanitiseSrc();
     final hasTextChanges = _tecForename.text != widget.user.forname ||
         _tecSurname.text != widget.user.surname ||
-        _tecLocation.text != widget.user.location;
+        _currentLocation != widget.user.location;
     final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin || _isLeader != widget.user.isLeader;
     final hasTagChanges = !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
     final requiredFieldsFilled = _tecForename.text.trim().isNotEmpty &&
         _tecSurname.text.trim().isNotEmpty &&
-        _tecLocation.text.trim().isNotEmpty;
+        _currentLocation.trim().isNotEmpty;
 
     if (!hasImgFieldChange) {
       _imageValidated = true;
@@ -100,12 +110,19 @@ class _EditUserPageState extends State<EditUserPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit User'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).pop(_authLinkChanged || result == true);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit User'),
+        ),
+        body: _buildBody(),
+        bottomNavigationBar: _buildSaveBar(),
       ),
-      body: _buildBody(),
-      bottomNavigationBar: _buildSaveBar(),
     );
   }
 
@@ -124,6 +141,70 @@ class _EditUserPageState extends State<EditUserPage> {
           label: const Text('Save Changes'),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return FutureBuilder<String?>(
+      future: _emailFuture,
+      builder: (context, snap) {
+        final colorScheme = Theme.of(context).colorScheme;
+        String display;
+        if (snap.connectionState == ConnectionState.waiting) {
+          display = 'Loading…';
+        } else if (snap.hasError) {
+          display = 'Unable to load email';
+        } else if (snap.data == null || snap.data!.isEmpty) {
+          display = _authID.isEmpty ? 'No account linked' : 'No email on file';
+        } else {
+          display = snap.data!;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.email_outlined),
+                helperText: _authID.isEmpty
+                    ? 'No login linked — use Link account after they register'
+                    : 'Linked account — reassign if they registered with a new email',
+                helperMaxLines: 2,
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              ),
+              child: Text(
+                display,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: snap.hasData && snap.data != null && snap.data!.isNotEmpty
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _onLinkAccountClick,
+                  icon: Icon(_authID.isEmpty ? Icons.link : Icons.swap_horiz),
+                  label: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
+                ),
+                if (_authID.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: _onUnlinkAccountClick,
+                    icon: const Icon(Icons.link_off),
+                    label: const Text('Unlink'),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -232,12 +313,25 @@ class _EditUserPageState extends State<EditUserPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _tecLocation,
+                  _buildEmailField(),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _locationDropdownValue(context),
                     decoration: const InputDecoration(
                       labelText: 'Location*',
                       border: OutlineInputBorder(),
                     ),
+                    items: _locationOptions(context)
+                        .map((location) => DropdownMenuItem<String>(
+                              value: location,
+                              child: Text(location),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _currentLocation = value);
+                      _updateChangeState();
+                    },
                   ),
                 ],
               ),
@@ -315,7 +409,7 @@ class _EditUserPageState extends State<EditUserPage> {
                   ),
                   ListTile(
                     title: const Text('Auth ID'),
-                    subtitle: Text(widget.user.authID),
+                    subtitle: Text(_authID.isEmpty ? '(none — placeholder)' : _authID),
                     dense: true,
                   ),
                 ],
@@ -328,6 +422,160 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   // * Logic
+
+  User _userSnapshot({String? authID}) {
+    return User(
+      id: widget.user.id,
+      forname: _tecForename.text.trim().isEmpty ? widget.user.forname : _tecForename.text.trim(),
+      surname: _tecSurname.text.trim().isEmpty ? widget.user.surname : _tecSurname.text.trim(),
+      imgSrc: _src,
+      location: _currentLocation.trim().isEmpty ? widget.user.location : _currentLocation.trim(),
+      isAreaAdmin: _isAreaAdmin,
+      isLeader: _isLeader,
+      authID: authID ?? _authID,
+      tagIDs: _selectedTagIDs.toList(),
+    );
+  }
+
+  void _replaceUserInAppContext(User updated) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final allUsers = appContext.allUsers;
+    final index = allUsers.indexWhere((u) => u.id == updated.id);
+    if (index == -1) return;
+
+    final existing = allUsers[index];
+    if (existing.roles != null) updated.setRoles(existing.roles!.toList());
+    if (existing.posts != null) updated.setPosts(existing.posts!.toList());
+    allUsers[index] = updated;
+
+    if (appContext.currentUser.id == updated.id) {
+      appContext.setCurrentUser(updated);
+    }
+  }
+
+  Future<void> _onLinkAccountClick() async {
+    final emailController = TextEditingController();
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _authID.isEmpty
+                    ? 'Enter the email they used when registering in the app. '
+                        'Their Auth ID will be linked to this volunteer profile.'
+                    : 'Enter the new account email. The previous Auth link will be cleared '
+                        '(temp accounts are not deleted automatically).',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(emailController.text.trim()),
+              child: const Text('Search'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || email == null || email.isEmpty) return;
+
+    final linked = await DialogManager.runWithSteppedProgressDialog(
+      context: context,
+      title: 'Linking account',
+      initialMessage: 'Looking up $email…',
+      errorTitle: 'Could not link account',
+      action: (onProgress) async {
+        const total = 2;
+        onProgress(completed: 0, total: total, message: 'Looking up $email…');
+        final authID = await _everyoneDBManager.fetchAuthIDFromEmail(email);
+        if (authID == null || authID.isEmpty) {
+          throw StateError('No account found for that email. Ask them to register first.');
+        }
+        onProgress(completed: 1, total: total, message: 'Linking account…');
+        final updated = await _authLinkService.linkAuth(
+          user: _userSnapshot(),
+          newAuthID: authID,
+          isLeader: _isLeader,
+        );
+        if (!mounted) return;
+        _replaceUserInAppContext(updated);
+        setState(() {
+          _authID = updated.authID;
+          _authLinkChanged = true;
+          _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
+        });
+      },
+    );
+
+    if (!mounted || !linked) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account linked successfully'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _onUnlinkAccountClick() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Unlink account'),
+        content: const Text(
+          'Remove the login link from this profile? They will not be able to sign in as this '
+          'volunteer until you link an account again. Schedule and profile data are kept.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Unlink')),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    final unlinked = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Unlinking account',
+      subtitle: 'Removing login link…',
+      errorTitle: 'Could not unlink account',
+      action: () async {
+        final updated = await _authLinkService.unlinkAuth(user: _userSnapshot());
+        if (!mounted) return;
+        _replaceUserInAppContext(updated);
+        setState(() {
+          _authID = '';
+          _authLinkChanged = true;
+          _emailFuture = Future.value(null);
+        });
+      },
+    );
+
+    if (!mounted || !unlinked) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account unlinked'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   Future<Uint8List> _fetchFile() async {
     final imageUrl = NetworkImageHelper.getImageUrl(_src);
@@ -344,12 +592,10 @@ class _EditUserPageState extends State<EditUserPage> {
     _updateChangeState();
 
     try {
-      // Test if the image is accessible via HEAD request
+      // GET without custom headers — Flutter web CORS fails on User-Agent / HEAD preflight.
       final imageUrl = NetworkImageHelper.getImageUrl(_src);
-      final response = await http.head(
-        Uri.parse(imageUrl),
-        headers: {'User-Agent': 'Mozilla/5.0 (compatible; Image-Validator/1.0)'},
-      ).timeout(const Duration(seconds: 10));
+      final response =
+          await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -377,7 +623,7 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   void _onSaveChangesClick() async {
-    if (_tecForename.text.trim().isEmpty || _tecSurname.text.trim().isEmpty || _tecLocation.text.trim().isEmpty) {
+    if (_tecForename.text.trim().isEmpty || _tecSurname.text.trim().isEmpty || _currentLocation.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
@@ -393,10 +639,10 @@ class _EditUserPageState extends State<EditUserPage> {
       forname: _tecForename.text.trim(),
       surname: _tecSurname.text.trim(),
       imgSrc: _src,
-      location: _tecLocation.text.trim(),
+      location: _currentLocation.trim(),
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
-      authID: widget.user.authID,
+      authID: _authID,
       tagIDs: _selectedTagIDs.toList(),
     );
 
@@ -421,6 +667,9 @@ class _EditUserPageState extends State<EditUserPage> {
         tagIDs: tagIDsToSave,
       );
       await _userDBManager.updateUser(userToSave);
+      if (userToSave.authID.isNotEmpty) {
+        await _everyoneDBManager.setAsUser(userToSave.authID, userToSave.isLeader);
+      }
 
       // Update local image data if image changed
       if (_src != widget.user.imgSrc && _src.isNotEmpty) {
@@ -429,38 +678,14 @@ class _EditUserPageState extends State<EditUserPage> {
 
       // Update in app context if this is the current user or in all users list
       if (mounted) {
-        final appContext = Provider.of<AppContext>(context, listen: false);
-
-        // Update in all users list
-        final allUsers = appContext.allUsers;
-        final index = allUsers.indexWhere((u) => u.id == widget.user.id);
-        if (index != -1) {
-          final existing = allUsers[index];
-          final replacement = User(
-            id: userToSave.id,
-            forname: userToSave.forname,
-            surname: userToSave.surname,
-            imgSrc: userToSave.imgSrc,
-            location: userToSave.location,
-            isAreaAdmin: userToSave.isAreaAdmin,
-            isLeader: userToSave.isLeader,
-            authID: userToSave.authID,
-            tagIDs: userToSave.tagIDs,
-          );
-          if (existing.roles != null) replacement.setRoles(existing.roles!.toList());
-          if (existing.posts != null) replacement.setPosts(existing.posts!.toList());
-          allUsers[index] = replacement;
-
-          if (appContext.currentUser.id == widget.user.id) {
-            appContext.setCurrentUser(replacement);
-          }
-        }
+        _replaceUserInAppContext(userToSave);
 
         setState(() {
           _canSave = false;
           _testing = false;
           _hasChanges = false;
           _imageValidated = true;
+          _authLinkChanged = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -515,5 +740,22 @@ class _EditUserPageState extends State<EditUserPage> {
           '• Any publicly accessible image URL\n\n'
           'Recommended: Max image size is 512 KB',
     );
+  }
+
+  List<String> _locationOptions(BuildContext context) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final options = List<String>.from(
+      VolunteerLocations.assignableFrom(appContext.allLocations),
+    );
+    if (_currentLocation.isNotEmpty && !options.contains(_currentLocation)) {
+      options.insert(0, _currentLocation);
+    }
+    return options;
+  }
+
+  String _locationDropdownValue(BuildContext context) {
+    final options = _locationOptions(context);
+    if (options.contains(_currentLocation)) return _currentLocation;
+    return options.isNotEmpty ? options.first : _currentLocation;
   }
 }

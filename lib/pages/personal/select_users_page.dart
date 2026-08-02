@@ -24,6 +24,7 @@ class SelectUsersPage extends StatefulWidget {
     this.includeCurrentUser = false,
     this.allowTaskCheck = false,
     this.title,
+    this.maxSelection,
   });
 
   final List<String> selectedUIDs;
@@ -31,6 +32,10 @@ class SelectUsersPage extends StatefulWidget {
   final bool includeCurrentUser;
   final bool allowTaskCheck;
   final String? title;
+
+  /// When set, selection is capped (e.g. `1` for lead speaker). Selecting
+  /// beyond the limit replaces the oldest selection.
+  final int? maxSelection;
 
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
@@ -50,7 +55,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     super.initState();
     _selectedUIDs = Set<String>.from(widget.selectedUIDs);
     final appContext = Provider.of<AppContext>(context, listen: false);
-    _locationFilter = VolunteerLocations.defaultFilterForUser(appContext.currentUser.location);
+    final assignable = VolunteerLocations.assignableFrom(appContext.allLocations);
+    _locationFilter = VolunteerLocations.defaultFilterForUser(
+      appContext.currentUser.location,
+      assignable,
+    );
   }
 
   @override
@@ -62,8 +71,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
+    final double webHorizontalPadding = isWide
+        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
+        : 0.0;
 
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final filteredUsers = _filteredUsers(appContext);
@@ -117,7 +129,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.fromLTRB(webHorizontalPadding, 8, webHorizontalPadding, 8),
               child: Row(
-                children: VolunteerLocations.filterOptions.map((location) {
+                children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
                   final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -254,9 +266,13 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     setState(() {
       if (_selectedUIDs.contains(uid)) {
         _selectedUIDs.remove(uid);
-      } else {
-        _selectedUIDs.add(uid);
+        return;
       }
+      final max = widget.maxSelection;
+      if (max != null && _selectedUIDs.length >= max) {
+        _selectedUIDs.clear();
+      }
+      _selectedUIDs.add(uid);
     });
   }
 

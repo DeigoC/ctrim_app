@@ -1,4 +1,9 @@
+import '../models/user_location.dart';
+
 /// Known volunteer locations used for registration, filtering, and display.
+///
+/// Prefer [assignableFrom] / [filterOptionsFrom] with admin-managed definitions;
+/// [fallbackAssignable] is used when Firestore locations are empty or unavailable.
 class VolunteerLocations {
   VolunteerLocations._();
 
@@ -7,10 +12,29 @@ class VolunteerLocations {
   static const String portadown = 'Portadown';
   static const String northCoast = 'North Coast';
 
-  static const List<String> filterOptions = [all, belfast, portadown, northCoast];
-  static const List<String> assignable = [belfast, portadown, northCoast];
+  static const List<String> fallbackAssignable = [belfast, portadown, northCoast];
 
-  static String defaultFilterForUser(final String userLocation) {
-    return assignable.contains(userLocation) ? userLocation : belfast;
+  /// Legacy alias — prefer [assignableFrom] when AppContext locations are loaded.
+  static const List<String> assignable = fallbackAssignable;
+
+  /// Legacy alias — prefer [filterOptionsFrom] when AppContext locations are loaded.
+  static const List<String> filterOptions = [all, belfast, portadown, northCoast];
+
+  static List<String> assignableFrom(final List<UserLocation> locations) {
+    final active = locations.where((l) => l.isActive).map((l) => l.name).toList();
+    return active.isEmpty ? List<String>.from(fallbackAssignable) : active;
+  }
+
+  static List<String> filterOptionsFrom(final List<UserLocation> locations) {
+    return [all, ...assignableFrom(locations)];
+  }
+
+  static String defaultFilterForUser(
+    final String userLocation, [
+    final List<String>? assignableNames,
+  ]) {
+    final options = assignableNames ?? fallbackAssignable;
+    if (options.contains(userLocation)) return userLocation;
+    return options.isNotEmpty ? options.first : belfast;
   }
 }
