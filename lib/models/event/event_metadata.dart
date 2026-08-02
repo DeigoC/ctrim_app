@@ -4,14 +4,16 @@ class EventMetadata {
   late final String _authorUID;
   late final List<String> _contributorUIDs;
   late String _lastUID;
-  late final String? _parentID;
+  late String? _parentID;
   late final List<String> _childrenIDs, _topics, _tagIDs;
   String? _leadSpeakerUID;
+  bool _isPeriodParent = false;
 
-  EventMetadata({required String authorUID, final String? parentID}) {
+  EventMetadata({required String authorUID, final String? parentID, bool isPeriodParent = false}) {
     _authorUID = authorUID;
     _lastUID = authorUID;
     _parentID = parentID;
+    _isPeriodParent = isPeriodParent;
     _contributorUIDs = List<String>.empty(growable: true);
     _childrenIDs = List<String>.empty(growable: true);
     _topics = List.empty(growable: true);
@@ -26,7 +28,8 @@ class EventMetadata {
         _childrenIDs = List<String>.from(data['ChildrenIDs']),
         _topics = List<String>.from(data['Topics'] ?? []),
         _tagIDs = List<String>.from(data['TagIDs'] ?? []),
-        _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
+        _leadSpeakerUID = data['LeadSpeakerUID'] as String?,
+        _isPeriodParent = data['IsPeriodParent'] == true;
 
   Map<String, Object?> toJson() {
     return {
@@ -38,6 +41,7 @@ class EventMetadata {
       'Topics': _topics,
       'TagIDs': _tagIDs,
       'LeadSpeakerUID': _leadSpeakerUID,
+      'IsPeriodParent': _isPeriodParent,
     };
   }
 
@@ -45,9 +49,10 @@ class EventMetadata {
   String get authorUID => _authorUID;
   String? get parentID => _parentID;
   String? get leadSpeakerUID => _leadSpeakerUID;
+  bool get isPeriodParent => _isPeriodParent;
   bool get hasLeadSpeaker => _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
   bool get hasChildren => _childrenIDs.isNotEmpty;
-  bool get hasParent => _parentID != null;
+  bool get hasParent => _parentID != null && _parentID!.isNotEmpty;
 
   // ! change in the future to be unmodifiable and update accordingly
   List<String> get contributorUIDs => _contributorUIDs;
@@ -77,4 +82,18 @@ class EventMetadata {
   void setLastUID(final String newLastUID) => _lastUID = newLastUID;
   void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
   void clearLeadSpeakerUID() => _leadSpeakerUID = null;
+
+  void setParentID(final String? parentID) =>
+      _parentID = (parentID == null || parentID.isEmpty) ? null : parentID;
+
+  void clearParentID() => _parentID = null;
+
+  void setIsPeriodParent(final bool value) => _isPeriodParent = value;
+
+  void addChildID(final String childId) {
+    if (childId.isEmpty || _childrenIDs.contains(childId)) return;
+    _childrenIDs.add(childId);
+  }
+
+  void removeChildID(final String childId) => _childrenIDs.remove(childId);
 }

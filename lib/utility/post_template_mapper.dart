@@ -82,6 +82,7 @@ class PostTemplateMapper {
       eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
       eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
+    eventContext.applyIsPeriodParent(template.isPeriodParent);
 
     // program related
     int roleId = DateTime.now().millisecondsSinceEpoch;

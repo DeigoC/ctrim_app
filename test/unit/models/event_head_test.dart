@@ -22,6 +22,7 @@ void main() {
         expect(head.interestedCount, 0);
         expect(head.attendeeCount, 0);
         expect(head.hasAttendanceCounts, false);
+        expect(head.isPeriodParent, false);
       });
 
       test('creates with all parameters', () {
@@ -65,6 +66,22 @@ void main() {
         expect(head.interestedCount, 3);
         expect(head.attendeeCount, 5);
         expect(head.hasAttendanceCounts, true);
+        expect(head.isPeriodParent, false);
+      });
+
+      test('fromMap reads IsPeriodParent', () {
+        final map = {
+          'Title': 'Season',
+          'Subtitle': '',
+          'Location': 'Belfast',
+          'Media': <Map<String, dynamic>>[],
+          'RecentDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+          'EventDate': null,
+          'IsPeriodParent': true,
+        };
+
+        final head = EventHead.fromMap('period-1', map);
+        expect(head.isPeriodParent, true);
       });
 
       test('fromMap defaults missing attendance counts to zero', () {
@@ -400,6 +417,7 @@ void main() {
         expect(json['LeadSpeakerUID'], isNull);
         expect(json['LeadSpeakerImgSrc'], isNull);
         expect(json['LeadSpeakerName'], isNull);
+        expect(json['IsPeriodParent'], false);
       });
 
       test('toJson includes EventDate when set', () {
@@ -410,6 +428,12 @@ void main() {
         final json = head.toJson() as Map<String, dynamic>;
 
         expect(json['EventDate'], isA<Timestamp>());
+      });
+
+      test('toJson includes IsPeriodParent when set', () {
+        final head = EventHead(id: 'e1');
+        head.setIsPeriodParent(true);
+        expect(head.toJson()['IsPeriodParent'], true);
       });
     });
   });

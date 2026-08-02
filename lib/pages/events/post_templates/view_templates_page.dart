@@ -481,6 +481,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'TagIDs': <String>[],
       'Contributors': <String>[],
       'LeadSpeakerUID': null,
+      'IsPeriodParent': false,
       'Subtitles': <String>[],
       'AllDay': false,
       'Online': false,
@@ -526,6 +527,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       eventContext.metadata.setLeadSpeakerUID(postTemplate.leadSpeakerUID);
       eventContext.syncLeadSpeakerHeadFromUsers(_appContext.allUsers);
     }
+    eventContext.applyIsPeriodParent(postTemplate.isPeriodParent);
 
     for (final role in postTemplate.roles) {
       eventContext.program.addRole(

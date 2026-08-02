@@ -116,6 +116,9 @@ class _EventLogDialogState extends State<EventLogDialog> {
     );
     if (!mounted || !saved) return;
     _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+    for (final entry in widget.eventContext.lastParentLinkSync.entries) {
+      _appContext.setMetadata(entry.key, entry.value);
+    }
     widget.eventContext.resetSavingOfTheEdit();
     widget.updatePage();
     Navigator.of(context).pop();

@@ -114,6 +114,16 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         const Divider(height: 32),
         _buildSubtitleListEditor(),
         const Divider(height: 32),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Period parent'),
+          subtitle: const Text('Posts from this template start as period parents'),
+          value: widget.eventContext.metadata.isPeriodParent,
+          onChanged: (value) {
+            setState(() => widget.eventContext.applyIsPeriodParent(value));
+          },
+        ),
+        const Divider(height: 32),
         _buildDayOfWeekPicker(),
         const SizedBox(height: 16),
       ],
@@ -684,6 +694,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'TagIDs': widget.eventContext.head.tagIDs,
       'Contributors': widget.eventContext.metadata.contributorUIDs,
       'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
+      'IsPeriodParent': widget.eventContext.metadata.isPeriodParent,
       'Subtitles': _subtitles,
       'AllDay': widget.eventContext.program.allDay,
       'Online': widget.eventContext.program.online,

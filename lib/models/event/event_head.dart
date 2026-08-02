@@ -12,6 +12,7 @@ class EventHead {
   DateTime? _eventDate;
   late int _interestedCount, _attendeeCount;
   String? _leadSpeakerUID, _leadSpeakerImgSrc, _leadSpeakerName;
+  bool _isPeriodParent = false;
 
   EventHead({
     required String id,
@@ -19,12 +20,14 @@ class EventHead {
     String subtitle = '',
     String location = 'Belfast',
     List<String> tagIDs = const [],
+    bool isPeriodParent = false,
   }) {
     _id = id;
     _title = title;
     _subtitle = subtitle;
     _location = location;
     _tagIDs = List<String>.from(tagIDs);
+    _isPeriodParent = isPeriodParent;
     _media = List<Map<String, dynamic>>.empty(growable: true);
     _recentDate = DateTime.now();
     _interestedCount = 0;
@@ -45,6 +48,7 @@ class EventHead {
     _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
     _leadSpeakerImgSrc = data['LeadSpeakerImgSrc'] as String?;
     _leadSpeakerName = data['LeadSpeakerName'] as String?;
+    _isPeriodParent = data['IsPeriodParent'] == true;
   }
 
   static List<String> _parseTagIDs(final dynamic raw) {
@@ -76,6 +80,7 @@ class EventHead {
       'LeadSpeakerUID': _leadSpeakerUID,
       'LeadSpeakerImgSrc': _leadSpeakerImgSrc,
       'LeadSpeakerName': _leadSpeakerName,
+      'IsPeriodParent': _isPeriodParent,
     };
   }
 
@@ -83,6 +88,7 @@ class EventHead {
   String get title => _title;
   String get subtitle => _subtitle;
   String get location => _location;
+  bool get isPeriodParent => _isPeriodParent;
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   bool hasTag(final String tagId) => _tagIDs.contains(tagId);
   bool hasAnyTag(final Iterable<String> tagIds) => tagIds.any(_tagIDs.contains);
@@ -121,6 +127,7 @@ class EventHead {
   void removeEventDate() => _eventDate = null;
   void setLocation(final String newLocation) => _location = newLocation;
   void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
+  void setIsPeriodParent(final bool value) => _isPeriodParent = value;
   void setInterestedCount(final int count) => _interestedCount = count < 0 ? 0 : count;
   void setAttendeeCount(final int count) => _attendeeCount = count < 0 ? 0 : count;
 

@@ -77,6 +77,17 @@ void main() {
         expect(template.leadSpeakerUID, 'speaker-1');
       });
 
+      test('defaults IsPeriodParent to false and reads true', () {
+        final plain = PostTemplate.fromMap(true, 'tpl-plain', baseLocalMap());
+        expect(plain.isPeriodParent, false);
+
+        final map = baseLocalMap();
+        map['IsPeriodParent'] = true;
+        final period = PostTemplate.fromMap(true, 'tpl-period', map);
+        expect(period.isPeriodParent, true);
+        expect(period.toJson(true)['IsPeriodParent'], true);
+      });
+
       test('accepts Hive-style Map<dynamic, dynamic> nested entries', () {
         // Mirrors what Hive returns from box.get — LinkedMap<dynamic, dynamic>
         final hiveHeadMedia = <dynamic>[

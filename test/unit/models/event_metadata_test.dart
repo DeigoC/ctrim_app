@@ -24,6 +24,12 @@ void main() {
 
         expect(meta.parentID, 'parent-post');
         expect(meta.hasParent, true);
+        expect(meta.isPeriodParent, false);
+      });
+
+      test('creates with isPeriodParent', () {
+        final meta = EventMetadata(authorUID: 'user-1', isPeriodParent: true);
+        expect(meta.isPeriodParent, true);
       });
     });
 
@@ -36,6 +42,7 @@ void main() {
           'ContributorUIDs': ['user-2', 'user-3'],
           'ChildrenIDs': ['child-1'],
           'Topics': ['youth', 'music'],
+          'IsPeriodParent': true,
         };
 
         final meta = EventMetadata.fromMap(map);
@@ -48,6 +55,7 @@ void main() {
         expect(meta.contributorUIDs, ['user-2', 'user-3']);
         expect(meta.childrenPostIDs, ['child-1']);
         expect(meta.topics, ['youth', 'music']);
+        expect(meta.isPeriodParent, true);
       });
 
       test('creates from a map without Topics key (backwards compat)', () {
@@ -65,6 +73,7 @@ void main() {
         expect(meta.tagIDs, isEmpty);
         expect(meta.leadSpeakerUID, isNull);
         expect(meta.hasLeadSpeaker, false);
+        expect(meta.isPeriodParent, false);
       });
 
       test('creates from a map with LeadSpeakerUID', () {
@@ -102,6 +111,43 @@ void main() {
         expect(json['ContributorUIDs'], isEmpty);
         expect(json['ChildrenIDs'], isEmpty);
         expect(json['LeadSpeakerUID'], 'speaker-1');
+        expect(json['IsPeriodParent'], false);
+      });
+    });
+
+    group('parent and period parent', () {
+      test('setParentID updates and clearParentID clears', () {
+        final meta = EventMetadata(authorUID: 'user-1', parentID: 'p1');
+        meta.setParentID('p2');
+        expect(meta.parentID, 'p2');
+        expect(meta.hasParent, true);
+        meta.clearParentID();
+        expect(meta.parentID, isNull);
+        expect(meta.hasParent, false);
+      });
+
+      test('setParentID treats empty string as null', () {
+        final meta = EventMetadata(authorUID: 'user-1', parentID: 'p1');
+        meta.setParentID('');
+        expect(meta.parentID, isNull);
+        expect(meta.hasParent, false);
+      });
+
+      test('setIsPeriodParent toggles flag', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.setIsPeriodParent(true);
+        expect(meta.isPeriodParent, true);
+        meta.setIsPeriodParent(false);
+        expect(meta.isPeriodParent, false);
+      });
+
+      test('addChildID is idempotent and removeChildID works', () {
+        final meta = EventMetadata(authorUID: 'user-1');
+        meta.addChildID('c1');
+        meta.addChildID('c1');
+        expect(meta.childrenPostIDs, ['c1']);
+        meta.removeChildID('c1');
+        expect(meta.childrenPostIDs, isEmpty);
       });
     });
 
