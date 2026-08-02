@@ -226,8 +226,8 @@ Collection id **`cell_groups`** (snake) unless we prefer camel; confirm at imple
 | `Name` | string | Display name |
 | `Subtitle` / `Summary` | string | Short blurb — guest-safe |
 | `Location` | string | Align with post locations / church sites? |
-| `LeaderUserIds` | list | **One or more** owner/leader `users` uids — **depends on user-model work** |
-| `LeaderNames` / free-text leaders | list? | Fallback when a leader has no app account yet |
+| `LeaderUserIds` | list | **One or more** owner/leader `users` uids (registered or placeholder) |
+| `LeaderNames` / free-text leaders | list? | Fallback only if needed; prefer placeholder `User` when account expected |
 | `MemberCount` | int | Denorm; may be **hidden from guests** even if stored |
 | `Status` | enum | `active` / `paused` / `archived` / … |
 | `MeetingWeekday` / `MeetingTime` / `Cadence` | … | “Every Tuesday 7:30pm” |
@@ -374,7 +374,7 @@ Lock decisions; bulletin↔CG mechanics + companion user-model (placeholders / `
 - Attendance trends / health views derived from linked posts + post attendance
 - Oversight reports across all groups
 - Multiplication (parent/child groups)
-- Free-text → registered merge
+- Free-text → placeholder / registered merge (beyond V1 Auth link)
 
 ---
 
