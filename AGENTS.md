@@ -53,10 +53,15 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 ## Recent agent-relevant changes
 
 - **2026-08-02** — Post templates embed change history `Logs` (`uid`/`log`/`ts`) on the doc; save uses `TemplateLogDialog`; viewer is `view_template_logs_page.dart`.
-- **2026-08-02** — Cell Groups companion user model locked in `docs/cell-groups.md`: placeholder `users` (empty `AuthID`), `CreatedByUserID`, scoped Auth link (creator/admin), post-link freeze, hide placeholders from pickers.
+- **2026-08-02** — Cell Groups Phase 0 locked in `docs/cell-groups.md`: placeholders + `IsPlaceholder`/`CreatedByUserID`, shared `SelectUsersPage` create gate, period-parent side track.
 - **2026-08-02** — Key graphic save: `getKeyGraphic` is the first head `Media` image — “Set as Key Media” now prepends (`prependMediaItem`); Change cover uses `replaceKeyGraphic`. After save, ViewEventPage refreshes discard baseline so dispose does not restore pre-edit Media.
 - **2026-08-01** — Post content tags (`post_tags`) + bulletin filter; FCM streams derived from location + tag `StreamKind` (Belfast IDs frozen). Design: `docs/post-tags-notification-streams.md`. Deploy `firestore.rules` for `post_tags`.
 - **2026-08-01** — Web push: SW no longer re-shows FCM `notification` payloads (fixes duplicate banners); re-register also strips stale tokens from `web_topics`.
+- **2026-07-19** — Post schedule cascade: editing/adding items can **Shift following** (push later roles by end delta) or **Keep times** (allow overlap); start changes keep duration; expanded `ProgramTile` has Move earlier/later via `EventProgram.moveRoleInOrder`.
+- **2026-07-12** — Personal share: `ShareWebAppPage` replaces beta TestFlight/Android page; web link share + Add to Home Screen on that page (`PwaInstallService` + `web/pwa_install.js`).
+- **2026-07-11** — Bulk post dates: `BulkPostDates` anchors bulk-created posts to the source post's event date (#18).
+- **2026-07-11** — Web Hosting CI: merge to `main` deploys via `.github/workflows/firebase-hosting-merge.yml`; PRs get preview channels via `firebase-hosting-pull-request.yml` (secret `FIREBASE_SERVICE_ACCOUNT_CTRIM_APP`). Flutter pinned to `3.41.9` (quill 11.5.0 incompatible with 3.44).
+- **2026-07-09** — Broadcast notify compose page: `SendBroadcastNotificationPage` + `EventNotificationCopy` (preset / subtitle / custom body); `Notify: Broadcast` opens the page instead of sending subtitle immediately.
 
 ## Commands
 

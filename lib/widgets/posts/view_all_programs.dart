@@ -59,6 +59,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             final bool canEdit = (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
                     widget.eventContext.isUserContributor(_appContext.currentUser.id)) &&
                 DateTime.now().isBefore(roleStart);
+            final bool editable = _canEditPostProgram() ? true : canEdit;
 
             return ProgramTile(
               programEntry: programRoles[index],
@@ -66,8 +67,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               selected: _selectedIndex == index,
               assignedUsers:
                   (programRoles[index]["uids"] as List<String>).map((e) => _appContext.getUserFromID(e)).toList(),
-              canEdit: _canEditPostProgram() ? true : canEdit,
+              canEdit: editable,
               onEditClick: () => _openEditProgramPage(programRoles[index]),
+              canMoveUp: editable && index > 0,
+              canMoveDown: editable && index < programRoles.length - 1,
+              onMoveUp: () => _moveRole(programRoles[index]['id'] as int, -1),
+              onMoveDown: () => _moveRole(programRoles[index]['id'] as int, 1),
             );
           },
           separatorBuilder: (BuildContext context, int index) => const Divider(),
@@ -136,6 +141,18 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         _selectedIndex = null;
       }
     });
+  }
+
+  void _moveRole(final int roleId, final int direction) {
+    final bool moved = widget.eventContext.program.moveRoleInOrder(roleId, direction);
+    if (!moved) return;
+
+    widget.eventContext.allowSavingOfTheEdit();
+    final int newIndex = widget.eventContext.program.indexOfRole(roleId);
+    setState(() {
+      _selectedIndex = newIndex >= 0 ? newIndex : null;
+    });
+    widget.onProgramChanged();
   }
 
   Widget _buildLocationTrailingIcon() {

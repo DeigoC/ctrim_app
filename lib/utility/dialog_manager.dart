@@ -291,6 +291,52 @@ class DialogManager {
   }
 
   /// Shows a modern confirmation dialog with customizable content and actions
+  /// Ask whether changing a schedule item should push later items forward.
+  /// Returns null if the user cancels.
+  static Future<bool?> askShiftFollowingScheduleItems({
+    required BuildContext context,
+    required int affectedCount,
+  }) async {
+    HapticFeedback.lightImpact();
+    final String itemLabel = affectedCount == 1 ? '1 later item' : '$affectedCount later items';
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+
+        return AlertDialog.adaptive(
+          icon: Icon(Icons.schedule, color: colorScheme.primary, size: 32),
+          title: Text(
+            'Update schedule timing?',
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            'This change affects $itemLabel.\n\n'
+            'Shift following items to keep the sequence, or keep their times '
+            '(items may overlap).',
+            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Keep times'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Shift following'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   static Future<bool> showConfirmationDialog({
     required BuildContext context,
     required String title,
