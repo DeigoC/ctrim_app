@@ -5,12 +5,13 @@ import 'package:ctrim_app/pages/personal/select_users_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/parent_link.dart';
+import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 import 'package:ctrim_app/widgets/post_tag_picker.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditHeadDetailsPage extends StatefulWidget {
@@ -386,6 +387,11 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: Provider.of<AppContext>(context, listen: false).currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
         ),
       ),
     );

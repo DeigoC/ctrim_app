@@ -447,6 +447,67 @@
   "@selectUsersManageContributors": {
     "description": "Button to open the contributor picker"
   },
+  "selectUsersCreatePlaceholder": "Create placeholder",
+  "@selectUsersCreatePlaceholder": {
+    "description": "Button offered when picker search finds no matching volunteer"
+  },
+  "selectUsersCreatePlaceholderTitle": "Create placeholder",
+  "@selectUsersCreatePlaceholderTitle": {
+    "description": "Dialog title for creating a placeholder volunteer profile"
+  },
+  "selectUsersCreatePlaceholderBody": "Create a temporary profile with no login. You can link their account later after they register.",
+  "@selectUsersCreatePlaceholderBody": {
+    "description": "Explains placeholder create from the user picker"
+  },
+  "selectUsersForename": "Forename",
+  "@selectUsersForename": {
+    "description": "Forename field label in placeholder create dialog"
+  },
+  "selectUsersSurname": "Surname",
+  "@selectUsersSurname": {
+    "description": "Surname field label in placeholder create dialog"
+  },
+  "selectUsersCreate": "Create",
+  "@selectUsersCreate": {
+    "description": "Confirm create placeholder in picker dialog"
+  },
+  "selectUsersNameRequired": "Enter both forename and surname",
+  "@selectUsersNameRequired": {
+    "description": "Validation when placeholder create names are blank"
+  },
+  "selectUsersCreatingPlaceholder": "Creating placeholder",
+  "@selectUsersCreatingPlaceholder": {
+    "description": "Progress dialog title while creating a placeholder user"
+  },
+  "selectUsersCreatingPlaceholderSubtitle": "Saving profile…",
+  "@selectUsersCreatingPlaceholderSubtitle": {
+    "description": "Progress dialog subtitle while creating a placeholder user"
+  },
+  "selectUsersCreatePlaceholderFailed": "Could not create placeholder",
+  "@selectUsersCreatePlaceholderFailed": {
+    "description": "Error title when placeholder create fails"
+  },
+  "selectUsersPlaceholderCreated": "Placeholder created and selected",
+  "@selectUsersPlaceholderCreated": {
+    "description": "SnackBar after successful placeholder create from picker"
+  },
+  "selectUsersPlaceholderSubtitle": "Placeholder · {location}",
+  "@selectUsersPlaceholderSubtitle": {
+    "description": "Subtitle for placeholder users in the picker list",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "volunteersShowPlaceholders": "Show placeholders",
+  "@volunteersShowPlaceholders": {
+    "description": "Toggle to include placeholder profiles in the Volunteers list"
+  },
+  "volunteersPlaceholderBadge": "Placeholder",
+  "@volunteersPlaceholderBadge": {
+    "description": "Badge on placeholder volunteer cards"
+  },
   "volunteersSortLabel": "Sort",
   "@volunteersSortLabel": {
     "description": "Label before sort mode chips on the volunteers list"

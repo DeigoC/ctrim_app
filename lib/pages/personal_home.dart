@@ -157,8 +157,8 @@ class _PersonalHomeState extends State<PersonalHome> {
         ],
         _buildMainActionsSection(appContext, theme, colorScheme, wide: false),
         const SizedBox(height: 24),
-        if (appContext.currentUser.isLeader ||
-            appContext.currentUser.isAreaAdmin) ...[
+        if (appContext.currentUser.canManagePostTemplates ||
+            appContext.currentUser.canManageVolunteers) ...[
           _buildAdminSection(appContext, theme, colorScheme, wide: false),
           const SizedBox(height: 24),
         ],
@@ -176,7 +176,8 @@ class _PersonalHomeState extends State<PersonalHome> {
     double contentWidth,
   ) {
     final showAdmin =
-        appContext.currentUser.isLeader || appContext.currentUser.isAreaAdmin;
+        appContext.currentUser.canManagePostTemplates ||
+            appContext.currentUser.canManageVolunteers;
     final actionColumns = contentWidth >= ResponsiveLayout.desktop ? 3 : 2;
 
     return Column(
@@ -456,7 +457,7 @@ class _PersonalHomeState extends State<PersonalHome> {
       AppContext appContext, ColorScheme colorScheme) {
     final l10n = AppLocalizations.of(context)!;
     final actions = <_PersonalAction>[];
-    if (appContext.currentUser.isLeader) {
+    if (appContext.currentUser.canManagePostTemplates) {
       actions.add(
         _PersonalAction(
           icon: Icons.newspaper_rounded,
@@ -467,7 +468,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ),
       );
     }
-    if (appContext.currentUser.isAreaAdmin) {
+    if (appContext.currentUser.canManageVolunteers) {
       actions.add(
         _PersonalAction(
           icon: Icons.label_rounded,
@@ -506,8 +507,8 @@ class _PersonalHomeState extends State<PersonalHome> {
     required bool wide,
     int gridColumns = 1,
   }) {
-    final showTemplates = appContext.currentUser.isLeader;
-    final showUserTags = appContext.currentUser.isAreaAdmin;
+    final showTemplates = appContext.currentUser.canManagePostTemplates;
+    final showUserTags = appContext.currentUser.canManageVolunteers;
     final sectionTitle = showUserTags && !showTemplates
         ? 'Admin Tools'
         : showTemplates && !showUserTags

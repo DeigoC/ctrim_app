@@ -2,8 +2,8 @@
 
 > **Purpose:** Living design for a first-class **Cell Group** section and data model (beyond bulletin posts alone).  
 > **Created:** 2026-08-01  
-> **Status:** Phase 0 lock **done**; Phase 0.5 period-parent **shipped**. Next: **user/placeholder model**, then full CG section.  
-> **Start here in a new chat:** “Implement placeholder users from `docs/cell-groups.md`” or “Continue cell groups from `docs/cell-groups.md`”
+> **Status:** Phase 0 lock **done**; Phase 0.5 period-parent **shipped**; Phase 0.75 placeholder users **shipped**. Next: full CG section (Phase 1).  
+> **Start here in a new chat:** “Continue cell groups from `docs/cell-groups.md`” (Phase 1) or “Deploy placeholder user functions / backfill”
 
 ---
 
@@ -393,16 +393,16 @@ Enough locked for implementing chats. Remaining nits are implement-time defaults
 - Parent picker UI: **title/subtitle edit page** (`EditHeadDetailsPage` / `SelectPeriodParentPage`) — **author or area admin** only; list = `IsPeriodParent` posts
 - Cycle guards via `ParentLink`
 
-### Phase 0.75 — Companion user model (**next** — before full CG)
+### Phase 0.75 — Companion user model — **done** (2026-08-04)
 
 - `User.IsPlaceholder` + `User.CreatedByUserID` + unit tests
-- Backfill empty Auth → `IsPlaceholder: true` (`CreatedByUserID` empty)
-- Callable CF: createPlaceholderUser (do not widen client `users` create)
-- Enhance `SelectUsersPage` create-when-missing (**medium gate:** CG leader / area admin / post author)
-- Harden Auth link; clear `IsPlaceholder` on success; post-link freeze to area admin
-- Hide placeholders from Volunteers / pickers by default; addressing queue for admins/creators
+- Callable CFs: `create_placeholder_user`, `link_user_auth`, `backfill_placeholder_flags`
+- `SelectUsersPage` create-when-missing (medium gate: area admin / post author; CG leader later)
+- Auth link clears `IsPlaceholder`; post-link freeze to area admin; creator name-only rules
+- Hide placeholders from Volunteers / pickers by default; “Show placeholders” toggle
 
-Until CG Phase 1 exists, **area admin + post author** still unlock create-when-missing on attendance/roles (CG-leader gate becomes meaningful later).
+Deploy: `firebase deploy --only functions:create_placeholder_user,functions:link_user_auth,functions:backfill_placeholder_flags,firestore:rules --project ctrim-8b49b`  
+Then (once): call `backfill_placeholder_flags` as area admin to mark legacy empty-Auth users.
 
 ### Phase 1 — Cell Groups foundation (no trends)
 
@@ -482,7 +482,7 @@ Until CG Phase 1 exists, **area admin + post author** still unlock create-when-m
 
 ## Open questions
 
-**Phase 0 product lock is complete.** Phase 0.5 shipped. **Next implement:** placeholder user model (0.75), then CG section (1).
+**Phase 0 product lock is complete.** Phase 0.5 + 0.75 shipped. **Next implement:** Cell Groups section (Phase 1).
 
 ### Deferred to implement chat (defaults OK — change only if awkward)
 
@@ -507,8 +507,9 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 ```
 - [x] Phase 0 product locks — 2026-08-02
 - [x] Phase 0.5: IsPeriodParent + editable ParentID — 2026-08-02
-- [ ] Phase 0.75: User.IsPlaceholder + CreatedByUserID + CF create + SelectUsersPage + backfill + Auth link harden
+- [x] Phase 0.75: User.IsPlaceholder + CreatedByUserID + CF create/link + SelectUsersPage + Auth link harden — 2026-08-04
 - [ ] Phase 1: CellGroup model/UI + CellGroupIDs + roster (after 0.75)
+- [ ] Deploy functions + rules + run backfill_placeholder_flags
 - [ ] flutter analyze && flutter test test/unit/
 - [ ] Update AGENTS.md Recent changes when shipped
 ```
@@ -546,3 +547,4 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 | 2026-08-02 | Final Phase 0: medium create-placeholder gate; legacy CreatedBy empty; parent picker on **title/subtitle edit**; guest cards name+cadence; Cell Groups tab home; area admin creates CG records. Phase 0 **done**. |
 | 2026-08-02 | Build order locked: **period parent/ParentID → user placeholders → full CG section**. User changes may ship before CG nav/roster. |
 | 2026-08-02 | **Phase 0.5 shipped:** `IsPeriodParent` (metadata + head denorm + template default); editable `ParentID` with ChildrenIDs sync + cycle guards; UI on `EditHeadDetailsPage` / `SelectPeriodParentPage` (author or area admin). |
+| 2026-08-04 | **Phase 0.75 shipped:** `IsPlaceholder` + `CreatedByUserID`; CFs `create_placeholder_user` / `link_user_auth` / `backfill_placeholder_flags`; SelectUsersPage create-when-missing; Volunteers hide + toggle; Auth link clears flag. |

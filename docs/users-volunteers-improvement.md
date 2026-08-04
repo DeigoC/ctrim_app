@@ -153,8 +153,8 @@ flowchart LR
 
 | Flag | Effect |
 |------|--------|
-| `isLeader` | Create events (home FAB); edit churches / testimonials / CTRIM info |
-| `isAreaAdmin` | Register/edit users, admin section, edit churches / testimonials / CTRIM info |
+| `isLeader` | Create events (home FAB); post templates; edit churches / testimonials / CTRIM info |
+| `isAreaAdmin` | Register/edit users, tags, locations; edit churches / testimonials / CTRIM info |
 
 ---
 
@@ -333,7 +333,7 @@ See [Admin-managed user tags](#admin-managed-user-tags) below for full design no
 
 - [ ] `availabilityNotes`, `isActive` (hide inactive from picker), optional admin-only `phone`
 - [x] **Auth link / placeholders** — Register User can save with empty `AuthID`; Edit User Link / Reassign / Unlink via `lib/utility/user_auth_link.dart` (does not delete temp Firebase Auth accounts)
-- [ ] **CG companion (planned)** — `CreatedByUserID` + **`IsPlaceholder`** on `users`; CG leaders create placeholders + scoped Auth link (creator or area admin; freeze reassign after link; clear `IsPlaceholder` on link). Full design in [`docs/cell-groups.md`](cell-groups.md#companion-user-model-change). Hide placeholders from Volunteers / pickers by default.
+- [x] **CG companion (Phase 0.75)** — `CreatedByUserID` + `IsPlaceholder` on `users`; CF create/link; SelectUsersPage create-when-missing; hide placeholders by default. See [`docs/cell-groups.md`](cell-groups.md#companion-user-model-change). Deploy functions + rules; run `backfill_placeholder_flags`.
 - [ ] Unify or document `users` vs `everyone` email visibility
 
 ---

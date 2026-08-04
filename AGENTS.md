@@ -44,7 +44,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Ongoing work
 
-- **Cell Groups** — Phase 0.5 shipped; next **placeholder user model**, then full CG section. Handoff: [`docs/cell-groups.md`](docs/cell-groups.md). Continue with: “Implement placeholder users from `docs/cell-groups.md`”.
+- **Cell Groups** — Phase 0.75 (placeholders) shipped; next **full CG section**. Handoff: [`docs/cell-groups.md`](docs/cell-groups.md). Continue with: “Continue cell groups from `docs/cell-groups.md`”.
 - **Post tags & notify streams** — V1 in place; handoff in [`docs/post-tags-notification-streams.md`](docs/post-tags-notification-streams.md). Deploy `firestore.rules` for `post_tags`; seed starter tags from Manage Post Tags.
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
@@ -52,6 +52,8 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-08-04** — Placeholder users (Cell Groups Phase 0.75): `User.IsPlaceholder` + `CreatedByUserID`; CFs `create_placeholder_user` / `link_user_auth` / `backfill_placeholder_flags`; `SelectUsersPage` create-when-missing (admin/post author); Volunteers hide placeholders + toggle. Deploy functions + `firestore.rules`; run backfill once.
+- **2026-08-04** — Access hardening: `firestore.rules` users/`user_tags`/`id_tracker`/`everyone` flag updates align with `isAreaAdmin`; `EveryoneDBManager.setAsUser` syncs `isAreaAdmin`; in-page `RoleAccessGate` on manage tags/locations, register/edit user, and template pages. Helpers: `User.canManageVolunteers` / `canManagePostTemplates`. Deploy `firestore.rules`.
 - **2026-08-02** — Info section add/edit/delete (churches, testimonials, CTRIM info) gated by `User.canManageInfo` (`isAreaAdmin || isLeader`); guests and regular users never see Add/Edit UI. Deploy `firestore.rules` for leader writes on `information`.
 - **2026-08-02** — Period parents side track: `IsPeriodParent` on metadata (+ head denorm) and templates; editable `ParentID` with bidirectional `ChildrenIDs` sync on Title & details (`EditHeadDetailsPage` / `SelectPeriodParentPage`). Author or area admin only. See `docs/cell-groups.md` Phase 0.5.
 - **2026-08-02** — Post templates embed change history `Logs` (`uid`/`log`/`ts`) on the doc; save uses `TemplateLogDialog`; viewer is `view_template_logs_page.dart`.

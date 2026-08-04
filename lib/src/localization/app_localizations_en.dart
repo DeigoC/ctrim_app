@@ -331,6 +331,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectUsersManageContributors => 'Manage contributors';
 
   @override
+  String get selectUsersCreatePlaceholder => 'Create placeholder';
+
+  @override
+  String get selectUsersCreatePlaceholderTitle => 'Create placeholder';
+
+  @override
+  String get selectUsersCreatePlaceholderBody =>
+      'Create a temporary profile with no login. You can link their account later after they register.';
+
+  @override
+  String get selectUsersForename => 'Forename';
+
+  @override
+  String get selectUsersSurname => 'Surname';
+
+  @override
+  String get selectUsersCreate => 'Create';
+
+  @override
+  String get selectUsersNameRequired => 'Enter both forename and surname';
+
+  @override
+  String get selectUsersCreatingPlaceholder => 'Creating placeholder';
+
+  @override
+  String get selectUsersCreatingPlaceholderSubtitle => 'Saving profile…';
+
+  @override
+  String get selectUsersCreatePlaceholderFailed =>
+      'Could not create placeholder';
+
+  @override
+  String get selectUsersPlaceholderCreated =>
+      'Placeholder created and selected';
+
+  @override
+  String selectUsersPlaceholderSubtitle(String location) {
+    return 'Placeholder · $location';
+  }
+
+  @override
+  String get volunteersShowPlaceholders => 'Show placeholders';
+
+  @override
+  String get volunteersPlaceholderBadge => 'Placeholder';
+
+  @override
   String get volunteersSortLabel => 'Sort';
 
   @override

@@ -23,6 +23,23 @@ service cloud.firestore {
         get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true;
     }
 
+    /// Creator of an unlinked placeholder may correct Forename/Surname only.
+    /// Auth link + IsPlaceholder clear go through link_user_auth CF (Admin SDK).
+    function isPlaceholderCreatorNameOnlyUpdate() {
+      return request.auth != null
+        && resource.data.get('IsPlaceholder', false) == true
+        && resource.data.get('CreatedByUserID', '') != ''
+        && get(/databases/$(database)/documents/users/$(resource.data.CreatedByUserID)).data.AuthID
+             == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['Forename', 'Surname'])
+        && request.resource.data.IsAreaAdmin == resource.data.IsAreaAdmin
+        && request.resource.data.IsLeader == resource.data.IsLeader
+        && request.resource.data.AuthID == resource.data.AuthID
+        && request.resource.data.CreatedByUserID == resource.data.CreatedByUserID
+        && request.resource.data.IsPlaceholder == true;
+    }
+
     /// Head count fields only — used so any signed-in user can sync interest/attendee denorm.
     function isAttendanceCountOnlyUpdate() {
       return request.auth != null &&
@@ -61,8 +78,12 @@ service cloud.firestore {
       // allow authenticated users to create their own document 
       allow create: if request.auth != null && auth_id == request.auth.uid && request.resource.data.keys().hasOnly(['email']);
       
-      // only allow admin to write to these (for registering users)
-      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;    
+      // Global admins: full write. Area admins: volunteer flags only (no isAdmin escalation).
+      allow update: if isAdmin() || (
+        isAreaAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['isUser', 'isLeader', 'isAreaAdmin'])
+      );
       
       // Supplemental: own user read/write; workers may read device_tokens to notify scheduled members
       match /supplemental/{document}{
@@ -100,33 +121,28 @@ service cloud.firestore {
       // Allow anyone to read user profiles (guest-friendly)
       allow read: if true;
 
-      // Only admins can register new users
-      allow create: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;
+      // Area admins register volunteers (matches Volunteers UI).
+      // Placeholder minting for non-admins goes through create_placeholder_user CF.
+      allow create: if isAreaAdmin() || isAdmin();
 
-      // Admins may edit any profile; volunteers may only change their own ImgSrc
-      allow update: if request.auth != null && (
-        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true ||
-        (
-          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true &&
-          resource.data.AuthID == request.auth.uid &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ImgSrc'])
-        )
-      );
+      // Area admins may edit any profile; volunteers may only change their own ImgSrc;
+      // placeholder creators may edit name (+ clear IsPlaceholder only via link CF).
+      allow update: if isAreaAdmin() || isAdmin() || (
+        isWorker() &&
+        resource.data.AuthID == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ImgSrc'])
+      ) || isPlaceholderCreatorNameOnlyUpdate();
 
       // Role/post tracking updated by workers when managing events
       match /supplemental/{document}{
         allow read: if true;
-        allow write: if request.auth != null && (
-          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true ||
-          get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isUser == true
-        );
+        allow write: if isAdmin() || isAreaAdmin() || isWorker();
       }
     }
 
     match /user_tags/{tagId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null &&
-        get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isAdmin == true;
+      allow create, update, delete: if isAreaAdmin() || isAdmin();
     }
 
     match /user_locations/{locationId} {
@@ -141,14 +157,16 @@ service cloud.firestore {
         (isAreaAdmin() || isAdmin());
     }
 
-    match /id_tracker/{documents=**}{
+    match /id_tracker/{docId}{
       // Allow anyone to read tracker (needed for guest user caching)
       allow read: if true;
       
       allow create: if false;
 
-      // allows leaders to create new posts and admins to register new users
-      allow write: if request.auth != null && get(/databases/$(database)/documents/everyone/$(request.auth.uid)).data.isLeader == true; 
+      // users counter: area admins register volunteers; events counter: leaders create posts
+      allow write: if docId == 'users'
+        ? (isAreaAdmin() || isLeader() || isAdmin())
+        : (isLeader() || isAdmin());
     }
 
     match /post_templates/{documents=**}{

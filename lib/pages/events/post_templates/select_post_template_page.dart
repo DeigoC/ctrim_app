@@ -11,6 +11,7 @@ import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/load_progress_body.dart';
 import '../../../widgets/responsive_content.dart';
+import '../../../widgets/role_access_gate.dart';
 import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
 
@@ -84,7 +85,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       final templates = await PostTemplateLoader.load(
         forceRemote: widget.bulkMode,
         onProgress: ({required completed, required total, required message}) {
-          _updateLoadProgress(completed: completed, total: total, message: message);
+          _updateLoadProgress(
+              completed: completed, total: total, message: message);
         },
       );
       if (!mounted) return;
@@ -129,19 +131,25 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(widget.bulkMode ? 'Bulk Create Posts' : 'Choose Template'),
+    return RoleAccessGate(
+      allow: (user) => user.canManagePostTemplates,
+      deniedMessage: 'Only leaders can create posts from templates.',
+      child: Scaffold(
         backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-      ),
-      body: Column(
-        children: [
-          if (!_loading && _loadError == null) _buildSearchAndFilters(colorScheme),
-          Expanded(child: _buildBody()),
-        ],
+        appBar: AppBar(
+          title:
+              Text(widget.bulkMode ? 'Bulk Create Posts' : 'Choose Template'),
+          backgroundColor: colorScheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
+        body: Column(
+          children: [
+            if (!_loading && _loadError == null)
+              _buildSearchAndFilters(colorScheme),
+            Expanded(child: _buildBody()),
+          ],
+        ),
       ),
     );
   }
@@ -198,11 +206,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
             selectedColor: colorScheme.primaryContainer,
             checkmarkColor: colorScheme.onPrimaryContainer,
             labelStyle: TextStyle(
-              color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
+              color: isSelected
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurfaceVariant,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
             side: BorderSide(
-              color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+              color:
+                  isSelected ? colorScheme.primary : colorScheme.outlineVariant,
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -253,7 +264,9 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _searchQuery.isNotEmpty ? 'Try adjusting your search or filters' : 'No templates available at the moment',
+              _searchQuery.isNotEmpty
+                  ? 'Try adjusting your search or filters'
+                  : 'No templates available at the moment',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -304,12 +317,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         final width = constraints.maxWidth;
         final isWide = ResponsiveLayout.isWideScreen(width);
         final horizontalPadding = isWide
-            ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2).clamp(16.0, double.infinity)
+            ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2)
+                .clamp(16.0, double.infinity)
             : 16.0;
 
         if (!isWide) {
           return ListView.separated(
-            padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
+            padding: EdgeInsets.fromLTRB(
+                horizontalPadding, 16, horizontalPadding, 16),
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemCount: templates.length,
             itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
@@ -334,7 +349,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         }
 
         return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
+          padding:
+              EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -358,13 +374,19 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isBlankTemplate ? colorScheme.primary.withValues(alpha: 0.5) : colorScheme.outlineVariant,
+          color: isBlankTemplate
+              ? colorScheme.primary.withValues(alpha: 0.5)
+              : colorScheme.outlineVariant,
           width: isBlankTemplate ? 2 : 1,
         ),
       ),
-      color: isBlankTemplate ? colorScheme.primaryContainer.withValues(alpha: 0.3) : colorScheme.surfaceContainerLow,
+      color: isBlankTemplate
+          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+          : colorScheme.surfaceContainerLow,
       child: InkWell(
-        onTap: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
+        onTap: () => widget.bulkMode
+            ? _onBulkAddPostTap(template)
+            : _onAddPostTap(template),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -380,12 +402,16 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isBlankTemplate ? colorScheme.primary.withValues(alpha: 0.2) : colorScheme.secondaryContainer,
+                      color: isBlankTemplate
+                          ? colorScheme.primary.withValues(alpha: 0.2)
+                          : colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       isBlankTemplate ? Icons.edit_note : Icons.description,
-                      color: isBlankTemplate ? colorScheme.primary : colorScheme.onSecondaryContainer,
+                      color: isBlankTemplate
+                          ? colorScheme.primary
+                          : colorScheme.onSecondaryContainer,
                       size: 24,
                     ),
                   ),
@@ -454,10 +480,16 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                 children: [
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () => widget.bulkMode ? _onBulkAddPostTap(template) : _onAddPostTap(template),
+                      onPressed: () => widget.bulkMode
+                          ? _onBulkAddPostTap(template)
+                          : _onAddPostTap(template),
                       style: FilledButton.styleFrom(
-                        backgroundColor: isBlankTemplate ? colorScheme.primary : colorScheme.secondaryContainer,
-                        foregroundColor: isBlankTemplate ? colorScheme.onPrimary : colorScheme.onSecondaryContainer,
+                        backgroundColor: isBlankTemplate
+                            ? colorScheme.primary
+                            : colorScheme.secondaryContainer,
+                        foregroundColor: isBlankTemplate
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSecondaryContainer,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -466,11 +498,17 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                       icon: Icon(
                         widget.bulkMode
                             ? Icons.calendar_month
-                            : (isBlankTemplate ? Icons.create : Icons.add_circle_outline),
+                            : (isBlankTemplate
+                                ? Icons.create
+                                : Icons.add_circle_outline),
                         size: 18,
                       ),
                       label: Text(
-                        widget.bulkMode ? 'Bulk Create' : (isBlankTemplate ? 'Start from Blank' : 'Use Template'),
+                        widget.bulkMode
+                            ? 'Bulk Create'
+                            : (isBlankTemplate
+                                ? 'Start from Blank'
+                                : 'Use Template'),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -501,7 +539,9 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         if (template.startTime != null)
           _buildDetailChip(
             template.allDay ? Icons.event : Icons.access_time,
-            template.allDay ? 'All Day' : DateFormat.jm().format(template.startTime!),
+            template.allDay
+                ? 'All Day'
+                : DateFormat.jm().format(template.startTime!),
             colorScheme,
           ),
 
@@ -533,7 +573,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     );
   }
 
-  Widget _buildDetailChip(IconData icon, String label, ColorScheme colorScheme) {
+  Widget _buildDetailChip(
+      IconData icon, String label, ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -640,7 +681,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
   Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final EventContext eventContext = PostTemplateMapper.mapTemplateToEventContext(
+    final EventContext eventContext =
+        PostTemplateMapper.mapTemplateToEventContext(
       template: postTemplate,
       currentUserID: appContext.currentUser.id,
       parentID: widget.eventContext.metadata.parentID,
@@ -652,12 +694,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       final selectedDate = await _selectDate(context);
       if (selectedDate == null || !mounted) return;
       PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
-      eventContext.head
-          .setTitle('${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
+      eventContext.head.setTitle(
+          '${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
       if (!mounted) return;
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => AddEventPage(eventContext: eventContext)));
     } else {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddEventPage(eventContext: eventContext)));
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => AddEventPage(eventContext: eventContext)));
     }
   }
 }

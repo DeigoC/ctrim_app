@@ -242,7 +242,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget? _buildFAB() {
-    if (_selectedIndex == 0 && _appContext.currentUser.isLeader) {
+    if (_selectedIndex == 0 && _appContext.currentUser.canManagePostTemplates) {
       return FloatingActionButton.extended(
           icon: const Icon(Icons.post_add),
           onPressed: () {

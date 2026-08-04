@@ -11,10 +11,12 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/user_auth_link.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_picker.dart';
+import '../../widgets/role_access_gate.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditUserPage extends StatefulWidget {
@@ -30,7 +32,8 @@ class _EditUserPageState extends State<EditUserPage> {
   final UserDBManager _userDBManager = UserDBManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
   final UserAuthLinkService _authLinkService = UserAuthLinkService();
-  final RegExp _driveRegExp = RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
+  final RegExp _driveRegExp =
+      RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
 
   late final TextEditingController _tecForename;
   late final TextEditingController _tecSurname;
@@ -85,8 +88,10 @@ class _EditUserPageState extends State<EditUserPage> {
         _tecSurname.text != widget.user.surname ||
         _currentLocation != widget.user.location;
     final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
-    final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin || _isLeader != widget.user.isLeader;
-    final hasTagChanges = !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
+    final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin ||
+        _isLeader != widget.user.isLeader;
+    final hasTagChanges =
+        !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
     final requiredFieldsFilled = _tecForename.text.trim().isNotEmpty &&
         _tecSurname.text.trim().isNotEmpty &&
         _currentLocation.trim().isNotEmpty;
@@ -98,7 +103,10 @@ class _EditUserPageState extends State<EditUserPage> {
     }
 
     setState(() {
-      _hasChanges = hasTextChanges || hasFlagChanges || hasTagChanges || hasImgFieldChange;
+      _hasChanges = hasTextChanges ||
+          hasFlagChanges ||
+          hasTagChanges ||
+          hasImgFieldChange;
       _canSave = _hasChanges && _imageValidated && requiredFieldsFilled;
     });
   }
@@ -110,31 +118,58 @@ class _EditUserPageState extends State<EditUserPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        Navigator.of(context).pop(_authLinkChanged || result == true);
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Edit User'),
+    return RoleAccessGate(
+      allow: (user) =>
+          user.canManageVolunteers ||
+          canEditPlaceholderProfile(actor: user, target: widget.user),
+      deniedMessage: 'You cannot edit this user.',
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          Navigator.of(context).pop(_authLinkChanged || result == true);
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_isCreatorOnlyEdit ? 'Edit placeholder' : 'Edit User'),
+          ),
+          body: _buildBody(),
+          bottomNavigationBar: _buildSaveBar(),
         ),
-        body: _buildBody(),
-        bottomNavigationBar: _buildSaveBar(),
       ),
     );
+  }
+
+  bool get _isCreatorOnlyEdit {
+    final current = Provider.of<AppContext>(context, listen: false).currentUser;
+    return !current.canManageVolunteers &&
+        canEditPlaceholderProfile(actor: current, target: widget.user);
+  }
+
+  bool get _canLinkAuth {
+    final current = Provider.of<AppContext>(context, listen: false).currentUser;
+    if (current.canManageVolunteers) return true;
+    return widget.user.isPlaceholder &&
+        _authID.isEmpty &&
+        widget.user.createdByUserID == current.id;
+  }
+
+  bool get _canUnlinkAuth {
+    final current = Provider.of<AppContext>(context, listen: false).currentUser;
+    return canUnlinkUserAuth(actor: current);
   }
 
   Widget? _buildSaveBar() {
     if (!_hasChanges) return null;
 
-    final horizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final horizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
+        padding:
+            EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
         child: FilledButton.icon(
           onPressed: _canSave ? _onSaveChangesClick : null,
           icon: const Icon(Icons.save),
@@ -173,12 +208,15 @@ class _EditUserPageState extends State<EditUserPage> {
                     : 'Linked account — reassign if they registered with a new email',
                 helperMaxLines: 2,
                 filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                fillColor:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
               ),
               child: Text(
                 display,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: snap.hasData && snap.data != null && snap.data!.isNotEmpty
+                      color: snap.hasData &&
+                              snap.data != null &&
+                              snap.data!.isNotEmpty
                           ? colorScheme.onSurface
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -189,12 +227,14 @@ class _EditUserPageState extends State<EditUserPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  onPressed: _onLinkAccountClick,
-                  icon: Icon(_authID.isEmpty ? Icons.link : Icons.swap_horiz),
-                  label: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
-                ),
-                if (_authID.isNotEmpty)
+                if (_canLinkAuth)
+                  OutlinedButton.icon(
+                    onPressed: _onLinkAccountClick,
+                    icon: Icon(_authID.isEmpty ? Icons.link : Icons.swap_horiz),
+                    label: Text(
+                        _authID.isEmpty ? 'Link account' : 'Reassign account'),
+                  ),
+                if (_canUnlinkAuth && _authID.isNotEmpty)
                   TextButton.icon(
                     onPressed: _onUnlinkAccountClick,
                     icon: const Icon(Icons.link_off),
@@ -209,11 +249,13 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Widget _buildBody() {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
+      padding:
+          EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -242,9 +284,11 @@ class _EditUserPageState extends State<EditUserPage> {
                                 return const Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.error, color: Colors.red, size: 40),
+                                    Icon(Icons.error,
+                                        color: Colors.red, size: 40),
                                     SizedBox(height: 8),
-                                    Text('Failed to load image', style: TextStyle(fontSize: 12)),
+                                    Text('Failed to load image',
+                                        style: TextStyle(fontSize: 12)),
                                   ],
                                 );
                               }
@@ -353,7 +397,8 @@ class _EditUserPageState extends State<EditUserPage> {
                   const SizedBox(height: 8),
                   SwitchListTile(
                     title: const Text('Area Admin'),
-                    subtitle: const Text('Can manage users and access admin features'),
+                    subtitle: const Text(
+                        'Can manage users and access admin features'),
                     value: _isAreaAdmin,
                     onChanged: (value) {
                       setState(() {
@@ -364,7 +409,8 @@ class _EditUserPageState extends State<EditUserPage> {
                   ),
                   SwitchListTile(
                     title: const Text('Leader'),
-                    subtitle: const Text('Has leadership privileges in the app'),
+                    subtitle:
+                        const Text('Has leadership privileges in the app'),
                     value: _isLeader,
                     onChanged: (value) {
                       setState(() {
@@ -409,7 +455,8 @@ class _EditUserPageState extends State<EditUserPage> {
                   ),
                   ListTile(
                     title: const Text('Auth ID'),
-                    subtitle: Text(_authID.isEmpty ? '(none — placeholder)' : _authID),
+                    subtitle: Text(
+                        _authID.isEmpty ? '(none — placeholder)' : _authID),
                     dense: true,
                   ),
                 ],
@@ -426,14 +473,22 @@ class _EditUserPageState extends State<EditUserPage> {
   User _userSnapshot({String? authID}) {
     return User(
       id: widget.user.id,
-      forname: _tecForename.text.trim().isEmpty ? widget.user.forname : _tecForename.text.trim(),
-      surname: _tecSurname.text.trim().isEmpty ? widget.user.surname : _tecSurname.text.trim(),
+      forname: _tecForename.text.trim().isEmpty
+          ? widget.user.forname
+          : _tecForename.text.trim(),
+      surname: _tecSurname.text.trim().isEmpty
+          ? widget.user.surname
+          : _tecSurname.text.trim(),
       imgSrc: _src,
-      location: _currentLocation.trim().isEmpty ? widget.user.location : _currentLocation.trim(),
+      location: _currentLocation.trim().isEmpty
+          ? widget.user.location
+          : _currentLocation.trim(),
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
       authID: authID ?? _authID,
       tagIDs: _selectedTagIDs.toList(),
+      createdByUserID: widget.user.createdByUserID,
+      isPlaceholder: widget.user.isPlaceholder,
     );
   }
 
@@ -485,9 +540,12 @@ class _EditUserPageState extends State<EditUserPage> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(emailController.text.trim()),
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel')),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(ctx).pop(emailController.text.trim()),
               child: const Text('Search'),
             ),
           ],
@@ -507,7 +565,8 @@ class _EditUserPageState extends State<EditUserPage> {
         onProgress(completed: 0, total: total, message: 'Looking up $email…');
         final authID = await _everyoneDBManager.fetchAuthIDFromEmail(email);
         if (authID == null || authID.isEmpty) {
-          throw StateError('No account found for that email. Ask them to register first.');
+          throw StateError(
+              'No account found for that email. Ask them to register first.');
         }
         onProgress(completed: 1, total: total, message: 'Linking account…');
         final updated = await _authLinkService.linkAuth(
@@ -544,8 +603,12 @@ class _EditUserPageState extends State<EditUserPage> {
           'volunteer until you link an account again. Schedule and profile data are kept.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Unlink')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Unlink')),
         ],
       ),
     );
@@ -557,7 +620,8 @@ class _EditUserPageState extends State<EditUserPage> {
       subtitle: 'Removing login link…',
       errorTitle: 'Could not unlink account',
       action: () async {
-        final updated = await _authLinkService.unlinkAuth(user: _userSnapshot());
+        final updated =
+            await _authLinkService.unlinkAuth(user: _userSnapshot());
         if (!mounted) return;
         _replaceUserInAppContext(updated);
         setState(() {
@@ -594,8 +658,9 @@ class _EditUserPageState extends State<EditUserPage> {
     try {
       // GET without custom headers — Flutter web CORS fails on User-Agent / HEAD preflight.
       final imageUrl = NetworkImageHelper.getImageUrl(_src);
-      final response =
-          await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(Uri.parse(imageUrl))
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -623,7 +688,9 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   void _onSaveChangesClick() async {
-    if (_tecForename.text.trim().isEmpty || _tecSurname.text.trim().isEmpty || _currentLocation.trim().isEmpty) {
+    if (_tecForename.text.trim().isEmpty ||
+        _tecSurname.text.trim().isEmpty ||
+        _currentLocation.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
@@ -644,6 +711,8 @@ class _EditUserPageState extends State<EditUserPage> {
       isLeader: _isLeader,
       authID: _authID,
       tagIDs: _selectedTagIDs.toList(),
+      createdByUserID: widget.user.createdByUserID,
+      isPlaceholder: widget.user.isPlaceholder,
     );
 
     try {
@@ -665,10 +734,25 @@ class _EditUserPageState extends State<EditUserPage> {
         isLeader: updatedUser.isLeader,
         authID: updatedUser.authID,
         tagIDs: tagIDsToSave,
+        createdByUserID: updatedUser.createdByUserID,
+        isPlaceholder: updatedUser.isPlaceholder,
       );
-      await _userDBManager.updateUser(userToSave);
-      if (userToSave.authID.isNotEmpty) {
-        await _everyoneDBManager.setAsUser(userToSave.authID, userToSave.isLeader);
+
+      if (_isCreatorOnlyEdit) {
+        await _userDBManager.updateUserNames(
+          uid: userToSave.id,
+          forename: userToSave.forname,
+          surname: userToSave.surname,
+        );
+      } else {
+        await _userDBManager.updateUser(userToSave);
+        if (userToSave.authID.isNotEmpty) {
+          await _everyoneDBManager.setAsUser(
+            userToSave.authID,
+            isLeader: userToSave.isLeader,
+            isAreaAdmin: userToSave.isAreaAdmin,
+          );
+        }
       }
 
       // Update local image data if image changed

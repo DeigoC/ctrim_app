@@ -183,6 +183,46 @@ class CloudFunctionManager {
     }
   }
 
+  /// Creates a placeholder volunteer profile via Admin SDK (server-enforced fields).
+  Future<Map<String, dynamic>> createPlaceholderUser({
+    required String forename,
+    required String surname,
+    String location = 'Belfast',
+    String? postId,
+  }) async {
+    final callable = _inst.httpsCallable('create_placeholder_user');
+    final result = await callable.call({
+      'Forename': forename,
+      'Surname': surname,
+      'Location': location,
+      if (postId != null && postId.isNotEmpty) 'PostID': postId,
+    });
+    final data = result.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw StateError('create_placeholder_user returned no data');
+  }
+
+  /// Links Auth on a volunteer profile; clears [IsPlaceholder]. Creator or area admin.
+  Future<Map<String, dynamic>> linkUserAuth({
+    required String userId,
+    required String authId,
+    bool isLeader = false,
+  }) async {
+    final callable = _inst.httpsCallable('link_user_auth');
+    final result = await callable.call({
+      'UserID': userId,
+      'AuthID': authId,
+      'IsLeader': isLeader,
+    });
+    final data = result.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw StateError('link_user_auth returned no data');
+  }
+
   List<String> _convertMapToKeyValueStrings(Map<String, String> data) {
     if (data.isEmpty) {
       return ['', ''];

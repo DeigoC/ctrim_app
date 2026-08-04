@@ -676,6 +676,90 @@ abstract class AppLocalizations {
   /// **'Manage contributors'**
   String get selectUsersManageContributors;
 
+  /// Button offered when picker search finds no matching volunteer
+  ///
+  /// In en, this message translates to:
+  /// **'Create placeholder'**
+  String get selectUsersCreatePlaceholder;
+
+  /// Dialog title for creating a placeholder volunteer profile
+  ///
+  /// In en, this message translates to:
+  /// **'Create placeholder'**
+  String get selectUsersCreatePlaceholderTitle;
+
+  /// Explains placeholder create from the user picker
+  ///
+  /// In en, this message translates to:
+  /// **'Create a temporary profile with no login. You can link their account later after they register.'**
+  String get selectUsersCreatePlaceholderBody;
+
+  /// Forename field label in placeholder create dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Forename'**
+  String get selectUsersForename;
+
+  /// Surname field label in placeholder create dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Surname'**
+  String get selectUsersSurname;
+
+  /// Confirm create placeholder in picker dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get selectUsersCreate;
+
+  /// Validation when placeholder create names are blank
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both forename and surname'**
+  String get selectUsersNameRequired;
+
+  /// Progress dialog title while creating a placeholder user
+  ///
+  /// In en, this message translates to:
+  /// **'Creating placeholder'**
+  String get selectUsersCreatingPlaceholder;
+
+  /// Progress dialog subtitle while creating a placeholder user
+  ///
+  /// In en, this message translates to:
+  /// **'Saving profile…'**
+  String get selectUsersCreatingPlaceholderSubtitle;
+
+  /// Error title when placeholder create fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create placeholder'**
+  String get selectUsersCreatePlaceholderFailed;
+
+  /// SnackBar after successful placeholder create from picker
+  ///
+  /// In en, this message translates to:
+  /// **'Placeholder created and selected'**
+  String get selectUsersPlaceholderCreated;
+
+  /// Subtitle for placeholder users in the picker list
+  ///
+  /// In en, this message translates to:
+  /// **'Placeholder · {location}'**
+  String selectUsersPlaceholderSubtitle(String location);
+
+  /// Toggle to include placeholder profiles in the Volunteers list
+  ///
+  /// In en, this message translates to:
+  /// **'Show placeholders'**
+  String get volunteersShowPlaceholders;
+
+  /// Badge on placeholder volunteer cards
+  ///
+  /// In en, this message translates to:
+  /// **'Placeholder'**
+  String get volunteersPlaceholderBadge;
+
   /// Label before sort mode chips on the volunteers list
   ///
   /// In en, this message translates to:

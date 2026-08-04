@@ -13,6 +13,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notification_topics.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../action_sheet.dart';
 import '../load_progress_body.dart';
 import '../user_avatar.dart';
@@ -542,12 +543,19 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final selected = attendance.attendees.where((e) => e.isUser && e.userId != null).map((e) => e.userId!).toList();
 
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final authorUid = widget.eventContext.metadata.authorUID;
     final result = await Navigator.push<List<String>>(
       context,
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
           selectedUIDs: selected,
           title: 'Select attendees',
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: appContext.currentUser,
+            postAuthorUid: authorUid,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
         ),
       ),
     );

@@ -15,6 +15,7 @@ import '../../../widgets/posts/view_all_programs.dart';
 import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
 import '../../../widgets/posts/template_log_dialog.dart';
+import '../../../widgets/role_access_gate.dart';
 import '../add_media_file_page.dart';
 import '../add_program_role_page.dart';
 import '../edit_body_page.dart';
@@ -65,7 +66,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody());
+    return RoleAccessGate(
+      allow: (user) => user.canManagePostTemplates,
+      deniedMessage: 'Only leaders can edit post templates.',
+      child: Scaffold(body: _buildBody()),
+    );
   }
 
   Widget _buildBody() {

@@ -6,6 +6,7 @@ import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/notification_topics.dart';
+import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 import 'package:ctrim_app/widgets/my_avatar_stack.dart';
 import 'package:ctrim_app/widgets/post_tag_picker.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
@@ -340,6 +341,11 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: Provider.of<AppContext>(context, listen: false).currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
         ),
       ),
     );
@@ -781,6 +787,11 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           selectedUIDs: List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: Provider.of<AppContext>(context, listen: false).currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
         ),
       ),
     );

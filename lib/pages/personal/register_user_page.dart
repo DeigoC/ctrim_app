@@ -9,6 +9,7 @@ import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/responsive_content.dart';
+import '../../widgets/role_access_gate.dart';
 import '../../widgets/user_tag_picker.dart';
 
 class RegisterUserPage extends StatefulWidget {
@@ -54,18 +55,23 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: _allowPop || _isSaved,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop || _allowPop || _isSaved) return;
-        final shouldPop = await DialogManager.discardChanges(context: context);
-        if (shouldPop && mounted) {
-          _popRouteAfterAllowing();
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Register User')),
-        body: _buildBody(),
+    return RoleAccessGate(
+      allow: (user) => user.canManageVolunteers,
+      deniedMessage: 'Only area admins can register users.',
+      child: PopScope(
+        canPop: _allowPop || _isSaved,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop || _allowPop || _isSaved) return;
+          final shouldPop =
+              await DialogManager.discardChanges(context: context);
+          if (shouldPop && mounted) {
+            _popRouteAfterAllowing();
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Register User')),
+          body: _buildBody(),
+        ),
       ),
     );
   }
@@ -77,12 +83,14 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           TextField(
-              decoration: const InputDecoration(label: Text('Forename'), hintText: 'Enter first name please'),
+              decoration: const InputDecoration(
+                  label: Text('Forename'), hintText: 'Enter first name please'),
               controller: _tecForename,
               onChanged: _areFieldsGood,
               onSubmitted: (_) => _fnSurname.requestFocus()),
           TextField(
-              decoration: const InputDecoration(label: Text('Surname'), hintText: 'Enter second name please'),
+              decoration: const InputDecoration(
+                  label: Text('Surname'), hintText: 'Enter second name please'),
               controller: _tecSurname,
               onChanged: _areFieldsGood,
               focusNode: _fnSurname,
@@ -91,7 +99,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
           _buildLocationSelector(),
           const SizedBox(height: 16),
           const Divider(),
-          Text('Account (optional)', style: Theme.of(context).textTheme.titleMedium),
+          Text('Account (optional)',
+              style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
             'Leave blank to create a placeholder profile (e.g. for schedules). '
@@ -118,7 +127,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
               readOnly: true),
           const SizedBox(height: 8),
           ElevatedButton(
-              onPressed: _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
+              onPressed:
+                  _tecAuthID.text.isEmpty ? _onSearchForAuthIDClick : null,
               child: const Text('Search for AuthID')),
           ElevatedButton(
               onPressed: _tecAuthID.text.isNotEmpty
@@ -144,7 +154,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
             builder: (context, appContext, _) => UserTagPicker(
               allTags: appContext.allTags,
               selectedTagIDs: _selectedTagIDs,
-              onChanged: (selected) => setState(() => _selectedTagIDs = selected),
+              onChanged: (selected) =>
+                  setState(() => _selectedTagIDs = selected),
             ),
           ),
           const SizedBox(height: 16),
@@ -161,7 +172,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   Widget _buildLocationSelector() {
     final appContext = Provider.of<AppContext>(context);
     final options = VolunteerLocations.assignableFrom(appContext.allLocations);
-    final value = options.contains(_currentLocation) ? _currentLocation : options.first;
+    final value =
+        options.contains(_currentLocation) ? _currentLocation : options.first;
 
     return DropdownButton<String>(
         icon: const Icon(Icons.map_sharp),
@@ -219,19 +231,28 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                 ? 'Create a profile with no login account? You can link their email later from Edit User.'
                 : 'Are you sure all details are finished?'),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel')),
               TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    final saved = await DialogManager.runWithSteppedProgressDialog(
+                    final saved =
+                        await DialogManager.runWithSteppedProgressDialog(
                       context: context,
-                      title: isPlaceholder ? 'Creating placeholder' : 'Registering user',
-                      initialMessage: isPlaceholder ? 'Creating profile…' : 'Checking account…',
+                      title: isPlaceholder
+                          ? 'Creating placeholder'
+                          : 'Registering user',
+                      initialMessage: isPlaceholder
+                          ? 'Creating profile…'
+                          : 'Checking account…',
                       errorTitle: 'Could not register user',
                       action: (onProgress) async {
                         final newUser = await _registerUser(onProgress);
                         if (!mounted) return;
-                        Provider.of<AppContext>(context, listen: false).allUsers.add(newUser);
+                        Provider.of<AppContext>(context, listen: false)
+                            .allUsers
+                            .add(newUser);
                       },
                     );
                     if (!mounted || !saved) return;
@@ -250,20 +271,26 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     final UserDBManager userDBManager = UserDBManager();
     final authID = _tecAuthID.text.trim();
 
-    onProgress(completed: 0, total: total, message: authID.isEmpty ? 'Creating profile…' : 'Checking account…');
+    onProgress(
+        completed: 0,
+        total: total,
+        message: authID.isEmpty ? 'Creating profile…' : 'Checking account…');
     if (authID.isNotEmpty) {
       final existing = await userDBManager.fetchUserByAuthID(authID);
       if (existing != null) {
-        throw StateError('That account is already linked to ${existing.fullname}.');
+        throw StateError(
+            'That account is already linked to ${existing.fullname}.');
       }
     }
 
     onProgress(completed: 1, total: total, message: 'Creating profile…');
     final String newID = await idTracker.getAndIncrementUserID();
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final locationOptions = VolunteerLocations.assignableFrom(appContext.allLocations);
-    final location =
-        locationOptions.contains(_currentLocation) ? _currentLocation : locationOptions.first;
+    final locationOptions =
+        VolunteerLocations.assignableFrom(appContext.allLocations);
+    final location = locationOptions.contains(_currentLocation)
+        ? _currentLocation
+        : locationOptions.first;
     final ctrim.User newUser = ctrim.User(
         id: newID,
         forname: _tecForename.text.trim(),
@@ -271,11 +298,13 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         authID: authID,
         location: location,
         isLeader: _isLeader,
-        tagIDs: _selectedTagIDs.toList());
+        tagIDs: _selectedTagIDs.toList(),
+        createdByUserID: appContext.currentUser.id,
+        isPlaceholder: authID.isEmpty);
 
     if (authID.isNotEmpty) {
       onProgress(completed: 2, total: total, message: 'Linking login account…');
-      await _everyoneDBManager.setAsUser(authID, _isLeader);
+      await _everyoneDBManager.setAsUser(authID, isLeader: _isLeader);
     } else {
       onProgress(completed: 2, total: total, message: 'Finishing…');
     }
@@ -284,7 +313,8 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
   }
 
   void _areFieldsGood(String _) {
-    final namesOk = _tecForename.text.trim().isNotEmpty && _tecSurname.text.trim().isNotEmpty;
+    final namesOk = _tecForename.text.trim().isNotEmpty &&
+        _tecSurname.text.trim().isNotEmpty;
     if (_canSave != namesOk) {
       setState(() {
         _canSave = namesOk;

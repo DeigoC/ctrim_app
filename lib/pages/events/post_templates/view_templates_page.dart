@@ -10,6 +10,7 @@ import '../../../utility/local_data_manager.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../widgets/load_progress_body.dart';
+import '../../../widgets/role_access_gate.dart';
 import 'edit_template_page.dart';
 
 class ViewTemplatesPage extends StatefulWidget {
@@ -61,7 +62,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     try {
       final templates = await PostTemplateLoader.load(
         onProgress: ({required completed, required total, required message}) {
-          _updateLoadProgress(completed: completed, total: total, message: message);
+          _updateLoadProgress(
+              completed: completed, total: total, message: message);
         },
       );
       if (!mounted) return;
@@ -84,20 +86,24 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Post Templates'),
+    return RoleAccessGate(
+      allow: (user) => user.canManagePostTemplates,
+      deniedMessage: 'Only leaders can manage post templates.',
+      child: Scaffold(
         backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
+        appBar: AppBar(
+          title: const Text('Post Templates'),
+          backgroundColor: colorScheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _loading ? null : _onCreateTemplateTap,
+          icon: const Icon(Icons.add),
+          label: const Text('New template'),
+        ),
+        body: _buildBody(),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _loading ? null : _onCreateTemplateTap,
-        icon: const Icon(Icons.add),
-        label: const Text('New template'),
-      ),
-      body: _buildBody(),
     );
   }
 
@@ -124,11 +130,15 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.description_outlined,
-                  size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  size: 48,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(height: 16),
               Text(
                 'No templates yet',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
@@ -149,12 +159,14 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         final width = constraints.maxWidth;
         final isWide = ResponsiveLayout.isWideScreen(width);
         final horizontalPadding = isWide
-            ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2).clamp(16.0, double.infinity)
+            ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2)
+                .clamp(16.0, double.infinity)
             : 16.0;
 
         if (!isWide) {
           return ListView.separated(
-            padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
+            padding: EdgeInsets.fromLTRB(
+                horizontalPadding, 16, horizontalPadding, 96),
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemCount: templates.length,
             itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
@@ -179,7 +191,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         }
 
         return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
+          padding:
+              EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -219,7 +232,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                   color: colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.description, color: colorScheme.onSecondaryContainer, size: 24),
+                child: Icon(Icons.description,
+                    color: colorScheme.onSecondaryContainer, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -228,7 +242,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                   children: [
                     Text(
                       template.title,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     if (template.description.isNotEmpty) ...[
                       const SizedBox(height: 6),
@@ -316,7 +331,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         const total = 2;
         onProgress(completed: 0, total: total, message: 'Creating template…');
         final result = await PostTemplateDBManager().addPostTemplate(draft);
-        createdTemplate = PostTemplate.fromMap(true, result.id, draft.toJson(true));
+        createdTemplate =
+            PostTemplate.fromMap(true, result.id, draft.toJson(true));
         onProgress(completed: 1, total: total, message: 'Saving local copy…');
         final local = LocalDataManager();
         await local.writePostTemplateData(createdTemplate!);
@@ -348,10 +364,13 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       errorTitle: 'Could not duplicate template',
       action: (onProgress) async {
         const total = 2;
-        onProgress(completed: 0, total: total, message: 'Duplicating template…');
+        onProgress(
+            completed: 0, total: total, message: 'Duplicating template…');
         final copyData = source.toJson(true);
         copyData['Title'] = 'Copy of ${source.title}';
-        copyData['HeadTitle'] = source.headTitle.isEmpty ? copyData['Title'] : 'Copy of ${source.headTitle}';
+        copyData['HeadTitle'] = source.headTitle.isEmpty
+            ? copyData['Title']
+            : 'Copy of ${source.headTitle}';
         // Fresh history for the new document — do not copy source Logs.
         copyData['Logs'] = <Map<String, dynamic>>[];
         final draft = PostTemplate.fromMap(true, 'temp', copyData);
@@ -523,7 +542,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       eventContext.metadata.addAllTopics(postTemplate.topics);
     }
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
-    if (postTemplate.leadSpeakerUID != null && postTemplate.leadSpeakerUID!.isNotEmpty) {
+    if (postTemplate.leadSpeakerUID != null &&
+        postTemplate.leadSpeakerUID!.isNotEmpty) {
       eventContext.metadata.setLeadSpeakerUID(postTemplate.leadSpeakerUID);
       eventContext.syncLeadSpeakerHeadFromUsers(_appContext.allUsers);
     }
@@ -536,8 +556,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         title: role['title'] ?? '',
         start: role['start'],
         end: role['end'],
-        id: role['id'] is int ? role['id'] as int : DateTime.now().millisecondsSinceEpoch,
-        forGuests: role['for_guests'] is bool ? role['for_guests'] as bool : true,
+        id: role['id'] is int
+            ? role['id'] as int
+            : DateTime.now().millisecondsSinceEpoch,
+        forGuests:
+            role['for_guests'] is bool ? role['for_guests'] as bool : true,
       );
     }
     eventContext.program.setAddress(postTemplate.address);

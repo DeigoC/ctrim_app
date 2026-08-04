@@ -20,6 +20,7 @@ import '../../utility/local_data_manager.dart';
 import '../../utility/notification_send_result.dart';
 import '../../utility/notification_topics.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_edit_sheet.dart';
 import '../../widgets/posts/post_metadata_section.dart';
@@ -687,6 +688,11 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: appContext.currentUser,
+            postAuthorUid: _eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: _eventContext.id,
         ),
       ),
     );

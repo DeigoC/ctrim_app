@@ -9,6 +9,7 @@ import '../../utility/notification_topics.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/post_tag_chip.dart';
+import '../../widgets/role_access_gate.dart';
 
 class ManagePostTagsPage extends StatefulWidget {
   const ManagePostTagsPage({super.key});
@@ -22,13 +23,38 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
   bool _loading = true;
   bool _saving = false;
 
-  static const List<({String name, String color, String streamKind})> _defaultSeedTags = [
-    (name: 'Sunday Worship', color: '#6B4EAA', streamKind: NotificationTopics.kindSundayService),
-    (name: 'Midweek Service', color: '#3D6B9E', streamKind: NotificationTopics.kindMidweekService),
-    (name: 'Growth Mentoring', color: '#2E7D6F', streamKind: NotificationTopics.kindGrowthMentoring),
-    (name: 'Dawn Watch', color: '#C45B2C', streamKind: NotificationTopics.kindDawnWatch),
-    (name: 'Overnight Prayer', color: '#8B5A2B', streamKind: NotificationTopics.kindOvernightPrayer),
-    (name: 'Youth Caregroup', color: '#4A7C59', streamKind: NotificationTopics.kindYouthCaregroup),
+  static const List<({String name, String color, String streamKind})>
+      _defaultSeedTags = [
+    (
+      name: 'Sunday Worship',
+      color: '#6B4EAA',
+      streamKind: NotificationTopics.kindSundayService
+    ),
+    (
+      name: 'Midweek Service',
+      color: '#3D6B9E',
+      streamKind: NotificationTopics.kindMidweekService
+    ),
+    (
+      name: 'Growth Mentoring',
+      color: '#2E7D6F',
+      streamKind: NotificationTopics.kindGrowthMentoring
+    ),
+    (
+      name: 'Dawn Watch',
+      color: '#C45B2C',
+      streamKind: NotificationTopics.kindDawnWatch
+    ),
+    (
+      name: 'Overnight Prayer',
+      color: '#8B5A2B',
+      streamKind: NotificationTopics.kindOvernightPrayer
+    ),
+    (
+      name: 'Youth Caregroup',
+      color: '#4A7C59',
+      streamKind: NotificationTopics.kindYouthCaregroup
+    ),
   ];
 
   @override
@@ -54,104 +80,121 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isWide = ResponsiveLayout.isWideScreen(screenWidth);
     final horizontalPadding = isWide
-        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
+        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2)
+            .clamp(0.0, double.infinity)
         : 0.0;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.managePostTagsTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: l10n.managePostTagsAdd,
-            onPressed: _saving ? null : () => _showTagDialog(),
-          ),
-        ],
-      ),
-      body: Consumer<AppContext>(
-        builder: (context, appContext, _) {
-          if (_loading) {
-            return const LoadProgressBody(
-              message: 'Loading tags…',
-              completedSteps: 0,
-              totalSteps: 1,
-            );
-          }
+    return RoleAccessGate(
+      allow: (user) => user.canManageVolunteers,
+      deniedMessage: 'Only area admins can manage post tags.',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.managePostTagsTitle),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: l10n.managePostTagsAdd,
+              onPressed: _saving ? null : () => _showTagDialog(),
+            ),
+          ],
+        ),
+        body: Consumer<AppContext>(
+          builder: (context, appContext, _) {
+            if (_loading) {
+              return const LoadProgressBody(
+                message: 'Loading tags…',
+                completedSteps: 0,
+                totalSteps: 1,
+              );
+            }
 
-          final tags = appContext.allPostTags;
-          if (tags.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(l10n.managePostTagsEmpty, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _saving ? null : _seedDefaultTags,
-                      icon: const Icon(Icons.auto_awesome),
-                      label: Text(l10n.managePostTagsSeedDefaults),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: _saving ? null : () => _showTagDialog(),
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.managePostTagsAdd),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            itemCount: tags.length,
-            itemBuilder: (_, index) {
-              final tag = tags[index];
-              final streamLabel = tag.isNotifiable
-                  ? l10n.managePostTagsStreamKindHint(tag.streamKind!)
-                  : l10n.managePostTagsNoStream;
-              return Card(
-                child: ListTile(
-                  leading: PostTagChip(tag: tag),
-                  title: Text(tag.name),
-                  subtitle: Text(
-                    '${tag.isActive ? l10n.managePostTagsActive : l10n.managePostTagsInactive} · $streamLabel',
-                  ),
-                  isThreeLine: true,
-                  trailing: Row(
+            final tags = appContext.allPostTags;
+            if (tags.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_upward),
-                        tooltip: l10n.managePostTagsMoveUp,
-                        onPressed: index == 0 || _saving ? null : () => _moveTag(index, -1),
+                      Text(l10n.managePostTagsEmpty,
+                          textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _saving ? null : _seedDefaultTags,
+                        icon: const Icon(Icons.auto_awesome),
+                        label: Text(l10n.managePostTagsSeedDefaults),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_downward),
-                        tooltip: l10n.managePostTagsMoveDown,
-                        onPressed: index == tags.length - 1 || _saving ? null : () => _moveTag(index, 1),
-                      ),
-                      PopupMenuButton<String>(
-                        onSelected: (value) => _onMenuAction(tag, value),
-                        itemBuilder: (_) => [
-                          PopupMenuItem(value: 'edit', child: Text(l10n.managePostTagsEdit)),
-                          PopupMenuItem(
-                            value: 'toggle',
-                            child: Text(tag.isActive ? l10n.managePostTagsDeactivate : l10n.managePostTagsActivate),
-                          ),
-                          PopupMenuItem(value: 'delete', child: Text(l10n.managePostTagsDelete)),
-                        ],
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _saving ? null : () => _showTagDialog(),
+                        icon: const Icon(Icons.add),
+                        label: Text(l10n.managePostTagsAdd),
                       ),
                     ],
                   ),
                 ),
               );
-            },
-          );
-        },
+            }
+
+            return ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              itemCount: tags.length,
+              itemBuilder: (_, index) {
+                final tag = tags[index];
+                final streamLabel = tag.isNotifiable
+                    ? l10n.managePostTagsStreamKindHint(tag.streamKind!)
+                    : l10n.managePostTagsNoStream;
+                return Card(
+                  child: ListTile(
+                    leading: PostTagChip(tag: tag),
+                    title: Text(tag.name),
+                    subtitle: Text(
+                      '${tag.isActive ? l10n.managePostTagsActive : l10n.managePostTagsInactive} · $streamLabel',
+                    ),
+                    isThreeLine: true,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_upward),
+                          tooltip: l10n.managePostTagsMoveUp,
+                          onPressed: index == 0 || _saving
+                              ? null
+                              : () => _moveTag(index, -1),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_downward),
+                          tooltip: l10n.managePostTagsMoveDown,
+                          onPressed: index == tags.length - 1 || _saving
+                              ? null
+                              : () => _moveTag(index, 1),
+                        ),
+                        PopupMenuButton<String>(
+                          onSelected: (value) => _onMenuAction(tag, value),
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                                value: 'edit',
+                                child: Text(l10n.managePostTagsEdit)),
+                            PopupMenuItem(
+                              value: 'toggle',
+                              child: Text(tag.isActive
+                                  ? l10n.managePostTagsDeactivate
+                                  : l10n.managePostTagsActivate),
+                            ),
+                            PopupMenuItem(
+                                value: 'delete',
+                                child: Text(l10n.managePostTagsDelete)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -171,21 +214,24 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
     final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: existing?.name ?? '');
     final colorController = TextEditingController(text: existing?.color ?? '');
-    final streamController = TextEditingController(text: existing?.streamKind ?? '');
+    final streamController =
+        TextEditingController(text: existing?.streamKind ?? '');
     final isEditing = existing != null;
 
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(isEditing ? l10n.managePostTagsEdit : l10n.managePostTagsAdd),
+          title: Text(
+              isEditing ? l10n.managePostTagsEdit : l10n.managePostTagsAdd),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(labelText: l10n.managePostTagsNameLabel),
+                  decoration:
+                      InputDecoration(labelText: l10n.managePostTagsNameLabel),
                   autofocus: true,
                 ),
                 const SizedBox(height: 12),
@@ -209,7 +255,9 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(l10n.cancel)),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(l10n.cancel)),
             FilledButton(
               onPressed: () {
                 if (nameController.text.trim().isEmpty) return;
@@ -248,7 +296,10 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
       } else {
         final nextOrder = appContext.allPostTags.isEmpty
             ? 1
-            : appContext.allPostTags.map((t) => t.displayOrder).reduce((a, b) => a > b ? a : b) + 1;
+            : appContext.allPostTags
+                    .map((t) => t.displayOrder)
+                    .reduce((a, b) => a > b ? a : b) +
+                1;
         final tag = await _tagDBManager.createTag(
           name: name,
           color: color.isEmpty ? null : color,
@@ -292,8 +343,12 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
         title: Text(l10n.managePostTagsDelete),
         content: Text(l10n.managePostTagsDeleteConfirm(tag.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(l10n.managePostTagsDelete)),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.managePostTagsDelete)),
         ],
       ),
     );
