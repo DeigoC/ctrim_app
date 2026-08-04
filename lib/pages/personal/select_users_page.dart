@@ -1,7 +1,9 @@
+import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
@@ -25,6 +27,10 @@ class SelectUsersPage extends StatefulWidget {
     this.allowTaskCheck = false,
     this.title,
     this.maxSelection,
+    this.allowCreatePlaceholder = false,
+    this.includePlaceholders = false,
+    this.postIdForPlaceholderCreate,
+    this.cellGroupIdForPlaceholderCreate,
   });
 
   final List<String> selectedUIDs;
@@ -37,12 +43,26 @@ class SelectUsersPage extends StatefulWidget {
   /// beyond the limit replaces the oldest selection.
   final int? maxSelection;
 
+  /// When true (and the signed-in user passes the create gate), empty search
+  /// offers "Create placeholder".
+  final bool allowCreatePlaceholder;
+
+  /// When false (default), hides `IsPlaceholder` users unless already selected.
+  final bool includePlaceholders;
+
+  /// Optional post id passed to `create_placeholder_user` for author-gate checks.
+  final String? postIdForPlaceholderCreate;
+
+  /// Optional cell group id passed to `create_placeholder_user` for leader-gate checks.
+  final String? cellGroupIdForPlaceholderCreate;
+
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
 }
 
 class _SelectUsersPageState extends State<SelectUsersPage> {
   final TextEditingController _searchController = TextEditingController();
+  final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   late final Set<String> _selectedUIDs;
   late String _locationFilter;
 
@@ -79,6 +99,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final filteredUsers = _filteredUsers(appContext);
+      final showCreate = widget.allowCreatePlaceholder &&
+          _searchQuery.trim().isNotEmpty &&
+          filteredUsers.isEmpty;
 
       return Scaffold(
         appBar: AppBar(
@@ -152,11 +175,24 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               child: filteredUsers.isEmpty
                   ? Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-                        child: Text(
-                          _emptyMessage(l10n),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
+                        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding + 16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _emptyMessage(l10n),
+                              style: Theme.of(context).textTheme.bodyLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                            if (showCreate) ...[
+                              const SizedBox(height: 16),
+                              FilledButton.tonalIcon(
+                                onPressed: () => _onCreatePlaceholder(appContext),
+                                icon: const Icon(Icons.person_add_alt),
+                                label: Text(l10n.selectUsersCreatePlaceholder),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     )
@@ -177,7 +213,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(user.location),
+                              Text(user.isPlaceholder
+                                  ? l10n.selectUsersPlaceholderSubtitle(user.location)
+                                  : user.location),
                               if (userTags.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
@@ -219,6 +257,10 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     if (widget.excludedUIDs.isNotEmpty) {
       final excluded = widget.excludedUIDs.toSet();
       users = users.where((user) => !excluded.contains(user.id));
+    }
+
+    if (!widget.includePlaceholders) {
+      users = users.where((user) => !user.isPlaceholder || _selectedUIDs.contains(user.id));
     }
 
     if (_locationFilter != VolunteerLocations.all) {
@@ -274,6 +316,109 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       }
       _selectedUIDs.add(uid);
     });
+  }
+
+  Future<void> _onCreatePlaceholder(AppContext appContext) async {
+    final l10n = AppLocalizations.of(context)!;
+    final parts = _searchQuery.trim().split(RegExp(r'\s+'));
+    final forename = parts.isNotEmpty ? parts.first : '';
+    final surname = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
+    final forenameController = TextEditingController(text: forename);
+    final surnameController = TextEditingController(text: surname);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.selectUsersCreatePlaceholderTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.selectUsersCreatePlaceholderBody),
+            const SizedBox(height: 16),
+            TextField(
+              controller: forenameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: l10n.selectUsersForename,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: surnameController,
+              decoration: InputDecoration(
+                labelText: l10n.selectUsersSurname,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.selectUsersCreate)),
+        ],
+      ),
+    );
+
+    if (!mounted || confirmed != true) return;
+
+    final newForename = forenameController.text.trim();
+    final newSurname = surnameController.text.trim();
+    if (newForename.isEmpty || newSurname.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.selectUsersNameRequired),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final location = _locationFilter == VolunteerLocations.all
+        ? appContext.currentUser.location
+        : _locationFilter;
+
+    final created = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: l10n.selectUsersCreatingPlaceholder,
+      subtitle: l10n.selectUsersCreatingPlaceholderSubtitle,
+      errorTitle: l10n.selectUsersCreatePlaceholderFailed,
+      action: () async {
+        final raw = await _cloudFunctionManager.createPlaceholderUser(
+          forename: newForename,
+          surname: newSurname,
+          location: location,
+          postId: widget.postIdForPlaceholderCreate,
+          cellGroupId: widget.cellGroupIdForPlaceholderCreate,
+        );
+        final id = raw['Id'] as String?;
+        if (id == null || id.isEmpty) {
+          throw StateError('Missing user id from create_placeholder_user');
+        }
+        final user = User.fromMap(id, raw);
+        if (!mounted) return;
+        appContext.allUsers.add(user);
+        setState(() {
+          final max = widget.maxSelection;
+          if (max != null && _selectedUIDs.length >= max) {
+            _selectedUIDs.clear();
+          }
+          _selectedUIDs.add(user.id);
+          _searchQuery = '';
+          _searchController.clear();
+          _isSearching = false;
+        });
+      },
+    );
+
+    if (!mounted || !created) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.selectUsersPlaceholderCreated),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   void _openUserSchedule(User user) {

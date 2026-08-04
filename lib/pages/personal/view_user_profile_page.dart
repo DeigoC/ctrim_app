@@ -6,6 +6,7 @@ import '../../models/user.dart';
 import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/user_tag_helpers.dart';
@@ -93,7 +94,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final canEdit = _appContext.currentUser.isAreaAdmin;
+    final canEdit = canEditPlaceholderProfile(
+      actor: _appContext.currentUser,
+      target: widget.selectedUser,
+    );
 
     return Scaffold(
       appBar: AppBar(

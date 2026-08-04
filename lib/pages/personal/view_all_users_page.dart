@@ -5,6 +5,7 @@ import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
@@ -31,6 +32,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   late String _locationFilter;
   Set<String> _selectedTagIDs = {};
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
+  bool _showPlaceholders = false;
 
   @override
   void initState() {
@@ -58,7 +60,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
-      final canEdit = appContext.currentUser.isAreaAdmin;
+      final canEdit = appContext.currentUser.canManageVolunteers;
       final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
 
       return Scaffold(
@@ -157,6 +159,17 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         onSelected: (_) => _showTagFilterSheet(activeTags),
                       ),
                     ],
+                    if (canEdit ||
+                        appContext.allUsers.any((u) =>
+                            u.isPlaceholder && u.createdByUserID == appContext.currentUser.id)) ...[
+                      const SizedBox(width: 4),
+                      FilterChip(
+                        avatar: const Icon(Icons.person_outline, size: 18),
+                        label: Text(l10n.volunteersShowPlaceholders),
+                        selected: _showPlaceholders,
+                        onSelected: (selected) => setState(() => _showPlaceholders = selected),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -175,8 +188,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ? _buildWideUserGrid(
                             users: filteredUsers,
                             allTags: appContext.allTags,
-                            canEdit: canEdit,
+                            appContext: appContext,
                             horizontalPadding: horizontalPadding,
+                            l10n: l10n,
                           )
                         : ListView.builder(
                             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -185,12 +199,18 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                               final user = filteredUsers[index];
                               final userTags =
                                   UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
+                              final canEditUser = canEditPlaceholderProfile(
+                                actor: appContext.currentUser,
+                                target: user,
+                              );
                               return ListTile(
                                 title: Text(user.fullname),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(user.location),
+                                    Text(user.isPlaceholder
+                                        ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
+                                        : user.location),
                                     if (userTags.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 4),
@@ -201,7 +221,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                                 isThreeLine: userTags.isNotEmpty,
                                 leading: MyUserAvatar(user),
                                 onTap: () => _onUserTap(user),
-                                onLongPress: canEdit ? () => _navigateToEditUser(user) : null,
+                                onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
                               );
                             },
                           ),
@@ -316,8 +336,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Widget _buildWideUserGrid({
     required List<User> users,
     required List<UserTag> allTags,
-    required bool canEdit,
+    required AppContext appContext,
     required double horizontalPadding,
+    required AppLocalizations l10n,
   }) {
     return GridView.builder(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 88),
@@ -331,13 +352,17 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       itemBuilder: (_, index) {
         final user = users[index];
         final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+        final canEditUser = canEditPlaceholderProfile(
+          actor: appContext.currentUser,
+          target: user,
+        );
         final theme = Theme.of(context);
         return Card(
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => _onUserTap(user),
-            onLongPress: canEdit ? () => _navigateToEditUser(user) : null,
+            onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
@@ -357,7 +382,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          user.location,
+                          user.isPlaceholder
+                              ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
+                              : user.location,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -381,7 +408,16 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   }
 
   List<User> _filteredUsers(List<User> allUsers, List<UserTag> allTags) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final currentUser = appContext.currentUser;
     Iterable<User> users = allUsers;
+
+    users = users.where((user) {
+      if (!user.isPlaceholder) return true;
+      if (!_showPlaceholders) return false;
+      if (currentUser.isAreaAdmin) return true;
+      return user.createdByUserID == currentUser.id;
+    });
 
     if (_locationFilter != VolunteerLocations.all) {
       users = users.where((user) => user.location == _locationFilter);

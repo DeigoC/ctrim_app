@@ -44,10 +44,15 @@ class EveryoneDBManager {
 
   // ! user related
 
-  Future<void> setAsUser(final String authID, final bool isLeader) async {
+  Future<void> setAsUser(
+    final String authID, {
+    required bool isLeader,
+    bool isAreaAdmin = false,
+  }) async {
     await _ref.doc(authID).update({
       'isUser': true,
       'isLeader': isLeader,
+      'isAreaAdmin': isAreaAdmin,
     });
   }
 
@@ -57,6 +62,7 @@ class EveryoneDBManager {
     await _ref.doc(authID).update({
       'isUser': false,
       'isLeader': false,
+      'isAreaAdmin': false,
     });
   }
 

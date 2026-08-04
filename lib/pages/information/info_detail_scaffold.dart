@@ -209,8 +209,8 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final isAreaAdmin =
-        Provider.of<AppContext>(context).currentUser.isAreaAdmin;
+    final canManageInfo =
+        Provider.of<AppContext>(context).currentUser.canManageInfo;
 
     return FutureBuilder<T?>(
       future: _future,
@@ -255,7 +255,7 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
           context: context,
           info: info,
           onRefresh: _refresh,
-          onEdit: isAreaAdmin ? () => _openEditor(info) : null,
+          onEdit: canManageInfo ? () => _openEditor(info) : null,
         );
       },
     );

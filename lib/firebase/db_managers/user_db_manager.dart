@@ -19,6 +19,18 @@ class UserDBManager {
     await _ref.doc(user.id).update(user.toJson());
   }
 
+  /// Placeholder creator name correction — field-scoped for firestore.rules.
+  Future<void> updateUserNames({
+    required String uid,
+    required String forename,
+    required String surname,
+  }) async {
+    await _ref.doc(uid).update({
+      'Forename': forename,
+      'Surname': surname,
+    });
+  }
+
   /// Self-serve profile photo update — only touches `ImgSrc`.
   Future<void> updateUserImgSrc(final String uid, final String imgSrc) async {
     await _ref.doc(uid).update({'ImgSrc': imgSrc});

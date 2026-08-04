@@ -38,6 +38,15 @@ class EventHeadDBManager {
     await _ref.doc(head.id).update(head.toJson());
   }
 
+  /// Heads marked as period/season parents (`IsPeriodParent`).
+  /// Sorted client-side by [RecentDate] so no composite index is required.
+  Future<List<EventHead>> fetchPeriodParentHeads({int limit = 40}) async {
+    final collection = await _ref.where('IsPeriodParent', isEqualTo: true).limit(limit).get();
+    final heads = List<EventHead>.from(collection.docs.map((e) => e.data()));
+    heads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+    return heads;
+  }
+
   /// Updates only attendance counts on the head (public denorm for guest-visible cards).
   Future<void> updateAttendanceCounts({
     required String id,
@@ -106,6 +115,49 @@ class EventSupplementalDBManager {
 
   Future<void> updateMetadata(final EventMetadata data) async {
     await _colRef.doc('metadata').update(data.toJson());
+  }
+
+  /// Bidirectionally syncs [ChildrenIDs] when a post's parent changes.
+  ///
+  /// Does not write the child's [ParentID] — caller updates that via [updateMetadata].
+  /// Returns updated parent metadata keyed by parent post id (for AppContext cache).
+  Future<Map<String, EventMetadata>> syncChildrenLinkage({
+    required String childId,
+    required String? oldParentId,
+    required String? newParentId,
+  }) async {
+    final String? oldId = (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
+    final String? newId = (newParentId == null || newParentId.isEmpty) ? null : newParentId;
+    if (oldId == newId) return {};
+    if (newId == childId) {
+      throw ArgumentError('A post cannot be its own parent');
+    }
+
+    final Map<String, EventMetadata> updated = {};
+
+    if (oldId != null) {
+      final oldManager = EventSupplementalDBManager(oldId);
+      final oldMeta = await oldManager.fetchMetadata();
+      oldMeta.removeChildID(childId);
+      await oldManager.updateMetadata(oldMeta);
+      updated[oldId] = oldMeta;
+    }
+
+    if (newId != null) {
+      final newManager = EventSupplementalDBManager(newId);
+      final newMeta = await newManager.fetchMetadata();
+      newMeta.addChildID(childId);
+      await newManager.updateMetadata(newMeta);
+      updated[newId] = newMeta;
+    }
+
+    return updated;
+  }
+
+  /// Children ids for cycle checks when reparenting.
+  Future<List<String>> fetchChildrenIDs() async {
+    final meta = await fetchMetadata();
+    return List<String>.from(meta.childrenPostIDs);
   }
 
   // * Supplemental - Media

@@ -61,6 +61,7 @@ class PostTemplateMapper {
 
     // meta related
     eventContext.applyTagIDs(List<String>.from(template.tagIDs));
+    eventContext.applyCellGroupIDs(List<String>.from(template.cellGroupIDs));
     if (template.tagIDs.isEmpty && template.topics.isNotEmpty) {
       // Legacy templates: keep Topics as FCM audience until tags are assigned.
       eventContext.metadata.addAllTopics(template.topics);
@@ -82,6 +83,7 @@ class PostTemplateMapper {
       eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
       eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
+    eventContext.applyIsPeriodParent(template.isPeriodParent);
 
     // program related
     int roleId = DateTime.now().millisecondsSinceEpoch;

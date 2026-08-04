@@ -7,6 +7,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -385,6 +386,11 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           selectedUIDs: List<String>.from(_selectedUsers),
           includeCurrentUser: true,
           allowTaskCheck: true,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: Provider.of<AppContext>(context, listen: false).currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
         ),
       ),
     );

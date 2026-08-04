@@ -6,6 +6,11 @@ from firebase_admin import firestore, initialize_app, messaging
 from user_role_sync import sync_post_program_roles, sync_program_roles_from_change
 from notification_auth import require_notification_sender
 from token_pruning import is_invalid_token_error, prune_invalid_tokens
+from placeholder_users import (
+    backfill_placeholder_flags_impl,
+    create_placeholder_user_impl,
+    link_user_auth_impl,
+)
 
 initialize_app()
 options.set_global_options(max_instances=10, region='europe-west1')
@@ -215,3 +220,30 @@ def sync_user_roles_on_program_write(event: firestore_fn.Event[firestore_fn.Chan
 
     result = sync_program_roles_from_change(db, post_id, before_program, after_program)
     print(f'sync_user_roles_on_program_write post={post_id} result={result}')
+
+
+@https_fn.on_call(region='europe-west1')
+def create_placeholder_user(req: https_fn.CallableRequest) -> any:
+    """Mint a placeholder users/{id} doc (IsPlaceholder, empty AuthID, CreatedByUserID)."""
+    db = firestore.client()
+    result = create_placeholder_user_impl(db, req)
+    print(f'create_placeholder_user id={result.get("Id")}')
+    return result
+
+
+@https_fn.on_call(region='europe-west1')
+def link_user_auth(req: https_fn.CallableRequest) -> any:
+    """Link AuthID on a volunteer profile; clears IsPlaceholder. Creator or area admin."""
+    db = firestore.client()
+    result = link_user_auth_impl(db, req)
+    print(f'link_user_auth user={result.get("Id")}')
+    return result
+
+
+@https_fn.on_call(region='europe-west1')
+def backfill_placeholder_flags(req: https_fn.CallableRequest) -> any:
+    """One-shot: empty AuthID users → IsPlaceholder true (CreatedByUserID left empty)."""
+    db = firestore.client()
+    result = backfill_placeholder_flags_impl(db, req)
+    print(f'backfill_placeholder_flags updated={result.get("updated")}')
+    return result

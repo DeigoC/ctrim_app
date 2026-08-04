@@ -17,7 +17,13 @@ void main() {
         expect(user.location, 'Belfast');
         expect(user.isAreaAdmin, false);
         expect(user.isLeader, false);
+        expect(user.canManageInfo, false);
+        expect(user.canManageVolunteers, false);
+        expect(user.canManagePostTemplates, false);
+        expect(user.canManageCellGroups, false);
         expect(user.authID, '');
+        expect(user.isPlaceholder, false);
+        expect(user.createdByUserID, '');
       });
 
       test('creates user with all parameters', () {
@@ -30,6 +36,8 @@ void main() {
           isAreaAdmin: true,
           isLeader: true,
           authID: 'auth-abc',
+          createdByUserID: '7',
+          isPlaceholder: true,
         );
 
         expect(user.id, '42');
@@ -39,8 +47,50 @@ void main() {
         expect(user.location, 'Dublin');
         expect(user.isAreaAdmin, true);
         expect(user.isLeader, true);
+        expect(user.canManageInfo, true);
+        expect(user.canManageVolunteers, true);
+        expect(user.canManagePostTemplates, true);
+        expect(user.canManageCellGroups, true);
         expect(user.authID, 'auth-abc');
         expect(user.tagIDs, isEmpty);
+        expect(user.createdByUserID, '7');
+        expect(user.isPlaceholder, true);
+      });
+    });
+
+    group('canManageInfo', () {
+      test('is true for area admin only', () {
+        final user = User(
+          id: '1',
+          forname: 'A',
+          surname: 'B',
+          isAreaAdmin: true,
+        );
+        expect(user.canManageInfo, true);
+        expect(user.canManageVolunteers, true);
+        expect(user.canManagePostTemplates, false);
+        expect(user.canManageCellGroups, true);
+      });
+
+      test('is true for leader only', () {
+        final user = User(
+          id: '1',
+          forname: 'A',
+          surname: 'B',
+          isLeader: true,
+        );
+        expect(user.canManageInfo, true);
+        expect(user.canManageVolunteers, false);
+        expect(user.canManagePostTemplates, true);
+        expect(user.canManageCellGroups, false);
+      });
+
+      test('is false for regular users', () {
+        final user = User(id: '1', forname: 'A', surname: 'B');
+        expect(user.canManageInfo, false);
+        expect(user.canManageVolunteers, false);
+        expect(user.canManagePostTemplates, false);
+        expect(user.canManageCellGroups, false);
       });
     });
 
@@ -55,6 +105,8 @@ void main() {
           'AuthID': 'auth-xyz',
           'ImgSrc': 'https://example.com/alice.png',
           'Tags': ['tag-1', 'tag-2'],
+          'CreatedByUserID': '3',
+          'IsPlaceholder': true,
         };
 
         final user = User.fromMap('99', map);
@@ -68,6 +120,8 @@ void main() {
         expect(user.authID, 'auth-xyz');
         expect(user.imgSrc, 'https://example.com/alice.png');
         expect(user.tagIDs, ['tag-1', 'tag-2']);
+        expect(user.createdByUserID, '3');
+        expect(user.isPlaceholder, true);
       });
 
       test('fromMap defaults Tags to empty list when missing', () {
@@ -81,6 +135,8 @@ void main() {
           'ImgSrc': '',
         });
         expect(user.tagIDs, isEmpty);
+        expect(user.isPlaceholder, false);
+        expect(user.createdByUserID, '');
       });
     });
 
@@ -95,6 +151,8 @@ void main() {
           isAreaAdmin: false,
           isLeader: true,
           authID: 'auth-1',
+          createdByUserID: '9',
+          isPlaceholder: true,
         );
 
         final json = user.toJson() as Map<String, dynamic>;
@@ -107,6 +165,8 @@ void main() {
         expect(json['ImgSrc'], 'img.png');
         expect(json['AuthID'], 'auth-1');
         expect(json['Tags'], isEmpty);
+        expect(json['CreatedByUserID'], '9');
+        expect(json['IsPlaceholder'], true);
       });
 
       test('serialises tag IDs', () {

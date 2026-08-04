@@ -7,6 +7,7 @@ import '../../pages/personal/select_users_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/user_avatar.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -593,6 +594,11 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           selectedUIDs: List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: Provider.of<AppContext>(context, listen: false).currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
         ),
       ),
     );

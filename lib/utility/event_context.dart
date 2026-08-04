@@ -12,6 +12,7 @@ import '../models/event/event_program.dart';
 import '../models/post_tag.dart';
 import '../models/user.dart';
 import 'broadcast_audience.dart';
+import 'parent_link.dart';
 
 class EventContext {
   late final EventHead _head;
@@ -24,6 +25,12 @@ class EventContext {
   EventAttendance? _attendance;
 
   bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
+
+  /// Parent id as loaded / last saved — used to sync [ChildrenIDs] on save.
+  String? _baselineParentID;
+
+  /// Result of the last [updatePost] parent-link sync (for AppContext cache).
+  Map<String, EventMetadata> _lastParentLinkSync = const {};
 
   // id (datetime milliseconds) to uids
   late final Map<int, List<String>> _roleAdditions, _roleRemovals;
@@ -47,6 +54,7 @@ class EventContext {
 
   EventContext.adding({required final String currentUserID, final String? parentID, final String? id}) {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
+    _baselineParentID = parentID;
     _program = EventProgram();
     _media = EventMedia();
     _head = EventHead(id: id ?? 'x'); // temporary
@@ -79,14 +87,26 @@ class EventContext {
   EventMetadata get metadata => _metadata;
   void setFetchedMetadata(final EventMetadata data) {
     _metadata = data;
+    _baselineParentID = data.parentID;
     // Prefer metadata TagIDs; fall back to head if metadata predates the field.
     if (data.tagIDs.isNotEmpty) {
       _head.setTagIDs(data.tagIDs);
     } else if (_head.tagIDs.isNotEmpty) {
       _metadata.setTagIDs(_head.tagIDs);
     }
+    // Prefer metadata CellGroupIDs; fall back to head denorm.
+    if (data.cellGroupIDs.isNotEmpty) {
+      _head.setCellGroupIDs(data.cellGroupIDs);
+    } else if (_head.cellGroupIDs.isNotEmpty) {
+      _metadata.setCellGroupIDs(_head.cellGroupIDs);
+    }
+    // Keep head denorm in sync with metadata period-parent flag.
+    _head.setIsPeriodParent(data.isPeriodParent);
     _initialiseInternalLists();
   }
+
+  /// Parent ids whose [ChildrenIDs] were rewritten on the last [updatePost].
+  Map<String, EventMetadata> get lastParentLinkSync => _lastParentLinkSync;
 
   // * Supplemental - Media Related
   EventMedia get media => _media;
@@ -129,12 +149,15 @@ class EventContext {
     headToUpload.setEventDate(_head.eventDate);
     headToUpload.setLocation(location);
     headToUpload.setTagIDs(_head.tagIDs);
+    headToUpload.setCellGroupIDs(_head.cellGroupIDs);
+    headToUpload.setIsPeriodParent(_metadata.isPeriodParent);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }
 
     // metadata
     _metadata.setLastUID(uid);
+    _head.setIsPeriodParent(_metadata.isPeriodParent);
 
     // log, create the new one for creation
     _log = EventLog({'uid': uid, 'log': 'Publication', 'ts': now});
@@ -156,6 +179,30 @@ class EventContext {
 
     _head.setRecentDate(now);
     metadata.setLastUID(uid);
+    _head.setIsPeriodParent(_metadata.isPeriodParent);
+
+    _lastParentLinkSync = const {};
+    final String? oldParent = _baselineParentID;
+    final String? newParent = _metadata.parentID;
+    if (oldParent != newParent) {
+      final createsCycle = await ParentLink.wouldCreateCycleAsync(
+        postId: id,
+        newParentId: newParent,
+        childrenOf: (candidateId) async {
+          if (candidateId == id) return List<String>.from(_metadata.childrenPostIDs);
+          return EventSupplementalDBManager(candidateId).fetchChildrenIDs();
+        },
+      );
+      if (createsCycle) {
+        throw StateError('Cannot set parent: would create a related-post cycle');
+      }
+      _lastParentLinkSync = await dbManager.syncChildrenLinkage(
+        childId: id,
+        oldParentId: oldParent,
+        newParentId: newParent,
+      );
+      _baselineParentID = newParent;
+    }
 
     await dbManager.addLogEntry(logMessage: log, uid: uid, ts: now);
 
@@ -210,6 +257,23 @@ class EventContext {
   void applyTagIDs(final List<String> tagIDs) {
     _head.setTagIDs(tagIDs);
     _metadata.setTagIDs(tagIDs);
+  }
+
+  /// Keeps head and metadata [CellGroupIDs] in sync.
+  void applyCellGroupIDs(final List<String> cellGroupIDs) {
+    _head.setCellGroupIDs(cellGroupIDs);
+    _metadata.setCellGroupIDs(cellGroupIDs);
+  }
+
+  /// Keeps head denorm and metadata [IsPeriodParent] in sync.
+  void applyIsPeriodParent(final bool value) {
+    _metadata.setIsPeriodParent(value);
+    _head.setIsPeriodParent(value);
+  }
+
+  /// Sets or clears this post's parent in memory (persisted on [updatePost]).
+  void applyParentID(final String? parentID) {
+    _metadata.setParentID(parentID);
   }
 
   /// Recomputes FCM [Topics] from location + notifiable tags (+ optional location umbrella).
@@ -321,6 +385,7 @@ class EventContext {
     result += '\n${_metadata.childrenPostIDs}';
     result += '\n${_metadata.topics}';
     result += '\n${_metadata.leadSpeakerUID ?? 'null'}';
+    result += '\n${_metadata.isPeriodParent ? '1' : '0'}';
     result += '\n----META_END----';
 
     return result;
@@ -390,7 +455,15 @@ class EventContext {
       if (!rawLeadSpeaker.contains('----META_END----') && rawLeadSpeaker != 'null') {
         _metadata.setLeadSpeakerUID(rawLeadSpeaker);
       }
+      if (lines.length > metadataStartIndex + 8) {
+        final String rawPeriod = lines.elementAt(metadataStartIndex + 8);
+        if (!rawPeriod.contains('----META_END----')) {
+          _metadata.setIsPeriodParent(rawPeriod == '1');
+          _head.setIsPeriodParent(_metadata.isPeriodParent);
+        }
+      }
     }
+    _baselineParentID = _metadata.parentID;
   }
 
   List<String> _getListFromData(final String rawData) {
