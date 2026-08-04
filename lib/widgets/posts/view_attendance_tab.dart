@@ -543,7 +543,6 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final selected = attendance.attendees.where((e) => e.isUser && e.userId != null).map((e) => e.userId!).toList();
 
-    final appContext = Provider.of<AppContext>(context, listen: false);
     final authorUid = widget.eventContext.metadata.authorUID;
     final result = await Navigator.push<List<String>>(
       context,

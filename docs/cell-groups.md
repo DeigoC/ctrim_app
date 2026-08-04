@@ -508,8 +508,8 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 - [x] Phase 0 product locks — 2026-08-02
 - [x] Phase 0.5: IsPeriodParent + editable ParentID — 2026-08-02
 - [x] Phase 0.75: User.IsPlaceholder + CreatedByUserID + CF create/link + SelectUsersPage + Auth link harden — 2026-08-04
+- [x] Deploy functions + rules + run backfill_placeholder_flags — 2026-08-04
 - [ ] Phase 1: CellGroup model/UI + CellGroupIDs + roster (after 0.75)
-- [ ] Deploy functions + rules + run backfill_placeholder_flags
 - [ ] flutter analyze && flutter test test/unit/
 - [ ] Update AGENTS.md Recent changes when shipped
 ```

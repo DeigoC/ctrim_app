@@ -223,6 +223,19 @@ class CloudFunctionManager {
     throw StateError('link_user_auth returned no data');
   }
 
+  /// One-shot: empty AuthID users → IsPlaceholder true (area admin). Remove UI after use.
+  Future<int> backfillPlaceholderFlags() async {
+    final callable = _inst.httpsCallable('backfill_placeholder_flags');
+    final result = await callable.call(<String, dynamic>{});
+    final data = result.data;
+    if (data is Map) {
+      final updated = data['updated'];
+      if (updated is int) return updated;
+      if (updated is num) return updated.toInt();
+    }
+    return 0;
+  }
+
   List<String> _convertMapToKeyValueStrings(Map<String, String> data) {
     if (data.isEmpty) {
       return ['', ''];
