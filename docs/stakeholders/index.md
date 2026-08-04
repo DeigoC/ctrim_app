@@ -4,7 +4,19 @@ Welcome — this site explains what the **CTRIM Community** app is for, who it s
 
 ## Start here
 
-- **[Product overview](overview.md)** — what the app covers, who it’s for, and what’s coming next
+- **[Product overview](overview.md)** — pitch, audiences, and what the app is / isn’t
+- **[Roadmap & priorities](roadmap.md)** — what’s shipping or planned
+
+## Features
+
+| Area | Page |
+|------|------|
+| Events & bulletin | [Events & bulletin](events-and-bulletin.md) |
+| Personal (profile, schedule) | [Personal](personal.md) |
+| Churches, testimonials, CTRIM info | [Information](information.md) |
+| Members, volunteers, admins | [People & roles](people-and-roles.md) |
+| Alerts & preferences | [Notifications](notifications.md) |
+| Phone & web | [Platforms](platforms.md) |
 
 ## Who this is for
 

@@ -60,6 +60,14 @@ exclude_docs: |
 nav:
   - Home: index.md
   - Product overview: overview.md
+  - Features:
+    - Events & bulletin: events-and-bulletin.md
+    - Personal: personal.md
+    - Information: information.md
+    - People & roles: people-and-roles.md
+    - Notifications: notifications.md
+    - Platforms: platforms.md
+  - Roadmap & priorities: roadmap.md
 
 extra:
   social:

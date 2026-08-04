@@ -1,6 +1,6 @@
 # Product overview
 
-> **Status:** Draft — structure ready; content to fill in
+> **Status:** Draft — summary page; detail lives in feature stubs
 
 ## One-line pitch
 
@@ -17,42 +17,20 @@ A mobile and web app for CTRIM community life: events, information, personal sch
 
 ## What the app covers today
 
-### Events & bulletin
-
-- Event posts on a shared bulletin
-- Templates and bulk create for recurring programmes
-- Attendance and interest on posts
-- Broadcast push notifications to opted-in audiences (including Belfast umbrella subscribers)
-
-### Personal
-
-- Sign-in / profile
-- My schedule (roles assigned on posts)
-- Notification preferences, including “this device” status and test send
-
-### Information
-
-- Churches, testimonials, and CTRIM info pages (rich text)
-
-### Platforms
-
-- Mobile (iOS / Android) and web (works like an installable web app)
+| Area | Summary | More detail |
+|------|---------|-------------|
+| Events & bulletin | Shared posts, templates, attendance/interest, broadcasts | [Events & bulletin](events-and-bulletin.md) |
+| Personal | Sign-in, profile, my schedule, notification prefs | [Personal](personal.md) |
+| Information | Churches, testimonials, CTRIM info (rich text) | [Information](information.md) |
+| People & roles | Members, volunteers, admins | [People & roles](people-and-roles.md) |
+| Notifications | Preferences, device status, broadcasts | [Notifications](notifications.md) |
+| Platforms | iOS, Android, and web | [Platforms](platforms.md) |
 
 ## What it’s not
 
 - Not the worship-team song/setlist app — that is a separate product
 - Not a full church management / giving / membership CRM
 
-## Current priorities / roadmap
+## Priorities & open questions
 
-_(To be filled in with what stakeholders should know is shipping or planned.)_
-
-Examples to replace:
-
-- Post attendance & interest
-- Users / Belfast Volunteers improvements
-- Push reliability on web / this device
-
-## Open questions for stakeholders
-
-_(Decisions still needed from leadership — add here as they come up.)_
+See **[Roadmap & priorities](roadmap.md)**.

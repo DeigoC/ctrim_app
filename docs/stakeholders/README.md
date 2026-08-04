@@ -27,7 +27,14 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 | Doc | Status | Purpose |
 |-----|--------|---------|
 | [index.md](index.md) | Draft | Site home |
-| [overview.md](overview.md) | Draft | Product overview for stakeholders |
+| [overview.md](overview.md) | Draft | Product overview |
+| [events-and-bulletin.md](events-and-bulletin.md) | Stub | Events & bulletin |
+| [personal.md](personal.md) | Stub | Profile, schedule, prefs |
+| [information.md](information.md) | Stub | Churches, testimonials, CTRIM info |
+| [people-and-roles.md](people-and-roles.md) | Stub | Members, volunteers, admins |
+| [notifications.md](notifications.md) | Stub | Alerts & broadcasts |
+| [platforms.md](platforms.md) | Stub | iOS / Android / web |
+| [roadmap.md](roadmap.md) | Stub | Priorities & open questions |
 
 Add new pages here, then list them under `nav:` in `mkdocs.yml`.
 
@@ -35,9 +42,13 @@ Add new pages here, then list them under `nav:` in `mkdocs.yml`.
 
 In a new agent chat against **ctrim_app**, say:
 
-> Continue stakeholder documentation from `docs/stakeholders/overview.md`
+> Continue stakeholder documentation from `docs/stakeholders/README.md` — fill stub pages in plain language (start with `events-and-bulletin.md` or whichever area we pick). Do not add agent/dev handoff jargon; update the Documents table status when a page moves past Stub.
 
 Keep stakeholder copy non-technical. Put agent/dev handoffs in `docs/` (parent of this folder), not here.
+
+### Keep in sync with the app
+
+Major **user-facing** product changes should update the matching page here in the same work (steering: always-on `maintain-agent-docs` rule + skill). Skip for internal-only refactors. Map of areas → files is in `.cursor/skills/maintain-agent-docs/SKILL.md`.
 
 ### First-time GitHub Pages setup
 
