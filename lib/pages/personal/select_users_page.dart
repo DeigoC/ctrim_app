@@ -30,6 +30,7 @@ class SelectUsersPage extends StatefulWidget {
     this.allowCreatePlaceholder = false,
     this.includePlaceholders = false,
     this.postIdForPlaceholderCreate,
+    this.cellGroupIdForPlaceholderCreate,
   });
 
   final List<String> selectedUIDs;
@@ -51,6 +52,9 @@ class SelectUsersPage extends StatefulWidget {
 
   /// Optional post id passed to `create_placeholder_user` for author-gate checks.
   final String? postIdForPlaceholderCreate;
+
+  /// Optional cell group id passed to `create_placeholder_user` for leader-gate checks.
+  final String? cellGroupIdForPlaceholderCreate;
 
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
@@ -386,6 +390,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           surname: newSurname,
           location: location,
           postId: widget.postIdForPlaceholderCreate,
+          cellGroupId: widget.cellGroupIdForPlaceholderCreate,
         );
         final id = raw['Id'] as String?;
         if (id == null || id.isEmpty) {

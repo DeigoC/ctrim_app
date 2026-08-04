@@ -697,6 +697,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'Location': widget.eventContext.head.location,
       'Topics': widget.oldTemplate.topics,
       'TagIDs': widget.eventContext.head.tagIDs,
+      'CellGroupIDs': widget.eventContext.head.cellGroupIDs,
       'Contributors': widget.eventContext.metadata.contributorUIDs,
       'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
       'IsPeriodParent': widget.eventContext.metadata.isPeriodParent,

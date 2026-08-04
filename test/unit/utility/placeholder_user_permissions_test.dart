@@ -46,6 +46,13 @@ void main() {
       test('denies without post author when not admin', () {
         expect(canCreatePlaceholderUser(actor: author), isFalse);
       });
+
+      test('allows cell group leader flag', () {
+        expect(
+          canCreatePlaceholderUser(actor: other, isCellGroupLeader: true),
+          isTrue,
+        );
+      });
     });
 
     group('canEditPlaceholderProfile', () {

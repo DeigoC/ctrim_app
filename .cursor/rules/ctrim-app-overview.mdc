@@ -11,7 +11,7 @@ Church/community Flutter app: events, information pages, personal section, bulle
 
 - `lib/firebase/` — auth, functions, messaging, `db_managers/` (one per collection)
 - `lib/models/` — plain Dart models (`event/`, `info/`, `user.dart`, `post_template.dart`)
-- `lib/pages/` — full screens (`events/`, `information/`, `personal/`, `information_home.dart`)
+- `lib/pages/` — full screens (`events/`, `information/`, `personal/`, `cell_groups/`, `information_home.dart`)
 - `lib/utility/` — `AppContext` (root `ChangeNotifier`), `InfoRepository`, prefs, local data
 - `lib/widgets/` — reusable UI including `quill_editor_wrapper.dart`
 - `test/unit/models/` — one `*_test.dart` per model

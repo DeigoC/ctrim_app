@@ -20,6 +20,7 @@ void main() {
         expect(user.canManageInfo, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, false);
+        expect(user.canManageCellGroups, false);
         expect(user.authID, '');
         expect(user.isPlaceholder, false);
         expect(user.createdByUserID, '');
@@ -49,6 +50,7 @@ void main() {
         expect(user.canManageInfo, true);
         expect(user.canManageVolunteers, true);
         expect(user.canManagePostTemplates, true);
+        expect(user.canManageCellGroups, true);
         expect(user.authID, 'auth-abc');
         expect(user.tagIDs, isEmpty);
         expect(user.createdByUserID, '7');
@@ -67,6 +69,7 @@ void main() {
         expect(user.canManageInfo, true);
         expect(user.canManageVolunteers, true);
         expect(user.canManagePostTemplates, false);
+        expect(user.canManageCellGroups, true);
       });
 
       test('is true for leader only', () {
@@ -79,6 +82,7 @@ void main() {
         expect(user.canManageInfo, true);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, true);
+        expect(user.canManageCellGroups, false);
       });
 
       test('is false for regular users', () {
@@ -86,6 +90,7 @@ void main() {
         expect(user.canManageInfo, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, false);
+        expect(user.canManageCellGroups, false);
       });
     });
 

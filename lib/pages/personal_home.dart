@@ -554,7 +554,13 @@ class _PersonalHomeState extends State<PersonalHome> {
 
     if (!appContext.isCurrentUserGuest) {
       final currentTab = appContext.sharedPref.preferredStartupTab;
-      final tabName = currentTab == 0 ? 'Events' : 'Information';
+      final tabName = currentTab == 0
+          ? 'Events'
+          : currentTab == 2
+              ? 'Cell Groups'
+              : currentTab == 3
+                  ? 'Personal'
+                  : 'Information';
       actions.add(
         _PersonalAction(
           icon: Icons.home_rounded,
@@ -803,6 +809,16 @@ class _PersonalHomeState extends State<PersonalHome> {
                   title: const Text('Information'),
                   subtitle: const Text('Open to the CTRIM Information tab'),
                   value: 1,
+                ),
+                RadioListTile<int>(
+                  title: const Text('Cell Groups'),
+                  subtitle: const Text('Open to the Cell Groups tab'),
+                  value: 2,
+                ),
+                RadioListTile<int>(
+                  title: const Text('Personal'),
+                  subtitle: const Text('Open to the Personal tab'),
+                  value: 3,
                 ),
               ],
             ),

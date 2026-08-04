@@ -157,16 +157,39 @@ service cloud.firestore {
         (isAreaAdmin() || isAdmin());
     }
 
+    // Cell groups: guest-safe head readable by all; roster is signed-in only.
+    // LeaderAuthIds denorm lets leaders edit roster without reverse user lookup.
+    function isCellGroupLeaderFromParent() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/cell_groups/$(cellGroupId))
+          .data.get('LeaderAuthIds', []).hasAny([request.auth.uid]);
+    }
+
+    match /cell_groups/{cellGroupId} {
+      allow read: if true;
+      allow create: if isAreaAdmin() || isAdmin();
+      allow update: if isAreaAdmin() || isAdmin();
+      allow delete: if isAreaAdmin() || isAdmin();
+
+      match /supplemental/{docId} {
+        allow read: if request.auth != null;
+        allow create, update: if isAreaAdmin() || isAdmin() || isCellGroupLeaderFromParent();
+      }
+    }
+
     match /id_tracker/{docId}{
       // Allow anyone to read tracker (needed for guest user caching)
       allow read: if true;
       
       allow create: if false;
 
-      // users counter: area admins register volunteers; events counter: leaders create posts
+      // users counter: area admins register volunteers; events: leaders;
+      // cell_groups: area admins create catalogue records
       allow write: if docId == 'users'
         ? (isAreaAdmin() || isLeader() || isAdmin())
-        : (isLeader() || isAdmin());
+        : docId == 'cell_groups'
+          ? (isAreaAdmin() || isAdmin())
+          : (isLeader() || isAdmin());
     }
 
     match /post_templates/{documents=**}{

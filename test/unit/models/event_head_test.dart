@@ -15,6 +15,7 @@ void main() {
         expect(head.subtitle, '');
         expect(head.location, 'Belfast');
         expect(head.tagIDs, isEmpty);
+        expect(head.cellGroupIDs, isEmpty);
         expect(head.eventDate, isNull);
         expect(head.hasEventDate, false);
         expect(head.hasMedia, false);
@@ -82,6 +83,23 @@ void main() {
 
         final head = EventHead.fromMap('period-1', map);
         expect(head.isPeriodParent, true);
+      });
+
+      test('fromMap reads CellGroupIDs', () {
+        final map = {
+          'Title': 'CG Meeting',
+          'Subtitle': '',
+          'Location': 'Belfast',
+          'Media': <Map<String, dynamic>>[],
+          'RecentDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+          'EventDate': null,
+          'CellGroupIDs': ['cg1', 'cg2'],
+        };
+
+        final head = EventHead.fromMap('event-cg', map);
+        expect(head.cellGroupIDs, ['cg1', 'cg2']);
+        expect(head.hasCellGroup('cg1'), true);
+        expect(head.toJson()['CellGroupIDs'], ['cg1', 'cg2']);
       });
 
       test('fromMap defaults missing attendance counts to zero', () {

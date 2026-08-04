@@ -295,6 +295,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       'Location': 'Belfast',
       'Topics': ['Belfast'],
       'TagIDs': <String>[],
+      'CellGroupIDs': <String>[],
       'Contributors': [],
       'LeadSpeakerUID': null,
       'AllDay': false,

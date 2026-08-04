@@ -94,6 +94,12 @@ class EventContext {
     } else if (_head.tagIDs.isNotEmpty) {
       _metadata.setTagIDs(_head.tagIDs);
     }
+    // Prefer metadata CellGroupIDs; fall back to head denorm.
+    if (data.cellGroupIDs.isNotEmpty) {
+      _head.setCellGroupIDs(data.cellGroupIDs);
+    } else if (_head.cellGroupIDs.isNotEmpty) {
+      _metadata.setCellGroupIDs(_head.cellGroupIDs);
+    }
     // Keep head denorm in sync with metadata period-parent flag.
     _head.setIsPeriodParent(data.isPeriodParent);
     _initialiseInternalLists();
@@ -143,6 +149,7 @@ class EventContext {
     headToUpload.setEventDate(_head.eventDate);
     headToUpload.setLocation(location);
     headToUpload.setTagIDs(_head.tagIDs);
+    headToUpload.setCellGroupIDs(_head.cellGroupIDs);
     headToUpload.setIsPeriodParent(_metadata.isPeriodParent);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
@@ -250,6 +257,12 @@ class EventContext {
   void applyTagIDs(final List<String> tagIDs) {
     _head.setTagIDs(tagIDs);
     _metadata.setTagIDs(tagIDs);
+  }
+
+  /// Keeps head and metadata [CellGroupIDs] in sync.
+  void applyCellGroupIDs(final List<String> cellGroupIDs) {
+    _head.setCellGroupIDs(cellGroupIDs);
+    _metadata.setCellGroupIDs(cellGroupIDs);
   }
 
   /// Keeps head denorm and metadata [IsPeriodParent] in sync.

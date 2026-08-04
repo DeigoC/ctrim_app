@@ -403,4 +403,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersSortTooltip => 'Sort volunteers';
+
+  @override
+  String get cellGroupsAssignLabel => 'Cell groups';
+
+  @override
+  String get cellGroupsAssignHint =>
+      'Link this meeting to one or more cell groups (joint sessions allowed)';
+
+  @override
+  String get cellGroupsNoneAvailable =>
+      'No active cell groups yet. Area admins can create them in the Cell Groups section.';
+
+  @override
+  String get cellGroupsSectionTitle => 'Cell Groups';
+
+  @override
+  String get cellGroupsEmpty => 'No cell groups yet.';
+
+  @override
+  String get cellGroupsCreate => 'New cell group';
+
+  @override
+  String get cellGroupsEdit => 'Edit group';
+
+  @override
+  String get cellGroupsManageRoster => 'Manage roster';
+
+  @override
+  String get cellGroupsMeetingTrail => 'Recent meetings';
+
+  @override
+  String get cellGroupsMeetingTrailEmpty => 'No linked meeting posts yet.';
+
+  @override
+  String cellGroupsMemberCount(int count) {
+    return '$count members';
+  }
+
+  @override
+  String get cellGroupsLeadersLabel => 'Leaders';
+
+  @override
+  String get cellGroupsRosterTitle => 'Roster';
+
+  @override
+  String get cellGroupsAddMembers => 'Add members';
+
+  @override
+  String get cellGroupsAddFreeText => 'Add by name';
+
+  @override
+  String get cellGroupsFreeTextHint => 'Name (no app account)';
+
+  @override
+  String get cellGroupsStatusActive => 'Active';
+
+  @override
+  String get cellGroupsStatusPaused => 'Paused';
+
+  @override
+  String get cellGroupsStatusArchived => 'Archived';
+
+  @override
+  String get cellGroupsGuestSignInHint =>
+      'Sign in to see more details about this group.';
 }

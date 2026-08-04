@@ -21,6 +21,7 @@ import '../utility/web_notification_deep_link.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
+import 'cell_groups/cell_groups_home.dart';
 import 'information/ctrim_info_page.dart';
 import 'information_home.dart';
 import 'personal_home.dart';
@@ -44,6 +45,7 @@ class _HomePageState extends State<HomePage>
   static const List<_NavDestination> _destinations = [
     _NavDestination(icon: Icons.library_books, label: 'Bulletin'),
     _NavDestination(icon: Icons.church, label: 'CTRIM'),
+    _NavDestination(icon: Icons.groups, label: 'Cell Groups'),
     _NavDestination(icon: Icons.person, label: 'Personal'),
   ];
 
@@ -52,7 +54,8 @@ class _HomePageState extends State<HomePage>
 
   late final AppContext _appContext;
   final ScrollController _postsScrollController = ScrollController(),
-      _informationScrollController = ScrollController();
+      _informationScrollController = ScrollController(),
+      _cellGroupsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -140,6 +143,7 @@ class _HomePageState extends State<HomePage>
     _informationTabController.dispose();
     _postsScrollController.dispose();
     _informationScrollController.dispose();
+    _cellGroupsScrollController.dispose();
     super.dispose();
   }
 
@@ -237,6 +241,8 @@ class _HomePageState extends State<HomePage>
         tabController: _informationTabController,
         scrollController: _informationScrollController,
       );
+    } else if (_selectedIndex == 2) {
+      return CellGroupsHome(scrollController: _cellGroupsScrollController);
     }
     return PersonalHome(appContext: appContext);
   }
@@ -276,6 +282,9 @@ class _HomePageState extends State<HomePage>
             duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
       } else if (index == 1) {
         _informationScrollController.animateTo(0,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+      } else if (index == 2) {
+        _cellGroupsScrollController.animateTo(0,
             duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
       }
     }

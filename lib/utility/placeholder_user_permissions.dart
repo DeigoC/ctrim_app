@@ -2,13 +2,15 @@ import '../models/user.dart';
 
 /// Whether [actor] may mint a placeholder `users` profile (CF create).
 ///
-/// Medium gate (Phase 0.75): area admin, or author of the post that opened the
-/// picker. CG-leader ownership becomes meaningful once Cell Groups Phase 1 ships.
+/// Medium gate: area admin, author of the post that opened the picker, or a
+/// leader of the cell group that opened the picker (Phase 1).
 bool canCreatePlaceholderUser({
   required User actor,
   String? postAuthorUid,
+  bool isCellGroupLeader = false,
 }) {
   if (actor.isAreaAdmin) return true;
+  if (isCellGroupLeader) return true;
   if (postAuthorUid != null && postAuthorUid.isNotEmpty && postAuthorUid == actor.id) {
     return true;
   }

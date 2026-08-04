@@ -7,7 +7,7 @@ class EventHead {
   late final String _id;
   late final List<Map<String, dynamic>> _media;
   late String _title, _subtitle, _location;
-  late List<String> _tagIDs;
+  late List<String> _tagIDs, _cellGroupIDs;
   late DateTime _recentDate;
   DateTime? _eventDate;
   late int _interestedCount, _attendeeCount;
@@ -20,6 +20,7 @@ class EventHead {
     String subtitle = '',
     String location = 'Belfast',
     List<String> tagIDs = const [],
+    List<String> cellGroupIDs = const [],
     bool isPeriodParent = false,
   }) {
     _id = id;
@@ -27,6 +28,7 @@ class EventHead {
     _subtitle = subtitle;
     _location = location;
     _tagIDs = List<String>.from(tagIDs);
+    _cellGroupIDs = List<String>.from(cellGroupIDs);
     _isPeriodParent = isPeriodParent;
     _media = List<Map<String, dynamic>>.empty(growable: true);
     _recentDate = DateTime.now();
@@ -40,6 +42,7 @@ class EventHead {
     _subtitle = data['Subtitle'];
     _location = data['Location'];
     _tagIDs = _parseTagIDs(data['TagIDs']);
+    _cellGroupIDs = _parseTagIDs(data['CellGroupIDs']);
     _media = _toMedia(List.from(data['Media']));
     _recentDate = (data['RecentDate'] as Timestamp).toDate();
     _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
@@ -72,6 +75,7 @@ class EventHead {
       'Subtitle': _subtitle,
       'Location': _location,
       'TagIDs': _tagIDs,
+      'CellGroupIDs': _cellGroupIDs,
       'Media': _media,
       'RecentDate': Timestamp.fromDate(_recentDate),
       'EventDate': _eventDate == null ? null : Timestamp.fromDate(_eventDate!),
@@ -92,6 +96,8 @@ class EventHead {
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   bool hasTag(final String tagId) => _tagIDs.contains(tagId);
   bool hasAnyTag(final Iterable<String> tagIds) => tagIds.any(_tagIDs.contains);
+  List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
+  bool hasCellGroup(final String cellGroupId) => _cellGroupIDs.contains(cellGroupId);
   DateTime get recentDate => _recentDate;
   DateTime? get eventDate => _eventDate;
   int get interestedCount => _interestedCount;
@@ -127,6 +133,8 @@ class EventHead {
   void removeEventDate() => _eventDate = null;
   void setLocation(final String newLocation) => _location = newLocation;
   void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
+  void setCellGroupIDs(final List<String> cellGroupIDs) =>
+      _cellGroupIDs = List<String>.from(cellGroupIDs);
   void setIsPeriodParent(final bool value) => _isPeriodParent = value;
   void setInterestedCount(final int count) => _interestedCount = count < 0 ? 0 : count;
   void setAttendeeCount(final int count) => _attendeeCount = count < 0 ? 0 : count;

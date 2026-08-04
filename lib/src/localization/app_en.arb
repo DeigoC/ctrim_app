@@ -544,5 +544,90 @@
   "volunteersSortTooltip": "Sort volunteers",
   "@volunteersSortTooltip": {
     "description": "Tooltip for the volunteers sort menu in the app bar"
+  },
+  "cellGroupsAssignLabel": "Cell groups",
+  "@cellGroupsAssignLabel": {
+    "description": "Section label for linking a post or template to cell groups"
+  },
+  "cellGroupsAssignHint": "Link this meeting to one or more cell groups (joint sessions allowed)",
+  "@cellGroupsAssignHint": {
+    "description": "Hint under the cell group picker on post edit"
+  },
+  "cellGroupsNoneAvailable": "No active cell groups yet. Area admins can create them in the Cell Groups section.",
+  "@cellGroupsNoneAvailable": {
+    "description": "Empty state when no cell groups exist for assignment"
+  },
+  "cellGroupsSectionTitle": "Cell Groups",
+  "@cellGroupsSectionTitle": {
+    "description": "Main nav / home title for the Cell Groups section"
+  },
+  "cellGroupsEmpty": "No cell groups yet.",
+  "@cellGroupsEmpty": {
+    "description": "Empty state on the Cell Groups list"
+  },
+  "cellGroupsCreate": "New cell group",
+  "@cellGroupsCreate": {
+    "description": "FAB / action to create a cell group (area admin)"
+  },
+  "cellGroupsEdit": "Edit group",
+  "@cellGroupsEdit": {
+    "description": "Action to edit a cell group profile"
+  },
+  "cellGroupsManageRoster": "Manage roster",
+  "@cellGroupsManageRoster": {
+    "description": "Action to manage cell group members"
+  },
+  "cellGroupsMeetingTrail": "Recent meetings",
+  "@cellGroupsMeetingTrail": {
+    "description": "Section title for linked bulletin posts on CG detail"
+  },
+  "cellGroupsMeetingTrailEmpty": "No linked meeting posts yet.",
+  "@cellGroupsMeetingTrailEmpty": {
+    "description": "Empty state for CG meeting trail"
+  },
+  "cellGroupsMemberCount": "{count} members",
+  "@cellGroupsMemberCount": {
+    "description": "Member count shown to signed-in users",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cellGroupsLeadersLabel": "Leaders",
+  "@cellGroupsLeadersLabel": {
+    "description": "Label for leaders list on CG detail"
+  },
+  "cellGroupsRosterTitle": "Roster",
+  "@cellGroupsRosterTitle": {
+    "description": "Title for the cell group roster page"
+  },
+  "cellGroupsAddMembers": "Add members",
+  "@cellGroupsAddMembers": {
+    "description": "Button to open user picker for roster"
+  },
+  "cellGroupsAddFreeText": "Add by name",
+  "@cellGroupsAddFreeText": {
+    "description": "Button to add a free-text roster name"
+  },
+  "cellGroupsFreeTextHint": "Name (no app account)",
+  "@cellGroupsFreeTextHint": {
+    "description": "Hint for free-text roster member dialog"
+  },
+  "cellGroupsStatusActive": "Active",
+  "@cellGroupsStatusActive": {
+    "description": "Cell group status: active"
+  },
+  "cellGroupsStatusPaused": "Paused",
+  "@cellGroupsStatusPaused": {
+    "description": "Cell group status: paused"
+  },
+  "cellGroupsStatusArchived": "Archived",
+  "@cellGroupsStatusArchived": {
+    "description": "Cell group status: archived"
+  },
+  "cellGroupsGuestSignInHint": "Sign in to see more details about this group.",
+  "@cellGroupsGuestSignInHint": {
+    "description": "Hint on CG detail for guests"
   }
 }

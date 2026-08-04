@@ -498,6 +498,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'Location': location,
       'Topics': [location],
       'TagIDs': <String>[],
+      'CellGroupIDs': <String>[],
       'Contributors': <String>[],
       'LeadSpeakerUID': null,
       'IsPeriodParent': false,
@@ -538,6 +539,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
     eventContext.applyTagIDs(List<String>.from(postTemplate.tagIDs));
+    eventContext.applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
     if (postTemplate.tagIDs.isEmpty && postTemplate.topics.isNotEmpty) {
       eventContext.metadata.addAllTopics(postTemplate.topics);
     }

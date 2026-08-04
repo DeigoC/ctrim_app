@@ -2,8 +2,8 @@
 
 > **Purpose:** Living design for a first-class **Cell Group** section and data model (beyond bulletin posts alone).  
 > **Created:** 2026-08-01  
-> **Status:** Phase 0 lock **done**; Phase 0.5 period-parent **shipped**; Phase 0.75 placeholder users **shipped**. Next: full CG section (Phase 1).  
-> **Start here in a new chat:** “Continue cell groups from `docs/cell-groups.md`” (Phase 1) or “Deploy placeholder user functions / backfill”
+> **Status:** Phase 0 lock **done**; Phase 0.5 period-parent **shipped**; Phase 0.75 placeholder users **shipped**; Phase 1 Cell Groups foundation **shipped**. Next: Phase 2 operating rhythm.  
+> **Start here in a new chat:** “Continue cell groups from `docs/cell-groups.md`” (Phase 2) or “Deploy cell_groups rules / seed id_tracker”
 
 ---
 
@@ -404,7 +404,7 @@ Enough locked for implementing chats. Remaining nits are implement-time defaults
 Deploy: `firebase deploy --only functions:create_placeholder_user,functions:link_user_auth,functions:backfill_placeholder_flags,firestore:rules --project ctrim-8b49b`  
 Then (once): call `backfill_placeholder_flags` as area admin to mark legacy empty-Auth users.
 
-### Phase 1 — Cell Groups foundation (no trends)
+### Phase 1 — Cell Groups foundation (no trends) — **done** (2026-08-04)
 
 - `CellGroup` model + `cell_groups` collection + tiered `firestore.rules`
 - Cell Groups main section: list + detail (tiered); **`Icons.groups`**
@@ -413,6 +413,9 @@ Then (once): call `backfill_placeholder_flags` as area admin to mark legacy empt
 - `CellGroupIDs` on metadata + head; templates store/pre-fill them
 - Meeting trail (~3–4 posts) on CG detail via head query
 - Unit tests; **depends on Phase 0.75**
+
+Deploy: `firebase deploy --only functions:create_placeholder_user,firestore:rules --project ctrim-8b49b`  
+Also seed `id_tracker/cell_groups` with `{ "id": "1" }` if missing.
 
 ### Phase 2 — Operating rhythm
 
@@ -482,7 +485,7 @@ Then (once): call `backfill_placeholder_flags` as area admin to mark legacy empt
 
 ## Open questions
 
-**Phase 0 product lock is complete.** Phase 0.5 + 0.75 shipped. **Next implement:** Cell Groups section (Phase 1).
+**Phase 0 product lock is complete.** Phase 0.5 + 0.75 + Phase 1 shipped. **Next implement:** Phase 2 operating rhythm.
 
 ### Deferred to implement chat (defaults OK — change only if awkward)
 
@@ -509,9 +512,10 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 - [x] Phase 0.5: IsPeriodParent + editable ParentID — 2026-08-02
 - [x] Phase 0.75: User.IsPlaceholder + CreatedByUserID + CF create/link + SelectUsersPage + Auth link harden — 2026-08-04
 - [x] Deploy functions + rules + run backfill_placeholder_flags — 2026-08-04
-- [ ] Phase 1: CellGroup model/UI + CellGroupIDs + roster (after 0.75)
-- [ ] flutter analyze && flutter test test/unit/
-- [ ] Update AGENTS.md Recent changes when shipped
+- [x] Phase 1: CellGroup model/UI + CellGroupIDs + roster — 2026-08-04
+- [x] flutter analyze && flutter test test/unit/ (Phase 1 models)
+- [x] Update AGENTS.md Recent changes when shipped
+- [ ] Deploy firestore.rules + create_placeholder_user; seed id_tracker/cell_groups
 ```
 
 ---
@@ -548,3 +552,4 @@ Out of scope (do not block V1): self-claim merge, create-from-CG, trends, Youth 
 | 2026-08-02 | Build order locked: **period parent/ParentID → user placeholders → full CG section**. User changes may ship before CG nav/roster. |
 | 2026-08-02 | **Phase 0.5 shipped:** `IsPeriodParent` (metadata + head denorm + template default); editable `ParentID` with ChildrenIDs sync + cycle guards; UI on `EditHeadDetailsPage` / `SelectPeriodParentPage` (author or area admin). |
 | 2026-08-04 | **Phase 0.75 shipped:** `IsPlaceholder` + `CreatedByUserID`; CFs `create_placeholder_user` / `link_user_auth` / `backfill_placeholder_flags`; SelectUsersPage create-when-missing; Volunteers hide + toggle; Auth link clears flag. |
+| 2026-08-04 | **Phase 1 shipped:** `cell_groups` + roster; nav `Icons.groups`; admin create/edit; leader roster; `CellGroupIDs` on posts/templates; meeting trail; CG-leader placeholder create. |

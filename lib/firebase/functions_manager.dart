@@ -189,6 +189,7 @@ class CloudFunctionManager {
     required String surname,
     String location = 'Belfast',
     String? postId,
+    String? cellGroupId,
   }) async {
     final callable = _inst.httpsCallable('create_placeholder_user');
     final result = await callable.call({
@@ -196,6 +197,7 @@ class CloudFunctionManager {
       'Surname': surname,
       'Location': location,
       if (postId != null && postId.isNotEmpty) 'PostID': postId,
+      if (cellGroupId != null && cellGroupId.isNotEmpty) 'CellGroupID': cellGroupId,
     });
     final data = result.data;
     if (data is Map) {

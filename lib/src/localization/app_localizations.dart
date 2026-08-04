@@ -807,6 +807,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sort volunteers'**
   String get volunteersSortTooltip;
+
+  /// Section label for linking a post or template to cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups'**
+  String get cellGroupsAssignLabel;
+
+  /// Hint under the cell group picker on post edit
+  ///
+  /// In en, this message translates to:
+  /// **'Link this meeting to one or more cell groups (joint sessions allowed)'**
+  String get cellGroupsAssignHint;
+
+  /// Empty state when no cell groups exist for assignment
+  ///
+  /// In en, this message translates to:
+  /// **'No active cell groups yet. Area admins can create them in the Cell Groups section.'**
+  String get cellGroupsNoneAvailable;
+
+  /// Main nav / home title for the Cell Groups section
+  ///
+  /// In en, this message translates to:
+  /// **'Cell Groups'**
+  String get cellGroupsSectionTitle;
+
+  /// Empty state on the Cell Groups list
+  ///
+  /// In en, this message translates to:
+  /// **'No cell groups yet.'**
+  String get cellGroupsEmpty;
+
+  /// FAB / action to create a cell group (area admin)
+  ///
+  /// In en, this message translates to:
+  /// **'New cell group'**
+  String get cellGroupsCreate;
+
+  /// Action to edit a cell group profile
+  ///
+  /// In en, this message translates to:
+  /// **'Edit group'**
+  String get cellGroupsEdit;
+
+  /// Action to manage cell group members
+  ///
+  /// In en, this message translates to:
+  /// **'Manage roster'**
+  String get cellGroupsManageRoster;
+
+  /// Section title for linked bulletin posts on CG detail
+  ///
+  /// In en, this message translates to:
+  /// **'Recent meetings'**
+  String get cellGroupsMeetingTrail;
+
+  /// Empty state for CG meeting trail
+  ///
+  /// In en, this message translates to:
+  /// **'No linked meeting posts yet.'**
+  String get cellGroupsMeetingTrailEmpty;
+
+  /// Member count shown to signed-in users
+  ///
+  /// In en, this message translates to:
+  /// **'{count} members'**
+  String cellGroupsMemberCount(int count);
+
+  /// Label for leaders list on CG detail
+  ///
+  /// In en, this message translates to:
+  /// **'Leaders'**
+  String get cellGroupsLeadersLabel;
+
+  /// Title for the cell group roster page
+  ///
+  /// In en, this message translates to:
+  /// **'Roster'**
+  String get cellGroupsRosterTitle;
+
+  /// Button to open user picker for roster
+  ///
+  /// In en, this message translates to:
+  /// **'Add members'**
+  String get cellGroupsAddMembers;
+
+  /// Button to add a free-text roster name
+  ///
+  /// In en, this message translates to:
+  /// **'Add by name'**
+  String get cellGroupsAddFreeText;
+
+  /// Hint for free-text roster member dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Name (no app account)'**
+  String get cellGroupsFreeTextHint;
+
+  /// Cell group status: active
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get cellGroupsStatusActive;
+
+  /// Cell group status: paused
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get cellGroupsStatusPaused;
+
+  /// Cell group status: archived
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get cellGroupsStatusArchived;
+
+  /// Hint on CG detail for guests
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see more details about this group.'**
+  String get cellGroupsGuestSignInHint;
 }
 
 class _AppLocalizationsDelegate

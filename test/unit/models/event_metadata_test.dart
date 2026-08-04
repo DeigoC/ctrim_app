@@ -108,6 +108,7 @@ void main() {
         expect(json['ParentID'], 'parent-1');
         expect(json['Topics'], ['youth', 'mission']);
         expect(json['TagIDs'], isEmpty);
+        expect(json['CellGroupIDs'], isEmpty);
         expect(json['ContributorUIDs'], isEmpty);
         expect(json['ChildrenIDs'], isEmpty);
         expect(json['LeadSpeakerUID'], 'speaker-1');

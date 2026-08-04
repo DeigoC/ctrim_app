@@ -44,7 +44,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Ongoing work
 
-- **Cell Groups** — Phase 0.75 (placeholders) shipped; next **full CG section**. Handoff: [`docs/cell-groups.md`](docs/cell-groups.md). Continue with: “Continue cell groups from `docs/cell-groups.md`”.
+- **Cell Groups** — Phase 1 (foundation) shipped; next Phase 2 operating rhythm. Handoff: [`docs/cell-groups.md`](docs/cell-groups.md).
 - **Post tags & notify streams** — V1 in place; handoff in [`docs/post-tags-notification-streams.md`](docs/post-tags-notification-streams.md). Deploy `firestore.rules` for `post_tags`; seed starter tags from Manage Post Tags.
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
@@ -52,6 +52,7 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 
 ## Recent agent-relevant changes
 
+- **2026-08-04** — Cell Groups Phase 1: `CellGroup` + `cell_groups` / supplemental roster; nav `Icons.groups`; area-admin CRUD + leader roster; `CellGroupIDs` on head/metadata/templates; meeting trail; CG-leader placeholder create via CF `CellGroupID`. Deploy `firestore.rules` + `create_placeholder_user`; seed `id_tracker/cell_groups` (`{id: "1"}`).
 - **2026-08-04** — Stakeholder docs site: MkDocs Material (`mkdocs.yml`, `docs/stakeholders/` only) + GitHub Pages workflow `.github/workflows/docs-pages.yml`. Preview: `pip install -r requirements-docs.txt && mkdocs serve`. Enable Pages source “GitHub Actions” after first deploy on `main`.
 - **2026-08-04** — Placeholder users (Cell Groups Phase 0.75): `User.IsPlaceholder` + `CreatedByUserID`; CFs `create_placeholder_user` / `link_user_auth` / `backfill_placeholder_flags`; `SelectUsersPage` create-when-missing (admin/post author); Volunteers hide placeholders + toggle. Deploy functions + `firestore.rules`; run backfill once.
 - **2026-08-04** — Access hardening: `firestore.rules` users/`user_tags`/`id_tracker`/`everyone` flag updates align with `isAreaAdmin`; `EveryoneDBManager.setAsUser` syncs `isAreaAdmin`; in-page `RoleAccessGate` on manage tags/locations, register/edit user, and template pages. Helpers: `User.canManageVolunteers` / `canManagePostTemplates`. Deploy `firestore.rules`.

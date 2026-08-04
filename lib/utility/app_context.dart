@@ -4,6 +4,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/cell_group.dart';
 import '../models/event/event_head.dart';
 import '../models/event/event_metadata.dart';
 import '../models/post_tag.dart';
@@ -22,6 +23,7 @@ class AppContext extends ChangeNotifier {
   static late final List<UserTag> _allTags;
   static late final List<PostTag> _allPostTags;
   static late final List<UserLocation> _allLocations;
+  static late final List<CellGroup> _allCellGroups;
 
   // there's an interesting idea for optimisation to do with the recentDate and writing to file
   // so this file below here might be unecessary for now
@@ -48,12 +50,14 @@ class AppContext extends ChangeNotifier {
       List<UserTag>? allTags,
       List<PostTag>? allPostTags,
       List<UserLocation>? allLocations,
+      List<CellGroup>? allCellGroups,
       User? user}) {
     _eventHeads = heads ?? List<EventHead>.empty(growable: true);
     _allUsers = allUsers ?? List<User>.empty(growable: true);
     _allTags = allTags ?? List<UserTag>.empty(growable: true);
     _allPostTags = allPostTags ?? List<PostTag>.empty(growable: true);
     _allLocations = allLocations ?? List<UserLocation>.empty(growable: true);
+    _allCellGroups = allCellGroups ?? List<CellGroup>.empty(growable: true);
     _currentUser = user ?? _guest;
     _analytics = analytics;
     _sharedPref = AppSharedPreferences(preferences: prefInstance);
@@ -279,6 +283,58 @@ class AppContext extends ChangeNotifier {
       if (tag.id == tagId) return tag;
     }
     return null;
+  }
+
+  List<CellGroup> get allCellGroups => UnmodifiableListView(_allCellGroups);
+  List<CellGroup> get activeCellGroups =>
+      _allCellGroups.where((g) => g.isActive).toList();
+
+  void setAllCellGroups(final List<CellGroup> groups) {
+    _allCellGroups
+      ..clear()
+      ..addAll(groups);
+    _sortCellGroups();
+    notifyListeners();
+  }
+
+  void addOrUpdateCellGroup(final CellGroup group) {
+    _allCellGroups.removeWhere((g) => g.id == group.id);
+    _allCellGroups.add(group);
+    _sortCellGroups();
+    notifyListeners();
+  }
+
+  void removeCellGroup(final String groupId) {
+    _allCellGroups.removeWhere((g) => g.id == groupId);
+    notifyListeners();
+  }
+
+  CellGroup? cellGroupById(final String groupId) {
+    for (final group in _allCellGroups) {
+      if (group.id == groupId) return group;
+    }
+    return null;
+  }
+
+  void _sortCellGroups() {
+    _allCellGroups.sort((a, b) {
+      final statusOrder = _cellGroupStatusRank(a.status).compareTo(_cellGroupStatusRank(b.status));
+      if (statusOrder != 0) return statusOrder;
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+  }
+
+  static int _cellGroupStatusRank(final String status) {
+    switch (status) {
+      case CellGroupStatus.active:
+        return 0;
+      case CellGroupStatus.paused:
+        return 1;
+      case CellGroupStatus.archived:
+        return 2;
+      default:
+        return 3;
+    }
   }
 
   List<UserLocation> get allLocations => UnmodifiableListView(_allLocations);

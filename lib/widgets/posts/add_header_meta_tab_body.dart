@@ -7,6 +7,7 @@ import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
+import 'package:ctrim_app/widgets/cell_group_picker.dart';
 import 'package:ctrim_app/widgets/my_avatar_stack.dart';
 import 'package:ctrim_app/widgets/post_tag_picker.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
@@ -716,6 +717,16 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   allTags: appContext.allPostTags,
                   selectedTagIDs: Set<String>.from(widget.eventContext.head.tagIDs),
                   onChanged: (selected) => _onTagsChanged(appContext, selected),
+                ),
+                const SizedBox(height: 12),
+                CellGroupPicker(
+                  allGroups: appContext.allCellGroups,
+                  selectedCellGroupIDs: Set<String>.from(widget.eventContext.head.cellGroupIDs),
+                  onChanged: (selected) {
+                    setState(() {
+                      widget.eventContext.applyCellGroupIDs(selected.toList());
+                    });
+                  },
                 ),
                 const Divider(height: 32),
                 ..._buildNotificationControls(appContext),

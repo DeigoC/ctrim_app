@@ -88,6 +88,17 @@ void main() {
         expect(period.toJson(true)['IsPeriodParent'], true);
       });
 
+      test('defaults CellGroupIDs to empty and reads list', () {
+        final plain = PostTemplate.fromMap(true, 'tpl-plain', baseLocalMap());
+        expect(plain.cellGroupIDs, isEmpty);
+
+        final map = baseLocalMap();
+        map['CellGroupIDs'] = <String>['cg1', 'cg2'];
+        final linked = PostTemplate.fromMap(true, 'tpl-cg', map);
+        expect(linked.cellGroupIDs, ['cg1', 'cg2']);
+        expect(linked.toJson(true)['CellGroupIDs'], ['cg1', 'cg2']);
+      });
+
       test('accepts Hive-style Map<dynamic, dynamic> nested entries', () {
         // Mirrors what Hive returns from box.get — LinkedMap<dynamic, dynamic>
         final hiveHeadMedia = <dynamic>[

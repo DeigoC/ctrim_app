@@ -8,6 +8,7 @@ import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/parent_link.dart';
 import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
+import 'package:ctrim_app/widgets/cell_group_picker.dart';
 import 'package:ctrim_app/widgets/post_tag_picker.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   late final String _originalTitle, _originalSubtitle;
   late final String? _originalLeadSpeakerUID;
   late final List<String> _originalTagIDs;
+  late final List<String> _originalCellGroupIDs;
   late final bool _originalIsPeriodParent;
   late final String? _originalParentID;
 
@@ -37,6 +39,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
     _originalLeadSpeakerUID =
         widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
     _originalTagIDs = List<String>.from(widget.eventContext.head.tagIDs);
+    _originalCellGroupIDs = List<String>.from(widget.eventContext.head.cellGroupIDs);
     _originalIsPeriodParent = widget.eventContext.metadata.isPeriodParent;
     _originalParentID = widget.eventContext.metadata.parentID;
     _tecSubtitle = TextEditingController(text: _originalSubtitle);
@@ -69,7 +72,9 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
         final titleChanged = _originalTitle.compareTo(_tecTitle.text.trim()) != 0;
         final subtitleChanged = _originalSubtitle.compareTo(_tecSubtitle.text.trim()) != 0;
         final leadSpeakerChanged = _leadSpeakerUID != _originalLeadSpeakerUID;
-        final tagsChanged = !_sameTagIDs(_originalTagIDs, widget.eventContext.head.tagIDs);
+        final tagsChanged = !_sameIdLists(_originalTagIDs, widget.eventContext.head.tagIDs);
+        final cellGroupsChanged =
+            !_sameIdLists(_originalCellGroupIDs, widget.eventContext.head.cellGroupIDs);
         final periodChanged = widget.eventContext.metadata.isPeriodParent != _originalIsPeriodParent;
         final parentChanged = widget.eventContext.metadata.parentID != _originalParentID;
 
@@ -81,6 +86,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
             subtitleChanged ||
             leadSpeakerChanged ||
             tagsChanged ||
+            cellGroupsChanged ||
             periodChanged ||
             parentChanged) {
           widget.eventContext.allowSavingOfTheEdit();
@@ -93,7 +99,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
     );
   }
 
-  bool _sameTagIDs(List<String> a, List<String> b) {
+  bool _sameIdLists(List<String> a, List<String> b) {
     if (a.length != b.length) return false;
     final setA = a.toSet();
     return b.every(setA.contains);
@@ -155,6 +161,16 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
           allTags: appContext.allPostTags,
           selectedTagIDs: Set<String>.from(widget.eventContext.head.tagIDs),
           onChanged: (selected) => _onTagsChanged(appContext, selected),
+        ),
+        const SizedBox(height: 12),
+        CellGroupPicker(
+          allGroups: appContext.allCellGroups,
+          selectedCellGroupIDs: Set<String>.from(widget.eventContext.head.cellGroupIDs),
+          onChanged: (selected) {
+            setState(() {
+              widget.eventContext.applyCellGroupIDs(selected.toList());
+            });
+          },
         ),
         const SizedBox(height: 12),
         _buildLeadSpeakerCard(appContext),

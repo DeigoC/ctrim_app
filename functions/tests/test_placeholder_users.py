@@ -136,6 +136,37 @@ class PlaceholderPermissionTests(unittest.TestCase):
             )
         )
 
+    def test_create_allows_cell_group_leader(self):
+        db = MagicMock()
+
+        everyone_doc = MagicMock()
+        everyone_doc.exists = True
+        everyone_doc.to_dict.return_value = {'isUser': True}
+
+        cg_doc = MagicMock()
+        cg_doc.exists = True
+        cg_doc.to_dict.return_value = {'LeaderUserIds': ['9', '10']}
+
+        def collection(name):
+            col = MagicMock()
+            if name == 'everyone':
+                col.document.return_value.get.return_value = everyone_doc
+            elif name == 'cell_groups':
+                col.document.return_value.get.return_value = cg_doc
+            return col
+
+        db.collection.side_effect = collection
+
+        self.assertTrue(
+            _caller_may_create_placeholder(
+                db,
+                auth_uid='auth-d',
+                caller_volunteer_id='9',
+                post_id='',
+                cell_group_id='cg-1',
+            )
+        )
+
     def test_link_allows_creator_while_placeholder(self):
         db = MagicMock()
         creator = MagicMock()

@@ -45,12 +45,23 @@ def _caller_may_create_placeholder(
     auth_uid: str,
     caller_volunteer_id: str | None,
     post_id: str,
+    cell_group_id: str = '',
 ) -> bool:
     flags = _everyone_flags(db, auth_uid)
     if _is_area_or_global_admin(flags):
         return True
 
-    if not post_id or not caller_volunteer_id:
+    if not caller_volunteer_id:
+        return False
+
+    if cell_group_id:
+        cg = db.collection('cell_groups').document(cell_group_id).get()
+        if cg.exists:
+            leaders = (cg.to_dict() or {}).get('LeaderUserIds') or []
+            if caller_volunteer_id in [str(x) for x in leaders]:
+                return True
+
+    if not post_id:
         return False
 
     meta = (
@@ -99,6 +110,7 @@ def create_placeholder_user_impl(db, req: https_fn.CallableRequest) -> dict:
     surname = str(data.get('Surname', '')).strip()
     location = str(data.get('Location', 'Belfast')).strip() or 'Belfast'
     post_id = str(data.get('PostID', '')).strip()
+    cell_group_id = str(data.get('CellGroupID', '')).strip()
 
     if not forename or not surname:
         raise https_fn.HttpsError(
@@ -112,6 +124,7 @@ def create_placeholder_user_impl(db, req: https_fn.CallableRequest) -> dict:
         auth_uid=auth_uid,
         caller_volunteer_id=caller_volunteer_id,
         post_id=post_id,
+        cell_group_id=cell_group_id,
     ):
         raise https_fn.HttpsError(
             code=https_fn.FunctionsErrorCode.PERMISSION_DENIED,

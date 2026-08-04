@@ -104,6 +104,9 @@ class User {
   /// Create/edit post templates (and Add Post FAB).
   bool get canManagePostTemplates => _isLeader;
 
+  /// Create/edit cell group catalogue records (area admin).
+  bool get canManageCellGroups => _isAreaAdmin;
+
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
 
   bool hasTag(final String tagId) => _tagIDs.contains(tagId);

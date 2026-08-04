@@ -5,7 +5,7 @@ class EventMetadata {
   late final List<String> _contributorUIDs;
   late String _lastUID;
   late String? _parentID;
-  late final List<String> _childrenIDs, _topics, _tagIDs;
+  late final List<String> _childrenIDs, _topics, _tagIDs, _cellGroupIDs;
   String? _leadSpeakerUID;
   bool _isPeriodParent = false;
 
@@ -18,6 +18,7 @@ class EventMetadata {
     _childrenIDs = List<String>.empty(growable: true);
     _topics = List.empty(growable: true);
     _tagIDs = List.empty(growable: true);
+    _cellGroupIDs = List.empty(growable: true);
   }
 
   EventMetadata.fromMap(final Map<String, dynamic> data)
@@ -28,6 +29,7 @@ class EventMetadata {
         _childrenIDs = List<String>.from(data['ChildrenIDs']),
         _topics = List<String>.from(data['Topics'] ?? []),
         _tagIDs = List<String>.from(data['TagIDs'] ?? []),
+        _cellGroupIDs = List<String>.from(data['CellGroupIDs'] ?? []),
         _leadSpeakerUID = data['LeadSpeakerUID'] as String?,
         _isPeriodParent = data['IsPeriodParent'] == true;
 
@@ -40,6 +42,7 @@ class EventMetadata {
       'ChildrenIDs': _childrenIDs,
       'Topics': _topics,
       'TagIDs': _tagIDs,
+      'CellGroupIDs': _cellGroupIDs,
       'LeadSpeakerUID': _leadSpeakerUID,
       'IsPeriodParent': _isPeriodParent,
     };
@@ -59,6 +62,7 @@ class EventMetadata {
   List<String> get childrenPostIDs => _childrenIDs;
   List<String> get topics => UnmodifiableListView(_topics);
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
+  List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
 
   void clearTopics() => _topics.clear();
   void addAllTopics(final List<String> newTopics) => _topics.addAll(newTopics);
@@ -78,6 +82,14 @@ class EventMetadata {
   }
 
   void clearTagIDs() => _tagIDs.clear();
+
+  void setCellGroupIDs(final List<String> cellGroupIDs) {
+    _cellGroupIDs
+      ..clear()
+      ..addAll(cellGroupIDs);
+  }
+
+  void clearCellGroupIDs() => _cellGroupIDs.clear();
 
   void setLastUID(final String newLastUID) => _lastUID = newLastUID;
   void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
