@@ -48,18 +48,15 @@ Configured globally in `~/.cursor/mcp.json` as the **dart** server (`dart mcp-se
 - **Post tags & notify streams** — V1 in place; handoff in [`docs/post-tags-notification-streams.md`](docs/post-tags-notification-streams.md). Deploy `firestore.rules` for `post_tags`; seed starter tags from Manage Post Tags.
 - **Post attendance & interest** — V1 code in place; handoff/checklist in [`docs/post-attendance-interest.md`](docs/post-attendance-interest.md). Deploy `firestore.rules` before privacy testing.
 - **Users / Belfast Volunteers refactor** — plan and audit in [`docs/users-volunteers-improvement.md`](docs/users-volunteers-improvement.md) (typed roles, Volunteers UI, schedule sync). Continue across chats from that doc.
-- **Stakeholder documentation** — product-facing drafts in [`docs/stakeholders/`](docs/stakeholders/). Continue with: “Continue stakeholder documentation from `docs/stakeholders/overview.md`”.
+- **Stakeholder documentation** — product-facing pages in [`docs/stakeholders/`](docs/stakeholders/) (MkDocs Material → GitHub Pages). Config: `mkdocs.yml`. Continue with: “Continue stakeholder documentation from `docs/stakeholders/overview.md`”.
 
 ## Recent agent-relevant changes
 
+- **2026-08-04** — Stakeholder docs site: MkDocs Material (`mkdocs.yml`, `docs/stakeholders/` only) + GitHub Pages workflow `.github/workflows/docs-pages.yml`. Preview: `pip install -r requirements-docs.txt && mkdocs serve`. Enable Pages source “GitHub Actions” after first deploy on `main`.
 - **2026-08-04** — Placeholder users (Cell Groups Phase 0.75): `User.IsPlaceholder` + `CreatedByUserID`; CFs `create_placeholder_user` / `link_user_auth` / `backfill_placeholder_flags`; `SelectUsersPage` create-when-missing (admin/post author); Volunteers hide placeholders + toggle. Deploy functions + `firestore.rules`; run backfill once.
 - **2026-08-04** — Access hardening: `firestore.rules` users/`user_tags`/`id_tracker`/`everyone` flag updates align with `isAreaAdmin`; `EveryoneDBManager.setAsUser` syncs `isAreaAdmin`; in-page `RoleAccessGate` on manage tags/locations, register/edit user, and template pages. Helpers: `User.canManageVolunteers` / `canManagePostTemplates`. Deploy `firestore.rules`.
 - **2026-08-02** — Info section add/edit/delete (churches, testimonials, CTRIM info) gated by `User.canManageInfo` (`isAreaAdmin || isLeader`); guests and regular users never see Add/Edit UI. Deploy `firestore.rules` for leader writes on `information`.
 - **2026-08-02** — Period parents side track: `IsPeriodParent` on metadata (+ head denorm) and templates; editable `ParentID` with bidirectional `ChildrenIDs` sync on Title & details (`EditHeadDetailsPage` / `SelectPeriodParentPage`). Author or area admin only. See `docs/cell-groups.md` Phase 0.5.
-- **2026-08-02** — Post templates embed change history `Logs` (`uid`/`log`/`ts`) on the doc; save uses `TemplateLogDialog`; viewer is `view_template_logs_page.dart`.
-- **2026-08-02** — Cell Groups Phase 0 locked in `docs/cell-groups.md`: placeholders + `IsPlaceholder`/`CreatedByUserID`, shared `SelectUsersPage` create gate, period-parent side track.
-- **2026-08-02** — Key graphic save: `getKeyGraphic` is the first head `Media` image — “Set as Key Media” now prepends (`prependMediaItem`); Change cover uses `replaceKeyGraphic`. After save, ViewEventPage refreshes discard baseline so dispose does not restore pre-edit Media.
-- **2026-08-01** — Post content tags (`post_tags`) + bulletin filter; FCM streams derived from location + tag `StreamKind` (Belfast IDs frozen). Design: `docs/post-tags-notification-streams.md`. Deploy `firestore.rules` for `post_tags`.
 
 ## Commands
 
