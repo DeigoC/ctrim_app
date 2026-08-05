@@ -36,6 +36,14 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 | [notifications.md](notifications.md) | Draft for review | Alerts & broadcasts |
 | [platforms.md](platforms.md) | Draft for review | iOS / Android / web |
 | [roadmap.md](roadmap.md) | Draft for review | Priorities & open questions |
+| [how-to/index.md](how-to/index.md) | Scaffold | How-to guides hub |
+| [how-to/posts/create-a-post.md](how-to/posts/create-a-post.md) | Outline | Create a post |
+| [how-to/posts/edit-a-post.md](how-to/posts/edit-a-post.md) | Outline | Edit a post (by section) |
+| [how-to/information/add-or-edit-information.md](how-to/information/add-or-edit-information.md) | Outline | Information records |
+| [how-to/people/register-or-edit-users.md](how-to/people/register-or-edit-users.md) | Outline | Register / edit people |
+| [how-to/media.md](how-to/media.md) | Reference | Images, GIFs, video embeds |
+
+Media files go in `assets/images/`, `assets/gifs/`, `assets/video/` (see [how-to/media.md](how-to/media.md)).
 
 Add new pages here, then list them under `nav:` in `mkdocs.yml`.
 

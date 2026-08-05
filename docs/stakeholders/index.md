@@ -7,7 +7,8 @@ Welcome — this site explains what the **CTRIM Community** app is for, who it s
 ## Start here
 
 - **[Product overview](overview.md)** — pitch, audiences, and what the app is / isn’t  
-- **[Roadmap & priorities](roadmap.md)** — what’s shipping or planned, plus open questions  
+- **[How-to guides](how-to/index.md)** — step-by-step tasks (posts, information, people)  
+- **[Roadmap & priorities](roadmap.md)** — what’s shipping or planned  
 
 ## Features
 
@@ -20,6 +21,16 @@ Welcome — this site explains what the **CTRIM Community** app is for, who it s
 | Members, volunteers, leaders, area / site admins | [People & roles](people-and-roles.md) |
 | Alerts & preferences | [Notifications](notifications.md) |
 | Phone & web | [Platforms](platforms.md) |
+
+## How-to guides
+
+| Task | Guide |
+|------|-------|
+| Create a post | [Create a post](how-to/posts/create-a-post.md) |
+| Edit a post (by section) | [Edit a post](how-to/posts/edit-a-post.md) |
+| Information records | [Add or edit Information](how-to/information/add-or-edit-information.md) |
+| Register / edit people | [Register or edit people](how-to/people/register-or-edit-users.md) |
+| Screenshots, GIFs, video | [Using images & video](how-to/media.md) |
 
 ## Who this is for
 

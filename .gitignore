@@ -48,6 +48,33 @@ app.*.map.json
 # For Function's Python venv that takes over the repo
 /functions/venv
 
+# Local Firebase emulator exports — may contain real emails, PII, password hashes
+/emulators_data/
+
+# Legacy Information seed JSON (runtime uses Firestore). Keep out of public git.
+/assets/info/
+
+# Agent / Cursor guidance — keep local only when the GitHub repo is public
+/.cursor/
+/AGENTS.md
+/.github/copilot-instructions.md
+# Engineering handoffs at docs/*.md (stakeholder site under docs/stakeholders/ stays public)
+/docs/*.md
+
+# Secrets / local credentials (never commit)
+.env
+.env.*
+**/serviceAccount*.json
+*-firebase-adminsdk-*.json
+*.pem
+*.p12
+*.keystore
+*.jks
+android/key.properties
+
+# Local-only backup used during history purge (do not commit)
+.local_private_backup/
+
 # Documentation
 /Documentation/
 

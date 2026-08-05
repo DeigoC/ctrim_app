@@ -56,7 +56,4 @@ flutter:
   assets:
     # Add assets from the images directory to the application.
     - assets/images/
-    - assets/info/testimonials/
-    - assets/info/ctrim_info/
-    - assets/info/churches/
     - assets/personal/
