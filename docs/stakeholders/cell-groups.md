@@ -1,6 +1,6 @@
 # Cell Groups
 
-> **Status:** Draft for review — feature in active development and testing
+> **Note:** Cell Groups is in active development and testing.
 
 **Cell Groups** is a main tab in the app for small-group life alongside the bulletin. The name in the product is always **Cell Group**.
 

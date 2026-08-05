@@ -1,7 +1,5 @@
 # Events & bulletin
 
-> **Status:** Draft for review
-
 The **bulletin** is the shared list of community event posts. Members browse what’s coming up; organisers create and maintain posts, roles, and related details.
 
 ## What members and guests see

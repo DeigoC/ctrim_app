@@ -1,6 +1,6 @@
 # Roadmap & priorities
 
-> **Status:** Draft for review — keep short and honest; update when priorities change
+> **Note:** Keep this page short and honest; update when priorities change.
 
 What stakeholders should know is **shipping, finishing, or planned** — not a full engineering backlog.
 

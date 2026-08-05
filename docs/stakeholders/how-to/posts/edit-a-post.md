@@ -1,6 +1,6 @@
 # Edit a post
 
-> **Status:** Outline — fill per “part” of a post; add screenshots per section  
+> **Status:** In progress — fill per “part” of a post; add screenshots per section  
 > **Who:** Post **author** and **contributors**  
 > **Where:** Open the post → edit actions for each area
 

@@ -2,8 +2,6 @@
 
 Welcome — this site explains what the **CTRIM Community** app is for, who it serves, and what it can do today. No technical background needed.
 
-> **Status:** Draft for review — content is a first wave for leadership feedback.
-
 ## Start here
 
 - **[Product overview](overview.md)** — pitch, audiences, and what the app is / isn’t  
@@ -41,7 +39,7 @@ Welcome — this site explains what the **CTRIM Community** app is for, who it s
 | Anyone curious about the project | A clear picture of the product |
 
 !!! tip "Feedback welcome"
-    These pages are drafts. If something is wrong, missing, or too detailed for a public site, say so — we’ll adjust before treating this as “released.”
+    These pages are updated as the product evolves. If something is wrong or missing, say so — we’ll fix it.
 
 ## Not covered here
 

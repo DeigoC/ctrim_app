@@ -26,32 +26,32 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 
 | Doc | Status | Purpose |
 |-----|--------|---------|
-| [index.md](index.md) | Draft for review | Site home |
-| [overview.md](overview.md) | Draft for review | Product overview |
-| [events-and-bulletin.md](events-and-bulletin.md) | Draft for review | Events & bulletin |
-| [personal.md](personal.md) | Draft for review | Profile, schedule, prefs |
-| [information.md](information.md) | Draft for review | Churches, testimonials, CTRIM info |
-| [cell-groups.md](cell-groups.md) | Draft for review | Cell Groups (early) |
-| [people-and-roles.md](people-and-roles.md) | Draft for review | Members, volunteers, leaders |
-| [notifications.md](notifications.md) | Draft for review | Alerts & broadcasts |
-| [platforms.md](platforms.md) | Draft for review | iOS / Android / web |
-| [roadmap.md](roadmap.md) | Draft for review | Priorities & open questions |
-| [how-to/index.md](how-to/index.md) | Scaffold | How-to guides hub |
-| [how-to/posts/create-a-post.md](how-to/posts/create-a-post.md) | Outline | Create a post |
-| [how-to/posts/edit-a-post.md](how-to/posts/edit-a-post.md) | Outline | Edit a post (by section) |
-| [how-to/information/add-or-edit-information.md](how-to/information/add-or-edit-information.md) | Outline | Information records |
-| [how-to/people/register-or-edit-users.md](how-to/people/register-or-edit-users.md) | Outline | Register / edit people |
+| [index.md](index.md) | Current | Site home |
+| [overview.md](overview.md) | Current | Product overview |
+| [events-and-bulletin.md](events-and-bulletin.md) | Current | Events & bulletin |
+| [personal.md](personal.md) | Current | Profile, schedule, prefs |
+| [information.md](information.md) | Current | Churches, testimonials, CTRIM info |
+| [cell-groups.md](cell-groups.md) | Current | Cell Groups (in development) |
+| [people-and-roles.md](people-and-roles.md) | Current | Members, volunteers, leaders |
+| [notifications.md](notifications.md) | Current | Alerts & broadcasts |
+| [platforms.md](platforms.md) | Current | iOS / Android / web |
+| [roadmap.md](roadmap.md) | Current | Priorities (update as they change) |
+| [how-to/index.md](how-to/index.md) | Current | How-to guides hub |
+| [how-to/posts/create-a-post.md](how-to/posts/create-a-post.md) | In progress | Create a post |
+| [how-to/posts/edit-a-post.md](how-to/posts/edit-a-post.md) | In progress | Edit a post (by section) |
+| [how-to/information/add-or-edit-information.md](how-to/information/add-or-edit-information.md) | In progress | Information records |
+| [how-to/people/register-or-edit-users.md](how-to/people/register-or-edit-users.md) | In progress | Register / edit people |
 | [how-to/media.md](how-to/media.md) | Reference | Images, GIFs, video embeds |
 
 Media files go in `assets/images/`, `assets/gifs/`, `assets/video/` (see [how-to/media.md](how-to/media.md)).
 
-Add new pages here, then list them under `nav:` in `mkdocs.yml`.
+Add new pages here, then list them under `nav:` in `mkdocs.yml`. Status: **Current** = published baseline you edit as you go; **In progress** = how-tos still needing steps/screenshots.
 
 ## Continue on Cursor / cloud
 
 In a new agent chat against **ctrim_app**, say:
 
-> Continue stakeholder documentation from `docs/stakeholders/README.md` — fill stub pages in plain language (start with `events-and-bulletin.md` or whichever area we pick). Do not add agent/dev handoff jargon; update the Documents table status when a page moves past Stub.
+> Continue stakeholder documentation from `docs/stakeholders/README.md` — edit living pages in plain language; finish how-to guides with steps and screenshots as media is ready. Do not add agent/dev handoff jargon; keep the Documents table status accurate (Current vs In progress).
 
 Keep stakeholder copy non-technical. Put agent/dev handoffs in `docs/` (parent of this folder), not here.
 

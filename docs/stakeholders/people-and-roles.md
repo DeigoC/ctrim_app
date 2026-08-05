@@ -1,7 +1,5 @@
 # People & roles
 
-> **Status:** Draft for review
-
 How people show up in the app, and what different levels of access roughly mean.
 
 ## At a glance

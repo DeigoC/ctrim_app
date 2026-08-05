@@ -1,6 +1,6 @@
 # Create a post
 
-> **Status:** Outline — fill steps; drop screenshots/GIFs into `assets/`  
+> **Status:** In progress — fill steps; drop screenshots/GIFs into `assets/`  
 > **Who:** Leaders (and anyone else with create access)  
 > **Where:** Web app — Bulletin / Personal → templates flow
 

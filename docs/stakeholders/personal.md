@@ -1,7 +1,5 @@
 # Personal
 
-> **Status:** Draft for review
-
 **Personal** is each person’s home base: account, schedule, notification settings, and shortcuts used by organisers.
 
 ## Guests vs signed-in

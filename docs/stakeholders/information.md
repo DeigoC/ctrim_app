@@ -1,7 +1,5 @@
 # Information
 
-> **Status:** Draft for review
-
 The **CTRIM** tab holds longer-lived information for visitors — not the day-to-day event bulletin.
 
 ## What’s included

@@ -1,7 +1,5 @@
 # Notifications
 
-> **Status:** Draft for review
-
 How the app reaches people with updates — and how they stay in control. Further **web push** and notification improvements are actively planned — see [Roadmap](roadmap.md).
 
 ## For members

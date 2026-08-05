@@ -1,7 +1,5 @@
 # Platforms
 
-> **Status:** Draft for review
-
 CTRIM Community is built to run on phone and browser. **Right now the focus is the web app.**
 
 ## Web (current focus)

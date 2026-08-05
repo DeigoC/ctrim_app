@@ -1,7 +1,5 @@
 # Product overview
 
-> **Status:** Draft for review
-
 ## One-line pitch
 
 CTRIM Community is a **web-first** community app (also usable on phones in the browser): what’s on the bulletin, longer information pages, your personal schedule, and cell groups — with optional push notifications so people hear about what they care about.

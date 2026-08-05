@@ -1,6 +1,6 @@
 # Register or edit people
 
-> **Status:** Outline  
+> **Status:** In progress  
 > **Who:** Leaders (people they work with), area admins (area scope), later site admins  
 > **Where:** Personal → **Volunteers** / register & edit flows
 

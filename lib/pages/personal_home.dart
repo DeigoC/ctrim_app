@@ -45,6 +45,8 @@ class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   static const String _slideDeckUtilsUrl =
       'https://church-slidedeck-utils.streamlit.app/';
+  static const String _stakeholderDocsUrl =
+      'https://deigoc.github.io/ctrim_app/';
   // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
@@ -403,6 +405,13 @@ class _PersonalHomeState extends State<PersonalHome> {
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
           iconColor: colorScheme.secondary,
+        ),
+        _PersonalAction(
+          icon: Icons.menu_book_rounded,
+          title: 'Product guide',
+          subtitle: 'How the app works — for volunteers and leaders',
+          onTap: () => launchUrlString(_stakeholderDocsUrl),
+          iconColor: colorScheme.primary,
         ),
       ]);
     }
