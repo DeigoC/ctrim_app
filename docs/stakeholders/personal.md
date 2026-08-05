@@ -1,33 +1,53 @@
 # Personal
 
-> **Status:** Stub — expand with plain-language feature detail
+> **Status:** Draft for review
 
-The **Personal** area is each signed-in person’s home for their profile, schedule, and notification settings.
+**Personal** is each person’s home base: account, schedule, notification settings, and shortcuts used by organisers.
 
-## Sign-in & profile
+## Guests vs signed-in
 
-_(TODO)_
+| | Guests | Signed in |
+|--|--------|-----------|
+| Browse bulletin & information | Yes | Yes |
+| Mark interest (“follow updates”) | No (prompted to sign in) | Yes |
+| My Schedule / My Posts | No | Yes (when they have a community profile) |
+| Notification preferences | Can enable notifications | Full preference page |
+| Create account / Sign in | Offered from Personal | Profile and account options |
 
-- Signing in vs browsing as a guest
-- What appears on a profile
-- Updating personal details
+## Profile
 
-## My schedule
+Signed-in people see a profile card (including profile picture where set) and options such as:
 
-_(TODO)_
+- Viewing and editing their own details *(where allowed)*  
+- Requesting account deletion  
+- Choosing which main tab opens on startup  
 
-- Roles assigned on event posts
-- How the schedule helps volunteers see what’s coming up
+## My Schedule
 
-## Notification preferences
+**My Schedule** lists roles and tasks the person has been assigned on event posts — a practical “what am I down for?” view for volunteers.
 
-_(TODO — high level here; detail on [Notifications](notifications.md).)_
+## Organiser shortcuts (when you have access)
 
-- Choosing what to hear about
-- “This device” status and test send
+Depending on role, Personal may also link to:
+
+- **Volunteers** — searchable directory of people  
+- **Post Templates** — reusable event blueprints  
+- People / tags / locations management *(area admins)*  
+
+See [People & roles](people-and-roles.md).
+
+## Notifications
+
+Personal → **Push Notifications** is where someone checks:
+
+- Whether **this device** is set up for alerts  
+- Per-topic / location switches  
+- A **test send** to this device only  
+
+More detail: [Notifications](notifications.md). The **web app** is the current focus; there is also help to **add the app to the home screen**.
 
 ## Related pages
 
-- [Events & bulletin](events-and-bulletin.md)
-- [Notifications](notifications.md)
-- [People & roles](people-and-roles.md)
+- [Events & bulletin](events-and-bulletin.md)  
+- [Notifications](notifications.md)  
+- [Platforms](platforms.md)

@@ -26,15 +26,16 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 
 | Doc | Status | Purpose |
 |-----|--------|---------|
-| [index.md](index.md) | Draft | Site home |
-| [overview.md](overview.md) | Draft | Product overview |
-| [events-and-bulletin.md](events-and-bulletin.md) | Stub | Events & bulletin |
-| [personal.md](personal.md) | Stub | Profile, schedule, prefs |
-| [information.md](information.md) | Stub | Churches, testimonials, CTRIM info |
-| [people-and-roles.md](people-and-roles.md) | Stub | Members, volunteers, admins |
-| [notifications.md](notifications.md) | Stub | Alerts & broadcasts |
-| [platforms.md](platforms.md) | Stub | iOS / Android / web |
-| [roadmap.md](roadmap.md) | Stub | Priorities & open questions |
+| [index.md](index.md) | Draft for review | Site home |
+| [overview.md](overview.md) | Draft for review | Product overview |
+| [events-and-bulletin.md](events-and-bulletin.md) | Draft for review | Events & bulletin |
+| [personal.md](personal.md) | Draft for review | Profile, schedule, prefs |
+| [information.md](information.md) | Draft for review | Churches, testimonials, CTRIM info |
+| [cell-groups.md](cell-groups.md) | Draft for review | Cell Groups (early) |
+| [people-and-roles.md](people-and-roles.md) | Draft for review | Members, volunteers, leaders |
+| [notifications.md](notifications.md) | Draft for review | Alerts & broadcasts |
+| [platforms.md](platforms.md) | Draft for review | iOS / Android / web |
+| [roadmap.md](roadmap.md) | Draft for review | Priorities & open questions |
 
 Add new pages here, then list them under `nav:` in `mkdocs.yml`.
 

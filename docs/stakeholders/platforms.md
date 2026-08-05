@@ -1,28 +1,32 @@
 # Platforms
 
-> **Status:** Stub — expand with plain-language feature detail
+> **Status:** Draft for review
 
-CTRIM Community runs on phones and in the browser.
+CTRIM Community is built to run on phone and browser. **Right now the focus is the web app.**
 
-## Mobile
+## Web (current focus)
 
-_(TODO)_
+- Use the app in a desktop or mobile browser  
+- Optional **add to home screen** / share prompt so it behaves more like an installed app  
+- Privacy and terms links are available  
+- Push notifications work via the browser; members should check **This device** under notification settings  
 
-- iOS and Android apps
-- Installing / updating _(store links if you want them public)_
+Web is where most current development and testing effort goes.
 
-## Web
+## Mobile apps (later)
 
-_(TODO)_
+**iOS** and **Android** store releases are **not prioritised** at the moment. The product is still designed with mobile in mind (including using the web app on a phone), but native store apps are a later concern.
 
-- Using the app in a browser
-- Installable web app (PWA) behaviour, if you want stakeholders to know
+## What to set expectations about
 
-## What works the same vs differently
-
-_(TODO — e.g. notifications on web vs phone; anything leaders should set expectations about.)_
+| Topic | Notes |
+|-------|--------|
+| Primary experience today | Web app (browser / home-screen) |
+| Push notifications | Especially important to set up correctly on web — see [Notifications](notifications.md) |
+| Guest browsing | Works without an account; richer features need sign-in |
 
 ## Related pages
 
-- [Notifications](notifications.md)
-- [Product overview](overview.md)
+- [Notifications](notifications.md)  
+- [Product overview](overview.md)  
+- [Roadmap](roadmap.md)

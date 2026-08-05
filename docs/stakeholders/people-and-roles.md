@@ -1,34 +1,56 @@
 # People & roles
 
-> **Status:** Stub — expand with plain-language feature detail
+> **Status:** Draft for review
 
-How people appear in the app, and what different roles can do.
+How people show up in the app, and what different levels of access roughly mean.
 
-## Audiences at a glance
+## At a glance
 
-| Role | Typical access |
-|------|----------------|
-| Guest / visitor | Browse public content without a full account |
-| Community member | Profile, schedule, notifications, bulletin |
-| Volunteer / staff | Day-to-day post and schedule work |
-| Admin | Users, broadcasts, templates, wider settings |
+| Who | Roughly can… |
+|-----|----------------|
+| **Guest** | Browse bulletin, information, and public cell-group cards |
+| **Signed-in member** | Interest (“follow updates”) on posts, notification preferences, richer personal features |
+| **Volunteer / registered profile** | My Schedule, volunteer directory, posts they’re involved with |
+| **Leader** | Create posts and templates; register / add people they work with; edit the Information (CTRIM) section |
+| **Area admin** | Admin controls for their **assigned area(s)** — people, tags, locations, cell groups, and the same kind of elevated content access |
+| **Site admin** *(planned working title)* | Admin **without** the area location restriction — above area admin |
 
-_(Refine names and wording with leadership.)_
+**Guests** and ordinary **signed-in members** cannot edit Information or other admin surfaces. Elevated roles (**Leader**, **Area admin**, and later **Site admin**) can.
 
-## Volunteers
+## What “Leader” means
 
-_(TODO — Belfast Volunteers / volunteer lists; how organisers find and assign people.)_
+In the app, **Leader** is one role that covers different church leadership hats — for example **department leaders** and **cell group leaders**. There is overlap in practice.
 
-## Managing users
+Leaders should be able to:
 
-_(TODO — registering people, editing profiles, locations/tags if stakeholder-relevant.)_
+- Create posts (and use templates)  
+- Add / register people they need for their work (including placeholders when needed)  
+- Edit the **Information** (CTRIM) section — churches, testimonials, and related pages  
 
-## Placeholders _(if/when relevant to stakeholders)_
+They are not a catch-all for every admin control; area-scoped settings (tags, locations, cell-group catalogue admin, and similar) stay with **Area admin** / **Site admin**.
 
-_(TODO — only if leadership needs the concept: people recorded before they have a full sign-in.)_
+## Area admin
+
+**Area admins** look after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, and cell groups. Controls will continue to be gated by area assignment as that model lands fully.
+
+## Site admin *(planned)*
+
+**Site admin** is the working title for a level **above** area admin: the same kind of admin power **without** being limited to a single area’s location scope.
+
+## Volunteers directory
+
+**Volunteers** (from Personal, when available) is a searchable directory of people. It can be filtered by location (for example Belfast, Portadown, North Coast) and by tags.
+
+## Placeholders
+
+Sometimes organisers need to assign or list someone **before** that person has a full sign-in. The app supports **placeholder** people for that — useful for rosters, cell groups, and attendance.
+
+Leaders and area admins can create a placeholder when picking someone who isn’t in the directory yet. The Volunteers list can show or hide placeholders. Guests and leaders alike can read about this feature here so everyone knows it exists.
 
 ## Related pages
 
-- [Events & bulletin](events-and-bulletin.md)
-- [Personal](personal.md)
+- [Events & bulletin](events-and-bulletin.md)  
+- [Information](information.md)  
+- [Personal](personal.md)  
+- [Cell Groups](cell-groups.md)  
 - [Roadmap](roadmap.md)
