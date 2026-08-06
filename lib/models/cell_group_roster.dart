@@ -15,7 +15,10 @@ class CellGroupMemberStatus {
   static const String inactive = 'inactive';
 }
 
-/// One row on a cell group roster (registered, placeholder, or free-text).
+/// One row on a cell group roster (registered or placeholder user).
+///
+/// Free-text rows (`DisplayName` only) are legacy-read only; new adds use a
+/// linked `UserId` (registered or placeholder).
 class CellGroupRosterMember {
   late String _userId, _displayName, _role, _status;
   DateTime? _joinedAt;

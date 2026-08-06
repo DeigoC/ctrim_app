@@ -606,13 +606,9 @@
   "@cellGroupsAddMembers": {
     "description": "Button to open user picker for roster"
   },
-  "cellGroupsAddFreeText": "Add by name",
-  "@cellGroupsAddFreeText": {
-    "description": "Button to add a free-text roster name"
-  },
-  "cellGroupsFreeTextHint": "Name (no app account)",
-  "@cellGroupsFreeTextHint": {
-    "description": "Hint for free-text roster member dialog"
+  "cellGroupsRosterAddHint": "Search for someone, or create a temporary profile if they are not listed.",
+  "@cellGroupsRosterAddHint": {
+    "description": "Hint under Add members: use picker / Create placeholder"
   },
   "cellGroupsStatusActive": "Active",
   "@cellGroupsStatusActive": {

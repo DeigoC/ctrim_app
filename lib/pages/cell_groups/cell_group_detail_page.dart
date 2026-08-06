@@ -295,7 +295,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                 child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
               ),
         title: Text(name),
-        subtitle: m.isFreeText ? const Text('Name only') : null,
+        subtitle: m.isFreeText ? const Text('Name only (legacy)') : null,
       );
     }).toList();
   }

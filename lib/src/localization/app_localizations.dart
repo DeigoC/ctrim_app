@@ -892,17 +892,11 @@ abstract class AppLocalizations {
   /// **'Add members'**
   String get cellGroupsAddMembers;
 
-  /// Button to add a free-text roster name
+  /// Hint under Add members: use picker / Create placeholder
   ///
   /// In en, this message translates to:
-  /// **'Add by name'**
-  String get cellGroupsAddFreeText;
-
-  /// Hint for free-text roster member dialog
-  ///
-  /// In en, this message translates to:
-  /// **'Name (no app account)'**
-  String get cellGroupsFreeTextHint;
+  /// **'Search for someone, or create a temporary profile if they are not listed.'**
+  String get cellGroupsRosterAddHint;
 
   /// Cell group status: active
   ///

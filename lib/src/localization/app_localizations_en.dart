@@ -451,10 +451,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsAddMembers => 'Add members';
 
   @override
-  String get cellGroupsAddFreeText => 'Add by name';
-
-  @override
-  String get cellGroupsFreeTextHint => 'Name (no app account)';
+  String get cellGroupsRosterAddHint =>
+      'Search for someone, or create a temporary profile if they are not listed.';
 
   @override
   String get cellGroupsStatusActive => 'Active';

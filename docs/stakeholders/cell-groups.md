@@ -11,6 +11,7 @@ The foundation is in the app and being tested:
 - A catalogue of cell groups members and guests can browse at a public level  
 - Group details for signed-in people (richer than the public card)  
 - Leaders and roster information for organisers who have access  
+- Roster members are people with an app profile — including **temporary profiles** leaders create when someone is not registered yet (forename, surname, and location). Name-only entries are no longer added.  
 - Links between groups and related event posts / meetings where set up  
 - A simple trail of recent meetings for a group  
 

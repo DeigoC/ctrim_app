@@ -14,7 +14,10 @@ import '../../widgets/load_progress_body.dart';
 import '../../widgets/user_avatar.dart';
 import '../personal/select_users_page.dart';
 
-/// Leader / area-admin roster editor (registered, placeholder, free-text).
+/// Leader / area-admin roster editor (registered + placeholder users).
+///
+/// Legacy free-text rows may still appear and can be removed; new adds go through
+/// [SelectUsersPage] (search → Create placeholder when needed).
 class EditCellGroupRosterPage extends StatefulWidget {
   const EditCellGroupRosterPage({super.key, required this.group});
 
@@ -89,21 +92,20 @@ class _EditCellGroupRosterPageState extends State<EditCellGroupRosterPage> {
               : ListView(
                   padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 32),
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.tonalIcon(
-                          onPressed: () => _addUsers(appContext),
-                          icon: const Icon(Icons.person_add),
-                          label: Text(l10n.cellGroupsAddMembers),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _addFreeText,
-                          icon: const Icon(Icons.badge_outlined),
-                          label: Text(l10n.cellGroupsAddFreeText),
-                        ),
-                      ],
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.tonalIcon(
+                        onPressed: () => _addUsers(appContext),
+                        icon: const Icon(Icons.person_add),
+                        label: Text(l10n.cellGroupsAddMembers),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.cellGroupsRosterAddHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                     const SizedBox(height: 16),
                     if (_roster.members.isEmpty)
@@ -130,7 +132,7 @@ class _EditCellGroupRosterPageState extends State<EditCellGroupRosterPage> {
                           title: Text(name),
                           subtitle: Text(
                             [
-                              if (member.isFreeText) 'Name only',
+                              if (member.isFreeText) 'Name only (legacy)',
                               if (user?.isPlaceholder == true) 'Placeholder',
                               member.role,
                             ].where((e) => e.isNotEmpty).join(' · '),
@@ -165,6 +167,7 @@ class _EditCellGroupRosterPageState extends State<EditCellGroupRosterPage> {
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
           selectedUIDs: existingLinked,
+          includeCurrentUser: true,
           title: AppLocalizations.of(context)!.cellGroupsAddMembers,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
@@ -177,6 +180,7 @@ class _EditCellGroupRosterPageState extends State<EditCellGroupRosterPage> {
     );
     if (result == null || !mounted) return;
 
+    // Preserve any legacy free-text rows until an editor removes them.
     final freeText = _roster.members.where((m) => m.isFreeText).toList();
     final now = DateTime.now();
     final existingById = {
@@ -188,33 +192,6 @@ class _EditCellGroupRosterPageState extends State<EditCellGroupRosterPage> {
 
     setState(() {
       _roster.setMembers([...linked, ...freeText]);
-    });
-  }
-
-  Future<void> _addFreeText() async {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.cellGroupsAddFreeText),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(hintText: l10n.cellGroupsFreeTextHint),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Add')),
-        ],
-      ),
-    );
-    final name = controller.text.trim();
-    controller.dispose();
-    if (!mounted || confirmed != true || name.isEmpty) return;
-    setState(() {
-      _roster.addMember(CellGroupRosterMember(displayName: name, joinedAt: DateTime.now()));
     });
   }
 

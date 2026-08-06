@@ -185,6 +185,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
           selectedUIDs: List<String>.from(_leaderUserIds),
+          includeCurrentUser: true,
           title: AppLocalizations.of(context)!.cellGroupsLeadersLabel,
           includePlaceholders: true,
         ),
