@@ -11,8 +11,10 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/persist_users_local_cache.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/user_auth_link.dart';
+import '../../utility/users_local_cache.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_picker.dart';
@@ -41,6 +43,7 @@ class _EditUserPageState extends State<EditUserPage> {
 
   late bool _isAreaAdmin;
   late bool _isLeader;
+  late bool _isPlaceholder;
   late String _src;
   late String _authID;
   late String _currentLocation;
@@ -62,6 +65,7 @@ class _EditUserPageState extends State<EditUserPage> {
 
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
+    _isPlaceholder = widget.user.isPlaceholder;
     _src = widget.user.imgSrc;
     _authID = widget.user.authID;
     _currentLocation = widget.user.location;
@@ -142,16 +146,28 @@ class _EditUserPageState extends State<EditUserPage> {
 
   bool get _isCreatorOnlyEdit {
     final current = Provider.of<AppContext>(context, listen: false).currentUser;
-    return !current.canManageVolunteers &&
-        canEditPlaceholderProfile(actor: current, target: widget.user);
+    if (current.canManageVolunteers) return false;
+    // Use live Auth / placeholder state so a successful Link account leaves
+    // the names-only creator path (permissions are area-admin only after link).
+    final liveTarget = copyUser(
+      widget.user,
+      authID: _authID,
+      isPlaceholder: _isPlaceholder,
+    );
+    return canEditPlaceholderProfile(actor: current, target: liveTarget);
   }
 
   bool get _canLinkAuth {
     final current = Provider.of<AppContext>(context, listen: false).currentUser;
     if (current.canManageVolunteers) return true;
-    return widget.user.isPlaceholder &&
+    return _isPlaceholder &&
         _authID.isEmpty &&
         widget.user.createdByUserID == current.id;
+  }
+
+  bool get _canManagePermissions {
+    final current = Provider.of<AppContext>(context, listen: false).currentUser;
+    return current.canManageVolunteers;
   }
 
   bool get _canUnlinkAuth {
@@ -383,47 +399,50 @@ class _EditUserPageState extends State<EditUserPage> {
           ),
           const SizedBox(height: 16),
 
-          // Permissions Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Permissions',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    title: const Text('Area Admin'),
-                    subtitle: const Text(
-                        'Can manage users and access admin features'),
-                    value: _isAreaAdmin,
-                    onChanged: (value) {
-                      setState(() {
-                        _isAreaAdmin = value;
-                      });
-                      _updateChangeState();
-                    },
-                  ),
-                  SwitchListTile(
-                    title: const Text('Leader'),
-                    subtitle:
-                        const Text('Has leadership privileges in the app'),
-                    value: _isLeader,
-                    onChanged: (value) {
-                      setState(() {
-                        _isLeader = value;
-                      });
-                      _updateChangeState();
-                    },
-                  ),
-                ],
+          // Permissions Section (area admins only — creators cannot escalate roles)
+          if (_canManagePermissions) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Permissions',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      title: const Text('Area Admin'),
+                      subtitle: const Text(
+                          'Can manage users and access admin features'),
+                      value: _isAreaAdmin,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAreaAdmin = value;
+                        });
+                        _updateChangeState();
+                      },
+                    ),
+                    SwitchListTile(
+                      title: const Text('Leader'),
+                      subtitle:
+                          const Text('Has leadership privileges in the app'),
+                      value: _isLeader,
+                      onChanged: (value) {
+                        setState(() {
+                          _isLeader = value;
+                        });
+                        _updateChangeState();
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
           Consumer<AppContext>(
             builder: (context, appContext, _) => UserTagPicker(
               allTags: appContext.allTags,
@@ -471,6 +490,7 @@ class _EditUserPageState extends State<EditUserPage> {
   // * Logic
 
   User _userSnapshot({String? authID}) {
+    final resolvedAuthID = authID ?? _authID;
     return User(
       id: widget.user.id,
       forname: _tecForename.text.trim().isEmpty
@@ -485,10 +505,13 @@ class _EditUserPageState extends State<EditUserPage> {
           : _currentLocation.trim(),
       isAreaAdmin: _isAreaAdmin,
       isLeader: _isLeader,
-      authID: authID ?? _authID,
+      authID: resolvedAuthID,
       tagIDs: _selectedTagIDs.toList(),
       createdByUserID: widget.user.createdByUserID,
-      isPlaceholder: widget.user.isPlaceholder,
+      isPlaceholder: effectiveIsPlaceholder(
+        authID: resolvedAuthID,
+        fallbackIsPlaceholder: _isPlaceholder,
+      ),
     );
   }
 
@@ -573,14 +596,19 @@ class _EditUserPageState extends State<EditUserPage> {
           user: _userSnapshot(),
           newAuthID: authID,
           isLeader: _isLeader,
+          isAreaAdmin: _isAreaAdmin,
         );
         if (!mounted) return;
         _replaceUserInAppContext(updated);
         setState(() {
           _authID = updated.authID;
+          _isPlaceholder = updated.isPlaceholder;
           _authLinkChanged = true;
           _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
         });
+        await persistUsersLocalCache(
+          Provider.of<AppContext>(context, listen: false).allUsers,
+        );
       },
     );
 
@@ -626,9 +654,13 @@ class _EditUserPageState extends State<EditUserPage> {
         _replaceUserInAppContext(updated);
         setState(() {
           _authID = '';
+          _isPlaceholder = true;
           _authLinkChanged = true;
           _emailFuture = Future.value(null);
         });
+        await persistUsersLocalCache(
+          Provider.of<AppContext>(context, listen: false).allUsers,
+        );
       },
     );
 
@@ -700,7 +732,12 @@ class _EditUserPageState extends State<EditUserPage> {
       return;
     }
 
-    // Create updated user object
+    // Create updated user object — never reuse stale widget.user.isPlaceholder
+    // after Link account (that would write IsPlaceholder:true back to Firestore).
+    final placeholder = effectiveIsPlaceholder(
+      authID: _authID,
+      fallbackIsPlaceholder: _isPlaceholder,
+    );
     final updatedUser = User(
       id: widget.user.id,
       forname: _tecForename.text.trim(),
@@ -712,7 +749,7 @@ class _EditUserPageState extends State<EditUserPage> {
       authID: _authID,
       tagIDs: _selectedTagIDs.toList(),
       createdByUserID: widget.user.createdByUserID,
-      isPlaceholder: widget.user.isPlaceholder,
+      isPlaceholder: placeholder,
     );
 
     try {
@@ -763,8 +800,10 @@ class _EditUserPageState extends State<EditUserPage> {
       // Update in app context if this is the current user or in all users list
       if (mounted) {
         _replaceUserInAppContext(userToSave);
+        await persistUsersLocalCache(appContext.allUsers);
 
         setState(() {
+          _isPlaceholder = userToSave.isPlaceholder;
           _canSave = false;
           _testing = false;
           _hasChanges = false;

@@ -211,12 +211,14 @@ class CloudFunctionManager {
     required String userId,
     required String authId,
     bool isLeader = false,
+    bool isAreaAdmin = false,
   }) async {
     final callable = _inst.httpsCallable('link_user_auth');
     final result = await callable.call({
       'UserID': userId,
       'AuthID': authId,
       'IsLeader': isLeader,
+      'IsAreaAdmin': isAreaAdmin,
     });
     final data = result.data;
     if (data is Map) {

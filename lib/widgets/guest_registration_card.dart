@@ -4,19 +4,17 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/db_managers/id_tracker.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../models/user.dart' as ctrim;
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../utility/local_data_manager.dart';
+import '../utility/persist_users_local_cache.dart';
 
 class GuestRegistrationCard extends StatefulWidget {
   const GuestRegistrationCard({super.key});
@@ -663,29 +661,10 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
 
   Future<List<ctrim.User>> _fetchUsers() async {
     debugPrint('--fetching users from DB');
-    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final LocalDataManager dataManager = LocalDataManager();
-    final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
-
     final List<ctrim.User> allUsers = await _userDBManager.fetchAllUsers();
-    final String currentID = await trackerDBManager.getCurrentUserID();
-
-    String allUsersContent = '$currentID-${packageInfo.version}';
-    for (final user in allUsers) {
-      allUsersContent += '\n${user.id}';
-      allUsersContent += '\n${user.forname}';
-      allUsersContent += '\n${user.surname}';
-      allUsersContent += '\n${user.imgSrc}';
-      allUsersContent += '\n${user.isLeader ? '1' : '0'}';
-      allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
-      allUsersContent += '\n${user.location}';
-      allUsersContent += '\n${user.authID}';
-      allUsersContent += '\n${user.tagIDs.join(',')}';
-    }
 
     debugPrint('--writing users from DB');
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
+    await persistUsersLocalCache(allUsers);
     return allUsers;
   }
 

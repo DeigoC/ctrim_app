@@ -22,7 +22,9 @@ import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/local_data_manager.dart';
+import 'utility/persist_users_local_cache.dart';
 import 'utility/user_schedule_service.dart';
+import 'utility/users_local_cache.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -230,72 +232,20 @@ Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
     debugPrint('--fetching users from Local Data');
 
     usersData.removeAt(0);
-    const int oldChunkSize = 8;
-    const int newChunkSize = 9;
-    final int dataLength = usersData.length;
-    int chunkSize = newChunkSize;
-    if (dataLength % newChunkSize == 0) {
-      chunkSize = newChunkSize;
-    } else if (dataLength % oldChunkSize == 0) {
-      chunkSize = oldChunkSize;
-    } else {
-      debugPrint('--local user cache format mismatch, refetching from DB');
-      shouldReadLocalData = false;
+    final cached = UsersLocalCache.decodeBody(usersData);
+    if (cached != null) {
+      return cached;
     }
-
-    if (shouldReadLocalData) {
-      final int numberOfChunks = dataLength ~/ chunkSize;
-
-      final List<List<String>> allUserEntries = List<List<String>>.generate(numberOfChunks, (index) {
-        int startIndex = index * chunkSize;
-        int endIndex = (index + 1) * chunkSize;
-        return usersData.sublist(startIndex, endIndex);
-      });
-
-      final List<ctrim.User> result = List<ctrim.User>.empty(growable: true);
-      for (final userEntry in allUserEntries) {
-        final tagIDs = chunkSize == newChunkSize && userEntry.length > 8
-            ? userEntry[8].split(',').where((e) => e.isNotEmpty).toList()
-            : <String>[];
-        final thisUser = ctrim.User(
-            id: userEntry[0],
-            forname: userEntry[1],
-            surname: userEntry[2],
-            imgSrc: userEntry[3],
-            isLeader: userEntry[4] == '1',
-            isAreaAdmin: userEntry[5] == '1',
-            location: userEntry[6],
-            authID: userEntry[7],
-            tagIDs: tagIDs);
-        result.add(thisUser);
-      }
-
-      return result;
-    }
+    debugPrint('--local user cache format mismatch, refetching from DB');
   }
 
   debugPrint('--fetching users from DB');
-    final UserDBManager userDBManager = UserDBManager();
-    final allUsers = await userDBManager.fetchAllUsers();
+  final UserDBManager userDBManager = UserDBManager();
+  final allUsers = await userDBManager.fetchAllUsers();
 
-    String allUsersContent = '$currentID-$version'; // start with the current count / uID
-    for (final user in allUsers) {
-      allUsersContent += '\n${user.id}';
-      allUsersContent += '\n${user.forname}';
-      allUsersContent += '\n${user.surname}';
-      allUsersContent += '\n${user.imgSrc}';
-      allUsersContent += '\n${user.isLeader ? '1' : '0'}';
-      allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
-      allUsersContent += '\n${user.location}';
-      allUsersContent += '\n${user.authID}';
-      allUsersContent += '\n${user.tagIDs.join(',')}';
-    }
+  debugPrint('--writing users from DB');
+  await persistUsersLocalCache(allUsers);
 
-    debugPrint('--writing users from DB');
-    // this write thing should be updated when we register users
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
-
-    pref.setBool('fetchUserImages', true); // refresh user image fetch
-    return allUsers;
+  pref.setBool('fetchUserImages', true); // refresh user image fetch
+  return allUsers;
 }

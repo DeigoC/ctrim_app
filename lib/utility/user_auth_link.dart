@@ -40,6 +40,7 @@ class UserAuthLinkService {
     required User user,
     required String newAuthID,
     required bool isLeader,
+    bool isAreaAdmin = false,
   }) async {
     final authID = newAuthID.trim();
     final existingOwner = await _userDBManager.fetchUserByAuthID(authID);
@@ -53,7 +54,11 @@ class UserAuthLinkService {
     }
 
     if (user.authID == authID && !user.isPlaceholder) {
-      await _everyoneDBManager.setAsUser(authID, isLeader: isLeader);
+      await _everyoneDBManager.setAsUser(
+        authID,
+        isLeader: isLeader,
+        isAreaAdmin: isAreaAdmin,
+      );
       return user;
     }
 
@@ -61,6 +66,7 @@ class UserAuthLinkService {
       userId: user.id,
       authId: authID,
       isLeader: isLeader,
+      isAreaAdmin: isAreaAdmin,
     );
     return _userFromLinkResult(user, raw);
   }
