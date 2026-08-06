@@ -7,6 +7,7 @@ import '../../firebase/db_managers/id_tracker.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
+import '../../utility/persist_users_local_cache.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
@@ -250,9 +251,10 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
                       action: (onProgress) async {
                         final newUser = await _registerUser(onProgress);
                         if (!mounted) return;
-                        Provider.of<AppContext>(context, listen: false)
-                            .allUsers
-                            .add(newUser);
+                        final appContext =
+                            Provider.of<AppContext>(context, listen: false);
+                        appContext.allUsers.add(newUser);
+                        await persistUsersLocalCache(appContext.allUsers);
                       },
                     );
                     if (!mounted || !saved) return;

@@ -32,6 +32,7 @@ class ViewUserProfilePage extends StatefulWidget {
 
 class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   late final AppContext _appContext;
+  late User _user;
   final UserScheduleService _scheduleService = UserScheduleService();
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
@@ -46,7 +47,16 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   void initState() {
     super.initState();
     _appContext = Provider.of<AppContext>(context, listen: false);
+    _user = _resolveUser(widget.selectedUser);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadProfileData());
+  }
+
+  User _resolveUser(User fallback) {
+    try {
+      return _appContext.allUsers.firstWhere((u) => u.id == fallback.id);
+    } catch (_) {
+      return fallback;
+    }
   }
 
   Future<void> _loadProfileData() async {
@@ -59,8 +69,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     });
 
     try {
-      if (widget.selectedUser.roles == null) {
-        widget.selectedUser.setRoles(await _scheduleService.fetchRoles(widget.selectedUser.id));
+      if (_user.roles == null) {
+        _user.setRoles(await _scheduleService.fetchRoles(_user.id));
       }
       if (!mounted) return;
 
@@ -70,7 +80,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       });
 
       await _scheduleService.pruneStaleRoles(
-        user: widget.selectedUser,
+        user: _user,
         eventHeads: _appContext.eventHeads,
       );
       if (!mounted) return;
@@ -96,12 +106,12 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     final colorScheme = theme.colorScheme;
     final canEdit = canEditPlaceholderProfile(
       actor: _appContext.currentUser,
-      target: widget.selectedUser,
+      target: _user,
     );
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.selectedUser.fullname),
+        title: Text(_user.fullname),
         actions: [
           if (canEdit)
             IconButton(
@@ -133,11 +143,11 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     final double webHorizontalPadding =
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
     final upcomingRoles = UserScheduleService.upcomingRoles(
-      user: widget.selectedUser,
+      user: _user,
       eventHeads: _appContext.eventHeads,
       limit: 3,
     );
-    final userTags = UserTagHelpers.tagsForUser(user: widget.selectedUser, allTags: _appContext.allTags);
+    final userTags = UserTagHelpers.tagsForUser(user: _user, allTags: _appContext.allTags);
 
     return ListView(
       padding: EdgeInsets.fromLTRB(webHorizontalPadding, 16, webHorizontalPadding, 24),
@@ -147,10 +157,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                MyUserAvatar(widget.selectedUser, radius: 48),
+                MyUserAvatar(_user, radius: 48),
                 const SizedBox(height: 16),
                 Text(
-                  widget.selectedUser.fullname,
+                  _user.fullname,
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
@@ -161,20 +171,20 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
                     Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
-                      widget.selectedUser.location,
+                      _user.location,
                       style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
-                if (widget.selectedUser.isLeader || widget.selectedUser.isAreaAdmin) ...[
+                if (_user.isLeader || _user.isAreaAdmin) ...[
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      if (widget.selectedUser.isLeader) _buildBadge(l10n.userProfileLeaderBadge, colorScheme.secondaryContainer, colorScheme.onSecondaryContainer),
-                      if (widget.selectedUser.isAreaAdmin) _buildBadge(l10n.userProfileAdminBadge, colorScheme.primaryContainer, colorScheme.onPrimaryContainer),
+                      if (_user.isLeader) _buildBadge(l10n.userProfileLeaderBadge, colorScheme.secondaryContainer, colorScheme.onSecondaryContainer),
+                      if (_user.isAreaAdmin) _buildBadge(l10n.userProfileAdminBadge, colorScheme.primaryContainer, colorScheme.onPrimaryContainer),
                     ],
                   ),
                 ],
@@ -269,7 +279,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       context,
       MaterialPageRoute(
         builder: (_) => ViewUserRolesPage(
-          selectedUser: widget.selectedUser,
+          selectedUser: _user,
           allowPostView: true,
         ),
       ),
@@ -281,7 +291,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       context,
       MaterialPageRoute(
         builder: (_) => ViewUserRolesPage(
-          selectedUser: widget.selectedUser,
+          selectedUser: _user,
           allowPostView: true,
           initialTab: 1,
         ),
@@ -292,10 +302,13 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   Future<void> _onEditUser() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => EditUserPage(user: widget.selectedUser)),
+      MaterialPageRoute(builder: (_) => EditUserPage(user: _user)),
     );
-    if (result == true && mounted) {
-      setState(() {});
+    if (!mounted) return;
+    if (result == true) {
+      setState(() {
+        _user = _resolveUser(_user);
+      });
     }
   }
 }

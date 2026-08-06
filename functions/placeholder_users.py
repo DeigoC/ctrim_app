@@ -198,6 +198,7 @@ def link_user_auth_impl(db, req: https_fn.CallableRequest) -> dict:
     user_id = str(data.get('UserID', '')).strip()
     new_auth_id = str(data.get('AuthID', '')).strip()
     is_leader = data.get('IsLeader') is True
+    is_area_admin = data.get('IsAreaAdmin') is True
 
     if not user_id or not new_auth_id:
         raise https_fn.HttpsError(
@@ -228,9 +229,17 @@ def link_user_auth_impl(db, req: https_fn.CallableRequest) -> dict:
             message='Not authorized to link Auth for this user',
         )
 
-    # Non-admins cannot grant leader via link.
+    # Non-admins cannot grant leader / area admin via link.
     if not _is_area_or_global_admin(flags):
         is_leader = False
+        is_area_admin = False
+    else:
+        # Prefer request flags; fall back to existing users doc so promote-then-link
+        # keeps area admin on everyone/{authID} without a second Save.
+        if data.get('IsAreaAdmin') is None:
+            is_area_admin = target.get('IsAreaAdmin') is True
+        if data.get('IsLeader') is None:
+            is_leader = target.get('IsLeader') is True
 
     conflict = (
         db.collection('users')
@@ -257,11 +266,15 @@ def link_user_auth_impl(db, req: https_fn.CallableRequest) -> dict:
         'AuthID': new_auth_id,
         'IsPlaceholder': False,
     }
+    if _is_area_or_global_admin(flags):
+        updates['IsLeader'] = is_leader
+        updates['IsAreaAdmin'] = is_area_admin
     user_ref.update(updates)
 
     everyone_payload = {'isUser': True}
     if _is_area_or_global_admin(flags):
         everyone_payload['isLeader'] = is_leader
+        everyone_payload['isAreaAdmin'] = is_area_admin
     everyone_ref.set(everyone_payload, merge=True)
 
     if old_auth and old_auth != new_auth_id:

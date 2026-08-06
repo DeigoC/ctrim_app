@@ -5,20 +5,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/db_managers/id_tracker.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../models/user.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../utility/local_data_manager.dart';
+import '../utility/persist_users_local_cache.dart';
 import '../utility/web_notification_lifecycle.dart';
 import 'home_page.dart';
 import '../../utility/responsive_layout.dart';
@@ -1230,30 +1228,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
   Future<List<User>> _fetchUsers() async {
     debugPrint('--fetching users from DB');
-    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final LocalDataManager dataManager = LocalDataManager();
-    final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
-
     final List<User> allUsers = await _userDBManager.fetchAllUsers();
-    final String currentID = await trackerDBManager.getCurrentUserID();
-
-    String allUsersContent = '$currentID-${packageInfo.version}';
-    for (final user in allUsers) {
-      allUsersContent += '\n${user.id}';
-      allUsersContent += '\n${user.forname}';
-      allUsersContent += '\n${user.surname}';
-      allUsersContent += '\n${user.imgSrc}';
-      allUsersContent += '\n${user.isLeader ? '1' : '0'}';
-      allUsersContent += '\n${user.isAreaAdmin ? '1' : '0'}';
-      allUsersContent += '\n${user.location}';
-      allUsersContent += '\n${user.authID}';
-      allUsersContent += '\n${user.tagIDs.join(',')}';
-    }
 
     debugPrint('--writing users from DB');
-    // this write thing should be updated when we register users
-    await dataManager.writeUsersList(allUsersContent);
-    await dataManager.writeLastUsersFetch();
+    await persistUsersLocalCache(allUsers);
     return allUsers;
   }
 
