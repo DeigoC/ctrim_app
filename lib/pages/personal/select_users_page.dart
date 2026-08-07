@@ -97,6 +97,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     final double webHorizontalPadding = isWide
         ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
         : 0.0;
+    // Keep filter chips inset from the screen edges on narrow layouts.
+    final double filterHorizontalPadding =
+        webHorizontalPadding > 0 ? webHorizontalPadding : 16.0;
 
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final filteredUsers = _filteredUsers(appContext);
@@ -145,7 +148,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               Material(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: filterHorizontalPadding, vertical: 8),
                   child: Text(
                     l10n.selectUsersSelected(_selectedUIDs.length),
                     style: Theme.of(context).textTheme.titleSmall,
@@ -154,7 +157,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(webHorizontalPadding, 8, webHorizontalPadding, 8),
+                padding: EdgeInsets.fromLTRB(filterHorizontalPadding, 8, filterHorizontalPadding, 8),
                 child: Row(
                   children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
                     final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
@@ -172,7 +175,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               UserTagFilterBar(
                 tags: appContext.allTags,
                 selectedTagIDs: _selectedTagIDs,
-                horizontalPadding: webHorizontalPadding,
+                horizontalPadding: filterHorizontalPadding,
                 onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
               ),
               Expanded(
