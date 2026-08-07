@@ -32,6 +32,7 @@ import 'personal/manage_user_locations_page.dart';
 import 'personal/manage_user_tags_page.dart';
 import 'personal/manage_post_tags_page.dart';
 import '../utility/responsive_layout.dart';
+import '../src/settings/settings_controller.dart';
 
 class PersonalHome extends StatefulWidget {
   const PersonalHome({super.key, required this.appContext});
@@ -560,6 +561,21 @@ class _PersonalHomeState extends State<PersonalHome> {
   List<_PersonalAction> _appLegalActions(
       AppContext appContext, ColorScheme colorScheme) {
     final actions = <_PersonalAction>[];
+    final settingsController = Provider.of<SettingsController>(context);
+    final themeLabel = _themeModeLabel(settingsController.themeMode);
+
+    actions.add(
+      _PersonalAction(
+        icon: Icons.brightness_6_rounded,
+        title: 'Appearance',
+        subtitle: themeLabel,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _showThemeModeDialog(settingsController);
+        },
+        iconColor: colorScheme.tertiary,
+      ),
+    );
 
     if (!appContext.isCurrentUserGuest) {
       final currentTab = appContext.sharedPref.preferredStartupTab;
@@ -838,6 +854,67 @@ class _PersonalHomeState extends State<PersonalHome> {
               child: const Text('Cancel'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  String _themeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+      case ThemeMode.system:
+        return 'Match device';
+    }
+  }
+
+  void _showThemeModeDialog(SettingsController settingsController) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AnimatedBuilder(
+          animation: settingsController,
+          builder: (context, _) {
+            return AlertDialog(
+              title: const Text('Appearance'),
+              content: RadioGroup<ThemeMode>(
+                groupValue: settingsController.themeMode,
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await settingsController.updateThemeMode(value);
+                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                },
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RadioListTile<ThemeMode>(
+                      title: Text('Match device'),
+                      subtitle: Text('Follow the system light or dark setting'),
+                      value: ThemeMode.system,
+                    ),
+                    RadioListTile<ThemeMode>(
+                      title: Text('Light'),
+                      subtitle: Text('Always use light mode'),
+                      value: ThemeMode.light,
+                    ),
+                    RadioListTile<ThemeMode>(
+                      title: Text('Dark'),
+                      subtitle: Text('Always use dark mode'),
+                      value: ThemeMode.dark,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

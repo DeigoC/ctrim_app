@@ -208,11 +208,16 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildBottomNavigationBar() {
+    final colorScheme = Theme.of(context).colorScheme;
+    // 4+ items default to shifting (white icons); force fixed + theme colors.
     return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.transparent,
       elevation: 0,
       currentIndex: _selectedIndex,
       onTap: _onNavigationItemTap,
+      selectedItemColor: colorScheme.primary,
+      unselectedItemColor: colorScheme.onSurfaceVariant,
       unselectedFontSize: 8,
       selectedFontSize: 12,
       items: _destinations

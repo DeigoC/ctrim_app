@@ -7,13 +7,14 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
-import '../../widgets/responsive_content.dart';
 import 'cell_group_detail_page.dart';
 import 'edit_cell_group_page.dart';
 
 /// Main Cell Groups section: catalogue list with tiered cards.
 class CellGroupsHome extends StatefulWidget {
   const CellGroupsHome({super.key, this.scrollController});
+
+  static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
 
   final ScrollController? scrollController;
 
@@ -54,17 +55,10 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     final l10n = AppLocalizations.of(context)!;
     final appContext = Provider.of<AppContext>(context);
     final canCreate = appContext.currentUser.canManageCellGroups;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.cellGroupsSectionTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loading ? null : _refresh,
-          ),
-        ],
-      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
@@ -78,73 +72,172 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
               },
             )
           : null,
-      body: _buildBody(appContext, l10n),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final contentWidth = constraints.maxWidth;
+          final isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+          final maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+          final horizontalPadding = isWideScreen
+              ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+              : 16.0;
+
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: CustomScrollView(
+              controller: widget.scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              key: const PageStorageKey<String>('cell_groups_page'),
+              slivers: [
+                SliverAppBar.large(
+                  title: Text(
+                    l10n.cellGroupsSectionTitle,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  centerTitle: false,
+                  backgroundColor: colorScheme.surface,
+                  surfaceTintColor: colorScheme.surfaceTint,
+                  leading: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.shadow.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        CellGroupsHome._ctrimLogo,
+                        fit: BoxFit.contain,
+                        height: kToolbarHeight,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.church,
+                            color: colorScheme.primary,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: _loading ? null : _refresh,
+                    ),
+                  ],
+                ),
+                ..._buildContentSlivers(
+                  appContext: appContext,
+                  l10n: l10n,
+                  isWideScreen: isWideScreen,
+                  horizontalPadding: horizontalPadding,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildBody(AppContext appContext, AppLocalizations l10n) {
+  List<Widget> _buildContentSlivers({
+    required AppContext appContext,
+    required AppLocalizations l10n,
+    required bool isWideScreen,
+    required double horizontalPadding,
+  }) {
     if (_loading && appContext.allCellGroups.isEmpty) {
-      return const LoadProgressBody(
-        message: 'Loading cell groups…',
-        completedSteps: 0,
-        totalSteps: 1,
-      );
+      return [
+        const SliverFillRemaining(
+          hasScrollBody: false,
+          child: LoadProgressBody(
+            message: 'Loading cell groups…',
+            completedSteps: 0,
+            totalSteps: 1,
+          ),
+        ),
+      ];
     }
     if (_error != null && appContext.allCellGroups.isEmpty) {
-      return LoadProgressBody(
-        message: 'Loading cell groups…',
-        completedSteps: 0,
-        totalSteps: 1,
-        error: _error,
-        onRetry: _refresh,
-      );
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: LoadProgressBody(
+            message: 'Loading cell groups…',
+            completedSteps: 0,
+            totalSteps: 1,
+            error: _error,
+            onRetry: _refresh,
+          ),
+        ),
+      ];
     }
 
     final groups = appContext.allCellGroups.where((g) => !g.isArchived).toList();
     if (groups.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            l10n.cellGroupsEmpty,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                l10n.cellGroupsEmpty,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
           ),
         ),
-      );
+      ];
     }
 
-    final width = MediaQuery.sizeOf(context).width;
-    final isWide = ResponsiveLayout.isWideScreen(width);
     final isGuest = appContext.isCurrentUserGuest;
+    final padding = EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 88);
 
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      child: ResponsiveContent(
-        child: isWide
-            ? GridView.builder(
-                controller: widget.scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 2.4,
-                ),
-                itemCount: groups.length,
-                itemBuilder: (context, index) =>
-                    _CellGroupCard(group: groups[index], isGuest: isGuest),
-              )
-            : ListView.separated(
-                controller: widget.scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
-                itemCount: groups.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) =>
-                    _CellGroupCard(group: groups[index], isGuest: isGuest),
-              ),
+    if (isWideScreen) {
+      return [
+        SliverPadding(
+          padding: padding,
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 2.4,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) =>
+                  _CellGroupCard(group: groups[index], isGuest: isGuest),
+              childCount: groups.length,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: padding,
+        sliver: SliverList.separated(
+          itemCount: groups.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) =>
+              _CellGroupCard(group: groups[index], isGuest: isGuest),
+        ),
       ),
-    );
+    ];
   }
 }
 

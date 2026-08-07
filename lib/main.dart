@@ -29,19 +29,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 void main() async {
-  // Set up the SettingsController, which will glue user settings to multiple
-  // Flutter Widgets.
-  final settingsController = SettingsController(SettingsService());
-
-  // Load the user's preferred theme while the splash screen is displayed.
-  // This prevents a sudden theme change when the app is first displayed.
-  await settingsController.loadSettings();
-
-  // Run the app and pass in the SettingsController. The app listens to the
-  // SettingsController for changes, then passes it further down to the
-  // SettingsView.
-
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Shared preferences + theme settings before first frame so the preferred
+  // ThemeMode is ready (system / light / dark) without a flash.
+  final SharedPreferences prefInstance = await SharedPreferences.getInstance();
+  final settingsController = SettingsController(SettingsService(prefInstance));
+  await settingsController.loadSettings();
 
   // Initialize Hive for local caching (works on all platforms including web)
   await LocalDataManager.initialize();
@@ -83,7 +77,6 @@ void main() async {
   //   }
   // }
 
-  final SharedPreferences prefInstance = await SharedPreferences.getInstance();
   final AuthManager authManager = AuthManager();
   final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
   final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
@@ -103,11 +96,15 @@ void main() async {
   final AppContext guestContext =
       AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir, analytics: analytics);
 
-  runApp(ChangeNotifierProvider(
-      create: (_) => guestContext,
-      child: MyApp(
-        settingsController: settingsController,
-      )));
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider.value(value: guestContext),
+      ChangeNotifierProvider.value(value: settingsController),
+    ],
+    child: MyApp(
+      settingsController: settingsController,
+    ),
+  ));
 
   // Wait a moment for App Check to fully initialize before fetching data
   if (kIsWeb && kDebugMode) {
