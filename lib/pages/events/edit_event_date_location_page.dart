@@ -8,8 +8,17 @@ import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
-  const EditEventDateLocationPage({super.key, required this.eventContext});
+  const EditEventDateLocationPage({
+    super.key,
+    required this.eventContext,
+    this.timeOnly = false,
+  });
+
   final EventContext eventContext;
+
+  /// When true (post templates), only start/end time matter — calendar date is
+  /// chosen later when creating a post from the template.
+  final bool timeOnly;
 
   @override
   State<EditEventDateLocationPage> createState() => _EditEventDateLocationPageState();
@@ -17,6 +26,7 @@ class EditEventDateLocationPage extends StatefulWidget {
 
 class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   static final DateFormat _startFormat = DateFormat('EEEE d MMM yyyy, HH:mm');
+  static final DateFormat _timeFormat = DateFormat('HH:mm');
   static final DateFormat _endFormat = DateFormat('HH:mm');
   // static final List<String> _locations = ['Belfast'];
   late final DateTime? _originalStart, _originalEnd;
@@ -28,6 +38,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   String _webLink = '';
   DateTime? _start, _end;
   bool _isAllDay = false, _online = false;
+
+  bool get _timeOnly => widget.timeOnly;
 
   @override
   void initState() {
@@ -68,7 +80,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          title: const Text('Edit Date & Location'),
+          title: Text(_timeOnly ? 'Edit Time & Location' : 'Edit Date & Location'),
           backgroundColor: Theme.of(context).colorScheme.surface,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
           elevation: 0,
@@ -114,14 +126,16 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Set Event Date',
+                _timeOnly ? 'Set Typical Start Time' : 'Set Event Date',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Choose when your event will take place',
+                _timeOnly
+                    ? 'Posts from this template pick a calendar date when created; only the time is stored here.'
+                    : 'Choose when your event will take place',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
@@ -129,9 +143,9 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: _onSelectStartDateClick,
-                icon: const Icon(Icons.calendar_today),
-                label: const Text('Select Date & Time'),
+                onPressed: _onSelectStartClick,
+                icon: Icon(_timeOnly ? Icons.schedule : Icons.calendar_today),
+                label: Text(_timeOnly ? 'Select Start Time' : 'Select Date & Time'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
@@ -170,13 +184,22 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Date & Time',
+                    _timeOnly ? 'Typical time' : 'Date & Time',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                 ],
               ),
+              if (_timeOnly) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Calendar date is chosen when creating a post from this template.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                ),
+              ],
               const SizedBox(height: 16),
               // Start Date/Time
               Container(
@@ -189,13 +212,13 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   title: Text(
-                    _startFormat.format(_start!),
+                    _timeOnly ? _timeFormat.format(_start!) : _startFormat.format(_start!),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
                   ),
                   subtitle: Text(
-                    'Event starts',
+                    _timeOnly ? 'Typical start' : 'Event starts',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
@@ -208,12 +231,12 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        onPressed: _onSelectStartDateClick,
+                        onPressed: _onSelectStartClick,
                         icon: Icon(
                           Icons.edit,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        tooltip: 'Edit start time',
+                        tooltip: _timeOnly ? 'Edit start time' : 'Edit start date & time',
                       ),
                       IconButton(
                         onPressed: _onDeleteStartTimeClick,
@@ -221,11 +244,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                           Icons.delete_outline,
                           color: Theme.of(context).colorScheme.error,
                         ),
-                        tooltip: 'Remove date',
+                        tooltip: _timeOnly ? 'Remove time' : 'Remove date',
                       ),
                     ],
                   ),
-                  onTap: _onSelectStartDateClick,
+                  onTap: _onSelectStartClick,
                 ),
               ),
               const SizedBox(height: 8),
@@ -247,7 +270,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                         ),
                   ),
                   subtitle: Text(
-                    'Event ends',
+                    _timeOnly ? 'Typical end' : 'Event ends',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
@@ -542,6 +565,14 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   // * Logic
 
+  void _onSelectStartClick() {
+    if (_timeOnly) {
+      _onSelectStartTimeOnly();
+    } else {
+      _onSelectStartDateClick();
+    }
+  }
+
   void _onSelectStartDateClick() {
     showDatePicker(
             context: context,
@@ -555,15 +586,39 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     });
   }
 
+  Future<void> _onSelectStartTimeOnly() async {
+    final DateTime anchor = _start ?? DateTime.now();
+    final TimeOfDay initial = _start != null
+        ? TimeOfDay.fromDateTime(_start!)
+        : const TimeOfDay(hour: 9, minute: 0);
+    final selectedTOD = await showTimePicker(context: context, initialTime: initial);
+    if (selectedTOD == null || !mounted) return;
+    await _applyStartDateTime(
+      DateTime(anchor.year, anchor.month, anchor.day, selectedTOD.hour, selectedTOD.minute),
+    );
+  }
+
   Future<void> _onSelectStartTime(final DateTime selectedStartDate) async {
     final selectedTOD = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(selectedStartDate
             .add(Duration(hours: _start == null ? 9 : _start!.hour, minutes: _start == null ? 0 : _start!.minute))));
     if (selectedTOD == null || !mounted) return;
+    await _applyStartDateTime(DateTime(
+      selectedStartDate.year,
+      selectedStartDate.month,
+      selectedStartDate.day,
+      selectedTOD.hour,
+      selectedTOD.minute,
+    ));
+  }
+
+  Future<void> _applyStartDateTime(final DateTime start) async {
     setState(() {
-      _start = DateTime(selectedStartDate.year, selectedStartDate.month, selectedStartDate.day, selectedTOD.hour,
-          selectedTOD.minute);
+      _start = start;
+      if (_end != null) {
+        _end = DateTime(start.year, start.month, start.day, _end!.hour, _end!.minute);
+      }
     });
     if (!mounted) return;
     await showDialog(
@@ -702,6 +757,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   void _onDeleteStartTimeClick() {
     setState(() {
       _start = null;
+      _end = null;
+      _isAllDay = false;
     });
   }
 
@@ -713,15 +770,21 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         widget.eventContext.program.online != _originalOnline ||
         widget.eventContext.head.location.compareTo(_originalLocation) != 0 ||
         _originalMapLink.compareTo(_tecMapLink.text.trim()) != 0) {
-      widget.eventContext.program.setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
-      widget.eventContext.program.setAllDay(_isAllDay);
+      if (_start == null) {
+        widget.eventContext.head.setEventDate(null);
+        widget.eventContext.program.setFinishTime(null);
+        widget.eventContext.program.setAllDay(false);
+      } else {
+        widget.eventContext.program.setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
+        widget.eventContext.program.setAllDay(_isAllDay);
+        widget.eventContext.head.setEventDate(_start);
+      }
       widget.eventContext.program.setAddress(_tecAddress.text.trim());
       widget.eventContext.program.setOnline(_online);
       widget.eventContext.program.setMapLink(_tecMapLink.text.trim());
 
       final String newLocation = _location + (_online ? ' (Online)' : '');
       widget.eventContext.head.setLocation(newLocation);
-      widget.eventContext.head.setEventDate(_start);
 
       final appContext = Provider.of<AppContext>(context, listen: false);
       final includeUmbrella = BroadcastAudience.includesLocationUmbrella(

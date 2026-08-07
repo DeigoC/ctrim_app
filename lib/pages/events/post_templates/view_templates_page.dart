@@ -394,94 +394,15 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     await _openEditTemplate(duplicated!);
   }
 
-  Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog() async {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final headTitleController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final result = await showDialog<_NewTemplateDetails>(
+  Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog() {
+    // Material AlertDialog (not .adaptive): CupertinoAlertDialog on macOS/iOS
+    // cannot host Material TextFormFields and throws a layout / Material error.
+    // Controllers live on [_NewTemplateDetailsDialog] so they are not disposed
+    // while the route is still animating out (which caused "used after disposed").
+    return showDialog<_NewTemplateDetails>(
       context: context,
-      builder: (dialogContext) {
-        final theme = Theme.of(dialogContext);
-        return AlertDialog.adaptive(
-          title: const Text('New template'),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: titleController,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      hintText: 'e.g. Sunday Service',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter a title';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: headTitleController,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'List heading (optional)',
-                      hintText: 'Defaults to title',
-                      helperText: 'Shown in the template picker list',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: descriptionController,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (optional)',
-                      hintText: 'Short summary for admins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (!(formKey.currentState?.validate() ?? false)) return;
-                final title = titleController.text.trim();
-                final headTitle = headTitleController.text.trim().isEmpty
-                    ? title
-                    : headTitleController.text.trim();
-                Navigator.of(dialogContext).pop(
-                  _NewTemplateDetails(
-                    title: title,
-                    headTitle: headTitle,
-                    description: descriptionController.text.trim(),
-                  ),
-                );
-              },
-              child: Text('Create', style: theme.textTheme.labelLarge),
-            ),
-          ],
-        );
-      },
+      builder: (_) => const _NewTemplateDetailsDialog(),
     );
-
-    titleController.dispose();
-    descriptionController.dispose();
-    headTitleController.dispose();
-    return result;
   }
 
   PostTemplate _buildBlankTemplate({
@@ -595,4 +516,115 @@ class _NewTemplateDetails {
   final String title;
   final String headTitle;
   final String description;
+}
+
+class _NewTemplateDetailsDialog extends StatefulWidget {
+  const _NewTemplateDetailsDialog();
+
+  @override
+  State<_NewTemplateDetailsDialog> createState() =>
+      _NewTemplateDetailsDialogState();
+}
+
+class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _headTitleController;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _headTitleController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _headTitleController.dispose();
+    super.dispose();
+  }
+
+  void _onCreate() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final title = _titleController.text.trim();
+    final headTitle = _headTitleController.text.trim().isEmpty
+        ? title
+        : _headTitleController.text.trim();
+    Navigator.of(context).pop(
+      _NewTemplateDetails(
+        title: title,
+        headTitle: headTitle,
+        description: _descriptionController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('New template'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  hintText: 'e.g. Sunday Service',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Enter a title';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _headTitleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'List heading (optional)',
+                  hintText: 'Defaults to title',
+                  helperText: 'Shown in the template picker list',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descriptionController,
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Description (optional)',
+                  hintText: 'Short summary for admins',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _onCreate,
+          child: const Text('Create'),
+        ),
+      ],
+    );
+  }
 }

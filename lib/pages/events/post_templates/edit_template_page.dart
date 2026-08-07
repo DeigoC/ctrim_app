@@ -92,7 +92,12 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       _buildHeaderTab(),
       ViewPostBody(
           eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
-      ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
+      ViewAllPrograms(
+        eventContext: widget.eventContext,
+        onProgramChanged: () => _updateBody(),
+        isAddingPost: true,
+        timeOnlySchedule: true,
+      ),
       _buildMediaTab(),
     ]);
   }

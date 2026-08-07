@@ -151,6 +151,13 @@ class EventContext {
     headToUpload.setTagIDs(_head.tagIDs);
     headToUpload.setCellGroupIDs(_head.cellGroupIDs);
     headToUpload.setIsPeriodParent(_metadata.isPeriodParent);
+    if (_head.hasLeadSpeaker) {
+      headToUpload.setLeadSpeaker(
+        uid: _head.leadSpeakerUID,
+        imgSrc: _head.leadSpeakerImgSrc,
+        name: _head.leadSpeakerName,
+      );
+    }
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
     }

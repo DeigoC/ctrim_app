@@ -114,6 +114,9 @@ class EventHead {
   TimeOfDay get startTimeOfEvent => TimeOfDay.fromDateTime(_eventDate!);
   List<Map<String, dynamic>> get media => UnmodifiableListView(_media);
 
+  /// Cover image for AppBar / notifications / bulletin thumbnail.
+  /// Prefers the first head media image; falls back to the lead speaker
+  /// portrait only when no key-graphic images exist.
   String? getKeyGraphic() {
     for (final entry in media) {
       if (entry['type']!.compareTo('img') == 0) {

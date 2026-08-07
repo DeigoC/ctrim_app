@@ -11,11 +11,19 @@ import '../../utility/event_context.dart';
 import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
-  const ViewAllPrograms(
-      {super.key, required this.eventContext, required this.onProgramChanged, this.isAddingPost = false});
+  const ViewAllPrograms({
+    super.key,
+    required this.eventContext,
+    required this.onProgramChanged,
+    this.isAddingPost = false,
+    this.timeOnlySchedule = false,
+  });
   final EventContext eventContext;
   final Function onProgramChanged;
   final bool isAddingPost;
+
+  /// Post templates: show typical time only; calendar date is set when creating posts.
+  final bool timeOnlySchedule;
 
   @override
   State<ViewAllPrograms> createState() => _ViewAllProgramsPageState();
@@ -87,16 +95,29 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    String dateStr = "No Date Selected";
+    String dateStr = widget.timeOnlySchedule ? 'No start time set' : 'No Date Selected';
     String timeStr = '';
     if (widget.eventContext.head.eventDate != null) {
-      if (widget.eventContext.program.allDay) {
+      if (widget.timeOnlySchedule) {
+        if (widget.eventContext.program.allDay) {
+          dateStr = 'All day';
+          timeStr = 'Calendar date is chosen when creating a post';
+        } else {
+          dateStr = 'Typical time';
+          final finish = widget.eventContext.program.finishTime;
+          timeStr = finish == null
+              ? _timeFormat.format(widget.eventContext.head.eventDate!)
+              : 'From ${_timeFormat.format(widget.eventContext.head.eventDate!)} to ${_timeFormat.format(finish)}';
+        }
+      } else if (widget.eventContext.program.allDay) {
         dateStr = "${_startFormatAllDay.format(widget.eventContext.head.eventDate!)} (All Day)";
       } else {
         dateStr = _startFormat.format(widget.eventContext.head.eventDate!);
         timeStr =
             'From ${_timeFormat.format(widget.eventContext.head.eventDate!)} to ${_timeFormat.format(widget.eventContext.program.finishTime!)}';
       }
+    } else if (widget.timeOnlySchedule) {
+      timeStr = 'Tap to set typical time & location';
     }
 
     final List<Widget> children = [
@@ -108,7 +129,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             ListTile(
                 title: Text(dateStr, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                 subtitle: timeStr.isNotEmpty ? Text(timeStr) : null,
-                leading: Icon(Icons.calendar_month, color: colorScheme.primary)),
+                leading: Icon(
+                  widget.timeOnlySchedule ? Icons.schedule : Icons.calendar_month,
+                  color: colorScheme.primary,
+                )),
             const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
                 title: Text(widget.eventContext.head.location,
@@ -233,8 +257,14 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   void _onEditPostProgram() {
     Navigator.push(
-            context, MaterialPageRoute(builder: (_) => EditEventDateLocationPage(eventContext: widget.eventContext)))
-        .then((_) {
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditEventDateLocationPage(
+          eventContext: widget.eventContext,
+          timeOnly: widget.timeOnlySchedule,
+        ),
+      ),
+    ).then((_) {
       widget.eventContext.program.orderProgramsByStartTime();
       setState(() {});
       if (widget.eventContext.canSaveTheEditing) {

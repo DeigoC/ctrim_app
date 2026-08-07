@@ -151,21 +151,41 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   Widget _buildNarrowBody(
       AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    final showAdmin = appContext.currentUser.canManagePostTemplates ||
+        appContext.currentUser.canManageVolunteers;
+    final peopleActions = _peopleActions(appContext, colorScheme);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!appContext.isCurrentUserGuest) ...[
+        if (appContext.isCurrentUserGuest)
+          _buildGuestWelcomeCard(theme, colorScheme, wide: false)
+        else
           _buildUserProfileCard(appContext, theme, colorScheme, wide: false),
-          const SizedBox(height: 24),
-        ],
-        _buildMainActionsSection(appContext, theme, colorScheme, wide: false),
         const SizedBox(height: 24),
-        if (appContext.currentUser.canManagePostTemplates ||
-            appContext.currentUser.canManageVolunteers) ...[
-          _buildAdminSection(appContext, theme, colorScheme, wide: false),
+        _buildActionSection(
+          title: 'For you',
+          actions: _forYouActions(appContext, theme, colorScheme),
+          theme: theme,
+          colorScheme: colorScheme,
+          wide: false,
+        ),
+        if (peopleActions.isNotEmpty) ...[
           const SizedBox(height: 24),
+          _buildActionSection(
+            title: 'People',
+            actions: peopleActions,
+            theme: theme,
+            colorScheme: colorScheme,
+            wide: false,
+          ),
         ],
-        _buildAppLegalSection(appContext, theme, colorScheme, wide: false),
+        if (showAdmin) ...[
+          const SizedBox(height: 24),
+          _buildAdminSection(appContext, theme, colorScheme, wide: false),
+        ],
+        const SizedBox(height: 24),
+        _buildSettingsSection(appContext, theme, colorScheme, wide: false),
         const SizedBox(height: 24),
         _buildLogoutSection(theme, colorScheme),
       ],
@@ -178,25 +198,38 @@ class _PersonalHomeState extends State<PersonalHome> {
     ColorScheme colorScheme,
     double contentWidth,
   ) {
-    final showAdmin =
-        appContext.currentUser.canManagePostTemplates ||
-            appContext.currentUser.canManageVolunteers;
+    final showAdmin = appContext.currentUser.canManagePostTemplates ||
+        appContext.currentUser.canManageVolunteers;
     final actionColumns = contentWidth >= ResponsiveLayout.desktop ? 3 : 2;
+    final peopleActions = _peopleActions(appContext, colorScheme);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!appContext.isCurrentUserGuest) ...[
+        if (appContext.isCurrentUserGuest)
+          _buildGuestWelcomeCard(theme, colorScheme, wide: true)
+        else
           _buildUserProfileCard(appContext, theme, colorScheme, wide: true),
-          const SizedBox(height: 28),
-        ],
-        _buildMainActionsSection(
-          appContext,
-          theme,
-          colorScheme,
+        const SizedBox(height: 28),
+        _buildActionSection(
+          title: 'For you',
+          actions: _forYouActions(appContext, theme, colorScheme),
+          theme: theme,
+          colorScheme: colorScheme,
           wide: true,
           gridColumns: actionColumns,
         ),
+        if (peopleActions.isNotEmpty) ...[
+          const SizedBox(height: 28),
+          _buildActionSection(
+            title: 'People',
+            actions: peopleActions,
+            theme: theme,
+            colorScheme: colorScheme,
+            wide: true,
+            gridColumns: actionColumns,
+          ),
+        ],
         const SizedBox(height: 28),
         if (showAdmin)
           Row(
@@ -213,7 +246,7 @@ class _PersonalHomeState extends State<PersonalHome> {
               ),
               const SizedBox(width: 20),
               Expanded(
-                child: _buildAppLegalSection(
+                child: _buildSettingsSection(
                   appContext,
                   theme,
                   colorScheme,
@@ -224,7 +257,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             ],
           )
         else
-          _buildAppLegalSection(
+          _buildSettingsSection(
             appContext,
             theme,
             colorScheme,
@@ -245,6 +278,55 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   // * UI Components
 
+  Widget _buildGuestWelcomeCard(
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    required bool wide,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.secondaryContainer.withValues(alpha: 0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: wide
+          ? const EdgeInsets.symmetric(horizontal: 28, vertical: 28)
+          : const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Icon(Icons.person_outline_rounded,
+              size: wide ? 48 : 40, color: colorScheme.primary),
+          const SizedBox(height: 16),
+          Text(
+            'Welcome to CTRIM',
+            textAlign: TextAlign.center,
+            style: (wide ? theme.textTheme.headlineSmall : theme.textTheme.titleLarge)
+                ?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Create an account to manage your schedule, notifications, and profile.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUserProfileCard(
     AppContext appContext,
     ThemeData theme,
@@ -256,88 +338,91 @@ class _PersonalHomeState extends State<PersonalHome> {
         ? const EdgeInsets.symmetric(horizontal: 28, vertical: 24)
         : const EdgeInsets.all(20);
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: padding,
-        child: Row(
-          children: [
-            Hero(
-              tag: 'user_avatar_${appContext.currentUser.id}',
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: MyUserAvatar(
-                  appContext.currentUser,
-                  radius: avatarRadius,
-                ),
-              ),
-            ),
-            SizedBox(width: wide ? 24 : 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hi, ${appContext.currentUser.forname}! 👋',
-                    style: (wide
-                            ? theme.textTheme.headlineSmall
-                            : theme.textTheme.titleLarge)
-                        ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    appContext.currentUser.location,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (appContext.currentUser.isAreaAdmin) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Admin',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.secondaryContainer.withValues(alpha: 0.7),
           ],
         ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: padding,
+      child: Row(
+        children: [
+          Hero(
+            tag: 'user_avatar_${appContext.currentUser.id}',
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: MyUserAvatar(
+                appContext.currentUser,
+                radius: avatarRadius,
+              ),
+            ),
+          ),
+          SizedBox(width: wide ? 24 : 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hi, ${appContext.currentUser.forname}!',
+                  style: (wide
+                          ? theme.textTheme.headlineSmall
+                          : theme.textTheme.titleLarge)
+                      ?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  appContext.currentUser.location,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color:
+                        colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                  ),
+                ),
+                if (appContext.currentUser.isAreaAdmin) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Admin',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  List<_PersonalAction> _quickActions(
+  List<_PersonalAction> _forYouActions(
       AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
     final l10n = AppLocalizations.of(context)!;
     final actions = <_PersonalAction>[];
@@ -352,106 +437,107 @@ class _PersonalHomeState extends State<PersonalHome> {
           iconColor: colorScheme.primary,
         ),
       );
+      return actions;
     }
 
-    if (!appContext.isCurrentUserGuest) {
+    actions.add(
+      _PersonalAction(
+        icon: Icons.checklist_rounded,
+        title: l10n.mySchedule,
+        subtitle: l10n.myScheduleSubtitle,
+        trailing: _buildScheduleBadge(appContext, theme, colorScheme),
+        onTap: _onViewTasksClick,
+        iconColor: colorScheme.tertiary,
+      ),
+    );
+    actions.add(
+      _PersonalAction(
+        icon: Icons.notifications_active_rounded,
+        title: 'Push Notifications',
+        subtitle: 'Manage notification settings',
+        onTap: _onNotificationManagerClick,
+        iconColor: colorScheme.secondary,
+      ),
+    );
+    if (!appContext.sharedPref.isFirstOpen &&
+        appContext.sharedPref.fcmToken.isEmpty) {
       actions.add(
         _PersonalAction(
-          icon: Icons.notifications_active_rounded,
-          title: 'Push Notifications',
-          subtitle: 'Manage notification settings',
-          onTap: _onNotificationManagerClick,
-          iconColor: colorScheme.secondary,
-        ),
-      );
-      if (!appContext.sharedPref.isFirstOpen &&
-          appContext.sharedPref.fcmToken.isEmpty) {
-        actions.add(
-          _PersonalAction(
-            icon: Icons.notifications_none_rounded,
-            title: 'Enable Notifications',
-            subtitle: 'Get updates from CTRIM',
-            onTap: () => _onEnableNotificationsClick(appContext),
-            iconColor: colorScheme.tertiary,
-          ),
-        );
-      }
-      actions.addAll([
-        _PersonalAction(
-          icon: Icons.checklist_rounded,
-          title: l10n.mySchedule,
-          subtitle: l10n.myScheduleSubtitle,
-          trailing: _buildScheduleBadge(appContext, theme, colorScheme),
-          onTap: _onViewTasksClick,
+          icon: Icons.notifications_none_rounded,
+          title: 'Enable Notifications',
+          subtitle: 'Get updates from CTRIM',
+          onTap: () => _onEnableNotificationsClick(appContext),
           iconColor: colorScheme.tertiary,
         ),
-        _PersonalAction(
-          icon: Icons.account_circle_outlined,
-          title: 'Profile picture',
-          subtitle: 'Update your photo URL',
-          onTap: _onUserProfileClick,
-          iconColor: colorScheme.primary,
-        ),
-        _PersonalAction(
-          icon: Icons.article_rounded,
-          title: 'My Posts',
-          subtitle: 'View your created posts',
-          onTap: _onOpenPostsClick,
-          iconColor: colorScheme.primary,
-        ),
-        _PersonalAction(
-          icon: Icons.people_rounded,
-          title: l10n.volunteersMenuTitle,
-          subtitle: l10n.volunteersMenuSubtitle,
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
-          iconColor: colorScheme.secondary,
-        ),
-        _PersonalAction(
-          icon: Icons.menu_book_rounded,
-          title: 'Product guide',
-          subtitle: 'How the app works — for volunteers and leaders',
-          onTap: () => launchUrlString(_stakeholderDocsUrl),
-          iconColor: colorScheme.primary,
-        ),
-      ]);
-    }
-
-    if (kIsWeb) {
-      actions.add(
-        _PersonalAction(
-          icon: Icons.no_accounts_rounded,
-          title: 'Account Deletion Request',
-          subtitle: 'Request account removal',
-          onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
-          iconColor: colorScheme.error,
-        ),
       );
     }
+    actions.addAll([
+      _PersonalAction(
+        icon: Icons.article_rounded,
+        title: 'My Posts',
+        subtitle: 'View your created posts',
+        onTap: _onOpenPostsClick,
+        iconColor: colorScheme.primary,
+      ),
+      _PersonalAction(
+        icon: Icons.account_circle_outlined,
+        title: 'Profile picture',
+        subtitle: 'Update your photo URL',
+        onTap: _onUserProfileClick,
+        iconColor: colorScheme.primary,
+      ),
+    ]);
 
     return actions;
   }
 
-  Widget _buildMainActionsSection(
-    AppContext appContext,
-    ThemeData theme,
-    ColorScheme colorScheme, {
+  List<_PersonalAction> _peopleActions(
+      AppContext appContext, ColorScheme colorScheme) {
+    if (appContext.isCurrentUserGuest) return const [];
+
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      _PersonalAction(
+        icon: Icons.people_rounded,
+        title: l10n.volunteersMenuTitle,
+        subtitle: l10n.volunteersMenuSubtitle,
+        onTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
+        iconColor: colorScheme.secondary,
+      ),
+    ];
+  }
+
+  Widget _buildActionSection({
+    required String title,
+    required List<_PersonalAction> actions,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
     required bool wide,
     int gridColumns = 2,
+    IconData? titleIcon,
   }) {
-    final actions = _quickActions(appContext, theme, colorScheme);
+    if (actions.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text(
-            'Quick Actions',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
+          child: Row(
+            children: [
+              if (titleIcon != null) ...[
+                Icon(titleIcon, size: 20, color: colorScheme.primary),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -524,41 +610,19 @@ class _PersonalHomeState extends State<PersonalHome> {
         : showTemplates && !showUserTags
             ? 'Leader Tools'
             : 'Admin Tools';
-    final actions = _adminActions(appContext, colorScheme);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Row(
-            children: [
-              Icon(
-                Icons.admin_panel_settings_rounded,
-                size: 20,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                sectionTitle,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (wide)
-          _buildActionGrid(actions, theme, colorScheme, columns: gridColumns)
-        else
-          _buildActionListCard(actions, theme, colorScheme),
-      ],
+    return _buildActionSection(
+      title: sectionTitle,
+      titleIcon: Icons.admin_panel_settings_rounded,
+      actions: _adminActions(appContext, colorScheme),
+      theme: theme,
+      colorScheme: colorScheme,
+      wide: wide,
+      gridColumns: gridColumns,
     );
   }
 
-  List<_PersonalAction> _appLegalActions(
+  List<_PersonalAction> _settingsActions(
       AppContext appContext, ColorScheme colorScheme) {
     final actions = <_PersonalAction>[];
     final settingsController = Provider.of<SettingsController>(context);
@@ -608,6 +672,14 @@ class _PersonalHomeState extends State<PersonalHome> {
         onTap: _openShareWebAppClick,
         iconColor: colorScheme.tertiary,
       ),
+      if (!appContext.isCurrentUserGuest)
+        _PersonalAction(
+          icon: Icons.menu_book_rounded,
+          title: 'Product guide',
+          subtitle: 'How the app works — for volunteers and leaders',
+          onTap: () => launchUrlString(_stakeholderDocsUrl),
+          iconColor: colorScheme.primary,
+        ),
       _PersonalAction(
         icon: Icons.slideshow_rounded,
         title: 'Slide Deck Utils',
@@ -633,37 +705,36 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
     ]);
 
+    if (kIsWeb) {
+      actions.add(
+        _PersonalAction(
+          icon: Icons.no_accounts_rounded,
+          title: 'Account Deletion Request',
+          subtitle: 'Request account removal',
+          onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
+          iconColor: colorScheme.error,
+        ),
+      );
+    }
+
     return actions;
   }
 
-  Widget _buildAppLegalSection(
+  Widget _buildSettingsSection(
     AppContext appContext,
     ThemeData theme,
     ColorScheme colorScheme, {
     required bool wide,
     int gridColumns = 1,
   }) {
-    final actions = _appLegalActions(appContext, colorScheme);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text(
-            'App & Legal',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (wide)
-          _buildActionGrid(actions, theme, colorScheme, columns: gridColumns)
-        else
-          _buildActionListCard(actions, theme, colorScheme),
-      ],
+    return _buildActionSection(
+      title: 'Settings',
+      titleIcon: Icons.settings_outlined,
+      actions: _settingsActions(appContext, colorScheme),
+      theme: theme,
+      colorScheme: colorScheme,
+      wide: wide,
+      gridColumns: gridColumns,
     );
   }
 

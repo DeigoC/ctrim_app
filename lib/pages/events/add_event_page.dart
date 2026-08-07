@@ -172,15 +172,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   void _onRequiredFieldTextChange(final String newText) {
-    if (_okToSave() && !_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    } else if (!_okToSave() && _canSave) {
-      setState(() {
-        _canSave = false;
-      });
-    }
+    // Always rebuild so the AppBar key graphic updates when the cover or
+    // lead-speaker portrait changes (not only when save eligibility flips).
+    setState(() {
+      _canSave = _okToSave();
+    });
   }
 
   // the core requirements of a post - title, subtitle, an update to the body

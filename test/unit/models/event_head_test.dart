@@ -401,6 +401,18 @@ void main() {
         expect(head.hasLeadSpeakerPortrait, true);
       });
 
+      test('getKeyGraphic prefers media image over lead speaker image', () {
+        final head = EventHead(id: 'e1');
+        head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
+        expect(head.getKeyGraphic(), 'speaker.jpg');
+
+        head.addMediaItem(type: 'img', src: 'cover.jpg');
+        expect(head.getKeyGraphic(), 'cover.jpg');
+
+        head.replaceKeyGraphic(type: 'img', src: 'new-cover.jpg');
+        expect(head.getKeyGraphic(), 'new-cover.jpg');
+      });
+
       test('clearLeadSpeaker removes denormalized fields', () {
         final head = EventHead(id: 'e1');
         head.setLeadSpeaker(uid: 'u1', imgSrc: 'speaker.jpg', name: 'Alex');
