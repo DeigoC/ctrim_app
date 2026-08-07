@@ -16,8 +16,9 @@ import 'package:provider/provider.dart';
 
 /// Full-screen multi-select picker for volunteers.
 ///
-/// Returns the selected user IDs via [Navigator.pop]. Intended as the shared
-/// entry point for schedule assignees, contributors, and future user pickers.
+/// Returns the selected user IDs via [Navigator.pop] when the page is closed
+/// (back gesture, app bar back, or system back). Intended as the shared entry
+/// point for schedule assignees, contributors, and future user pickers.
 class SelectUsersPage extends StatefulWidget {
   const SelectUsersPage({
     super.key,
@@ -96,6 +97,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     final double webHorizontalPadding = isWide
         ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
         : 0.0;
+    // Keep filter chips inset from the screen edges on narrow layouts.
+    final double filterHorizontalPadding =
+        webHorizontalPadding > 0 ? webHorizontalPadding : 16.0;
 
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final filteredUsers = _filteredUsers(appContext);
@@ -103,145 +107,149 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           _searchQuery.trim().isNotEmpty &&
           filteredUsers.isEmpty;
 
-      return Scaffold(
-        appBar: AppBar(
-          title: _isSearching
-              ? AppSearchBar(
-                  controller: _searchController,
-                  hintText: l10n.volunteersSearchHint,
-                  inAppBar: true,
-                  autofocus: true,
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                )
-              : Text(widget.title ?? l10n.selectUsersTitle),
-          actions: [
-            IconButton(
-              icon: Icon(_isSearching ? Icons.close : Icons.search),
-              onPressed: () {
-                setState(() {
-                  if (_isSearching) {
-                    _isSearching = false;
-                    _searchQuery = '';
-                    _searchController.clear();
-                  } else {
-                    _isSearching = true;
-                  }
-                });
-              },
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(_selectedUIDs.toList()),
-              child: Text(l10n.selectUsersDone),
-            ),
-          ],
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Material(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
-                child: Text(
-                  l10n.selectUsersSelected(_selectedUIDs.length),
-                  style: Theme.of(context).textTheme.titleSmall,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            Navigator.of(context).pop(_selectedUIDs.toList());
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: _isSearching
+                ? AppSearchBar(
+                    controller: _searchController,
+                    hintText: l10n.volunteersSearchHint,
+                    inAppBar: true,
+                    autofocus: true,
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                  )
+                : Text(widget.title ?? l10n.selectUsersTitle),
+            actions: [
+              IconButton(
+                icon: Icon(_isSearching ? Icons.close : Icons.search),
+                onPressed: () {
+                  setState(() {
+                    if (_isSearching) {
+                      _isSearching = false;
+                      _searchQuery = '';
+                      _searchController.clear();
+                    } else {
+                      _isSearching = true;
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Material(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: filterHorizontalPadding, vertical: 8),
+                  child: Text(
+                    l10n.selectUsersSelected(_selectedUIDs.length),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
               ),
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.fromLTRB(webHorizontalPadding, 8, webHorizontalPadding, 8),
-              child: Row(
-                children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
-                  final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(label),
-                      selected: _locationFilter == location,
-                      onSelected: (_) => setState(() => _locationFilter = location),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            UserTagFilterBar(
-              tags: appContext.allTags,
-              selectedTagIDs: _selectedTagIDs,
-              horizontalPadding: webHorizontalPadding,
-              onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
-            ),
-            Expanded(
-              child: filteredUsers.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding + 16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _emptyMessage(l10n),
-                              style: Theme.of(context).textTheme.bodyLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                            if (showCreate) ...[
-                              const SizedBox(height: 16),
-                              FilledButton.tonalIcon(
-                                onPressed: () => _onCreatePlaceholder(appContext),
-                                icon: const Icon(Icons.person_add_alt),
-                                label: Text(l10n.selectUsersCreatePlaceholder),
-                              ),
-                            ],
-                          ],
-                        ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.fromLTRB(filterHorizontalPadding, 8, filterHorizontalPadding, 8),
+                child: Row(
+                  children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
+                    final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(label),
+                        selected: _locationFilter == location,
+                        onSelected: (_) => setState(() => _locationFilter = location),
                       ),
-                    )
-                  : ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-                      itemCount: filteredUsers.length,
-                      itemBuilder: (_, index) {
-                        final user = filteredUsers[index];
-                        final userTags = UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
-                        final isSelected = _selectedUIDs.contains(user.id);
-
-                        return ListTile(
-                          leading: Checkbox(
-                            value: isSelected,
-                            onChanged: (_) => _toggleUser(user.id),
-                          ),
-                          title: Text(user.fullname),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(user.isPlaceholder
-                                  ? l10n.selectUsersPlaceholderSubtitle(user.location)
-                                  : user.location),
-                              if (userTags.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: UserTagChipRow(tags: userTags, dense: true),
-                                ),
-                            ],
-                          ),
-                          isThreeLine: userTags.isNotEmpty,
-                          trailing: Row(
+                    );
+                  }).toList(),
+                ),
+              ),
+              UserTagFilterBar(
+                tags: appContext.allTags,
+                selectedTagIDs: _selectedTagIDs,
+                horizontalPadding: filterHorizontalPadding,
+                onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
+              ),
+              Expanded(
+                child: filteredUsers.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding + 16),
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              MyUserAvatar(user),
-                              if (widget.allowTaskCheck)
-                                IconButton(
-                                  onPressed: () => _openUserSchedule(user),
-                                  icon: const Icon(Icons.checklist),
-                                  tooltip: l10n.mySchedule,
+                              Text(
+                                _emptyMessage(l10n),
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                textAlign: TextAlign.center,
+                              ),
+                              if (showCreate) ...[
+                                const SizedBox(height: 16),
+                                FilledButton.tonalIcon(
+                                  onPressed: () => _onCreatePlaceholder(appContext),
+                                  icon: const Icon(Icons.person_add_alt),
+                                  label: Text(l10n.selectUsersCreatePlaceholder),
                                 ),
+                              ],
                             ],
                           ),
-                          onTap: () => _toggleUser(user.id),
-                        );
-                      },
-                    ),
-            ),
-          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                        itemCount: filteredUsers.length,
+                        itemBuilder: (_, index) {
+                          final user = filteredUsers[index];
+                          final userTags = UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
+                          final isSelected = _selectedUIDs.contains(user.id);
+
+                          return ListTile(
+                            leading: Checkbox(
+                              value: isSelected,
+                              onChanged: (_) => _toggleUser(user.id),
+                            ),
+                            title: Text(user.fullname),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(user.isPlaceholder
+                                    ? l10n.selectUsersPlaceholderSubtitle(user.location)
+                                    : user.location),
+                                if (userTags.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: UserTagChipRow(tags: userTags, dense: true),
+                                  ),
+                              ],
+                            ),
+                            isThreeLine: userTags.isNotEmpty,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                MyUserAvatar(user),
+                                if (widget.allowTaskCheck)
+                                  IconButton(
+                                    onPressed: () => _openUserSchedule(user),
+                                    icon: const Icon(Icons.checklist),
+                                    tooltip: l10n.mySchedule,
+                                  ),
+                              ],
+                            ),
+                            onTap: () => _toggleUser(user.id),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       );
     });
