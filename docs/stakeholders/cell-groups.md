@@ -6,12 +6,16 @@
 
 ## What you can expect today
 
-The foundation is in the app and being tested:
+The Cell Groups section has two areas (like CTRIM’s About / Churches tabs):
 
-- A catalogue of cell groups members and guests can browse at a public level  
+- **Overview** — a short introduction to cell groups (scripture and fuller copy still being filled in)  
+- **Groups** — the catalogue list of cell groups members and guests can browse  
+
+Also in the app and being tested:
+
 - Group details for signed-in people (richer than the public card)  
 - Leaders and roster information for organisers who have access  
-- Roster members are people with an app profile — including **temporary profiles** leaders create when someone is not registered yet (forename, surname, and location). Name-only entries are no longer added.  
+- Roster members are people with an app profile — including **temporary profiles** leaders create when someone is not registered yet (forename, surname, and location). Leaders manage the roster from the group detail via the people picker (not a separate roster editor).  
 - Links between groups and related event posts / meetings where set up  
 - A simple trail of recent meetings for a group  
 

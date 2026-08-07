@@ -1,5 +1,6 @@
 import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
@@ -94,12 +95,13 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isWide = ResponsiveLayout.isWideScreen(screenWidth);
-    final double webHorizontalPadding = isWide
-        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2).clamp(0.0, double.infinity)
+    final double horizontalPadding = isWide
+        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2)
+            .clamp(16.0, double.infinity)
         : 0.0;
     // Keep filter chips inset from the screen edges on narrow layouts.
     final double filterHorizontalPadding =
-        webHorizontalPadding > 0 ? webHorizontalPadding : 16.0;
+        horizontalPadding > 0 ? horizontalPadding : 16.0;
 
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final filteredUsers = _filteredUsers(appContext);
@@ -182,7 +184,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                 child: filteredUsers.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding + 16),
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -203,56 +205,154 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-                        itemCount: filteredUsers.length,
-                        itemBuilder: (_, index) {
-                          final user = filteredUsers[index];
-                          final userTags = UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
-                          final isSelected = _selectedUIDs.contains(user.id);
-
-                          return ListTile(
-                            leading: Checkbox(
-                              value: isSelected,
-                              onChanged: (_) => _toggleUser(user.id),
+                    : isWide
+                        ? _buildWideUserGrid(
+                            users: filteredUsers,
+                            allTags: appContext.allTags,
+                            horizontalPadding: horizontalPadding,
+                            l10n: l10n,
+                          )
+                        : ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (_, index) => _buildUserListTile(
+                              user: filteredUsers[index],
+                              allTags: appContext.allTags,
+                              l10n: l10n,
                             ),
-                            title: Text(user.fullname),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(user.isPlaceholder
-                                    ? l10n.selectUsersPlaceholderSubtitle(user.location)
-                                    : user.location),
-                                if (userTags.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: UserTagChipRow(tags: userTags, dense: true),
-                                  ),
-                              ],
-                            ),
-                            isThreeLine: userTags.isNotEmpty,
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                MyUserAvatar(user),
-                                if (widget.allowTaskCheck)
-                                  IconButton(
-                                    onPressed: () => _openUserSchedule(user),
-                                    icon: const Icon(Icons.checklist),
-                                    tooltip: l10n.mySchedule,
-                                  ),
-                              ],
-                            ),
-                            onTap: () => _toggleUser(user.id),
-                          );
-                        },
-                      ),
+                          ),
               ),
             ],
           ),
         ),
       );
     });
+  }
+
+  Widget _buildUserListTile({
+    required User user,
+    required List<UserTag> allTags,
+    required AppLocalizations l10n,
+  }) {
+    final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final isSelected = _selectedUIDs.contains(user.id);
+
+    return ListTile(
+      leading: Checkbox(
+        value: isSelected,
+        onChanged: (_) => _toggleUser(user.id),
+      ),
+      title: Text(user.fullname),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(user.isPlaceholder
+              ? l10n.selectUsersPlaceholderSubtitle(user.location)
+              : user.location),
+          if (userTags.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: UserTagChipRow(tags: userTags, dense: true),
+            ),
+        ],
+      ),
+      isThreeLine: userTags.isNotEmpty,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MyUserAvatar(user),
+          if (widget.allowTaskCheck)
+            IconButton(
+              onPressed: () => _openUserSchedule(user),
+              icon: const Icon(Icons.checklist),
+              tooltip: l10n.mySchedule,
+            ),
+        ],
+      ),
+      onTap: () => _toggleUser(user.id),
+    );
+  }
+
+  Widget _buildWideUserGrid({
+    required List<User> users,
+    required List<UserTag> allTags,
+    required double horizontalPadding,
+    required AppLocalizations l10n,
+  }) {
+    return GridView.builder(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 420,
+        mainAxisExtent: 108,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: users.length,
+      itemBuilder: (_, index) {
+        final user = users[index];
+        final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+        final isSelected = _selectedUIDs.contains(user.id);
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+
+        return Card(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          color: isSelected ? colorScheme.secondaryContainer : null,
+          child: InkWell(
+            onTap: () => _toggleUser(user.id),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleUser(user.id),
+                  ),
+                  MyUserAvatar(user, radius: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          user.fullname,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user.isPlaceholder
+                              ? l10n.selectUsersPlaceholderSubtitle(user.location)
+                              : user.location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (userTags.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          UserTagChipRow(tags: userTags, dense: true),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (widget.allowTaskCheck)
+                    IconButton(
+                      onPressed: () => _openUserSchedule(user),
+                      icon: const Icon(Icons.checklist),
+                      tooltip: l10n.mySchedule,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   List<User> _filteredUsers(AppContext appContext) {

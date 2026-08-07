@@ -10,13 +10,15 @@ import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/user_avatar.dart';
 import '../events/view_event_page.dart';
+import '../personal/select_users_page.dart';
 import 'edit_cell_group_page.dart';
-import 'edit_cell_group_roster_page.dart';
 
 class CellGroupDetailPage extends StatefulWidget {
   const CellGroupDetailPage({super.key, required this.groupId});
@@ -93,6 +95,99 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     return roster != null && roster.containsUserId(appContext.currentUser.id);
   }
 
+  /// Opens [SelectUsersPage] and persists the roster when membership changes.
+  Future<void> _manageRoster(AppContext appContext, CellGroup group) async {
+    final roster = await _ensureRosterLoaded();
+    if (!mounted) return;
+
+    final existingLinked = roster.members
+        .where((m) => m.isLinkedUser)
+        .map((m) => m.userId)
+        .toList();
+    final isLeader =
+        group.isLeaderUser(appContext.currentUser.id) || appContext.currentUser.isAreaAdmin;
+
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: existingLinked,
+          includeCurrentUser: true,
+          title: AppLocalizations.of(context)!.cellGroupsManageRoster,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: appContext.currentUser,
+            isCellGroupLeader: isLeader,
+          ),
+          includePlaceholders: true,
+          cellGroupIdForPlaceholderCreate: group.id,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final previous = existingLinked.toSet();
+    final next = result.toSet();
+    if (previous.length == next.length && previous.containsAll(next)) return;
+
+    final freeText = roster.members.where((m) => m.isFreeText).toList();
+    final now = DateTime.now();
+    final existingById = {
+      for (final m in roster.members.where((m) => m.isLinkedUser)) m.userId: m,
+    };
+    final linked = result
+        .map((uid) =>
+            existingById[uid] ?? CellGroupRosterMember(userId: uid, joinedAt: now))
+        .toList();
+    final updated = CellGroupRoster(members: [...linked, ...freeText]);
+
+    await _persistRoster(group: group, roster: updated);
+  }
+
+  Future<void> _removeFreeTextMember({
+    required CellGroup group,
+    required CellGroupRosterMember member,
+  }) async {
+    final roster = _roster;
+    if (roster == null) return;
+    final next = List<CellGroupRosterMember>.from(roster.members)..remove(member);
+    await _persistRoster(group: group, roster: CellGroupRoster(members: next));
+  }
+
+  Future<CellGroupRoster> _ensureRosterLoaded() async {
+    final existing = _roster;
+    if (existing != null) return existing;
+    try {
+      final roster =
+          await CellGroupSupplementalDBManager(widget.groupId).fetchRoster();
+      if (mounted) setState(() => _roster = roster);
+      return roster;
+    } catch (_) {
+      final empty = CellGroupRoster();
+      if (mounted) setState(() => _roster = empty);
+      return empty;
+    }
+  }
+
+  Future<void> _persistRoster({
+    required CellGroup group,
+    required CellGroupRoster roster,
+  }) async {
+    final ok = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Saving roster…',
+      action: () async {
+        await CellGroupSupplementalDBManager(group.id).setRoster(roster);
+        final count = roster.activeCount;
+        await CellGroupDBManager().updateMemberCount(id: group.id, memberCount: count);
+        group.setMemberCount(count);
+        if (!mounted) return;
+        Provider.of<AppContext>(context, listen: false).addOrUpdateCellGroup(group);
+      },
+    );
+    if (!mounted || !ok) return;
+    setState(() => _roster = roster);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -150,15 +245,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             IconButton(
               icon: const Icon(Icons.group_outlined),
               tooltip: l10n.cellGroupsManageRoster,
-              onPressed: () async {
-                final updated = await Navigator.push<bool>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditCellGroupRosterPage(group: group),
-                  ),
-                );
-                if (updated == true && mounted) _load();
-              },
+              onPressed: () => _manageRoster(appContext, group),
             ),
         ],
       ),
@@ -209,18 +296,15 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                ..._buildRosterPreview(appContext, _roster!),
+                ..._buildRosterPreview(
+                  appContext: appContext,
+                  group: group,
+                  roster: _roster!,
+                  canManage: canRoster,
+                ),
                 if (canRoster)
                   TextButton(
-                    onPressed: () async {
-                      final updated = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditCellGroupRosterPage(group: group),
-                        ),
-                      );
-                      if (updated == true && mounted) _load();
-                    },
+                    onPressed: () => _manageRoster(appContext, group),
                     child: Text(l10n.cellGroupsManageRoster),
                   ),
               ],
@@ -270,7 +354,12 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     }).toList();
   }
 
-  List<Widget> _buildRosterPreview(AppContext appContext, CellGroupRoster roster) {
+  List<Widget> _buildRosterPreview({
+    required AppContext appContext,
+    required CellGroup group,
+    required CellGroupRoster roster,
+    required bool canManage,
+  }) {
     final members = roster.activeMembers.take(8).toList();
     if (members.isEmpty) {
       return [
@@ -296,6 +385,14 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               ),
         title: Text(name),
         subtitle: m.isFreeText ? const Text('Name only (legacy)') : null,
+        // Linked members are edited via SelectUsersPage; free-text only here.
+        trailing: canManage && m.isFreeText
+            ? IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                tooltip: 'Remove',
+                onPressed: () => _removeFreeTextMember(group: group, member: m),
+              )
+            : null,
       );
     }).toList();
   }

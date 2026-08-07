@@ -56,7 +56,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isWide = ResponsiveLayout.isWideScreen(screenWidth);
-    final double horizontalPadding = isWide ? 16 : 0;
+    final double horizontalPadding = isWide
+        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2)
+            .clamp(16.0, double.infinity)
+        : 0.0;
+    final double filterHorizontalPadding =
+        horizontalPadding > 0 ? horizontalPadding : 16.0;
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
@@ -126,7 +131,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             children: [
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
+                padding: EdgeInsets.fromLTRB(
+                    filterHorizontalPadding, 8, filterHorizontalPadding, 8),
                 child: Row(
                   children: [
                     ...VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
@@ -174,14 +180,17 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 ),
               ),
               if (_selectedTagIDs.isNotEmpty)
-                _buildSelectedTagsSummary(activeTags, horizontalPadding, l10n),
+                _buildSelectedTagsSummary(activeTags, filterHorizontalPadding, l10n),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
-                        child: Text(
-                          _emptyMessage(l10n),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
+                          child: Text(
+                            _emptyMessage(l10n),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       )
                     : isWide

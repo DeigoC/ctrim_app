@@ -41,7 +41,7 @@ class _NavDestination {
 }
 
 class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const List<_NavDestination> _destinations = [
     _NavDestination(icon: Icons.library_books, label: 'Bulletin'),
     _NavDestination(icon: Icons.church, label: 'CTRIM'),
@@ -50,6 +50,7 @@ class _HomePageState extends State<HomePage>
   ];
 
   late final TabController _informationTabController;
+  late final TabController _cellGroupsTabController;
   late int _selectedIndex;
 
   late final AppContext _appContext;
@@ -66,6 +67,7 @@ class _HomePageState extends State<HomePage>
     _selectedIndex = _appContext.sharedPref.preferredStartupTab;
 
     _informationTabController = TabController(length: 4, vsync: this);
+    _cellGroupsTabController = TabController(length: 2, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
     _appContext.allUsers.sort(((a, b) {
       final surname = a.surname.compareTo(b.surname);
@@ -141,6 +143,7 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     _informationTabController.dispose();
+    _cellGroupsTabController.dispose();
     _postsScrollController.dispose();
     _informationScrollController.dispose();
     _cellGroupsScrollController.dispose();
@@ -247,7 +250,10 @@ class _HomePageState extends State<HomePage>
         scrollController: _informationScrollController,
       );
     } else if (_selectedIndex == 2) {
-      return CellGroupsHome(scrollController: _cellGroupsScrollController);
+      return CellGroupsHome(
+        tabController: _cellGroupsTabController,
+        scrollController: _cellGroupsScrollController,
+      );
     }
     return PersonalHome(appContext: appContext);
   }

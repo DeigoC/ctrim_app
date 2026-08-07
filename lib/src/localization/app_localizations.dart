@@ -832,6 +832,72 @@ abstract class AppLocalizations {
   /// **'Cell Groups'**
   String get cellGroupsSectionTitle;
 
+  /// Cell Groups section tab: teaching / overview content
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get cellGroupsTabOverview;
+
+  /// Cell Groups section tab: catalogue list of groups
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get cellGroupsTabGroups;
+
+  /// Headline on the Cell Groups overview tab
+  ///
+  /// In en, this message translates to:
+  /// **'Life in small groups'**
+  String get cellGroupsOverviewHeadline;
+
+  /// Short intro blurb on the Cell Groups overview tab
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups are small gatherings that meet regularly outside the main service — focused on Bible study, care, prayer, and discipleship, usually in homes and led by trained members.'**
+  String get cellGroupsOverviewIntro;
+
+  /// Title above the verse card on CG overview
+  ///
+  /// In en, this message translates to:
+  /// **'Scripture'**
+  String get cellGroupsOverviewVerseTitle;
+
+  /// Placeholder Bible reference for CG overview
+  ///
+  /// In en, this message translates to:
+  /// **'[Verse reference placeholder]'**
+  String get cellGroupsOverviewVerseReference;
+
+  /// Placeholder verse body for CG overview
+  ///
+  /// In en, this message translates to:
+  /// **'\"[Verse text placeholder — replace with the passage that underpins cell group life.]\"'**
+  String get cellGroupsOverviewVerseBody;
+
+  /// Placeholder label where overview hero image will go
+  ///
+  /// In en, this message translates to:
+  /// **'Image coming soon'**
+  String get cellGroupsOverviewImagePlaceholder;
+
+  /// Title for the longer overview section on CG overview
+  ///
+  /// In en, this message translates to:
+  /// **'What are cell groups?'**
+  String get cellGroupsOverviewDetailTitle;
+
+  /// Subtitle for the longer overview section
+  ///
+  /// In en, this message translates to:
+  /// **'More detail coming soon'**
+  String get cellGroupsOverviewDetailSubtitle;
+
+  /// Placeholder body for the longer CG overview section
+  ///
+  /// In en, this message translates to:
+  /// **'A fuller explanation of how cell groups work in CTRIM will go here — meeting rhythm, what to expect when you join, and how groups connect to Sunday life. For now, browse the Groups tab to see what is available.'**
+  String get cellGroupsOverviewDetailBody;
+
   /// Empty state on the Cell Groups list
   ///
   /// In en, this message translates to:

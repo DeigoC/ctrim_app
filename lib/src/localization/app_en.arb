@@ -561,6 +561,50 @@
   "@cellGroupsSectionTitle": {
     "description": "Main nav / home title for the Cell Groups section"
   },
+  "cellGroupsTabOverview": "Overview",
+  "@cellGroupsTabOverview": {
+    "description": "Cell Groups section tab: teaching / overview content"
+  },
+  "cellGroupsTabGroups": "Groups",
+  "@cellGroupsTabGroups": {
+    "description": "Cell Groups section tab: catalogue list of groups"
+  },
+  "cellGroupsOverviewHeadline": "Life in small groups",
+  "@cellGroupsOverviewHeadline": {
+    "description": "Headline on the Cell Groups overview tab"
+  },
+  "cellGroupsOverviewIntro": "Cell groups are small gatherings that meet regularly outside the main service — focused on Bible study, care, prayer, and discipleship, usually in homes and led by trained members.",
+  "@cellGroupsOverviewIntro": {
+    "description": "Short intro blurb on the Cell Groups overview tab"
+  },
+  "cellGroupsOverviewVerseTitle": "Scripture",
+  "@cellGroupsOverviewVerseTitle": {
+    "description": "Title above the verse card on CG overview"
+  },
+  "cellGroupsOverviewVerseReference": "[Verse reference placeholder]",
+  "@cellGroupsOverviewVerseReference": {
+    "description": "Placeholder Bible reference for CG overview"
+  },
+  "cellGroupsOverviewVerseBody": "\"[Verse text placeholder — replace with the passage that underpins cell group life.]\"",
+  "@cellGroupsOverviewVerseBody": {
+    "description": "Placeholder verse body for CG overview"
+  },
+  "cellGroupsOverviewImagePlaceholder": "Image coming soon",
+  "@cellGroupsOverviewImagePlaceholder": {
+    "description": "Placeholder label where overview hero image will go"
+  },
+  "cellGroupsOverviewDetailTitle": "What are cell groups?",
+  "@cellGroupsOverviewDetailTitle": {
+    "description": "Title for the longer overview section on CG overview"
+  },
+  "cellGroupsOverviewDetailSubtitle": "More detail coming soon",
+  "@cellGroupsOverviewDetailSubtitle": {
+    "description": "Subtitle for the longer overview section"
+  },
+  "cellGroupsOverviewDetailBody": "A fuller explanation of how cell groups work in CTRIM will go here — meeting rhythm, what to expect when you join, and how groups connect to Sunday life. For now, browse the Groups tab to see what is available.",
+  "@cellGroupsOverviewDetailBody": {
+    "description": "Placeholder body for the longer CG overview section"
+  },
   "cellGroupsEmpty": "No cell groups yet.",
   "@cellGroupsEmpty": {
     "description": "Empty state on the Cell Groups list"

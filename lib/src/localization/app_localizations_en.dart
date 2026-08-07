@@ -419,6 +419,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsSectionTitle => 'Cell Groups';
 
   @override
+  String get cellGroupsTabOverview => 'Overview';
+
+  @override
+  String get cellGroupsTabGroups => 'Groups';
+
+  @override
+  String get cellGroupsOverviewHeadline => 'Life in small groups';
+
+  @override
+  String get cellGroupsOverviewIntro =>
+      'Cell groups are small gatherings that meet regularly outside the main service — focused on Bible study, care, prayer, and discipleship, usually in homes and led by trained members.';
+
+  @override
+  String get cellGroupsOverviewVerseTitle => 'Scripture';
+
+  @override
+  String get cellGroupsOverviewVerseReference =>
+      '[Verse reference placeholder]';
+
+  @override
+  String get cellGroupsOverviewVerseBody =>
+      '\"[Verse text placeholder — replace with the passage that underpins cell group life.]\"';
+
+  @override
+  String get cellGroupsOverviewImagePlaceholder => 'Image coming soon';
+
+  @override
+  String get cellGroupsOverviewDetailTitle => 'What are cell groups?';
+
+  @override
+  String get cellGroupsOverviewDetailSubtitle => 'More detail coming soon';
+
+  @override
+  String get cellGroupsOverviewDetailBody =>
+      'A fuller explanation of how cell groups work in CTRIM will go here — meeting rhythm, what to expect when you join, and how groups connect to Sunday life. For now, browse the Groups tab to see what is available.';
+
+  @override
   String get cellGroupsEmpty => 'No cell groups yet.';
 
   @override
