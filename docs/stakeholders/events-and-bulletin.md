@@ -33,7 +33,7 @@ The **author** of a post, plus anyone listed as a **contributor** on that post, 
 | Idea | In plain language |
 |------|-------------------|
 | **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
-| **Attendance** | Who is (or was) attending — registered people and, where needed, names without accounts. Interested people can be promoted to attending. **Post contributors** (and the author) manage the list; it stays editable after the event. |
+| **Attendance** | Who is (or was) attending — registered people or **placeholders** created from the people picker when someone isn’t in the directory yet. Interested people can be promoted to attending. **Post contributors** (and the author) manage the list; it stays editable after the event. |
 
 ## Related pages
 

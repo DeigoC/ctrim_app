@@ -41,7 +41,8 @@ class InterestedEntry {
   DateTime get ts => _ts;
 }
 
-/// Staff-managed attendee: registered user or free-text external guest.
+/// Staff-managed attendee: registered/placeholder user, or legacy free-text guest.
+/// New guests should be added as placeholder users via [SelectUsersPage], not as externals.
 class AttendeeEntry {
   static const String typeUser = 'user';
   static const String typeExternal = 'external';

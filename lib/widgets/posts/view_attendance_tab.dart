@@ -14,7 +14,6 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notification_topics.dart';
 import '../../utility/placeholder_user_permissions.dart';
-import '../action_sheet.dart';
 import '../load_progress_body.dart';
 import '../user_avatar.dart';
 
@@ -142,7 +141,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             trailing: canManage
                 ? IconButton(
                     tooltip: 'Manage attendees',
-                    onPressed: _busy ? null : _showManageAttendeesSheet,
+                    onPressed: _busy ? null : _manageAttendees,
                     icon: const Icon(Icons.person_add_alt_1),
                   )
                 : null,
@@ -156,7 +155,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         ] else if (canManage) ...[
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            onPressed: _busy ? null : _showManageAttendeesSheet,
+            onPressed: _busy ? null : _manageAttendees,
             icon: const Icon(Icons.person_add_alt_1, size: 18),
             label: const Text('Add attendees'),
           ),
@@ -321,9 +320,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
               child: const Icon(Icons.person_outline, size: 20),
             ),
       title: Text(entry.displayName),
-      subtitle: Text(entry.isExternal
-          ? (entry.note?.isNotEmpty == true ? entry.note! : 'Guest (not registered)')
-          : 'Registered'),
+      subtitle: Text(_attendeeSubtitle(appContext, entry)),
       trailing: canManage
           ? IconButton(
               tooltip: 'Remove attendee',
@@ -332,6 +329,21 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             )
           : null,
     );
+  }
+
+  String _attendeeSubtitle(AppContext appContext, AttendeeEntry entry) {
+    if (entry.isExternal) {
+      return entry.note?.isNotEmpty == true ? entry.note! : 'Guest (legacy name-only)';
+    }
+    if (entry.userId != null) {
+      try {
+        final user = appContext.getUserFromID(entry.userId!);
+        if (user.isPlaceholder) return 'Placeholder';
+      } catch (_) {
+        // fall through
+      }
+    }
+    return 'Registered';
   }
 
   Widget _avatarForUserId(
@@ -494,51 +506,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     if (ok) widget.onChanged();
   }
 
-  void _showManageAttendeesSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
-      ),
-      builder: (sheetContext) {
-        return ActionSheetShell(
-          icon: Icons.groups_outlined,
-          title: 'Manage attendees',
-          subtitle: 'Add registered users or guests by name',
-          children: [
-            ActionSheetOptionGrid(
-              children: [
-                ActionSheetOption(
-                  icon: Icons.person_search,
-                  color: Colors.blue,
-                  title: 'Add registered users',
-                  subtitle: 'Pick from people already in the app',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _addRegisteredUsers();
-                  },
-                ),
-                ActionSheetOption(
-                  icon: Icons.person_outline,
-                  color: Colors.teal,
-                  title: 'Add guest by name',
-                  subtitle: 'Someone who is not registered yet',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _addExternalGuest();
-                  },
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _addRegisteredUsers() async {
+  Future<void> _manageAttendees() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final selected = attendance.attendees.where((e) => e.isUser && e.userId != null).map((e) => e.userId!).toList();
@@ -550,6 +518,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         builder: (_) => SelectUsersPage(
           selectedUIDs: selected,
           title: 'Select attendees',
+          includePlaceholders: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
             postAuthorUid: authorUid,
@@ -563,6 +532,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final byId = {
       for (final e in attendance.attendees.where((e) => e.isUser && e.userId != null)) e.userId!: e,
     };
+    // Preserve legacy free-text guests until removed individually.
     final externals = attendance.attendees.where((e) => e.isExternal).toList();
     final next = <AttendeeEntry>[...externals];
 
@@ -584,56 +554,6 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       ));
     }
 
-    await _persistAttendees(next);
-  }
-
-  Future<void> _addExternalGuest() async {
-    final nameController = TextEditingController();
-    final noteController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Add guest'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Name'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: noteController,
-                decoration: const InputDecoration(labelText: 'Note (optional)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Add')),
-          ],
-        );
-      },
-    );
-
-    final name = nameController.text.trim();
-    nameController.dispose();
-    final note = noteController.text.trim();
-    noteController.dispose();
-
-    if (confirmed != true || name.isEmpty || !mounted) return;
-
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final attendance = widget.eventContext.attendance ?? EventAttendance();
-    final next = List<AttendeeEntry>.from(attendance.attendees)
-      ..add(AttendeeEntry.external(
-        name: name,
-        note: note.isEmpty ? null : note,
-        addedBy: appContext.currentUser.id,
-      ));
     await _persistAttendees(next);
   }
 }

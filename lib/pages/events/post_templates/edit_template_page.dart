@@ -118,7 +118,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         AddEventHeadMeta(
           tecTitle: _tecTitle,
           tecSubtitle: _tecSubtitle,
-          onRequiredFieldChange: (_) => null,
+          onRequiredFieldChange: (_) => setState(() {}),
           eventContext: widget.eventContext,
         ),
         const Divider(height: 32),
@@ -524,7 +524,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final hasKeyGraphic = widget.eventContext.head.getKeyGraphic() != null;
+    final hasKeyGraphic = _previewKeyGraphicSrc() != null;
 
     return [
       SliverAppBar(
@@ -590,8 +590,32 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     ];
   }
 
+  /// Template AppBar preview: fixed head media → cover pool → lead speaker.
+  String? _previewKeyGraphicSrc() {
+    final fromHead = _firstImageSrc(widget.eventContext.head.media);
+    if (fromHead != null) return fromHead;
+
+    final coverPool = _bodyMediaPool.isNotEmpty ? _bodyMediaPool : _headMediaPool;
+    final fromPool = _firstImageSrc(coverPool);
+    if (fromPool != null) return fromPool;
+
+    final speaker = widget.eventContext.head.leadSpeakerImgSrc;
+    if (speaker != null && speaker.isNotEmpty) return speaker;
+    return null;
+  }
+
+  String? _firstImageSrc(List<Map<String, dynamic>> items) {
+    for (final entry in items) {
+      if (entry['type'] == 'img') {
+        final src = entry['src'] as String?;
+        if (src != null && src.isNotEmpty) return src;
+      }
+    }
+    return null;
+  }
+
   Widget? _buildAppBarBackground() {
-    final keyGraphic = widget.eventContext.head.getKeyGraphic();
+    final keyGraphic = _previewKeyGraphicSrc();
     if (keyGraphic == null) return null;
     return Image.network(
       NetworkImageHelper.getImageUrl(keyGraphic),
