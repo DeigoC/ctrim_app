@@ -65,7 +65,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       final attendance =
           await EventSupplementalDBManager(widget.eventContext.id).fetchAttendance();
       if (!mounted) return;
-      widget.eventContext.setFetchedAttendance(attendance);
+      widget.eventContext.setFetchedAttendance(attendance, forceReplace: true);
       setState(() => _loading = false);
       widget.onChanged();
     } catch (e) {
@@ -618,7 +618,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         displayName: user?.fullname ?? entry.displayName,
         addedBy: appContext.currentUser.id,
       ));
-    await _persistAttendees(next);
+    _applyAttendeesLocally(next);
   }
 
   Future<void> _toggleExpectedChecked(String userId, bool checked) async {
@@ -634,52 +634,44 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           displayName: name,
           addedBy: appContext.currentUser.id,
         ));
-      await _persistAttendees(next);
+      _applyAttendeesLocally(next);
       return;
     }
 
     final next = attendance.attendees
         .where((e) => !(e.isUser && e.userId == userId))
         .toList();
-    await _persistAttendees(next);
+    _applyAttendeesLocally(next);
   }
 
   Future<void> _removeAttendee(String id) async {
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final next = attendance.attendees.where((e) => e.id != id).toList();
-    await _persistAttendees(next);
+    _applyAttendeesLocally(next);
   }
 
-  Future<void> _persistAttendees(List<AttendeeEntry> attendees) async {
-    setState(() => _busy = true);
-    final ok = await DialogManager.runWithProgressDialog(
-      context: context,
-      title: 'Updating attendees…',
-      action: () async {
-        final updated = await EventSupplementalDBManager(widget.eventContext.id)
-            .saveAttendees(attendees);
-        widget.eventContext.setFetchedAttendance(updated);
-      },
-    );
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (ok) widget.onChanged();
+  void _applyAttendeesLocally(List<AttendeeEntry> attendees) {
+    final current = widget.eventContext.attendance ?? EventAttendance();
+    final updated = EventAttendance.fromMap({
+      ...current.toMutableMap(),
+      'attendees': attendees.map((e) => e.toJson()).toList(),
+    });
+    setState(() {
+      widget.eventContext.applyStaffAttendanceEdit(updated);
+    });
+    widget.onChanged();
   }
 
-  Future<void> _persistExpected(List<String> expectedUserIds) async {
-    setState(() => _busy = true);
-    final ok = await DialogManager.runWithProgressDialog(
-      context: context,
-      title: 'Updating expected…',
-      action: () async {
-        final updated = await EventSupplementalDBManager(widget.eventContext.id)
-            .saveExpectedUserIds(expectedUserIds);
-        widget.eventContext.setFetchedAttendance(updated);
-      },
-    );
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (ok) widget.onChanged();
+  void _applyExpectedLocally(List<String> expectedUserIds) {
+    final current = widget.eventContext.attendance ?? EventAttendance();
+    final updated = EventAttendance.fromMap({
+      ...current.toMutableMap(),
+      'expectedUserIds': expectedUserIds,
+    });
+    setState(() {
+      widget.eventContext.applyStaffAttendanceEdit(updated);
+    });
+    widget.onChanged();
   }
 
   Future<void> _manageExpected() async {
@@ -708,7 +700,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final next = result.toSet();
     if (previous.length == next.length && previous.containsAll(next)) return;
 
-    await _persistExpected(result);
+    _applyExpectedLocally(result);
   }
 
   Future<void> _seedExpectedFromCellGroups() async {
@@ -716,6 +708,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     if (cgIds.isEmpty) return;
 
     setState(() => _busy = true);
+    List<String>? seededIds;
     final ok = await DialogManager.runWithProgressDialog(
       context: context,
       title: 'Filling from cell group…',
@@ -732,14 +725,14 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             }
           }
         }
-        final updated = await EventSupplementalDBManager(widget.eventContext.id)
-            .saveExpectedUserIds(ids.toList());
-        widget.eventContext.setFetchedAttendance(updated);
+        seededIds = ids.toList();
       },
     );
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) widget.onChanged();
+    if (ok && seededIds != null) {
+      _applyExpectedLocally(seededIds!);
+    }
   }
 
   Future<void> _manageAttendees() async {
@@ -795,6 +788,6 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       ));
     }
 
-    await _persistAttendees(next);
+    _applyAttendeesLocally(next);
   }
 }

@@ -430,9 +430,9 @@ class _PersonalHomeState extends State<PersonalHome> {
     if (appContext.isCurrentUserGuest) {
       actions.add(
         _PersonalAction(
-          icon: Icons.person_add_rounded,
-          title: 'Create Account',
-          subtitle: 'Sign up or sign in',
+          icon: Icons.login_rounded,
+          title: 'Sign In or Create Account',
+          subtitle: 'Access your account or register',
           onTap: _onRegisterAccountClick,
           iconColor: colorScheme.primary,
         ),

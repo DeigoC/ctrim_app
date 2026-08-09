@@ -575,7 +575,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
   }
 
   Future<void> _completeAuthentication(bool isNewUser) async {
-    await DialogManager.runWithSteppedProgressDialog(
+    final ready = await DialogManager.runWithSteppedProgressDialog(
       title: 'Welcome to CTRIM!',
       initialMessage: 'Saving credentials…',
       context: context,
@@ -611,9 +611,9 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       },
     );
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (!mounted || !ready) return;
+    // Return to Personal (this card lives on GuestRegistrationPage).
+    Navigator.of(context).pop();
   }
 
   Future<void> _migrateFCMToken() async {

@@ -309,4 +309,34 @@ class EventSupplementalDBManager {
       return updated;
     });
   }
+
+  /// Replaces staff-managed attendees + expected checklist in one write.
+  /// Preserves [interested] from the server (self-serve may have changed meanwhile).
+  Future<EventAttendance> saveStaffManagedAttendance({
+    required final List<AttendeeEntry> attendees,
+    required final List<String> expectedUserIds,
+  }) async {
+    final firestore = FirebaseFirestore.instance;
+    final headRef = firestore.collection('events').doc(_postId);
+    final attRef = _colRef.doc('attendance');
+
+    return firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      final attendance = attSnap.exists && attSnap.data() != null
+          ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
+          : EventAttendance();
+
+      final data = attendance.toMutableMap();
+      data['attendees'] = attendees.map((e) => e.toJson()).toList();
+      data['expectedUserIds'] = expectedUserIds;
+      final updated = EventAttendance.fromMap(data);
+
+      tx.set(attRef, updated.toJson());
+      tx.update(headRef, {
+        'InterestedCount': updated.interestedCount,
+        'AttendeeCount': updated.attendeeCount,
+      });
+      return updated;
+    });
+  }
 }

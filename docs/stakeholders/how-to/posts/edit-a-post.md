@@ -49,10 +49,12 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 
 ### Interest & attendance
 
-1. Open the **People** / attendance area on the post.  
-2. Manage **attendance** (author and **contributors** can edit).  
+1. Open the **People** tab on the post.  
+2. Manage **expected** people and **attendance** (author and **contributors** can edit).  
 3. See who marked **interest** (“follow updates”) if needed.  
-4. Save.  
+4. Tap **Save** on the post (same as other edits) and add a short update log.  
+
+Interest (“Mark interest”) saves immediately for the signed-in person; staff attendance changes wait for **Save**. 
 
 ### Notify / broadcast
 

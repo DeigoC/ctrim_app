@@ -132,6 +132,25 @@ class EventProgram {
     }
   }
 
+  /// Moves every role onto [newDay]'s calendar date relative to [oldDay],
+  /// preserving each role's clock time (and any overnight day offset).
+  void rebaseRolesToCalendarDate({
+    required DateTime oldDay,
+    required DateTime newDay,
+  }) {
+    final oldDateOnly = DateTime(oldDay.year, oldDay.month, oldDay.day);
+    final newDateOnly = DateTime(newDay.year, newDay.month, newDay.day);
+    final delta = newDateOnly.difference(oldDateOnly);
+    if (delta == Duration.zero) return;
+
+    for (final role in _roles) {
+      final start = role['start'] as DateTime?;
+      final end = role['end'] as DateTime?;
+      if (start != null) role['start'] = start.add(delta);
+      if (end != null) role['end'] = end.add(delta);
+    }
+  }
+
   /// Updates one role's timing. When [shiftFollowing] is true, roles that started
   /// at or after the previous end are shifted by (newEnd - oldEnd), preserving gaps.
   void updateRoleTiming({

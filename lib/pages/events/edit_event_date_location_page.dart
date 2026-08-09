@@ -236,7 +236,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                           Icons.edit,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        tooltip: _timeOnly ? 'Edit start time' : 'Edit start date & time',
+                        tooltip: _timeOnly ? 'Edit start time' : 'Edit start date',
                       ),
                       IconButton(
                         onPressed: _onDeleteStartTimeClick,
@@ -574,15 +574,32 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   void _onSelectStartDateClick() {
+    final hadExistingStart = _start != null;
     showDatePicker(
             context: context,
             initialDate: _start == null ? DateTime.now().add(const Duration(days: 1)) : _start!,
             firstDate: DateTime.now().subtract(const Duration(days: 30)),
             lastDate: DateTime.now().add(const Duration(days: 122)))
-        .then((selectedStartDate) {
-      if (selectedStartDate != null) {
-        _onSelectStartTime(selectedStartDate);
+        .then((selectedStartDate) async {
+      if (selectedStartDate == null || !mounted) return;
+
+      // Changing an existing date: keep time-of-day and end/all-day settings.
+      if (hadExistingStart) {
+        final previous = _start!;
+        await _applyStartDateTime(
+          DateTime(
+            selectedStartDate.year,
+            selectedStartDate.month,
+            selectedStartDate.day,
+            previous.hour,
+            previous.minute,
+          ),
+          promptForDuration: false,
+        );
+        return;
       }
+
+      await _onSelectStartTime(selectedStartDate);
     });
   }
 
@@ -595,6 +612,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     if (selectedTOD == null || !mounted) return;
     await _applyStartDateTime(
       DateTime(anchor.year, anchor.month, anchor.day, selectedTOD.hour, selectedTOD.minute),
+      promptForDuration: _start == null,
     );
   }
 
@@ -604,23 +622,28 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         initialTime: TimeOfDay.fromDateTime(selectedStartDate
             .add(Duration(hours: _start == null ? 9 : _start!.hour, minutes: _start == null ? 0 : _start!.minute))));
     if (selectedTOD == null || !mounted) return;
-    await _applyStartDateTime(DateTime(
-      selectedStartDate.year,
-      selectedStartDate.month,
-      selectedStartDate.day,
-      selectedTOD.hour,
-      selectedTOD.minute,
-    ));
+    await _applyStartDateTime(
+      DateTime(
+        selectedStartDate.year,
+        selectedStartDate.month,
+        selectedStartDate.day,
+        selectedTOD.hour,
+        selectedTOD.minute,
+      ),
+    );
   }
 
-  Future<void> _applyStartDateTime(final DateTime start) async {
+  Future<void> _applyStartDateTime(
+    final DateTime start, {
+    bool promptForDuration = true,
+  }) async {
     setState(() {
       _start = start;
       if (_end != null) {
         _end = DateTime(start.year, start.month, start.day, _end!.hour, _end!.minute);
       }
     });
-    if (!mounted) return;
+    if (!promptForDuration || !mounted) return;
     await showDialog(
         context: context,
         barrierDismissible: false,
@@ -775,6 +798,12 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         widget.eventContext.program.setFinishTime(null);
         widget.eventContext.program.setAllDay(false);
       } else {
+        if (_originalStart != null) {
+          widget.eventContext.program.rebaseRolesToCalendarDate(
+            oldDay: _originalStart!,
+            newDay: _start!,
+          );
+        }
         widget.eventContext.program.setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
         widget.eventContext.program.setAllDay(_isAllDay);
         widget.eventContext.head.setEventDate(_start);

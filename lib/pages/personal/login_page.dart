@@ -78,7 +78,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     return PopScope(
       canPop: _loggedIn,
-      onPopInvokedWithResult: (didPop, result) => _loggedIn ? null : _onWillPop(),
+      onPopInvokedWithResult: (didPop, result) {
+        // Imperative Navigator.pop ignores canPop; only block system back / gestures.
+        if (didPop || _loggedIn) return;
+        _onWillPop();
+      },
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
@@ -393,15 +397,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       return;
     }
 
-    // PopScope reads canPop from the last build. Update _loggedIn via setState,
-    // then pop on the next frame so canPop is true and the route can close.
+    // Mark logged-in before pop so onPopInvoked does not show the "sign in
+    // required" alert. Navigator.pop is imperative and closes even when canPop
+    // was false on the previous build.
     setState(() {
       _isLoading = false;
       _loggedIn = true;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
+    Provider.of<AppContext>(context, listen: false).rebuildPlease();
+    Navigator.of(context).pop();
   }
 
   Future<void> _logUserToApp(

@@ -24,6 +24,7 @@ class EventContext {
   late final String _currentUID;
   final EventBody _body = EventBody();
   EventAttendance? _attendance;
+  bool _attendanceDirty = false;
 
   bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
 
@@ -123,10 +124,39 @@ class EventContext {
   // * Attendance Related (private supplemental; null until fetched / signed-in load)
   EventAttendance? get attendance => _attendance;
   bool get hasLoadedAttendance => _attendance != null;
-  void setFetchedAttendance(final EventAttendance attendance) {
+  bool get isAttendanceDirty => _attendanceDirty;
+
+  /// Applies a server attendance snapshot.
+  ///
+  /// When [forceReplace] is false and staff lists are dirty (unsaved local edits),
+  /// only [interested] is taken from the server so self-serve interest toggles do
+  /// not wipe pending attendee/expected changes.
+  void setFetchedAttendance(final EventAttendance attendance, {bool forceReplace = false}) {
+    if (!forceReplace && _attendanceDirty && _attendance != null) {
+      _attendance = EventAttendance.fromMap({
+        'interested': {
+          for (final e in attendance.interested.entries) e.key: e.value.toJson(),
+        },
+        'attendees': _attendance!.attendees.map((e) => e.toJson()).toList(),
+        'expectedUserIds': List<String>.from(_attendance!.expectedUserIds),
+      });
+    } else {
+      _attendance = attendance;
+      if (forceReplace) {
+        _attendanceDirty = false;
+      }
+    }
+    _head.setInterestedCount(_attendance!.interestedCount);
+    _head.setAttendeeCount(_attendance!.attendeeCount);
+  }
+
+  /// Local staff edit to attendees / expected checklist; enables post Save.
+  void applyStaffAttendanceEdit(final EventAttendance attendance) {
     _attendance = attendance;
     _head.setInterestedCount(attendance.interestedCount);
     _head.setAttendeeCount(attendance.attendeeCount);
+    _attendanceDirty = true;
+    _canSaveTheEditing = true;
   }
 
   // * General logic
@@ -223,6 +253,17 @@ class EventContext {
     await dbManager.updateMetadata(_metadata);
     await dbManager.updateProgram(_program);
     await dbManager.updateMedia(_media);
+
+    if (_attendanceDirty && _attendance != null) {
+      final saved = await dbManager.saveStaffManagedAttendance(
+        attendees: List<AttendeeEntry>.from(_attendance!.attendees),
+        expectedUserIds: List<String>.from(_attendance!.expectedUserIds),
+      );
+      _attendance = saved;
+      _head.setInterestedCount(saved.interestedCount);
+      _head.setAttendeeCount(saved.attendeeCount);
+      _attendanceDirty = false;
+    }
   }
 
   /// User IDs removed from program roles during the current edit (for CF role sync).
@@ -257,6 +298,7 @@ class EventContext {
     }
     _notifyBroadcast = true;
     _notifyScheduledMembers = true;
+    _attendanceDirty = false;
     _canSaveTheEditing = false;
   }
 

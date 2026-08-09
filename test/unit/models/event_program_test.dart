@@ -275,6 +275,30 @@ void main() {
         expect(program.moveRoleInOrder(1, -1), false);
         expect(program.moveRoleInOrder(3, 1), false);
       });
+
+      test('rebaseRolesToCalendarDate keeps clock times on the new day', () {
+        final program = buildSequentialProgram();
+        program.rebaseRolesToCalendarDate(
+          oldDay: DateTime(2024, 6, 15, 9, 0),
+          newDay: DateTime(2024, 6, 22, 9, 0),
+        );
+
+        expect(program.roles[0]['start'], DateTime(2024, 6, 22, 10, 0));
+        expect(program.roles[0]['end'], DateTime(2024, 6, 22, 10, 15));
+        expect(program.roles[1]['start'], DateTime(2024, 6, 22, 10, 15));
+        expect(program.roles[2]['end'], DateTime(2024, 6, 22, 11, 30));
+      });
+
+      test('rebaseRolesToCalendarDate is a no-op for the same calendar day', () {
+        final program = buildSequentialProgram();
+        program.rebaseRolesToCalendarDate(
+          oldDay: DateTime(2024, 6, 15, 9, 0),
+          newDay: DateTime(2024, 6, 15, 18, 30),
+        );
+
+        expect(program.roles[0]['start'], DateTime(2024, 6, 15, 10, 0));
+        expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 30));
+      });
     });
 
     group('toString', () {

@@ -58,6 +58,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late final String _currentUID;
   late DateTime? _originalEventDate;
   late String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
+  late int _originalAttendeeCount;
 
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
@@ -106,6 +107,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
     _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
     _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
+    _originalAttendeeCount = widget.eventHead.attendeeCount;
   }
 
   @override
@@ -127,6 +129,7 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
         imgSrc: _originalLeadSpeakerImgSrc,
         name: _originalLeadSpeakerName,
       );
+      widget.eventHead.setAttendeeCount(_originalAttendeeCount);
       if (_haveFetchedPost) {
         if (_originalLeadSpeakerUID == null || _originalLeadSpeakerUID!.isEmpty) {
           _eventContext.metadata.clearLeadSpeakerUID();
