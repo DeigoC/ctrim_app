@@ -84,7 +84,10 @@ class QuillViewerWidget extends StatelessWidget {
 }
 
 /// A wrapper widget for QuillEditor with editing capabilities.
-/// Includes toolbar and editor in a Column layout.
+///
+/// By default fills remaining height (`expands: true`) and scrolls inside the
+/// editor — required for large pastes and phone scrolling. Use
+/// [expands] `false` with [maxHeight] when embedding inside another scroll view.
 class QuillEditorWidget extends StatefulWidget {
   const QuillEditorWidget({
     super.key,
@@ -98,6 +101,8 @@ class QuillEditorWidget extends StatefulWidget {
     this.editorPadding,
     this.placeholder,
     this.minHeight = 160,
+    this.maxHeight = 420,
+    this.expands = true,
   });
 
   final List<dynamic> jsonContent;
@@ -111,12 +116,21 @@ class QuillEditorWidget extends StatefulWidget {
   final String? placeholder;
   final double minHeight;
 
+  /// Used when [expands] is false (embedded in an outer scroll view).
+  final double maxHeight;
+
+  /// When true, fill the parent (must be under [Expanded]/[SizedBox] with a
+  /// finite height) and scroll inside the editor.
+  final bool expands;
+
   @override
   State<QuillEditorWidget> createState() => QuillEditorWidgetState();
 }
 
 class QuillEditorWidgetState extends State<QuillEditorWidget> {
   late final quill.QuillController _controller;
+  late final FocusNode _focusNode;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
@@ -126,6 +140,8 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
       document: document,
       selection: const TextSelection.collapsed(offset: 0),
     );
+    _focusNode = FocusNode();
+    _scrollController = ScrollController();
 
     if (widget.onDocumentChanged != null) {
       _controller.document.changes.listen((event) {
@@ -137,39 +153,73 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final editor = quill.QuillEditor.basic(
+    final media = MediaQuery.of(context);
+    // Extra trailing space so the last lines can scroll above the keyboard /
+    // home indicator into a comfortable edit zone on phones.
+    final bottomPad = 24 +
+        media.padding.bottom +
+        media.viewInsets.bottom +
+        (media.size.shortestSide < 600 ? 140.0 : 72.0);
+
+    final editor = quill.QuillEditor(
       controller: _controller,
+      focusNode: _focusNode,
+      scrollController: _scrollController,
       config: quill.QuillEditorConfig(
         placeholder: widget.placeholder,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        minHeight: widget.minHeight,
+        padding: EdgeInsets.fromLTRB(8, 12, 8, bottomPad),
+        scrollable: true,
+        // Always expand into a bounded parent (Expanded or ConstrainedBox).
+        expands: true,
+        scrollPhysics: const ClampingScrollPhysics(),
       ),
     );
 
+    final paddedEditor = widget.editorPadding != null
+        ? Padding(padding: widget.editorPadding!, child: editor)
+        : editor;
+
+    final toolbar = quill.QuillSimpleToolbar(
+      controller: _controller,
+      config: quill.QuillSimpleToolbarConfig(
+        showAlignmentButtons: widget.showAlignmentButtons,
+        showSubscript: widget.showSubscript,
+        showSuperscript: widget.showSuperscript,
+        showCodeBlock: widget.showCodeBlock,
+        multiRowsDisplay: widget.multiRowsDisplay,
+      ),
+    );
+
+    if (widget.expands) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          toolbar,
+          Expanded(child: paddedEditor),
+        ],
+      );
+    }
+
+    // Embedded in an outer scroll view: fixed viewport, scroll inside Quill.
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        quill.QuillSimpleToolbar(
-          controller: _controller,
-          config: quill.QuillSimpleToolbarConfig(
-            showAlignmentButtons: widget.showAlignmentButtons,
-            showSubscript: widget.showSubscript,
-            showSuperscript: widget.showSuperscript,
-            showCodeBlock: widget.showCodeBlock,
-            multiRowsDisplay: widget.multiRowsDisplay,
+        toolbar,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: widget.minHeight,
+            maxHeight: widget.maxHeight,
           ),
+          child: paddedEditor,
         ),
-        widget.editorPadding != null
-            ? Padding(
-                padding: widget.editorPadding!,
-                child: editor,
-              )
-            : editor,
       ],
     );
   }

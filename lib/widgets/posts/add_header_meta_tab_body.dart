@@ -15,15 +15,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class AddEventHeadMeta extends StatefulWidget {
-  const AddEventHeadMeta(
-      {super.key,
-      required this.tecTitle,
-      required this.tecSubtitle,
-      required this.onRequiredFieldChange,
-      required this.eventContext});
+  const AddEventHeadMeta({
+    super.key,
+    required this.tecTitle,
+    required this.tecSubtitle,
+    required this.onRequiredFieldChange,
+    required this.eventContext,
+    this.showNotificationControls = true,
+  });
   final TextEditingController tecTitle, tecSubtitle;
   final EventContext eventContext;
   final Function(String) onRequiredFieldChange;
+
+  /// When false (template editor), omit send-time notify toggles.
+  final bool showNotificationControls;
 
   @override
   State<AddEventHeadMeta> createState() => _AddEventHeadMetaState();
@@ -730,8 +735,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 ),
                 const SizedBox(height: 12),
                 _buildExpectedAttendeesSection(appContext, theme, colorScheme),
-                const Divider(height: 32),
-                ..._buildNotificationControls(appContext),
+                if (widget.showNotificationControls) ...[
+                  const Divider(height: 32),
+                  ..._buildNotificationControls(appContext),
+                ],
               ],
             ),
           ),
