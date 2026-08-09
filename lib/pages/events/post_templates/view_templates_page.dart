@@ -67,7 +67,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         },
       );
       if (!mounted) return;
-      templates.sort((a, b) => a.headTitle.compareTo(b.headTitle));
+      templates.sort((a, b) => a.title.compareTo(b.title));
       setState(() {
         _templates = templates;
         _loading = false;
@@ -255,16 +255,6 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                         ),
                       ),
                     ],
-                    if (template.headTitle.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        template.headTitle,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -312,7 +302,6 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     final draft = _buildBlankTemplate(
       title: details.title,
       description: details.description,
-      headTitle: details.headTitle,
       location: location,
     );
     draft.addLog(
@@ -368,9 +357,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
             completed: 0, total: total, message: 'Duplicating template…');
         final copyData = source.toJson(true);
         copyData['Title'] = 'Copy of ${source.title}';
-        copyData['HeadTitle'] = source.headTitle.isEmpty
-            ? copyData['Title']
-            : 'Copy of ${source.headTitle}';
+        copyData['HeadTitle'] = copyData['Title'];
         // Fresh history for the new document — do not copy source Logs.
         copyData['Logs'] = <Map<String, dynamic>>[];
         final draft = PostTemplate.fromMap(true, 'temp', copyData);
@@ -408,13 +395,12 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   PostTemplate _buildBlankTemplate({
     required String title,
     required String description,
-    required String headTitle,
     required String location,
   }) {
     return PostTemplate.fromMap(true, 'temp', {
       'Title': title,
       'Description': description.isEmpty ? 'New post template' : description,
-      'HeadTitle': headTitle,
+      'HeadTitle': title,
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': location,
       'Topics': [location],
@@ -512,12 +498,10 @@ enum _TemplateAction { edit, duplicate }
 class _NewTemplateDetails {
   const _NewTemplateDetails({
     required this.title,
-    required this.headTitle,
     required this.description,
   });
 
   final String title;
-  final String headTitle;
   final String description;
 }
 
@@ -533,34 +517,26 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _headTitleController;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
-    _headTitleController = TextEditingController();
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _headTitleController.dispose();
     super.dispose();
   }
 
   void _onCreate() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final title = _titleController.text.trim();
-    final headTitle = _headTitleController.text.trim().isEmpty
-        ? title
-        : _headTitleController.text.trim();
     Navigator.of(context).pop(
       _NewTemplateDetails(
-        title: title,
-        headTitle: headTitle,
+        title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
       ),
     );
@@ -591,17 +567,6 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
                   }
                   return null;
                 },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _headTitleController,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'List heading (optional)',
-                  hintText: 'Defaults to title',
-                  helperText: 'Shown in the template picker list',
-                  border: OutlineInputBorder(),
-                ),
               ),
               const SizedBox(height: 12),
               TextFormField(

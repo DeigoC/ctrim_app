@@ -91,7 +91,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       );
       if (!mounted) return;
 
-      templates.sort((a, b) => a.headTitle.compareTo(b.headTitle));
+      templates.sort((a, b) => a.title.compareTo(b.title));
       if (!widget.bulkMode) {
         templates.add(_createBlankSlate());
       }

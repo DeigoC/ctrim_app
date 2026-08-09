@@ -712,7 +712,7 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final Map<String, dynamic> templateData = {
       'Title': _tecTitle.text.trim(),
       'Description': widget.oldTemplate.description,
-      'HeadTitle': widget.oldTemplate.headTitle, // unlikely we'll be updating this anytime soon...?
+      'HeadTitle': _tecTitle.text.trim(),
       'Body': widget.eventContext.encodedBody,
       'Location': widget.eventContext.head.location,
       'Topics': widget.oldTemplate.topics,
