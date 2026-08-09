@@ -276,8 +276,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             ),
             SliverToBoxAdapter(
               child: ResponsiveContent(
+                narrowPadding: 16,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
+                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

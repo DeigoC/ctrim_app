@@ -52,6 +52,7 @@ class _EditUserPageState extends State<EditUserPage> {
   bool _hasChanges = false;
   bool _imageValidated = true;
   bool _authLinkChanged = false;
+  bool _allowPop = false;
 
   Future<String?>? _emailFuture;
 
@@ -113,16 +114,30 @@ class _EditUserPageState extends State<EditUserPage> {
     return a.containsAll(b);
   }
 
+  void _popRouteAfterAllowing({Object? result}) {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return RoleAccessGate(
       allow: (user) => user.canManageVolunteers || canEditPlaceholderProfile(actor: user, target: widget.user),
       deniedMessage: 'You cannot edit this user.',
       child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          Navigator.of(context).pop(_authLinkChanged || result == true);
+        canPop: _allowPop || !_hasChanges,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop || _allowPop) return;
+          if (!_hasChanges) {
+            _popRouteAfterAllowing(result: _authLinkChanged || result == true);
+            return;
+          }
+          final shouldPop = await DialogManager.discardChanges(context: context);
+          if (shouldPop && mounted) {
+            _popRouteAfterAllowing(result: _authLinkChanged || result == true);
+          }
         },
         child: Scaffold(
           appBar: AppBar(
@@ -773,7 +788,7 @@ class _EditUserPageState extends State<EditUserPage> {
           ),
         );
 
-        Navigator.pop(context, true); // Return true to indicate success
+        _popRouteAfterAllowing(result: true); // Return true to indicate success
       }
     } catch (e) {
       if (mounted) {

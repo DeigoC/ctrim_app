@@ -35,21 +35,72 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   late List<Map<String, dynamic>> _media;
   String? _keyGraphicSrc;
   bool _saving = false;
+  bool _isSaved = false;
+  bool _allowPop = false;
+
+  late final String _initialName;
+  late final String _initialSummary;
+  late final String _initialTime;
+  late final String _initialStatus;
+  late final int? _initialWeekday;
+  late final List<String> _initialLeaderUserIds;
+  late final List<String> _initialMediaSrcs;
+  late final String? _initialKeyGraphicSrc;
 
   bool get _isEditing => widget.existing != null;
+
+  void _popRouteAfterAllowing({Object? result}) {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
-    _nameController = TextEditingController(text: existing?.name ?? '');
-    _summaryController = TextEditingController(text: existing?.summary ?? '');
-    _timeController = TextEditingController(text: existing?.meetingTime ?? '');
-    _status = existing?.status ?? CellGroupStatus.active;
-    _weekday = existing?.meetingWeekday;
-    _leaderUserIds = List<String>.from(existing?.leaderUserIds ?? const []);
+    _initialName = existing?.name ?? '';
+    _initialSummary = existing?.summary ?? '';
+    _initialTime = existing?.meetingTime ?? '';
+    _initialStatus = existing?.status ?? CellGroupStatus.active;
+    _initialWeekday = existing?.meetingWeekday;
+    _initialLeaderUserIds = List<String>.from(existing?.leaderUserIds ?? const []);
+    _initialMediaSrcs =
+        existing?.media.map((e) => (e['src'] as String?) ?? '').where((s) => s.isNotEmpty).toList() ??
+            [];
+    _initialKeyGraphicSrc = existing?.keyGraphicSrc;
+
+    _nameController = TextEditingController(text: _initialName);
+    _summaryController = TextEditingController(text: _initialSummary);
+    _timeController = TextEditingController(text: _initialTime);
+    _status = _initialStatus;
+    _weekday = _initialWeekday;
+    _leaderUserIds = List<String>.from(_initialLeaderUserIds);
     _media = existing?.media.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
-    _keyGraphicSrc = existing?.keyGraphicSrc;
+    _keyGraphicSrc = _initialKeyGraphicSrc;
+  }
+
+  bool _hasUnsavedChanges() {
+    if (_nameController.text.trim() != _initialName.trim()) return true;
+    if (_summaryController.text.trim() != _initialSummary.trim()) return true;
+    if (_timeController.text.trim() != _initialTime.trim()) return true;
+    if (_status != _initialStatus) return true;
+    if (_weekday != _initialWeekday) return true;
+    if (!_sameIdLists(_leaderUserIds, _initialLeaderUserIds)) return true;
+    if (_keyGraphicSrc != _initialKeyGraphicSrc) return true;
+    final currentSrcs =
+        _media.map((e) => (e['src'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+    if (!_sameIdLists(currentSrcs, _initialMediaSrcs)) return true;
+    return false;
+  }
+
+  bool _sameIdLists(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -69,21 +120,34 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     return RoleAccessGate(
       allow: (user) => user.canManageCellGroups,
       deniedMessage: 'Only area admins can create or edit cell groups.',
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isEditing ? l10n.cellGroupsEdit : l10n.cellGroupsCreate),
-          actions: [
-            TextButton(
-              onPressed: _saving ? null : _save,
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 32),
-            children: [
+      child: PopScope(
+        canPop: _allowPop || _isSaved,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop || _allowPop || _isSaved) return;
+          if (!_hasUnsavedChanges()) {
+            _popRouteAfterAllowing();
+            return;
+          }
+          final shouldPop = await DialogManager.discardChanges(context: context);
+          if (shouldPop && mounted) {
+            _popRouteAfterAllowing();
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_isEditing ? l10n.cellGroupsEdit : l10n.cellGroupsCreate),
+            actions: [
+              TextButton(
+                onPressed: _saving ? null : _save,
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+          body: Form(
+            key: _formKey,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 32),
+              children: [
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
@@ -213,6 +277,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
               }),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -389,7 +454,10 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    if (ok) Navigator.of(context).pop(true);
+    if (ok) {
+      _isSaved = true;
+      _popRouteAfterAllowing(result: true);
+    }
   }
 
   User? _userById(String id) {

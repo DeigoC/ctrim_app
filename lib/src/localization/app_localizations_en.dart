@@ -465,7 +465,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsEdit => 'Edit group';
 
   @override
-  String get cellGroupsManageRoster => 'Manage roster';
+  String get cellGroupsManageRoster => 'Manage cell members';
 
   @override
   String get cellGroupsMeetingTrail => 'Recent meetings';
@@ -482,7 +482,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsLeadersLabel => 'Leaders';
 
   @override
-  String get cellGroupsRosterTitle => 'Roster';
+  String get cellGroupsRosterTitle => 'Cell Members';
 
   @override
   String get cellGroupsAddMembers => 'Add members';

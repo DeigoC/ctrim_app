@@ -21,7 +21,8 @@ class AppSharedPreferences {
       _dismissedGuestBanner = 'dismissedGuestBanner',
       _guestFcmToken = 'guestFcmToken',
       _hasSeenBulletinDialog = 'hasSeenBulletinDialog',
-      _hasSeenPwaHomeScreenPrompt = 'hasSeenPwaHomeScreenPrompt';
+      _hasSeenPwaHomeScreenPrompt = 'hasSeenPwaHomeScreenPrompt',
+      _hasDeclinedNotificationPrePrompt = 'hasDeclinedNotificationPrePrompt';
 
   AppSharedPreferences({required SharedPreferences preferences}) {
     _pref = preferences;
@@ -145,6 +146,12 @@ class AppSharedPreferences {
 
   bool get hasSeenPwaHomeScreenPrompt => _pref.getBool(_hasSeenPwaHomeScreenPrompt) ?? false;
   void setHasSeenPwaHomeScreenPrompt() => _pref.setBool(_hasSeenPwaHomeScreenPrompt, true);
+
+  /// User tapped "Not now" on the post-auth notification soft-ask.
+  bool get hasDeclinedNotificationPrePrompt =>
+      _pref.getBool(_hasDeclinedNotificationPrePrompt) ?? false;
+  void setHasDeclinedNotificationPrePrompt([bool declined = true]) =>
+      _pref.setBool(_hasDeclinedNotificationPrePrompt, declined);
 
   // Note: Post data, post tracking, and user data caching is now handled by
   // LocalDataManager which uses Hive and works across all platforms (web, mobile, desktop)

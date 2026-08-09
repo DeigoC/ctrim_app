@@ -31,13 +31,29 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
   bool _testing = false;
   bool _imageValidated = false;
   bool _canSave = false;
+  bool _allowPop = false;
+  bool _isSaved = false;
   String? _validationMessage;
+
+  late final String _initialSrc;
+
+  void _popRouteAfterAllowing({Object? result}) {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
+
+  bool _hasUnsavedChanges() {
+    return _sanitiseSrc() != _initialSrc;
+  }
 
   @override
   void initState() {
     super.initState();
     _appContext = Provider.of<AppContext>(context, listen: false);
     _previewSrc = _appContext.currentUser.imgSrc;
+    _initialSrc = _previewSrc;
     _tecImgSrc = TextEditingController(text: _previewSrc);
     _tecImgSrc.addListener(_onUrlChanged);
   }
@@ -69,7 +85,20 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
     final horizontalPadding =
         ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
 
-    return Scaffold(
+    return PopScope(
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        if (!_hasUnsavedChanges()) {
+          _popRouteAfterAllowing();
+          return;
+        }
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(title: const Text('Edit profile picture')),
       body: ListView(
         padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 32),
@@ -161,6 +190,7 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
           _buildHelpSection(theme, colorScheme),
         ],
       ),
+    ),
     );
   }
 
@@ -318,7 +348,8 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
         behavior: SnackBarBehavior.floating,
       ),
     );
-    Navigator.of(context).pop(true);
+    _isSaved = true;
+    _popRouteAfterAllowing(result: true);
   }
 
   void _syncAllUsersImgSrc(String src) {

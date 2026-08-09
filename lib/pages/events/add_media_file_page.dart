@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
@@ -36,9 +37,25 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final int _maxVideoSizeMB = 128;
   VideoPlayerController? _videoPlayerController;
   bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
+  bool _allowPop = false;
+  bool _isSaved = false;
   String _src = '';
   File? _tmpFile;
   int? _mediaFileSizeBytes;
+
+  void _popRouteAfterAllowing({Object? result}) {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
+
+  bool _hasUnsavedChanges() {
+    return _tecSrc.text.trim().isNotEmpty ||
+        _tecThumbnailSrc.text.trim().isNotEmpty ||
+        _canSave ||
+        _isTesting;
+  }
 
   @override
   void initState() {
@@ -62,7 +79,20 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        if (!_hasUnsavedChanges()) {
+          _popRouteAfterAllowing();
+          return;
+        }
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(_isVideo ? 'Add video' : 'Add image'),
@@ -86,6 +116,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         ],
       ),
       body: _buildBody(),
+    ),
     );
   }
 
@@ -1065,13 +1096,15 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
               if (widget.returnResultOnly) {
                 Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(data); // Return media map
+                _isSaved = true;
+                _popRouteAfterAllowing(result: data);
                 return;
               }
 
               widget.eventContext.media.addMediaFile(data);
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Close page
+              _isSaved = true;
+              _popRouteAfterAllowing();
             },
             child: Text(widget.returnResultOnly ? 'Add' : 'Save'),
           ),

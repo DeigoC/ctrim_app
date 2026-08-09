@@ -24,6 +24,8 @@ When editing a post, organisers can send a **broadcast** push to people who opte
 
 The **web app** is the current focus, so getting notifications working reliably in the browser (“This device”) matters most right now. See [Platforms](platforms.md).
 
+After sign-in or creating an account on the web, the app shows a short in-app explanation (**Stay in the loop**) before the browser’s Allow prompt, and points people to **Personal → Push Notifications** to fine-tune later. Choosing **Not now** skips the browser prompt for that session pattern until they enable from Personal.
+
 ## Related pages
 
 - [Personal](personal.md)  

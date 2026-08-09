@@ -33,6 +33,15 @@ class _SendBroadcastNotificationPageState
   late String _selectedPreset;
   late bool _includeLocationUmbrella;
   bool _sending = false;
+  bool _allowPop = false;
+  bool _isSaved = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -85,7 +94,16 @@ class _SendBroadcastNotificationPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(title: const Text('Send Broadcast')),
       body: ResponsiveContent(
         narrowPadding: 16,
@@ -167,6 +185,7 @@ class _SendBroadcastNotificationPageState
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -368,7 +387,8 @@ class _SendBroadcastNotificationPageState
         message: combined.feedbackMessage,
         isError: combined.hasFailures && !combined.hasSuccess,
       );
-      Navigator.of(context).pop();
+      _isSaved = true;
+      _popRouteAfterAllowing();
     } catch (e) {
       if (!mounted) return;
       setState(() => _sending = false);

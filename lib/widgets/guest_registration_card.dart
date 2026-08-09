@@ -10,10 +10,10 @@ import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
-import '../firebase/messaging_manager.dart';
 import '../models/user.dart' as ctrim;
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
+import '../utility/notification_permission_prompt.dart';
 import '../utility/persist_users_local_cache.dart';
 
 class GuestRegistrationCard extends StatefulWidget {
@@ -612,31 +612,39 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     );
 
     if (!mounted || !ready) return;
+
+    // Soft-ask before the browser Allow prompt (web); skip cold getToken during setup.
+    if (kIsWeb) {
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      await NotificationPermissionPrompt.maybePromptAfterAuth(
+        context: context,
+        prefs: appContext.sharedPref,
+        authId: _authManager.currentAuthUID,
+      );
+      if (!mounted) return;
+    }
+
     // Return to Personal (this card lives on GuestRegistrationPage).
     Navigator.of(context).pop();
   }
 
   Future<void> _migrateFCMToken() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    String? token = appContext.sharedPref.guestFcmToken;
+    final token = appContext.sharedPref.guestFcmToken;
 
-    // If no guest token, try to get a new one
-    if (token.isEmpty) {
-      final messagingManager = MessagingManager();
-      token = await messagingManager.getToken();
-    }
+    // Only migrate an existing guest token. Do not call getToken() here — that
+    // can trigger the browser permission prompt without an in-app explainer.
+    if (token.isEmpty) return;
 
-    if (token != null && token.isNotEmpty) {
-      debugPrint('Migrating FCM token: $token');
-      final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
-      appContext.sharedPref.saveFCMToken(token);
-      appContext.sharedPref.clearGuestFCMToken();
-      await _everyoneDBManager.addTokenForAuthID(
-        authID: _authManager.currentAuthUID,
-        token: token,
-        platform: platformName,
-      );
-    }
+    debugPrint('Migrating FCM token: $token');
+    final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
+    appContext.sharedPref.saveFCMToken(token);
+    appContext.sharedPref.clearGuestFCMToken();
+    await _everyoneDBManager.addTokenForAuthID(
+      authID: _authManager.currentAuthUID,
+      token: token,
+      platform: platformName,
+    );
   }
 
   Future<void> _fetchEssentialData() async {

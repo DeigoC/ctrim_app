@@ -38,10 +38,33 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   late final List<String> _subtitles;
   int? _defaultDayOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
+  bool _allowPop = false;
+  bool _isSaved = false;
+
+  late final String _initialTitle;
+  late final String _initialSubtitle;
+  late final List<String> _initialSubtitles;
+  late final int? _initialDefaultDayOfWeek;
+  late final List<String> _initialHeadPoolSrcs;
+  late final List<String> _initialBodyPoolSrcs;
+  late final List<String> _initialTagIDs;
+  late final List<String> _initialCellGroupIDs;
+  late final List<String> _initialExpectedAttendeeUserIDs;
+  late final List<String> _initialContributorUIDs;
+  late final String _initialLocation;
+  late final String? _initialLeadSpeakerUID;
+  late final bool _initialIsPeriodParent;
 
   static const int _aboutTabIndex = 1;
   static const int _scheduleTabIndex = 2;
   static const int _mediaTabIndex = 3;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -53,7 +76,69 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     _defaultDayOfWeek = widget.oldTemplate.defaultDayOfWeek;
     _headMediaPool = widget.oldTemplate.headMediaPool.map((e) => Map<String, dynamic>.from(e)).toList();
     _bodyMediaPool = widget.oldTemplate.bodyMediaPool.map((e) => Map<String, dynamic>.from(e)).toList();
+
+    _initialTitle = _tecTitle.text;
+    _initialSubtitle = _tecSubtitle.text;
+    _initialSubtitles = List<String>.from(_subtitles);
+    _initialDefaultDayOfWeek = _defaultDayOfWeek;
+    _initialHeadPoolSrcs = _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList();
+    _initialBodyPoolSrcs = _bodyMediaPool.map((e) => (e['src'] as String?) ?? '').toList();
+    _initialTagIDs = List<String>.from(widget.oldTemplate.tagIDs);
+    _initialCellGroupIDs = List<String>.from(widget.oldTemplate.cellGroupIDs);
+    _initialExpectedAttendeeUserIDs = List<String>.from(widget.oldTemplate.expectedAttendeeUserIDs);
+    _initialContributorUIDs = List<String>.from(widget.oldTemplate.contributors);
+    _initialLocation = widget.oldTemplate.location;
+    _initialLeadSpeakerUID = widget.oldTemplate.leadSpeakerUID;
+    _initialIsPeriodParent = widget.oldTemplate.isPeriodParent;
     super.initState();
+  }
+
+  bool _hasUnsavedChanges() {
+    if (widget.eventContext.canSaveTheEditing) return true;
+    if (_tecTitle.text.trim() != _initialTitle.trim()) return true;
+    if (_tecSubtitle.text.trim() != _initialSubtitle.trim()) return true;
+    if (_defaultDayOfWeek != _initialDefaultDayOfWeek) return true;
+    if (!_sameStringLists(_subtitles, _initialSubtitles)) return true;
+    if (!_sameStringLists(
+      _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList(),
+      _initialHeadPoolSrcs,
+    )) {
+      return true;
+    }
+    if (!_sameStringLists(
+      _bodyMediaPool.map((e) => (e['src'] as String?) ?? '').toList(),
+      _initialBodyPoolSrcs,
+    )) {
+      return true;
+    }
+    if (!_sameStringLists(widget.eventContext.head.tagIDs, _initialTagIDs)) return true;
+    if (!_sameStringLists(widget.eventContext.head.cellGroupIDs, _initialCellGroupIDs)) {
+      return true;
+    }
+    if (!_sameStringLists(
+      widget.eventContext.expectedAttendeeUserIDs,
+      _initialExpectedAttendeeUserIDs,
+    )) {
+      return true;
+    }
+    if (!_sameStringLists(
+      widget.eventContext.metadata.contributorUIDs,
+      _initialContributorUIDs,
+    )) {
+      return true;
+    }
+    if (widget.eventContext.head.location != _initialLocation) return true;
+    if (widget.eventContext.metadata.leadSpeakerUID != _initialLeadSpeakerUID) return true;
+    if (widget.eventContext.metadata.isPeriodParent != _initialIsPeriodParent) return true;
+    return false;
+  }
+
+  bool _sameStringLists(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -69,7 +154,21 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     return RoleAccessGate(
       allow: (user) => user.canManagePostTemplates,
       deniedMessage: 'Only leaders can edit post templates.',
-      child: Scaffold(body: _buildBody()),
+      child: PopScope(
+        canPop: _allowPop || _isSaved,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop || _allowPop || _isSaved) return;
+          if (!_hasUnsavedChanges()) {
+            _popRouteAfterAllowing();
+            return;
+          }
+          final shouldPop = await DialogManager.discardChanges(context: context);
+          if (shouldPop && mounted) {
+            _popRouteAfterAllowing();
+          }
+        },
+        child: Scaffold(body: _buildBody()),
+      ),
     );
   }
 
@@ -689,7 +788,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       action: (onProgress) => _performTemplateSave(onProgress, logMessage: logMessage),
     );
     if (!mounted || !saved) return;
-    Navigator.of(context).pop();
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 
   Future<void> _performTemplateSave(

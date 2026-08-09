@@ -617,9 +617,9 @@
   "@cellGroupsEdit": {
     "description": "Action to edit a cell group profile"
   },
-  "cellGroupsManageRoster": "Manage roster",
+  "cellGroupsManageRoster": "Manage cell members",
   "@cellGroupsManageRoster": {
-    "description": "Action to manage cell group members"
+    "description": "Action to manage cell group members (UI: Cell Members, not Roster)"
   },
   "cellGroupsMeetingTrail": "Recent meetings",
   "@cellGroupsMeetingTrail": {
@@ -642,9 +642,9 @@
   "@cellGroupsLeadersLabel": {
     "description": "Label for leaders list on CG detail"
   },
-  "cellGroupsRosterTitle": "Roster",
+  "cellGroupsRosterTitle": "Cell Members",
   "@cellGroupsRosterTitle": {
-    "description": "Title for the cell group roster page"
+    "description": "Section title for CG members on detail (UI label; code/Firestore may still say roster)"
   },
   "cellGroupsAddMembers": "Add members",
   "@cellGroupsAddMembers": {

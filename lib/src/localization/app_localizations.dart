@@ -916,10 +916,10 @@ abstract class AppLocalizations {
   /// **'Edit group'**
   String get cellGroupsEdit;
 
-  /// Action to manage cell group members
+  /// Action to manage cell group members (UI: Cell Members, not Roster)
   ///
   /// In en, this message translates to:
-  /// **'Manage roster'**
+  /// **'Manage cell members'**
   String get cellGroupsManageRoster;
 
   /// Section title for linked bulletin posts on CG detail
@@ -946,10 +946,10 @@ abstract class AppLocalizations {
   /// **'Leaders'**
   String get cellGroupsLeadersLabel;
 
-  /// Title for the cell group roster page
+  /// Section title for CG members on detail (UI label; code/Firestore may still say roster)
   ///
   /// In en, this message translates to:
-  /// **'Roster'**
+  /// **'Cell Members'**
   String get cellGroupsRosterTitle;
 
   /// Button to open user picker for roster

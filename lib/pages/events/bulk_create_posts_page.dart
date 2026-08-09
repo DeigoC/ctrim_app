@@ -12,6 +12,7 @@ import '../../models/event/event_metadata.dart';
 import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/bulk_post_dates.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
@@ -53,6 +54,15 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   bool _isCreating = false;
   bool _isRefreshingTemplate = true;
   int _createdCount = 0;
+  bool _allowPop = false;
+  bool _isSaved = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   String? get _effectiveParentID {
     if (widget.sourcePostId != null) {
@@ -238,10 +248,11 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       }
 
       if (mounted) {
-        Navigator.of(context).pop();
+        _isSaved = true;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_previews.length} posts created successfully')),
         );
+        _popRouteAfterAllowing();
       }
     } catch (e) {
       if (mounted) {
@@ -296,8 +307,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final dayName = _selectedDayOfWeek != null ? _dayNames[_selectedDayOfWeek! - 1] : 'Not set';
 
+    late final Widget page;
     if (_isCreating) {
-      return Scaffold(
+      page = Scaffold(
         appBar: AppBar(title: const Text('Bulk Create Posts')),
         body: LoadProgressBody(
           message: 'Creating $_createdCount of ${_previews.length} posts…',
@@ -305,10 +317,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           totalSteps: _previews.isEmpty ? 1 : _previews.length,
         ),
       );
-    }
-
-    if (_isRefreshingTemplate) {
-      return Scaffold(
+    } else if (_isRefreshingTemplate) {
+      page = Scaffold(
         appBar: AppBar(title: const Text('Bulk Create Posts')),
         body: const LoadProgressBody(
           message: 'Refreshing template…',
@@ -316,62 +326,74 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           totalSteps: 1,
         ),
       );
+    } else {
+      page = Scaffold(
+        appBar: AppBar(
+          title: const Text('Bulk Create Posts'),
+          backgroundColor: colorScheme.surface,
+        ),
+        floatingActionButton: _previews.isEmpty
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: _createAllPosts,
+                icon: const Icon(Icons.check),
+                label: Text('Create ${_previews.length} Posts'),
+              ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final contentWidth = constraints.maxWidth;
+            final isWide = ResponsiveLayout.isWideScreen(contentWidth);
+            final maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+            final horizontalPadding = isWide
+                ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+                : 0.0;
+
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    children: [
+                      _buildTemplateHeader(colorScheme, dayName),
+                      if (widget.sourcePostId != null) _buildRelationPicker(colorScheme),
+                      _buildDayOfWeekSelector(colorScheme),
+                      if (_selectedDayOfWeek != null) _buildWeeksSelector(),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    child: _selectedDayOfWeek == null
+                        ? Center(
+                            child: Text(
+                              'Choose a day of the week to preview posts.',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          )
+                        : _buildPreviewList(colorScheme, contentWidth: maxWidth.clamp(0, contentWidth)),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bulk Create Posts'),
-        backgroundColor: colorScheme.surface,
-      ),
-      floatingActionButton: _previews.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _createAllPosts,
-              icon: const Icon(Icons.check),
-              label: Text('Create ${_previews.length} Posts'),
-            ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final contentWidth = constraints.maxWidth;
-          final isWide = ResponsiveLayout.isWideScreen(contentWidth);
-          final maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
-          final horizontalPadding = isWide
-              ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
-              : 0.0;
-
-          return Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  children: [
-                    _buildTemplateHeader(colorScheme, dayName),
-                    if (widget.sourcePostId != null) _buildRelationPicker(colorScheme),
-                    _buildDayOfWeekSelector(colorScheme),
-                    if (_selectedDayOfWeek != null) _buildWeeksSelector(),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: _selectedDayOfWeek == null
-                      ? Center(
-                          child: Text(
-                            'Choose a day of the week to preview posts.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        )
-                      : _buildPreviewList(colorScheme, contentWidth: maxWidth.clamp(0, contentWidth)),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+    return PopScope(
+      canPop: _allowPop || _isSaved || _isCreating,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved || _isCreating) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: page,
     );
   }
 

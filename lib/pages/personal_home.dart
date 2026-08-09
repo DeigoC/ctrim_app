@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,14 +6,14 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/messaging_manager.dart';
 import '../src/localization/app_localizations.dart';
 import '../utility/app_context.dart';
 import '../utility/user_schedule_service.dart';
-import '../utility/web_notification_lifecycle.dart';
+import '../utility/notification_permission_prompt.dart';
 import '../utility/notification_subscription_service.dart';
 import '../utility/notification_topics.dart';
 import '../utility/dialog_manager.dart';
+import '../utility/web_notification_lifecycle.dart';
 import '../widgets/user_avatar.dart';
 import '../utility/pwa_install_service.dart';
 import '../widgets/personal/add_to_home_screen_dialog.dart';
@@ -1265,76 +1263,17 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   Future<void> _onEnableNotificationsClick(AppContext appContext) async {
-    final MessagingManager messagingManager = MessagingManager();
     final authId = AuthManager().currentAuthUID;
     final pwa = PwaInstallService.instance;
 
-    if (kIsWeb && pwa.isIosBrowser && !pwa.isInstalled) {
-      await DialogManager.showAlertDialog(
-        context: context,
-        title: 'Add to Home Screen first',
-        content:
-            'On iPhone and iPad, web push only works when CTRIM is opened from '
-            'the Home Screen. Use Share → Add to Home Screen, open that icon, '
-            'then enable notifications.',
-        icon: Icons.install_mobile_outlined,
-      );
-      return;
-    }
-
-    final shouldProceed = await showDialog<bool>(
+    final result = await NotificationPermissionPrompt.promptAndRegister(
       context: context,
-      barrierDismissible: true,
-      builder: (context) => AlertDialog(
-        title: const Text('Enable Notifications'),
-        content: const Text(
-          'Get notified about important updates, events, and announcements from CTRIM. You can manage your notification preferences anytime.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Not Now'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Enable'),
-          ),
-        ],
-      ),
+      prefs: appContext.sharedPref,
+      authId: authId,
+      isGuest: appContext.isCurrentUserGuest,
     );
 
-    if (shouldProceed != true) return;
-
-    String? token;
-    if (kIsWeb && authId.isNotEmpty && !appContext.isCurrentUserGuest) {
-      token = await WebNotificationLifecycle().register(
-        authId: authId,
-        requestPermission: true,
-        onTokenSaved: appContext.sharedPref.saveFCMToken,
-        prefs: appContext.sharedPref,
-        webAuthId: authId,
-      );
-    } else {
-      token = await messagingManager.requestPermissionAndToken();
-      if (token != null &&
-          authId.isNotEmpty &&
-          !appContext.isCurrentUserGuest) {
-        final everyoneDBManager = EveryoneDBManager();
-        await everyoneDBManager.addTokenForAuthID(
-          authID: authId,
-          token: token,
-          platform: Platform.operatingSystem,
-        );
-      }
-    }
-
-    if (token != null) {
-      if (appContext.isCurrentUserGuest) {
-        appContext.sharedPref.saveGuestFCMToken(token);
-      } else {
-        appContext.sharedPref.saveFCMToken(token);
-      }
-
+    if (result.isEnabled) {
       appContext.sharedPref.setSubscribedToBelfast(true);
       for (final topic in NotificationTopics.serviceTopics) {
         appContext.sharedPref.setSubscribedToTopic(topic, true);
@@ -1362,17 +1301,23 @@ class _PersonalHomeState extends State<PersonalHome> {
         ),
       );
       setState(() {});
-    } else if (mounted) {
-      final hint = kIsWeb && pwa.isIosBrowser && !pwa.isInstalled
-          ? 'On iPhone/iPad, open CTRIM from the Home Screen app and try again.'
-          : 'Could not enable notifications. Check permission and try again.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(hint), duration: const Duration(seconds: 4)),
-      );
+      return;
     }
+
+    if (!mounted) return;
+    if (result.outcome == NotificationPromptOutcome.declined ||
+        result.outcome == NotificationPromptOutcome.blockedByPwa) {
+      return;
+    }
+
+    final hint = kIsWeb && pwa.isIosBrowser && !pwa.isInstalled
+        ? 'On iPhone/iPad, open CTRIM from the Home Screen app and try again.'
+        : 'Could not enable notifications. Check permission and try again.';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(hint), duration: const Duration(seconds: 4)),
+    );
   }
 }
-
 
 class _PersonalAction {
   const _PersonalAction({
