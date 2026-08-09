@@ -20,6 +20,9 @@ void main() {
       expect(group.meetingWeekday, isNull);
       expect(group.meetingTime, '');
       expect(group.cadenceLabel, '');
+      expect(group.media, isEmpty);
+      expect(group.keyGraphicSrc, isNull);
+      expect(group.hasKeyGraphic, false);
     });
 
     test('fromMap parses Firestore fields', () {
@@ -30,6 +33,11 @@ void main() {
         'Location': 'Belfast',
         'LeaderUserIds': ['7', '8'],
         'LeaderAuthIds': ['auth-a'],
+        'Media': [
+          {'src': 'drive/photo1', 'type': 'img', 'title': 'Cover'},
+          {'src': 'drive/photo2', 'type': 'img', 'title': ''},
+        ],
+        'KeyGraphicSrc': 'drive/photo1',
         'MemberCount': 12,
         'Status': CellGroupStatus.paused,
         'MeetingWeekday': DateTime.tuesday,
@@ -52,6 +60,20 @@ void main() {
       expect(group.isLeaderUser('7'), true);
       expect(group.isLeaderAuth('auth-a'), true);
       expect(group.createdByUserID, '1');
+      expect(group.media, hasLength(2));
+      expect(group.keyGraphicSrc, 'drive/photo1');
+      expect(group.hasKeyGraphic, true);
+    });
+
+    test('fromMap clears orphan KeyGraphicSrc', () {
+      final group = CellGroup.fromMap('cg1', {
+        'Name': 'CG',
+        'Media': [
+          {'src': 'drive/a', 'type': 'img'},
+        ],
+        'KeyGraphicSrc': 'drive/missing',
+      });
+      expect(group.keyGraphicSrc, isNull);
     });
 
     test('toJson writes PascalCase keys', () {
@@ -60,6 +82,10 @@ void main() {
         name: 'CG',
         leaderUserIds: ['2'],
         leaderAuthIds: ['auth-2'],
+        media: [
+          {'src': 'drive/cover', 'type': 'img', 'title': 'Group'},
+        ],
+        keyGraphicSrc: 'drive/cover',
         meetingWeekday: DateTime.friday,
         meetingTime: '20:00',
         createdAt: DateTime(2026, 1, 1),
@@ -74,6 +100,31 @@ void main() {
       expect(json['MeetingTime'], '20:00');
       expect(json['Status'], CellGroupStatus.active);
       expect(json['CreatedAt'], isA<Timestamp>());
+      expect(json['Media'], hasLength(1));
+      expect(json['KeyGraphicSrc'], 'drive/cover');
+    });
+
+    test('media helpers enforce capacity and key graphic sync', () {
+      final group = CellGroup(id: '1', name: 'CG');
+      expect(
+        group.addMediaItem({'src': 'a', 'type': 'img'}),
+        isTrue,
+      );
+      expect(group.setKeyGraphicSrc('a'), isTrue);
+      expect(group.keyGraphicSrc, 'a');
+
+      expect(group.setKeyGraphicSrc('missing'), isFalse);
+      expect(group.keyGraphicSrc, 'a');
+
+      group.removeMediaItem('a');
+      expect(group.media, isEmpty);
+      expect(group.keyGraphicSrc, isNull);
+
+      for (var i = 0; i < CellGroup.maxMediaItems; i++) {
+        expect(group.addMediaItem({'src': 'src-$i', 'type': 'img'}), isTrue);
+      }
+      expect(group.addMediaItem({'src': 'overflow', 'type': 'img'}), isFalse);
+      expect(group.addMediaItem({'src': 'src-0', 'type': 'img'}), isFalse);
     });
 
     test('setLeaders filters empty auth ids', () {

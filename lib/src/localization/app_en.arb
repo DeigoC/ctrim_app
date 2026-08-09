@@ -669,5 +669,33 @@
   "cellGroupsGuestSignInHint": "Sign in to see more details about this group.",
   "@cellGroupsGuestSignInHint": {
     "description": "Hint on CG detail for guests"
+  },
+  "cellGroupsPhotosTitle": "Photos",
+  "@cellGroupsPhotosTitle": {
+    "description": "Section title for cell group photo gallery"
+  },
+  "cellGroupsPhotosHint": "Add a wide group photo as the cover for the detail page. Catalogue tiles still show the first leader’s portrait.",
+  "@cellGroupsPhotosHint": {
+    "description": "Helper under Photos on edit cell group"
+  },
+  "cellGroupsPhotosEmpty": "No photos yet.",
+  "@cellGroupsPhotosEmpty": {
+    "description": "Empty state when editing CG photos"
+  },
+  "cellGroupsAddPhoto": "Add photo",
+  "@cellGroupsAddPhoto": {
+    "description": "Button to add a cell group photo"
+  },
+  "cellGroupsCoverPhoto": "Cover",
+  "@cellGroupsCoverPhoto": {
+    "description": "Badge / label for the key graphic on a cell group"
+  },
+  "cellGroupsSetAsCover": "Tap to set as cover",
+  "@cellGroupsSetAsCover": {
+    "description": "Hint on a non-cover photo in CG edit"
+  },
+  "cellGroupsPhotosImagesOnly": "Cell groups only support images for now.",
+  "@cellGroupsPhotosImagesOnly": {
+    "description": "SnackBar when a video is added to a cell group"
   }
 }

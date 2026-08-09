@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
@@ -10,9 +11,10 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
-import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
+import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/user_avatar.dart';
@@ -220,109 +222,227 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     final canEdit = appContext.currentUser.canManageCellGroups;
     final canRoster = _canManageRoster(appContext, group);
     final showRoster = _canViewRoster(appContext, group, _roster);
-    final gutter = ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasKeyGraphic = group.hasKeyGraphic;
+    final keySrc = group.keyGraphicSrc;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(group.name),
-        actions: [
-          if (canEdit)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: l10n.cellGroupsEdit,
-              onPressed: () async {
-                final updated = await Navigator.push<bool>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditCellGroupPage(existing: group),
-                  ),
-                );
-                if (updated == true && mounted) _load();
-              },
-            ),
-          if (canRoster)
-            IconButton(
-              icon: const Icon(Icons.group_outlined),
-              tooltip: l10n.cellGroupsManageRoster,
-              onPressed: () => _manageRoster(appContext, group),
-            ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: _load,
-        child: ResponsiveContent(
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 32),
-            children: [
-              if (group.summary.isNotEmpty)
-                Text(group.summary, style: Theme.of(context).textTheme.bodyLarge),
-              if (group.cadenceLabel.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.schedule, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 8),
-                    Text(group.cadenceLabel),
-                  ],
-                ),
-              ],
-              if (!isGuest) ...[
-                const SizedBox(height: 8),
-                Text(l10n.cellGroupsMemberCount(group.memberCount)),
-              ],
-              if (isGuest) ...[
-                const SizedBox(height: 16),
-                Text(
-                  l10n.cellGroupsGuestSignInHint,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              expandedHeight:
+                  hasKeyGraphic ? MediaQuery.sizeOf(context).height * 0.28 : null,
+              title: Text(group.name),
+              flexibleSpace: hasKeyGraphic && keySrc != null
+                  ? FlexibleSpaceBar(
+                      background: GestureDetector(
+                        onTap: () => _openPhoto(keySrc),
+                        child: CachedImageWidget(
+                          imageUrl: keySrc,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
                       ),
-                ),
-              ],
-              if (!isGuest) ...[
-                const SizedBox(height: 20),
-                Text(
-                  l10n.cellGroupsLeadersLabel,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                ..._buildLeaders(appContext, group),
-              ],
-              if (showRoster && _roster != null) ...[
-                const SizedBox(height: 20),
-                Text(
-                  l10n.cellGroupsRosterTitle,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                ..._buildRosterPreview(
-                  appContext: appContext,
-                  group: group,
-                  roster: _roster!,
-                  canManage: canRoster,
-                ),
+                    )
+                  : null,
+              actions: [
+                if (canEdit)
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: l10n.cellGroupsEdit,
+                    onPressed: () async {
+                      final updated = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditCellGroupPage(existing: group),
+                        ),
+                      );
+                      if (updated == true && mounted) _load();
+                    },
+                  ),
                 if (canRoster)
-                  TextButton(
+                  IconButton(
+                    icon: const Icon(Icons.group_outlined),
+                    tooltip: l10n.cellGroupsManageRoster,
                     onPressed: () => _manageRoster(appContext, group),
-                    child: Text(l10n.cellGroupsManageRoster),
                   ),
               ],
-              const SizedBox(height: 20),
-              Text(
-                l10n.cellGroupsMeetingTrail,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              if (_trail.isEmpty)
-                Text(
-                  l10n.cellGroupsMeetingTrailEmpty,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            SliverToBoxAdapter(
+              child: ResponsiveContent(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (group.summary.isNotEmpty)
+                        Text(group.summary, style: theme.textTheme.bodyLarge),
+                      if (group.cadenceLabel.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.schedule, size: 18, color: colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 8),
+                            Text(group.cadenceLabel),
+                          ],
+                        ),
+                      ],
+                      if (!isGuest) ...[
+                        const SizedBox(height: 8),
+                        Text(l10n.cellGroupsMemberCount(group.memberCount)),
+                      ],
+                      if (isGuest) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.cellGroupsGuestSignInHint,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                      if (group.media.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.cellGroupsPhotosTitle,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildGallery(group),
+                      ],
+                      if (!isGuest) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.cellGroupsLeadersLabel,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        ..._buildLeaders(appContext, group),
+                      ],
+                      if (showRoster && _roster != null) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.cellGroupsRosterTitle,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        ..._buildRosterPreview(
+                          appContext: appContext,
+                          group: group,
+                          roster: _roster!,
+                          canManage: canRoster,
+                        ),
+                        if (canRoster)
+                          TextButton(
+                            onPressed: () => _manageRoster(appContext, group),
+                            child: Text(l10n.cellGroupsManageRoster),
+                          ),
+                      ],
+                      const SizedBox(height: 20),
+                      Text(
+                        l10n.cellGroupsMeetingTrail,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
-                )
-              else
-                ..._trail.map((head) => _buildMeetingPostCard(head)),
-            ],
+                      const SizedBox(height: 8),
+                      if (_trail.isEmpty)
+                        Text(
+                          l10n.cellGroupsMeetingTrailEmpty,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                        )
+                      else
+                        ..._trail.map((head) => _buildMeetingPostCard(head)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGallery(CellGroup group) {
+    return SizedBox(
+      height: 112,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: group.media.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final src = (group.media[index]['src'] as String?) ?? '';
+          if (src.isEmpty) return const SizedBox.shrink();
+          final isCover = src == group.keyGraphicSrc;
+          return GestureDetector(
+            onTap: () => _openPhoto(src),
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedImageWidget(
+                      imageUrl: src,
+                      fit: BoxFit.cover,
+                      heroTag: '${group.id}-$src',
+                    ),
+                  ),
+                  if (isCover)
+                    Positioned(
+                      left: 6,
+                      bottom: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          AppLocalizations.of(context)!.cellGroupsCoverPhoto,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openPhoto(String src) {
+    final groupId = _group?.id ?? widget.groupId;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+          ),
+          body: PhotoView(
+            imageProvider: NetworkImage(NetworkImageHelper.getImageUrl(src)),
+            heroAttributes: PhotoViewHeroAttributes(tag: '$groupId-$src'),
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 2.5,
           ),
         ),
       ),

@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../src/localization/app_localizations.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/media/cached_image_widget.dart';
 import '../information/info_tab_widgets.dart';
 
 /// Intro / teaching content for Cell Groups (first tab).
-///
-/// Copy and media are placeholders for now — flesh out later.
 class CellGroupsOverviewTab extends StatelessWidget {
   const CellGroupsOverviewTab({super.key});
+
+  /// Same Drive `uc?id=` form as Information → About hardcoded images.
+  /// [CachedImageWidget] applies the web CORS proxy and local byte cache.
+  static const String _overviewImage =
+      'https://drive.google.com/uc?id=1nG1r-fbzkxJxD6qa9jsvcubqCbye2DOS';
 
   @override
   Widget build(BuildContext context) {
@@ -98,9 +102,14 @@ class CellGroupsOverviewTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _OverviewImagePlaceholder(
-                    height: isWideScreen ? 250 : 200,
-                    label: l10n.cellGroupsOverviewImagePlaceholder,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: CachedImageWidget(
+                      imageUrl: _overviewImage,
+                      height: isWideScreen ? 250 : 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   InfoSectionCard(
@@ -120,52 +129,6 @@ class CellGroupsOverviewTab extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _OverviewImagePlaceholder extends StatelessWidget {
-  const _OverviewImagePlaceholder({
-    required this.height,
-    required this.label,
-  });
-
-  final double height;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: height,
-        width: double.infinity,
-        color: colorScheme.surfaceContainerHighest,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 48,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

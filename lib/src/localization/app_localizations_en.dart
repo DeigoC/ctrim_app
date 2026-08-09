@@ -503,4 +503,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cellGroupsGuestSignInHint =>
       'Sign in to see more details about this group.';
+
+  @override
+  String get cellGroupsPhotosTitle => 'Photos';
+
+  @override
+  String get cellGroupsPhotosHint =>
+      'Add a wide group photo as the cover for the detail page. Catalogue tiles still show the first leader’s portrait.';
+
+  @override
+  String get cellGroupsPhotosEmpty => 'No photos yet.';
+
+  @override
+  String get cellGroupsAddPhoto => 'Add photo';
+
+  @override
+  String get cellGroupsCoverPhoto => 'Cover';
+
+  @override
+  String get cellGroupsSetAsCover => 'Tap to set as cover';
+
+  @override
+  String get cellGroupsPhotosImagesOnly =>
+      'Cell groups only support images for now.';
 }

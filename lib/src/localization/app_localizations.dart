@@ -987,6 +987,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in to see more details about this group.'**
   String get cellGroupsGuestSignInHint;
+
+  /// Section title for cell group photo gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get cellGroupsPhotosTitle;
+
+  /// Helper under Photos on edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Add a wide group photo as the cover for the detail page. Catalogue tiles still show the first leader’s portrait.'**
+  String get cellGroupsPhotosHint;
+
+  /// Empty state when editing CG photos
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet.'**
+  String get cellGroupsPhotosEmpty;
+
+  /// Button to add a cell group photo
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get cellGroupsAddPhoto;
+
+  /// Badge / label for the key graphic on a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get cellGroupsCoverPhoto;
+
+  /// Hint on a non-cover photo in CG edit
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to set as cover'**
+  String get cellGroupsSetAsCover;
+
+  /// SnackBar when a video is added to a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups only support images for now.'**
+  String get cellGroupsPhotosImagesOnly;
 }
 
 class _AppLocalizationsDelegate

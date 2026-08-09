@@ -13,7 +13,8 @@ The Cell Groups section has two areas (like CTRIM’s About / Churches tabs):
 
 Also in the app and being tested:
 
-- Group details for signed-in people (richer than the public card)  
+- Group details for signed-in people (richer than the public card), including an optional wide **cover photo** and photo gallery when area admins have added them  
+- Catalogue cards still show the **first leader’s portrait** (not the cover photo)  
 - Leaders and roster information for organisers who have access  
 - Roster members are people with an app profile — including **temporary profiles** leaders create when someone is not registered yet (forename, surname, and location). Leaders manage the roster from the group detail via the people picker (not a separate roster editor).  
 - Links between groups and related event posts / meetings where set up  

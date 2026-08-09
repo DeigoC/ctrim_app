@@ -7,8 +7,11 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/event_context.dart';
+import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/role_access_gate.dart';
+import '../events/add_media_file_page.dart';
 import '../personal/select_users_page.dart';
 
 /// Area-admin create / edit for a cell group profile + leadership.
@@ -29,6 +32,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   late String _status;
   int? _weekday;
   late List<String> _leaderUserIds;
+  late List<Map<String, dynamic>> _media;
+  String? _keyGraphicSrc;
   bool _saving = false;
 
   bool get _isEditing => widget.existing != null;
@@ -43,6 +48,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     _status = existing?.status ?? CellGroupStatus.active;
     _weekday = existing?.meetingWeekday;
     _leaderUserIds = List<String>.from(existing?.leaderUserIds ?? const []);
+    _media = existing?.media.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+    _keyGraphicSrc = existing?.keyGraphicSrc;
   }
 
   @override
@@ -56,6 +63,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final gutter = ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width);
 
     return RoleAccessGate(
@@ -150,10 +158,41 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              Text(
+                l10n.cellGroupsPhotosTitle,
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.cellGroupsPhotosHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_media.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    l10n.cellGroupsPhotosEmpty,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              else
+                ..._media.map(_buildMediaTile),
+              if (_media.length < CellGroup.maxMediaItems)
+                OutlinedButton.icon(
+                  onPressed: _addPhoto,
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: Text(l10n.cellGroupsAddPhoto),
+                ),
               const SizedBox(height: 16),
               Text(
                 l10n.cellGroupsLeadersLabel,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
@@ -177,6 +216,108 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildMediaTile(Map<String, dynamic> item) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final src = (item['src'] as String?) ?? '';
+    final isCover = src.isNotEmpty && src == _keyGraphicSrc;
+    final title = (item['title'] as String?)?.trim();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest,
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: src.isEmpty
+                ? ColoredBox(
+                    color: colorScheme.surfaceContainerHigh,
+                    child: Icon(Icons.image_outlined, color: colorScheme.onSurfaceVariant),
+                  )
+                : Image.network(
+                    NetworkImageHelper.getImageUrl(src),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => ColoredBox(
+                      color: colorScheme.surfaceContainerHigh,
+                      child: Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+          ),
+        ),
+        title: Text(
+          (title != null && title.isNotEmpty) ? title : (isCover ? l10n.cellGroupsCoverPhoto : 'Image'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          isCover ? l10n.cellGroupsCoverPhoto : l10n.cellGroupsSetAsCover,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: isCover ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            fontWeight: isCover ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+        onTap: src.isEmpty
+            ? null
+            : () => setState(() {
+                  _keyGraphicSrc = isCover ? null : src;
+                }),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete_outline, size: 20),
+          color: colorScheme.error,
+          tooltip: 'Remove',
+          onPressed: () => setState(() {
+            _media.removeWhere((e) => e['src'] == src);
+            if (_keyGraphicSrc == src) _keyGraphicSrc = null;
+          }),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addPhoto() async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddMediaFilePage(
+          eventContext: EventContext.adding(currentUserID: appContext.currentUser.id),
+          returnResultOnly: true,
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+
+    final type = (result['type'] as String?) ?? 'img';
+    if (type != 'img') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.cellGroupsPhotosImagesOnly)),
+      );
+      return;
+    }
+
+    final src = (result['src'] as String?) ?? '';
+    if (src.isEmpty) return;
+    if (_media.any((e) => e['src'] == src)) return;
+    if (_media.length >= CellGroup.maxMediaItems) return;
+
+    setState(() {
+      _media.add({
+        'src': src,
+        'type': 'img',
+        'title': result['title'] ?? '',
+        'thumbnailSrc': result['thumbnailSrc'],
+      });
+      _keyGraphicSrc ??= src;
+    });
   }
 
   Future<void> _pickLeaders() async {
@@ -205,6 +346,10 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
         .map((id) => _userById(id)?.authID ?? '')
         .where((id) => id.isNotEmpty)
         .toList();
+    final mediaCopy = _media.map((e) => Map<String, dynamic>.from(e)).toList();
+    final keySrc = (_keyGraphicSrc != null && mediaCopy.any((e) => e['src'] == _keyGraphicSrc))
+        ? _keyGraphicSrc
+        : null;
 
     setState(() => _saving = true);
     final ok = await DialogManager.runWithProgressDialog(
@@ -220,6 +365,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           group.setMeetingTime(time);
           group.setStatus(_status);
           group.setLeaders(userIds: _leaderUserIds, authIds: authIds);
+          group.setMedia(mediaCopy);
+          group.setKeyGraphicSrc(keySrc);
           await db.updateGroup(group);
           appContext.addOrUpdateCellGroup(group);
         } else {
@@ -229,6 +376,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             location: 'Belfast',
             leaderUserIds: _leaderUserIds,
             leaderAuthIds: authIds,
+            media: mediaCopy,
+            keyGraphicSrc: keySrc,
             status: _status,
             meetingWeekday: _weekday,
             meetingTime: time,
