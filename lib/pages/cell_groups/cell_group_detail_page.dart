@@ -13,6 +13,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
@@ -175,7 +176,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   }) async {
     final ok = await DialogManager.runWithProgressDialog(
       context: context,
-      title: 'Saving roster…',
+      title: 'Saving members…',
       action: () async {
         await CellGroupSupplementalDBManager(group.id).setRoster(roster);
         final count = roster.activeCount;
@@ -224,8 +225,11 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     final showRoster = _canViewRoster(appContext, group, _roster);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
     final hasKeyGraphic = group.hasKeyGraphic;
     final keySrc = group.keyGraphicSrc;
+    final heroHeight = MediaQuery.sizeOf(context).height * (isWide ? 0.32 : 0.28);
 
     return Scaffold(
       body: RefreshIndicator(
@@ -235,10 +239,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           slivers: [
             SliverAppBar(
               pinned: true,
-              expandedHeight:
-                  hasKeyGraphic ? MediaQuery.sizeOf(context).height * 0.28 : null,
+              expandedHeight: (!isWide && hasKeyGraphic) ? heroHeight : null,
               title: Text(group.name),
-              flexibleSpace: hasKeyGraphic && keySrc != null
+              flexibleSpace: (!isWide && hasKeyGraphic && keySrc != null)
                   ? FlexibleSpaceBar(
                       background: GestureDetector(
                         onTap: () => _openPhoto(keySrc),
@@ -251,119 +254,37 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                       ),
                     )
                   : null,
-              actions: [
-                if (canEdit)
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: l10n.cellGroupsEdit,
-                    onPressed: () async {
-                      final updated = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditCellGroupPage(existing: group),
-                        ),
-                      );
-                      if (updated == true && mounted) _load();
-                    },
-                  ),
-                if (canRoster)
-                  IconButton(
-                    icon: const Icon(Icons.group_outlined),
-                    tooltip: l10n.cellGroupsManageRoster,
-                    onPressed: () => _manageRoster(appContext, group),
-                  ),
-              ],
+              actions: _buildAppBarActions(
+                l10n: l10n,
+                appContext: appContext,
+                group: group,
+                canEdit: canEdit,
+                canRoster: canRoster,
+              ),
             ),
+            if (isWide && hasKeyGraphic && keySrc != null)
+              SliverToBoxAdapter(
+                child: _buildWideHero(
+                  keySrc: keySrc,
+                  height: heroHeight,
+                  screenWidth: screenWidth,
+                ),
+              ),
             SliverToBoxAdapter(
               child: ResponsiveContent(
                 narrowPadding: 16,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (group.summary.isNotEmpty)
-                        Text(group.summary, style: theme.textTheme.bodyLarge),
-                      if (group.cadenceLabel.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.schedule, size: 18, color: colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 8),
-                            Text(group.cadenceLabel),
-                          ],
-                        ),
-                      ],
-                      if (!isGuest) ...[
-                        const SizedBox(height: 8),
-                        Text(l10n.cellGroupsMemberCount(group.memberCount)),
-                      ],
-                      if (isGuest) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.cellGroupsGuestSignInHint,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                      if (group.media.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          l10n.cellGroupsPhotosTitle,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildGallery(group),
-                      ],
-                      if (!isGuest) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          l10n.cellGroupsLeadersLabel,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        ..._buildLeaders(appContext, group),
-                      ],
-                      if (showRoster && _roster != null) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          l10n.cellGroupsRosterTitle,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        ..._buildRosterPreview(
-                          appContext: appContext,
-                          group: group,
-                          roster: _roster!,
-                          canManage: canRoster,
-                        ),
-                        if (canRoster)
-                          TextButton(
-                            onPressed: () => _manageRoster(appContext, group),
-                            child: Text(l10n.cellGroupsManageRoster),
-                          ),
-                      ],
-                      const SizedBox(height: 20),
-                      Text(
-                        l10n.cellGroupsMeetingTrail,
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_trail.isEmpty)
-                        Text(
-                          l10n.cellGroupsMeetingTrailEmpty,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                        )
-                      else
-                        ..._trail.map((head) => _buildMeetingPostCard(head)),
-                    ],
+                  padding: EdgeInsets.fromLTRB(0, isWide ? 20 : 16, 0, 32),
+                  child: _buildDetailSections(
+                    l10n: l10n,
+                    appContext: appContext,
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    group: group,
+                    isGuest: isGuest,
+                    canRoster: canRoster,
+                    showRoster: showRoster,
+                    isWide: isWide,
                   ),
                 ),
               ),
@@ -374,9 +295,278 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     );
   }
 
-  Widget _buildGallery(CellGroup group) {
+  List<Widget> _buildAppBarActions({
+    required AppLocalizations l10n,
+    required AppContext appContext,
+    required CellGroup group,
+    required bool canEdit,
+    required bool canRoster,
+  }) {
+    return [
+      if (canEdit)
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: l10n.cellGroupsEdit,
+          onPressed: () async {
+            final updated = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditCellGroupPage(existing: group),
+              ),
+            );
+            if (updated == true && mounted) _load();
+          },
+        ),
+      if (canRoster)
+        IconButton(
+          icon: const Icon(Icons.group_outlined),
+          tooltip: l10n.cellGroupsManageRoster,
+          onPressed: () => _manageRoster(appContext, group),
+        ),
+    ];
+  }
+
+  Widget _buildWideHero({
+    required String keySrc,
+    required double height,
+    required double screenWidth,
+  }) {
+    final gutter = ResponsiveLayout.horizontalGutter(screenWidth, narrowPadding: 16);
+    final maxWidth = ResponsiveLayout.maxContentWidth(screenWidth);
+    final sidePad = screenWidth > maxWidth ? (screenWidth - maxWidth) / 2 : gutter;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(sidePad, 8, sidePad, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          height: height,
+          width: double.infinity,
+          child: GestureDetector(
+            onTap: () => _openPhoto(keySrc),
+            child: CachedImageWidget(
+              imageUrl: keySrc,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: height,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailSections({
+    required AppLocalizations l10n,
+    required AppContext appContext,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required CellGroup group,
+    required bool isGuest,
+    required bool canRoster,
+    required bool showRoster,
+    required bool isWide,
+  }) {
+    final aboutCard = _CgSectionCard(
+      title: l10n.cellGroupsAboutTitle,
+      child: _buildAboutBody(
+        l10n: l10n,
+        theme: theme,
+        colorScheme: colorScheme,
+        group: group,
+        isGuest: isGuest,
+      ),
+    );
+    final photosCard = group.media.isEmpty
+        ? null
+        : _CgSectionCard(
+            title: l10n.cellGroupsPhotosTitle,
+            child: _buildGallery(group, isWide: isWide),
+          );
+    final leadersCard = isGuest
+        ? null
+        : _CgSectionCard(
+            title: l10n.cellGroupsLeadersLabel,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _buildLeaders(appContext, group),
+            ),
+          );
+    final membersCard = (showRoster && _roster != null)
+        ? _CgSectionCard(
+            title: l10n.cellGroupsRosterTitle,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ..._buildRosterPreview(
+                  appContext: appContext,
+                  group: group,
+                  roster: _roster!,
+                  canManage: canRoster,
+                ),
+                if (canRoster) ...[
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _manageRoster(appContext, group),
+                      icon: const Icon(Icons.group_outlined, size: 18),
+                      label: Text(l10n.cellGroupsManageRoster),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          )
+        : null;
+    final meetingsBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.cellGroupsMeetingTrail,
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        if (_trail.isEmpty)
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: colorScheme.outlineVariant),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.cellGroupsMeetingTrailEmpty,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+          )
+        else
+          ..._trail.map((head) => _buildMeetingPostCard(head)),
+      ],
+    );
+
+    final peopleColumn = <Widget>[
+      if (leadersCard != null) leadersCard,
+      if (leadersCard != null && membersCard != null) const SizedBox(height: 12),
+      if (membersCard != null) membersCard,
+    ];
+
+    if (!isWide || peopleColumn.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          aboutCard,
+          if (photosCard != null) ...[
+            const SizedBox(height: 12),
+            photosCard,
+          ],
+          if (leadersCard != null) ...[
+            const SizedBox(height: 12),
+            leadersCard,
+          ],
+          if (membersCard != null) ...[
+            const SizedBox(height: 12),
+            membersCard,
+          ],
+          const SizedBox(height: 20),
+          meetingsBlock,
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  aboutCard,
+                  if (photosCard != null) ...[
+                    const SizedBox(height: 12),
+                    photosCard,
+                  ],
+                  const SizedBox(height: 20),
+                  meetingsBlock,
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: peopleColumn,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAboutBody({
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required CellGroup group,
+    required bool isGuest,
+  }) {
+    final location = group.location.trim();
+    final cadence = group.cadenceLabel;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (group.summary.isNotEmpty) ...[
+          Text(group.summary, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: 12),
+        ],
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (location.isNotEmpty)
+              _CgMetaChip(
+                icon: Icons.location_on_outlined,
+                label: location,
+              ),
+            if (cadence.isNotEmpty)
+              _CgMetaChip(
+                icon: Icons.schedule,
+                label: cadence,
+              ),
+            if (!isGuest)
+              _CgMetaChip(
+                icon: Icons.people_outline,
+                label: l10n.cellGroupsMemberCount(group.memberCount),
+              ),
+          ],
+        ),
+        if (isGuest) ...[
+          const SizedBox(height: 12),
+          Text(
+            l10n.cellGroupsGuestSignInHint,
+            style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGallery(CellGroup group, {required bool isWide}) {
     return SizedBox(
-      height: 112,
+      height: isWide ? 148 : 112,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: group.media.length,
@@ -545,5 +735,75 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       if (u.id == id) return u;
     }
     return null;
+  }
+}
+
+class _CgSectionCard extends StatelessWidget {
+  const _CgSectionCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CgMetaChip extends StatelessWidget {
+  const _CgMetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

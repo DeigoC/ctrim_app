@@ -670,6 +670,10 @@
   "@cellGroupsGuestSignInHint": {
     "description": "Hint on CG detail for guests"
   },
+  "cellGroupsAboutTitle": "About",
+  "@cellGroupsAboutTitle": {
+    "description": "Section title for CG summary / cadence on detail"
+  },
   "cellGroupsPhotosTitle": "Photos",
   "@cellGroupsPhotosTitle": {
     "description": "Section title for cell group photo gallery"

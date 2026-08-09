@@ -505,6 +505,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign in to see more details about this group.';
 
   @override
+  String get cellGroupsAboutTitle => 'About';
+
+  @override
   String get cellGroupsPhotosTitle => 'Photos';
 
   @override

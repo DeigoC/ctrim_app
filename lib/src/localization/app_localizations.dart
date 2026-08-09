@@ -988,6 +988,12 @@ abstract class AppLocalizations {
   /// **'Sign in to see more details about this group.'**
   String get cellGroupsGuestSignInHint;
 
+  /// Section title for CG summary / cadence on detail
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get cellGroupsAboutTitle;
+
   /// Section title for cell group photo gallery
   ///
   /// In en, this message translates to:
