@@ -9,7 +9,7 @@
 The Cell Groups section has two areas (like CTRIM’s About / Churches tabs):
 
 - **Overview** — a short introduction to cell groups (scripture and fuller copy still being filled in)  
-- **Groups** — the catalogue list of cell groups members and guests can browse  
+- **Groups** — the catalogue list of cell groups members and guests can browse (larger cards with leader photo, location on the title line, description, and — when signed in — member avatar stacks)  
 
 Also in the app and being tested:
 

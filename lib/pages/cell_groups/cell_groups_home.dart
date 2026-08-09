@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/cell_group_db_manager.dart';
+import '../../models/cell_group.dart';
+import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
@@ -31,6 +33,9 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
   bool _loading = true;
   Object? _error;
 
+  /// Linked roster members per group id (signed-in only; empty for guests).
+  Map<String, List<User>> _rosterUsersByGroupId = const {};
+
   @override
   void initState() {
     super.initState();
@@ -54,15 +59,53 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
       _error = null;
     });
     try {
+      final appContext = Provider.of<AppContext>(context, listen: false);
       final groups = await _db.fetchAllGroups();
       if (!mounted) return;
-      Provider.of<AppContext>(context, listen: false).setAllCellGroups(groups);
+      appContext.setAllCellGroups(groups);
+
+      final rosterUsers = await _fetchRosterUsers(
+        appContext: appContext,
+        groups: groups,
+      );
+      if (!mounted) return;
+      setState(() => _rosterUsersByGroupId = rosterUsers);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Parallel roster reads for non-archived groups when signed in.
+  Future<Map<String, List<User>>> _fetchRosterUsers({
+    required AppContext appContext,
+    required List<CellGroup> groups,
+  }) async {
+    if (appContext.isCurrentUserGuest) return const {};
+
+    final active = groups.where((g) => !g.isArchived).toList();
+    if (active.isEmpty) return const {};
+
+    final entries = await Future.wait(active.map((group) async {
+      try {
+        final roster =
+            await CellGroupSupplementalDBManager(group.id).fetchRoster();
+        final users = <User>[];
+        for (final member in roster.activeMembers) {
+          if (!member.isLinkedUser) continue;
+          final match = appContext.allUsers.where((u) => u.id == member.userId);
+          if (match.isNotEmpty) users.add(match.first);
+          if (users.length >= 8) break;
+        }
+        return MapEntry(group.id, users);
+      } catch (_) {
+        return MapEntry(group.id, <User>[]);
+      }
+    }));
+
+    return Map<String, List<User>>.fromEntries(entries);
   }
 
   List<({String label, IconData icon})> _sections(AppLocalizations l10n) => [
@@ -259,6 +302,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
             loading: _loading,
             error: _error,
             onRefresh: _refresh,
+            rosterUsersByGroupId: _rosterUsersByGroupId,
           ),
         ],
       ),
