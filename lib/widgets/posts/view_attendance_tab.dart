@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
+import '../../firebase/db_managers/cell_group_db_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_attendance.dart';
@@ -17,7 +18,7 @@ import '../../utility/placeholder_user_permissions.dart';
 import '../load_progress_body.dart';
 import '../user_avatar.dart';
 
-/// People tab: interested (self-serve) + attendees (author/contributor managed).
+/// People tab: interested (self-serve) + expected checklist + attendees (author/contributor).
 class ViewAttendanceTab extends StatefulWidget {
   const ViewAttendanceTab({
     super.key,
@@ -61,7 +62,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     });
 
     try {
-      final attendance = await EventSupplementalDBManager(widget.eventContext.id).fetchAttendance();
+      final attendance =
+          await EventSupplementalDBManager(widget.eventContext.id).fetchAttendance();
       if (!mounted) return;
       widget.eventContext.setFetchedAttendance(attendance);
       setState(() => _loading = false);
@@ -83,7 +85,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final head = widget.eventContext.head;
 
     if (!_authManager.isSignedIn) {
-      return _buildGuestBody(theme, colorScheme, head.interestedCount, head.attendeeCount);
+      return _buildGuestBody(
+          theme, colorScheme, head.interestedCount, head.attendeeCount);
     }
 
     if (_loading || _loadError != null) {
@@ -98,12 +101,17 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     }
 
     final attendance = widget.eventContext.attendance ?? EventAttendance();
-    final canManage = widget.eventContext.isUserAdminOfPost(appContext.currentUser.id);
+    final canManage =
+        widget.eventContext.isUserAdminOfPost(appContext.currentUser.id);
     final authId = _authManager.currentAuthUID;
     final isInterested = attendance.hasInterest(authId);
     final hasInterested = attendance.interested.isNotEmpty;
+    final hasExpected = attendance.expectedUserIds.isNotEmpty;
     final hasAttendees = attendance.attendees.isNotEmpty;
-    final attendeeLabel = widget.eventContext.head.isRecent ? 'Attended' : 'Attending';
+    final attendeeLabel =
+        widget.eventContext.head.isRecent ? 'Attended' : 'Attending';
+    final hasLinkedCellGroups =
+        widget.eventContext.head.cellGroupIDs.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -131,6 +139,68 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             ),
           ),
         ],
+        if (canManage || hasExpected) ...[
+          const SizedBox(height: 16),
+          _buildSectionCard(
+            theme,
+            colorScheme,
+            icon: Icons.checklist,
+            title: 'Expected (${attendance.expectedCount})',
+            trailing: canManage
+                ? IconButton(
+                    tooltip: 'Manage expected',
+                    onPressed: _busy ? null : _manageExpected,
+                    icon: const Icon(Icons.edit_outlined),
+                  )
+                : null,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!hasExpected)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'No expected attendees yet. Add the usual people, or fill from a linked cell group.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                else
+                  for (final userId in attendance.expectedUserIds)
+                    _buildExpectedTile(
+                      theme,
+                      colorScheme,
+                      appContext,
+                      userId,
+                      checked: attendance.hasUserAttendee(userId),
+                      canManage: canManage,
+                    ),
+                if (canManage) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : _manageExpected,
+                        icon: const Icon(Icons.person_add_alt_1, size: 18),
+                        label: Text(
+                            hasExpected ? 'Edit expected' : 'Add expected'),
+                      ),
+                      if (hasLinkedCellGroups)
+                        OutlinedButton.icon(
+                          onPressed: _busy ? null : _seedExpectedFromCellGroups,
+                          icon: const Icon(Icons.groups_outlined, size: 18),
+                          label: const Text('Fill from cell group'),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
         if (hasAttendees) ...[
           const SizedBox(height: 16),
           _buildSectionCard(
@@ -148,7 +218,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             child: Column(
               children: [
                 for (final entry in attendance.attendees)
-                  _buildAttendeeTile(theme, colorScheme, appContext, entry, canManage: canManage),
+                  _buildAttendeeTile(
+                      theme, colorScheme, appContext, entry,
+                      canManage: canManage),
               ],
             ),
           ),
@@ -166,13 +238,16 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
 
   bool _isAlreadyAttending(EventAttendance attendance, InterestedEntry entry) {
     if (entry.userId != null) {
-      return attendance.attendees.any((a) => a.isUser && a.userId == entry.userId);
+      return attendance.attendees
+          .any((a) => a.isUser && a.userId == entry.userId);
     }
     return false;
   }
 
-  Widget _buildGuestBody(ThemeData theme, ColorScheme colorScheme, int interested, int attending) {
-    final attendeeWord = widget.eventContext.head.isRecent ? 'attended' : 'attending';
+  Widget _buildGuestBody(
+      ThemeData theme, ColorScheme colorScheme, int interested, int attending) {
+    final attendeeWord =
+        widget.eventContext.head.isRecent ? 'attended' : 'attending';
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -188,26 +263,30 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
               ? 'Create an account or sign in to mark interest, follow updates, and see names.'
               : '$interested interested · $attending $attendeeWord.\n'
                   'Sign in to see names and mark your own interest.',
-          style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 24),
         FilledButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const GuestRegistrationPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const GuestRegistrationPage()));
           },
           child: const Text('Create account'),
         ),
         const SizedBox(height: 8),
         Text(
           'Already registered? Sign in from the Personal tab.',
-          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: colorScheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  Widget _buildInterestToggle(ThemeData theme, ColorScheme colorScheme, bool isInterested) {
+  Widget _buildInterestToggle(
+      ThemeData theme, ColorScheme colorScheme, bool isInterested) {
     return Card(
       elevation: 0,
       color: colorScheme.primaryContainer.withValues(alpha: 0.35),
@@ -224,7 +303,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
               ? 'You will get updates when this post changes.'
               : 'Show up publicly and follow updates for this post.',
         ),
-        secondary: Icon(isInterested ? Icons.favorite : Icons.favorite_border, color: colorScheme.primary),
+        secondary: Icon(
+            isInterested ? Icons.favorite : Icons.favorite_border,
+            color: colorScheme.primary),
       ),
     );
   }
@@ -253,7 +334,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
                 Icon(icon, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  child: Text(title,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
                 ),
                 if (trailing != null) trailing,
               ],
@@ -263,6 +346,35 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildExpectedTile(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AppContext appContext,
+    String userId, {
+    required bool checked,
+    required bool canManage,
+  }) {
+    final name = _displayNameForUserId(appContext, userId);
+    return CheckboxListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      value: checked,
+      onChanged: canManage && !_busy
+          ? (value) => _toggleExpectedChecked(userId, value ?? false)
+          : null,
+      secondary: _avatarForUserId(
+          appContext, userId, name, colorScheme.secondaryContainer),
+      title: Text(name),
+      subtitle: Text(
+        checked
+            ? (widget.eventContext.head.isRecent
+                ? 'Marked attended'
+                : 'Marked attending')
+            : 'Expected',
+      ),
+      controlAffinity: ListTileControlAffinity.leading,
     );
   }
 
@@ -276,11 +388,14 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-      leading: _avatarForUserId(appContext, entry.userId, entry.displayName, colorScheme.secondaryContainer),
+      leading: _avatarForUserId(appContext, entry.userId, entry.displayName,
+          colorScheme.secondaryContainer),
       title: Text(entry.displayName),
       subtitle: Text(
         alreadyAttending
-            ? (widget.eventContext.head.isRecent ? 'Interested · also attended' : 'Interested · also attending')
+            ? (widget.eventContext.head.isRecent
+                ? 'Interested · also attended'
+                : 'Interested · also attending')
             : 'Interested',
       ),
       trailing: canManage
@@ -289,14 +404,17 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
               children: [
                 if (!alreadyAttending && _canPromote(entry, appContext))
                   IconButton(
-                    tooltip: widget.eventContext.head.isRecent ? 'Mark as attended' : 'Mark as attending',
+                    tooltip: widget.eventContext.head.isRecent
+                        ? 'Mark as attended'
+                        : 'Mark as attending',
                     icon: const Icon(Icons.person_add_alt_1),
                     onPressed: _busy ? null : () => _promoteToAttendee(entry),
                   ),
                 IconButton(
                   tooltip: 'Remove interest',
                   icon: const Icon(Icons.close),
-                  onPressed: _busy ? null : () => _removeInterest(entry.authId),
+                  onPressed:
+                      _busy ? null : () => _removeInterest(entry.authId),
                 ),
               ],
             )
@@ -314,7 +432,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       leading: entry.isUser
-          ? _avatarForUserId(appContext, entry.userId, entry.displayName, colorScheme.tertiaryContainer)
+          ? _avatarForUserId(appContext, entry.userId, entry.displayName,
+              colorScheme.tertiaryContainer)
           : CircleAvatar(
               backgroundColor: colorScheme.tertiaryContainer,
               child: const Icon(Icons.person_outline, size: 20),
@@ -333,7 +452,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
 
   String _attendeeSubtitle(AppContext appContext, AttendeeEntry entry) {
     if (entry.isExternal) {
-      return entry.note?.isNotEmpty == true ? entry.note! : 'Guest (legacy name-only)';
+      return entry.note?.isNotEmpty == true
+          ? entry.note!
+          : 'Guest (legacy name-only)';
     }
     if (entry.userId != null) {
       try {
@@ -366,11 +487,20 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     );
   }
 
+  String _displayNameForUserId(AppContext appContext, String userId) {
+    try {
+      return appContext.getUserFromID(userId).fullname;
+    } catch (_) {
+      return userId;
+    }
+  }
+
   bool _canPromote(InterestedEntry entry, AppContext appContext) {
     return _resolveUserIdForInterest(entry, appContext) != null;
   }
 
-  String? _resolveUserIdForInterest(InterestedEntry entry, AppContext appContext) {
+  String? _resolveUserIdForInterest(
+      InterestedEntry entry, AppContext appContext) {
     if (entry.userId != null && entry.userId!.isNotEmpty) return entry.userId;
     try {
       return appContext.allUsers.firstWhere((u) => u.authID == entry.authId).id;
@@ -401,7 +531,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final authId = _authManager.currentAuthUID;
     final displayName = _resolveDisplayName(appContext);
-    final userId = appContext.isCurrentUserGuest ? null : appContext.currentUser.id;
+    final userId =
+        appContext.isCurrentUserGuest ? null : appContext.currentUser.id;
     final topic = NotificationTopics.postTopic(widget.eventContext.id);
     final webAuthId = kIsWeb ? authId : null;
 
@@ -417,7 +548,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           total: total,
           message: interested ? 'Saving interest…' : 'Removing interest…',
         );
-        final updated = await EventSupplementalDBManager(widget.eventContext.id).setOwnInterest(
+        final updated =
+            await EventSupplementalDBManager(widget.eventContext.id)
+                .setOwnInterest(
           authId: authId,
           displayName: displayName,
           userId: userId,
@@ -428,7 +561,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         onProgress(
           completed: 1,
           total: total,
-          message: interested ? 'Subscribing to updates…' : 'Unsubscribing from updates…',
+          message: interested
+              ? 'Subscribing to updates…'
+              : 'Unsubscribing from updates…',
         );
         if (interested) {
           appContext.sharedPref.addPostBookmark(widget.eventContext.id);
@@ -450,7 +585,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       context: context,
       title: 'Removing…',
       action: () async {
-        final updated = await EventSupplementalDBManager(widget.eventContext.id).removeInterestForAuthId(authId);
+        final updated = await EventSupplementalDBManager(widget.eventContext.id)
+            .removeInterestForAuthId(authId);
         widget.eventContext.setFetchedAttendance(updated);
       },
     );
@@ -485,6 +621,29 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     await _persistAttendees(next);
   }
 
+  Future<void> _toggleExpectedChecked(String userId, bool checked) async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final attendance = widget.eventContext.attendance ?? EventAttendance();
+
+    if (checked) {
+      if (attendance.hasUserAttendee(userId)) return;
+      final name = _displayNameForUserId(appContext, userId);
+      final next = List<AttendeeEntry>.from(attendance.attendees)
+        ..add(AttendeeEntry.user(
+          userId: userId,
+          displayName: name,
+          addedBy: appContext.currentUser.id,
+        ));
+      await _persistAttendees(next);
+      return;
+    }
+
+    final next = attendance.attendees
+        .where((e) => !(e.isUser && e.userId == userId))
+        .toList();
+    await _persistAttendees(next);
+  }
+
   Future<void> _removeAttendee(String id) async {
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final next = attendance.attendees.where((e) => e.id != id).toList();
@@ -497,7 +656,84 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       context: context,
       title: 'Updating attendees…',
       action: () async {
-        final updated = await EventSupplementalDBManager(widget.eventContext.id).saveAttendees(attendees);
+        final updated = await EventSupplementalDBManager(widget.eventContext.id)
+            .saveAttendees(attendees);
+        widget.eventContext.setFetchedAttendance(updated);
+      },
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) widget.onChanged();
+  }
+
+  Future<void> _persistExpected(List<String> expectedUserIds) async {
+    setState(() => _busy = true);
+    final ok = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Updating expected…',
+      action: () async {
+        final updated = await EventSupplementalDBManager(widget.eventContext.id)
+            .saveExpectedUserIds(expectedUserIds);
+        widget.eventContext.setFetchedAttendance(updated);
+      },
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) widget.onChanged();
+  }
+
+  Future<void> _manageExpected() async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final attendance = widget.eventContext.attendance ?? EventAttendance();
+    final authorUid = widget.eventContext.metadata.authorUID;
+
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: List<String>.from(attendance.expectedUserIds),
+          title: 'Expected attendees',
+          includePlaceholders: true,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: appContext.currentUser,
+            postAuthorUid: authorUid,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final previous = attendance.expectedUserIds.toSet();
+    final next = result.toSet();
+    if (previous.length == next.length && previous.containsAll(next)) return;
+
+    await _persistExpected(result);
+  }
+
+  Future<void> _seedExpectedFromCellGroups() async {
+    final cgIds = widget.eventContext.head.cellGroupIDs;
+    if (cgIds.isEmpty) return;
+
+    setState(() => _busy = true);
+    final ok = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Filling from cell group…',
+      action: () async {
+        final ids = <String>{
+          ...?(widget.eventContext.attendance?.expectedUserIds),
+        };
+        for (final cgId in cgIds) {
+          final roster =
+              await CellGroupSupplementalDBManager(cgId).fetchRoster();
+          for (final member in roster.members) {
+            if (member.isLinkedUser && member.isActive) {
+              ids.add(member.userId);
+            }
+          }
+        }
+        final updated = await EventSupplementalDBManager(widget.eventContext.id)
+            .saveExpectedUserIds(ids.toList());
         widget.eventContext.setFetchedAttendance(updated);
       },
     );
@@ -509,7 +745,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   Future<void> _manageAttendees() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final attendance = widget.eventContext.attendance ?? EventAttendance();
-    final selected = attendance.attendees.where((e) => e.isUser && e.userId != null).map((e) => e.userId!).toList();
+    final selected = attendance.attendees
+        .where((e) => e.isUser && e.userId != null)
+        .map((e) => e.userId!)
+        .toList();
 
     final authorUid = widget.eventContext.metadata.authorUID;
     final result = await Navigator.push<List<String>>(
@@ -530,7 +769,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     if (result == null || !mounted) return;
 
     final byId = {
-      for (final e in attendance.attendees.where((e) => e.isUser && e.userId != null)) e.userId!: e,
+      for (final e
+          in attendance.attendees.where((e) => e.isUser && e.userId != null))
+        e.userId!: e,
     };
     // Preserve legacy free-text guests until removed individually.
     final externals = attendance.attendees.where((e) => e.isExternal).toList();

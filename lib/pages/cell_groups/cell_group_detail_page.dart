@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
@@ -14,9 +13,9 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
+import '../../widgets/posts/post_head.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/user_avatar.dart';
-import '../events/view_event_page.dart';
 import '../personal/select_users_page.dart';
 import 'edit_cell_group_page.dart';
 
@@ -322,10 +321,33 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                       ),
                 )
               else
-                ..._trail.map((head) => _MeetingTrailTile(head: head)),
+                ..._trail.map((head) => _buildMeetingPostCard(head)),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMeetingPostCard(EventHead head) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: PostHead(
+        thisHead: head,
+        updatePost: () {
+          if (mounted) setState(() {});
+        },
       ),
     );
   }
@@ -402,30 +424,5 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       if (u.id == id) return u;
     }
     return null;
-  }
-}
-
-class _MeetingTrailTile extends StatelessWidget {
-  const _MeetingTrailTile({required this.head});
-
-  final EventHead head;
-
-  @override
-  Widget build(BuildContext context) {
-    final date = head.eventDate ?? head.recentDate;
-    final formatted = DateFormat.yMMMd().format(date);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.article_outlined),
-      title: Text(head.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(formatted),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head)),
-        );
-      },
-    );
   }
 }

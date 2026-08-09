@@ -56,6 +56,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _tabController = TabController(length: 4, vsync: this);
     _tecTitle = TextEditingController(text: widget.eventContext.head.title);
     _tecSubtitle = TextEditingController(text: widget.eventContext.head.subtitle);
+    // Template-mapped drafts already have title/subtitle/body; evaluate once so
+    // Save appears without requiring an extra field edit.
+    _canSave = _okToSave();
     super.initState();
   }
 

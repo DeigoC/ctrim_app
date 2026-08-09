@@ -4,7 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
-  late List<String> _topics, _tagIDs, _cellGroupIDs, _contributorUIDs, _subtitles;
+  late List<String> _topics,
+      _tagIDs,
+      _cellGroupIDs,
+      _expectedAttendeeUserIDs,
+      _contributorUIDs,
+      _subtitles;
   late List<Map<String, dynamic>> _headMedia, _media, _headMediaPool, _bodyMediaPool;
   late List<Map<String, dynamic>> _logs;
   String? _leadSpeakerUID;
@@ -28,6 +33,9 @@ class PostTemplate {
     _tagIDs = data['TagIDs'] != null ? List<String>.from(data['TagIDs']) : <String>[];
     _cellGroupIDs =
         data['CellGroupIDs'] != null ? List<String>.from(data['CellGroupIDs']) : <String>[];
+    _expectedAttendeeUserIDs = data['ExpectedAttendeeUserIDs'] != null
+        ? List<String>.from(data['ExpectedAttendeeUserIDs'])
+        : <String>[];
     _contributorUIDs = List.from(data['Contributors']);
     _subtitles = data['Subtitles'] != null ? List<String>.from(data['Subtitles']) : <String>[];
     _location = data['Location'];
@@ -95,6 +103,7 @@ class PostTemplate {
       'Topics': _topics,
       'TagIDs': _tagIDs,
       'CellGroupIDs': _cellGroupIDs,
+      'ExpectedAttendeeUserIDs': _expectedAttendeeUserIDs,
       'Contributors': _contributorUIDs,
       'LeadSpeakerUID': _leadSpeakerUID,
       'IsPeriodParent': _isPeriodParent,
@@ -145,6 +154,8 @@ class PostTemplate {
   List<String> get topics => _topics;
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
+  List<String> get expectedAttendeeUserIDs =>
+      UnmodifiableListView(_expectedAttendeeUserIDs);
   List<String> get subtitles => _subtitles;
   String? get leadSpeakerUID => _leadSpeakerUID;
   bool get isPeriodParent => _isPeriodParent;
@@ -155,6 +166,9 @@ class PostTemplate {
   void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
   void setCellGroupIDs(final List<String> cellGroupIDs) =>
       _cellGroupIDs = List<String>.from(cellGroupIDs);
+
+  void setExpectedAttendeeUserIDs(final List<String> userIds) =>
+      _expectedAttendeeUserIDs = List<String>.from(userIds);
 
   /// Prepends a change-history entry (same shape as post [EventLog] entries).
   void addLog({required String log, required String uid, required DateTime ts}) =>

@@ -264,6 +264,7 @@ class EventSupplementalDBManager {
   }
 
   /// Replaces the full attendee list and syncs [AttendeeCount] (staff-managed).
+  /// Preserves [EventAttendance.expectedUserIds] and interest.
   Future<EventAttendance> saveAttendees(final List<AttendeeEntry> attendees) async {
     final firestore = FirebaseFirestore.instance;
     final headRef = firestore.collection('events').doc(_postId);
@@ -275,18 +276,36 @@ class EventSupplementalDBManager {
           ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
           : EventAttendance();
 
-      final updated = EventAttendance.fromMap({
-        'interested': {
-          for (final e in attendance.interested.entries) e.key: e.value.toJson(),
-        },
-        'attendees': attendees.map((e) => e.toJson()).toList(),
-      });
+      final data = attendance.toMutableMap();
+      data['attendees'] = attendees.map((e) => e.toJson()).toList();
+      final updated = EventAttendance.fromMap(data);
 
       tx.set(attRef, updated.toJson());
       tx.update(headRef, {
         'InterestedCount': updated.interestedCount,
         'AttendeeCount': updated.attendeeCount,
       });
+      return updated;
+    });
+  }
+
+  /// Replaces the expected-attendee checklist (staff-managed). Preserves attendees
+  /// and interest; does not change public head counts.
+  Future<EventAttendance> saveExpectedUserIds(final List<String> expectedUserIds) async {
+    final firestore = FirebaseFirestore.instance;
+    final attRef = _colRef.doc('attendance');
+
+    return firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      final attendance = attSnap.exists && attSnap.data() != null
+          ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
+          : EventAttendance();
+
+      final data = attendance.toMutableMap();
+      data['expectedUserIds'] = expectedUserIds;
+      final updated = EventAttendance.fromMap(data);
+
+      tx.set(attRef, updated.toJson());
       return updated;
     });
   }

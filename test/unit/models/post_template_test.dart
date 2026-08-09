@@ -99,6 +99,17 @@ void main() {
         expect(linked.toJson(true)['CellGroupIDs'], ['cg1', 'cg2']);
       });
 
+      test('defaults ExpectedAttendeeUserIDs to empty and reads list', () {
+        final plain = PostTemplate.fromMap(true, 'tpl-plain', baseLocalMap());
+        expect(plain.expectedAttendeeUserIDs, isEmpty);
+
+        final map = baseLocalMap();
+        map['ExpectedAttendeeUserIDs'] = <String>['u1', 'u2'];
+        final withExpected = PostTemplate.fromMap(true, 'tpl-exp', map);
+        expect(withExpected.expectedAttendeeUserIDs, ['u1', 'u2']);
+        expect(withExpected.toJson(true)['ExpectedAttendeeUserIDs'], ['u1', 'u2']);
+      });
+
       test('accepts Hive-style Map<dynamic, dynamic> nested entries', () {
         // Mirrors what Hive returns from box.get — LinkedMap<dynamic, dynamic>
         final hiveHeadMedia = <dynamic>[

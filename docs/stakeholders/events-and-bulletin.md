@@ -18,13 +18,13 @@ The **author** of a post, plus anyone listed as a **contributor** on that post, 
 - Title, about text, and details  
 - Media (photos / video)  
 - Schedule and role assignments  
-- Who is attending (attendance is meant to be editable by contributors as well as the author)  
+- Who is attending / who is expected (attendance and expected lists are editable by contributors as well as the author)  
 - Related people on the post  
 - Sending a **broadcast** notification about the post to people who opted in  
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, and similar). Leaders manage them from Personal → **Post Templates**.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**.
 
 **Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date.
 
@@ -33,7 +33,8 @@ The **author** of a post, plus anyone listed as a **contributor** on that post, 
 | Idea | In plain language |
 |------|-------------------|
 | **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
-| **Attendance** | Who is (or was) attending — registered people or **placeholders** created from the people picker when someone isn’t in the directory yet. Interested people can be promoted to attending. **Post contributors** (and the author) manage the list; it stays editable after the event. |
+| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). On the day, organisers can check them off into attendance quickly. |
+| **Attendance** | Who is (or was) attending — registered people or **placeholders** created from the people picker when someone isn’t in the directory yet. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. |
 
 ## Related pages
 

@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import '../firebase/db_managers/cell_group_db_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_attendance.dart';
@@ -39,6 +40,9 @@ class EventContext {
 
   // template subtitles list (for posts created from templates)
   List<String>? _templateSubtitles;
+
+  /// Draft expected attendees for create / template edit (written to attendance on publish).
+  final List<String> _expectedAttendeeUserIDs = <String>[];
 
   // for viewing and editing
   EventContext.viewing(
@@ -175,7 +179,8 @@ class EventContext {
     await dbManager.addMetadata(_metadata);
     await dbManager.setLog(_log);
     await dbManager.addProgram(_program);
-    await dbManager.setAttendance(EventAttendance());
+    final expectedIds = await resolveExpectedUserIdsForNewPost();
+    await dbManager.setAttendance(EventAttendance(expectedUserIds: expectedIds));
     return newID;
   }
 
@@ -270,6 +275,40 @@ class EventContext {
   void applyCellGroupIDs(final List<String> cellGroupIDs) {
     _head.setCellGroupIDs(cellGroupIDs);
     _metadata.setCellGroupIDs(cellGroupIDs);
+  }
+
+  /// Draft expected attendees for new posts / templates (not the live attendance doc).
+  List<String> get expectedAttendeeUserIDs =>
+      UnmodifiableListView(_expectedAttendeeUserIDs);
+
+  void applyExpectedAttendeeUserIDs(final List<String> userIds) {
+    _expectedAttendeeUserIDs
+      ..clear()
+      ..addAll({for (final id in userIds) if (id.isNotEmpty) id});
+  }
+
+  /// Resolves expected IDs for a new post: draft list, else linked CG roster members.
+  Future<List<String>> resolveExpectedUserIdsForNewPost() async {
+    if (_expectedAttendeeUserIDs.isNotEmpty) {
+      return List<String>.from(_expectedAttendeeUserIDs);
+    }
+    final cgIds = _head.cellGroupIDs;
+    if (cgIds.isEmpty) return <String>[];
+
+    final ids = <String>{};
+    for (final cgId in cgIds) {
+      try {
+        final roster = await CellGroupSupplementalDBManager(cgId).fetchRoster();
+        for (final member in roster.members) {
+          if (member.isLinkedUser && member.isActive) {
+            ids.add(member.userId);
+          }
+        }
+      } catch (_) {
+        // Roster may be unavailable; skip that group.
+      }
+    }
+    return ids.toList();
   }
 
   /// Keeps head denorm and metadata [IsPeriodParent] in sync.

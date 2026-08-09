@@ -62,6 +62,8 @@ class PostTemplateMapper {
     // meta related
     eventContext.applyTagIDs(List<String>.from(template.tagIDs));
     eventContext.applyCellGroupIDs(List<String>.from(template.cellGroupIDs));
+    eventContext.applyExpectedAttendeeUserIDs(
+        List<String>.from(template.expectedAttendeeUserIDs));
     if (template.tagIDs.isEmpty && template.topics.isNotEmpty) {
       // Legacy templates: keep Topics as FCM audience until tags are assigned.
       eventContext.metadata.addAllTopics(template.topics);

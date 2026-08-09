@@ -728,6 +728,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                     });
                   },
                 ),
+                const SizedBox(height: 12),
+                _buildExpectedAttendeesSection(appContext, theme, colorScheme),
                 const Divider(height: 32),
                 ..._buildNotificationControls(appContext),
               ],
@@ -788,7 +790,77 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     ];
   }
 
+  Widget _buildExpectedAttendeesSection(
+    AppContext appContext,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final expected = widget.eventContext.expectedAttendeeUserIDs;
+    final users = appContext.allUsers.where((u) => expected.contains(u.id)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Expected attendees',
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Usual people for this meeting. Pre-fills the People checklist on new posts '
+          '(or seeds from linked cell groups if empty).',
+          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 8),
+        if (expected.isEmpty)
+          Text(
+            'None set yet',
+            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          )
+        else ...[
+          MyAvatarStack(users: users, appDir: appContext.appDir),
+          const SizedBox(height: 8),
+          Text(
+            '${expected.length} expected',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _onManageExpectedAttendeesTap,
+          icon: const Icon(Icons.checklist, size: 18),
+          label: const Text('Manage expected attendees'),
+        ),
+      ],
+    );
+  }
+
   // ? Logic
+
+  Future<void> _onManageExpectedAttendeesTap() async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: List<String>.from(widget.eventContext.expectedAttendeeUserIDs),
+          title: 'Expected attendees',
+          includePlaceholders: true,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: appContext.currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      widget.eventContext.applyExpectedAttendeeUserIDs(result);
+    });
+  }
 
   Future<void> _onManageContributorsTap() async {
     final result = await Navigator.push<List<String>>(

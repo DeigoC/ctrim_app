@@ -91,6 +91,7 @@ void main() {
       final attendance = EventAttendance();
       expect(attendance.interestedCount, 0);
       expect(attendance.attendeeCount, 0);
+      expect(attendance.expectedCount, 0);
       expect(attendance.hasInterest('x'), false);
     });
 
@@ -111,7 +112,17 @@ void main() {
       expect(attendance.attendeeCount, 1);
     });
 
-    test('fromMap parses interested map and attendees list', () {
+    test('expectedUserIds set and query', () {
+      final attendance = EventAttendance(expectedUserIds: ['1', '2', '']);
+      expect(attendance.expectedCount, 2);
+      expect(attendance.hasExpectedUser('1'), true);
+      expect(attendance.hasExpectedUser('9'), false);
+
+      attendance.setExpectedUserIds(['2', '2', '3']);
+      expect(attendance.expectedUserIds, ['2', '3']);
+    });
+
+    test('fromMap parses interested map, attendees, and expectedUserIds', () {
       final attendance = EventAttendance.fromMap({
         'interested': {
           'auth-9': {
@@ -132,16 +143,18 @@ void main() {
             'ts': Timestamp.fromDate(DateTime(2026, 2, 3)),
           },
         ],
+        'expectedUserIds': ['10', '11'],
       });
 
       expect(attendance.interestedCount, 1);
       expect(attendance.interestFor('auth-9')!.displayName, 'Nine');
       expect(attendance.attendeeCount, 1);
       expect(attendance.attendees.first.isExternal, true);
+      expect(attendance.expectedUserIds, ['10', '11']);
     });
 
-    test('toJson shape', () {
-      final attendance = EventAttendance();
+    test('toJson shape includes expectedUserIds', () {
+      final attendance = EventAttendance(expectedUserIds: ['7']);
       attendance.putInterest(InterestedEntry(authId: 'a', displayName: 'A', ts: DateTime(2026, 1, 1)));
       attendance.addAttendee(AttendeeEntry.external(name: 'G', addedBy: '1', id: 'ext_1', ts: DateTime(2026, 1, 2)));
 
@@ -150,6 +163,7 @@ void main() {
       expect((json['interested'] as Map).containsKey('a'), true);
       expect(json['attendees'], isA<List>());
       expect((json['attendees'] as List).length, 1);
+      expect(json['expectedUserIds'], ['7']);
     });
 
     test('interested and attendees getters are unmodifiable', () {
@@ -157,6 +171,7 @@ void main() {
       expect(() => attendance.interested['x'] = InterestedEntry(authId: 'x', displayName: 'X'), throwsUnsupportedError);
       expect(
           () => attendance.attendees.add(AttendeeEntry.external(name: 'n', addedBy: '1')), throwsUnsupportedError);
+      expect(() => attendance.expectedUserIds.add('1'), throwsUnsupportedError);
     });
   });
 }

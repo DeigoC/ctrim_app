@@ -420,6 +420,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'Topics': [location],
       'TagIDs': <String>[],
       'CellGroupIDs': <String>[],
+      'ExpectedAttendeeUserIDs': <String>[],
       'Contributors': <String>[],
       'LeadSpeakerUID': null,
       'IsPeriodParent': false,
@@ -461,6 +462,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
 
     eventContext.applyTagIDs(List<String>.from(postTemplate.tagIDs));
     eventContext.applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
+    eventContext.applyExpectedAttendeeUserIDs(
+        List<String>.from(postTemplate.expectedAttendeeUserIDs));
     if (postTemplate.tagIDs.isEmpty && postTemplate.topics.isNotEmpty) {
       eventContext.metadata.addAllTopics(postTemplate.topics);
     }
