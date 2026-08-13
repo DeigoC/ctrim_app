@@ -28,11 +28,12 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 |-----|--------|---------|
 | [index.md](index.md) | Current | Site home |
 | [overview.md](overview.md) | Current | Product overview |
-| [events-and-bulletin.md](events-and-bulletin.md) | Current | Events & bulletin |
-| [personal.md](personal.md) | Current | Profile, schedule, prefs |
+| [key-concepts.md](key-concepts.md) | Current | Glossary (post, volunteer, interest, …) |
+| [events-and-bulletin.md](events-and-bulletin.md) | Current | Events & bulletin (filters, bookmarks, related) |
+| [personal.md](personal.md) | Current | Profile, schedule, prefs, share / slide decks |
 | [information.md](information.md) | Current | Churches, testimonials, CTRIM info |
 | [cell-groups.md](cell-groups.md) | Current | Cell Groups (in development) |
-| [people-and-roles.md](people-and-roles.md) | Current | Members, volunteers, leaders |
+| [people-and-roles.md](people-and-roles.md) | Current | Guest → volunteer → Leader / Area admin (+ capability grid) |
 | [notifications.md](notifications.md) | Current | Alerts & broadcasts |
 | [platforms.md](platforms.md) | Current | iOS / Android / web |
 | [roadmap.md](roadmap.md) | Current | Priorities (update as they change) |

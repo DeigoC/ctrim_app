@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/cell_group_db_manager.dart';
+import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/cell_group.dart';
 import '../../models/cell_group_roster.dart';
 import '../../models/event/event_head.dart';
@@ -33,11 +34,14 @@ class CellGroupDetailPage extends StatefulWidget {
 
 class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   final CellGroupDBManager _db = CellGroupDBManager();
+  final UserDBManager _userDb = UserDBManager();
   bool _loading = true;
   Object? _error;
   CellGroup? _group;
   CellGroupRoster? _roster;
   List<EventHead> _trail = const [];
+  /// Resolved profiles for leaders + roster (avoids showing raw numeric user ids).
+  Map<String, User> _usersById = const {};
 
   @override
   void initState() {
@@ -66,12 +70,19 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         }
       }
 
+      final usersById = await _resolveUsers(
+        appContext: appContext,
+        leaderIds: group.leaderUserIds,
+        roster: roster,
+      );
+
       if (!mounted) return;
       appContext.addOrUpdateCellGroup(group);
       setState(() {
         _group = group;
         _roster = roster;
         _trail = trail;
+        _usersById = usersById;
         _loading = false;
       });
     } catch (e) {
@@ -81,6 +92,70 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         _loading = false;
       });
     }
+  }
+
+  /// Look up leaders/members in [AppContext.allUsers], then fetch any gaps.
+  Future<Map<String, User>> _resolveUsers({
+    required AppContext appContext,
+    required Iterable<String> leaderIds,
+    required CellGroupRoster? roster,
+  }) async {
+    final ids = <String>{
+      ...leaderIds.where((id) => id.isNotEmpty),
+      if (roster != null)
+        ...roster.activeMembers
+            .where((m) => m.isLinkedUser)
+            .map((m) => m.userId),
+    };
+    if (ids.isEmpty) return const {};
+
+    final resolved = <String, User>{};
+    final missing = <String>[];
+    for (final id in ids) {
+      final local = _findCachedUser(appContext, id);
+      if (local != null) {
+        resolved[id] = local;
+      } else {
+        missing.add(id);
+      }
+    }
+
+    if (missing.isNotEmpty) {
+      final fetched = await Future.wait(missing.map((id) async {
+        try {
+          return await _userDb.fetchUserByID(id);
+        } catch (_) {
+          return null;
+        }
+      }));
+      for (final user in fetched) {
+        if (user == null) continue;
+        resolved[user.id] = user;
+        if (_findCachedUser(appContext, user.id) == null) {
+          appContext.allUsers.add(user);
+        }
+      }
+    }
+
+    return resolved;
+  }
+
+  User? _findCachedUser(AppContext appContext, String id) {
+    for (final u in appContext.allUsers) {
+      if (u.id == id) return u;
+    }
+    return null;
+  }
+
+  User? _userForId(String id) => _usersById[id] ?? _findCachedUser(
+        Provider.of<AppContext>(context, listen: false),
+        id,
+      );
+
+  String _displayNameFor({User? user, String displayName = ''}) {
+    if (user != null) return user.fullname;
+    if (displayName.trim().isNotEmpty) return displayName.trim();
+    return 'Unknown member';
   }
 
   bool _canManageRoster(AppContext appContext, CellGroup group) {
@@ -136,10 +211,20 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     final existingById = {
       for (final m in roster.members.where((m) => m.isLinkedUser)) m.userId: m,
     };
-    final linked = result
-        .map((uid) =>
-            existingById[uid] ?? CellGroupRosterMember(userId: uid, joinedAt: now))
-        .toList();
+    final linked = result.map((uid) {
+      final existing = existingById[uid];
+      final user = _userForId(uid) ?? _findCachedUser(appContext, uid);
+      final name = user?.fullname ?? existing?.displayName ?? '';
+      if (existing != null) {
+        if (name.isNotEmpty) existing.setDisplayName(name);
+        return existing;
+      }
+      return CellGroupRosterMember(
+        userId: uid,
+        displayName: name,
+        joinedAt: now,
+      );
+    }).toList();
     final updated = CellGroupRoster(members: [...linked, ...freeText]);
 
     await _persistRoster(group: group, roster: updated);
@@ -187,7 +272,18 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       },
     );
     if (!mounted || !ok) return;
-    setState(() => _roster = roster);
+
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final usersById = await _resolveUsers(
+      appContext: appContext,
+      leaderIds: group.leaderUserIds,
+      roster: roster,
+    );
+    if (!mounted) return;
+    setState(() {
+      _roster = roster;
+      _usersById = usersById;
+    });
   }
 
   @override
@@ -256,10 +352,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                   : null,
               actions: _buildAppBarActions(
                 l10n: l10n,
-                appContext: appContext,
                 group: group,
                 canEdit: canEdit,
-                canRoster: canRoster,
               ),
             ),
             if (isWide && hasKeyGraphic && keySrc != null)
@@ -297,10 +391,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
   List<Widget> _buildAppBarActions({
     required AppLocalizations l10n,
-    required AppContext appContext,
     required CellGroup group,
     required bool canEdit,
-    required bool canRoster,
   }) {
     return [
       if (canEdit)
@@ -316,12 +408,6 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             );
             if (updated == true && mounted) _load();
           },
-        ),
-      if (canRoster)
-        IconButton(
-          icon: const Icon(Icons.group_outlined),
-          tooltip: l10n.cellGroupsManageRoster,
-          onPressed: () => _manageRoster(appContext, group),
         ),
     ];
   }
@@ -675,8 +761,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       ];
     }
     return group.leaderUserIds.map((uid) {
-      final user = _userById(appContext, uid);
-      final name = user?.fullname ?? uid;
+      final user = _userForId(uid);
+      final name = _displayNameFor(user: user);
       return ListTile(
         contentPadding: EdgeInsets.zero,
         leading: user != null
@@ -705,8 +791,11 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       ];
     }
     return members.map((m) {
-      final user = m.isLinkedUser ? _userById(appContext, m.userId) : null;
-      final name = user?.fullname ?? (m.displayName.isNotEmpty ? m.displayName : m.userId);
+      final user = m.isLinkedUser ? _userForId(m.userId) : null;
+      final name = _displayNameFor(
+        user: user,
+        displayName: m.displayName,
+      );
       return ListTile(
         dense: true,
         contentPadding: EdgeInsets.zero,
@@ -728,13 +817,6 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             : null,
       );
     }).toList();
-  }
-
-  User? _userById(AppContext appContext, String id) {
-    for (final u in appContext.allUsers) {
-      if (u.id == id) return u;
-    }
-    return null;
   }
 }
 

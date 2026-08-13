@@ -125,41 +125,111 @@ class _NotificationManagementPageState
     required bool wide,
   }) {
     final locations = _appContext.activeLocations;
-    final locationNames = locations.isNotEmpty
+    final catalogNames = locations.isNotEmpty
         ? locations.map((l) => l.name).toList()
         : <String>['Belfast'];
 
-    final streamKinds = _streamKindsForPrefs();
-    final widgets = <Widget>[];
+    final primaryName = _primaryNotifyLocation(catalogNames);
+    final otherNames =
+        catalogNames.where((name) => name != primaryName).toList();
 
-    for (final locationName in locationNames) {
-      widgets.add(_buildSectionHeader(theme, colorScheme, locationName));
-      widgets.add(const SizedBox(height: 8));
+    final streamKinds = _streamKindsForPrefs();
+    final widgets = <Widget>[
+      ..._buildLocationBlock(
+        theme: theme,
+        colorScheme: colorScheme,
+        wide: wide,
+        locationName: primaryName,
+        streamKinds: streamKinds,
+      ),
+    ];
+
+    if (otherNames.isNotEmpty) {
       widgets.add(
-        _buildTopicCard(
-          theme: theme,
-          colorScheme: colorScheme,
-          children: [
-            _buildLocationUmbrellaSwitch(locationName),
-          ],
+        Theme(
+          data: theme.copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: false,
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            title: Text(
+              'Other locations',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              'Topics for churches outside $primaryName',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            children: [
+              for (final locationName in otherNames) ...[
+                ..._buildLocationBlock(
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  wide: wide,
+                  locationName: locationName,
+                  streamKinds: streamKinds,
+                ),
+              ],
+            ],
+          ),
         ),
       );
-      widgets.add(const SizedBox(height: 16));
-      widgets.add(_buildSectionHeader(theme, colorScheme, '$locationName services'));
-      widgets.add(const SizedBox(height: 8));
-      widgets.add(
-        _buildServiceTopicsSection(
-          theme: theme,
-          colorScheme: colorScheme,
-          wide: wide,
-          locationName: locationName,
-          streamKinds: streamKinds,
-        ),
-      );
-      widgets.add(const SizedBox(height: 24));
     }
 
     return widgets;
+  }
+
+  /// Prefer the signed-in user's location when it matches the catalog; else Belfast.
+  String _primaryNotifyLocation(List<String> catalogNames) {
+    const fallback = 'Belfast';
+    if (_appContext.isCurrentUserGuest) {
+      return catalogNames.contains(fallback) ? fallback : catalogNames.first;
+    }
+
+    final userLocation = _appContext.currentUser.location.trim();
+    if (userLocation.isNotEmpty) {
+      for (final name in catalogNames) {
+        if (name.toLowerCase() == userLocation.toLowerCase()) return name;
+      }
+    }
+
+    if (catalogNames.contains(fallback)) return fallback;
+    return catalogNames.first;
+  }
+
+  List<Widget> _buildLocationBlock({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required bool wide,
+    required String locationName,
+    required List<String> streamKinds,
+  }) {
+    return [
+      _buildSectionHeader(theme, colorScheme, locationName),
+      const SizedBox(height: 8),
+      _buildTopicCard(
+        theme: theme,
+        colorScheme: colorScheme,
+        children: [
+          _buildLocationUmbrellaSwitch(locationName),
+        ],
+      ),
+      const SizedBox(height: 16),
+      _buildSectionHeader(theme, colorScheme, '$locationName services'),
+      const SizedBox(height: 8),
+      _buildServiceTopicsSection(
+        theme: theme,
+        colorScheme: colorScheme,
+        wide: wide,
+        locationName: locationName,
+        streamKinds: streamKinds,
+      ),
+      const SizedBox(height: 24),
+    ];
   }
 
   List<String> _streamKindsForPrefs() {

@@ -46,7 +46,9 @@ class User {
         _imgSrc = data['ImgSrc'],
         _tagIDs = _parseTagIDs(data['Tags']),
         _createdByUserID = (data['CreatedByUserID'] as String?) ?? '',
-        _isPlaceholder = (data['IsPlaceholder'] as bool?) ?? false;
+        // Linked accounts are never placeholders, even if a stale flag remains.
+        _isPlaceholder = ((data['AuthID'] as String?) ?? '').trim().isEmpty &&
+            ((data['IsPlaceholder'] as bool?) ?? false);
 
   static List<String> _parseTagIDs(final dynamic raw) {
     if (raw is! List) return [];

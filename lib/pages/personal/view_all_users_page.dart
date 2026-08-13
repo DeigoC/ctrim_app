@@ -167,7 +167,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ],
                     if (canEdit ||
                         appContext.allUsers.any((u) =>
-                            u.isPlaceholder && u.createdByUserID == appContext.currentUser.id)) ...[
+                            isTransientVolunteerPlaceholder(u) &&
+                            u.createdByUserID == appContext.currentUser.id)) ...[
                       const SizedBox(width: 4),
                       FilterChip(
                         avatar: const Icon(Icons.person_outline, size: 18),
@@ -421,12 +422,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final currentUser = appContext.currentUser;
     Iterable<User> users = allUsers;
 
-    users = users.where((user) {
-      if (!user.isPlaceholder) return true;
-      if (!_showPlaceholders) return false;
-      if (currentUser.isAreaAdmin) return true;
-      return user.createdByUserID == currentUser.id;
-    });
+    users = users.where((user) => isVisibleInVolunteerDirectory(
+          user: user,
+          viewer: currentUser,
+          showPlaceholders: _showPlaceholders,
+        ));
 
     if (_locationFilter != VolunteerLocations.all) {
       users = users.where((user) => user.location == _locationFilter);

@@ -38,11 +38,18 @@ class CellGroupRosterMember {
   }
 
   CellGroupRosterMember.fromMap(final Map<String, dynamic> data)
-      : _userId = (data['UserId'] as String?) ?? '',
+      : _userId = _parseId(data['UserId']),
         _displayName = (data['DisplayName'] as String?) ?? '',
         _role = (data['Role'] as String?) ?? CellGroupMemberRole.member,
         _status = (data['Status'] as String?) ?? CellGroupMemberStatus.active,
         _joinedAt = _parseTimestamp(data['JoinedAt']);
+
+  /// Firestore may store numeric ids; coerce like [CellGroup] leader id lists.
+  static String _parseId(final dynamic raw) {
+    if (raw == null) return '';
+    if (raw is String) return raw.trim();
+    return raw.toString().trim();
+  }
 
   static DateTime? _parseTimestamp(final dynamic raw) {
     if (raw is Timestamp) return raw.toDate();

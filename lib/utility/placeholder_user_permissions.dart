@@ -44,3 +44,27 @@ bool canLinkPlaceholderAuth({
 
 /// Whether [actor] may unlink Auth from [target] (area admin only).
 bool canUnlinkUserAuth({required User actor}) => actor.isAreaAdmin;
+
+/// Picker-minted placeholders (have a creator). Used to decide whether a
+/// non-admin should see the Volunteers "Show placeholders" chip.
+bool isTransientVolunteerPlaceholder(User user) {
+  if (!user.isPlaceholder) return false;
+  return user.createdByUserID.trim().isNotEmpty;
+}
+
+/// Whether [user] should appear in the Volunteers directory for [viewer]
+/// given the placeholders toggle.
+///
+/// Product lock: hide every `IsPlaceholder` profile by default (including
+/// legacy empty-Auth backfill rows). With the toggle on, area admins see all
+/// placeholders; others only see ones they created.
+bool isVisibleInVolunteerDirectory({
+  required User user,
+  required User viewer,
+  required bool showPlaceholders,
+}) {
+  if (!user.isPlaceholder) return true;
+  if (!showPlaceholders) return false;
+  if (viewer.isAreaAdmin) return true;
+  return user.createdByUserID == viewer.id;
+}

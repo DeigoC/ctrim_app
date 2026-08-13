@@ -15,6 +15,7 @@ import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
 import '../utility/responsive_layout.dart';
+import '../utility/user_schedule_service.dart';
 import '../utility/web_notification_lifecycle.dart';
 import '../utility/notification_subscription_service.dart';
 import '../utility/web_notification_deep_link.dart';
@@ -48,6 +49,8 @@ class _HomePageState extends State<HomePage>
     _NavDestination(icon: Icons.groups, label: 'Cell Groups'),
     _NavDestination(icon: Icons.person, label: 'Personal'),
   ];
+
+  static const String _personalLabel = 'Personal';
 
   late final TabController _informationTabController;
   late final TabController _cellGroupsTabController;
@@ -202,7 +205,7 @@ class _HomePageState extends State<HomePage>
       destinations: _destinations
           .map(
             (dest) => NavigationRailDestination(
-              icon: Icon(dest.icon),
+              icon: _navDestinationIcon(dest),
               label: Text(dest.label),
             ),
           )
@@ -226,11 +229,35 @@ class _HomePageState extends State<HomePage>
       items: _destinations
           .map(
             (dest) => BottomNavigationBarItem(
-              icon: Icon(dest.icon),
+              icon: _navDestinationIcon(dest),
               label: dest.label,
             ),
           )
           .toList(),
+    );
+  }
+
+  /// Same count as Personal → My Schedule; badge only when > 0.
+  Widget _navDestinationIcon(_NavDestination dest) {
+    final icon = Icon(dest.icon);
+    if (dest.label != _personalLabel) return icon;
+
+    final count = _personalScheduleBadgeCount();
+    if (count == 0) return icon;
+
+    return Badge(
+      label: Text('$count'),
+      child: icon,
+    );
+  }
+
+  int _personalScheduleBadgeCount() {
+    if (_appContext.isCurrentUserGuest) return 0;
+    final user = _appContext.currentUser;
+    if (user.roles == null) return 0;
+    return UserScheduleService.upcomingPostCount(
+      user: user,
+      eventHeads: _appContext.eventHeads,
     );
   }
 
@@ -635,6 +662,10 @@ class _HomePageState extends State<HomePage>
     final UserDBManager userDBManager = UserDBManager();
     _appContext.currentUser.setRoles(
         await userDBManager.fetchUserRoles(_appContext.currentUser.id));
+    if (mounted) {
+      // Refresh Personal tab + nav schedule badges.
+      _appContext.rebuildPlease();
+    }
   }
 
   // * maintenance work

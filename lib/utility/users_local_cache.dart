@@ -91,10 +91,13 @@ class UsersLocalCache {
     final tagIDs = chunkSize >= chunkSizeV2 && entry.length > 8
         ? entry[8].split(',').where((e) => e.isNotEmpty).toList()
         : <String>[];
-    final isPlaceholder = chunkSize >= chunkSizeV3
-        ? entry[9] == '1'
-        // Legacy caches omitted the flag — empty AuthID implies placeholder.
-        : entry[7].trim().isEmpty;
+    final isPlaceholder = effectiveIsPlaceholder(
+      authID: entry[7],
+      fallbackIsPlaceholder: chunkSize >= chunkSizeV3
+          ? entry[9] == '1'
+          // Legacy caches omitted the flag — empty AuthID implies placeholder.
+          : entry[7].trim().isEmpty,
+    );
     final createdByUserID =
         chunkSize >= chunkSizeV3 ? entry[10] : '';
 

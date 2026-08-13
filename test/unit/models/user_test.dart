@@ -121,7 +121,24 @@ void main() {
         expect(user.imgSrc, 'https://example.com/alice.png');
         expect(user.tagIDs, ['tag-1', 'tag-2']);
         expect(user.createdByUserID, '3');
+        // Linked Auth clears a stale IsPlaceholder flag.
+        expect(user.isPlaceholder, false);
+      });
+
+      test('fromMap keeps IsPlaceholder when AuthID is empty', () {
+        final user = User.fromMap('99', {
+          'Forename': 'Temp',
+          'Surname': 'Person',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+          'CreatedByUserID': '3',
+          'IsPlaceholder': true,
+        });
         expect(user.isPlaceholder, true);
+        expect(user.createdByUserID, '3');
       });
 
       test('fromMap defaults Tags to empty list when missing', () {

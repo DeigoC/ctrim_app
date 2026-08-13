@@ -670,14 +670,13 @@ class _PersonalHomeState extends State<PersonalHome> {
         onTap: _openShareWebAppClick,
         iconColor: colorScheme.tertiary,
       ),
-      if (!appContext.isCurrentUserGuest)
-        _PersonalAction(
-          icon: Icons.menu_book_rounded,
-          title: 'Product guide',
-          subtitle: 'How the app works — for volunteers and leaders',
-          onTap: () => launchUrlString(_stakeholderDocsUrl),
-          iconColor: colorScheme.primary,
-        ),
+      _PersonalAction(
+        icon: Icons.menu_book_rounded,
+        title: 'Product guide',
+        subtitle: 'How the app works — open to everyone',
+        onTap: () => launchUrlString(_stakeholderDocsUrl),
+        iconColor: colorScheme.primary,
+      ),
       _PersonalAction(
         icon: Icons.slideshow_rounded,
         title: 'Slide Deck Utils',

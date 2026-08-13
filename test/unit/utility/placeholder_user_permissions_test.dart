@@ -93,5 +93,117 @@ void main() {
         expect(canUnlinkUserAuth(actor: author), isFalse);
       });
     });
+
+    group('isTransientVolunteerPlaceholder', () {
+      test('true only for placeholders with a creator', () {
+        expect(isTransientVolunteerPlaceholder(placeholder), isTrue);
+        expect(
+          isTransientVolunteerPlaceholder(
+            User(
+              id: '11',
+              forname: 'Legacy',
+              surname: 'Unlinked',
+              isPlaceholder: true,
+              createdByUserID: '',
+            ),
+          ),
+          isFalse,
+        );
+        expect(isTransientVolunteerPlaceholder(linked), isFalse);
+        expect(isTransientVolunteerPlaceholder(author), isFalse);
+      });
+    });
+
+    group('isVisibleInVolunteerDirectory', () {
+      final legacyUnlinked = User(
+        id: '11',
+        forname: 'Legacy',
+        surname: 'Unlinked',
+        isPlaceholder: true,
+        createdByUserID: '',
+      );
+
+      test('always shows linked / non-placeholder profiles', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: author,
+            viewer: other,
+            showPlaceholders: false,
+          ),
+          isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: linked,
+            viewer: other,
+            showPlaceholders: false,
+          ),
+          isTrue,
+        );
+      });
+
+      test('hides all placeholders unless toggle is on', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: admin,
+            showPlaceholders: false,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: admin,
+            showPlaceholders: false,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: admin,
+            showPlaceholders: true,
+          ),
+          isTrue,
+        );
+      });
+
+      test('non-admin only sees own minted placeholders when toggle is on', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: author,
+            showPlaceholders: true,
+          ),
+          isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: other,
+            showPlaceholders: true,
+          ),
+          isFalse,
+        );
+        // Legacy backfill rows have no creator — area admin only.
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: author,
+            showPlaceholders: true,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: admin,
+            showPlaceholders: true,
+          ),
+          isTrue,
+        );
+      });
+    });
   });
 }
