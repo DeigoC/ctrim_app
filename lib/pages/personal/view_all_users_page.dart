@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/pages/personal/edit_user_page.dart';
@@ -5,6 +6,7 @@ import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/persist_users_local_cache.dart';
 import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
@@ -13,6 +15,7 @@ import 'package:ctrim_app/widgets/action_sheet.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:ctrim_app/widgets/user_tag_chip.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -27,12 +30,15 @@ class ViewAllUsersPage extends StatefulWidget {
 
 class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   final TextEditingController _searchController = TextEditingController();
+  final UserDBManager _userDBManager = UserDBManager();
   bool _isSearching = false;
   String _searchQuery = '';
   late String _locationFilter;
   Set<String> _selectedTagIDs = {};
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
   bool _showPlaceholders = false;
+  bool _refreshing = false;
+  String? _refreshError;
 
   @override
   void initState() {
@@ -43,12 +49,106 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       appContext.currentUser.location,
       assignable,
     );
+    // Stale 21-day local cache can keep wrong IsPlaceholder flags — refresh.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshUsersFromServer());
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _refreshUsersFromServer() async {
+    if (!mounted || _refreshing) return;
+    setState(() {
+      _refreshing = true;
+      _refreshError = null;
+    });
+
+    try {
+      final users = await _userDBManager.fetchAllUsers();
+      if (!mounted) return;
+
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      final currentId = appContext.currentUser.id;
+      appContext.allUsers
+        ..clear()
+        ..addAll(users);
+
+      final refreshedCurrent = users.where((u) => u.id == currentId);
+      if (refreshedCurrent.isNotEmpty) {
+        appContext.setCurrentUser(refreshedCurrent.first);
+      }
+
+      await persistUsersLocalCache(users);
+      if (!mounted) return;
+
+      _logDirectorySnapshot(
+        allUsers: users,
+        filtered: _filteredUsers(users, appContext.allTags),
+        source: 'firestore-refresh',
+      );
+      appContext.rebuildPlease();
+    } catch (e, st) {
+      debugPrint('[VolunteersDirectory] refresh failed: $e\n$st');
+      if (mounted) {
+        setState(() => _refreshError = e.toString());
+      }
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
+    }
+  }
+
+  void _logDirectorySnapshot({
+    required List<User> allUsers,
+    required List<User> filtered,
+    required String source,
+  }) {
+    if (!kDebugMode) return;
+
+    var linked = 0;
+    var placeholder = 0;
+    var emptyAuthNotPlaceholder = 0;
+    final locationCounts = <String, int>{};
+
+    for (final u in allUsers) {
+      final hasAuth = u.authID.trim().isNotEmpty;
+      if (hasAuth) linked++;
+      if (u.isPlaceholder) {
+        placeholder++;
+      } else if (!hasAuth) {
+        emptyAuthNotPlaceholder++;
+      }
+      locationCounts.update(u.location.isEmpty ? '(empty)' : u.location, (c) => c + 1, ifAbsent: () => 1);
+    }
+
+    final filteredLocations = <String, int>{};
+    for (final u in filtered) {
+      filteredLocations.update(
+        u.location.isEmpty ? '(empty)' : u.location,
+        (c) => c + 1,
+        ifAbsent: () => 1,
+      );
+    }
+
+    final sample = filtered
+        .take(20)
+        .map((u) =>
+            '${u.fullname}[id=${u.id} auth=${u.authID.isEmpty ? 'no' : 'yes'} ph=${u.isPlaceholder} loc=${u.location}]')
+        .join(' | ');
+
+    debugPrint(
+      '[VolunteersDirectory] source=$source '
+      'all=${allUsers.length} filtered=${filtered.length} '
+      'linked=$linked placeholder=$placeholder emptyAuthNotPh=$emptyAuthNotPlaceholder '
+      'showPh=$_showPlaceholders locationFilter=$_locationFilter '
+      'tags=${_selectedTagIDs.length} '
+      'allByLoc=$locationCounts filteredByLoc=$filteredLocations',
+    );
+    if (sample.isNotEmpty) {
+      debugPrint('[VolunteersDirectory] sample: $sample');
+    }
   }
 
   @override
@@ -84,6 +184,18 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   )
                 : Text(_pageTitle(l10n)),
             actions: [
+              if (!_isSearching)
+                IconButton(
+                  icon: _refreshing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  tooltip: 'Refresh volunteers',
+                  onPressed: _refreshing ? null : _refreshUsersFromServer,
+                ),
               if (!_isSearching)
                 PopupMenuButton<_VolunteerSortMode>(
                   icon: const Icon(Icons.sort),
@@ -129,6 +241,31 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (_refreshError != null)
+                ColoredBox(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Could not refresh volunteers. Pull refresh or tap retry.',
+                            style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _refreshUsersFromServer,
+                          child: const Text('Retry'),
+                        ),
+                        IconButton(
+                          onPressed: () => setState(() => _refreshError = null),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.fromLTRB(
@@ -142,7 +279,17 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         child: FilterChip(
                           label: Text(label),
                           selected: _locationFilter == location,
-                          onSelected: (_) => setState(() => _locationFilter = location),
+                          onSelected: (_) {
+                            setState(() => _locationFilter = location);
+                            _logDirectorySnapshot(
+                              allUsers: appContext.allUsers,
+                              filtered: _filteredUsers(
+                                appContext.allUsers,
+                                appContext.allTags,
+                              ),
+                              source: 'location-$location',
+                            );
+                          },
                         ),
                       );
                     }),
@@ -174,7 +321,17 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         avatar: const Icon(Icons.person_outline, size: 18),
                         label: Text(l10n.volunteersShowPlaceholders),
                         selected: _showPlaceholders,
-                        onSelected: (selected) => setState(() => _showPlaceholders = selected),
+                        onSelected: (selected) {
+                          setState(() => _showPlaceholders = selected);
+                          _logDirectorySnapshot(
+                            allUsers: appContext.allUsers,
+                            filtered: _filteredUsers(
+                              appContext.allUsers,
+                              appContext.allTags,
+                            ),
+                            source: 'placeholders-$selected',
+                          );
+                        },
                       ),
                     ],
                   ],
@@ -217,6 +374,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                                 title: Text(user.fullname),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(user.isPlaceholder
                                         ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
