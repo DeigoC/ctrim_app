@@ -2,6 +2,8 @@
 
 How the app reaches people with updates — and how they stay in control. Further **web push** and notification improvements are actively planned — see [Roadmap](roadmap.md).
 
+Terms such as **interest**, **bookmark**, **broadcast**, and **post tag**: [Key concepts](key-concepts.md).
+
 ## For members
 
 From Personal → **Push Notifications**, someone can:
@@ -12,13 +14,22 @@ From Personal → **Push Notifications**, someone can:
 - Turn topic streams on or off (examples include Sunday Worship, Midweek, Dawn Watch, and cell-group–related streams — the exact list can change)  
 - Use an umbrella option such as **All Belfast updates** (and similar “all {location}” options where offered)  
 
-Following a post with **interest** (“follow updates”) or bookmarking can also bring updates about **that specific post**, separately from the topic switches.
+Two other ways to stay close to a **specific post**:
+
+| Action | Effect |
+|--------|--------|
+| **Interest** (“follow updates”) | Shows on the post; organisers can see who is interested |
+| **Bookmark** | Keeps the post on your shortlist; **update logs** when organisers save changes can notify bookmarkers |
+
+Topic switches and per-post interest/bookmarks work together — turning a topic off does not always stop alerts for posts you bookmarked. See [Events & bulletin](events-and-bulletin.md).
 
 ## For organisers
 
 When editing a post, organisers can send a **broadcast** push to people who opted into the relevant audiences — and can also notify people already scheduled on roles for that post.
 
 **Post tags** help with browsing on the bulletin and, when a tag is set up for notifications, which stream a broadcast uses. Members don’t need to understand the machinery — they mainly choose topics they care about.
+
+Saving edits with an **update log** can notify people who bookmarked that post (separate from a full broadcast).
 
 ## Web first
 
@@ -28,6 +39,7 @@ After sign-in or creating an account on the web, the app shows a short in-app ex
 
 ## Related pages
 
+- [Key concepts](key-concepts.md)  
 - [Personal](personal.md)  
 - [Events & bulletin](events-and-bulletin.md)  
 - [Roadmap](roadmap.md)

@@ -61,6 +61,7 @@ exclude_docs: |
 nav:
   - Home: index.md
   - Product overview: overview.md
+  - Key concepts: key-concepts.md
   - Features:
     - Events & bulletin: events-and-bulletin.md
     - Personal: personal.md

@@ -1,6 +1,8 @@
 # Events & bulletin
 
-The **bulletin** is the shared list of community event posts. Members browse what’s coming up; organisers create and maintain posts, roles, and related details.
+The **bulletin** is the shared list of community **posts** — usually dated events and meetings. Members browse what’s coming up; organisers create and maintain posts, roles, and related details.
+
+Definitions for **post**, **interest**, **bookmark**, **template**, and related terms: [Key concepts](key-concepts.md).
 
 ## What members and guests see
 
@@ -8,6 +10,45 @@ The **bulletin** is the shared list of community event posts. Members browse wha
 - On many posts, see **interest** and **attendance** counts
 - When signed in: mark **interest** (“follow updates” for that post) and see who else is interested
 - Guests can browse and see counts; signing in unlocks interest and richer people details
+- **Bookmark** posts to keep track of them (long-press a card on the bulletin, or use the bookmark control on an open post)
+
+## Finding posts (sort & filters)
+
+Use the bulletin’s **sort / filter** control to change what you see:
+
+| Option | What it shows |
+|--------|----------------|
+| **Relevancy** *(default)* | Today’s events, recent posts, and what’s coming up |
+| **Upcoming Events** | Events happening soon |
+| **Recent Events** | What you may have missed |
+| **Bookmarks** | Only posts you bookmarked |
+
+You can also filter by **post tags** (for example Sunday Worship or Midweek) alongside the sort option. Active filters appear as a “Showing: …” banner on the bulletin.
+
+## Inside a post
+
+Opening a post shows tabs when that content exists:
+
+| Tab | What’s there |
+|-----|----------------|
+| **About** | Title, details, and main description |
+| **People** | Interest, expected attendees, and attendance |
+| **Schedule** | Programme / roles and times (guests may see a filtered view — see below) |
+| **Media** | Photos and video |
+| **Related** | Linked parent, sibling, or child posts |
+
+## Interest, bookmarks & attendance
+
+| Idea | In plain language |
+|------|-------------------|
+| **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
+| **Bookmark** | Keep the post on your shortlist and (when organisers save with an update log) get notified about changes. Separate from interest — you can bookmark without marking interest. |
+| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). On the day, organisers can check them off into attendance quickly. |
+| **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. |
+
+## Guest-visible schedule
+
+Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme.
 
 ## What organisers can do
 
@@ -18,9 +59,14 @@ The **author** of a post, plus anyone listed as a **contributor** on that post, 
 - Title, about text, and details  
 - Media (photos / video)  
 - Schedule and role assignments  
-- Who is attending / who is expected (attendance and expected lists are editable by contributors as well as the author)  
+- Who is attending / who is expected (including **Fill from cell group** when the post is linked to a cell group)  
 - Related people on the post  
+- Links to **related** posts and **period parents** (term / season containers)  
 - Sending a **broadcast** notification about the post to people who opted in  
+
+### Update logs & change history
+
+When saving important edits, organisers can write a short **update log**. That note can be sent to people who **bookmarked** the post. Anyone can open **change history** from the “Updated … by …” line on the post to see past logs.
 
 ## Templates & recurring programmes
 
@@ -28,16 +74,22 @@ The **author** of a post, plus anyone listed as a **contributor** on that post, 
 
 **Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date.
 
-## Interest & attendance
+## Related posts & period parents
 
-| Idea | In plain language |
-|------|-------------------|
-| **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
-| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). On the day, organisers can check them off into attendance quickly. |
-| **Attendance** | Who is (or was) attending — registered people or **placeholders** created from the people picker when someone isn’t in the directory yet. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. |
+Posts can form a family:
+
+- **Related** tab — parent, sibling, and child posts for a series or meeting group  
+- **Period parent** — mark a post as a container for a term or season, then attach individual meeting posts underneath  
+
+Organisers create or attach related posts from the post’s edit actions.
+
+## Posts and cell groups
+
+A post can link to one or more **cell groups**. On the People tab, organisers can **Fill from cell group** to seed expected attendees from that group’s members. More: [Cell Groups](cell-groups.md).
 
 ## Related pages
 
+- [Key concepts](key-concepts.md)  
 - [Notifications](notifications.md) — who gets alerts about posts  
 - [People & roles](people-and-roles.md) — who can create and manage  
 - [Cell Groups](cell-groups.md) — when posts link to groups  

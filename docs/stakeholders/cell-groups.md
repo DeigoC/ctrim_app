@@ -2,7 +2,7 @@
 
 > **Note:** Cell Groups is in active development and testing.
 
-**Cell Groups** is a main tab in the app for small-group life alongside the bulletin. The name in the product is always **Cell Group**.
+**Cell Groups** is a main tab in the app for small-group life alongside the bulletin. The name in the product is always **Cell Group** (see [Key concepts](key-concepts.md)).
 
 ## What you can expect today
 
@@ -16,11 +16,17 @@ Also in the app and being tested:
 - Group details for signed-in people (richer than the public card), including an optional wide **cover photo** and photo gallery when area admins have added them  
 - Catalogue cards still show the **first leader’s portrait** (not the cover photo)  
 - Leaders and **cell members** information for organisers who have access  
-- Cell members are people with an app profile — including **temporary profiles** leaders create when someone is not registered yet (forename, surname, and location). Leaders manage members from the group detail via the people picker.  
-- Links between groups and related event posts / meetings where set up  
+- Cell members are people with an app profile — including **placeholders** leaders create when someone is not registered yet (forename, surname, and location). Leaders manage members from the group detail via the people picker.  
+- Links between groups and related event **posts** / meetings where set up  
 - A simple trail of recent meetings for a group  
 
 **Area admins** create and edit groups for their area. People with the **Leader** role — including cell group leaders — create posts, register people for their groups, and can also edit Information content (guests and ordinary members cannot).
+
+## Posts linked to a cell group
+
+When a bulletin **post** is linked to a cell group, organisers on that post can use **Fill from cell group** on the People tab to seed **expected attendees** from the group’s members. That keeps meeting attendance close to who’s actually in the group.
+
+More on posts: [Events & bulletin](events-and-bulletin.md).
 
 ## Still growing
 
@@ -28,6 +34,7 @@ Day-to-day operating rhythms (how groups run week to week in the app) continue t
 
 ## Related pages
 
+- [Key concepts](key-concepts.md)  
 - [Events & bulletin](events-and-bulletin.md)  
 - [People & roles](people-and-roles.md)  
 - [Roadmap](roadmap.md)

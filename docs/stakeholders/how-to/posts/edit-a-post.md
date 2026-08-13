@@ -51,22 +51,29 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 
 1. Open the **People** tab on the post.  
 2. Manage **expected** people and **attendance** (author and **contributors** can edit).  
-3. See who marked **interest** (“follow updates”) if needed.  
-4. Tap **Save** on the post (same as other edits) and add a short update log.  
+3. If the post is linked to a **cell group**, use **Fill from cell group** to seed expected attendees when helpful.  
+4. See who marked **interest** (“follow updates”) if needed.  
+5. Tap **Save** on the post (same as other edits) and add a short **update log** (bookmarkers can be notified).  
 
-Interest (“Mark interest”) saves immediately for the signed-in person; staff attendance changes wait for **Save**. 
+Interest (“Mark interest”) saves immediately for the signed-in person; staff attendance changes wait for **Save**.
+
+### Related posts
+
+1. Use related-post actions to create or attach **child / sibling** posts, or attach under a **period parent** for a term or season.  
+2. Readers see links on the post’s **Related** tab.  
 
 ### Notify / broadcast
 
 1. When the post is ready, use **broadcast** (or notify) if you want a push to opted-in audiences.  
 2. Confirm the audience before sending.  
 
-More on streams: [Notifications](../../notifications.md).
+More on streams: [Notifications](../../notifications.md). Terms: [Key concepts](../../key-concepts.md).
 
 ## Related
 
 - [Create a post](create-a-post.md)  
-- [Events & bulletin](../../events-and-bulletin.md)
+- [Events & bulletin](../../events-and-bulletin.md)  
+- [Key concepts](../../key-concepts.md)
 
 ## Media checklist
 
