@@ -8,6 +8,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/persist_users_local_cache.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/user_avatar.dart';
 
@@ -329,6 +330,7 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
         if (!mounted) return;
         _appContext.setNewUserImage(sanitized);
         _syncAllUsersImgSrc(sanitized);
+        await persistUsersLocalCache(_appContext.allUsers);
         _appContext.rebuildPlease();
       },
     );

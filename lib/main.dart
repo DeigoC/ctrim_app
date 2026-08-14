@@ -2,29 +2,27 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase/auth_manager.dart';
-import 'firebase/db_managers/event_db_manager.dart';
-import 'firebase/db_managers/id_tracker.dart';
 import 'firebase/db_managers/user_db_manager.dart';
 import 'firebase/db_managers/user_location_db_manager.dart';
 import 'firebase/db_managers/user_tag_db_manager.dart';
 import 'firebase/db_managers/post_tag_db_manager.dart';
 import 'firebase/db_managers/cell_group_db_manager.dart';
 import 'firebase_options.dart';
+import 'models/event/event_head.dart';
 import 'models/user.dart' as ctrim;
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
+import 'utility/event_heads_repository.dart';
 import 'utility/local_data_manager.dart';
-import 'utility/persist_users_local_cache.dart';
 import 'utility/user_schedule_service.dart';
-import 'utility/users_local_cache.dart';
+import 'utility/users_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -78,7 +76,6 @@ void main() async {
   // }
 
   final AuthManager authManager = AuthManager();
-  final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
   final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
   String? cacheDir, appDir;
@@ -113,21 +110,30 @@ void main() async {
   }
 
   // Fetch essential data in background for all users (guests and authenticated)
-  _fetchEssentialDataInBackground(guestContext, prefInstance, authManager, eventHeadDBManager, email, pass);
+  _fetchEssentialDataInBackground(guestContext, prefInstance, authManager, email, pass);
 }
 
 Future<void> _fetchEssentialDataInBackground(
   AppContext guestContext,
   SharedPreferences prefInstance,
   AuthManager authManager,
-  EventHeadDBManager eventHeadDBManager,
   String? email,
   String? pass,
 ) async {
+  final eventHeadsRepository = EventHeadsRepository();
+  final usersRepository = UsersRepository();
+
+  List<EventHead> heads = <EventHead>[];
+  List<ctrim.User> allUsers = <ctrim.User>[];
+
   // First, fetch event heads for guest users (or anyone) - this makes content visible immediately
   try {
-    final heads = await eventHeadDBManager.fetchEventHeads();
-    final allUsers = await _fetchAllUsers(prefInstance);
+    heads = await eventHeadsRepository.fetchEventHeads();
+    final usersResult = await usersRepository.fetchUsersWithMeta();
+    allUsers = usersResult.users;
+    if (!usersResult.fromCache) {
+      prefInstance.setBool('fetchUserImages', true);
+    }
 
     guestContext.addAllEventHeads(heads);
     guestContext.allUsers.addAll(allUsers);
@@ -174,24 +180,29 @@ Future<void> _fetchEssentialDataInBackground(
       final currentUser = await userDBManager.fetchUserByAuthID(authID);
 
       if (currentUser != null) {
-        // Fetch fresh data for authenticated user
-        final allUsers = await _fetchAllUsers(prefInstance);
-        final heads = await eventHeadDBManager.fetchEventHeads();
+        var loadedHeads = List<EventHead>.from(heads);
+        if (loadedHeads.isEmpty) {
+          loadedHeads = await eventHeadsRepository.fetchEventHeads();
+        }
+        var loadedUsers = List<ctrim.User>.from(allUsers);
+        if (loadedUsers.isEmpty) {
+          loadedUsers = await usersRepository.fetchUsers();
+        }
 
-        // User roles cleanup
         currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
         final scheduleService = UserScheduleService(userDBManager: userDBManager);
-        await scheduleService.pruneStaleRoles(user: currentUser, eventHeads: heads);
+        await scheduleService.pruneStaleRoles(
+          user: currentUser,
+          eventHeads: loadedHeads,
+        );
 
-        // Add current user to all users list
-        allUsers.removeWhere((e) => e.id == currentUser.id);
-        allUsers.add(currentUser);
+        loadedUsers.removeWhere((e) => e.id == currentUser.id);
+        loadedUsers.add(currentUser);
 
-        // Update the context with authenticated user data (this will refresh the UI with user-specific data)
         guestContext.upgradeToAuthenticatedUser(
           user: currentUser,
-          heads: heads,
-          allUsers: allUsers,
+          heads: loadedHeads,
+          allUsers: loadedUsers,
         );
 
         debugPrint('Successfully upgraded guest to authenticated user: ${currentUser.forname}');
@@ -201,48 +212,4 @@ Future<void> _fetchEssentialDataInBackground(
       // Stay as guest with already-loaded data
     }
   }
-}
-
-Future<List<ctrim.User>> _fetchAllUsers(final SharedPreferences pref) async {
-  final IDTrackerDBManager trackerDBManager = IDTrackerDBManager();
-  final LocalDataManager dataManager = LocalDataManager();
-  final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-  final String version = packageInfo.version;
-  debugPrint('version is $version');
-
-  final String currentID = await trackerDBManager.getCurrentUserID();
-  final List<String> usersData = await dataManager.readUsers();
-  final DateTime? lastUserFetch = await dataManager.readLastUserFetch();
-  final bool lastFetchWasNotAWhileAgo = lastUserFetch != null && DateTime.now().difference(lastUserFetch).inDays <= 21;
-
-  // only use the local data if the count is the same in the DB and the last time has been multiple days ago (21 days)
-  bool shouldReadLocalData = false;
-  if (usersData.isNotEmpty) {
-    // from now on we check that the version is the same as before
-    final firstLine = usersData[0].split('-');
-    if (firstLine.length == 2) {
-      shouldReadLocalData = firstLine[0] == currentID && firstLine[1] == version && lastFetchWasNotAWhileAgo;
-    }
-  }
-
-  if (shouldReadLocalData) {
-    debugPrint('--fetching users from Local Data');
-
-    usersData.removeAt(0);
-    final cached = UsersLocalCache.decodeBody(usersData);
-    if (cached != null) {
-      return cached;
-    }
-    debugPrint('--local user cache format mismatch, refetching from DB');
-  }
-
-  debugPrint('--fetching users from DB');
-  final UserDBManager userDBManager = UserDBManager();
-  final allUsers = await userDBManager.fetchAllUsers();
-
-  debugPrint('--writing users from DB');
-  await persistUsersLocalCache(allUsers);
-
-  pref.setBool('fetchUserImages', true); // refresh user image fetch
-  return allUsers;
 }

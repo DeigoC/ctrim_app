@@ -177,19 +177,30 @@ service cloud.firestore {
       }
     }
 
+    /// Signed-in users may bump collection watermarks (profile photo, interest
+    /// counts) without touching ID counters.
+    function isLastUpdateOnlyTrackerUpdate() {
+      return request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastUpdate']);
+    }
+
     match /id_tracker/{docId}{
-      // Allow anyone to read tracker (needed for guest user caching)
+      // Allow anyone to read tracker (needed for guest user/event caching)
       allow read: if true;
       
       allow create: if false;
 
       // users counter: area admins register volunteers; events: leaders;
-      // cell_groups: area admins create catalogue records
-      allow write: if docId == 'users'
-        ? (isAreaAdmin() || isLeader() || isAdmin())
-        : docId == 'cell_groups'
-          ? (isAreaAdmin() || isAdmin())
-          : (isLeader() || isAdmin());
+      // cell_groups: area admins create catalogue records.
+      // lastUpdate-only: any signed-in user (self-serve photo / attendance denorm).
+      allow update: if isLastUpdateOnlyTrackerUpdate() || (
+        docId == 'users'
+          ? (isAreaAdmin() || isLeader() || isAdmin())
+          : docId == 'cell_groups'
+            ? (isAreaAdmin() || isAdmin())
+            : (isLeader() || isAdmin())
+      );
     }
 
     match /post_templates/{documents=**}{

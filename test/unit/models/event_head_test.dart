@@ -70,6 +70,59 @@ void main() {
         expect(head.isPeriodParent, false);
       });
 
+      test('creates from a map with epoch millis (Hive cache)', () {
+        final now = DateTime(2024, 6, 15, 10, 0);
+        final eventDate = DateTime(2024, 7, 20, 14, 0);
+
+        final map = {
+          'Title': 'Cached Event',
+          'Subtitle': 'From Hive',
+          'Location': 'Belfast',
+          'Media': [
+            {'src': 'img.jpg', 'type': 'img', 'title': 'Cover', 'thumbnailSrc': null},
+          ],
+          'RecentDate': now.millisecondsSinceEpoch,
+          'EventDate': eventDate.millisecondsSinceEpoch,
+          'InterestedCount': 1,
+          'AttendeeCount': 2,
+          'TagIDs': ['t1'],
+          'CellGroupIDs': ['cg1'],
+          'IsPeriodParent': true,
+        };
+
+        final head = EventHead.fromMap('cached-1', map);
+        expect(head.recentDate, now);
+        expect(head.eventDate, eventDate);
+        expect(head.tagIDs, ['t1']);
+        expect(head.cellGroupIDs, ['cg1']);
+        expect(head.isPeriodParent, true);
+        expect(head.media.first['src'], 'img.jpg');
+      });
+
+      test('toCacheJson round-trips through fromMap', () {
+        final head = EventHead(id: 'round-1', title: 'Talk', subtitle: 'Sun', location: 'Belfast');
+        final recent = DateTime(2024, 3, 1, 12);
+        final eventDate = DateTime(2024, 3, 10, 18);
+        head.setRecentDate(recent);
+        head.setEventDate(eventDate);
+        head.setInterestedCount(4);
+        head.setAttendeeCount(8);
+        head.addMediaItem(src: 'a.jpg', type: 'img', title: 'A');
+
+        final cached = head.toCacheJson();
+        expect(cached['RecentDate'], recent.millisecondsSinceEpoch);
+        expect(cached['EventDate'], eventDate.millisecondsSinceEpoch);
+
+        final restored = EventHead.fromMap(cached['id'] as String, cached);
+        expect(restored.id, 'round-1');
+        expect(restored.title, 'Talk');
+        expect(restored.recentDate, recent);
+        expect(restored.eventDate, eventDate);
+        expect(restored.interestedCount, 4);
+        expect(restored.attendeeCount, 8);
+        expect(restored.media.first['src'], 'a.jpg');
+      });
+
       test('fromMap reads IsPeriodParent', () {
         final map = {
           'Title': 'Season',

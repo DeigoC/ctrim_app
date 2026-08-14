@@ -20,6 +20,7 @@ class LocalDataManager {
   static const String _metadataBox = 'metadata';
   static const String _imagesCacheBox = 'images_cache';
   static const String _cacheTimestampsBox = 'cache_timestamps';
+  static const String _eventHeadsBox = 'event_heads';
 
   // Cache size limits (in bytes)
   static const int maxCacheSizeBytes = 50 * 1024 * 1024; // 50MB
@@ -44,6 +45,7 @@ class LocalDataManager {
       Hive.openBox(_metadataBox),
       Hive.openBox(_imagesCacheBox),
       Hive.openBox(_cacheTimestampsBox),
+      Hive.openBox(_eventHeadsBox),
     ]);
 
     _initialized = true;
@@ -98,6 +100,27 @@ class LocalDataManager {
       }
     }
     return null;
+  }
+
+  // * Event heads (bulletin list)
+  Future<void> writeEventHeads(final List<Map<String, dynamic>> heads) async {
+    final box = Hive.box(_eventHeadsBox);
+    await box.put('event_heads', heads);
+  }
+
+  Future<List<Map<String, dynamic>>> readEventHeads() async {
+    final box = Hive.box(_eventHeadsBox);
+    final dynamic content = box.get('event_heads');
+    if (content is! List) {
+      return <Map<String, dynamic>>[];
+    }
+    final result = <Map<String, dynamic>>[];
+    for (final entry in content) {
+      if (entry is Map) {
+        result.add(Map<String, dynamic>.from(entry));
+      }
+    }
+    return result;
   }
 
   // * Post Tracking
@@ -314,7 +337,7 @@ class LocalDataManager {
     await box.delete(id);
   }
 
-  Future<int> readInfoCollectionLastUpdate(final String sectionKey) async {
+  Future<int> readCollectionLastUpdate(final String sectionKey) async {
     final box = Hive.box(_metadataBox);
     final dynamic value = box.get('${sectionKey}_last_update');
     if (value is int) {
@@ -329,9 +352,17 @@ class LocalDataManager {
     return 0;
   }
 
-  Future<void> writeInfoCollectionLastUpdate(final String sectionKey, final int value) async {
+  Future<void> writeCollectionLastUpdate(final String sectionKey, final int value) async {
     final box = Hive.box(_metadataBox);
     await box.put('${sectionKey}_last_update', value);
+  }
+
+  Future<int> readInfoCollectionLastUpdate(final String sectionKey) async {
+    return readCollectionLastUpdate(sectionKey);
+  }
+
+  Future<void> writeInfoCollectionLastUpdate(final String sectionKey, final int value) async {
+    await writeCollectionLastUpdate(sectionKey, value);
   }
 
   Future<bool> haveCheckedInfoCollectionUpdates(final String sectionKey) async {

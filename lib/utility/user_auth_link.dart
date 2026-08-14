@@ -1,4 +1,5 @@
 import '../firebase/db_managers/everyone_db_manager.dart';
+import '../firebase/db_managers/id_tracker.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/functions_manager.dart';
 import '../models/user.dart';
@@ -27,13 +28,16 @@ class UserAuthLinkService {
     UserDBManager? userDBManager,
     EveryoneDBManager? everyoneDBManager,
     CloudFunctionManager? cloudFunctionManager,
+    IDTrackerDBManager? idTracker,
   })  : _userDBManager = userDBManager ?? UserDBManager(),
         _everyoneDBManager = everyoneDBManager ?? EveryoneDBManager(),
-        _cloudFunctionManager = cloudFunctionManager ?? CloudFunctionManager();
+        _cloudFunctionManager = cloudFunctionManager ?? CloudFunctionManager(),
+        _idTracker = idTracker ?? IDTrackerDBManager();
 
   final UserDBManager _userDBManager;
   final EveryoneDBManager _everyoneDBManager;
   final CloudFunctionManager _cloudFunctionManager;
+  final IDTrackerDBManager _idTracker;
 
   /// Points [user] at [newAuthID], sets `isUser` on the new identity, and clears the old one.
   Future<User> linkAuth({
@@ -68,6 +72,7 @@ class UserAuthLinkService {
       isLeader: isLeader,
       isAreaAdmin: isAreaAdmin,
     );
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
     return _userFromLinkResult(user, raw);
   }
 

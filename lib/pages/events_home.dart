@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../firebase/db_managers/event_db_manager.dart';
 import '../models/event/event_head.dart';
+import '../models/post_tag.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
+import '../utility/event_heads_repository.dart';
 import '../utility/responsive_layout.dart';
-import '../models/post_tag.dart';
 import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
 import '../widgets/post_tag_chip.dart';
@@ -469,8 +469,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   }
 
   Future<void> _refreshPosts() async {
-    final EventHeadDBManager headDBManager = EventHeadDBManager();
-    final heads = await headDBManager.fetchEventHeads();
+    final heads = await EventHeadsRepository().fetchEventHeads(forceRefresh: true);
     setState(() {
       _appContext.setRefreshedHeads(heads);
     });

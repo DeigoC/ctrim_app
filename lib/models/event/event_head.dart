@@ -43,9 +43,9 @@ class EventHead {
     _location = data['Location'];
     _tagIDs = _parseTagIDs(data['TagIDs']);
     _cellGroupIDs = _parseTagIDs(data['CellGroupIDs']);
-    _media = _toMedia(List.from(data['Media']));
-    _recentDate = (data['RecentDate'] as Timestamp).toDate();
-    _eventDate = data['EventDate'] == null ? null : (data['EventDate'] as Timestamp).toDate();
+    _media = _toMedia(data['Media']);
+    _recentDate = _parseDateTime(data['RecentDate']) ?? DateTime.now();
+    _eventDate = _parseDateTime(data['EventDate']);
     _interestedCount = (data['InterestedCount'] as num?)?.toInt() ?? 0;
     _attendeeCount = (data['AttendeeCount'] as num?)?.toInt() ?? 0;
     _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
@@ -54,16 +54,33 @@ class EventHead {
     _isPeriodParent = data['IsPeriodParent'] == true;
   }
 
+  static DateTime? _parseDateTime(final dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    return null;
+  }
+
   static List<String> _parseTagIDs(final dynamic raw) {
     if (raw is! List) return <String>[];
     return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
   }
 
-  List<Map<String, dynamic>> _toMedia(List<Map<String, dynamic>> data) {
+  List<Map<String, dynamic>> _toMedia(final dynamic raw) {
+    if (raw is! List) {
+      return List<Map<String, dynamic>>.empty(growable: true);
+    }
     final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
-    for (final entry in data) {
-      result.add(
-          {'src': entry['src'], 'type': entry['type'], 'title': entry['title'], 'thumbnailSrc': entry['thumbnailSrc']});
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      result.add({
+        'src': entry['src'],
+        'type': entry['type'],
+        'title': entry['title'],
+        'thumbnailSrc': entry['thumbnailSrc'],
+      });
     }
     return result;
   }
@@ -79,6 +96,27 @@ class EventHead {
       'Media': _media,
       'RecentDate': Timestamp.fromDate(_recentDate),
       'EventDate': _eventDate == null ? null : Timestamp.fromDate(_eventDate!),
+      'InterestedCount': _interestedCount,
+      'AttendeeCount': _attendeeCount,
+      'LeadSpeakerUID': _leadSpeakerUID,
+      'LeadSpeakerImgSrc': _leadSpeakerImgSrc,
+      'LeadSpeakerName': _leadSpeakerName,
+      'IsPeriodParent': _isPeriodParent,
+    };
+  }
+
+  /// Hive-safe map: epoch millis instead of Firestore [Timestamp].
+  Map<String, dynamic> toCacheJson() {
+    return {
+      'id': _id,
+      'Title': _title,
+      'Subtitle': _subtitle,
+      'Location': _location,
+      'TagIDs': _tagIDs,
+      'CellGroupIDs': _cellGroupIDs,
+      'Media': _media.map((e) => Map<String, dynamic>.from(e)).toList(),
+      'RecentDate': _recentDate.millisecondsSinceEpoch,
+      'EventDate': _eventDate?.millisecondsSinceEpoch,
       'InterestedCount': _interestedCount,
       'AttendeeCount': _attendeeCount,
       'LeadSpeakerUID': _leadSpeakerUID,

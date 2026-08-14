@@ -15,11 +15,11 @@ class UsersLocalCache {
 
   /// Builds the string written to [LocalDataManager.writeUsersList].
   static String encode({
-    required String idTracker,
+    required int lastUpdate,
     required String appVersion,
     required Iterable<User> users,
   }) {
-    final buffer = StringBuffer('$idTracker-$appVersion');
+    final buffer = StringBuffer('$lastUpdate-$appVersion');
     for (final user in users) {
       buffer.write('\n${user.id}');
       buffer.write('\n${user.forname}');

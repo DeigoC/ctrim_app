@@ -1,3 +1,4 @@
+import 'package:ctrim_app/firebase/db_managers/id_tracker.dart';
 import 'package:ctrim_app/firebase/functions_manager.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/models/user_tag.dart';
@@ -5,6 +6,7 @@ import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
+import 'package:ctrim_app/utility/persist_users_local_cache.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
@@ -507,6 +509,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         final user = User.fromMap(id, raw);
         if (!mounted) return;
         appContext.allUsers.add(user);
+        await IDTrackerDBManager().tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
+        await persistUsersLocalCache(appContext.allUsers);
         setState(() {
           final max = widget.maxSelection;
           if (max != null && _selectedUIDs.length >= max) {

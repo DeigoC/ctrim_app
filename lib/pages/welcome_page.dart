@@ -9,14 +9,13 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
-import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
-import '../models/user.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../utility/persist_users_local_cache.dart';
+import '../utility/event_heads_repository.dart';
+import '../utility/users_repository.dart';
 import '../utility/web_notification_lifecycle.dart';
 import 'home_page.dart';
 import '../../utility/responsive_layout.dart';
@@ -1195,9 +1194,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<void> _fetchEssentialData() async {
-    final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-    final allUsers = await _fetchUsers();
-    final heads = await eventHeadDBManager.fetchEventHeads();
+    final allUsers = await UsersRepository().fetchUsers();
+    final heads = await EventHeadsRepository().fetchEventHeads();
     _appContext.allUsers.addAll(allUsers);
     _appContext.addAllEventHeads(heads);
   }
@@ -1224,15 +1222,6 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
       _appContext.sharedPref.saveFCMToken(token);
       _everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
     }
-  }
-
-  Future<List<User>> _fetchUsers() async {
-    debugPrint('--fetching users from DB');
-    final List<User> allUsers = await _userDBManager.fetchAllUsers();
-
-    debugPrint('--writing users from DB');
-    await persistUsersLocalCache(allUsers);
-    return allUsers;
   }
 
   Future<void> _saveCreds(bool fromRegistration) async {

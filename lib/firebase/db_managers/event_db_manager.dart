@@ -8,10 +8,15 @@ import '../../models/event/event_log.dart';
 import '../../models/event/event_media.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/event/event_program.dart';
+import 'id_tracker.dart';
 
 class EventHeadDBManager {
   static final CollectionReference _ref = FirebaseFirestore.instance.collection('events').withConverter<EventHead>(
       fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!), toFirestore: (head, _) => head.toJson());
+
+  final IDTrackerDBManager _idTracker;
+
+  EventHeadDBManager({IDTrackerDBManager? idTracker}) : _idTracker = idTracker ?? IDTrackerDBManager();
 
   Future<List<EventHead>> fetchEventHeads() async {
     final collection = await _ref.orderBy('RecentDate', descending: true).limit(40).get();
@@ -32,10 +37,12 @@ class EventHeadDBManager {
 
   Future<void> saveNewHead(final EventHead head) async {
     await _ref.doc(head.id).set(head);
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 
   /// Heads marked as period/season parents (`IsPeriodParent`).
@@ -57,6 +64,7 @@ class EventHeadDBManager {
       'InterestedCount': interestedCount < 0 ? 0 : interestedCount,
       'AttendeeCount': attendeeCount < 0 ? 0 : attendeeCount,
     });
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 }
 
@@ -216,29 +224,31 @@ class EventSupplementalDBManager {
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
 
-    return firestore.runTransaction((tx) async {
+    final attendance = await firestore.runTransaction((tx) async {
       final attSnap = await tx.get(attRef);
-      final attendance = attSnap.exists && attSnap.data() != null
+      final result = attSnap.exists && attSnap.data() != null
           ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
           : EventAttendance();
 
       if (interested) {
-        attendance.putInterest(InterestedEntry(
+        result.putInterest(InterestedEntry(
           authId: authId,
           displayName: displayName,
           userId: userId,
         ));
       } else {
-        attendance.removeInterest(authId);
+        result.removeInterest(authId);
       }
 
-      tx.set(attRef, attendance.toJson());
+      tx.set(attRef, result.toJson());
       tx.update(headRef, {
-        'InterestedCount': attendance.interestedCount,
-        'AttendeeCount': attendance.attendeeCount,
+        'InterestedCount': result.interestedCount,
+        'AttendeeCount': result.attendeeCount,
       });
-      return attendance;
+      return result;
     });
+    await _touchEventsLastUpdate();
+    return attendance;
   }
 
   /// Removes any interest entry (moderation by workers / post admins).
@@ -247,20 +257,22 @@ class EventSupplementalDBManager {
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
 
-    return firestore.runTransaction((tx) async {
+    final attendance = await firestore.runTransaction((tx) async {
       final attSnap = await tx.get(attRef);
       if (!attSnap.exists || attSnap.data() == null) {
         return EventAttendance();
       }
-      final attendance = EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
-      attendance.removeInterest(authId);
-      tx.set(attRef, attendance.toJson());
+      final result = EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
+      result.removeInterest(authId);
+      tx.set(attRef, result.toJson());
       tx.update(headRef, {
-        'InterestedCount': attendance.interestedCount,
-        'AttendeeCount': attendance.attendeeCount,
+        'InterestedCount': result.interestedCount,
+        'AttendeeCount': result.attendeeCount,
       });
-      return attendance;
+      return result;
     });
+    await _touchEventsLastUpdate();
+    return attendance;
   }
 
   /// Replaces the full attendee list and syncs [AttendeeCount] (staff-managed).
@@ -270,7 +282,7 @@ class EventSupplementalDBManager {
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
 
-    return firestore.runTransaction((tx) async {
+    final updated = await firestore.runTransaction((tx) async {
       final attSnap = await tx.get(attRef);
       final attendance = attSnap.exists && attSnap.data() != null
           ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
@@ -278,15 +290,17 @@ class EventSupplementalDBManager {
 
       final data = attendance.toMutableMap();
       data['attendees'] = attendees.map((e) => e.toJson()).toList();
-      final updated = EventAttendance.fromMap(data);
+      final result = EventAttendance.fromMap(data);
 
-      tx.set(attRef, updated.toJson());
+      tx.set(attRef, result.toJson());
       tx.update(headRef, {
-        'InterestedCount': updated.interestedCount,
-        'AttendeeCount': updated.attendeeCount,
+        'InterestedCount': result.interestedCount,
+        'AttendeeCount': result.attendeeCount,
       });
-      return updated;
+      return result;
     });
+    await _touchEventsLastUpdate();
+    return updated;
   }
 
   /// Replaces the expected-attendee checklist (staff-managed). Preserves attendees
@@ -320,7 +334,7 @@ class EventSupplementalDBManager {
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
 
-    return firestore.runTransaction((tx) async {
+    final saved = await firestore.runTransaction((tx) async {
       final attSnap = await tx.get(attRef);
       final attendance = attSnap.exists && attSnap.data() != null
           ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
@@ -338,5 +352,11 @@ class EventSupplementalDBManager {
       });
       return updated;
     });
+    await _touchEventsLastUpdate();
+    return saved;
+  }
+
+  Future<void> _touchEventsLastUpdate() async {
+    await IDTrackerDBManager().tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 }

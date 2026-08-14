@@ -7,14 +7,13 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../firebase/auth_manager.dart';
-import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
-import '../models/user.dart' as ctrim;
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
+import '../utility/event_heads_repository.dart';
 import '../utility/notification_permission_prompt.dart';
-import '../utility/persist_users_local_cache.dart';
+import '../utility/users_repository.dart';
 
 class GuestRegistrationCard extends StatefulWidget {
   const GuestRegistrationCard({super.key});
@@ -649,10 +648,9 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
 
   Future<void> _fetchEssentialData() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
 
-    final allUsers = await _fetchUsers();
-    final heads = await eventHeadDBManager.fetchEventHeads();
+    final allUsers = await UsersRepository().fetchUsers();
+    final heads = await EventHeadsRepository().fetchEventHeads();
 
     // Fetch current user
     final currentUser = await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
@@ -665,15 +663,6 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
         allUsers: allUsers,
       );
     }
-  }
-
-  Future<List<ctrim.User>> _fetchUsers() async {
-    debugPrint('--fetching users from DB');
-    final List<ctrim.User> allUsers = await _userDBManager.fetchAllUsers();
-
-    debugPrint('--writing users from DB');
-    await persistUsersLocalCache(allUsers);
-    return allUsers;
   }
 
   Future<void> _handleForgotPassword() async {

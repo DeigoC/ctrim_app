@@ -45,7 +45,7 @@ void main() {
 
     test('round-trips v3 encode/decode including admin and placeholder', () {
       final encoded = UsersLocalCache.encode(
-        idTracker: '99',
+        lastUpdate: 99,
         appVersion: '1.2.3',
         users: [sample],
       );

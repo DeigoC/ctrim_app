@@ -1,4 +1,4 @@
-import 'package:ctrim_app/firebase/db_managers/user_db_manager.dart';
+import 'package:ctrim_app/utility/users_repository.dart';
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/pages/personal/edit_user_page.dart';
@@ -6,7 +6,6 @@ import 'package:ctrim_app/pages/personal/register_user_page.dart';
 import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/persist_users_local_cache.dart';
 import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
@@ -30,7 +29,7 @@ class ViewAllUsersPage extends StatefulWidget {
 
 class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   final TextEditingController _searchController = TextEditingController();
-  final UserDBManager _userDBManager = UserDBManager();
+  final UsersRepository _usersRepository = UsersRepository();
   bool _isSearching = false;
   String _searchQuery = '';
   late String _locationFilter;
@@ -49,7 +48,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       appContext.currentUser.location,
       assignable,
     );
-    // Stale 21-day local cache can keep wrong IsPlaceholder flags — refresh.
+    // Cache-aware refresh: skips Firestore when lastUpdate matches.
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshUsersFromServer());
   }
 
@@ -59,7 +58,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     super.dispose();
   }
 
-  Future<void> _refreshUsersFromServer() async {
+  Future<void> _refreshUsersFromServer({bool forceRefresh = false}) async {
     if (!mounted || _refreshing) return;
     setState(() {
       _refreshing = true;
@@ -67,7 +66,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     });
 
     try {
-      final users = await _userDBManager.fetchAllUsers();
+      final users = await _usersRepository.fetchUsers(forceRefresh: forceRefresh);
       if (!mounted) return;
 
       final appContext = Provider.of<AppContext>(context, listen: false);
@@ -81,7 +80,6 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         appContext.setCurrentUser(refreshedCurrent.first);
       }
 
-      await persistUsersLocalCache(users);
       if (!mounted) return;
 
       _logDirectorySnapshot(
@@ -194,7 +192,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         )
                       : const Icon(Icons.refresh),
                   tooltip: 'Refresh volunteers',
-                  onPressed: _refreshing ? null : _refreshUsersFromServer,
+                  onPressed: _refreshing ? null : () => _refreshUsersFromServer(forceRefresh: true),
                 ),
               if (!_isSearching)
                 PopupMenuButton<_VolunteerSortMode>(
@@ -255,7 +253,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _refreshUsersFromServer,
+                          onPressed: () => _refreshUsersFromServer(forceRefresh: true),
                           child: const Text('Retry'),
                         ),
                         IconButton(
