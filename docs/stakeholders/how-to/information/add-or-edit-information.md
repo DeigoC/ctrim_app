@@ -1,7 +1,7 @@
 # Add or edit Information content
 
 > **Status:** In progress  
-> **Who:** Leaders, area admins, and (later) site admins — **not** guests or ordinary members  
+> **Who:** Leaders (including area admins, and later site admins) — **not** guests or ordinary members  
 > **Where:** **CTRIM** tab — About, Churches, Testimonials, Information pages
 
 ## Before you start

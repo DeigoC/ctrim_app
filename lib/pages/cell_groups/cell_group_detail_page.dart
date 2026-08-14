@@ -16,6 +16,8 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
@@ -41,6 +43,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   CellGroup? _group;
   CellGroupRoster? _roster;
   List<EventHead> _trail = const [];
+
   /// Resolved profiles for leaders + roster (avoids showing raw numeric user ids).
   Map<String, User> _usersById = const {};
 
@@ -72,12 +75,14 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       final group = await _db.fetchGroup(widget.groupId);
       if (group == null) throw StateError('Cell group not found');
 
-      final trail = await _db.fetchMeetingTrail(cellGroupId: widget.groupId, limit: 4);
+      final trail =
+          await _db.fetchMeetingTrail(cellGroupId: widget.groupId, limit: 4);
 
       CellGroupRoster? roster;
       if (!appContext.isCurrentUserGuest) {
         try {
-          roster = await CellGroupSupplementalDBManager(widget.groupId).fetchRoster();
+          roster = await CellGroupSupplementalDBManager(widget.groupId)
+              .fetchRoster();
         } catch (_) {
           roster = null;
         }
@@ -160,7 +165,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     return null;
   }
 
-  User? _userForId(String id) => _usersById[id] ?? _findCachedUser(
+  User? _userForId(String id) =>
+      _usersById[id] ??
+      _findCachedUser(
         Provider.of<AppContext>(context, listen: false),
         id,
       );
@@ -179,7 +186,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     return group.isLeaderAuth(authId);
   }
 
-  bool _canViewRoster(AppContext appContext, CellGroup group, CellGroupRoster? roster) {
+  bool _canViewRoster(
+      AppContext appContext, CellGroup group, CellGroupRoster? roster) {
     if (appContext.isCurrentUserGuest) return false;
     if (_canManageRoster(appContext, group)) return true;
     return roster != null && roster.containsUserId(appContext.currentUser.id);
@@ -194,8 +202,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         .where((m) => m.isLinkedUser)
         .map((m) => m.userId)
         .toList();
-    final isLeader =
-        group.isLeaderUser(appContext.currentUser.id) || appContext.currentUser.isAreaAdmin;
+    final isLeader = group.isLeaderUser(appContext.currentUser.id) ||
+        appContext.currentUser.isAreaAdmin;
 
     final result = await Navigator.push<List<String>>(
       context,
@@ -249,7 +257,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   }) async {
     final roster = _roster;
     if (roster == null) return;
-    final next = List<CellGroupRosterMember>.from(roster.members)..remove(member);
+    final next = List<CellGroupRosterMember>.from(roster.members)
+      ..remove(member);
     await _persistRoster(group: group, roster: CellGroupRoster(members: next));
   }
 
@@ -278,10 +287,17 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       action: () async {
         await CellGroupSupplementalDBManager(group.id).setRoster(roster);
         final count = roster.activeCount;
-        await CellGroupDBManager().updateMemberCount(id: group.id, memberCount: count);
+        await CellGroupDBManager()
+            .updateMemberCount(id: group.id, memberCount: count);
         group.setMemberCount(count);
         if (!mounted) return;
-        Provider.of<AppContext>(context, listen: false).addOrUpdateCellGroup(group);
+        final appContext = Provider.of<AppContext>(context, listen: false);
+        appContext.addOrUpdateCellGroup(group);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.updatedCellMembers,
+          documentId: group.id,
+        );
       },
     );
     if (!mounted || !ok) return;
@@ -338,7 +354,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     final isWide = ResponsiveLayout.isWideScreen(screenWidth);
     final hasKeyGraphic = group.hasKeyGraphic;
     final keySrc = group.keyGraphicSrc;
-    final heroHeight = MediaQuery.sizeOf(context).height * (isWide ? 0.32 : 0.28);
+    final heroHeight =
+        MediaQuery.sizeOf(context).height * (isWide ? 0.32 : 0.28);
 
     return Scaffold(
       body: RefreshIndicator(
@@ -430,9 +447,11 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     required double height,
     required double screenWidth,
   }) {
-    final gutter = ResponsiveLayout.horizontalGutter(screenWidth, narrowPadding: 16);
+    final gutter =
+        ResponsiveLayout.horizontalGutter(screenWidth, narrowPadding: 16);
     final maxWidth = ResponsiveLayout.maxContentWidth(screenWidth);
-    final sidePad = screenWidth > maxWidth ? (screenWidth - maxWidth) / 2 : gutter;
+    final sidePad =
+        screenWidth > maxWidth ? (screenWidth - maxWidth) / 2 : gutter;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(sidePad, 8, sidePad, 0),
@@ -523,7 +542,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       children: [
         Text(
           l10n.cellGroupsMeetingTrail,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         if (_trail.isEmpty)
@@ -538,8 +558,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               child: Text(
                 l10n.cellGroupsMeetingTrailEmpty,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           )
@@ -550,7 +570,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
     final peopleColumn = <Widget>[
       if (leadersCard != null) leadersCard,
-      if (leadersCard != null && membersCard != null) const SizedBox(height: 12),
+      if (leadersCard != null && membersCard != null)
+        const SizedBox(height: 12),
       if (membersCard != null) membersCard,
     ];
 
@@ -655,8 +676,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           Text(
             l10n.cellGroupsGuestSignInHint,
             style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ],
@@ -694,7 +715,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                       left: 6,
                       bottom: 6,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(6),
@@ -857,7 +879,8 @@ class _CgSectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             child,

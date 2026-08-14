@@ -8,6 +8,8 @@ import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
 import '../../utility/persist_users_local_cache.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
@@ -311,6 +313,11 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
       onProgress(completed: 2, total: total, message: 'Finishing…');
     }
     await userDBManager.addUser(newUser);
+    await UserActivityRecorder().record(
+      actorUserId: appContext.currentUser.id,
+      log: UserActivityMessages.registeredVolunteer,
+      documentId: newUser.id,
+    );
     return newUser;
   }
 

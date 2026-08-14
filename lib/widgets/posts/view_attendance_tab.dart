@@ -15,6 +15,8 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notification_topics.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../load_progress_body.dart';
 import '../user_avatar.dart';
 
@@ -63,7 +65,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
 
     try {
       final attendance =
-          await EventSupplementalDBManager(widget.eventContext.id).fetchAttendance();
+          await EventSupplementalDBManager(widget.eventContext.id)
+              .fetchAttendance();
       if (!mounted) return;
       widget.eventContext.setFetchedAttendance(attendance, forceReplace: true);
       setState(() => _loading = false);
@@ -218,8 +221,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
             child: Column(
               children: [
                 for (final entry in attendance.attendees)
-                  _buildAttendeeTile(
-                      theme, colorScheme, appContext, entry,
+                  _buildAttendeeTile(theme, colorScheme, appContext, entry,
                       canManage: canManage),
               ],
             ),
@@ -255,7 +257,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         const SizedBox(height: 16),
         Text(
           'Sign in to see who is interested',
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style:
+              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
@@ -269,8 +272,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         const SizedBox(height: 24),
         FilledButton(
           onPressed: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const GuestRegistrationPage()));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const GuestRegistrationPage()));
           },
           child: const Text('Create account'),
         ),
@@ -296,15 +301,15 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         onChanged: _busy ? null : (value) => _toggleInterest(value),
         title: Text(
           isInterested ? 'You are interested' : 'Mark interest',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           isInterested
               ? 'You will get updates when this post changes.'
               : 'Show up publicly and follow updates for this post.',
         ),
-        secondary: Icon(
-            isInterested ? Icons.favorite : Icons.favorite_border,
+        secondary: Icon(isInterested ? Icons.favorite : Icons.favorite_border,
             color: colorScheme.primary),
       ),
     );
@@ -413,8 +418,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
                 IconButton(
                   tooltip: 'Remove interest',
                   icon: const Icon(Icons.close),
-                  onPressed:
-                      _busy ? null : () => _removeInterest(entry.authId),
+                  onPressed: _busy ? null : () => _removeInterest(entry.authId),
                 ),
               ],
             )
@@ -548,15 +552,19 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           total: total,
           message: interested ? 'Saving interest…' : 'Removing interest…',
         );
-        final updated =
-            await EventSupplementalDBManager(widget.eventContext.id)
-                .setOwnInterest(
+        final updated = await EventSupplementalDBManager(widget.eventContext.id)
+            .setOwnInterest(
           authId: authId,
           displayName: displayName,
           userId: userId,
           interested: interested,
         );
         widget.eventContext.setFetchedAttendance(updated);
+        await UserActivityRecorder().record(
+          actorUserId: userId,
+          log: UserActivityMessages.updatedPostInterest,
+          documentId: widget.eventContext.id,
+        );
 
         onProgress(
           completed: 1,
@@ -570,7 +578,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           await _messagingManager.subscribeToTopic(topic, authId: webAuthId);
         } else {
           appContext.sharedPref.removePostBookmark(widget.eventContext.id);
-          await _messagingManager.unsubscribeFromTopic(topic, authId: webAuthId);
+          await _messagingManager.unsubscribeFromTopic(topic,
+              authId: webAuthId);
         }
       },
     );
@@ -585,9 +594,16 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       context: context,
       title: 'Removing…',
       action: () async {
+        final actorId =
+            Provider.of<AppContext>(context, listen: false).currentUser.id;
         final updated = await EventSupplementalDBManager(widget.eventContext.id)
             .removeInterestForAuthId(authId);
         widget.eventContext.setFetchedAttendance(updated);
+        await UserActivityRecorder().record(
+          actorUserId: actorId,
+          log: UserActivityMessages.updatedPostInterest,
+          documentId: widget.eventContext.id,
+        );
       },
     );
     if (!mounted) return;

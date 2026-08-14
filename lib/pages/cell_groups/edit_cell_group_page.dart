@@ -10,6 +10,8 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/role_access_gate.dart';
 import '../events/add_media_file_page.dart';
 import '../personal/select_users_page.dart';
@@ -65,10 +67,13 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     _initialTime = existing?.meetingTime ?? '';
     _initialStatus = existing?.status ?? CellGroupStatus.active;
     _initialWeekday = existing?.meetingWeekday;
-    _initialLeaderUserIds = List<String>.from(existing?.leaderUserIds ?? const []);
-    _initialMediaSrcs =
-        existing?.media.map((e) => (e['src'] as String?) ?? '').where((s) => s.isNotEmpty).toList() ??
-            [];
+    _initialLeaderUserIds =
+        List<String>.from(existing?.leaderUserIds ?? const []);
+    _initialMediaSrcs = existing?.media
+            .map((e) => (e['src'] as String?) ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList() ??
+        [];
     _initialKeyGraphicSrc = existing?.keyGraphicSrc;
 
     _nameController = TextEditingController(text: _initialName);
@@ -77,7 +82,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     _status = _initialStatus;
     _weekday = _initialWeekday;
     _leaderUserIds = List<String>.from(_initialLeaderUserIds);
-    _media = existing?.media.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+    _media =
+        existing?.media.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
     _keyGraphicSrc = _initialKeyGraphicSrc;
   }
 
@@ -89,8 +95,10 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     if (_weekday != _initialWeekday) return true;
     if (!_sameIdLists(_leaderUserIds, _initialLeaderUserIds)) return true;
     if (_keyGraphicSrc != _initialKeyGraphicSrc) return true;
-    final currentSrcs =
-        _media.map((e) => (e['src'] as String?) ?? '').where((s) => s.isNotEmpty).toList();
+    final currentSrcs = _media
+        .map((e) => (e['src'] as String?) ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
     if (!_sameIdLists(currentSrcs, _initialMediaSrcs)) return true;
     return false;
   }
@@ -115,7 +123,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final gutter = ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width);
+    final gutter =
+        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width);
 
     return RoleAccessGate(
       allow: (user) => user.canManageCellGroups,
@@ -128,14 +137,16 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             _popRouteAfterAllowing();
             return;
           }
-          final shouldPop = await DialogManager.discardChanges(context: context);
+          final shouldPop =
+              await DialogManager.discardChanges(context: context);
           if (shouldPop && mounted) {
             _popRouteAfterAllowing();
           }
         },
         child: Scaffold(
           appBar: AppBar(
-            title: Text(_isEditing ? l10n.cellGroupsEdit : l10n.cellGroupsCreate),
+            title:
+                Text(_isEditing ? l10n.cellGroupsEdit : l10n.cellGroupsCreate),
             actions: [
               TextButton(
                 onPressed: _saving ? null : _save,
@@ -148,136 +159,155 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             child: ListView(
               padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 32),
               children: [
-              TextFormField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
+                TextFormField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Name is required'
+                      : null,
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _summaryController,
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Summary',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Meeting weekday',
-                  border: OutlineInputBorder(),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int?>(
-                    isExpanded: true,
-                    value: _weekday,
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('Not set')),
-                      DropdownMenuItem(value: DateTime.monday, child: Text('Monday')),
-                      DropdownMenuItem(value: DateTime.tuesday, child: Text('Tuesday')),
-                      DropdownMenuItem(value: DateTime.wednesday, child: Text('Wednesday')),
-                      DropdownMenuItem(value: DateTime.thursday, child: Text('Thursday')),
-                      DropdownMenuItem(value: DateTime.friday, child: Text('Friday')),
-                      DropdownMenuItem(value: DateTime.saturday, child: Text('Saturday')),
-                      DropdownMenuItem(value: DateTime.sunday, child: Text('Sunday')),
-                    ],
-                    onChanged: (v) => setState(() => _weekday = v),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _summaryController,
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Summary',
+                    border: OutlineInputBorder(),
+                    alignLabelWithHint: true,
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Meeting time',
-                  hintText: 'e.g. 19:30',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _status,
-                    items: [
-                      DropdownMenuItem(value: CellGroupStatus.active, child: Text(l10n.cellGroupsStatusActive)),
-                      DropdownMenuItem(value: CellGroupStatus.paused, child: Text(l10n.cellGroupsStatusPaused)),
-                      DropdownMenuItem(value: CellGroupStatus.archived, child: Text(l10n.cellGroupsStatusArchived)),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) setState(() => _status = v);
-                    },
+                const SizedBox(height: 12),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Meeting weekday',
+                    border: OutlineInputBorder(),
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                l10n.cellGroupsPhotosTitle,
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.cellGroupsPhotosHint,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (_media.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    l10n.cellGroupsPhotosEmpty,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int?>(
+                      isExpanded: true,
+                      value: _weekday,
+                      items: const [
+                        DropdownMenuItem(value: null, child: Text('Not set')),
+                        DropdownMenuItem(
+                            value: DateTime.monday, child: Text('Monday')),
+                        DropdownMenuItem(
+                            value: DateTime.tuesday, child: Text('Tuesday')),
+                        DropdownMenuItem(
+                            value: DateTime.wednesday,
+                            child: Text('Wednesday')),
+                        DropdownMenuItem(
+                            value: DateTime.thursday, child: Text('Thursday')),
+                        DropdownMenuItem(
+                            value: DateTime.friday, child: Text('Friday')),
+                        DropdownMenuItem(
+                            value: DateTime.saturday, child: Text('Saturday')),
+                        DropdownMenuItem(
+                            value: DateTime.sunday, child: Text('Sunday')),
+                      ],
+                      onChanged: (v) => setState(() => _weekday = v),
                     ),
                   ),
-                )
-              else
-                ..._media.map(_buildMediaTile),
-              if (_media.length < CellGroup.maxMediaItems)
-                OutlinedButton.icon(
-                  onPressed: _addPhoto,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: Text(l10n.cellGroupsAddPhoto),
                 ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.cellGroupsLeadersLabel,
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _pickLeaders,
-                icon: const Icon(Icons.person_add_alt),
-                label: const Text('Choose leaders'),
-              ),
-              ..._leaderUserIds.map((uid) {
-                final user = _userById(uid);
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(user?.fullname ?? uid),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => _leaderUserIds.remove(uid)),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _timeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Meeting time',
+                    hintText: 'e.g. 19:30',
+                    border: OutlineInputBorder(),
                   ),
-                );
-              }),
-            ],
+                ),
+                const SizedBox(height: 12),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Status',
+                    border: OutlineInputBorder(),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _status,
+                      items: [
+                        DropdownMenuItem(
+                            value: CellGroupStatus.active,
+                            child: Text(l10n.cellGroupsStatusActive)),
+                        DropdownMenuItem(
+                            value: CellGroupStatus.paused,
+                            child: Text(l10n.cellGroupsStatusPaused)),
+                        DropdownMenuItem(
+                            value: CellGroupStatus.archived,
+                            child: Text(l10n.cellGroupsStatusArchived)),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _status = v);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  l10n.cellGroupsPhotosTitle,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.cellGroupsPhotosHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_media.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      l10n.cellGroupsPhotosEmpty,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                else
+                  ..._media.map(_buildMediaTile),
+                if (_media.length < CellGroup.maxMediaItems)
+                  OutlinedButton.icon(
+                    onPressed: _addPhoto,
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: Text(l10n.cellGroupsAddPhoto),
+                  ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.cellGroupsLeadersLabel,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _pickLeaders,
+                  icon: const Icon(Icons.person_add_alt),
+                  label: const Text('Choose leaders'),
+                ),
+                ..._leaderUserIds.map((uid) {
+                  final user = _userById(uid);
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(user?.fullname ?? uid),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () =>
+                          setState(() => _leaderUserIds.remove(uid)),
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -304,20 +334,24 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             child: src.isEmpty
                 ? ColoredBox(
                     color: colorScheme.surfaceContainerHigh,
-                    child: Icon(Icons.image_outlined, color: colorScheme.onSurfaceVariant),
+                    child: Icon(Icons.image_outlined,
+                        color: colorScheme.onSurfaceVariant),
                   )
                 : Image.network(
                     NetworkImageHelper.getImageUrl(src),
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => ColoredBox(
                       color: colorScheme.surfaceContainerHigh,
-                      child: Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
+                      child: Icon(Icons.broken_image_outlined,
+                          color: colorScheme.onSurfaceVariant),
                     ),
                   ),
           ),
         ),
         title: Text(
-          (title != null && title.isNotEmpty) ? title : (isCover ? l10n.cellGroupsCoverPhoto : 'Image'),
+          (title != null && title.isNotEmpty)
+              ? title
+              : (isCover ? l10n.cellGroupsCoverPhoto : 'Image'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -354,7 +388,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
       context,
       MaterialPageRoute(
         builder: (_) => AddMediaFilePage(
-          eventContext: EventContext.adding(currentUserID: appContext.currentUser.id),
+          eventContext:
+              EventContext.adding(currentUserID: appContext.currentUser.id),
           returnResultOnly: true,
         ),
       ),
@@ -364,7 +399,9 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     final type = (result['type'] as String?) ?? 'img';
     if (type != 'img') {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.cellGroupsPhotosImagesOnly)),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.cellGroupsPhotosImagesOnly)),
       );
       return;
     }
@@ -412,7 +449,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
         .where((id) => id.isNotEmpty)
         .toList();
     final mediaCopy = _media.map((e) => Map<String, dynamic>.from(e)).toList();
-    final keySrc = (_keyGraphicSrc != null && mediaCopy.any((e) => e['src'] == _keyGraphicSrc))
+    final keySrc = (_keyGraphicSrc != null &&
+            mediaCopy.any((e) => e['src'] == _keyGraphicSrc))
         ? _keyGraphicSrc
         : null;
 
@@ -434,6 +472,11 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           group.setKeyGraphicSrc(keySrc);
           await db.updateGroup(group);
           appContext.addOrUpdateCellGroup(group);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.editedCellGroup,
+            documentId: group.id,
+          );
         } else {
           final created = await db.createGroup(
             name: name,
@@ -449,6 +492,11 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             createdByUserID: appContext.currentUser.id,
           );
           appContext.addOrUpdateCellGroup(created);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.createdCellGroup,
+            documentId: created.id,
+          );
         }
       },
     );

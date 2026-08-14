@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_activity_log.dart';
+import 'package:ctrim_app/models/user_activity_record.dart';
 import 'package:ctrim_app/models/user_post_involvement.dart';
 import 'package:ctrim_app/models/user_role_assignment.dart';
 
@@ -66,9 +68,10 @@ void main() {
           surname: 'B',
           isAreaAdmin: true,
         );
+        expect(user.isLeader, true);
         expect(user.canManageInfo, true);
         expect(user.canManageVolunteers, true);
-        expect(user.canManagePostTemplates, false);
+        expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, true);
       });
 
@@ -155,6 +158,22 @@ void main() {
         expect(user.isPlaceholder, false);
         expect(user.createdByUserID, '');
       });
+
+      test('fromMap treats area admin as a leader even if IsLeader is false',
+          () {
+        final user = User.fromMap('1', {
+          'Forename': 'A',
+          'Surname': 'B',
+          'Location': 'Belfast',
+          'IsAreaAdmin': true,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+        });
+        expect(user.isAreaAdmin, true);
+        expect(user.isLeader, true);
+        expect(user.canManagePostTemplates, true);
+      });
     });
 
     group('toJson', () {
@@ -195,6 +214,18 @@ void main() {
         );
         final json = user.toJson() as Map<String, dynamic>;
         expect(json['Tags'], ['a', 'b']);
+      });
+
+      test('writes IsLeader true when the user is an area admin', () {
+        final user = User(
+          id: '1',
+          forname: 'Ada',
+          surname: 'Admin',
+          isAreaAdmin: true,
+        );
+        final json = user.toJson() as Map<String, dynamic>;
+        expect(json['IsAreaAdmin'], true);
+        expect(json['IsLeader'], true);
       });
     });
 
@@ -251,19 +282,22 @@ void main() {
         expect(user.roles, isNotNull);
         expect(user.roles!.length, 1);
         expect(user.roles!.first.title, 'Leader');
-        expect(() => user.roles!.add(user.roles!.first), throwsUnsupportedError);
+        expect(
+            () => user.roles!.add(user.roles!.first), throwsUnsupportedError);
       });
 
       test('setPosts stores and returns an unmodifiable list', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
+          UserPostInvolvement(
+              postID: 'post-1', ownership: PostOwnership.author),
         ]);
 
         expect(user.posts, isNotNull);
         expect(user.posts!.length, 1);
         expect(user.posts!.first.postID, 'post-1');
-        expect(() => user.posts!.add(user.posts!.first), throwsUnsupportedError);
+        expect(
+            () => user.posts!.add(user.posts!.first), throwsUnsupportedError);
       });
 
       test('removeRoles removes matching entries', () {
@@ -290,11 +324,30 @@ void main() {
         expect(user.roles!.first.postID, 'p2');
       });
 
+      test('setActivity stores the log without affecting toJson', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith');
+        final log = UserActivityLog([
+          UserActivityRecord(
+            log: 'Edited a bulletin post',
+            ts: DateTime(2026, 8, 14),
+            documentId: '42',
+          ),
+        ]);
+        user.setActivity(log);
+
+        expect(user.activity, isNotNull);
+        expect(user.activity!.records.length, 1);
+        expect(user.toJson().containsKey('Logs'), isFalse);
+        expect(user.toJson().containsKey('activity'), isFalse);
+      });
+
       test('removeAllPosts removes matching entries', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
-          UserPostInvolvement(postID: 'post-2', ownership: PostOwnership.contributor),
+          UserPostInvolvement(
+              postID: 'post-1', ownership: PostOwnership.author),
+          UserPostInvolvement(
+              postID: 'post-2', ownership: PostOwnership.contributor),
         ]);
         user.removeAllPosts(['post-1']);
 
@@ -313,7 +366,11 @@ void main() {
       });
 
       test('hasTag and hasAnyTag work', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith', tagIDs: ['worship', 'tech']);
+        final user = User(
+            id: '1',
+            forname: 'John',
+            surname: 'Smith',
+            tagIDs: ['worship', 'tech']);
         expect(user.hasTag('worship'), isTrue);
         expect(user.hasTag('usher'), isFalse);
         expect(user.hasAnyTag(['usher', 'tech']), isTrue);

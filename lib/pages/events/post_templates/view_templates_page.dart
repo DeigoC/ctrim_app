@@ -9,6 +9,8 @@ import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/responsive_layout.dart';
+import '../../../utility/user_activity_messages.dart';
+import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/load_progress_body.dart';
 import '../../../widgets/role_access_gate.dart';
 import 'edit_template_page.dart';
@@ -326,6 +328,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         final local = LocalDataManager();
         await local.writePostTemplateData(createdTemplate!);
         await local.writeLastPostTemplateUpdate(result.lastUpdate);
+        await UserActivityRecorder().record(
+          actorUserId: _appContext.currentUser.id,
+          log: UserActivityMessages.createdPostTemplate,
+          documentId: result.id,
+        );
       },
     );
 
@@ -372,6 +379,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         final local = LocalDataManager();
         await local.writePostTemplateData(duplicated!);
         await local.writeLastPostTemplateUpdate(result.lastUpdate);
+        await UserActivityRecorder().record(
+          actorUserId: _appContext.currentUser.id,
+          log: UserActivityMessages.createdPostTemplate,
+          documentId: result.id,
+        );
       },
     );
 
@@ -447,7 +459,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
     eventContext.applyTagIDs(List<String>.from(postTemplate.tagIDs));
-    eventContext.applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
+    eventContext
+        .applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
     eventContext.applyExpectedAttendeeUserIDs(
         List<String>.from(postTemplate.expectedAttendeeUserIDs));
     if (postTemplate.tagIDs.isEmpty && postTemplate.topics.isNotEmpty) {

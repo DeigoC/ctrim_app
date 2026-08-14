@@ -81,6 +81,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userProfileUntitledEvent => 'Untitled event';
 
   @override
+  String get userProfileRecentActivity => 'Recent activity';
+
+  @override
+  String get userProfileNoRecentActivity => 'No recent activity';
+
+  @override
+  String get userProfileViewAllActivity => 'View all activity';
+
+  @override
+  String get userActivityPageTitle => 'Activity';
+
+  @override
+  String get userActivityDenied => 'Only area admins can view the full activity log.';
+
+  @override
+  String userActivityDocumentId(String id) => 'Record $id';
+
+  @override
   String get cancel => 'Cancel';
 
   @override

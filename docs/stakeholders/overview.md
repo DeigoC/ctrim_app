@@ -12,7 +12,7 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | Community members | Profile, schedule, follow updates on posts, notification choices |
 | Volunteers & organisers | Posts, roles, attendance, volunteer directory |
 | Leaders | Create posts/templates; register people; edit Information content |
-| Area admins | Area-scoped admin (people, tags, locations, cell groups, and elevated content) |
+| Area admins | Leaders plus area-scoped admin (people, tags, locations, cell groups) |
 | Site admins *(planned)* | Admin without area location restriction |
 | Stakeholders (this site) | A clear picture of capabilities and priorities — no technical background needed |
 | Anyone curious | Browse as a guest; product guide and [open source on GitHub](https://github.com/DeigoC/ctrim_app) |

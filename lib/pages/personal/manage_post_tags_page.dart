@@ -7,6 +7,8 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/notification_topics.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/post_tag_chip.dart';
 import '../../widgets/role_access_gate.dart';
@@ -293,6 +295,11 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
         existing.setStreamKind(streamKind.isEmpty ? null : streamKind);
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdatePostTag(existing);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.editedPostTag,
+          documentId: existing.id,
+        );
       } else {
         final nextOrder = appContext.allPostTags.isEmpty
             ? 1
@@ -307,6 +314,11 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
           displayOrder: nextOrder,
         );
         appContext.addOrUpdatePostTag(tag);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdPostTag,
+          documentId: tag.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -359,6 +371,12 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
       await _tagDBManager.deleteTag(tag.id);
       if (!mounted) return;
       Provider.of<AppContext>(context, listen: false).removePostTag(tag.id);
+      await UserActivityRecorder().record(
+        actorUserId:
+            Provider.of<AppContext>(context, listen: false).currentUser.id,
+        log: UserActivityMessages.deletedPostTag,
+        documentId: tag.id,
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -397,6 +415,11 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
           displayOrder: i + 1,
         );
         appContext.addOrUpdatePostTag(tag);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdPostTag,
+          documentId: tag.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

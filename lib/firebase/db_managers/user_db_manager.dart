@@ -1,23 +1,44 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/user.dart';
+import '../../models/user_activity_log.dart';
 import '../../models/user_post_involvement.dart';
 import '../../models/user_role_assignment.dart';
 import 'id_tracker.dart';
 
 class UserDBManager {
-  static final CollectionReference _ref = FirebaseFirestore.instance.collection('users').withConverter<User>(
-      fromFirestore: (snap, _) => User.fromMap(snap.id, snap.data()!), toFirestore: (user, _) => user.toJson());
-  static const String _supplemental = 'supplemental', _roles = 'roles', _posts = 'posts';
+  static final CollectionReference _ref = FirebaseFirestore.instance
+      .collection('users')
+      .withConverter<User>(
+          fromFirestore: (snap, _) => User.fromMap(snap.id, snap.data()!),
+          toFirestore: (user, _) => user.toJson());
+  static const String _supplemental = 'supplemental',
+      _roles = 'roles',
+      _posts = 'posts',
+      _activity = 'activity';
 
   final IDTrackerDBManager _idTracker;
 
-  UserDBManager({IDTrackerDBManager? idTracker}) : _idTracker = idTracker ?? IDTrackerDBManager();
+  UserDBManager({IDTrackerDBManager? idTracker})
+      : _idTracker = idTracker ?? IDTrackerDBManager();
 
   Future<void> addUser(final User user) async {
     await _ref.doc(user.id).set(user);
-    await _ref.doc(user.id).collection(_supplemental).doc(_roles).set({_roles: []});
-    await _ref.doc(user.id).collection(_supplemental).doc(_posts).set({_posts: []});
+    await _ref
+        .doc(user.id)
+        .collection(_supplemental)
+        .doc(_roles)
+        .set({_roles: []});
+    await _ref
+        .doc(user.id)
+        .collection(_supplemental)
+        .doc(_posts)
+        .set({_posts: []});
+    await _ref
+        .doc(user.id)
+        .collection(_supplemental)
+        .doc(_activity)
+        .set({'Logs': []});
     await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
   }
 
@@ -88,19 +109,31 @@ class UserDBManager {
       end: DateTime.fromMillisecondsSinceEpoch(millisecondEnd),
       title: title,
     ));
-    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: UserRoleAssignment.listToFirestore(data)});
+    await _ref
+        .doc(uid)
+        .collection(_supplemental)
+        .doc(_roles)
+        .update({_roles: UserRoleAssignment.listToFirestore(data)});
   }
 
   Future<void> removeUserRole(final String uid, final int roleID) async {
     final data = await fetchUserRoles(uid);
     data.removeWhere((e) => e.roleID == roleID);
-    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: UserRoleAssignment.listToFirestore(data)});
+    await _ref
+        .doc(uid)
+        .collection(_supplemental)
+        .doc(_roles)
+        .update({_roles: UserRoleAssignment.listToFirestore(data)});
   }
 
   Future<void> removeUserPostRole(final String uid, final String postID) async {
     final data = await fetchUserRoles(uid);
     data.removeWhere((e) => e.postID == postID);
-    await _ref.doc(uid).collection(_supplemental).doc(_roles).update({_roles: UserRoleAssignment.listToFirestore(data)});
+    await _ref
+        .doc(uid)
+        .collection(_supplemental)
+        .doc(_roles)
+        .update({_roles: UserRoleAssignment.listToFirestore(data)});
   }
 
   // User posts
@@ -112,23 +145,61 @@ class UserDBManager {
     return UserPostInvolvement.listFromFirestore(postsData);
   }
 
-  Future<void> addPostToUser(final String uid, final String postID, final String ownership) async {
+  Future<void> addPostToUser(
+      final String uid, final String postID, final String ownership) async {
     final data = await fetchUserPosts(uid);
-    data.add(UserPostInvolvement(postID: postID, ownership: PostOwnership.fromString(ownership)));
-    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: UserPostInvolvement.listToFirestore(data)});
+    data.add(UserPostInvolvement(
+        postID: postID, ownership: PostOwnership.fromString(ownership)));
+    await _ref
+        .doc(uid)
+        .collection(_supplemental)
+        .doc(_posts)
+        .update({_posts: UserPostInvolvement.listToFirestore(data)});
   }
 
   Future<void> removePostFromUser(final String uid, final String postID) async {
     final data = await fetchUserPosts(uid);
     data.removeWhere((e) => e.postID == postID);
-    await _ref.doc(uid).collection(_supplemental).doc(_posts).update({_posts: UserPostInvolvement.listToFirestore(data)});
+    await _ref
+        .doc(uid)
+        .collection(_supplemental)
+        .doc(_posts)
+        .update({_posts: UserPostInvolvement.listToFirestore(data)});
   }
 
   Future<void> updatePosts(final User user) async {
-    await _ref
-        .doc(user.id)
-        .collection(_supplemental)
-        .doc(_posts)
-        .update({_posts: UserPostInvolvement.listToFirestore(user.posts!.toList())});
+    await _ref.doc(user.id).collection(_supplemental).doc(_posts).update(
+        {_posts: UserPostInvolvement.listToFirestore(user.posts!.toList())});
+  }
+
+  DocumentReference<Map<String, dynamic>> _activityRef(final String uid) {
+    return _ref.doc(uid).collection(_supplemental).doc(_activity);
+  }
+
+  /// Guest-readable activity log. Missing docs are treated as empty.
+  Future<UserActivityLog> fetchActivity(final String uid) async {
+    final doc = await _activityRef(uid).get();
+    final data = doc.data();
+    if (!doc.exists || data == null) return UserActivityLog();
+    return UserActivityLog.fromMap(data);
+  }
+
+  /// Prepends one activity row. Does not touch `id_tracker` users lastUpdate.
+  /// Skips guest / empty actor ids. Callers should fail-soft around this.
+  Future<void> addActivity({
+    required String actorUserId,
+    required String log,
+    required String documentId,
+  }) async {
+    if (actorUserId.isEmpty || actorUserId == '0') return;
+    final activityRef = _activityRef(actorUserId);
+    await FirebaseFirestore.instance.runTransaction((txn) async {
+      final snap = await txn.get(activityRef);
+      final existing = snap.exists && snap.data() != null
+          ? UserActivityLog.fromMap(snap.data()!)
+          : UserActivityLog();
+      existing.add(log: log, documentId: documentId, ts: DateTime.now());
+      txn.set(activityRef, existing.toJson());
+    });
   }
 }

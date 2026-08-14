@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'user_activity_log.dart';
 import 'user_post_involvement.dart';
 import 'user_role_assignment.dart';
 
@@ -15,6 +16,7 @@ class User {
   late List<String> _tagIDs;
   List<UserRoleAssignment>? _roles;
   List<UserPostInvolvement>? _posts;
+  UserActivityLog? _activity;
 
   User(
       {required String id,
@@ -67,7 +69,7 @@ class User {
       'Surname': _surname,
       'Location': _location,
       'IsAreaAdmin': _isAreaAdmin,
-      'IsLeader': _isLeader,
+      'IsLeader': isLeader,
       'ImgSrc': _imgSrc,
       'AuthID': _authID,
       'Tags': _tagIDs,
@@ -92,6 +94,8 @@ class User {
   void removeAllPosts(final List<String> postIDs) =>
       _posts!.removeWhere((e) => postIDs.contains(e.postID));
 
+  void setActivity(final UserActivityLog log) => _activity = log;
+
   String get id => _id;
   String get forname => _forename;
   String get surname => _surname;
@@ -105,20 +109,21 @@ class User {
   String get authID => _authID;
 
   /// Permission flags on the volunteer profile (`IsLeader` / `IsAreaAdmin`).
+  /// Area admin is a step above Leader: every admin is a leader.
   /// Cell-group leadership is stored on cell group records, not this document.
   bool get isAreaAdmin => _isAreaAdmin;
-  bool get isLeader => _isLeader;
+  bool get isLeader => _isLeader || _isAreaAdmin;
   String get createdByUserID => _createdByUserID;
   bool get isPlaceholder => _isPlaceholder;
 
   /// Churches, testimonials, and CTRIM info add/edit/delete.
-  bool get canManageInfo => _isAreaAdmin || _isLeader;
+  bool get canManageInfo => isLeader;
 
   /// Register/edit volunteers, user tags, post tags, locations.
   bool get canManageVolunteers => _isAreaAdmin;
 
   /// Create/edit post templates (and Add Post FAB).
-  bool get canManagePostTemplates => _isLeader;
+  bool get canManagePostTemplates => isLeader;
 
   /// Create/edit cell group catalogue records (area admin).
   bool get canManageCellGroups => _isAreaAdmin;
@@ -132,4 +137,5 @@ class User {
       _roles == null ? null : UnmodifiableListView(_roles!);
   List<UserPostInvolvement>? get posts =>
       _posts == null ? null : UnmodifiableListView(_posts!);
+  UserActivityLog? get activity => _activity;
 }

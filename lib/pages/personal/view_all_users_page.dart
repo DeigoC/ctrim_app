@@ -223,9 +223,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         )
                       : const Icon(Icons.refresh),
                   tooltip: 'Refresh volunteers',
-                  onPressed: _refreshing
-                      ? null
-                      : () => _refreshUsersFromServer(),
+                  onPressed:
+                      _refreshing ? null : () => _refreshUsersFromServer(),
                 ),
               if (!_isSearching)
                 PopupMenuButton<_VolunteerSortMode>(
@@ -506,12 +505,10 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
 
   void _toggleRoleFilter(VolunteerRoleKind role) {
     setState(() {
-      _selectedRoles = Set<VolunteerRoleKind>.from(_selectedRoles);
-      if (_selectedRoles.contains(role)) {
-        _selectedRoles.remove(role);
-      } else {
-        _selectedRoles.add(role);
-      }
+      _selectedRoles = VolunteerRoleHelpers.toggleRole(
+        current: _selectedRoles,
+        role: role,
+      );
     });
   }
 

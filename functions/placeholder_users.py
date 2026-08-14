@@ -162,6 +162,7 @@ def create_placeholder_user_impl(db, req: https_fn.CallableRequest) -> dict:
     user_ref.set(user_payload)
     user_ref.collection('supplemental').document('roles').set({'roles': []})
     user_ref.collection('supplemental').document('posts').set({'posts': []})
+    user_ref.collection('supplemental').document('activity').set({'Logs': []})
 
     return {'Id': new_id, **user_payload}
 

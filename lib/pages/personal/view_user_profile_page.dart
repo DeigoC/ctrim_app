@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart';
+import '../../models/user_activity_record.dart';
 import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
@@ -16,6 +18,7 @@ import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_chip.dart';
 import '../../widgets/volunteer_role_badge.dart';
 import 'edit_user_page.dart';
+import 'view_user_activity_page.dart';
 import 'view_user_roles_page.dart';
 
 class ViewUserProfilePage extends StatefulWidget {
@@ -36,8 +39,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   late final AppContext _appContext;
   late User _user;
   final UserScheduleService _scheduleService = UserScheduleService();
+  final UserDBManager _userDBManager = UserDBManager();
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
+  static final DateFormat _activityDateFormat = DateFormat('d MMM yyyy. HH:mm');
 
   bool _loading = true;
   Object? _loadError;
@@ -67,7 +72,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       _loadError = null;
       _statusMessage = 'Fetching schedule…';
       _completedSteps = 0;
-      _totalSteps = 2;
+      _totalSteps = 3;
     });
 
     try {
@@ -86,9 +91,17 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
         eventHeads: _appContext.eventHeads,
       );
       if (!mounted) return;
+
+      setState(() {
+        _completedSteps = 2;
+        _statusMessage = 'Fetching activity…';
+      });
+
+      _user.setActivity(await _userDBManager.fetchActivity(_user.id));
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _completedSteps = 2;
+        _completedSteps = 3;
         _statusMessage = 'Done';
       });
     } catch (e, st) {
@@ -247,7 +260,56 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             label: Text(l10n.userProfileViewPosts),
           ),
         ],
+        const SizedBox(height: 16),
+        Text(l10n.userProfileRecentActivity,
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        _buildActivityCard(l10n, theme, colorScheme),
+        if (_appContext.currentUser.canManageVolunteers) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _onViewAllActivity,
+            icon: const Icon(Icons.history),
+            label: Text(l10n.userProfileViewAllActivity),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildActivityCard(
+    AppLocalizations l10n,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final preview = _user.activity?.preview ?? const <UserActivityRecord>[];
+    if (preview.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            l10n.userProfileNoRecentActivity,
+            style: theme.textTheme.bodyLarge
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Column(
+        children: [
+          for (var i = 0; i < preview.length; i++) ...[
+            if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+            ListTile(
+              leading: Icon(Icons.history, color: colorScheme.primary),
+              title: Text(preview[i].log),
+              subtitle: Text(_activityDateFormat.format(preview[i].ts)),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -299,6 +361,15 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
           allowPostView: true,
           initialTab: 1,
         ),
+      ),
+    );
+  }
+
+  void _onViewAllActivity() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewUserActivityPage(selectedUser: _user),
       ),
     );
   }

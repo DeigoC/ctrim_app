@@ -226,6 +226,42 @@ abstract class AppLocalizations {
   /// **'Untitled event'**
   String get userProfileUntitledEvent;
 
+  /// Section title for the last few volunteer activity records
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get userProfileRecentActivity;
+
+  /// Empty state when a volunteer has no recorded activity
+  ///
+  /// In en, this message translates to:
+  /// **'No recent activity'**
+  String get userProfileNoRecentActivity;
+
+  /// Area-admin button to open the full activity paper trail
+  ///
+  /// In en, this message translates to:
+  /// **'View all activity'**
+  String get userProfileViewAllActivity;
+
+  /// App bar title for the full volunteer activity log
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get userActivityPageTitle;
+
+  /// Access denied copy on the full activity page
+  ///
+  /// In en, this message translates to:
+  /// **'Only area admins can view the full activity log.'**
+  String get userActivityDenied;
+
+  /// Subtitle showing the Firestore document ID for paper trailing
+  ///
+  /// In en, this message translates to:
+  /// **'Record {id}'**
+  String userActivityDocumentId(String id);
+
   /// Generic cancel button label
   ///
   /// In en, this message translates to:

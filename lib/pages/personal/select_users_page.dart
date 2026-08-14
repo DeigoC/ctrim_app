@@ -8,6 +8,8 @@ import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/persist_users_local_cache.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
+import 'package:ctrim_app/utility/user_activity_messages.dart';
+import 'package:ctrim_app/utility/user_activity_recorder.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
@@ -79,7 +81,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     super.initState();
     _selectedUIDs = Set<String>.from(widget.selectedUIDs);
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final assignable = VolunteerLocations.assignableFrom(appContext.allLocations);
+    final assignable =
+        VolunteerLocations.assignableFrom(appContext.allLocations);
     _locationFilter = VolunteerLocations.defaultFilterForUser(
       appContext.currentUser.location,
       assignable,
@@ -152,7 +155,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               Material(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: filterHorizontalPadding, vertical: 8),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: filterHorizontalPadding, vertical: 8),
                   child: Text(
                     l10n.selectUsersSelected(_selectedUIDs.length),
                     style: Theme.of(context).textTheme.titleSmall,
@@ -161,16 +165,22 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(filterHorizontalPadding, 8, filterHorizontalPadding, 8),
+                padding: EdgeInsets.fromLTRB(
+                    filterHorizontalPadding, 8, filterHorizontalPadding, 8),
                 child: Row(
-                  children: VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
-                    final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
+                  children: VolunteerLocations.filterOptionsFrom(
+                          appContext.allLocations)
+                      .map((location) {
+                    final label = location == VolunteerLocations.all
+                        ? l10n.volunteersFilterAll
+                        : location;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
                         label: Text(label),
                         selected: _locationFilter == location,
-                        onSelected: (_) => setState(() => _locationFilter = location),
+                        onSelected: (_) =>
+                            setState(() => _locationFilter = location),
                       ),
                     );
                   }).toList(),
@@ -180,13 +190,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                 tags: appContext.allTags,
                 selectedTagIDs: _selectedTagIDs,
                 horizontalPadding: filterHorizontalPadding,
-                onSelectionChanged: (selected) => setState(() => _selectedTagIDs = selected),
+                onSelectionChanged: (selected) =>
+                    setState(() => _selectedTagIDs = selected),
               ),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding + 16),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -198,9 +210,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                               if (showCreate) ...[
                                 const SizedBox(height: 16),
                                 FilledButton.tonalIcon(
-                                  onPressed: () => _onCreatePlaceholder(appContext),
+                                  onPressed: () =>
+                                      _onCreatePlaceholder(appContext),
                                   icon: const Icon(Icons.person_add_alt),
-                                  label: Text(l10n.selectUsersCreatePlaceholder),
+                                  label:
+                                      Text(l10n.selectUsersCreatePlaceholder),
                                 ),
                               ],
                             ],
@@ -215,7 +229,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                             l10n: l10n,
                           )
                         : ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
                             itemCount: filteredUsers.length,
                             itemBuilder: (_, index) => _buildUserListTile(
                               user: filteredUsers[index],
@@ -292,7 +307,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       itemCount: users.length,
       itemBuilder: (_, index) {
         final user = users[index];
-        final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+        final userTags =
+            UserTagHelpers.tagsForUser(user: user, allTags: allTags);
         final isSelected = _selectedUIDs.contains(user.id);
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
@@ -322,12 +338,14 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                           user.fullname,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           user.isPlaceholder
-                              ? l10n.selectUsersPlaceholderSubtitle(user.location)
+                              ? l10n
+                                  .selectUsersPlaceholderSubtitle(user.location)
                               : user.location,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -370,7 +388,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
 
     if (!widget.includePlaceholders) {
-      users = users.where((user) => !user.isPlaceholder || _selectedUIDs.contains(user.id));
+      users = users.where(
+          (user) => !user.isPlaceholder || _selectedUIDs.contains(user.id));
     }
 
     if (_locationFilter != VolunteerLocations.all) {
@@ -386,7 +405,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
-      users = users.where((user) => user.fullname.toLowerCase().contains(query));
+      users =
+          users.where((user) => user.fullname.toLowerCase().contains(query));
     }
 
     final result = users.toList()
@@ -465,8 +485,12 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.selectUsersCreate)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.cancel)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.selectUsersCreate)),
         ],
       ),
     );
@@ -509,8 +533,14 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         final user = User.fromMap(id, raw);
         if (!mounted) return;
         appContext.allUsers.add(user);
-        await IDTrackerDBManager().tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
+        await IDTrackerDBManager()
+            .tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
         await persistUsersLocalCache(appContext.allUsers);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.registeredVolunteer,
+          documentId: user.id,
+        );
         setState(() {
           final max = widget.maxSelection;
           if (max != null && _selectedUIDs.length >= max) {
@@ -534,6 +564,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   }
 
   void _openUserSchedule(User user) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ViewUserRolesPage(selectedUser: user)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => ViewUserRolesPage(selectedUser: user)));
   }
 }

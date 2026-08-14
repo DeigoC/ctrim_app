@@ -17,7 +17,7 @@ Content is meant to be readable on phone and web, with richer formatting than a 
 
 ## Who can edit
 
-**Leaders**, **area admins**, and (when introduced) **site admins** can add and edit this content.
+**Leaders** (including **area admins**, and later **site admins**) can add and edit this content.
 
 **Guests** and ordinary **signed-in members** cannot — they never see Add/Edit controls for these pages.
 

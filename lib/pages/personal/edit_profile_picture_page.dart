@@ -10,6 +10,8 @@ import '../../utility/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/persist_users_local_cache.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/user_avatar.dart';
 
 /// Lets the signed-in volunteer update their own profile picture URL.
@@ -21,8 +23,10 @@ class EditProfilePicturePage extends StatefulWidget {
 }
 
 class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
-  static final RegExp _driveRegExp = RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
-  static final RegExp _driveRegExpLoose = RegExp(r'drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
+  static final RegExp _driveRegExp =
+      RegExp(r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
+  static final RegExp _driveRegExpLoose =
+      RegExp(r'drive\.google\.com/file/d/([a-zA-Z0-9_-]+)');
 
   final UserDBManager _userDBManager = UserDBManager();
   late final TextEditingController _tecImgSrc;
@@ -83,8 +87,9 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final horizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final horizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return PopScope(
       canPop: _allowPop || _isSaved,
@@ -100,98 +105,108 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
         }
       },
       child: Scaffold(
-      appBar: AppBar(title: const Text('Edit profile picture')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 32),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Text(
-                    'Preview',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 16),
-                  MyUserAvatar(
-                    _appContext.currentUser,
-                    radius: 64,
-                    tmpImageSrc: _testing || _imageValidated ? _previewSrc : null,
-                  ),
-                  if (_validationMessage != null) ...[
-                    const SizedBox(height: 12),
+        appBar: AppBar(title: const Text('Edit profile picture')),
+        body: ListView(
+          padding:
+              EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 32),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
                     Text(
-                      _validationMessage!,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                      'Preview',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Image URL',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Paste a public link to your photo. Google Drive share links work — use the help section below.',
-                    style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _tecImgSrc,
-                    maxLines: 3,
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      labelText: 'Image URL',
-                      hintText: 'https://… or Google Drive share link',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        tooltip: 'Clear',
-                        onPressed: _tecImgSrc.text.isEmpty ? null : () => _tecImgSrc.clear(),
-                        icon: const Icon(Icons.clear),
-                      ),
+                    const SizedBox(height: 16),
+                    MyUserAvatar(
+                      _appContext.currentUser,
+                      radius: 64,
+                      tmpImageSrc:
+                          _testing || _imageValidated ? _previewSrc : null,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _tecImgSrc.text.trim().isEmpty ? null : _onTestImageClick,
-                          icon: const Icon(Icons.visibility_outlined),
-                          label: const Text('Test image'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: _canSave ? _onSaveClick : null,
-                          icon: const Icon(Icons.save),
-                          label: const Text('Save'),
-                        ),
+                    if (_validationMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _validationMessage!,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: colorScheme.error),
                       ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          _buildHelpSection(theme, colorScheme),
-        ],
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Image URL',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Paste a public link to your photo. Google Drive share links work — use the help section below.',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _tecImgSrc,
+                      maxLines: 3,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        labelText: 'Image URL',
+                        hintText: 'https://… or Google Drive share link',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          tooltip: 'Clear',
+                          onPressed: _tecImgSrc.text.isEmpty
+                              ? null
+                              : () => _tecImgSrc.clear(),
+                          icon: const Icon(Icons.clear),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _tecImgSrc.text.trim().isEmpty
+                                ? null
+                                : _onTestImageClick,
+                            icon: const Icon(Icons.visibility_outlined),
+                            label: const Text('Test image'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _canSave ? _onSaveClick : null,
+                            icon: const Icon(Icons.save),
+                            label: const Text('Save'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildHelpSection(theme, colorScheme),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -207,13 +222,15 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
             alignment: Alignment.centerLeft,
             child: Text(
               'Using Google Drive (recommended)',
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(height: 8),
           const _HelpStep(
             number: 1,
-            text: 'Upload your photo to Google Drive (from drive.google.com or the Drive app).',
+            text:
+                'Upload your photo to Google Drive (from drive.google.com or the Drive app).',
           ),
           const _HelpStep(
             number: 2,
@@ -221,11 +238,13 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
           ),
           const _HelpStep(
             number: 3,
-            text: 'Under General access, choose Anyone with the link (Viewer). Copy the link.',
+            text:
+                'Under General access, choose Anyone with the link (Viewer). Copy the link.',
           ),
           const _HelpStep(
             number: 4,
-            text: 'Paste that link in the Image URL field above, then tap Test image.',
+            text:
+                'Paste that link in the Image URL field above, then tap Test image.',
           ),
           const _HelpStep(
             number: 5,
@@ -234,7 +253,8 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
           const SizedBox(height: 12),
           Text(
             'Tips',
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
@@ -242,7 +262,8 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
             '• A square crop works best for the circular avatar.\n'
             '• Direct image URLs (ending in .jpg / .png) also work if the file is publicly reachable.\n'
             '• If Test image fails, the link is usually still private — check “Anyone with the link”.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.4),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.4),
           ),
           const SizedBox(height: 12),
           Align(
@@ -273,8 +294,9 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
     try {
       final imageUrl = NetworkImageHelper.getImageUrl(sanitized);
       // No custom headers: Flutter web CORS preflight fails if User-Agent is set.
-      final response =
-          await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(Uri.parse(imageUrl))
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}');
@@ -324,13 +346,19 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
       action: (onProgress) async {
         const total = 2;
         onProgress(completed: 0, total: total, message: 'Updating profile…');
-        await _userDBManager.updateUserImgSrc(_appContext.currentUser.id, sanitized);
+        await _userDBManager.updateUserImgSrc(
+            _appContext.currentUser.id, sanitized);
         onProgress(completed: 1, total: total, message: 'Caching photo…');
         await _cacheLocalImage(sanitized);
         if (!mounted) return;
         _appContext.setNewUserImage(sanitized);
         _syncAllUsersImgSrc(sanitized);
         await persistUsersLocalCache(_appContext.allUsers);
+        await UserActivityRecorder().record(
+          actorUserId: _appContext.currentUser.id,
+          log: UserActivityMessages.updatedProfilePhoto,
+          documentId: _appContext.currentUser.id,
+        );
         _appContext.rebuildPlease();
       },
     );
@@ -366,13 +394,15 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
     final localDataManager = LocalDataManager();
     final imageUrl = NetworkImageHelper.getImageUrl(src);
     final response = await http.get(Uri.parse(imageUrl));
-    await localDataManager.writeUserImage(_appContext.currentUser.id, response.bodyBytes);
+    await localDataManager.writeUserImage(
+        _appContext.currentUser.id, response.bodyBytes);
     debugPrint('Cached profile image for: ${_appContext.currentUser.id}');
   }
 
   String _sanitiseSrc() {
     final raw = _tecImgSrc.text.trim();
-    final match = _driveRegExp.firstMatch(raw) ?? _driveRegExpLoose.firstMatch(raw);
+    final match =
+        _driveRegExp.firstMatch(raw) ?? _driveRegExpLoose.firstMatch(raw);
     if (match != null) {
       return 'https://drive.google.com/uc?id=${match.group(1)!}';
     }

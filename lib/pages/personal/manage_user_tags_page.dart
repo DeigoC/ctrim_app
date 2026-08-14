@@ -6,6 +6,8 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../widgets/user_tag_chip.dart';
@@ -244,6 +246,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
         existing.setColor(color.isEmpty ? null : color);
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdateTag(existing);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.editedUserTag,
+          documentId: existing.id,
+        );
       } else {
         final nextOrder = appContext.allTags.isEmpty
             ? 1
@@ -257,6 +264,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           displayOrder: nextOrder,
         );
         appContext.addOrUpdateTag(tag);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdUserTag,
+          documentId: tag.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -309,6 +321,12 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       await _tagDBManager.deleteTag(tag.id);
       if (!mounted) return;
       Provider.of<AppContext>(context, listen: false).removeTag(tag.id);
+      await UserActivityRecorder().record(
+        actorUserId:
+            Provider.of<AppContext>(context, listen: false).currentUser.id,
+        log: UserActivityMessages.deletedUserTag,
+        documentId: tag.id,
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -346,6 +364,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           displayOrder: i + 1,
         );
         appContext.addOrUpdateTag(tag);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdUserTag,
+          documentId: tag.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

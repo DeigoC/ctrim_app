@@ -12,7 +12,7 @@ What stakeholders should know is **shipping, finishing, or planned** — not a f
 - **Attendance** — continue so **post contributors** (not only the author) can manage who’s attending  
 - **Area-scoped admin** — gate certain admin controls by the area a person is assigned to  
 - **Site admin** *(planned working title)* — a level above area admin without the location restriction  
-- Keep **Information** editing with **Leaders** and area/site admins — not guests or ordinary signed-in members  
+- Keep **Information** editing with **Leaders** (including area/site admins) — not guests or ordinary signed-in members  
 
 ## In place or finishing
 
@@ -30,7 +30,7 @@ What stakeholders should know is **shipping, finishing, or planned** — not a f
 | Small groups | Always **Cell Group** |
 | Placeholders | Documented publicly |
 | Interest | “Follow updates” (not formal RSVP) |
-| Information editing | Leaders + area/site admins; not guests or ordinary members |
+| Information editing | Leaders (including area/site admins); not guests or ordinary members |
 | Platforms | Web first; store apps later |
 
 ## Related pages

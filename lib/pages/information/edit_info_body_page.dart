@@ -5,6 +5,8 @@ import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/info_repository.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
+import 'package:ctrim_app/utility/user_activity_messages.dart';
+import 'package:ctrim_app/utility/user_activity_recorder.dart';
 import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -104,15 +106,16 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     super.didChangeDependencies();
     if (_checkedAccess) return;
     _checkedAccess = true;
-    final canManage =
-        Provider.of<AppContext>(context, listen: false).currentUser.canManageInfo;
+    final canManage = Provider.of<AppContext>(context, listen: false)
+        .currentUser
+        .canManageInfo;
     if (!canManage) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-                'Only area admins and leaders can edit this content.'),
+            content:
+                Text('Only area admins and leaders can edit this content.'),
           ),
         );
         _popRouteAfterAllowing();
@@ -331,8 +334,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     if (!appContext.currentUser.canManageInfo) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text(
-                'Only area admins and leaders can edit this content.')),
+            content:
+                Text('Only area admins and leaders can edit this content.')),
       );
       return;
     }
@@ -364,6 +367,13 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             displayOrder: displayOrder,
           );
           await _infoRepository.saveChurchInfo(church);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingChurch == null
+                ? UserActivityMessages.createdChurchRecord
+                : UserActivityMessages.editedChurchRecord,
+            documentId: church.id,
+          );
           break;
         case InfoEditorSection.testimonial:
           final existingTestimonial = widget.testimonialInfo;
@@ -380,6 +390,13 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             displayOrder: displayOrder,
           );
           await _infoRepository.saveTestimonialInfo(testimonial);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingTestimonial == null
+                ? UserActivityMessages.createdTestimonial
+                : UserActivityMessages.editedTestimonial,
+            documentId: testimonial.id,
+          );
           break;
         case InfoEditorSection.ctrim:
           final existingInfo = widget.ctrimInfo;
@@ -396,6 +413,13 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             displayOrder: displayOrder,
           );
           await _infoRepository.saveCtrimInfo(info);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingInfo == null
+                ? UserActivityMessages.createdCtrimInfo
+                : UserActivityMessages.editedCtrimInfo,
+            documentId: info.id,
+          );
           break;
       }
 
@@ -451,13 +475,28 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       switch (widget.section) {
         case InfoEditorSection.church:
           await _infoRepository.deleteChurchInfo(widget.churchInfo!.id);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedChurchRecord,
+            documentId: widget.churchInfo!.id,
+          );
           break;
         case InfoEditorSection.testimonial:
           await _infoRepository
               .deleteTestimonialInfo(widget.testimonialInfo!.id);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedTestimonial,
+            documentId: widget.testimonialInfo!.id,
+          );
           break;
         case InfoEditorSection.ctrim:
           await _infoRepository.deleteCtrimInfo(widget.ctrimInfo!.id);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedCtrimInfo,
+            documentId: widget.ctrimInfo!.id,
+          );
           break;
       }
 

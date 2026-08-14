@@ -102,6 +102,35 @@
   "@userProfileUntitledEvent": {
     "description": "Fallback event title on profile schedule preview"
   },
+  "userProfileRecentActivity": "Recent activity",
+  "@userProfileRecentActivity": {
+    "description": "Section title for the last few volunteer activity records"
+  },
+  "userProfileNoRecentActivity": "No recent activity",
+  "@userProfileNoRecentActivity": {
+    "description": "Empty state when a volunteer has no recorded activity"
+  },
+  "userProfileViewAllActivity": "View all activity",
+  "@userProfileViewAllActivity": {
+    "description": "Area-admin button to open the full activity paper trail"
+  },
+  "userActivityPageTitle": "Activity",
+  "@userActivityPageTitle": {
+    "description": "App bar title for the full volunteer activity log"
+  },
+  "userActivityDenied": "Only area admins can view the full activity log.",
+  "@userActivityDenied": {
+    "description": "Access denied copy on the full activity page"
+  },
+  "userActivityDocumentId": "Record {id}",
+  "@userActivityDocumentId": {
+    "description": "Subtitle showing the Firestore document ID for paper trailing",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "cancel": "Cancel",
   "@cancel": {
     "description": "Generic cancel button label"

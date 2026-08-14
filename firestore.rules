@@ -62,6 +62,13 @@ service cloud.firestore {
         request.resource.data.interested.keys().hasOnly([request.auth.uid]);
     }
 
+    /// Caller is the volunteer whose `users/{userId}` profile is being written.
+    function isOwnVolunteerProfile() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(userId)).data.AuthID
+          == request.auth.uid;
+    }
+
     // Default: deny all deletes, allow reads only with more specific rules below
     match /{document=**} {
       allow delete: if false;
@@ -133,10 +140,14 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ImgSrc'])
       ) || isPlaceholderCreatorNameOnlyUpdate();
 
-      // Role/post tracking updated by workers when managing events
+      // Role/post tracking updated by workers when managing events.
+      // Activity is guest-readable; workers may only append their own log
+      // (area/global admins seed empty activity when registering people).
       match /supplemental/{document}{
         allow read: if true;
-        allow write: if isAdmin() || isAreaAdmin() || isWorker();
+        allow write: if document == 'activity'
+          ? (isAdmin() || isAreaAdmin() || isOwnVolunteerProfile())
+          : (isAdmin() || isAreaAdmin() || isWorker());
       }
     }
 

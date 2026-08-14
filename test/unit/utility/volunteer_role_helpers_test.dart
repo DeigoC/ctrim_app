@@ -74,7 +74,7 @@ void main() {
     ];
     final index = CellGroupLeaderIndex.fromGroups(groups);
 
-    test('rolesFor includes profile flags and derived CG leadership', () {
+    test('rolesFor shows Admin instead of Leader when both flags apply', () {
       final roles = VolunteerRoleHelpers.rolesFor(
         user: _user(id: 'cg1', isLeader: true, isAreaAdmin: true),
         cellGroupLeaders: index,
@@ -83,11 +83,19 @@ void main() {
       expect(
         roles,
         {
-          VolunteerRoleKind.leader,
           VolunteerRoleKind.areaAdmin,
           VolunteerRoleKind.cellGroupLeader,
         },
       );
+    });
+
+    test('rolesFor shows Leader when the user is not an admin', () {
+      final roles = VolunteerRoleHelpers.rolesFor(
+        user: _user(id: 'l1', isLeader: true),
+        cellGroupLeaders: index,
+      );
+
+      expect(roles, {VolunteerRoleKind.leader});
     });
 
     test('empty role filter matches everyone', () {
@@ -101,9 +109,32 @@ void main() {
       );
     });
 
+    test('Leaders filter includes area admins', () {
+      final admin = _user(id: 'a1', isAreaAdmin: true);
+      expect(
+        VolunteerRoleHelpers.userMatchesRoleFilter(
+          user: admin,
+          selected: {VolunteerRoleKind.leader},
+          cellGroupLeaders: index,
+        ),
+        isTrue,
+      );
+    });
+
+    test('Admins filter excludes leaders who are not admins', () {
+      final leader = _user(id: 'l1', isLeader: true);
+      expect(
+        VolunteerRoleHelpers.userMatchesRoleFilter(
+          user: leader,
+          selected: {VolunteerRoleKind.areaAdmin},
+          cellGroupLeaders: index,
+        ),
+        isFalse,
+      );
+    });
+
     test('role filter is OR across selected roles', () {
       final leader = _user(id: 'l1', isLeader: true);
-      final admin = _user(id: 'a1', isAreaAdmin: true);
       final cgLeader = _user(id: 'cg1');
       final none = _user(id: 'plain');
       const selected = {
@@ -129,19 +160,35 @@ void main() {
       );
       expect(
         VolunteerRoleHelpers.userMatchesRoleFilter(
-          user: admin,
-          selected: selected,
-          cellGroupLeaders: index,
-        ),
-        isFalse,
-      );
-      expect(
-        VolunteerRoleHelpers.userMatchesRoleFilter(
           user: none,
           selected: selected,
           cellGroupLeaders: index,
         ),
         isFalse,
+      );
+    });
+
+    test('toggleRole keeps Leader and Admin mutually exclusive', () {
+      var selected = <VolunteerRoleKind>{};
+      selected = VolunteerRoleHelpers.toggleRole(
+        current: selected,
+        role: VolunteerRoleKind.leader,
+      );
+      expect(selected, {VolunteerRoleKind.leader});
+
+      selected = VolunteerRoleHelpers.toggleRole(
+        current: selected,
+        role: VolunteerRoleKind.areaAdmin,
+      );
+      expect(selected, {VolunteerRoleKind.areaAdmin});
+
+      selected = VolunteerRoleHelpers.toggleRole(
+        current: selected,
+        role: VolunteerRoleKind.cellGroupLeader,
+      );
+      expect(
+        selected,
+        {VolunteerRoleKind.areaAdmin, VolunteerRoleKind.cellGroupLeader},
       );
     });
   });

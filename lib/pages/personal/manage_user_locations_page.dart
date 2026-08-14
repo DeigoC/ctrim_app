@@ -6,6 +6,8 @@ import '../../models/user_location.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/role_access_gate.dart';
@@ -250,6 +252,11 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
         if (oldName != name) {
           appContext.renameUsersLocation(oldName, name);
         }
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.editedLocation,
+          documentId: existing.id,
+        );
       } else {
         final nextOrder = appContext.allLocations.isEmpty
             ? 1
@@ -262,6 +269,11 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           displayOrder: nextOrder,
         );
         appContext.addOrUpdateLocation(location);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdLocation,
+          documentId: location.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -319,6 +331,12 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
       if (!mounted) return;
       Provider.of<AppContext>(context, listen: false)
           .removeLocation(location.id);
+      await UserActivityRecorder().record(
+        actorUserId:
+            Provider.of<AppContext>(context, listen: false).currentUser.id,
+        log: UserActivityMessages.deletedLocation,
+        documentId: location.id,
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -354,6 +372,11 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           displayOrder: i + 1,
         );
         appContext.addOrUpdateLocation(location);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdLocation,
+          documentId: location.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

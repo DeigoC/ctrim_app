@@ -15,7 +15,7 @@ Short definitions of **guest**, **volunteer**, **placeholder**, **Leader**, and 
 | **Volunteer (community profile)** | Appear in the Volunteers directory; My Schedule, My Posts, and assignments when organisers involve them |
 | **Placeholder** | A staff-created name in the directory **before** that person has signed in — for attendance, cell groups, and programmes |
 | **Leader** | Create posts and templates; register / add people they work with; edit the Information (CTRIM) section |
-| **Area admin** | Admin for their **assigned area(s)** — people, tags, locations, cell groups, plus elevated content access |
+| **Area admin** | A **Leader** plus admin for their **assigned area(s)** — people, tags, locations, cell groups |
 | **Site admin** *(planned working title)* | Admin **without** the area location restriction — above area admin |
 
 **Guests** and ordinary **signed-in members** cannot edit Information or other admin surfaces. Elevated roles (**Leader**, **Area admin**, and later **Site admin**) can.
@@ -28,7 +28,7 @@ These are not five separate “apps” — they stack:
 2. **Signing in** unlocks personal actions (interest, notification prefs, and similar).  
 3. A **community / volunteer profile** is what puts someone in the Volunteers directory and lets organisers assign them to programmes, attendance, and cell groups. Signing in alone is the account; the profile is the community record organisers work with.  
 4. **Placeholder** profiles fill the gap when someone needs to be listed **before** they create an account — same kind of directory entry, without a sign-in yet.  
-5. **Leader** and **Area admin** are elevated flags on a community profile (not a different product).  
+5. **Leader** is an elevated flag on a community profile. **Area admin** is a step above Leader — every area admin is a Leader, but not every Leader is an area admin.  
 6. Separately, the **author** of a post (and anyone listed as a **contributor**) can edit **that** post even if they are not a global admin.
 
 ## What each tier can access
@@ -41,14 +41,15 @@ These are not five separate “apps” — they stack:
 | Richer people / member details on posts and groups | — | Yes | Yes | Yes | Yes |
 | My Schedule / My Posts | — | When they have a profile & assignments | Yes | Yes | Yes |
 | Volunteers directory (Personal → People) | — | Yes* | Yes | Yes | Yes |
-| Create posts / use post templates | — | — | — | Yes | —† |
+| Recent activity on a volunteer profile (last few lines) | — | Yes* | Yes | Yes | Yes |
+| Full activity list for a volunteer | — | — | — | — | Yes |
+| Create posts / use post templates | — | — | — | Yes | Yes |
 | Edit **this** post (if author or contributor) | — | If listed | If listed | If listed | If listed |
 | Register / add people (incl. placeholders) | — | — | — | Yes | Yes |
 | Edit Information (churches, testimonials, CTRIM pages) | — | — | — | Yes | Yes |
 | Manage tags, locations, cell-group **catalogue** | — | — | — | — | Yes |
 
-\*Signed-in people with access to Personal can open Volunteers when that section is available.  
-†Area admins focus on area admin tools; post creation is the **Leader** hat (someone can hold both).
+\*Signed-in people with access to Personal can open Volunteers when that section is available.
 
 Programme lines on a post can also be marked so **guests do not see** staff-only schedule items — signed-in organisers still see the full programme.
 
@@ -68,7 +69,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Area admin
 
-**Area admins** look after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, and cell groups. Controls will continue to be gated by area assignment as that model lands fully.
+**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, and cell groups. Controls will continue to be gated by area assignment as that model lands fully.
 
 ## Site admin *(planned)*
 
@@ -76,11 +77,19 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Volunteers directory
 
-**Volunteers** (from Personal, when available) is a searchable directory of people. It can be filtered by location (for example Belfast, Portadown, North Coast), by **Leader / Admin / CG Leader** roles, and by team tags.
+**Volunteers** (from Personal, when available) is a searchable directory of people. It can be filtered by location (for example Belfast, Portadown, North Coast), by role, and by team tags.
 
-Each person can show **Leader** and **Admin** badges from their profile permissions. **CG Leader** is someone listed as a leader on a cell group (including paused groups, not archived ones) — it is not a separate switch on the person.
+Role filters:
+
+- **Leaders** — everyone with Leader access, including area admins  
+- **Admins** — area admins only (a tighter view; you do not also select Leaders)  
+- **CG Leaders** — people listed as a leader on a cell group (including paused groups, not archived ones)
+
+Each person shows at most one of **Admin** or **Leader** from their profile permissions (Admin is the higher badge). **CG Leader** can appear alongside either — it is not a separate switch on the person.
 
 Having a row here is what “volunteer / registered profile” means in everyday use — not a separate app mode.
+
+Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a volunteer, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
 
 ## Placeholders
 
