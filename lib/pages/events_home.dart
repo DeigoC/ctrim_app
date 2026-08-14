@@ -6,6 +6,7 @@ import '../models/post_tag.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/event_heads_repository.dart';
+import '../utility/refresh_cooldown.dart';
 import '../utility/responsive_layout.dart';
 import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
@@ -455,7 +456,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
       _appContext.sharedPref.setPostRefreshTime();
     } else {
       debugPrint('cannot refresh cause of timer');
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(kRefreshCooldownBusyWait);
     }
   }
 
@@ -469,7 +470,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   }
 
   Future<void> _refreshPosts() async {
-    final heads = await EventHeadsRepository().fetchEventHeads(forceRefresh: true);
+    final heads = await EventHeadsRepository().fetchEventHeads();
     setState(() {
       _appContext.setRefreshedHeads(heads);
     });

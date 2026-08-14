@@ -6,6 +6,7 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
+import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../widgets/load_progress_body.dart';
@@ -550,7 +551,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       });
     } else {
       debugPrint('Fake Refreshing');
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(kRefreshCooldownBusyWait);
     }
   }
 

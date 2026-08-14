@@ -74,6 +74,10 @@
   "@userProfileAdminBadge": {
     "description": "Badge shown when a volunteer is an area admin"
   },
+  "userProfileCellGroupLeaderBadge": "CG Leader",
+  "@userProfileCellGroupLeaderBadge": {
+    "description": "Badge shown when a volunteer leads an active or paused cell group"
+  },
   "userProfileUpcomingTasks": "Upcoming tasks",
   "@userProfileUpcomingTasks": {
     "description": "Section title on a volunteer profile for schedule preview"
@@ -519,6 +523,22 @@
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
     "description": "Sort volunteers by primary team tag"
+  },
+  "volunteersFilterLeaders": "Leaders",
+  "@volunteersFilterLeaders": {
+    "description": "Filter chip to show volunteers with the Leader permission"
+  },
+  "volunteersFilterAdmins": "Admins",
+  "@volunteersFilterAdmins": {
+    "description": "Filter chip to show volunteers who are area admins"
+  },
+  "volunteersFilterCellGroupLeaders": "CG Leaders",
+  "@volunteersFilterCellGroupLeaders": {
+    "description": "Filter chip to show volunteers who lead a cell group"
+  },
+  "volunteersEmptyRoles": "No volunteers match the selected roles",
+  "@volunteersEmptyRoles": {
+    "description": "Empty state when a role filter returns no volunteers"
   },
   "volunteersFilterTags": "Tags",
   "@volunteersFilterTags": {

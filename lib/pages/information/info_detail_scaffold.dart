@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../utility/app_context.dart';
+import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/information/info_image_carousel.dart';
 import '../../widgets/load_progress_body.dart';
@@ -180,8 +181,14 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
   }
 
   Future<void> _refresh() async {
+    final pref = Provider.of<AppContext>(context, listen: false).sharedPref;
+    if (!pref.canRefreshInfo) {
+      await Future.delayed(kRefreshCooldownBusyWait);
+      return;
+    }
+    pref.setInfoRefreshTime();
     setState(() {
-      _future = _load(forceRefresh: true);
+      _future = _load(forceRefresh: false);
     });
     await _future;
   }

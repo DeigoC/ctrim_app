@@ -60,6 +60,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userProfileAdminBadge => 'Admin';
 
   @override
+  String get userProfileCellGroupLeaderBadge => 'CG Leader';
+
+  @override
   String get userProfileUpcomingTasks => 'Upcoming tasks';
 
   @override
@@ -385,6 +388,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersSortTags => 'Team';
+
+  @override
+  String get volunteersFilterLeaders => 'Leaders';
+
+  @override
+  String get volunteersFilterAdmins => 'Admins';
+
+  @override
+  String get volunteersFilterCellGroupLeaders => 'CG Leaders';
+
+  @override
+  String get volunteersEmptyRoles => 'No volunteers match the selected roles';
 
   @override
   String get volunteersFilterTags => 'Tags';

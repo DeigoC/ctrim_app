@@ -14,6 +14,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
@@ -47,6 +48,18 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _onPullRefresh() async {
+    final pref = Provider.of<AppContext>(context, listen: false).sharedPref;
+    if (!pref.canRefreshCellGroups) {
+      await Future.delayed(kRefreshCooldownBusyWait);
+      return;
+    }
+    await _load();
+    if (mounted && _error == null) {
+      pref.setCellGroupsRefreshTime();
+    }
   }
 
   Future<void> _load() async {
@@ -329,7 +342,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: _load,
+        onRefresh: _onPullRefresh,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [

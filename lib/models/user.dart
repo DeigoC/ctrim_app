@@ -4,7 +4,13 @@ import 'user_post_involvement.dart';
 import 'user_role_assignment.dart';
 
 class User {
-  late String _forename, _surname, _authID, _imgSrc, _id, _location, _createdByUserID;
+  late String _forename,
+      _surname,
+      _authID,
+      _imgSrc,
+      _id,
+      _location,
+      _createdByUserID;
   late bool _isAreaAdmin, _isLeader, _isPlaceholder;
   late List<String> _tagIDs;
   List<UserRoleAssignment>? _roles;
@@ -72,26 +78,34 @@ class User {
 
   void setImgSrc(final String newImgSrc) => _imgSrc = newImgSrc;
   void setLocation(final String location) => _location = location;
-  void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
+  void setTagIDs(final List<String> tagIDs) =>
+      _tagIDs = List<String>.from(tagIDs);
   void setIsPlaceholder(final bool value) => _isPlaceholder = value;
   void setForename(final String value) => _forename = value;
   void setSurname(final String value) => _surname = value;
 
   void setRoles(final List<UserRoleAssignment> newRoles) => _roles = newRoles;
-  void removeRoles(final List<String> postIDs) => _roles!.removeWhere((e) => postIDs.contains(e.postID));
+  void removeRoles(final List<String> postIDs) =>
+      _roles!.removeWhere((e) => postIDs.contains(e.postID));
 
   void setPosts(final List<UserPostInvolvement> newPosts) => _posts = newPosts;
-  void removeAllPosts(final List<String> postIDs) => _posts!.removeWhere((e) => postIDs.contains(e.postID));
+  void removeAllPosts(final List<String> postIDs) =>
+      _posts!.removeWhere((e) => postIDs.contains(e.postID));
 
   String get id => _id;
   String get forname => _forename;
   String get surname => _surname;
   String get fullname => '$_forename $_surname';
-  String get initials => _forename[0] + _surname.split('-').map((e) => e[0]).join('');
-  String get shortenedFullName => '$_forename ${_surname.split('-').map((e) => e[0]).join('')}.';
+  String get initials =>
+      _forename[0] + _surname.split('-').map((e) => e[0]).join('');
+  String get shortenedFullName =>
+      '$_forename ${_surname.split('-').map((e) => e[0]).join('')}.';
   String get imgSrc => _imgSrc;
   String get location => _location;
   String get authID => _authID;
+
+  /// Permission flags on the volunteer profile (`IsLeader` / `IsAreaAdmin`).
+  /// Cell-group leadership is stored on cell group records, not this document.
   bool get isAreaAdmin => _isAreaAdmin;
   bool get isLeader => _isLeader;
   String get createdByUserID => _createdByUserID;
@@ -114,6 +128,8 @@ class User {
   bool hasTag(final String tagId) => _tagIDs.contains(tagId);
   bool hasAnyTag(final Iterable<String> tagIds) => tagIds.any(_tagIDs.contains);
 
-  List<UserRoleAssignment>? get roles => _roles == null ? null : UnmodifiableListView(_roles!);
-  List<UserPostInvolvement>? get posts => _posts == null ? null : UnmodifiableListView(_posts!);
+  List<UserRoleAssignment>? get roles =>
+      _roles == null ? null : UnmodifiableListView(_roles!);
+  List<UserPostInvolvement>? get posts =>
+      _posts == null ? null : UnmodifiableListView(_posts!);
 }

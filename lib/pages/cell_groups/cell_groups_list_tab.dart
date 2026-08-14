@@ -18,12 +18,14 @@ class CellGroupsListTab extends StatelessWidget {
     required this.loading,
     required this.error,
     required this.onRefresh,
+    this.onRetry,
     this.rosterUsersByGroupId = const {},
   });
 
   final bool loading;
   final Object? error;
   final Future<void> Function() onRefresh;
+  final Future<void> Function()? onRetry;
 
   /// Linked roster members keyed by cell group id (signed-in only).
   final Map<String, List<User>> rosterUsersByGroupId;
@@ -88,7 +90,9 @@ class CellGroupsListTab extends StatelessWidget {
             completedSteps: 0,
             totalSteps: 1,
             error: error,
-            onRetry: onRefresh,
+            onRetry: () {
+              (onRetry ?? onRefresh)();
+            },
           ),
         ),
       ];

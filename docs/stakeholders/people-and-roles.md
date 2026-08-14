@@ -76,7 +76,9 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Volunteers directory
 
-**Volunteers** (from Personal, when available) is a searchable directory of people. It can be filtered by location (for example Belfast, Portadown, North Coast) and by tags.
+**Volunteers** (from Personal, when available) is a searchable directory of people. It can be filtered by location (for example Belfast, Portadown, North Coast), by **Leader / Admin / CG Leader** roles, and by team tags.
+
+Each person can show **Leader** and **Admin** badges from their profile permissions. **CG Leader** is someone listed as a leader on a cell group (including paused groups, not archived ones) — it is not a separate switch on the person.
 
 Having a row here is what “volunteer / registered profile” means in everyday use — not a separate app mode.
 

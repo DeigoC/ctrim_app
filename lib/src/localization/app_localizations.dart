@@ -184,6 +184,12 @@ abstract class AppLocalizations {
   /// **'Admin'**
   String get userProfileAdminBadge;
 
+  /// Badge shown when a volunteer leads an active or paused cell group
+  ///
+  /// In en, this message translates to:
+  /// **'CG Leader'**
+  String get userProfileCellGroupLeaderBadge;
+
   /// Section title on a volunteer profile for schedule preview
   ///
   /// In en, this message translates to:
@@ -777,6 +783,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Team'**
   String get volunteersSortTags;
+
+  /// Filter chip to show volunteers with the Leader permission
+  ///
+  /// In en, this message translates to:
+  /// **'Leaders'**
+  String get volunteersFilterLeaders;
+
+  /// Filter chip to show volunteers who are area admins
+  ///
+  /// In en, this message translates to:
+  /// **'Admins'**
+  String get volunteersFilterAdmins;
+
+  /// Filter chip to show volunteers who lead a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'CG Leaders'**
+  String get volunteersFilterCellGroupLeaders;
+
+  /// Empty state when a role filter returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteers match the selected roles'**
+  String get volunteersEmptyRoles;
 
   /// Button that opens the volunteer tag filter sheet
   ///

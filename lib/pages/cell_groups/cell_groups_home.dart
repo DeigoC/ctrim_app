@@ -6,6 +6,7 @@ import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import 'cell_groups_list_tab.dart';
 import 'cell_groups_overview_tab.dart';
@@ -40,7 +41,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
   void initState() {
     super.initState();
     widget.tabController.addListener(_onTabChanged);
-    _refresh();
+    _refresh(ignoreCooldown: true);
   }
 
   @override
@@ -53,13 +54,18 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _refresh() async {
+  Future<void> _refresh({bool ignoreCooldown = false}) async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    if (!ignoreCooldown && !appContext.sharedPref.canRefreshCellGroups) {
+      await Future.delayed(kRefreshCooldownBusyWait);
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final appContext = Provider.of<AppContext>(context, listen: false);
       final groups = await _db.fetchAllGroups();
       if (!mounted) return;
       appContext.setAllCellGroups(groups);
@@ -69,6 +75,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
         groups: groups,
       );
       if (!mounted) return;
+      appContext.sharedPref.setCellGroupsRefreshTime();
       setState(() => _rosterUsersByGroupId = rosterUsers);
     } catch (e) {
       if (!mounted) return;
@@ -132,7 +139,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
                   context,
                   MaterialPageRoute(builder: (_) => const EditCellGroupPage()),
                 );
-                if (created == true && mounted) _refresh();
+                if (created == true && mounted) _refresh(ignoreCooldown: true);
               },
             )
           : null,
@@ -267,7 +274,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
             if (widget.tabController.index == 1)
               IconButton(
                 icon: const Icon(Icons.refresh),
-                onPressed: _loading ? null : _refresh,
+                onPressed: _loading ? null : () { _refresh(); },
               ),
           ],
           bottom: showTabBar
@@ -301,7 +308,8 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
           CellGroupsListTab(
             loading: _loading,
             error: _error,
-            onRefresh: _refresh,
+            onRefresh: () => _refresh(),
+            onRetry: () => _refresh(ignoreCooldown: true),
             rosterUsersByGroupId: _rosterUsersByGroupId,
           ),
         ],

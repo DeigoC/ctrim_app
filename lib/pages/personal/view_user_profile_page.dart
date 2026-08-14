@@ -10,9 +10,11 @@ import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/user_tag_helpers.dart';
+import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/user_tag_chip.dart';
+import '../../widgets/volunteer_role_badge.dart';
 import 'edit_user_page.dart';
 import 'view_user_roles_page.dart';
 
@@ -140,17 +142,25 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
     final upcomingRoles = UserScheduleService.upcomingRoles(
       user: _user,
       eventHeads: _appContext.eventHeads,
       limit: 3,
     );
-    final userTags = UserTagHelpers.tagsForUser(user: _user, allTags: _appContext.allTags);
+    final userTags =
+        UserTagHelpers.tagsForUser(user: _user, allTags: _appContext.allTags);
+    final volunteerRoles = VolunteerRoleHelpers.rolesFor(
+      user: _user,
+      cellGroupLeaders:
+          CellGroupLeaderIndex.fromGroups(_appContext.allCellGroups),
+    );
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(webHorizontalPadding, 16, webHorizontalPadding, 24),
+      padding: EdgeInsets.fromLTRB(
+          webHorizontalPadding, 16, webHorizontalPadding, 24),
       children: [
         Card(
           child: Padding(
@@ -161,43 +171,44 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
                 const SizedBox(height: 16),
                 Text(
                   _user.fullname,
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                    Icon(Icons.location_on_outlined,
+                        size: 16, color: colorScheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       _user.location,
-                      style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodyLarge
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
-                if (_user.isLeader || _user.isAreaAdmin) ...[
+                if (volunteerRoles.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  VolunteerRoleBadgeRow(
+                    roles: volunteerRoles,
                     alignment: WrapAlignment.center,
-                    children: [
-                      if (_user.isLeader) _buildBadge(l10n.userProfileLeaderBadge, colorScheme.secondaryContainer, colorScheme.onSecondaryContainer),
-                      if (_user.isAreaAdmin) _buildBadge(l10n.userProfileAdminBadge, colorScheme.primaryContainer, colorScheme.onPrimaryContainer),
-                    ],
                   ),
                 ],
                 if (userTags.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  UserTagChipRow(tags: userTags, alignment: WrapAlignment.center),
+                  UserTagChipRow(
+                      tags: userTags, alignment: WrapAlignment.center),
                 ],
               ],
             ),
           ),
         ),
         const SizedBox(height: 16),
-        Text(l10n.userProfileUpcomingTasks, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        Text(l10n.userProfileUpcomingTasks,
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         if (upcomingRoles.isEmpty)
           Card(
@@ -205,7 +216,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
               padding: const EdgeInsets.all(16),
               child: Text(
                 l10n.userProfileNoUpcomingTasks,
-                style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyLarge
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ),
           )
@@ -214,7 +226,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             child: Column(
               children: [
                 for (var i = 0; i < upcomingRoles.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+                  if (i > 0)
+                    const Divider(height: 1, indent: 16, endIndent: 16),
                   _buildPreviewTile(upcomingRoles[i], l10n, theme, colorScheme),
                 ],
               ],
@@ -238,20 +251,6 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     );
   }
 
-  Widget _buildBadge(String label, Color background, Color foreground) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: foreground, fontWeight: FontWeight.w600, fontSize: 12),
-      ),
-    );
-  }
-
   Widget _buildPreviewTile(
     UserRoleAssignment role,
     AppLocalizations l10n,
@@ -263,13 +262,18 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       eventHeads: _appContext.eventHeads,
     );
     final eventTitle = eventHead?.title ?? l10n.userProfileUntitledEvent;
-    final dateLabel = eventHead?.eventDate != null ? _eventDateFormat.format(eventHead!.eventDate!) : null;
-    final timeLabel = '${_timeFormat.format(role.start)} - ${_timeFormat.format(role.end)}';
+    final dateLabel = eventHead?.eventDate != null
+        ? _eventDateFormat.format(eventHead!.eventDate!)
+        : null;
+    final timeLabel =
+        '${_timeFormat.format(role.start)} - ${_timeFormat.format(role.end)}';
 
     return ListTile(
       leading: Icon(Icons.event, color: colorScheme.primary),
       title: Text(role.title),
-      subtitle: Text(dateLabel == null ? timeLabel : '$eventTitle · $dateLabel · $timeLabel'),
+      subtitle: Text(dateLabel == null
+          ? timeLabel
+          : '$eventTitle · $dateLabel · $timeLabel'),
       isThreeLine: dateLabel != null,
     );
   }

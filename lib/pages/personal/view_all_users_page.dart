@@ -7,13 +7,16 @@ import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
+import 'package:ctrim_app/utility/refresh_cooldown.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
+import 'package:ctrim_app/utility/volunteer_role_helpers.dart';
 import 'package:ctrim_app/widgets/action_sheet.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:ctrim_app/widgets/user_tag_chip.dart';
+import 'package:ctrim_app/widgets/volunteer_role_badge.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -34,6 +37,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   String _searchQuery = '';
   late String _locationFilter;
   Set<String> _selectedTagIDs = {};
+  Set<VolunteerRoleKind> _selectedRoles = {};
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
   bool _showPlaceholders = false;
   bool _refreshing = false;
@@ -43,13 +47,16 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   void initState() {
     super.initState();
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final assignable = VolunteerLocations.assignableFrom(appContext.allLocations);
+    final assignable =
+        VolunteerLocations.assignableFrom(appContext.allLocations);
     _locationFilter = VolunteerLocations.defaultFilterForUser(
       appContext.currentUser.location,
       assignable,
     );
     // Cache-aware refresh: skips Firestore when lastUpdate matches.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshUsersFromServer());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _refreshUsersFromServer(ignoreCooldown: true),
+    );
   }
 
   @override
@@ -58,15 +65,25 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     super.dispose();
   }
 
-  Future<void> _refreshUsersFromServer({bool forceRefresh = false}) async {
+  Future<void> _refreshUsersFromServer({
+    bool forceRefresh = false,
+    bool ignoreCooldown = false,
+  }) async {
     if (!mounted || _refreshing) return;
+    final pref = Provider.of<AppContext>(context, listen: false).sharedPref;
+    if (!forceRefresh && !ignoreCooldown && !pref.canRefreshUsers) {
+      await Future.delayed(kRefreshCooldownBusyWait);
+      return;
+    }
+
     setState(() {
       _refreshing = true;
       _refreshError = null;
     });
 
     try {
-      final users = await _usersRepository.fetchUsers(forceRefresh: forceRefresh);
+      final users =
+          await _usersRepository.fetchUsers(forceRefresh: forceRefresh);
       if (!mounted) return;
 
       final appContext = Provider.of<AppContext>(context, listen: false);
@@ -80,11 +97,16 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         appContext.setCurrentUser(refreshedCurrent.first);
       }
 
+      pref.setUsersRefreshTime();
       if (!mounted) return;
 
       _logDirectorySnapshot(
         allUsers: users,
-        filtered: _filteredUsers(users, appContext.allTags),
+        filtered: _filteredUsers(
+          users,
+          appContext.allTags,
+          CellGroupLeaderIndex.fromGroups(appContext.allCellGroups),
+        ),
         source: 'firestore-refresh',
       );
       appContext.rebuildPlease();
@@ -118,7 +140,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       } else if (!hasAuth) {
         emptyAuthNotPlaceholder++;
       }
-      locationCounts.update(u.location.isEmpty ? '(empty)' : u.location, (c) => c + 1, ifAbsent: () => 1);
+      locationCounts.update(
+          u.location.isEmpty ? '(empty)' : u.location, (c) => c + 1,
+          ifAbsent: () => 1);
     }
 
     final filteredLocations = <String, int>{};
@@ -141,7 +165,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       'all=${allUsers.length} filtered=${filtered.length} '
       'linked=$linked placeholder=$placeholder emptyAuthNotPh=$emptyAuthNotPlaceholder '
       'showPh=$_showPlaceholders locationFilter=$_locationFilter '
-      'tags=${_selectedTagIDs.length} '
+      'tags=${_selectedTagIDs.length} roles=${_selectedRoles.length} '
       'allByLoc=$locationCounts filteredByLoc=$filteredLocations',
     );
     if (sample.isNotEmpty) {
@@ -162,9 +186,16 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         horizontalPadding > 0 ? horizontalPadding : 16.0;
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      final filteredUsers = _filteredUsers(appContext.allUsers, appContext.allTags);
+      final cellGroupLeaders =
+          CellGroupLeaderIndex.fromGroups(appContext.allCellGroups);
+      final filteredUsers = _filteredUsers(
+        appContext.allUsers,
+        appContext.allTags,
+        cellGroupLeaders,
+      );
       final canEdit = appContext.currentUser.canManageVolunteers;
-      final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
+      final activeTags =
+          appContext.allTags.where((tag) => tag.isActive).toList();
 
       return Scaffold(
           appBar: AppBar(
@@ -192,7 +223,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         )
                       : const Icon(Icons.refresh),
                   tooltip: 'Refresh volunteers',
-                  onPressed: _refreshing ? null : () => _refreshUsersFromServer(forceRefresh: true),
+                  onPressed: _refreshing
+                      ? null
+                      : () => _refreshUsersFromServer(),
                 ),
               if (!_isSearching)
                 PopupMenuButton<_VolunteerSortMode>(
@@ -243,17 +276,22 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 ColoredBox(
                   color: Theme.of(context).colorScheme.errorContainer,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
-                            'Could not refresh volunteers. Pull refresh or tap retry.',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+                            'Could not refresh volunteers. Tap retry to download again.',
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer),
                           ),
                         ),
                         TextButton(
-                          onPressed: () => _refreshUsersFromServer(forceRefresh: true),
+                          onPressed: () =>
+                              _refreshUsersFromServer(forceRefresh: true),
                           child: const Text('Retry'),
                         ),
                         IconButton(
@@ -270,8 +308,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     filterHorizontalPadding, 8, filterHorizontalPadding, 8),
                 child: Row(
                   children: [
-                    ...VolunteerLocations.filterOptionsFrom(appContext.allLocations).map((location) {
-                      final label = location == VolunteerLocations.all ? l10n.volunteersFilterAll : location;
+                    ...VolunteerLocations.filterOptionsFrom(
+                            appContext.allLocations)
+                        .map((location) {
+                      final label = location == VolunteerLocations.all
+                          ? l10n.volunteersFilterAll
+                          : location;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChip(
@@ -284,6 +326,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                               filtered: _filteredUsers(
                                 appContext.allUsers,
                                 appContext.allTags,
+                                cellGroupLeaders,
                               ),
                               source: 'location-$location',
                             );
@@ -291,6 +334,36 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ),
                       );
                     }),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(l10n.volunteersFilterLeaders),
+                        selected:
+                            _selectedRoles.contains(VolunteerRoleKind.leader),
+                        onSelected: (selected) =>
+                            _toggleRoleFilter(VolunteerRoleKind.leader),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(l10n.volunteersFilterAdmins),
+                        selected: _selectedRoles
+                            .contains(VolunteerRoleKind.areaAdmin),
+                        onSelected: (selected) =>
+                            _toggleRoleFilter(VolunteerRoleKind.areaAdmin),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(l10n.volunteersFilterCellGroupLeaders),
+                        selected: _selectedRoles
+                            .contains(VolunteerRoleKind.cellGroupLeader),
+                        onSelected: (selected) => _toggleRoleFilter(
+                            VolunteerRoleKind.cellGroupLeader),
+                      ),
+                    ),
                     if (activeTags.isNotEmpty) ...[
                       const SizedBox(width: 4),
                       FilterChip(
@@ -298,13 +371,16 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                           Icons.label_outline,
                           size: 18,
                           color: _selectedTagIDs.isNotEmpty
-                              ? Theme.of(context).colorScheme.onSecondaryContainer
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer
                               : null,
                         ),
                         label: Text(
                           _selectedTagIDs.isEmpty
                               ? l10n.volunteersFilterTags
-                              : l10n.volunteersFilterTagsCount(_selectedTagIDs.length),
+                              : l10n.volunteersFilterTagsCount(
+                                  _selectedTagIDs.length),
                         ),
                         selected: _selectedTagIDs.isNotEmpty,
                         onSelected: (_) => _showTagFilterSheet(activeTags),
@@ -313,7 +389,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     if (canEdit ||
                         appContext.allUsers.any((u) =>
                             isTransientVolunteerPlaceholder(u) &&
-                            u.createdByUserID == appContext.currentUser.id)) ...[
+                            u.createdByUserID ==
+                                appContext.currentUser.id)) ...[
                       const SizedBox(width: 4),
                       FilterChip(
                         avatar: const Icon(Icons.person_outline, size: 18),
@@ -326,6 +403,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                             filtered: _filteredUsers(
                               appContext.allUsers,
                               appContext.allTags,
+                              cellGroupLeaders,
                             ),
                             source: 'placeholders-$selected',
                           );
@@ -336,12 +414,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 ),
               ),
               if (_selectedTagIDs.isNotEmpty)
-                _buildSelectedTagsSummary(activeTags, filterHorizontalPadding, l10n),
+                _buildSelectedTagsSummary(
+                    activeTags, filterHorizontalPadding, l10n),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding + 16),
                           child: Text(
                             _emptyMessage(l10n),
                             style: Theme.of(context).textTheme.bodyLarge,
@@ -353,21 +433,29 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ? _buildWideUserGrid(
                             users: filteredUsers,
                             allTags: appContext.allTags,
+                            cellGroupLeaders: cellGroupLeaders,
                             appContext: appContext,
                             horizontalPadding: horizontalPadding,
                             l10n: l10n,
                           )
                         : ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
                             itemCount: filteredUsers.length,
                             itemBuilder: (_, index) {
                               final user = filteredUsers[index];
-                              final userTags =
-                                  UserTagHelpers.tagsForUser(user: user, allTags: appContext.allTags);
+                              final userTags = UserTagHelpers.tagsForUser(
+                                  user: user, allTags: appContext.allTags);
+                              final roles = VolunteerRoleHelpers.rolesFor(
+                                user: user,
+                                cellGroupLeaders: cellGroupLeaders,
+                              );
                               final canEditUser = canEditPlaceholderProfile(
                                 actor: appContext.currentUser,
                                 target: user,
                               );
+                              final hasChips =
+                                  roles.isNotEmpty || userTags.isNotEmpty;
                               return ListTile(
                                 title: Text(user.fullname),
                                 subtitle: Column(
@@ -377,17 +465,20 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                                     Text(user.isPlaceholder
                                         ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
                                         : user.location),
-                                    if (userTags.isNotEmpty)
+                                    if (hasChips)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 4),
-                                        child: UserTagChipRow(tags: userTags, dense: true),
+                                        child: _chipRow(
+                                            roles: roles, tags: userTags),
                                       ),
                                   ],
                                 ),
-                                isThreeLine: userTags.isNotEmpty,
+                                isThreeLine: hasChips,
                                 leading: MyUserAvatar(user),
                                 onTap: () => _onUserTap(user),
-                                onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
+                                onLongPress: canEditUser
+                                    ? () => _navigateToEditUser(user)
+                                    : null,
                               );
                             },
                           ),
@@ -397,12 +488,40 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     });
   }
 
+  Widget _chipRow({
+    required Set<VolunteerRoleKind> roles,
+    required List<UserTag> tags,
+  }) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        ...VolunteerRoleBadgeRow.ordered(roles).map(
+          (role) => VolunteerRoleBadge(role: role, dense: true),
+        ),
+        ...tags.map((tag) => UserTagChip(tag: tag, dense: true)),
+      ],
+    );
+  }
+
+  void _toggleRoleFilter(VolunteerRoleKind role) {
+    setState(() {
+      _selectedRoles = Set<VolunteerRoleKind>.from(_selectedRoles);
+      if (_selectedRoles.contains(role)) {
+        _selectedRoles.remove(role);
+      } else {
+        _selectedRoles.add(role);
+      }
+    });
+  }
+
   Widget _buildSelectedTagsSummary(
     List<UserTag> activeTags,
     double horizontalPadding,
     AppLocalizations l10n,
   ) {
-    final selected = activeTags.where((tag) => _selectedTagIDs.contains(tag.id)).toList();
+    final selected =
+        activeTags.where((tag) => _selectedTagIDs.contains(tag.id)).toList();
     if (selected.isEmpty) return const SizedBox.shrink();
 
     return Padding(
@@ -418,7 +537,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               selected: true,
               onTap: () {
                 setState(() {
-                  _selectedTagIDs = Set<String>.from(_selectedTagIDs)..remove(tag.id);
+                  _selectedTagIDs = Set<String>.from(_selectedTagIDs)
+                    ..remove(tag.id);
                 });
               },
             ),
@@ -442,7 +562,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(28), topRight: Radius.circular(28)),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
@@ -471,7 +592,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                               draft.add(tag.id);
                             }
                           });
-                          setState(() => _selectedTagIDs = Set<String>.from(draft));
+                          setState(
+                              () => _selectedTagIDs = Set<String>.from(draft));
                         },
                       );
                     }).toList(),
@@ -502,6 +624,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Widget _buildWideUserGrid({
     required List<User> users,
     required List<UserTag> allTags,
+    required CellGroupLeaderIndex cellGroupLeaders,
     required AppContext appContext,
     required double horizontalPadding,
     required AppLocalizations l10n,
@@ -510,14 +633,19 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 88),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 420,
-        mainAxisExtent: 108,
+        mainAxisExtent: 124,
         crossAxisSpacing: 12,
         mainAxisSpacing: 8,
       ),
       itemCount: users.length,
       itemBuilder: (_, index) {
         final user = users[index];
-        final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+        final userTags =
+            UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+        final roles = VolunteerRoleHelpers.rolesFor(
+          user: user,
+          cellGroupLeaders: cellGroupLeaders,
+        );
         final canEditUser = canEditPlaceholderProfile(
           actor: appContext.currentUser,
           target: user,
@@ -544,7 +672,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                           user.fullname,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -557,9 +686,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        if (userTags.isNotEmpty) ...[
+                        if (roles.isNotEmpty || userTags.isNotEmpty) ...[
                           const SizedBox(height: 6),
-                          UserTagChipRow(tags: userTags, dense: true),
+                          _chipRow(roles: roles, tags: userTags),
                         ],
                       ],
                     ),
@@ -573,7 +702,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     );
   }
 
-  List<User> _filteredUsers(List<User> allUsers, List<UserTag> allTags) {
+  List<User> _filteredUsers(
+    List<User> allUsers,
+    List<UserTag> allTags,
+    CellGroupLeaderIndex cellGroupLeaders,
+  ) {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final currentUser = appContext.currentUser;
     Iterable<User> users = allUsers;
@@ -595,16 +728,27 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           ));
     }
 
+    if (_selectedRoles.isNotEmpty) {
+      users = users.where((user) => VolunteerRoleHelpers.userMatchesRoleFilter(
+            user: user,
+            selected: _selectedRoles,
+            cellGroupLeaders: cellGroupLeaders,
+          ));
+    }
+
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
-      users = users.where((user) => user.fullname.toLowerCase().contains(query));
+      users =
+          users.where((user) => user.fullname.toLowerCase().contains(query));
     }
 
     final result = users.toList()
       ..sort((a, b) {
         return switch (_sortMode) {
-          _VolunteerSortMode.surname => UserTagHelpers.compareUsersBySurname(a, b),
-          _VolunteerSortMode.tags => UserTagHelpers.compareUsersByPrimaryTag(a, b, allTags),
+          _VolunteerSortMode.surname =>
+            UserTagHelpers.compareUsersBySurname(a, b),
+          _VolunteerSortMode.tags =>
+            UserTagHelpers.compareUsersByPrimaryTag(a, b, allTags),
         };
       });
     return result;
@@ -621,6 +765,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     if (_searchQuery.isNotEmpty) {
       return l10n.volunteersEmptySearch(_searchQuery);
     }
+    if (_selectedRoles.isNotEmpty) {
+      return l10n.volunteersEmptyRoles;
+    }
     if (_selectedTagIDs.isNotEmpty) {
       return l10n.volunteersEmptyTags;
     }
@@ -631,7 +778,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   }
 
   void _addUserClick() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterUserPage())).then((_) {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => const RegisterUserPage())).then((_) {
       if (mounted) setState(() {});
     });
   }

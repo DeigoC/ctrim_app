@@ -3,6 +3,8 @@ import 'dart:collection';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'refresh_cooldown.dart';
+
 class AppSharedPreferences {
   static late final SharedPreferences _pref;
   static const String _isFirstOpen = 'isFirstOpen',
@@ -16,6 +18,9 @@ class AppSharedPreferences {
       _loggedOut = 'loggedOut',
       _subscribedToBelfast = 'subscribedToBelfast',
       _lastRoleRefresh = 'lastRoleRefresh',
+      _lastUsersRefresh = 'lastUsersRefresh',
+      _lastInfoRefresh = 'lastInfoRefresh',
+      _lastCellGroupsRefresh = 'lastCellGroupsRefresh',
       _showMultirowTools = 'showMultirowTools',
       _preferredStartupTab = 'preferredStartupTab',
       _dismissedGuestBanner = 'dismissedGuestBanner',
@@ -74,33 +79,40 @@ class AppSharedPreferences {
     _pref.setStringList(_bookmarkedPosts, bookmarked);
   }
 
-  bool get canRefreshPosts {
+  bool get canRefreshPosts => _canRefreshSince(_lastPostRefresh);
+
+  void setPostRefreshTime() => _markRefreshed(_lastPostRefresh);
+
+  bool get canRefreshRoles => _canRefreshSince(_lastRoleRefresh);
+
+  void setRoleRefreshTime() => _markRefreshed(_lastRoleRefresh);
+
+  bool get canRefreshUsers => _canRefreshSince(_lastUsersRefresh);
+
+  void setUsersRefreshTime() => _markRefreshed(_lastUsersRefresh);
+
+  bool get canRefreshInfo => _canRefreshSince(_lastInfoRefresh);
+
+  void setInfoRefreshTime() => _markRefreshed(_lastInfoRefresh);
+
+  bool get canRefreshCellGroups => _canRefreshSince(_lastCellGroupsRefresh);
+
+  void setCellGroupsRefreshTime() => _markRefreshed(_lastCellGroupsRefresh);
+
+  bool _canRefreshSince(final String key) {
     try {
-      return _pref.getInt(_lastPostRefresh) == null
-          ? true
-          : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastPostRefresh)!)).inMinutes >=
-              2;
+      return hasRefreshCooldownElapsed(
+        now: DateTime.now(),
+        lastRefreshMs: _pref.getInt(key),
+      );
     } catch (e) {
-      _pref.remove(_lastPostRefresh);
+      _pref.remove(key);
       return true;
     }
   }
 
-  void setPostRefreshTime() => _pref.setInt(_lastPostRefresh, DateTime.now().millisecondsSinceEpoch);
-
-  bool get canRefreshRoles {
-    try {
-      return _pref.getInt(_lastRoleRefresh) == null
-          ? true
-          : DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(_pref.getInt(_lastRoleRefresh)!)).inMinutes >=
-              2;
-    } catch (e) {
-      _pref.remove(_lastRoleRefresh);
-      return true;
-    }
-  }
-
-  void setRoleRefreshTime() => _pref.setInt(_lastRoleRefresh, DateTime.now().millisecondsSinceEpoch);
+  void _markRefreshed(final String key) =>
+      _pref.setInt(key, DateTime.now().millisecondsSinceEpoch);
 
   bool get showMultirowTools => _pref.getBool(_showMultirowTools) ?? false;
   void setShowMultirowTools(final bool newState) => _pref.setBool(_showMultirowTools, newState);
