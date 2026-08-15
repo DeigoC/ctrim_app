@@ -533,9 +533,13 @@
       }
     }
   },
-  "volunteersShowPlaceholders": "Show placeholders",
+  "volunteersShowPlaceholders": "Placeholders",
   "@volunteersShowPlaceholders": {
-    "description": "Toggle to include placeholder profiles in the Volunteers list"
+    "description": "Filter chip to show only placeholder profiles in the Volunteers list"
+  },
+  "volunteersEmptyPlaceholders": "No placeholder profiles to show",
+  "@volunteersEmptyPlaceholders": {
+    "description": "Empty state when the placeholders filter returns no volunteers"
   },
   "volunteersPlaceholderBadge": "Placeholder",
   "@volunteersPlaceholderBadge": {

@@ -396,7 +396,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get volunteersShowPlaceholders => 'Show placeholders';
+  String get volunteersShowPlaceholders => 'Placeholders';
+
+  @override
+  String get volunteersEmptyPlaceholders => 'No placeholder profiles to show';
 
   @override
   String get volunteersPlaceholderBadge => 'Placeholder';

@@ -790,11 +790,17 @@ abstract class AppLocalizations {
   /// **'Placeholder · {location}'**
   String selectUsersPlaceholderSubtitle(String location);
 
-  /// Toggle to include placeholder profiles in the Volunteers list
+  /// Filter chip to show only placeholder profiles in the Volunteers list
   ///
   /// In en, this message translates to:
-  /// **'Show placeholders'**
+  /// **'Placeholders'**
   String get volunteersShowPlaceholders;
+
+  /// Empty state when the placeholders filter returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No placeholder profiles to show'**
+  String get volunteersEmptyPlaceholders;
 
   /// Badge on placeholder volunteer cards
   ///

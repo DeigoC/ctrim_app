@@ -95,7 +95,7 @@ Opening someone’s profile also shows their **recent activity** — a short lis
 
 Sometimes organisers need to assign or list someone **before** that person has signed in. The app supports **placeholder** people for that — useful for attendance, cell groups, and programmes.
 
-Leaders and area admins can create a placeholder when picking someone who isn’t in the directory yet. The Volunteers list can show or hide placeholders. Later, when that person creates an account, organisers can connect it to the existing profile so history is not lost.
+Leaders and area admins can create a placeholder when picking someone who isn’t in the directory yet. The Volunteers list hides placeholders by default; turn on the **Placeholders** filter to see only those profiles. Later, when that person creates an account, organisers can connect it to the existing profile so history is not lost.
 
 ## Related pages
 

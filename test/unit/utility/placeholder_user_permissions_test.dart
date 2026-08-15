@@ -5,7 +5,8 @@ import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 
 void main() {
   group('placeholder_user_permissions', () {
-    final admin = User(id: '1', forname: 'Ada', surname: 'Admin', isAreaAdmin: true);
+    final admin =
+        User(id: '1', forname: 'Ada', surname: 'Admin', isAreaAdmin: true);
     final author = User(id: '2', forname: 'Pat', surname: 'Author');
     final other = User(id: '3', forname: 'Oli', surname: 'Other');
     final placeholder = User(
@@ -57,33 +58,40 @@ void main() {
 
     group('canEditPlaceholderProfile', () {
       test('allows admin for anyone', () {
-        expect(canEditPlaceholderProfile(actor: admin, target: placeholder), isTrue);
+        expect(canEditPlaceholderProfile(actor: admin, target: placeholder),
+            isTrue);
         expect(canEditPlaceholderProfile(actor: admin, target: linked), isTrue);
       });
 
       test('allows creator only while still a placeholder', () {
-        expect(canEditPlaceholderProfile(actor: author, target: placeholder), isTrue);
-        expect(canEditPlaceholderProfile(actor: author, target: linked), isFalse);
+        expect(canEditPlaceholderProfile(actor: author, target: placeholder),
+            isTrue);
+        expect(
+            canEditPlaceholderProfile(actor: author, target: linked), isFalse);
       });
 
       test('denies other users', () {
-        expect(canEditPlaceholderProfile(actor: other, target: placeholder), isFalse);
+        expect(canEditPlaceholderProfile(actor: other, target: placeholder),
+            isFalse);
       });
     });
 
     group('canLinkPlaceholderAuth', () {
       test('allows admin always', () {
-        expect(canLinkPlaceholderAuth(actor: admin, target: placeholder), isTrue);
+        expect(
+            canLinkPlaceholderAuth(actor: admin, target: placeholder), isTrue);
         expect(canLinkPlaceholderAuth(actor: admin, target: linked), isTrue);
       });
 
       test('allows creator only for unlinked placeholder', () {
-        expect(canLinkPlaceholderAuth(actor: author, target: placeholder), isTrue);
+        expect(
+            canLinkPlaceholderAuth(actor: author, target: placeholder), isTrue);
         expect(canLinkPlaceholderAuth(actor: author, target: linked), isFalse);
       });
 
       test('denies other users', () {
-        expect(canLinkPlaceholderAuth(actor: other, target: placeholder), isFalse);
+        expect(
+            canLinkPlaceholderAuth(actor: other, target: placeholder), isFalse);
       });
     });
 
@@ -128,7 +136,7 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: author,
             viewer: other,
-            showPlaceholders: false,
+            placeholdersOnly: false,
           ),
           isTrue,
         );
@@ -136,18 +144,18 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: linked,
             viewer: other,
-            showPlaceholders: false,
+            placeholdersOnly: false,
           ),
           isTrue,
         );
       });
 
-      test('hides all placeholders unless toggle is on', () {
+      test('hides all placeholders unless the filter is on', () {
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
             viewer: admin,
-            showPlaceholders: false,
+            placeholdersOnly: false,
           ),
           isFalse,
         );
@@ -155,7 +163,7 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: legacyUnlinked,
             viewer: admin,
-            showPlaceholders: false,
+            placeholdersOnly: false,
           ),
           isFalse,
         );
@@ -163,18 +171,37 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: placeholder,
             viewer: admin,
-            showPlaceholders: true,
+            placeholdersOnly: true,
           ),
           isTrue,
         );
       });
 
-      test('non-admin only sees own minted placeholders when toggle is on', () {
+      test('placeholders filter hides linked / non-placeholder profiles', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: author,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: linked,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+      });
+
+      test('non-admin only sees own minted placeholders when filter is on', () {
         expect(
           isVisibleInVolunteerDirectory(
             user: placeholder,
             viewer: author,
-            showPlaceholders: true,
+            placeholdersOnly: true,
           ),
           isTrue,
         );
@@ -182,7 +209,7 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: placeholder,
             viewer: other,
-            showPlaceholders: true,
+            placeholdersOnly: true,
           ),
           isFalse,
         );
@@ -191,7 +218,7 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: legacyUnlinked,
             viewer: author,
-            showPlaceholders: true,
+            placeholdersOnly: true,
           ),
           isFalse,
         );
@@ -199,7 +226,7 @@ void main() {
           isVisibleInVolunteerDirectory(
             user: legacyUnlinked,
             viewer: admin,
-            showPlaceholders: true,
+            placeholdersOnly: true,
           ),
           isTrue,
         );

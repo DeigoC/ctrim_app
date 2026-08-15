@@ -39,7 +39,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Set<String> _selectedTagIDs = {};
   Set<VolunteerRoleKind> _selectedRoles = {};
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
-  bool _showPlaceholders = false;
+  bool _placeholdersOnly = false;
   bool _refreshing = false;
   String? _refreshError;
 
@@ -164,7 +164,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       '[VolunteersDirectory] source=$source '
       'all=${allUsers.length} filtered=${filtered.length} '
       'linked=$linked placeholder=$placeholder emptyAuthNotPh=$emptyAuthNotPlaceholder '
-      'showPh=$_showPlaceholders locationFilter=$_locationFilter '
+      'showPh=$_placeholdersOnly locationFilter=$_locationFilter '
       'tags=${_selectedTagIDs.length} roles=${_selectedRoles.length} '
       'allByLoc=$locationCounts filteredByLoc=$filteredLocations',
     );
@@ -394,9 +394,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                       FilterChip(
                         avatar: const Icon(Icons.person_outline, size: 18),
                         label: Text(l10n.volunteersShowPlaceholders),
-                        selected: _showPlaceholders,
+                        selected: _placeholdersOnly,
                         onSelected: (selected) {
-                          setState(() => _showPlaceholders = selected);
+                          setState(() => _placeholdersOnly = selected);
                           _logDirectorySnapshot(
                             allUsers: appContext.allUsers,
                             filtered: _filteredUsers(
@@ -711,7 +711,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     users = users.where((user) => isVisibleInVolunteerDirectory(
           user: user,
           viewer: currentUser,
-          showPlaceholders: _showPlaceholders,
+          placeholdersOnly: _placeholdersOnly,
         ));
 
     if (_locationFilter != VolunteerLocations.all) {
@@ -761,6 +761,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   String _emptyMessage(AppLocalizations l10n) {
     if (_searchQuery.isNotEmpty) {
       return l10n.volunteersEmptySearch(_searchQuery);
+    }
+    if (_placeholdersOnly) {
+      return l10n.volunteersEmptyPlaceholders;
     }
     if (_selectedRoles.isNotEmpty) {
       return l10n.volunteersEmptyRoles;
