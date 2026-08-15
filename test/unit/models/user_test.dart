@@ -254,6 +254,12 @@ void main() {
         final user = User(id: '1', forname: 'John', surname: 'Smith-Jones');
         expect(user.shortenedFullName, 'John SJ.');
       });
+
+      test('initials and shortenedFullName tolerate empty names', () {
+        final user = User(id: '1', forname: '', surname: '');
+        expect(user.initials, '?');
+        expect(user.shortenedFullName, '?');
+      });
     });
 
     group('roles and posts', () {

@@ -93,10 +93,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userActivityPageTitle => 'Activity';
 
   @override
-  String get userActivityDenied => 'Only area admins can view the full activity log.';
+  String get userActivityDenied =>
+      'Only area admins can view the full activity log.';
 
   @override
-  String userActivityDocumentId(String id) => 'Record $id';
+  String userActivityDocumentId(String id) {
+    return 'Record $id';
+  }
 
   @override
   String get cancel => 'Cancel';

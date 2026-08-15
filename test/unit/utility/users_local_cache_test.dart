@@ -103,5 +103,62 @@ void main() {
     test('mismatched length returns null', () {
       expect(UsersLocalCache.decodeBody(['a', 'b', 'c']), isNull);
     });
+
+    test('scrambled rows with a Drive URL as location return null', () {
+      final body = [
+        'Belfast',
+        '0',
+        '',
+        '',
+        '1',
+        '0',
+        'https://drive.google.com/uc?id=abc',
+        'auth-1',
+        '',
+        '0',
+        '',
+      ];
+      expect(UsersLocalCache.decodeBody(body), isNull);
+      expect(
+        UsersLocalCache.looksScrambled([
+          User(
+            id: 'Belfast',
+            forname: '0',
+            surname: '',
+            location: 'https://drive.google.com/uc?id=abc',
+            authID: 'auth-1',
+          ),
+        ]),
+        isTrue,
+      );
+    });
+
+    test('v1 body whose length is also divisible by 11 still decodes as v1',
+        () {
+      // 11 v1 records = 88 lines, which is also 8 × v3. Prefer the layout
+      // that does not look scrambled.
+      final one = [
+        '7',
+        'Ada',
+        'Lovelace',
+        '',
+        '0',
+        '0',
+        'Belfast',
+        'auth-ada',
+      ];
+      final body = [for (var i = 0; i < 11; i++) ...one];
+      expect(body.length, 88);
+      expect(body.length % UsersLocalCache.chunkSizeV3, 0);
+      expect(body.length % UsersLocalCache.chunkSizeV1, 0);
+
+      final decoded = UsersLocalCache.decodeBody(body);
+      expect(decoded, isNotNull);
+      expect(decoded, hasLength(11));
+      expect(decoded!.first.id, '7');
+      expect(decoded.first.forname, 'Ada');
+      expect(decoded.first.location, 'Belfast');
+      expect(decoded.first.authID, 'auth-ada');
+    });
   });
 }

@@ -100,10 +100,28 @@ class User {
   String get forname => _forename;
   String get surname => _surname;
   String get fullname => '$_forename $_surname';
-  String get initials =>
-      _forename[0] + _surname.split('-').map((e) => e[0]).join('');
-  String get shortenedFullName =>
-      '$_forename ${_surname.split('-').map((e) => e[0]).join('')}.';
+  String get initials {
+    final letters = <String>[
+      if (_forename.isNotEmpty) _forename[0],
+      ..._surname
+          .split('-')
+          .where((part) => part.isNotEmpty)
+          .map((part) => part[0]),
+    ];
+    return letters.isEmpty ? '?' : letters.join();
+  }
+
+  String get shortenedFullName {
+    final surnameParts = _surname
+        .split('-')
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0])
+        .join();
+    if (_forename.isEmpty && surnameParts.isEmpty) return '?';
+    if (surnameParts.isEmpty) return _forename;
+    return '$_forename $surnameParts.';
+  }
+
   String get imgSrc => _imgSrc;
   String get location => _location;
   String get authID => _authID;

@@ -35,23 +35,27 @@ class UsersRepository {
     return result.users;
   }
 
-  Future<UsersLoadResult> fetchUsersWithMeta({bool forceRefresh = false}) async {
+  Future<UsersLoadResult> fetchUsersWithMeta(
+      {bool forceRefresh = false}) async {
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersion = packageInfo.version;
     final cached = await _readCachedUsers();
 
     int remoteLastUpdate;
     try {
-      remoteLastUpdate = await _idTracker.fetchLastUpdate(IDTrackerDBManager.usersDoc);
+      remoteLastUpdate =
+          await _idTracker.fetchLastUpdate(IDTrackerDBManager.usersDoc);
     } catch (e) {
-      debugPrint('UsersRepository: lastUpdate read failed, using cache if any: $e');
+      debugPrint(
+          'UsersRepository: lastUpdate read failed, using cache if any: $e');
       if (cached.users.isNotEmpty) {
         return UsersLoadResult(users: cached.users, fromCache: true);
       }
       rethrow;
     }
 
-    final localLastUpdate = await _localDataManager.readCollectionLastUpdate('users');
+    final localLastUpdate =
+        await _localDataManager.readCollectionLastUpdate('users');
     if (shouldUseLocalCollectionCache(
       forceRefresh: forceRefresh,
       hasCachedRecords: cached.users.isNotEmpty,
@@ -69,7 +73,8 @@ class UsersRepository {
       final allUsers = await _userDBManager.fetchAllUsers();
       var lastUpdate = remoteLastUpdate;
       if (lastUpdate <= 0) {
-        lastUpdate = await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
+        lastUpdate =
+            await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
         if (lastUpdate <= 0) {
           lastUpdate = DateTime.now().millisecondsSinceEpoch;
         }
@@ -96,6 +101,9 @@ class UsersRepository {
     }
     final decoded = UsersLocalCache.decodeBody(usersData.sublist(1));
     if (decoded == null) {
+      debugPrint(
+        'UsersRepository: discarding local users cache (unreadable or scrambled)',
+      );
       return (users: <User>[], appVersion: header[1]);
     }
     return (users: decoded, appVersion: header[1]);
