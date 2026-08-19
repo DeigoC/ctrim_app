@@ -46,7 +46,7 @@ class MyAvatarStack extends StatelessWidget {
     final positions =
         settings ?? RestrictedPositions(maxCoverage: 0.3, minCoverage: 0.1);
 
-    Widget infoWidget(int surplus) => BorderedCircleAvatar(
+    Widget infoWidget(int surplus, BuildContext _) => BorderedCircleAvatar(
           border: border,
           child: FittedBox(
             fit: BoxFit.contain,
