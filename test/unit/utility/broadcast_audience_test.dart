@@ -131,6 +131,15 @@ void main() {
         ),
         ['portadown-sunday-service', 'Portadown'],
       );
+      expect(
+        BroadcastAudience.resolveFromPost(
+          location: 'North Coast',
+          tagIDs: ['sun'],
+          allTags: tags,
+          includeLocationUmbrella: true,
+        ),
+        ['north-coast-sunday-service', 'north-coast'],
+      );
     });
 
     test('resolveFromPost falls back to legacy topics', () {

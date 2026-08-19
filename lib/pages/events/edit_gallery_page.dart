@@ -505,6 +505,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   Widget _buildMediaViewer(final Map<String, dynamic> thisEntry, final bool isKey) {
     if (thisEntry['type']!.compareTo('img') == 0) {
       return ImageMediaSlot(
+        key: ValueKey('${isKey ? 'key' : 'media'}-${thisEntry['src']}'),
         mediaEntry: thisEntry,
         onTap: null,
         postID: isKey ? 'key' : 'media',

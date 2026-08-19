@@ -83,6 +83,7 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
                               return ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: ImageMediaSlot(
+                                    key: ValueKey('${widget.eventContext.id}-${entry['src']}'),
                                     mediaEntry: entry,
                                     onTap: () => _onMediaTap(index, itemContext),
                                     postID: widget.eventContext.id),

@@ -754,5 +754,73 @@
   "cellGroupsPhotosImagesOnly": "Cell groups only support images for now.",
   "@cellGroupsPhotosImagesOnly": {
     "description": "SnackBar when a video is added to a cell group"
+  },
+  "cellGroupsNameLabel": "Name",
+  "@cellGroupsNameLabel": {
+    "description": "Label for cell group name on create/edit"
+  },
+  "cellGroupsNameHint": "e.g. Young Adults",
+  "@cellGroupsNameHint": {
+    "description": "Placeholder example for cell group name"
+  },
+  "cellGroupsNameHelper": "The public title on the Groups list and the group page.",
+  "@cellGroupsNameHelper": {
+    "description": "Helper under cell group name field"
+  },
+  "cellGroupsNameRequired": "Name is required",
+  "@cellGroupsNameRequired": {
+    "description": "Validation when cell group name is empty"
+  },
+  "cellGroupsSummaryLabel": "Summary",
+  "@cellGroupsSummaryLabel": {
+    "description": "Label for cell group summary on create/edit"
+  },
+  "cellGroupsSummaryHint": "Who this group is for, and what you usually do",
+  "@cellGroupsSummaryHint": {
+    "description": "Placeholder for cell group summary"
+  },
+  "cellGroupsSummaryHelper": "Short description on the catalogue card and in About.",
+  "@cellGroupsSummaryHelper": {
+    "description": "Helper under cell group summary field"
+  },
+  "cellGroupsWeekdayLabel": "Meeting weekday",
+  "@cellGroupsWeekdayLabel": {
+    "description": "Label for usual meeting weekday on create/edit"
+  },
+  "cellGroupsWeekdayHelper": "Usual day this group meets. Leave unset if it varies.",
+  "@cellGroupsWeekdayHelper": {
+    "description": "Helper under cell group weekday dropdown"
+  },
+  "cellGroupsWeekdayNotSet": "Not set",
+  "@cellGroupsWeekdayNotSet": {
+    "description": "Dropdown option when no meeting weekday is chosen"
+  },
+  "cellGroupsTimeLabel": "Meeting time",
+  "@cellGroupsTimeLabel": {
+    "description": "Label for usual meeting time on create/edit"
+  },
+  "cellGroupsTimeHint": "e.g. 19:30",
+  "@cellGroupsTimeHint": {
+    "description": "Placeholder example for meeting time"
+  },
+  "cellGroupsTimeHelper": "Usual start time, shown with the weekday on the Groups list.",
+  "@cellGroupsTimeHelper": {
+    "description": "Helper under cell group meeting time field"
+  },
+  "cellGroupsStatusLabel": "Status",
+  "@cellGroupsStatusLabel": {
+    "description": "Label for cell group status on create/edit"
+  },
+  "cellGroupsStatusHelper": "Active groups appear in the catalogue. Paused groups stay listed as paused. Archived groups are hidden.",
+  "@cellGroupsStatusHelper": {
+    "description": "Helper under cell group status dropdown"
+  },
+  "cellGroupsLeadersHint": "People who lead this group. Catalogue tiles use the first leader’s portrait.",
+  "@cellGroupsLeadersHint": {
+    "description": "Helper under leaders on create/edit cell group"
+  },
+  "cellGroupsChooseLeaders": "Choose leaders",
+  "@cellGroupsChooseLeaders": {
+    "description": "Button to pick cell group leaders"
   }
 }

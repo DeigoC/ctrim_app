@@ -7,11 +7,12 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
-import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
+import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
 import '../events/add_media_file_page.dart';
 import '../personal/select_users_page.dart';
@@ -123,8 +124,6 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final gutter =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width);
 
     return RoleAccessGate(
       allow: (user) => user.canManageCellGroups,
@@ -150,162 +149,188 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             actions: [
               TextButton(
                 onPressed: _saving ? null : _save,
-                child: const Text('Save'),
+                child: Text(l10n.save),
               ),
             ],
           ),
-          body: Form(
-            key: _formKey,
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 32),
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+          body: ResponsiveContent(
+            narrowPadding: 16,
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsNameLabel,
+                      hintText: l10n.cellGroupsNameHint,
+                      helperText: l10n.cellGroupsNameHelper,
+                      helperMaxLines: 2,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? l10n.cellGroupsNameRequired
+                        : null,
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Name is required'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _summaryController,
-                  maxLines: 3,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Summary',
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Meeting weekday',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      isExpanded: true,
-                      value: _weekday,
-                      items: const [
-                        DropdownMenuItem(value: null, child: Text('Not set')),
-                        DropdownMenuItem(
-                            value: DateTime.monday, child: Text('Monday')),
-                        DropdownMenuItem(
-                            value: DateTime.tuesday, child: Text('Tuesday')),
-                        DropdownMenuItem(
-                            value: DateTime.wednesday,
-                            child: Text('Wednesday')),
-                        DropdownMenuItem(
-                            value: DateTime.thursday, child: Text('Thursday')),
-                        DropdownMenuItem(
-                            value: DateTime.friday, child: Text('Friday')),
-                        DropdownMenuItem(
-                            value: DateTime.saturday, child: Text('Saturday')),
-                        DropdownMenuItem(
-                            value: DateTime.sunday, child: Text('Sunday')),
-                      ],
-                      onChanged: (v) => setState(() => _weekday = v),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _summaryController,
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsSummaryLabel,
+                      hintText: l10n.cellGroupsSummaryHint,
+                      helperText: l10n.cellGroupsSummaryHelper,
+                      helperMaxLines: 2,
+                      alignLabelWithHint: true,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _timeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Meeting time',
-                    hintText: 'e.g. 19:30',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: _status,
-                      items: [
-                        DropdownMenuItem(
-                            value: CellGroupStatus.active,
-                            child: Text(l10n.cellGroupsStatusActive)),
-                        DropdownMenuItem(
-                            value: CellGroupStatus.paused,
-                            child: Text(l10n.cellGroupsStatusPaused)),
-                        DropdownMenuItem(
-                            value: CellGroupStatus.archived,
-                            child: Text(l10n.cellGroupsStatusArchived)),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) setState(() => _status = v);
-                      },
+                  const SizedBox(height: 16),
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsWeekdayLabel,
+                      helperText: l10n.cellGroupsWeekdayHelper,
+                      helperMaxLines: 2,
+                      border: const OutlineInputBorder(),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.cellGroupsPhotosTitle,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.cellGroupsPhotosHint,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_media.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      l10n.cellGroupsPhotosEmpty,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        isExpanded: true,
+                        value: _weekday,
+                        items: [
+                          DropdownMenuItem(
+                              value: null,
+                              child: Text(l10n.cellGroupsWeekdayNotSet)),
+                          const DropdownMenuItem(
+                              value: DateTime.monday, child: Text('Monday')),
+                          const DropdownMenuItem(
+                              value: DateTime.tuesday, child: Text('Tuesday')),
+                          const DropdownMenuItem(
+                              value: DateTime.wednesday,
+                              child: Text('Wednesday')),
+                          const DropdownMenuItem(
+                              value: DateTime.thursday,
+                              child: Text('Thursday')),
+                          const DropdownMenuItem(
+                              value: DateTime.friday, child: Text('Friday')),
+                          const DropdownMenuItem(
+                              value: DateTime.saturday,
+                              child: Text('Saturday')),
+                          const DropdownMenuItem(
+                              value: DateTime.sunday, child: Text('Sunday')),
+                        ],
+                        onChanged: (v) => setState(() => _weekday = v),
                       ),
                     ),
-                  )
-                else
-                  ..._media.map(_buildMediaTile),
-                if (_media.length < CellGroup.maxMediaItems)
-                  OutlinedButton.icon(
-                    onPressed: _addPhoto,
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: Text(l10n.cellGroupsAddPhoto),
                   ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.cellGroupsLeadersLabel,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: _pickLeaders,
-                  icon: const Icon(Icons.person_add_alt),
-                  label: const Text('Choose leaders'),
-                ),
-                ..._leaderUserIds.map((uid) {
-                  final user = _userById(uid);
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(user?.fullname ?? uid),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () =>
-                          setState(() => _leaderUserIds.remove(uid)),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _timeController,
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsTimeLabel,
+                      hintText: l10n.cellGroupsTimeHint,
+                      helperText: l10n.cellGroupsTimeHelper,
+                      helperMaxLines: 2,
+                      border: const OutlineInputBorder(),
                     ),
-                  );
-                }),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsStatusLabel,
+                      helperText: l10n.cellGroupsStatusHelper,
+                      helperMaxLines: 3,
+                      border: const OutlineInputBorder(),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _status,
+                        items: [
+                          DropdownMenuItem(
+                              value: CellGroupStatus.active,
+                              child: Text(l10n.cellGroupsStatusActive)),
+                          DropdownMenuItem(
+                              value: CellGroupStatus.paused,
+                              child: Text(l10n.cellGroupsStatusPaused)),
+                          DropdownMenuItem(
+                              value: CellGroupStatus.archived,
+                              child: Text(l10n.cellGroupsStatusArchived)),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) setState(() => _status = v);
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    l10n.cellGroupsPhotosTitle,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.cellGroupsPhotosHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_media.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        l10n.cellGroupsPhotosEmpty,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  else
+                    ..._media.map(_buildMediaTile),
+                  if (_media.length < CellGroup.maxMediaItems)
+                    OutlinedButton.icon(
+                      onPressed: _addPhoto,
+                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                      label: Text(l10n.cellGroupsAddPhoto),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.cellGroupsLeadersLabel,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.cellGroupsLeadersHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _pickLeaders,
+                    icon: const Icon(Icons.person_add_alt),
+                    label: Text(l10n.cellGroupsChooseLeaders),
+                  ),
+                  ..._leaderUserIds.map((uid) {
+                    final user = _userById(uid);
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(user?.fullname ?? uid),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () =>
+                            setState(() => _leaderUserIds.remove(uid)),
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
         ),
@@ -430,7 +455,10 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           selectedUIDs: List<String>.from(_leaderUserIds),
           includeCurrentUser: true,
           title: AppLocalizations.of(context)!.cellGroupsLeadersLabel,
-          includePlaceholders: true,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: Provider.of<AppContext>(context, listen: false).currentUser,
+          ),
+          cellGroupIdForPlaceholderCreate: widget.existing?.id,
         ),
       ),
     );

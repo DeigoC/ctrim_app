@@ -522,6 +522,7 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
   Widget _buildMediaSlot(Map<String, dynamic> entry, int index, BuildContext context) {
     return entry['type']!.compareTo('img') == 0
         ? ImageMediaSlot(
+            key: ValueKey('${widget.thisHead.id}-${entry['src']}'),
             mediaEntry: entry,
             onTap: () => _onMediaTap(index, context),
             postID: widget.thisHead.id,

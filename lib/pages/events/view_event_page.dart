@@ -60,6 +60,9 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
   late String? _originalLeadSpeakerUID, _originalLeadSpeakerImgSrc, _originalLeadSpeakerName;
   late int _originalAttendeeCount;
 
+  String? _appBarGraphicSrc;
+  Future<Uint8List>? _appBarGraphicFuture;
+
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
   ];
@@ -391,20 +394,29 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     // * If there are no images, we should just remove the expanded height
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
 
-    if (keyGraphicSrc != null) {
-      return FutureBuilder<Uint8List?>(
-        future: _fetchImage(keyGraphicSrc),
-        builder: (_, snapshot) {
-          if (snapshot.hasData && snapshot.data != null) {
-            return Image.memory(snapshot.data!, fit: BoxFit.cover);
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong trying to get the image'));
-          }
-          return const Center(child: CircularProgressIndicator());
-        },
-      );
+    if (keyGraphicSrc == null) {
+      _appBarGraphicSrc = null;
+      _appBarGraphicFuture = null;
+      return null;
     }
-    return null;
+
+    if (_appBarGraphicSrc != keyGraphicSrc) {
+      _appBarGraphicSrc = keyGraphicSrc;
+      _appBarGraphicFuture = _fetchImage(keyGraphicSrc);
+    }
+
+    return FutureBuilder<Uint8List>(
+      key: ValueKey(keyGraphicSrc),
+      future: _appBarGraphicFuture,
+      builder: (_, snapshot) {
+        if (snapshot.hasData) {
+          return Image.memory(snapshot.data!, key: ValueKey(keyGraphicSrc), fit: BoxFit.cover);
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('Something went wrong trying to get the image'));
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
   }
 
   Widget _buildTabBody() {

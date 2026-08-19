@@ -568,4 +568,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cellGroupsPhotosImagesOnly =>
       'Cell groups only support images for now.';
+
+  @override
+  String get cellGroupsNameLabel => 'Name';
+
+  @override
+  String get cellGroupsNameHint => 'e.g. Young Adults';
+
+  @override
+  String get cellGroupsNameHelper =>
+      'The public title on the Groups list and the group page.';
+
+  @override
+  String get cellGroupsNameRequired => 'Name is required';
+
+  @override
+  String get cellGroupsSummaryLabel => 'Summary';
+
+  @override
+  String get cellGroupsSummaryHint =>
+      'Who this group is for, and what you usually do';
+
+  @override
+  String get cellGroupsSummaryHelper =>
+      'Short description on the catalogue card and in About.';
+
+  @override
+  String get cellGroupsWeekdayLabel => 'Meeting weekday';
+
+  @override
+  String get cellGroupsWeekdayHelper =>
+      'Usual day this group meets. Leave unset if it varies.';
+
+  @override
+  String get cellGroupsWeekdayNotSet => 'Not set';
+
+  @override
+  String get cellGroupsTimeLabel => 'Meeting time';
+
+  @override
+  String get cellGroupsTimeHint => 'e.g. 19:30';
+
+  @override
+  String get cellGroupsTimeHelper =>
+      'Usual start time, shown with the weekday on the Groups list.';
+
+  @override
+  String get cellGroupsStatusLabel => 'Status';
+
+  @override
+  String get cellGroupsStatusHelper =>
+      'Active groups appear in the catalogue. Paused groups stay listed as paused. Archived groups are hidden.';
+
+  @override
+  String get cellGroupsLeadersHint =>
+      'People who lead this group. Catalogue tiles use the first leader’s portrait.';
+
+  @override
+  String get cellGroupsChooseLeaders => 'Choose leaders';
 }

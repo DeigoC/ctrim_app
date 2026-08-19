@@ -19,6 +19,32 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
   int _retryCount = 0;
   static const int _maxRetries = 3;
   bool _hasError = false;
+  late String _src;
+  late Future<Uint8List> _imageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _src = widget.mediaEntry['src']!;
+    _imageFuture = _fetchCachedImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant ImageMediaSlot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newSrc = widget.mediaEntry['src'] as String? ?? '';
+    if (newSrc != _src) {
+      _src = newSrc;
+      _hasError = false;
+      _retryCount = 0;
+      _imageFuture = _fetchCachedImage();
+    }
+  }
+
+  void _reloadImage() {
+    _hasError = false;
+    _imageFuture = _fetchCachedImage();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +57,8 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
     }
 
     return FutureBuilder<Uint8List>(
-        future: _fetchCachedImage(),
+        key: ValueKey('$_src-$_retryCount'),
+        future: _imageFuture,
         builder: (_, snap) {
           Widget result = const Center(child: CircularProgressIndicator());
 
@@ -53,6 +80,7 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
                             if (mounted) {
                               setState(() {
                                 _retryCount++;
+                                _reloadImage();
                                 debugPrint('Retrying image download (attempt $_retryCount/$_maxRetries)');
                               });
                             }
@@ -83,6 +111,7 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
                 if (mounted) {
                   setState(() {
                     _retryCount++;
+                    _reloadImage();
                     debugPrint('Retrying image download after error (attempt $_retryCount/$_maxRetries)');
                   });
                 }
@@ -123,8 +152,8 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
           ? () {
               if (mounted) {
                 setState(() {
-                  _hasError = false;
                   _retryCount++;
+                  _reloadImage();
                 });
               }
             }

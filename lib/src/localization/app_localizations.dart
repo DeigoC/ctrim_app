@@ -1107,6 +1107,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cell groups only support images for now.'**
   String get cellGroupsPhotosImagesOnly;
+
+  /// Label for cell group name on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get cellGroupsNameLabel;
+
+  /// Placeholder example for cell group name
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Young Adults'**
+  String get cellGroupsNameHint;
+
+  /// Helper under cell group name field
+  ///
+  /// In en, this message translates to:
+  /// **'The public title on the Groups list and the group page.'**
+  String get cellGroupsNameHelper;
+
+  /// Validation when cell group name is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get cellGroupsNameRequired;
+
+  /// Label for cell group summary on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get cellGroupsSummaryLabel;
+
+  /// Placeholder for cell group summary
+  ///
+  /// In en, this message translates to:
+  /// **'Who this group is for, and what you usually do'**
+  String get cellGroupsSummaryHint;
+
+  /// Helper under cell group summary field
+  ///
+  /// In en, this message translates to:
+  /// **'Short description on the catalogue card and in About.'**
+  String get cellGroupsSummaryHelper;
+
+  /// Label for usual meeting weekday on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting weekday'**
+  String get cellGroupsWeekdayLabel;
+
+  /// Helper under cell group weekday dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Usual day this group meets. Leave unset if it varies.'**
+  String get cellGroupsWeekdayHelper;
+
+  /// Dropdown option when no meeting weekday is chosen
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get cellGroupsWeekdayNotSet;
+
+  /// Label for usual meeting time on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting time'**
+  String get cellGroupsTimeLabel;
+
+  /// Placeholder example for meeting time
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 19:30'**
+  String get cellGroupsTimeHint;
+
+  /// Helper under cell group meeting time field
+  ///
+  /// In en, this message translates to:
+  /// **'Usual start time, shown with the weekday on the Groups list.'**
+  String get cellGroupsTimeHelper;
+
+  /// Label for cell group status on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get cellGroupsStatusLabel;
+
+  /// Helper under cell group status dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Active groups appear in the catalogue. Paused groups stay listed as paused. Archived groups are hidden.'**
+  String get cellGroupsStatusHelper;
+
+  /// Helper under leaders on create/edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'People who lead this group. Catalogue tiles use the first leader’s portrait.'**
+  String get cellGroupsLeadersHint;
+
+  /// Button to pick cell group leaders
+  ///
+  /// In en, this message translates to:
+  /// **'Choose leaders'**
+  String get cellGroupsChooseLeaders;
 }
 
 class _AppLocalizationsDelegate

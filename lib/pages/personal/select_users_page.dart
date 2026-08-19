@@ -19,7 +19,7 @@ import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// Full-screen multi-select picker for volunteers.
+/// Full-screen multi-select picker for volunteers and placeholder profiles.
 ///
 /// Returns the selected user IDs via [Navigator.pop] when the page is closed
 /// (back gesture, app bar back, or system back). Intended as the shared entry
@@ -34,7 +34,7 @@ class SelectUsersPage extends StatefulWidget {
     this.title,
     this.maxSelection,
     this.allowCreatePlaceholder = false,
-    this.includePlaceholders = false,
+    this.includePlaceholders = true,
     this.postIdForPlaceholderCreate,
     this.cellGroupIdForPlaceholderCreate,
   });
@@ -53,7 +53,9 @@ class SelectUsersPage extends StatefulWidget {
   /// offers "Create placeholder".
   final bool allowCreatePlaceholder;
 
-  /// When false (default), hides `IsPlaceholder` users unless already selected.
+  /// When false, hides `IsPlaceholder` users unless already selected.
+  /// Defaults to true so programme, attendance, and roster pickers can assign
+  /// temporary profiles.
   final bool includePlaceholders;
 
   /// Optional post id passed to `create_placeholder_user` for author-gate checks.
@@ -71,6 +73,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   late final Set<String> _selectedUIDs;
   late String _locationFilter;
+  bool _placeholdersOnly = false;
 
   bool _isSearching = false;
   String _searchQuery = '';
@@ -133,6 +136,16 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                   )
                 : Text(widget.title ?? l10n.selectUsersTitle),
             actions: [
+              if (widget.allowCreatePlaceholder)
+                IconButton(
+                  icon: const Icon(Icons.person_add_alt),
+                  tooltip: l10n.selectUsersCreatePlaceholder,
+                  onPressed: () => _onCreatePlaceholder(
+                    appContext,
+                    seedFromSearch:
+                        _isSearching && _searchQuery.trim().isNotEmpty,
+                  ),
+                ),
               IconButton(
                 icon: Icon(_isSearching ? Icons.close : Icons.search),
                 onPressed: () {
@@ -168,22 +181,35 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                 padding: EdgeInsets.fromLTRB(
                     filterHorizontalPadding, 8, filterHorizontalPadding, 8),
                 child: Row(
-                  children: VolunteerLocations.filterOptionsFrom(
-                          appContext.allLocations)
-                      .map((location) {
-                    final label = location == VolunteerLocations.all
-                        ? l10n.volunteersFilterAll
-                        : location;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(label),
-                        selected: _locationFilter == location,
-                        onSelected: (_) =>
-                            setState(() => _locationFilter = location),
+                  children: [
+                    ...VolunteerLocations.filterOptionsFrom(
+                            appContext.allLocations)
+                        .map((location) {
+                      final label = location == VolunteerLocations.all
+                          ? l10n.volunteersFilterAll
+                          : location;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(label),
+                          selected: _locationFilter == location,
+                          onSelected: (_) =>
+                              setState(() => _locationFilter = location),
+                        ),
+                      );
+                    }),
+                    if (widget.includePlaceholders)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          avatar: const Icon(Icons.person_outline, size: 18),
+                          label: Text(l10n.volunteersShowPlaceholders),
+                          selected: _placeholdersOnly,
+                          onSelected: (selected) =>
+                              setState(() => _placeholdersOnly = selected),
+                        ),
                       ),
-                    );
-                  }).toList(),
+                  ],
                 ),
               ),
               UserTagFilterBar(
@@ -210,8 +236,10 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                               if (showCreate) ...[
                                 const SizedBox(height: 16),
                                 FilledButton.tonalIcon(
-                                  onPressed: () =>
-                                      _onCreatePlaceholder(appContext),
+                                  onPressed: () => _onCreatePlaceholder(
+                                    appContext,
+                                    seedFromSearch: true,
+                                  ),
                                   icon: const Icon(Icons.person_add_alt),
                                   label:
                                       Text(l10n.selectUsersCreatePlaceholder),
@@ -390,6 +418,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     if (!widget.includePlaceholders) {
       users = users.where(
           (user) => !user.isPlaceholder || _selectedUIDs.contains(user.id));
+    } else if (_placeholdersOnly) {
+      users = users.where(
+          (user) => user.isPlaceholder || _selectedUIDs.contains(user.id));
     }
 
     if (_locationFilter != VolunteerLocations.all) {
@@ -425,6 +456,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     if (_searchQuery.isNotEmpty) {
       return l10n.volunteersEmptySearch(_searchQuery);
     }
+    if (_placeholdersOnly) {
+      return l10n.volunteersEmptyPlaceholders;
+    }
     if (_selectedTagIDs.isNotEmpty) {
       return l10n.volunteersEmptyTags;
     }
@@ -448,9 +482,14 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     });
   }
 
-  Future<void> _onCreatePlaceholder(AppContext appContext) async {
+  Future<void> _onCreatePlaceholder(
+    AppContext appContext, {
+    required bool seedFromSearch,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
-    final parts = _searchQuery.trim().split(RegExp(r'\s+'));
+    final parts = seedFromSearch
+        ? _searchQuery.trim().split(RegExp(r'\s+'))
+        : const <String>[];
     final forename = parts.isNotEmpty ? parts.first : '';
     final surname = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 

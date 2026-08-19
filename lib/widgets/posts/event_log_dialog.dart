@@ -9,6 +9,7 @@ import '../../firebase/functions_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/event_heads_repository.dart';
 import '../../utility/local_data_manager.dart';
 
 class EventLogDialog extends StatefulWidget {
@@ -120,6 +121,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
       _appContext.setMetadata(entry.key, entry.value);
     }
     widget.eventContext.resetSavingOfTheEdit();
+    _appContext.rebuildPlease();
     widget.updatePage();
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context)
@@ -134,6 +136,11 @@ class _EventLogDialogState extends State<EventLogDialog> {
     await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
     final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
+    try {
+      await persistEventHeadsLocalCache(List.of(_appContext.eventHeads));
+    } catch (e) {
+      debugPrint('Could not persist event heads after post save: $e');
+    }
 
     try {
       if (widget.eventContext.head.eventDate != null) {

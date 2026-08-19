@@ -394,7 +394,8 @@ class _SendBroadcastNotificationPageState
       setState(() => _sending = false);
       DialogManager.showSnackBar(
         context: context,
-        message: 'Failed to send broadcast: $e',
+        message:
+            'Failed to send broadcast: ${CloudFunctionManager.callableError(e)}',
         isError: true,
       );
     }
