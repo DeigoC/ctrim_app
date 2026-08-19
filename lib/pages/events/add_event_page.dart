@@ -12,9 +12,11 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/notification_token_resolver.dart';
+import '../../utility/post_draft_review.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/action_sheet.dart';
 import '../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../widgets/posts/post_save_review_sheet.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
@@ -211,23 +213,22 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   Future<bool> _confirmSave() async {
-    bool result = false;
-    await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-              title: const Text('Save Post'),
-              content: const Text('Are you sure all details are correct?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                TextButton(
-                    onPressed: () {
-                      result = true;
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Save')),
-              ],
-            ));
-    return result;
+    final review = buildPostDraftReview(
+      eventContext: widget.eventContext,
+      title: _tecTitle.text.trim(),
+      subtitle: _tecSubtitle.text.trim(),
+      allTags: _appContext.allPostTags,
+    );
+    if (!mounted) return false;
+
+    return showPostSaveReviewSheet(
+      context: context,
+      review: review,
+      onNavigateToTab: (tab) {
+        _tabController.animateTo(tab.index);
+        setState(() {});
+      },
+    );
   }
 
   Future<void> _savePost(LoadProgressReporter onProgress) async {
