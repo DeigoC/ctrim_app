@@ -14,6 +14,7 @@ import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
+import '../../widgets/user_avatar.dart';
 import '../events/add_media_file_page.dart';
 import '../personal/select_users_page.dart';
 
@@ -317,23 +318,31 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
                     icon: const Icon(Icons.person_add_alt),
                     label: Text(l10n.cellGroupsChooseLeaders),
                   ),
-                  ..._leaderUserIds.map((uid) {
-                    final user = _userById(uid);
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(user?.fullname ?? uid),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () =>
-                            setState(() => _leaderUserIds.remove(uid)),
-                      ),
-                    );
-                  }),
+                  ..._leaderUserIds.map(_buildLeaderTile),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLeaderTile(String uid) {
+    final user = _userById(uid);
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: user != null
+          ? MyUserAvatar(user, radius: 20)
+          : CircleAvatar(
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              child: Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
+            ),
+      title: Text(user?.fullname ?? 'Unknown leader'),
+      trailing: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: () => setState(() => _leaderUserIds.remove(uid)),
       ),
     );
   }

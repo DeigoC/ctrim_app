@@ -6,6 +6,8 @@ import '../../utility/app_context.dart';
 import '../../utility/broadcast_audience.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/volunteer_locations.dart';
+import '../../widgets/schedule_duration_picker.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
   const EditEventDateLocationPage({
@@ -21,7 +23,8 @@ class EditEventDateLocationPage extends StatefulWidget {
   final bool timeOnly;
 
   @override
-  State<EditEventDateLocationPage> createState() => _EditEventDateLocationPageState();
+  State<EditEventDateLocationPage> createState() =>
+      _EditEventDateLocationPageState();
 }
 
 class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
@@ -43,15 +46,18 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
   @override
   void initState() {
+    super.initState();
     _originalStart = widget.eventContext.head.eventDate;
     _originalEnd = widget.eventContext.program.finishTime;
     _originalAllDay = widget.eventContext.program.allDay;
     _originalAddress = widget.eventContext.program.address;
     _originalOnline = widget.eventContext.program.online;
-    _originalLocation = widget.eventContext.head.location.replaceAll(' (Online)', '');
+    _originalLocation =
+        widget.eventContext.head.location.replaceAll(' (Online)', '');
     _originalMapLink = widget.eventContext.program.mapLink;
 
     _location = widget.eventContext.head.location.replaceAll(' (Online)', '');
+    _ensureLocationInCatalog();
     _tecAddress = TextEditingController(text: _originalAddress);
     _tecMapLink = TextEditingController(text: _originalMapLink);
     _online = widget.eventContext.program.online;
@@ -63,8 +69,6 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     _start = _originalStart;
     _end = _originalEnd;
     _isAllDay = _originalAllDay;
-
-    super.initState();
   }
 
   @override
@@ -80,7 +84,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          title: Text(_timeOnly ? 'Edit Time & Location' : 'Edit Date & Location'),
+          title:
+              Text(_timeOnly ? 'Edit Time & Location' : 'Edit Date & Location'),
           backgroundColor: Theme.of(context).colorScheme.surface,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
           elevation: 0,
@@ -91,14 +96,17 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   Widget _buildBody() {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),
+      padding: EdgeInsets.symmetric(
+          vertical: 16.0, horizontal: webHorizontalPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: _start == null ? _buildJustDateSelector() : _buildEverything(),
+        children:
+            _start == null ? _buildJustDateSelector() : _buildEverything(),
       ),
     );
   }
@@ -115,7 +123,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -137,7 +148,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     ? 'Posts from this template pick a calendar date when created; only the time is stored here.'
                     : 'Choose when your event will take place',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -145,9 +159,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               FilledButton.icon(
                 onPressed: _onSelectStartClick,
                 icon: Icon(_timeOnly ? Icons.schedule : Icons.calendar_today),
-                label: Text(_timeOnly ? 'Select Start Time' : 'Select Date & Time'),
+                label: Text(
+                    _timeOnly ? 'Select Start Time' : 'Select Date & Time'),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
               ),
             ],
@@ -196,7 +212,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 Text(
                   'Calendar date is chosen when creating a post from this template.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
                       ),
                 ),
               ],
@@ -205,14 +224,20 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.2),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   title: Text(
-                    _timeOnly ? _timeFormat.format(_start!) : _startFormat.format(_start!),
+                    _timeOnly
+                        ? _timeFormat.format(_start!)
+                        : _startFormat.format(_start!),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
@@ -220,7 +245,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   subtitle: Text(
                     _timeOnly ? 'Typical start' : 'Event starts',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.7),
                         ),
                   ),
                   leading: Icon(
@@ -236,7 +264,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                           Icons.edit,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        tooltip: _timeOnly ? 'Edit start time' : 'Edit start date',
+                        tooltip:
+                            _timeOnly ? 'Edit start time' : 'Edit start date',
                       ),
                       IconButton(
                         onPressed: _onDeleteStartTimeClick,
@@ -256,29 +285,44 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.2),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   title: Text(
                     _end == null ? 'Not set' : _endFormat.format(_end!),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: _end == null ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5) : null,
+                          color: _end == null
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5)
+                              : null,
                         ),
                   ),
                   subtitle: Text(
                     _timeOnly ? 'Typical end' : 'Event ends',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.7),
                         ),
                   ),
                   leading: Icon(
                     Icons.stop,
                     color: _end == null
-                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
+                        ? Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.5)
                         : Theme.of(context).colorScheme.secondary,
                   ),
                   trailing: Icon(
@@ -293,14 +337,20 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.today,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -361,12 +411,16 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.2),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   title: Text(
                     _location,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -374,9 +428,12 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                         ),
                   ),
                   subtitle: Text(
-                    'Event location (currently fixed)',
+                    'Tap to choose a location',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.7),
                         ),
                   ),
                   leading: Icon(
@@ -384,9 +441,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     color: Theme.of(context).colorScheme.secondary,
                   ),
                   trailing: Icon(
-                    Icons.lock,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                    size: 20,
+                    Icons.chevron_right,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.5),
                   ),
                   onTap: _onSelectLocationClick,
                 ),
@@ -396,14 +455,20 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.videocam,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -413,15 +478,22 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                         children: [
                           Text(
                             'Online Event',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
                           Text(
                             'Event will be held online',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
                           ),
                         ],
                       ),
@@ -440,7 +512,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 maxLines: null,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  fillColor: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -452,9 +527,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                       width: 2,
                     ),
                   ),
-                  hintText:
-                      _online ? 'https://zoom.us/j/...' : '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
-                  labelText: _online ? 'Online Meeting Link' : 'Physical Address',
+                  hintText: _online
+                      ? 'https://zoom.us/j/...'
+                      : '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland',
+                  labelText:
+                      _online ? 'Online Meeting Link' : 'Physical Address',
                   prefixIcon: Icon(
                     _online ? Icons.link : Icons.location_on,
                     color: Theme.of(context).colorScheme.primary,
@@ -463,7 +540,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     onPressed: _online ? _onOnlineMeetingLinkHelpClick : null,
                     icon: Icon(
                       Icons.help_outline,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
                     ),
                     tooltip: 'Help',
                   ),
@@ -482,7 +562,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       children.add(
         Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -498,7 +579,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                       ),
                       child: Icon(
                         Icons.map,
-                        color: Theme.of(context).colorScheme.onTertiaryContainer,
+                        color:
+                            Theme.of(context).colorScheme.onTertiaryContainer,
                         size: 20,
                       ),
                     ),
@@ -515,7 +597,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 Text(
                   'Provide a link to help attendees find the location',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
                       ),
                 ),
                 const SizedBox(height: 16),
@@ -524,7 +609,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   maxLines: null,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    fillColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -546,7 +634,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                       onPressed: _mapLinkHelpClick,
                       icon: Icon(
                         Icons.help_outline,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
                       ),
                       tooltip: 'How to get map link',
                     ),
@@ -577,7 +668,9 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     final hadExistingStart = _start != null;
     showDatePicker(
             context: context,
-            initialDate: _start == null ? DateTime.now().add(const Duration(days: 1)) : _start!,
+            initialDate: _start == null
+                ? DateTime.now().add(const Duration(days: 1))
+                : _start!,
             firstDate: DateTime.now().subtract(const Duration(days: 30)),
             lastDate: DateTime.now().add(const Duration(days: 122)))
         .then((selectedStartDate) async {
@@ -608,10 +701,12 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     final TimeOfDay initial = _start != null
         ? TimeOfDay.fromDateTime(_start!)
         : const TimeOfDay(hour: 9, minute: 0);
-    final selectedTOD = await showTimePicker(context: context, initialTime: initial);
+    final selectedTOD =
+        await showTimePicker(context: context, initialTime: initial);
     if (selectedTOD == null || !mounted) return;
     await _applyStartDateTime(
-      DateTime(anchor.year, anchor.month, anchor.day, selectedTOD.hour, selectedTOD.minute),
+      DateTime(anchor.year, anchor.month, anchor.day, selectedTOD.hour,
+          selectedTOD.minute),
       promptForDuration: _start == null,
     );
   }
@@ -619,8 +714,9 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   Future<void> _onSelectStartTime(final DateTime selectedStartDate) async {
     final selectedTOD = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay.fromDateTime(selectedStartDate
-            .add(Duration(hours: _start == null ? 9 : _start!.hour, minutes: _start == null ? 0 : _start!.minute))));
+        initialTime: TimeOfDay.fromDateTime(selectedStartDate.add(Duration(
+            hours: _start == null ? 9 : _start!.hour,
+            minutes: _start == null ? 0 : _start!.minute))));
     if (selectedTOD == null || !mounted) return;
     await _applyStartDateTime(
       DateTime(
@@ -640,7 +736,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     setState(() {
       _start = start;
       if (_end != null) {
-        _end = DateTime(start.year, start.month, start.day, _end!.hour, _end!.minute);
+        _end = DateTime(
+            start.year, start.month, start.day, _end!.hour, _end!.minute);
       }
     });
     if (!promptForDuration || !mounted) return;
@@ -648,92 +745,103 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    title: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.schedule,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text('Event Duration'),
-                      ],
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'How long will your event last?',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Choose whether this is an all-day event or has a specific end time.',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          setState(() {
-                            _isAllDay = true;
-                          });
-                        },
-                        icon: const Icon(Icons.today),
-                        label: const Text('All Day'),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      FilledButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _onSelectEndTimeClick();
-                        },
-                        icon: const Icon(Icons.schedule),
-                        label: const Text('Set End Time'),
+                      child: Icon(
+                        Icons.schedule,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        size: 20,
                       ),
-                    ]));
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Event Duration'),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'How long will your event last?',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Choose whether this is an all-day event or has a specific end time.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      setState(() {
+                        _isAllDay = true;
+                      });
+                    },
+                    icon: const Icon(Icons.today),
+                    label: const Text('All Day'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      Navigator.of(context).pop();
+                      await _onSelectEndTimeClick();
+                    },
+                    icon: const Icon(Icons.schedule),
+                    label: const Text('Set End Time'),
+                  ),
+                ]));
   }
 
-  void _onSelectEndTimeClick() {
-    showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_end ?? _start!.add(const Duration(hours: 4))))
-        .then((selectedTOD) {
-      if (selectedTOD != null) {
-        setState(() {
-          _end = DateTime(_start!.year, _start!.month, _start!.day, selectedTOD.hour, selectedTOD.minute);
-        });
-      }
+  Future<void> _onSelectEndTimeClick() async {
+    if (_start == null) return;
+    final end = await showScheduleDurationPicker(
+      context: context,
+      start: _start!,
+      initialEnd: _end,
+      title: _timeOnly ? 'Typical duration' : 'Event duration',
+    );
+    if (end == null || !mounted) return;
+    setState(() {
+      _end = end;
+      _isAllDay = false;
     });
   }
 
@@ -751,30 +859,86 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       } else {
         _webLink = _tecAddress.text.trim();
         if (_location == 'Belfast') {
-          _tecAddress = TextEditingController(text: '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland');
+          _tecAddress = TextEditingController(
+              text: '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland');
         }
       }
     });
   }
 
   void _onSelectLocationClick() {
-    // showDialog(
-    //     context: context,
-    //     builder: (_) => Dialog(
-    //           child: SizedBox(
-    //             height: MediaQuery.of(context).size.height * 0.6,
-    //             child: ListView.builder(
-    //                 itemCount: _locations.length,
-    //                 itemBuilder: (_, index) => ListTile(
-    //                       title: Text(_locations[index]),
-    //                       onTap: () {
-    //                         setState(() {
-    //                           _location = _locations[index];
-    //                         });
-    //                       },
-    //                     )),
-    //           ),
-    //         ));
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final options = VolunteerLocations.assignableFrom(appContext.allLocations);
+    if (options.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                child: Text(
+                  'Choose location',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (_, index) {
+                    final option = options[index];
+                    final selected = option == _location;
+                    return ListTile(
+                      leading: Icon(
+                        Icons.place_outlined,
+                        color: selected
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      title: Text(option),
+                      trailing: selected
+                          ? Icon(Icons.check,
+                              color: Theme.of(context).colorScheme.primary)
+                          : null,
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        if (option == _location) return;
+                        setState(() {
+                          _location = option;
+                          if (!_online &&
+                              option == VolunteerLocations.belfast &&
+                              _tecAddress.text.trim().isEmpty) {
+                            _tecAddress.text =
+                                '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland';
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _ensureLocationInCatalog() {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final options = VolunteerLocations.assignableFrom(appContext.allLocations);
+    if (options.isEmpty) return;
+    if (!options.contains(_location)) {
+      _location = options.first;
+    }
   }
 
   void _onDeleteStartTimeClick() {
@@ -789,7 +953,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     if (_start != _originalStart ||
         _end != _originalEnd ||
         _isAllDay != _originalAllDay ||
-        _tecAddress.text.trim().toLowerCase().compareTo(_originalAddress.toLowerCase()) != 0 ||
+        _tecAddress.text
+                .trim()
+                .toLowerCase()
+                .compareTo(_originalAddress.toLowerCase()) !=
+            0 ||
         widget.eventContext.program.online != _originalOnline ||
         widget.eventContext.head.location.compareTo(_originalLocation) != 0 ||
         _originalMapLink.compareTo(_tecMapLink.text.trim()) != 0) {
@@ -804,7 +972,8 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
             newDay: _start!,
           );
         }
-        widget.eventContext.program.setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
+        widget.eventContext.program
+            .setFinishTime(_end ?? _start!.add(const Duration(hours: 4)));
         widget.eventContext.program.setAllDay(_isAllDay);
         widget.eventContext.head.setEventDate(_start);
       }
@@ -864,7 +1033,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -892,7 +1064,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     '1. Go to Google Maps\n2. Search for your event address\n3. Click the "Share" button\n4. Copy the link and paste it here',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -945,7 +1120,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .secondaryContainer
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -973,7 +1151,10 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                     '• Zoom meeting links\n• Microsoft Teams links\n• Google Meet links\n• YouTube live streams',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.8),
                     ),
                   ),
                 ],

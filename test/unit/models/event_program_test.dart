@@ -55,6 +55,22 @@ void main() {
         program.setMapLink('https://maps.example.com');
         expect(program.mapLink, 'https://maps.example.com');
       });
+
+      test('hasLocationLaunchUrl is false when map link cleared', () {
+        final program = EventProgram();
+        program.setMapLink('');
+        expect(program.hasLocationLaunchUrl, false);
+      });
+
+      test('hasLocationLaunchUrl uses address for online events', () {
+        final program = EventProgram();
+        program.setOnline(true);
+        program.setAddress('');
+        expect(program.hasLocationLaunchUrl, false);
+        program.setAddress('https://zoom.us/j/123');
+        expect(program.hasLocationLaunchUrl, true);
+        expect(program.locationLaunchUrl, 'https://zoom.us/j/123');
+      });
     });
 
     group('role management', () {

@@ -190,6 +190,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'No post tags yet. Area admins can create tags in Admin Tools.';
 
   @override
+  String get postTagsNoneSelected => 'No tags selected';
+
+  @override
+  String get postTagsManage => 'Manage tags';
+
+  @override
+  String get postTagsSelectTitle => 'Select content tags';
+
+  @override
+  String get postTagsSearchHint => 'Search tags...';
+
+  @override
+  String get postTagsNotifiableFilter => 'Notification streams';
+
+  @override
   String get managePostTagsTitle => 'Manage Post Tags';
 
   @override
@@ -346,6 +361,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String selectCatalogSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectCatalogNoResults => 'No matches for your search or filters.';
+
+  @override
   String get selectUsersManageMembers => 'Manage members';
 
   @override
@@ -453,6 +476,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cellGroupsNoneAvailable =>
       'No active cell groups yet. Area admins can create them in the Cell Groups section.';
+
+  @override
+  String get cellGroupsNoneSelected => 'No cell groups selected';
+
+  @override
+  String get cellGroupsManage => 'Manage cell groups';
+
+  @override
+  String get cellGroupsSelectTitle => 'Select cell groups';
+
+  @override
+  String get cellGroupsSearchHint => 'Search cell groups...';
 
   @override
   String get cellGroupsSectionTitle => 'Cell Groups';

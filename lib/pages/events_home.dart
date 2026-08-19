@@ -13,6 +13,7 @@ import '../widgets/bulletin/bulletin_first_time_dialog.dart';
 import '../widgets/post_tag_chip.dart';
 import '../widgets/posts/post_head.dart';
 import '../utility/post_tag_helpers.dart';
+import '../utility/volunteer_locations.dart';
 import '../src/localization/app_localizations.dart';
 
 class ViewEventsHome extends StatefulWidget {
@@ -30,10 +31,15 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   late AnimationController _refreshAnimationController;
   late Animation<double> _refreshAnimation;
   final Set<String> _selectedPostTagIDs = {};
+  late String _locationFilter;
 
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
+    _locationFilter = VolunteerLocations.defaultFilterForUser(
+      _appContext.currentUser.location,
+      VolunteerLocations.assignableFrom(_appContext.allLocations),
+    );
     _appContext.sortPostsByIndex();
 
     _refreshAnimationController = AnimationController(
@@ -86,6 +92,15 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
           (e) => !PostTagHelpers.headMatchesTagFilter(
             head: e,
             selectedTagIDs: _selectedPostTagIDs,
+          ),
+        );
+      }
+
+      if (_locationFilter != VolunteerLocations.all) {
+        eventHeads.removeWhere(
+          (e) => !VolunteerLocations.postLocationMatchesFilter(
+            postLocation: e.location,
+            locationFilter: _locationFilter,
           ),
         );
       }
@@ -210,7 +225,9 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     ),
                   ),
                 ),
-                if (appContext.postSortIndex != 0 || _selectedPostTagIDs.isNotEmpty)
+                if (appContext.postSortIndex != 0 ||
+                    _selectedPostTagIDs.isNotEmpty ||
+                    _locationFilter != VolunteerLocations.all)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -317,6 +334,9 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     final Color accent = (sortInfo?['color'] as Color?) ?? colorScheme.primary;
     final parts = <String>[];
     if (sortInfo != null) parts.add(sortInfo['label'] as String);
+    if (_locationFilter != VolunteerLocations.all) {
+      parts.add(_locationFilter);
+    }
     if (selectedTags.isNotEmpty) {
       parts.add(selectedTags.map((t) => t.name).join(', '));
     }
@@ -424,6 +444,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
               sortIndex: _appContext.postSortIndex,
               availableTags: _appContext.activePostTags,
               selectedTagIDs: Set<String>.from(_selectedPostTagIDs),
+              locationOptions:
+                  VolunteerLocations.filterOptionsFrom(_appContext.allLocations),
+              selectedLocation: _locationFilter,
+              onLocationChanged: (location) {
+                setState(() => _locationFilter = location);
+              },
               onTagSelectionChanged: (selected) {
                 setState(() {
                   _selectedPostTagIDs
@@ -483,6 +509,9 @@ class BulletinSettingSheet extends StatefulWidget {
     required this.sortIndex,
     required this.availableTags,
     required this.selectedTagIDs,
+    required this.locationOptions,
+    required this.selectedLocation,
+    required this.onLocationChanged,
     required this.onTagSelectionChanged,
     required this.relevancySort,
     required this.descendingEventDate,
@@ -493,6 +522,9 @@ class BulletinSettingSheet extends StatefulWidget {
   final int sortIndex;
   final List<PostTag> availableTags;
   final Set<String> selectedTagIDs;
+  final List<String> locationOptions;
+  final String selectedLocation;
+  final void Function(String location) onLocationChanged;
   final void Function(Set<String> selected) onTagSelectionChanged;
   final void Function() relevancySort, descendingEventDate, ascendingEventDate, showBookmarks;
 
@@ -551,6 +583,46 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
       subtitle: 'Choose how to organize your events',
       children: [
         ActionSheetOptionGrid(children: _buildFilterOptions()),
+        if (widget.locationOptions.length > 1) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+            child: Text(
+              'Location',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Text(
+              'Show posts for a specific place',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.locationOptions.map((location) {
+                final selected = widget.selectedLocation == location;
+                final label = location == VolunteerLocations.all
+                    ? l10n.volunteersFilterAll
+                    : location;
+                return FilterChip(
+                  label: Text(label),
+                  selected: selected,
+                  onSelected: (_) => _onLocationChanged(location),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
         if (widget.availableTags.isNotEmpty) ...[
           const SizedBox(height: 8),
           Padding(
@@ -611,6 +683,11 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> with Ticker
     HapticFeedback.selectionClick();
     setState(() => _selectedTagIDs = selected);
     widget.onTagSelectionChanged(selected);
+  }
+
+  void _onLocationChanged(String location) {
+    HapticFeedback.selectionClick();
+    widget.onLocationChanged(location);
   }
 
   List<Widget> _buildFilterOptions() {

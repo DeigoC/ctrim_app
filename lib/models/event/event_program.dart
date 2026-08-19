@@ -79,6 +79,11 @@ class EventProgram {
   String get mapLink => _mapLink;
   DateTime? get finishTime => _finishTime;
 
+  /// URL opened by the Maps / Join action on the program schedule card.
+  String get locationLaunchUrl => _online ? _address : _mapLink;
+
+  bool get hasLocationLaunchUrl => locationLaunchUrl.trim().isNotEmpty;
+
   void setAllDay(final bool state) => _allDay = state;
   void setFinishTime(final DateTime? finish) => _finishTime = finish;
   void setOnline(final bool state) => _online = state;

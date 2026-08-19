@@ -179,7 +179,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     widget.onProgramChanged();
   }
 
-  Widget _buildLocationTrailingIcon() {
+  Widget? _buildLocationTrailingIcon() {
+    if (!widget.eventContext.program.hasLocationLaunchUrl) {
+      return null;
+    }
     if (widget.eventContext.program.online) {
       return FilledButton.tonal(
         onPressed: _onClickLocationTrailingIcon,
@@ -237,8 +240,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   void _onClickLocationTrailingIcon() {
-    final String link =
-        widget.eventContext.program.online ? widget.eventContext.program.address : widget.eventContext.program.mapLink;
+    final String link = widget.eventContext.program.locationLaunchUrl.trim();
+    if (link.isEmpty) return;
     launchUrlString(link, mode: LaunchMode.externalApplication).onError((error, stackTrace) async {
       debugPrint('error with link: $link');
       if (!mounted) return false;

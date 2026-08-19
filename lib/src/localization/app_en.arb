@@ -249,6 +249,26 @@
   "@postTagsNoneAvailable": {
     "description": "Message when no post tags exist for assignment"
   },
+  "postTagsNoneSelected": "No tags selected",
+  "@postTagsNoneSelected": {
+    "description": "Summary when a post has no content tags assigned"
+  },
+  "postTagsManage": "Manage tags",
+  "@postTagsManage": {
+    "description": "Opens the searchable post tag picker"
+  },
+  "postTagsSelectTitle": "Select content tags",
+  "@postTagsSelectTitle": {
+    "description": "Title for the full-screen post tag picker"
+  },
+  "postTagsSearchHint": "Search tags...",
+  "@postTagsSearchHint": {
+    "description": "Search hint on the post tag picker"
+  },
+  "postTagsNotifiableFilter": "Notification streams",
+  "@postTagsNotifiableFilter": {
+    "description": "Filter chip to show only post tags that drive push streams"
+  },
   "managePostTagsTitle": "Manage Post Tags",
   "@managePostTagsTitle": {
     "description": "Title for the admin page that manages post content tag definitions"
@@ -468,6 +488,19 @@
       }
     }
   },
+  "selectCatalogSelected": "{count} selected",
+  "@selectCatalogSelected": {
+    "description": "Selected count on a catalog tag/group picker page",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectCatalogNoResults": "No matches for your search or filters.",
+  "@selectCatalogNoResults": {
+    "description": "Empty state when catalog picker filters hide every item"
+  },
   "selectUsersManageMembers": "Manage members",
   "@selectUsersManageMembers": {
     "description": "Button to open the volunteer picker from schedule assignment"
@@ -609,6 +642,22 @@
   "cellGroupsNoneAvailable": "No active cell groups yet. Area admins can create them in the Cell Groups section.",
   "@cellGroupsNoneAvailable": {
     "description": "Empty state when no cell groups exist for assignment"
+  },
+  "cellGroupsNoneSelected": "No cell groups selected",
+  "@cellGroupsNoneSelected": {
+    "description": "Summary when a post is not linked to any cell groups"
+  },
+  "cellGroupsManage": "Manage cell groups",
+  "@cellGroupsManage": {
+    "description": "Opens the searchable cell group picker"
+  },
+  "cellGroupsSelectTitle": "Select cell groups",
+  "@cellGroupsSelectTitle": {
+    "description": "Title for the full-screen cell group picker"
+  },
+  "cellGroupsSearchHint": "Search cell groups...",
+  "@cellGroupsSearchHint": {
+    "description": "Search hint on the cell group picker"
   },
   "cellGroupsSectionTitle": "Cell Groups",
   "@cellGroupsSectionTitle": {

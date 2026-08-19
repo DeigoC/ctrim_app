@@ -9,6 +9,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/my_avatar_stack.dart';
+import '../../widgets/schedule_duration_picker.dart';
 import '../../utility/responsive_layout.dart';
 
 class AddEventProgramPage extends StatefulWidget {
@@ -23,7 +24,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   static final DateFormat _timeFormat = DateFormat('HH:mm');
   late final AppContext _appContext;
 
-  final TextEditingController _tecTitle = TextEditingController(), _tecDetail = TextEditingController();
+  final TextEditingController _tecTitle = TextEditingController(),
+      _tecDetail = TextEditingController();
   final List<String> _selectedUsers = List.empty(growable: true);
 
   DateTime? _start, _end;
@@ -60,16 +62,20 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
           _popRouteAfterAllowing();
         }
       },
-      child: Scaffold(appBar: AppBar(title: const Text('Add Schedule')), body: _buildBody()),
+      child: Scaffold(
+          appBar: AppBar(title: const Text('Add Schedule')),
+          body: _buildBody()),
     );
   }
 
   Widget _buildBody() {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: webHorizontalPadding),
+      padding: EdgeInsets.symmetric(
+          vertical: 16.0, horizontal: webHorizontalPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -83,13 +89,15 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.schedule, color: Theme.of(context).primaryColor),
+                      Icon(Icons.schedule,
+                          color: Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         'Schedule Time',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -134,13 +142,15 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.description, color: Theme.of(context).primaryColor),
+                      Icon(Icons.description,
+                          color: Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         'Program Details',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -166,7 +176,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                     maxLength: 128,
                     decoration: const InputDecoration(
                       label: Text('Additional Details'),
-                      hintText: 'Provide more information about this program...',
+                      hintText:
+                          'Provide more information about this program...',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.notes),
                       alignLabelWithHint: true,
@@ -192,9 +203,10 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                       const SizedBox(width: 8),
                       Text(
                         'Team Assignment',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -203,7 +215,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.outline),
+                      border: Border.all(
+                          color: Theme.of(context).colorScheme.outline),
                       borderRadius: BorderRadius.circular(8),
                       color: Theme.of(context).colorScheme.surface,
                     ),
@@ -213,17 +226,27 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                           Column(
                             children: [
                               Icon(Icons.person_add_alt_1,
-                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
+                                  size: 48,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.4)),
                               const SizedBox(height: 8),
                               Text(
                                 'No team members assigned',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                                style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6)),
                               ),
                             ],
                           )
                         else ...[
                           MyAvatarStack(
-                            users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
+                            users: _appContext.allUsers
+                                .where((e) => _selectedUsers.contains(e.id))
+                                .toList(),
                             appDir: _appContext.appDir,
                           ),
                           const SizedBox(height: 8),
@@ -236,7 +259,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                         FilledButton.icon(
                           onPressed: _onManageMembersTap,
                           icon: const Icon(Icons.group),
-                          label: Text(AppLocalizations.of(context)!.selectUsersManageMembers),
+                          label: Text(AppLocalizations.of(context)!
+                              .selectUsersManageMembers),
                         ),
                       ],
                     ),
@@ -257,13 +281,15 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.settings, color: Theme.of(context).primaryColor),
+                      Icon(Icons.settings,
+                          color: Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         'Visibility Settings',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -272,7 +298,8 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                     value: _forGuests,
                     onChanged: _onForGuestsChange,
                     title: const Text('Visible to Guests'),
-                    subtitle: const Text('Allow guests to see this program item'),
+                    subtitle:
+                        const Text('Allow guests to see this program item'),
                     secondary: Icon(
                       _forGuests ? Icons.visibility : Icons.visibility_off,
                       color: Theme.of(context).primaryColor,
@@ -320,7 +347,10 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 ? Colors.amber
                 : isEnabled
                     ? Theme.of(context).colorScheme.outline
-                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                    : Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.5),
             width: showWarning ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -337,8 +367,13 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   icon,
                   size: 16,
                   color: isEnabled
-                      ? (showWarning ? Colors.amber : Theme.of(context).colorScheme.primary)
-                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ? (showWarning
+                          ? Colors.amber
+                          : Theme.of(context).colorScheme.primary)
+                      : Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -346,14 +381,21 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isEnabled
-                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
-                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ? Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7)
+                        : Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.5),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 if (showWarning) ...[
                   const SizedBox(width: 4),
-                  const Icon(Icons.warning_amber, size: 14, color: Colors.amber),
+                  const Icon(Icons.warning_amber,
+                      size: 14, color: Colors.amber),
                 ],
               ],
             ),
@@ -366,8 +408,14 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
                 color: isEnabled
                     ? (hasTime
                         ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        : Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7))
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -409,11 +457,16 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
   }
 
   void _onRequirementsChange(final String _) {
-    if (_tecTitle.text.trim().isEmpty || _start == null || _end == null && _canSave) {
+    if (_tecTitle.text.trim().isEmpty ||
+        _start == null ||
+        _end == null && _canSave) {
       setState(() {
         _canSave = false;
       });
-    } else if (_tecTitle.text.trim().isNotEmpty && _start != null && _end != null && !_canSave) {
+    } else if (_tecTitle.text.trim().isNotEmpty &&
+        _start != null &&
+        _end != null &&
+        !_canSave) {
       setState(() {
         _canSave = true;
       });
@@ -452,130 +505,15 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     });
   }
 
-  void _onEndTimeTap() {
-    // select from a range of pre-set durations
-    showDialog(
+  Future<void> _onEndTimeTap() async {
+    final end = await showScheduleDurationPicker(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-            maxWidth: 400,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.timer, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Select Duration',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(8),
-                  children: [
-                    _buildDurationOption("5 minutes", 5, Icons.timer),
-                    _buildDurationOption("10 minutes", 10, Icons.timer_10),
-                    _buildDurationOption("15 minutes", 15, Icons.schedule),
-                    _buildDurationOption("20 minutes", 20, Icons.schedule),
-                    _buildDurationOption("25 minutes", 25, Icons.schedule),
-                    _buildDurationOption("30 minutes", 30, Icons.schedule),
-                    _buildDurationOption("45 minutes", 45, Icons.schedule),
-                    _buildDurationOption("1 hour", 60, Icons.timer_outlined),
-                    _buildDurationOption("1 hour 30 minutes", 90, Icons.timer_outlined),
-                    _buildDurationOption("2 hours", 120, Icons.timer_outlined),
-                    const Divider(),
-                    ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(Icons.edit_calendar, color: Theme.of(context).colorScheme.onPrimaryContainer),
-                      ),
-                      title: const Text("Custom finish time"),
-                      subtitle: const Text("Set a specific end time"),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () => _selectCustomTimeForEndTime(),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      start: _start!,
+      initialEnd: _end,
     );
-  }
-
-  Widget _buildDurationOption(String title, int minutes, IconData icon) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Icon(icon, color: Theme.of(context).colorScheme.onPrimaryContainer),
-        ),
-        title: Text(title),
-        subtitle: Text("Ends at ${_timeFormat.format(_start!.add(Duration(minutes: minutes)))}"),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: () => _setPresetDurationForEndTime(minutes),
-      ),
-    );
-  }
-
-  void _setPresetDurationForEndTime(final int minutes) {
-    Navigator.of(context).pop();
-    setState(() {
-      _end = _start!.add(Duration(minutes: minutes));
-    });
-    _onRequirementsChange("");
-  }
-
-  void _selectCustomTimeForEndTime() {
-    Navigator.of(context).pop();
-
-    showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_start!.add(Duration(hours: 1))),
-      helpText: 'When does the role finish?',
-    ).then((selectedEndTime) {
-      if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
-        setState(() {
-          _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
-              widget.eventContext.head.eventDate!.day, selectedEndTime.hour, selectedEndTime.minute);
-        });
-        _onRequirementsChange("");
-      }
-    });
+    if (end == null || !mounted) return;
+    setState(() => _end = end);
+    _onRequirementsChange('');
   }
 
   Future<void> _onSaveClick() async {
@@ -603,18 +541,6 @@ class _AddEventProgramPageState extends State<AddEventProgramPage> {
     widget.eventContext.allowSavingOfTheEdit();
     _isSaved = true;
     _popRouteAfterAllowing();
-  }
-
-  bool _isEndTimeValid(final TimeOfDay end) {
-    if (end.hour.compareTo(_start!.hour) > 0 ||
-        (end.hour.compareTo(_start!.hour) == 0 && end.minute.compareTo(_start!.minute) > 0)) {
-      return true;
-    }
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Invalid Finish Time',
-        content: 'Please set it after the Start Time which is currently at ${_timeFormat.format(_start!)}');
-    return false;
   }
 
   void _addProgramRoleToEventContext({required bool shiftFollowing}) {

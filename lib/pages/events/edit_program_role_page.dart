@@ -8,10 +8,12 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/my_avatar_stack.dart';
+import '../../widgets/schedule_duration_picker.dart';
 import '../../utility/responsive_layout.dart';
 
 class EditEventProgramPage extends StatefulWidget {
-  const EditEventProgramPage({super.key, required this.eventContext, required this.programEntry});
+  const EditEventProgramPage(
+      {super.key, required this.eventContext, required this.programEntry});
   final EventContext eventContext;
   final Map<String, dynamic> programEntry;
 
@@ -75,11 +77,13 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   Widget _buildBody() {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
+      padding:
+          EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -93,13 +97,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.schedule, color: Theme.of(context).primaryColor),
+                      Icon(Icons.schedule,
+                          color: Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         'Schedule Time',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -141,13 +147,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.description, color: Theme.of(context).primaryColor),
+                      Icon(Icons.description,
+                          color: Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         'Program Details',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -170,7 +178,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                     maxLength: 128,
                     decoration: const InputDecoration(
                       label: Text('Additional Details'),
-                      hintText: 'Provide more information about this program...',
+                      hintText:
+                          'Provide more information about this program...',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.notes),
                       alignLabelWithHint: true,
@@ -197,9 +206,10 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                       const SizedBox(width: 8),
                       Text(
                         'Team Assignment',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -208,7 +218,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.outline),
+                      border: Border.all(
+                          color: Theme.of(context).colorScheme.outline),
                       borderRadius: BorderRadius.circular(8),
                       color: Theme.of(context).colorScheme.surface,
                     ),
@@ -218,17 +229,27 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                           Column(
                             children: [
                               Icon(Icons.person_add_alt_1,
-                                  size: 48, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
+                                  size: 48,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.4)),
                               const SizedBox(height: 8),
                               Text(
                                 'No team members assigned',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                                style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6)),
                               ),
                             ],
                           )
                         else ...[
                           MyAvatarStack(
-                            users: _appContext.allUsers.where((e) => _selectedUsers.contains(e.id)).toList(),
+                            users: _appContext.allUsers
+                                .where((e) => _selectedUsers.contains(e.id))
+                                .toList(),
                             appDir: _appContext.appDir,
                           ),
                           const SizedBox(height: 8),
@@ -241,7 +262,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                         FilledButton.icon(
                           onPressed: _onManageMembersTap,
                           icon: const Icon(Icons.group),
-                          label: Text(AppLocalizations.of(context)!.selectUsersManageMembers),
+                          label: Text(AppLocalizations.of(context)!
+                              .selectUsersManageMembers),
                         ),
                       ],
                     ),
@@ -262,13 +284,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.settings, color: Theme.of(context).primaryColor),
+                      Icon(Icons.settings,
+                          color: Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
                       Text(
                         'Visibility Settings',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -277,7 +301,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
                     value: _forGuests,
                     onChanged: _onForGuestsChange,
                     title: const Text('Visible to Guests'),
-                    subtitle: const Text('Allow guests to see this program item'),
+                    subtitle:
+                        const Text('Allow guests to see this program item'),
                     secondary: Icon(
                       _forGuests ? Icons.visibility : Icons.visibility_off,
                       color: Theme.of(context).primaryColor,
@@ -308,7 +333,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           OutlinedButton.icon(
             onPressed: _onDeleteTap,
             icon: const Icon(Icons.delete, color: Colors.red),
-            label: const Text('Delete Program', style: TextStyle(color: Colors.red)),
+            label: const Text('Delete Program',
+                style: TextStyle(color: Colors.red)),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
               side: const BorderSide(color: Colors.red),
@@ -340,13 +366,17 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
           children: [
             Row(
               children: [
-                Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+                Icon(icon,
+                    size: 16, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 4),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -378,10 +408,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   void _hasAnythingChanged() {
     if (_canSave &&
         (_areTimesTheSame() &&
-            _tecDetail.text.trim().compareTo(widget.programEntry['detail']) == 0 &&
-            (_tecTitle.text.trim().compareTo(widget.programEntry['title']) == 0 || _tecTitle.text.trim().isEmpty)) &&
+            _tecDetail.text.trim().compareTo(widget.programEntry['detail']) ==
+                0 &&
+            (_tecTitle.text.trim().compareTo(widget.programEntry['title']) ==
+                    0 ||
+                _tecTitle.text.trim().isEmpty)) &&
         _forGuests == widget.programEntry['for_guests'] &&
-        _selectedUsers.toString().compareTo((widget.programEntry['uids'] as List<String>).toString()) == 0) {
+        _selectedUsers.toString().compareTo(
+                (widget.programEntry['uids'] as List<String>).toString()) ==
+            0) {
       setState(() {
         _canSave = false;
       });
@@ -393,20 +428,34 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   bool _areTimesTheSame() {
-    return (_start.hour.compareTo((widget.programEntry['start'] as DateTime).hour) == 0 &&
-        _start.minute.compareTo((widget.programEntry['start'] as DateTime).minute) == 0 &&
-        _end.hour.compareTo((widget.programEntry['end'] as DateTime).hour) == 0 &&
-        _end.minute.compareTo((widget.programEntry['end'] as DateTime).minute) == 0);
+    return (_start.hour
+                .compareTo((widget.programEntry['start'] as DateTime).hour) ==
+            0 &&
+        _start.minute
+                .compareTo((widget.programEntry['start'] as DateTime).minute) ==
+            0 &&
+        _end.hour.compareTo((widget.programEntry['end'] as DateTime).hour) ==
+            0 &&
+        _end.minute
+                .compareTo((widget.programEntry['end'] as DateTime).minute) ==
+            0);
   }
 
   void _onStartTimeTap() {
-    showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_start), helpText: 'When does the role start?')
+    showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(_start),
+            helpText: 'When does the role start?')
         .then((selectedStartTime) async {
       if (selectedStartTime != null) {
         final Duration duration = _end.difference(_start);
         setState(() {
-          _start = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
-              widget.eventContext.head.eventDate!.day, selectedStartTime.hour, selectedStartTime.minute);
+          _start = DateTime(
+              widget.eventContext.head.eventDate!.year,
+              widget.eventContext.head.eventDate!.month,
+              widget.eventContext.head.eventDate!.day,
+              selectedStartTime.hour,
+              selectedStartTime.minute);
           _end = _start.add(duration);
         });
         _hasAnythingChanged();
@@ -414,142 +463,15 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     });
   }
 
-  void _onEndTimeTap() {
-    // select from a range of pre-set durations
-    showDialog(
+  Future<void> _onEndTimeTap() async {
+    final end = await showScheduleDurationPicker(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-            maxWidth: 400,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.timer, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Select Duration',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(8),
-                  children: [
-                    _buildDurationOption("5 minutes", 5, Icons.timer),
-                    _buildDurationOption("10 minutes", 10, Icons.timer_10),
-                    _buildDurationOption("15 minutes", 15, Icons.schedule),
-                    _buildDurationOption("20 minutes", 20, Icons.schedule),
-                    _buildDurationOption("25 minutes", 25, Icons.schedule),
-                    _buildDurationOption("30 minutes", 30, Icons.schedule),
-                    _buildDurationOption("45 minutes", 45, Icons.schedule),
-                    _buildDurationOption("1 hour", 60, Icons.timer_outlined),
-                    _buildDurationOption("1 hour 30 minutes", 90, Icons.timer_outlined),
-                    _buildDurationOption("2 hours", 120, Icons.timer_outlined),
-                    const Divider(),
-                    ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(Icons.edit_calendar, color: Theme.of(context).colorScheme.onPrimaryContainer),
-                      ),
-                      title: const Text("Custom finish time"),
-                      subtitle: const Text("Set a specific end time"),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () => _selectCustomTimeForEndTime(),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      start: _start,
+      initialEnd: _end,
     );
-  }
-
-  Widget _buildDurationOption(String title, int minutes, IconData icon) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Icon(icon, color: Theme.of(context).colorScheme.onPrimaryContainer),
-        ),
-        title: Text(title),
-        subtitle: Text("Ends at ${_timeFormat.format(_start.add(Duration(minutes: minutes)))}"),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: () => _setPresetDurationForEndTime(minutes),
-      ),
-    );
-  }
-
-  void _selectCustomTimeForEndTime() {
-    Navigator.of(context).pop();
-
-    showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_end),
-      helpText: 'When does the role finish?',
-    ).then((selectedEndTime) {
-      if (selectedEndTime != null && _isEndTimeValid(selectedEndTime)) {
-        setState(() {
-          _end = DateTime(widget.eventContext.head.eventDate!.year, widget.eventContext.head.eventDate!.month,
-              widget.eventContext.head.eventDate!.day, selectedEndTime.hour, selectedEndTime.minute);
-        });
-        _hasAnythingChanged();
-      }
-    });
-  }
-
-  void _setPresetDurationForEndTime(final int minutes) {
-    Navigator.of(context).pop();
-    setState(() {
-      _end = _start.add(Duration(minutes: minutes));
-    });
+    if (end == null || !mounted) return;
+    setState(() => _end = end);
     _hasAnythingChanged();
-  }
-
-  bool _isEndTimeValid(final TimeOfDay end) {
-    if (end.hour.compareTo(_start.hour) > 0 ||
-        (end.hour.compareTo(_start.hour) == 0 && end.minute.compareTo(_start.minute) > 0)) {
-      return true;
-    }
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Invalid Finish Time',
-        content: 'Please set it after the Start Time which is currently at ${_timeFormat.format(_start)}');
-    return false;
   }
 
   Future<void> _onManageMembersTap() async {
@@ -588,7 +510,8 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
     if (!_areTimesTheSame()) {
       final DateTime oldEnd = widget.programEntry['end'] as DateTime;
       final int affectedCount = widget.eventContext.program
-          .countRolesStartingAtOrAfter(oldEnd, excludeRoleId: widget.programEntry['id'] as int);
+          .countRolesStartingAtOrAfter(oldEnd,
+              excludeRoleId: widget.programEntry['id'] as int);
       if (affectedCount > 0) {
         final bool? choice = await DialogManager.askShiftFollowingScheduleItems(
           context: context,
@@ -637,33 +560,43 @@ class _EditEventProgramPageState extends State<EditEventProgramPage> {
   }
 
   void _sortNotifications() {
-    final List<String> originalList = List<String>.from(widget.programEntry['uids']);
+    final List<String> originalList =
+        List<String>.from(widget.programEntry['uids']);
 
     // figure out the removed members
-    final removedMembers = originalList.where((e) => !_selectedUsers.contains(e));
+    final removedMembers =
+        originalList.where((e) => !_selectedUsers.contains(e));
     debugPrint('Sending role removal to the following: $removedMembers');
     if (removedMembers.isNotEmpty) {
-      widget.eventContext.addRoleRemovalNotification(removedMembers, widget.programEntry['id']);
+      widget.eventContext.addRoleRemovalNotification(
+          removedMembers, widget.programEntry['id']);
     }
 
     // figure out the new members
     final newMembers = _selectedUsers.where((e) => !originalList.contains(e));
     debugPrint('Sending role addition to the following: $newMembers');
     if (newMembers.isNotEmpty) {
-      widget.eventContext.addRoleAdditionNotification(newMembers, widget.programEntry['id']);
+      widget.eventContext
+          .addRoleAdditionNotification(newMembers, widget.programEntry['id']);
     }
-    debugPrint('--------role addition now looks like: ${widget.eventContext.roleAdditions}');
+    debugPrint(
+        '--------role addition now looks like: ${widget.eventContext.roleAdditions}');
   }
 
   Future<void> _onDeleteTap() async {
     // remember to send all from the original about the removal of role
     final confirmation = await DialogManager.showConfirmationDialog(
-        context: context, title: 'Delete Schedule Item', content: 'Are you sure you want to delete this item?');
+        context: context,
+        title: 'Delete Schedule Item',
+        content: 'Are you sure you want to delete this item?');
     if (!confirmation || !mounted) return;
 
-    widget.eventContext.removeRoleAdditionNotification(widget.programEntry['id']);
-    widget.eventContext.addRoleRemovalNotification(widget.programEntry['uids'], widget.programEntry['id']);
-    widget.eventContext.addRoleDeletionTitle(widget.programEntry['id'], widget.programEntry['title']);
+    widget.eventContext
+        .removeRoleAdditionNotification(widget.programEntry['id']);
+    widget.eventContext.addRoleRemovalNotification(
+        widget.programEntry['uids'], widget.programEntry['id']);
+    widget.eventContext.addRoleDeletionTitle(
+        widget.programEntry['id'], widget.programEntry['title']);
 
     widget.eventContext.program.removeRole(widget.programEntry['id']);
     widget.eventContext.allowSavingOfTheEdit();

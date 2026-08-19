@@ -424,6 +424,36 @@ abstract class AppLocalizations {
   /// **'No post tags yet. Area admins can create tags in Admin Tools.'**
   String get postTagsNoneAvailable;
 
+  /// Summary when a post has no content tags assigned
+  ///
+  /// In en, this message translates to:
+  /// **'No tags selected'**
+  String get postTagsNoneSelected;
+
+  /// Opens the searchable post tag picker
+  ///
+  /// In en, this message translates to:
+  /// **'Manage tags'**
+  String get postTagsManage;
+
+  /// Title for the full-screen post tag picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select content tags'**
+  String get postTagsSelectTitle;
+
+  /// Search hint on the post tag picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search tags...'**
+  String get postTagsSearchHint;
+
+  /// Filter chip to show only post tags that drive push streams
+  ///
+  /// In en, this message translates to:
+  /// **'Notification streams'**
+  String get postTagsNotifiableFilter;
+
   /// Title for the admin page that manages post content tag definitions
   ///
   /// In en, this message translates to:
@@ -700,6 +730,18 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String selectUsersSelected(int count);
 
+  /// Selected count on a catalog tag/group picker page
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectCatalogSelected(int count);
+
+  /// Empty state when catalog picker filters hide every item
+  ///
+  /// In en, this message translates to:
+  /// **'No matches for your search or filters.'**
+  String get selectCatalogNoResults;
+
   /// Button to open the volunteer picker from schedule assignment
   ///
   /// In en, this message translates to:
@@ -897,6 +939,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No active cell groups yet. Area admins can create them in the Cell Groups section.'**
   String get cellGroupsNoneAvailable;
+
+  /// Summary when a post is not linked to any cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'No cell groups selected'**
+  String get cellGroupsNoneSelected;
+
+  /// Opens the searchable cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Manage cell groups'**
+  String get cellGroupsManage;
+
+  /// Title for the full-screen cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select cell groups'**
+  String get cellGroupsSelectTitle;
+
+  /// Search hint on the cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search cell groups...'**
+  String get cellGroupsSearchHint;
 
   /// Main nav / home title for the Cell Groups section
   ///

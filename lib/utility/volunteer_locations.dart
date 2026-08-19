@@ -37,4 +37,20 @@ class VolunteerLocations {
     if (options.contains(userLocation)) return userLocation;
     return options.isNotEmpty ? options.first : belfast;
   }
+
+  static const String onlineSuffix = ' (Online)';
+
+  /// Strips the online suffix from [EventHead.location] for comparisons.
+  static String normalizePostLocation(final String location) {
+    return location.replaceAll(onlineSuffix, '').trim();
+  }
+
+  /// Bulletin / list filter against a post's [Location] field.
+  static bool postLocationMatchesFilter({
+    required String postLocation,
+    required String locationFilter,
+  }) {
+    if (locationFilter == all) return true;
+    return normalizePostLocation(postLocation) == locationFilter;
+  }
 }
