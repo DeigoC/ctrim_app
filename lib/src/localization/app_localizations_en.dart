@@ -509,12 +509,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsOverviewVerseTitle => 'Scripture';
 
   @override
-  String get cellGroupsOverviewVerseReference =>
-      '[Verse reference placeholder]';
+  String get cellGroupsOverviewVerseReference => 'Acts 2:42, 46–47';
 
   @override
   String get cellGroupsOverviewVerseBody =>
-      '\"[Verse text placeholder — replace with the passage that underpins cell group life.]\"';
+      '\"They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer… They continued to meet together… And the Lord added to their number daily those who were being saved.\"';
 
   @override
   String get cellGroupsOverviewImagePlaceholder => 'Image coming soon';
