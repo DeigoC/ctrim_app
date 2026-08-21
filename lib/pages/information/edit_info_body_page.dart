@@ -19,6 +19,7 @@ class EditInfoBodyPage extends StatefulWidget {
     this.churchInfo,
     this.testimonialInfo,
     this.ctrimInfo,
+    this.initialCtrimCategory = CtrimInfoCategory.principle,
   });
 
   factory EditInfoBodyPage.forChurch({final ChurchInfo? info}) {
@@ -31,13 +32,20 @@ class EditInfoBodyPage extends StatefulWidget {
         section: InfoEditorSection.testimonial, testimonialInfo: info);
   }
 
-  factory EditInfoBodyPage.forCtrim({final CtrimInfo? info}) {
+  factory EditInfoBodyPage.forCtrim({
+    final CtrimInfo? info,
+    final CtrimInfoCategory initialCategory = CtrimInfoCategory.principle,
+  }) {
     return EditInfoBodyPage._(
-        section: InfoEditorSection.ctrim, ctrimInfo: info);
+      section: InfoEditorSection.ctrim,
+      ctrimInfo: info,
+      initialCtrimCategory: info?.category ?? initialCategory,
+    );
   }
 
   final ChurchInfo? churchInfo;
   final CtrimInfo? ctrimInfo;
+  final CtrimInfoCategory initialCtrimCategory;
   final InfoEditorSection section;
   final TestimonialInfo? testimonialInfo;
 
@@ -70,6 +78,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   late final String _initialSummary;
   late final String _initialImages;
   late final String _initialDisplayOrder;
+  late final CtrimInfoCategory _initialCtrimCategory;
+  late CtrimInfoCategory _selectedCtrimCategory;
   bool _isSaving = false;
   bool _isDeleting = false;
   bool _isSaved = false;
@@ -94,6 +104,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     _initialSummary = _initialSummaryValue();
     _initialImages = _initialImageSourcesValue();
     _initialDisplayOrder = _initialDisplayOrderValue();
+    _initialCtrimCategory = widget.initialCtrimCategory;
+    _selectedCtrimCategory = _initialCtrimCategory;
     _primaryController = TextEditingController(text: _initialPrimary);
     _secondaryController = TextEditingController(text: _initialSecondary);
     _summaryController = TextEditingController(text: _initialSummary);
@@ -239,6 +251,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     if (_displayOrderController.text.trim() != _initialDisplayOrder.trim()) {
       return true;
     }
+    if (widget.section == InfoEditorSection.ctrim &&
+        _selectedCtrimCategory != _initialCtrimCategory) {
+      return true;
+    }
 
     final currentBody =
         _editorKey.currentState?.getDocumentJson() ?? _initialBody;
@@ -298,6 +314,35 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
           ),
           minLines: 2,
           maxLines: 3,
+        ),
+      ]);
+    }
+
+    if (widget.section == InfoEditorSection.ctrim) {
+      fields.addAll([
+        const SizedBox(height: 12),
+        DropdownButtonFormField<CtrimInfoCategory>(
+          initialValue: _selectedCtrimCategory,
+          decoration: const InputDecoration(
+            labelText: 'Section',
+            helperText:
+                'Principles appear under “Our core ideologies”; Teachings under '
+                '“Simple lessons to get started!”',
+          ),
+          items: CtrimInfoCategory.values
+              .map(
+                (category) => DropdownMenuItem<CtrimInfoCategory>(
+                  value: category,
+                  child: Text(category.label),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() => _selectedCtrimCategory = value);
+          },
         ),
       ]);
     }
@@ -411,6 +456,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             updatedBy: appContext.currentUser.id,
             updatedAt: now,
             displayOrder: displayOrder,
+            category: _selectedCtrimCategory,
           );
           await _infoRepository.saveCtrimInfo(info);
           await UserActivityRecorder().record(

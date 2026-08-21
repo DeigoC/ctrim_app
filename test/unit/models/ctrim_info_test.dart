@@ -16,6 +16,7 @@ void main() {
         'updatedBy': 'admin-1',
         'updatedAt': Timestamp.fromMillisecondsSinceEpoch(1700000000000),
         'displayOrder': 3,
+        'category': 'teaching',
       });
 
       expect(info.id, 'core_values');
@@ -25,9 +26,23 @@ void main() {
       expect(info.imageSources, ['https://example.com/core.png']);
       expect(info.updatedBy, 'admin-1');
       expect(info.displayOrder, 3);
+      expect(info.category, CtrimInfoCategory.teaching);
     });
 
-    test('toJson writes Firestore friendly shape', () {
+    test('fromMap defaults missing category to principle', () {
+      final info = CtrimInfo.fromMap('legacy', {
+        'title': 'Legacy Topic',
+        'description': 'desc',
+        'analyticTitle': 'Legacy Topic',
+        'body': [
+          {'insert': 'Body\n'}
+        ],
+      });
+
+      expect(info.category, CtrimInfoCategory.principle);
+    });
+
+    test('toJson writes Firestore friendly shape including category', () {
       final info = CtrimInfo(
         id: 'devotionals',
         title: 'Devotionals',
@@ -40,6 +55,7 @@ void main() {
         updatedBy: 'admin-2',
         updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
         displayOrder: 4,
+        category: CtrimInfoCategory.teaching,
       );
 
       final json = info.toJson();
@@ -50,6 +66,22 @@ void main() {
       expect(json['imageSources'], ['https://example.com/devotionals.png']);
       expect(json['updatedAt'], isA<Timestamp>());
       expect(json['displayOrder'], 4);
+      expect(json['category'], 'teaching');
+    });
+
+    test('toCacheJson includes category', () {
+      final info = CtrimInfo(
+        id: 'cell_group',
+        title: 'Cell Group',
+        description: 'desc',
+        analyticsTitle: 'Cell Group',
+        body: const [
+          {'insert': 'Body\n'}
+        ],
+        category: CtrimInfoCategory.principle,
+      );
+
+      expect(info.toCacheJson()['category'], 'principle');
     });
 
     test('fromMap removes invalid empty insert operations', () {
@@ -95,6 +127,21 @@ void main() {
       expect(info.body, [
         {'insert': 'From ops\n'}
       ]);
+    });
+  });
+
+  group('CtrimInfoCategory', () {
+    test('fromFirestore maps teaching and defaults everything else', () {
+      expect(CtrimInfoCategory.fromFirestore('teaching'),
+          CtrimInfoCategory.teaching);
+      expect(CtrimInfoCategory.fromFirestore('TEACHING'),
+          CtrimInfoCategory.teaching);
+      expect(CtrimInfoCategory.fromFirestore('principle'),
+          CtrimInfoCategory.principle);
+      expect(CtrimInfoCategory.fromFirestore(null), CtrimInfoCategory.principle);
+      expect(CtrimInfoCategory.fromFirestore(''), CtrimInfoCategory.principle);
+      expect(
+          CtrimInfoCategory.fromFirestore('other'), CtrimInfoCategory.principle);
     });
   });
 }
