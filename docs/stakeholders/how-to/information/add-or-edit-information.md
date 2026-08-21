@@ -13,15 +13,15 @@
 
 1. Open the **CTRIM** tab.  
 2. Go to the right subsection (**Churches**, **Testimonials**, or **Information**).  
-3. Choose **Add** (or equivalent).  
-4. Fill in title and body (rich text).  
+3. Choose **Add** (or equivalent). On **Information**, use **Add Principles Topic** or **Add Teachings Topic** so the new page lands in the right group.  
+4. Fill in title and body (rich text). For Information topics, confirm the **Section** field is **Principles** or **Teachings** as intended (defaults to Principles).  
 5. Save and check how it looks when viewing as a normal reader.  
 
 ## Edit an existing record
 
 1. Open the item from the list.  
 2. Choose **Edit**.  
-3. Update the content.  
+3. Update the content. For Information topics, you can move a page between **Principles** and **Teachings** with the **Section** field.  
 4. Save.  
 
 ## Delete *(if available)*

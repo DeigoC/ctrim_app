@@ -11,7 +11,7 @@ The **CTRIM** tab holds longer-lived information for visitors — not the day-to
 | **About** | Orientation to CTRIM / the community — typically mission, vision, and core values, often with imagery |
 | **Churches** | Information about related churches (cover image, optional gallery, rich text) |
 | **Testimonials** | Stories and testimonies (same kind of rich layout) |
-| **Information** | Longer CTRIM info pages (rich text, cover, optional gallery) |
+| **Information** | Longer CTRIM info pages, grouped into **Principles** (“Our core ideologies”) and **Teachings** (“Simple lessons to get started!”) |
 
 Content is meant to be readable on phone and web, with richer formatting than a short bulletin post. Guests and signed-in people can browse; only elevated roles can edit.
 

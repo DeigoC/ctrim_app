@@ -4,12 +4,34 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'info_parsing.dart';
 
+/// Where a CTRIM Information topic appears within the Information tab.
+enum CtrimInfoCategory {
+  principle('principle', 'Principles'),
+  teaching('teaching', 'Teachings');
+
+  const CtrimInfoCategory(this.firestoreValue, this.label);
+
+  final String firestoreValue;
+  final String label;
+
+  static CtrimInfoCategory fromFirestore(final dynamic rawValue) {
+    final value = (rawValue ?? '').toString().trim().toLowerCase();
+    if (value == teaching.firestoreValue) {
+      return teaching;
+    }
+    // Missing / unknown values default to Principles so existing records
+    // stay in the first section without a data migration.
+    return principle;
+  }
+}
+
 class CtrimInfo {
   late String _id, _title, _description, _analyticsTitle, _updatedBy;
   late List<dynamic> _body;
   late List<String> _imageSources;
   late DateTime _updatedAt;
   int _displayOrder = 0;
+  CtrimInfoCategory _category = CtrimInfoCategory.principle;
 
   CtrimInfo({
     required String id,
@@ -21,6 +43,7 @@ class CtrimInfo {
     String updatedBy = '',
     DateTime? updatedAt,
     int displayOrder = 0,
+    CtrimInfoCategory category = CtrimInfoCategory.principle,
   }) {
     _id = id;
     _title = title;
@@ -31,6 +54,7 @@ class CtrimInfo {
     _updatedBy = updatedBy;
     _updatedAt = updatedAt ?? DateTime.now();
     _displayOrder = displayOrder;
+    _category = category;
   }
 
   factory CtrimInfo.fromMap(final String id, final Map<String, dynamic> data) {
@@ -47,6 +71,7 @@ class CtrimInfo {
       updatedBy: (data['updatedBy'] ?? '').toString(),
       updatedAt: InfoParsing.parseUpdatedAt(data['updatedAt']),
       displayOrder: InfoParsing.parseDisplayOrder(data['displayOrder']),
+      category: CtrimInfoCategory.fromFirestore(data['category']),
     );
   }
 
@@ -60,6 +85,7 @@ class CtrimInfo {
       'updatedBy': _updatedBy,
       'updatedAt': Timestamp.fromDate(_updatedAt),
       'displayOrder': _displayOrder,
+      'category': _category.firestoreValue,
     };
   }
 
@@ -74,11 +100,13 @@ class CtrimInfo {
       'updatedBy': _updatedBy,
       'updatedAt': _updatedAt.millisecondsSinceEpoch,
       'displayOrder': _displayOrder,
+      'category': _category.firestoreValue,
     };
   }
 
   String get analyticsTitle => _analyticsTitle;
   List<dynamic> get body => UnmodifiableListView<dynamic>(_body);
+  CtrimInfoCategory get category => _category;
   String get description => _description;
   int get displayOrder => _displayOrder;
   String get id => _id;
@@ -90,6 +118,7 @@ class CtrimInfo {
 
   void setAnalyticsTitle(final String value) => _analyticsTitle = value;
   void setBody(final List<dynamic> value) => _body = List<dynamic>.from(value);
+  void setCategory(final CtrimInfoCategory value) => _category = value;
   void setDescription(final String value) => _description = value;
   void setDisplayOrder(final int value) => _displayOrder = value;
   void setImageSources(final List<String> value) =>
