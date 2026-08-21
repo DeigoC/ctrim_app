@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/cell_group.dart';
 import '../../models/cell_group_roster.dart';
 import '../../models/event/event_head.dart';
+import '../../utility/cell_group_activity_stats.dart';
 import 'id_tracker.dart';
 
 class CellGroupDBManager {
@@ -102,6 +103,45 @@ class CellGroupDBManager {
     });
     if (heads.length <= limit) return heads;
     return heads.sublist(0, limit);
+  }
+
+  /// CG-linked bulletin heads with [EventHead.eventDate] in the rolling
+  /// past + upcoming activity windows (see [CellGroupActivityStats]).
+  ///
+  /// Single-field `EventDate` range query — no composite index. Client filters
+  /// to posts that actually link a cell group.
+  Future<List<EventHead>> fetchLinkedMeetingsInActivityWindow({
+    DateTime? now,
+  }) async {
+    final DateTime clock = now ?? DateTime.now();
+    final DateTime start = CellGroupActivityStats.queryRangeStart(clock);
+    final DateTime end = CellGroupActivityStats.queryRangeEndExclusive(clock);
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .where('EventDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('EventDate', isLessThan: Timestamp.fromDate(end))
+        .get();
+
+    return snapshot.docs
+        .map((doc) => EventHead.fromMap(doc.id, doc.data()))
+        .where((head) => head.cellGroupIDs.isNotEmpty)
+        .toList();
+  }
+
+  /// Overview dashboard snapshot: catalogue counts + linked meeting activity.
+  Future<CellGroupActivityStats> fetchActivityStats({
+    List<CellGroup>? groups,
+    DateTime? now,
+  }) async {
+    final DateTime clock = now ?? DateTime.now();
+    final catalogue = groups ?? await fetchAllGroups();
+    final meetings = await fetchLinkedMeetingsInActivityWindow(now: clock);
+    return CellGroupActivityStats.compute(
+      groups: catalogue,
+      meetings: meetings,
+      now: clock,
+    );
   }
 
   static int _statusRank(final String status) {

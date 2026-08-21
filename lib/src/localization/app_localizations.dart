@@ -1018,23 +1018,95 @@ abstract class AppLocalizations {
   /// **'Image coming soon'**
   String get cellGroupsOverviewImagePlaceholder;
 
-  /// Title for the longer overview section on CG overview
+  /// Title for the Cell Groups overview activity dashboard
   ///
   /// In en, this message translates to:
-  /// **'What are cell groups?'**
-  String get cellGroupsOverviewDetailTitle;
+  /// **'Activity'**
+  String get cellGroupsActivityTitle;
 
-  /// Subtitle for the longer overview section
+  /// Subtitle under the activity dashboard title
   ///
   /// In en, this message translates to:
-  /// **'More detail coming soon'**
-  String get cellGroupsOverviewDetailSubtitle;
+  /// **'Meetings linked to cell groups'**
+  String get cellGroupsActivitySubtitle;
 
-  /// Placeholder body for the longer CG overview section
+  /// Primary metric: CG meetings in the past 3 weeks
   ///
   /// In en, this message translates to:
-  /// **'A fuller explanation of how cell groups work in CTRIM will go here — meeting rhythm, what to expect when you join, and how groups connect to Sunday life. For now, browse the Groups tab to see what is available.'**
-  String get cellGroupsOverviewDetailBody;
+  /// **'Recent meetings'**
+  String get cellGroupsActivityPastMeetings;
+
+  /// Hint under the past meetings count
+  ///
+  /// In en, this message translates to:
+  /// **'Past 3 weeks'**
+  String get cellGroupsActivityPastMeetingsHint;
+
+  /// Primary metric: sum of attendees for past-window CG meetings
+  ///
+  /// In en, this message translates to:
+  /// **'Attendees'**
+  String get cellGroupsActivityPastAttendees;
+
+  /// Hint under the past attendees total
+  ///
+  /// In en, this message translates to:
+  /// **'Checked in · past 3 weeks'**
+  String get cellGroupsActivityPastAttendeesHint;
+
+  /// Primary metric: CG meetings in the coming week including today
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get cellGroupsActivityUpcoming;
+
+  /// Hint under the upcoming meetings count
+  ///
+  /// In en, this message translates to:
+  /// **'Today + next 6 days'**
+  String get cellGroupsActivityUpcomingHint;
+
+  /// Secondary metric label for active cell group count
+  ///
+  /// In en, this message translates to:
+  /// **'Active groups'**
+  String get cellGroupsActivityActiveGroupsLabel;
+
+  /// Secondary metric label for total MemberCount across active groups
+  ///
+  /// In en, this message translates to:
+  /// **'Members in active groups'**
+  String get cellGroupsActivityTotalMembersLabel;
+
+  /// Secondary metric label for distinct groups with a past-window meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Groups that met · past 3 weeks'**
+  String get cellGroupsActivityGroupsMetLabel;
+
+  /// Secondary metric label for average attendees per past meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Avg attendance · past 3 weeks'**
+  String get cellGroupsActivityAvgAttendanceLabel;
+
+  /// Secondary metric label shown when some groups are paused
+  ///
+  /// In en, this message translates to:
+  /// **'Paused groups'**
+  String get cellGroupsActivityPausedGroupsLabel;
+
+  /// Error message when activity stats fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load activity right now.'**
+  String get cellGroupsActivityLoadError;
+
+  /// Retry button for activity stats load failure
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get cellGroupsActivityRetry;
 
   /// Empty state on the Cell Groups list
   ///
