@@ -520,14 +520,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsOverviewImagePlaceholder => 'Image coming soon';
 
   @override
-  String get cellGroupsOverviewDetailTitle => 'What are cell groups?';
+  String get cellGroupsActivityTitle => 'Activity';
 
   @override
-  String get cellGroupsOverviewDetailSubtitle => 'More detail coming soon';
+  String get cellGroupsActivitySubtitle => 'Meetings linked to cell groups';
 
   @override
-  String get cellGroupsOverviewDetailBody =>
-      'A fuller explanation of how cell groups work in CTRIM will go here — meeting rhythm, what to expect when you join, and how groups connect to Sunday life. For now, browse the Groups tab to see what is available.';
+  String get cellGroupsActivityPastMeetings => 'Recent meetings';
+
+  @override
+  String get cellGroupsActivityPastMeetingsHint => 'Past 3 weeks';
+
+  @override
+  String get cellGroupsActivityPastAttendees => 'Attendees';
+
+  @override
+  String get cellGroupsActivityPastAttendeesHint => 'Checked in · past 3 weeks';
+
+  @override
+  String get cellGroupsActivityUpcoming => 'Coming up';
+
+  @override
+  String get cellGroupsActivityUpcomingHint => 'Today + next 6 days';
+
+  @override
+  String get cellGroupsActivityActiveGroupsLabel => 'Active groups';
+
+  @override
+  String get cellGroupsActivityTotalMembersLabel => 'Members in active groups';
+
+  @override
+  String get cellGroupsActivityGroupsMetLabel =>
+      'Groups that met · past 3 weeks';
+
+  @override
+  String get cellGroupsActivityAvgAttendanceLabel =>
+      'Avg attendance · past 3 weeks';
+
+  @override
+  String get cellGroupsActivityPausedGroupsLabel => 'Paused groups';
+
+  @override
+  String get cellGroupsActivityLoadError => 'Couldn’t load activity right now.';
+
+  @override
+  String get cellGroupsActivityRetry => 'Retry';
 
   @override
   String get cellGroupsEmpty => 'No cell groups yet.';

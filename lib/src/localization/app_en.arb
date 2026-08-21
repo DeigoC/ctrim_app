@@ -695,17 +695,65 @@
   "@cellGroupsOverviewImagePlaceholder": {
     "description": "Placeholder label where overview hero image will go"
   },
-  "cellGroupsOverviewDetailTitle": "What are cell groups?",
-  "@cellGroupsOverviewDetailTitle": {
-    "description": "Title for the longer overview section on CG overview"
+  "cellGroupsActivityTitle": "Activity",
+  "@cellGroupsActivityTitle": {
+    "description": "Title for the Cell Groups overview activity dashboard"
   },
-  "cellGroupsOverviewDetailSubtitle": "More detail coming soon",
-  "@cellGroupsOverviewDetailSubtitle": {
-    "description": "Subtitle for the longer overview section"
+  "cellGroupsActivitySubtitle": "Meetings linked to cell groups",
+  "@cellGroupsActivitySubtitle": {
+    "description": "Subtitle under the activity dashboard title"
   },
-  "cellGroupsOverviewDetailBody": "A fuller explanation of how cell groups work in CTRIM will go here — meeting rhythm, what to expect when you join, and how groups connect to Sunday life. For now, browse the Groups tab to see what is available.",
-  "@cellGroupsOverviewDetailBody": {
-    "description": "Placeholder body for the longer CG overview section"
+  "cellGroupsActivityPastMeetings": "Recent meetings",
+  "@cellGroupsActivityPastMeetings": {
+    "description": "Primary metric: CG meetings in the past 3 weeks"
+  },
+  "cellGroupsActivityPastMeetingsHint": "Past 3 weeks",
+  "@cellGroupsActivityPastMeetingsHint": {
+    "description": "Hint under the past meetings count"
+  },
+  "cellGroupsActivityPastAttendees": "Attendees",
+  "@cellGroupsActivityPastAttendees": {
+    "description": "Primary metric: sum of attendees for past-window CG meetings"
+  },
+  "cellGroupsActivityPastAttendeesHint": "Checked in · past 3 weeks",
+  "@cellGroupsActivityPastAttendeesHint": {
+    "description": "Hint under the past attendees total"
+  },
+  "cellGroupsActivityUpcoming": "Coming up",
+  "@cellGroupsActivityUpcoming": {
+    "description": "Primary metric: CG meetings in the coming week including today"
+  },
+  "cellGroupsActivityUpcomingHint": "Today + next 6 days",
+  "@cellGroupsActivityUpcomingHint": {
+    "description": "Hint under the upcoming meetings count"
+  },
+  "cellGroupsActivityActiveGroupsLabel": "Active groups",
+  "@cellGroupsActivityActiveGroupsLabel": {
+    "description": "Secondary metric label for active cell group count"
+  },
+  "cellGroupsActivityTotalMembersLabel": "Members in active groups",
+  "@cellGroupsActivityTotalMembersLabel": {
+    "description": "Secondary metric label for total MemberCount across active groups"
+  },
+  "cellGroupsActivityGroupsMetLabel": "Groups that met · past 3 weeks",
+  "@cellGroupsActivityGroupsMetLabel": {
+    "description": "Secondary metric label for distinct groups with a past-window meeting"
+  },
+  "cellGroupsActivityAvgAttendanceLabel": "Avg attendance · past 3 weeks",
+  "@cellGroupsActivityAvgAttendanceLabel": {
+    "description": "Secondary metric label for average attendees per past meeting"
+  },
+  "cellGroupsActivityPausedGroupsLabel": "Paused groups",
+  "@cellGroupsActivityPausedGroupsLabel": {
+    "description": "Secondary metric label shown when some groups are paused"
+  },
+  "cellGroupsActivityLoadError": "Couldn’t load activity right now.",
+  "@cellGroupsActivityLoadError": {
+    "description": "Error message when activity stats fail to load"
+  },
+  "cellGroupsActivityRetry": "Retry",
+  "@cellGroupsActivityRetry": {
+    "description": "Retry button for activity stats load failure"
   },
   "cellGroupsEmpty": "No cell groups yet.",
   "@cellGroupsEmpty": {
