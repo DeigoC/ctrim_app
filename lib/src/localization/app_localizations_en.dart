@@ -697,4 +697,87 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cellGroupsChooseLeaders => 'Choose leaders';
+
+  @override
+  String get bulletinSortFilterTitle => 'Sort & Filter';
+
+  @override
+  String get bulletinSortFilterSubtitle => 'Choose how to organize your events';
+
+  @override
+  String get bulletinSortTooltip => 'Sort & Filter';
+
+  @override
+  String get bulletinSortSection => 'Sort';
+
+  @override
+  String get bulletinSortRelevancy => 'Relevancy';
+
+  @override
+  String get bulletinSortRelevancySubtitle =>
+      'Today first, then what’s coming up';
+
+  @override
+  String get bulletinSortSoonest => 'Soonest first';
+
+  @override
+  String get bulletinSortSoonestSubtitle => 'Earliest event date at the top';
+
+  @override
+  String get bulletinSortLatest => 'Latest first';
+
+  @override
+  String get bulletinSortLatestSubtitle => 'Most recent event date at the top';
+
+  @override
+  String get bulletinShowSection => 'Show';
+
+  @override
+  String get bulletinShowAll => 'All posts';
+
+  @override
+  String get bulletinShowUpcoming => 'Upcoming';
+
+  @override
+  String get bulletinShowPast => 'Past';
+
+  @override
+  String get bulletinShowBookmarks => 'Bookmarks';
+
+  @override
+  String get bulletinLocationSection => 'Location';
+
+  @override
+  String get bulletinLocationSubtitle => 'Show posts for a specific place';
+
+  @override
+  String get bulletinTagsSubtitle => 'Narrow the bulletin by content type';
+
+  @override
+  String bulletinShowing(String parts) {
+    return 'Showing: $parts';
+  }
+
+  @override
+  String get bulletinClearFilters => 'Clear filters';
+
+  @override
+  String get bulletinEmptyTitle => 'No Events Found';
+
+  @override
+  String get bulletinEmptyBody =>
+      'There are no events matching your current filters.\nTry adjusting your sort or filters.';
+
+  @override
+  String get bulletinChangeFilter => 'Change Filter';
+
+  @override
+  String get bulletinBookmarksHelpTitle => 'Bookmarked Posts';
+
+  @override
+  String get bulletinBookmarksHelpBody =>
+      'You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.';
+
+  @override
+  String get bulletinBookmarksHelpTooltip => 'Learn about bookmarks';
 }

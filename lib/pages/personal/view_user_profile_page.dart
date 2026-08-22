@@ -59,11 +59,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   }
 
   User _resolveUser(User fallback) {
-    try {
-      return _appContext.allUsers.firstWhere((u) => u.id == fallback.id);
-    } catch (_) {
-      return fallback;
-    }
+    return _appContext.userById(fallback.id) ?? fallback;
   }
 
   Future<void> _loadProfileData() async {

@@ -254,7 +254,8 @@ class ProgramTile extends StatelessWidget {
                 flex: 1,
                 child: MyAvatarStack(
                   users: (programEntry['uids'] as List<String>)
-                      .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
+                      .map((e) => Provider.of<AppContext>(context, listen: false).userById(e))
+                      .whereType<User>()
                       .toList(),
                   appDir: Provider.of<AppContext>(context, listen: false).appDir,
                 ),
@@ -296,7 +297,8 @@ class ProgramTile extends StatelessWidget {
       onTap: () => onTap(programEntry),
       trailing: MyAvatarStack(
         users: (programEntry['uids'] as List<String>)
-            .map((e) => Provider.of<AppContext>(context, listen: false).getUserFromID(e))
+            .map((e) => Provider.of<AppContext>(context, listen: false).userById(e))
+            .whereType<User>()
             .toList(),
         appDir: Provider.of<AppContext>(context, listen: false).appDir,
       ),

@@ -417,7 +417,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       _isLoading = false;
       _loggedIn = true;
     });
-    Provider.of<AppContext>(context, listen: false).rebuildPlease();
     Navigator.of(context).pop();
   }
 

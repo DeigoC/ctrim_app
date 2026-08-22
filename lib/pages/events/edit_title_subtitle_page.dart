@@ -324,14 +324,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
 
   EventHead? _resolveParentHead(AppContext appContext, String? parentID) {
     if (parentID == null || parentID.isEmpty) return null;
-    try {
-      return appContext.getPostHead(parentID);
-    } catch (_) {
-      for (final head in appContext.eventHeads) {
-        if (head.id == parentID) return head;
-      }
-      return null;
-    }
+    return appContext.headById(parentID);
   }
 
   Future<void> _onPickParentTap() async {
@@ -378,11 +371,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
   User? _resolveLeadSpeaker(AppContext appContext) {
     final uid = _leadSpeakerUID;
     if (uid == null || uid.isEmpty) return null;
-    try {
-      return appContext.getUserFromID(uid);
-    } catch (_) {
-      return null;
-    }
+    return appContext.userById(uid);
   }
 
   Future<void> _onManageLeadSpeakerTap() async {
@@ -409,7 +398,8 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
       if (result.isEmpty) {
         widget.eventContext.applyLeadSpeaker(uid: null);
       } else {
-        final user = appContext.getUserFromID(result.first);
+        final user = appContext.userById(result.first);
+        if (user == null) return;
         widget.eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
       }
     });

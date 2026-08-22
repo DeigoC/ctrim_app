@@ -538,14 +538,12 @@ class _EditUserPageState extends State<EditUserPage> {
 
   void _replaceUserInAppContext(User updated) {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final allUsers = appContext.allUsers;
-    final index = allUsers.indexWhere((u) => u.id == updated.id);
-    if (index == -1) return;
+    final existing = appContext.userById(updated.id);
+    if (existing == null) return;
 
-    final existing = allUsers[index];
     if (existing.roles != null) updated.setRoles(existing.roles!.toList());
     if (existing.posts != null) updated.setPosts(existing.posts!.toList());
-    allUsers[index] = updated;
+    appContext.addOrUpdateUser(updated);
 
     if (appContext.currentUser.id == updated.id) {
       appContext.setCurrentUser(updated);

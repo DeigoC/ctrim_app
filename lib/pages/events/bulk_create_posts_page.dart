@@ -287,7 +287,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
     EventHead parentHead;
     if (appContext.eventHeads.any((e) => e.id == parentID)) {
-      parentHead = appContext.getPostHead(parentID);
+      parentHead = appContext.headById(parentID)!;
     } else {
       parentHead = await headDBManager.fetchHead(parentID);
     }

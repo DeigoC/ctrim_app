@@ -2,22 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/event/event_head.dart';
-import '../models/post_tag.dart';
 import '../utility/app_context.dart';
-import '../utility/dialog_manager.dart';
+import '../utility/bulletin_listing.dart';
 import '../utility/event_heads_repository.dart';
 import '../utility/refresh_cooldown.dart';
 import '../utility/responsive_layout.dart';
-import '../widgets/action_sheet.dart';
 import '../widgets/bulletin/bulletin_first_time_dialog.dart';
-import '../widgets/post_tag_chip.dart';
+import '../widgets/bulletin/bulletin_setting_sheet.dart';
 import '../widgets/posts/post_head.dart';
 import '../utility/post_tag_helpers.dart';
 import '../utility/volunteer_locations.dart';
 import '../src/localization/app_localizations.dart';
 
 class ViewEventsHome extends StatefulWidget {
-  const ViewEventsHome({super.key, required this.rebuildFunction, required this.scrollController});
+  const ViewEventsHome(
+      {super.key,
+      required this.rebuildFunction,
+      required this.scrollController});
   final Function() rebuildFunction;
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   final ScrollController scrollController;
@@ -26,104 +27,93 @@ class ViewEventsHome extends StatefulWidget {
   State<ViewEventsHome> createState() => _ViewEventsHomeState();
 }
 
-class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStateMixin {
+class _ViewEventsHomeState extends State<ViewEventsHome> {
   late final AppContext _appContext;
-  late AnimationController _refreshAnimationController;
-  late Animation<double> _refreshAnimation;
   final Set<String> _selectedPostTagIDs = {};
   late String _locationFilter;
+  late BulletinSort _sort;
+  late BulletinTimeFilter _timeFilter;
+  late bool _bookmarksOnly;
 
   @override
   void initState() {
+    super.initState();
     _appContext = Provider.of<AppContext>(context, listen: false);
+    final prefs = _appContext.sharedPref;
+    _sort = prefs.bulletinSort;
+    _timeFilter = prefs.bulletinTimeFilter;
+    _bookmarksOnly = prefs.bulletinBookmarksOnly;
     _locationFilter = VolunteerLocations.defaultFilterForUser(
       _appContext.currentUser.location,
       VolunteerLocations.assignableFrom(_appContext.allLocations),
     );
-    _appContext.sortPostsByIndex();
 
-    _refreshAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _refreshAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _refreshAnimationController, curve: Curves.easeOut),
-    );
-
-    // Show first-time dialog if user hasn't seen it
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_appContext.sharedPref.hasSeenBulletinDialog) {
         _showBulletinFirstTimeDialog();
       }
     });
-
-    super.initState();
   }
 
-  @override
-  void dispose() {
-    _refreshAnimationController.dispose();
-    super.dispose();
+  BulletinListingQuery _listingQuery() {
+    return BulletinListingQuery(
+      sort: _sort,
+      timeFilter: _timeFilter,
+      bookmarksOnly: _bookmarksOnly,
+      bookmarkedIds: _appContext.sharedPref.bookmarkedPosts.toSet(),
+      selectedTagIDs: _selectedPostTagIDs,
+      locationFilter: _locationFilter,
+      now: DateTime.now(),
+    );
+  }
+
+  void _persistListingPrefs() {
+    final prefs = _appContext.sharedPref;
+    prefs.setBulletinSort(_sort);
+    prefs.setBulletinTimeFilter(_timeFilter);
+    prefs.setBulletinBookmarksOnly(_bookmarksOnly);
+  }
+
+  void _logListingChange() {
+    _appContext.analytics.logEvent(
+      name: 'bulletin_listing',
+      parameters: {
+        'sort': _sort.name,
+        'time': _timeFilter.name,
+        'bookmarks': _bookmarksOnly ? '1' : '0',
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Consumer<AppContext>(builder: (context, appContext, child) {
-      final bool defaultFilter = appContext.postSortIndex == 0;
-      final List<EventHead> eventHeads =
-          defaultFilter ? List.from(appContext.eventHeads, growable: true) : List.from(appContext.eventHeads, growable: true);
-
-      if (!defaultFilter) {
-        if (appContext.postSortIndex == 1) {
-          eventHeads.removeWhere(
-              (e) => e.eventDate == null || e.eventDate!.add(const Duration(hours: 12)).isBefore(DateTime.now()));
-        } else if (appContext.postSortIndex == 2) {
-          eventHeads.removeWhere((e) => e.eventDate == null || e.eventDate!.isAfter(DateTime.now()));
-        } else if (appContext.postSortIndex == 3) {
-          eventHeads.removeWhere((e) => !appContext.sharedPref.bookmarkedPosts.contains(e.id));
-        }
-      }
-
-      if (_selectedPostTagIDs.isNotEmpty) {
-        eventHeads.removeWhere(
-          (e) => !PostTagHelpers.headMatchesTagFilter(
-            head: e,
-            selectedTagIDs: _selectedPostTagIDs,
-          ),
-        );
-      }
-
-      if (_locationFilter != VolunteerLocations.all) {
-        eventHeads.removeWhere(
-          (e) => !VolunteerLocations.postLocationMatchesFilter(
-            postLocation: e.location,
-            locationFilter: _locationFilter,
-          ),
-        );
-      }
-
-      final int itemCount = eventHeads.length;
-      final List<EventHead> heads = eventHeads;
+      final query = _listingQuery();
+      final heads = BulletinListing.apply(
+        heads: appContext.eventHeads,
+        query: query,
+      );
+      final int itemCount = heads.length;
 
       return RefreshIndicator(
         edgeOffset: kToolbarHeight + 20,
         backgroundColor: colorScheme.surface,
         color: colorScheme.primary,
         onRefresh: () => _onRefresh().then((value) {
-          _refreshAnimationController.forward().then((_) {
-            _refreshAnimationController.reset();
-          });
-
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            behavior: !appContext.currentUser.isLeader ? SnackBarBehavior.floating : null,
+            behavior: !appContext.currentUser.isLeader
+                ? SnackBarBehavior.floating
+                : null,
             backgroundColor: colorScheme.inverseSurface,
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: colorScheme.onInverseSurface, size: 20),
+                Icon(Icons.check_circle,
+                    color: colorScheme.onInverseSurface, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'You are up to date!',
@@ -131,15 +121,18 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                 ),
               ],
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             duration: const Duration(seconds: 2),
           ));
         }),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double contentWidth = constraints.maxWidth;
-            final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
-            final double maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+            final bool isWideScreen =
+                ResponsiveLayout.isWideScreen(contentWidth);
+            final double maxWidth =
+                ResponsiveLayout.maxContentWidth(contentWidth);
             final double horizontalPadding = isWideScreen
                 ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
                 : 8.0;
@@ -173,22 +166,18 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surfaceTint,
                   actions: [
-                    AnimatedBuilder(
-                      animation: _refreshAnimation,
-                      builder: (context, child) {
-                        return Transform.rotate(
-                          angle: _refreshAnimation.value * 2 * 3.14159,
-                          child: IconButton(
-                            onPressed: () => _showFilterModel(context),
-                            icon: const Icon(Icons.sort),
-                            tooltip: 'Sort & Filter',
-                            style: IconButton.styleFrom(
-                              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                              foregroundColor: colorScheme.primary,
-                            ),
-                          ),
-                        );
-                      },
+                    IconButton(
+                      onPressed: () => _showFilterModel(context),
+                      tooltip: l10n.bulletinSortTooltip,
+                      style: IconButton.styleFrom(
+                        backgroundColor:
+                            colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        foregroundColor: colorScheme.primary,
+                      ),
+                      icon: Badge(
+                        isLabelVisible: query.showsNonDefaultBanner,
+                        child: const Icon(Icons.sort),
+                      ),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -225,13 +214,16 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     ),
                   ),
                 ),
-                if (appContext.postSortIndex != 0 ||
-                    _selectedPostTagIDs.isNotEmpty ||
-                    _locationFilter != VolunteerLocations.all)
+                if (query.showsNonDefaultBanner)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: _buildFilterIndicator(appContext, colorScheme),
+                      child: _buildFilterIndicator(
+                        appContext,
+                        colorScheme,
+                        l10n,
+                        query,
+                      ),
                     ),
                   ),
                 SliverPadding(
@@ -240,10 +232,10 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                     vertical: 8,
                   ),
                   sliver: itemCount == 0
-                      ? _buildEmptyState(colorScheme, theme)
+                      ? _buildEmptyState(colorScheme, theme, l10n)
                       : isWideScreen
                           ? SliverToBoxAdapter(
-                              child: _buildWidePostColumns(colorScheme, heads),
+                              child: _buildWidePostRows(colorScheme, heads),
                             )
                           : SliverList.separated(
                               itemCount: itemCount,
@@ -251,8 +243,9 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
                                 colorScheme,
                                 heads[index],
                               ),
-                              separatorBuilder: (BuildContext context, int index) =>
-                                  const SizedBox(height: 8),
+                              separatorBuilder:
+                                  (BuildContext context, int index) =>
+                                      const SizedBox(height: 8),
                             ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -264,33 +257,28 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     });
   }
 
-  /// Two columns with intrinsic card heights (avoids fixed-aspect dead space).
-  Widget _buildWidePostColumns(ColorScheme colorScheme, List<EventHead> heads) {
-    final List<EventHead> left = [];
-    final List<EventHead> right = [];
-    for (var i = 0; i < heads.length; i++) {
-      (i.isEven ? left : right).add(heads[i]);
-    }
-
-    Widget column(List<EventHead> columnHeads) {
-      return Column(
+  /// Paired rows so left-to-right, top-to-bottom stays chronological.
+  Widget _buildWidePostRows(ColorScheme colorScheme, List<EventHead> heads) {
+    final rows = <Widget>[];
+    for (var i = 0; i < heads.length; i += 2) {
+      if (i > 0) rows.add(const SizedBox(height: 16));
+      final right = i + 1 < heads.length ? heads[i + 1] : null;
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var i = 0; i < columnHeads.length; i++) ...[
-            if (i > 0) const SizedBox(height: 16),
-            _buildPostCard(colorScheme, columnHeads[i], verticalMargin: 0),
-          ],
+          Expanded(
+            child: _buildPostCard(colorScheme, heads[i], verticalMargin: 0),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: right == null
+                ? const SizedBox.shrink()
+                : _buildPostCard(colorScheme, right, verticalMargin: 0),
+          ),
         ],
-      );
+      ));
     }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: column(left)),
-        const SizedBox(width: 16),
-        Expanded(child: column(right)),
-      ],
-    );
+    return Column(children: rows);
   }
 
   Widget _buildPostCard(
@@ -317,23 +305,34 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     );
   }
 
-  Widget _buildFilterIndicator(AppContext appContext, ColorScheme colorScheme) {
-    final Map<int, Map<String, dynamic>> filterInfo = {
-      1: {'label': 'Upcoming Events', 'icon': Icons.upcoming, 'color': Colors.green},
-      2: {'label': 'Recent Events', 'icon': Icons.history, 'color': Colors.orange},
-      3: {'label': 'Bookmarked', 'icon': Icons.bookmark, 'color': Colors.purple},
-    };
-
-    final sortInfo = filterInfo[appContext.postSortIndex];
+  Widget _buildFilterIndicator(
+    AppContext appContext,
+    ColorScheme colorScheme,
+    AppLocalizations l10n,
+    BulletinListingQuery query,
+  ) {
     final selectedTags = PostTagHelpers.resolveTags(
       tagIDs: _selectedPostTagIDs.toList(),
       allTags: appContext.allPostTags,
     );
-    if (sortInfo == null && selectedTags.isEmpty) return const SizedBox.shrink();
-
-    final Color accent = (sortInfo?['color'] as Color?) ?? colorScheme.primary;
     final parts = <String>[];
-    if (sortInfo != null) parts.add(sortInfo['label'] as String);
+    switch (query.sort) {
+      case BulletinSort.eventDateSoonest:
+        parts.add(l10n.bulletinSortSoonest);
+      case BulletinSort.eventDateLatest:
+        parts.add(l10n.bulletinSortLatest);
+      case BulletinSort.relevancy:
+        break;
+    }
+    switch (query.timeFilter) {
+      case BulletinTimeFilter.upcoming:
+        parts.add(l10n.bulletinShowUpcoming);
+      case BulletinTimeFilter.past:
+        parts.add(l10n.bulletinShowPast);
+      case BulletinTimeFilter.all:
+        break;
+    }
+    if (query.bookmarksOnly) parts.add(l10n.bulletinShowBookmarks);
     if (_locationFilter != VolunteerLocations.all) {
       parts.add(_locationFilter);
     }
@@ -341,41 +340,69 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
       parts.add(selectedTags.map((t) => t.name).join(', '));
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
+    final Color accent = switch (query.timeFilter) {
+      BulletinTimeFilter.upcoming => Colors.green,
+      BulletinTimeFilter.past => Colors.orange,
+      BulletinTimeFilter.all when query.bookmarksOnly => Colors.purple,
+      BulletinTimeFilter.all => colorScheme.primary,
+    };
+
+    return Tooltip(
+      message: l10n.bulletinClearFilters,
+      child: Material(
         color: accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            sortInfo != null ? sortInfo['icon'] as IconData : Icons.label_outline,
-            size: 16,
-            color: accent,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Showing: ${parts.join(' · ')}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: accent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: _clearListingPrefs,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.3),
+                width: 1,
               ),
             ),
+            child: Row(
+              children: [
+                Icon(
+                  query.bookmarksOnly
+                      ? Icons.bookmark
+                      : query.timeFilter == BulletinTimeFilter.upcoming
+                          ? Icons.upcoming
+                          : query.timeFilter == BulletinTimeFilter.past
+                              ? Icons.history
+                              : Icons.filter_alt,
+                  size: 16,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.bulletinShowing(parts.join(' · ')),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                Icon(Icons.close, size: 16, color: accent),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme, ThemeData theme) {
+  Widget _buildEmptyState(
+    ColorScheme colorScheme,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
     return SliverToBoxAdapter(
       child: Container(
         padding: const EdgeInsets.all(32),
@@ -396,7 +423,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             ),
             const SizedBox(height: 24),
             Text(
-              'No Events Found',
+              l10n.bulletinEmptyTitle,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurfaceVariant,
@@ -404,7 +431,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             ),
             const SizedBox(height: 8),
             Text(
-              'There are no events matching your current filter.\nTry adjusting your sort preferences.',
+              l10n.bulletinEmptyBody,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
@@ -414,12 +441,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
             const SizedBox(height: 24),
             FilledButton.tonal(
               onPressed: () => _showFilterModel(context),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.filter_alt, size: 20),
-                  SizedBox(width: 8),
-                  Text('Change Filter'),
+                  const Icon(Icons.filter_alt, size: 20),
+                  const SizedBox(width: 8),
+                  Text(l10n.bulletinChangeFilter),
                 ],
               ),
             ),
@@ -432,39 +459,69 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
   void _showFilterModel(final BuildContext context) {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
-        showDragHandle: true,
-        isScrollControlled: true,
-        context: context,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      showDragHandle: true,
+      isScrollControlled: true,
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
         ),
-        builder: (_) => SafeArea(
-                child: BulletinSettingSheet(
-              sortIndex: _appContext.postSortIndex,
-              availableTags: _appContext.activePostTags,
-              selectedTagIDs: Set<String>.from(_selectedPostTagIDs),
-              locationOptions:
-                  VolunteerLocations.filterOptionsFrom(_appContext.allLocations),
-              selectedLocation: _locationFilter,
-              onLocationChanged: (location) {
-                setState(() => _locationFilter = location);
-              },
-              onTagSelectionChanged: (selected) {
-                setState(() {
-                  _selectedPostTagIDs
-                    ..clear()
-                    ..addAll(selected);
-                });
-              },
-              relevancySort: () => _onSortPosts(0),
-              descendingEventDate: () => _onSortPosts(1),
-              ascendingEventDate: () => _onSortPosts(2),
-              showBookmarks: () => _onSortPosts(3),
-            )));
+      ),
+      builder: (_) => SafeArea(
+        child: BulletinSettingSheet(
+          sort: _sort,
+          timeFilter: _timeFilter,
+          bookmarksOnly: _bookmarksOnly,
+          availableTags: _appContext.activePostTags,
+          selectedTagIDs: Set<String>.from(_selectedPostTagIDs),
+          locationOptions:
+              VolunteerLocations.filterOptionsFrom(_appContext.allLocations),
+          selectedLocation: _locationFilter,
+          onSortChanged: (sort) {
+            setState(() => _sort = sort);
+            _persistListingPrefs();
+            _logListingChange();
+          },
+          onTimeFilterChanged: (filter) {
+            setState(() => _timeFilter = filter);
+            _persistListingPrefs();
+            _logListingChange();
+          },
+          onBookmarksOnlyChanged: (value) {
+            setState(() => _bookmarksOnly = value);
+            _persistListingPrefs();
+            _logListingChange();
+          },
+          onLocationChanged: (location) {
+            setState(() => _locationFilter = location);
+          },
+          onTagSelectionChanged: (selected) {
+            setState(() {
+              _selectedPostTagIDs
+                ..clear()
+                ..addAll(selected);
+            });
+          },
+        ),
+      ),
+    );
   }
 
-  // * Logic
+  void _clearListingPrefs() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _sort = BulletinSort.relevancy;
+      _timeFilter = BulletinTimeFilter.all;
+      _bookmarksOnly = false;
+      _selectedPostTagIDs.clear();
+      _locationFilter = VolunteerLocations.all;
+    });
+    _persistListingPrefs();
+    _logListingChange();
+  }
+
   void _showBulletinFirstTimeDialog() {
     showDialog(
       context: context,
@@ -486,302 +543,10 @@ class _ViewEventsHomeState extends State<ViewEventsHome> with TickerProviderStat
     }
   }
 
-  void _onSortPosts(int newSortIndex) {
-    if (newSortIndex != _appContext.postSortIndex) {
-      setState(() {
-        _appContext.setPostSortIndex(newSortIndex);
-        _appContext.sortPostsByIndex();
-      });
-    }
-  }
-
   Future<void> _refreshPosts() async {
     final heads = await EventHeadsRepository().fetchEventHeads();
     setState(() {
       _appContext.setRefreshedHeads(heads);
     });
-  }
-}
-
-class BulletinSettingSheet extends StatefulWidget {
-  const BulletinSettingSheet({
-    super.key,
-    required this.sortIndex,
-    required this.availableTags,
-    required this.selectedTagIDs,
-    required this.locationOptions,
-    required this.selectedLocation,
-    required this.onLocationChanged,
-    required this.onTagSelectionChanged,
-    required this.relevancySort,
-    required this.descendingEventDate,
-    required this.ascendingEventDate,
-    required this.showBookmarks,
-  });
-
-  final int sortIndex;
-  final List<PostTag> availableTags;
-  final Set<String> selectedTagIDs;
-  final List<String> locationOptions;
-  final String selectedLocation;
-  final void Function(String location) onLocationChanged;
-  final void Function(Set<String> selected) onTagSelectionChanged;
-  final void Function() relevancySort, descendingEventDate, ascendingEventDate, showBookmarks;
-
-  @override
-  State<BulletinSettingSheet> createState() => _BulletinSettingSheetState();
-}
-
-class _BulletinSettingSheetState extends State<BulletinSettingSheet> with TickerProviderStateMixin {
-  int _sortIndex = 0;
-  late Set<String> _selectedTagIDs;
-  late AnimationController _animationController;
-  late List<Animation<Offset>> _slideAnimations;
-
-  @override
-  void initState() {
-    _sortIndex = widget.sortIndex;
-    _selectedTagIDs = Set<String>.from(widget.selectedTagIDs);
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _slideAnimations = List.generate(4, (index) {
-      return Tween<Offset>(
-        begin: const Offset(0.3, 0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(
-          index * 0.15,
-          0.6 + (index * 0.1),
-          curve: Curves.easeOutBack,
-        ),
-      ));
-    });
-
-    _animationController.forward();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-
-    return ActionSheetShell(
-      icon: Icons.sort,
-      title: 'Sort & Filter',
-      subtitle: 'Choose how to organize your events',
-      children: [
-        ActionSheetOptionGrid(children: _buildFilterOptions()),
-        if (widget.locationOptions.length > 1) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-            child: Text(
-              'Location',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-            child: Text(
-              'Show posts for a specific place',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: widget.locationOptions.map((location) {
-                final selected = widget.selectedLocation == location;
-                final label = location == VolunteerLocations.all
-                    ? l10n.volunteersFilterAll
-                    : location;
-                return FilterChip(
-                  label: Text(label),
-                  selected: selected,
-                  onSelected: (_) => _onLocationChanged(location),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-        if (widget.availableTags.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-            child: Text(
-              l10n.postTagsAssignLabel,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-            child: Text(
-              'Narrow the bulletin by content type',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (_selectedTagIDs.isNotEmpty)
-                  ActionChip(
-                    label: Text(l10n.postTagsFilterClear),
-                    onPressed: () => _onTagsChanged({}),
-                  ),
-                ...widget.availableTags.map((tag) {
-                  final selected = _selectedTagIDs.contains(tag.id);
-                  return PostTagChip(
-                    tag: tag,
-                    selected: selected,
-                    onTap: () {
-                      final next = Set<String>.from(_selectedTagIDs);
-                      if (selected) {
-                        next.remove(tag.id);
-                      } else {
-                        next.add(tag.id);
-                      }
-                      _onTagsChanged(next);
-                    },
-                  );
-                }),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  void _onTagsChanged(Set<String> selected) {
-    HapticFeedback.selectionClick();
-    setState(() => _selectedTagIDs = selected);
-    widget.onTagSelectionChanged(selected);
-  }
-
-  void _onLocationChanged(String location) {
-    HapticFeedback.selectionClick();
-    widget.onLocationChanged(location);
-  }
-
-  List<Widget> _buildFilterOptions() {
-    final List<Map<String, dynamic>> options = [
-      {
-        'index': 0,
-        'title': 'Relevancy',
-        'subtitle': 'Today\'s events, recent posts, and what\'s coming up',
-        'icon': Icons.star_rounded,
-        'color': Colors.amber,
-      },
-      {
-        'index': 1,
-        'title': 'Upcoming Events',
-        'subtitle': 'Exciting events happening soon',
-        'icon': Icons.upcoming,
-        'color': Colors.green,
-      },
-      {
-        'index': 2,
-        'title': 'Recent Events',
-        'subtitle': 'See what you missed',
-        'icon': Icons.history,
-        'color': Colors.orange,
-      },
-      {
-        'index': 3,
-        'title': 'Bookmarks',
-        'subtitle': 'Posts you want to keep track of',
-        'icon': Icons.bookmark_rounded,
-        'color': Colors.purple,
-        'hasHelp': true,
-      },
-    ];
-
-    return options.map((option) {
-      final index = option['index'] as int;
-      final isSelected = _sortIndex == index;
-      final colorScheme = Theme.of(context).colorScheme;
-
-      return SlideTransition(
-        position: _slideAnimations[index],
-        child: ActionSheetOption(
-          icon: option['icon'] as IconData,
-          color: option['color'] as Color,
-          title: option['title'] as String,
-          subtitle: option['subtitle'] as String,
-          selected: isSelected,
-          showChevron: false,
-          onTap: () => _onSortClick(index),
-          trailing: option['hasHelp'] == true
-              ? IconButton(
-                  icon: Icon(
-                    Icons.help_outline,
-                    size: 20,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  onPressed: _onBookmarkedHelp,
-                  tooltip: 'Learn about bookmarks',
-                )
-              : null,
-        ),
-      );
-    }).toList();
-  }
-
-  void _onSortClick(final int sortIndex) {
-    HapticFeedback.selectionClick();
-    Navigator.pop(context); // close the modal
-    setState(() {
-      _sortIndex = sortIndex;
-      switch (sortIndex) {
-        case 0:
-          widget.relevancySort();
-          break;
-        case 1:
-          widget.descendingEventDate();
-          break;
-        case 2:
-          widget.ascendingEventDate();
-          break;
-        case 3:
-          widget.showBookmarks();
-          break;
-      }
-    });
-  }
-
-  void _onBookmarkedHelp() {
-    HapticFeedback.lightImpact();
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Bookmarked Posts',
-        content:
-            'You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.');
   }
 }

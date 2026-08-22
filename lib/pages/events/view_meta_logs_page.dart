@@ -57,8 +57,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   Widget _buildWithData(BuildContext context) {
     final List<User> allUsers = _appContext.allUsers;
-    final User mainAdmin = allUsers.firstWhere(
-        (e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
+    final User mainAdmin = _userFor(widget.eventContext.metadata.authorUID);
     final List<User> selectedUsers = allUsers
         .where((element) =>
             widget.eventContext.metadata.contributorUIDs.contains(element.id))
@@ -359,8 +358,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                   itemCount: widget.eventContext.log.logs.length,
                   itemBuilder: (_, index) {
                     final thisEntry = widget.eventContext.log.logs[index];
-                    final thisU = allUsers.firstWhere(
-                        (e) => e.id.compareTo(thisEntry['uid']) == 0);
+                    final thisU = _userFor(thisEntry['uid'] as String);
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       elevation: 1,
@@ -512,7 +510,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   // * Logic
   void _showFullLog(
       final Map<String, dynamic> entry, final double horizontalPadding) {
-    final thisU = _appContext.getUserFromID(entry['uid']);
+    final thisU = _userFor(entry['uid'] as String);
     showDialog(
       context: context,
       builder: (_) => AppDialog(
@@ -606,5 +604,14 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     if (haveContributorsChange) {
       widget.eventContext.allowSavingOfTheEdit();
     }
+  }
+
+  User _userFor(final String uid) {
+    return _appContext.userById(uid) ??
+        User(
+          id: uid.isEmpty ? 'unknown' : uid,
+          forname: 'Unknown',
+          surname: 'User',
+        );
   }
 }

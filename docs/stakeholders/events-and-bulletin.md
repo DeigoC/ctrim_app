@@ -14,16 +14,26 @@ Definitions for **post**, **interest**, **bookmark**, **template**, and related 
 
 ## Finding posts (sort & filters)
 
-Use the bulletin’s **sort / filter** control to change what you see:
+Use the bulletin’s **sort / filter** control. Sort and filters are separate, so you can combine them (for example upcoming + a tag, or bookmarks + past events).
 
-| Option | What it shows |
+**Sort** (order of the list):
+
+| Option | What it does |
 |--------|----------------|
-| **Relevancy** *(default)* | Today’s events, recent posts, and what’s coming up |
-| **Upcoming Events** | Events happening soon |
-| **Recent Events** | What you may have missed |
-| **Bookmarks** | Only posts you bookmarked |
+| **Relevancy** *(default)* | Today’s events first, then everything still coming up by date, then older posts |
+| **Soonest first** | Earliest event date at the top |
+| **Latest first** | Most recent event date at the top |
 
-You can also filter by **post tags** (for example Sunday Worship or Midweek) alongside the sort option. Active filters appear as a “Showing: …” banner on the bulletin.
+**Show** (what appears):
+
+| Option | What it does |
+|--------|----------------|
+| **All posts** | No date cut-off |
+| **Upcoming** | Events still happening or coming up |
+| **Past** | Events that have already started |
+| **Bookmarks** | Only posts you bookmarked — can sit alongside Upcoming or Past |
+
+You can also filter by **location** and **post tags** (for example Sunday Worship or Midweek). The list usually starts on your own location; tap **All** to see every site. Active sort and filters appear as a “Showing: …” banner — tap the banner to clear them. Your last sort, date filter, and bookmark toggle are remembered next time.
 
 ## Inside a post
 

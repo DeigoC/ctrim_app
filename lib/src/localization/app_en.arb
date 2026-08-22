@@ -919,5 +919,114 @@
   "cellGroupsChooseLeaders": "Choose leaders",
   "@cellGroupsChooseLeaders": {
     "description": "Button to pick cell group leaders"
+  },
+  "bulletinSortFilterTitle": "Sort & Filter",
+  "@bulletinSortFilterTitle": {
+    "description": "Title of the bulletin sort and filter sheet"
+  },
+  "bulletinSortFilterSubtitle": "Choose how to organize your events",
+  "@bulletinSortFilterSubtitle": {
+    "description": "Subtitle of the bulletin sort and filter sheet"
+  },
+  "bulletinSortTooltip": "Sort & Filter",
+  "@bulletinSortTooltip": {
+    "description": "App bar tooltip for the bulletin sort and filter button"
+  },
+  "bulletinSortSection": "Sort",
+  "@bulletinSortSection": {
+    "description": "Section label for bulletin sort order"
+  },
+  "bulletinSortRelevancy": "Relevancy",
+  "@bulletinSortRelevancy": {
+    "description": "Default bulletin sort: today, then upcoming, then the rest"
+  },
+  "bulletinSortRelevancySubtitle": "Today first, then what’s coming up",
+  "@bulletinSortRelevancySubtitle": {
+    "description": "Explains relevancy sort on the bulletin"
+  },
+  "bulletinSortSoonest": "Soonest first",
+  "@bulletinSortSoonest": {
+    "description": "Bulletin sort by earliest event date"
+  },
+  "bulletinSortSoonestSubtitle": "Earliest event date at the top",
+  "@bulletinSortSoonestSubtitle": {
+    "description": "Explains soonest-first sort"
+  },
+  "bulletinSortLatest": "Latest first",
+  "@bulletinSortLatest": {
+    "description": "Bulletin sort by latest event date"
+  },
+  "bulletinSortLatestSubtitle": "Most recent event date at the top",
+  "@bulletinSortLatestSubtitle": {
+    "description": "Explains latest-first sort"
+  },
+  "bulletinShowSection": "Show",
+  "@bulletinShowSection": {
+    "description": "Section label for bulletin time and bookmark filters"
+  },
+  "bulletinShowAll": "All posts",
+  "@bulletinShowAll": {
+    "description": "Time filter that does not hide past or upcoming posts"
+  },
+  "bulletinShowUpcoming": "Upcoming",
+  "@bulletinShowUpcoming": {
+    "description": "Filter the bulletin to upcoming events"
+  },
+  "bulletinShowPast": "Past",
+  "@bulletinShowPast": {
+    "description": "Filter the bulletin to past events"
+  },
+  "bulletinShowBookmarks": "Bookmarks",
+  "@bulletinShowBookmarks": {
+    "description": "Filter the bulletin to bookmarked posts"
+  },
+  "bulletinLocationSection": "Location",
+  "@bulletinLocationSection": {
+    "description": "Section label for bulletin location filter"
+  },
+  "bulletinLocationSubtitle": "Show posts for a specific place",
+  "@bulletinLocationSubtitle": {
+    "description": "Helper under bulletin location chips"
+  },
+  "bulletinTagsSubtitle": "Narrow the bulletin by content type",
+  "@bulletinTagsSubtitle": {
+    "description": "Helper under bulletin content tag chips"
+  },
+  "bulletinShowing": "Showing: {parts}",
+  "@bulletinShowing": {
+    "description": "Banner listing the active bulletin sort and filters",
+    "placeholders": {
+      "parts": {
+        "type": "String"
+      }
+    }
+  },
+  "bulletinClearFilters": "Clear filters",
+  "@bulletinClearFilters": {
+    "description": "Clears bulletin sort and filters back to defaults"
+  },
+  "bulletinEmptyTitle": "No Events Found",
+  "@bulletinEmptyTitle": {
+    "description": "Empty state title when no bulletin posts match"
+  },
+  "bulletinEmptyBody": "There are no events matching your current filters.\nTry adjusting your sort or filters.",
+  "@bulletinEmptyBody": {
+    "description": "Empty state body when bulletin filters hide every post"
+  },
+  "bulletinChangeFilter": "Change Filter",
+  "@bulletinChangeFilter": {
+    "description": "Button on the empty bulletin to open sort and filter"
+  },
+  "bulletinBookmarksHelpTitle": "Bookmarked Posts",
+  "@bulletinBookmarksHelpTitle": {
+    "description": "Title of the bookmarks help dialog"
+  },
+  "bulletinBookmarksHelpBody": "You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.",
+  "@bulletinBookmarksHelpBody": {
+    "description": "Explains how bookmarks work on the bulletin"
+  },
+  "bulletinBookmarksHelpTooltip": "Learn about bookmarks",
+  "@bulletinBookmarksHelpTooltip": {
+    "description": "Tooltip on the bookmarks help button"
   }
 }

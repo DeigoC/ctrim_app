@@ -1347,6 +1347,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose leaders'**
   String get cellGroupsChooseLeaders;
+
+  /// Title of the bulletin sort and filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & Filter'**
+  String get bulletinSortFilterTitle;
+
+  /// Subtitle of the bulletin sort and filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to organize your events'**
+  String get bulletinSortFilterSubtitle;
+
+  /// App bar tooltip for the bulletin sort and filter button
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & Filter'**
+  String get bulletinSortTooltip;
+
+  /// Section label for bulletin sort order
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get bulletinSortSection;
+
+  /// Default bulletin sort: today, then upcoming, then the rest
+  ///
+  /// In en, this message translates to:
+  /// **'Relevancy'**
+  String get bulletinSortRelevancy;
+
+  /// Explains relevancy sort on the bulletin
+  ///
+  /// In en, this message translates to:
+  /// **'Today first, then what’s coming up'**
+  String get bulletinSortRelevancySubtitle;
+
+  /// Bulletin sort by earliest event date
+  ///
+  /// In en, this message translates to:
+  /// **'Soonest first'**
+  String get bulletinSortSoonest;
+
+  /// Explains soonest-first sort
+  ///
+  /// In en, this message translates to:
+  /// **'Earliest event date at the top'**
+  String get bulletinSortSoonestSubtitle;
+
+  /// Bulletin sort by latest event date
+  ///
+  /// In en, this message translates to:
+  /// **'Latest first'**
+  String get bulletinSortLatest;
+
+  /// Explains latest-first sort
+  ///
+  /// In en, this message translates to:
+  /// **'Most recent event date at the top'**
+  String get bulletinSortLatestSubtitle;
+
+  /// Section label for bulletin time and bookmark filters
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get bulletinShowSection;
+
+  /// Time filter that does not hide past or upcoming posts
+  ///
+  /// In en, this message translates to:
+  /// **'All posts'**
+  String get bulletinShowAll;
+
+  /// Filter the bulletin to upcoming events
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get bulletinShowUpcoming;
+
+  /// Filter the bulletin to past events
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get bulletinShowPast;
+
+  /// Filter the bulletin to bookmarked posts
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks'**
+  String get bulletinShowBookmarks;
+
+  /// Section label for bulletin location filter
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get bulletinLocationSection;
+
+  /// Helper under bulletin location chips
+  ///
+  /// In en, this message translates to:
+  /// **'Show posts for a specific place'**
+  String get bulletinLocationSubtitle;
+
+  /// Helper under bulletin content tag chips
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow the bulletin by content type'**
+  String get bulletinTagsSubtitle;
+
+  /// Banner listing the active bulletin sort and filters
+  ///
+  /// In en, this message translates to:
+  /// **'Showing: {parts}'**
+  String bulletinShowing(String parts);
+
+  /// Clears bulletin sort and filters back to defaults
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get bulletinClearFilters;
+
+  /// Empty state title when no bulletin posts match
+  ///
+  /// In en, this message translates to:
+  /// **'No Events Found'**
+  String get bulletinEmptyTitle;
+
+  /// Empty state body when bulletin filters hide every post
+  ///
+  /// In en, this message translates to:
+  /// **'There are no events matching your current filters.\nTry adjusting your sort or filters.'**
+  String get bulletinEmptyBody;
+
+  /// Button on the empty bulletin to open sort and filter
+  ///
+  /// In en, this message translates to:
+  /// **'Change Filter'**
+  String get bulletinChangeFilter;
+
+  /// Title of the bookmarks help dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarked Posts'**
+  String get bulletinBookmarksHelpTitle;
+
+  /// Explains how bookmarks work on the bulletin
+  ///
+  /// In en, this message translates to:
+  /// **'You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.'**
+  String get bulletinBookmarksHelpBody;
+
+  /// Tooltip on the bookmarks help button
+  ///
+  /// In en, this message translates to:
+  /// **'Learn about bookmarks'**
+  String get bulletinBookmarksHelpTooltip;
 }
 
 class _AppLocalizationsDelegate

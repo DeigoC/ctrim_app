@@ -10,207 +10,172 @@ import '../models/event/event_metadata.dart';
 import '../models/post_tag.dart';
 import '../models/user.dart';
 import '../models/user_location.dart';
+import '../models/user_role_assignment.dart';
 import '../models/user_tag.dart';
 import 'app_shared_preferences.dart';
 
-// handles some highlevel behaviours (like notifications) and persistant data for network optimisation
+/// Session cache for the signed-in user, volunteer directory, bulletin heads,
+/// and admin catalogs. Mutate only through the methods on this class.
 class AppContext extends ChangeNotifier {
-  static final User _guest = User(id: '0', forname: 'Guest', surname: 'Account');
+  static final User _guest =
+      User(id: '0', forname: 'Guest', surname: 'Account');
 
-  // these will always be fetched on startup and maintained for the session
-  static late final List<EventHead> _eventHeads;
-  static late final List<User> _allUsers;
-  static late final List<UserTag> _allTags;
-  static late final List<PostTag> _allPostTags;
-  static late final List<UserLocation> _allLocations;
-  static late final List<CellGroup> _allCellGroups;
+  final List<EventHead> _eventHeads;
+  final List<User> _allUsers;
+  final List<UserTag> _allTags;
+  final List<PostTag> _allPostTags;
+  final List<UserLocation> _allLocations;
+  final List<CellGroup> _allCellGroups;
 
-  // there's an interesting idea for optimisation to do with the recentDate and writing to file
-  // so this file below here might be unecessary for now
-  static final Map<String, EventMetadata> _metaData = {};
+  final Map<String, EventHead> _headsById = {};
+  final Map<String, User> _usersById = {};
 
-  // no more 'user contact' we will hold the tokens as necessary
-  static final Map<String, List<String>> _userTokens = {};
-  static late final AppSharedPreferences _sharedPref;
-  static late final String? _cacheDir, _appDir;
-  static late final FirebaseAnalytics _analytics;
+  final Map<String, EventMetadata> _metaData = {};
+  final Map<String, List<String>> _userTokens = {};
+
+  late final AppSharedPreferences _sharedPref;
+  late final String? _cacheDir, _appDir;
+  final FirebaseAnalytics? _analytics;
 
   late User _currentUser;
 
-  int _postSortIndex = 0;
   bool _useCurrentUserSrc = false;
+
+  int _sessionEpoch = 0;
+  int _usersEpoch = 0;
+  int _headsEpoch = 0;
+  int _catalogsEpoch = 0;
+
+  int get sessionEpoch => _sessionEpoch;
+  int get usersEpoch => _usersEpoch;
+  int get headsEpoch => _headsEpoch;
+  int get catalogsEpoch => _catalogsEpoch;
+
+  void _notify({
+    bool session = false,
+    bool users = false,
+    bool heads = false,
+    bool catalogs = false,
+  }) {
+    if (session) _sessionEpoch++;
+    if (users) _usersEpoch++;
+    if (heads) _headsEpoch++;
+    if (catalogs) _catalogsEpoch++;
+    notifyListeners();
+  }
 
   AppContext(
       {required SharedPreferences prefInstance,
       required String? cacheDir,
       required String? appDir,
-      required FirebaseAnalytics analytics,
+      FirebaseAnalytics? analytics,
       List<EventHead>? heads,
       List<User>? allUsers,
       List<UserTag>? allTags,
       List<PostTag>? allPostTags,
       List<UserLocation>? allLocations,
       List<CellGroup>? allCellGroups,
-      User? user}) {
-    _eventHeads = heads ?? List<EventHead>.empty(growable: true);
-    _allUsers = allUsers ?? List<User>.empty(growable: true);
-    _allTags = allTags ?? List<UserTag>.empty(growable: true);
-    _allPostTags = allPostTags ?? List<PostTag>.empty(growable: true);
-    _allLocations = allLocations ?? List<UserLocation>.empty(growable: true);
-    _allCellGroups = allCellGroups ?? List<CellGroup>.empty(growable: true);
+      User? user})
+      : _eventHeads = List<EventHead>.from(heads ?? const []),
+        _allUsers = List<User>.from(allUsers ?? const []),
+        _allTags = List<UserTag>.from(allTags ?? const []),
+        _allPostTags = List<PostTag>.from(allPostTags ?? const []),
+        _allLocations = List<UserLocation>.from(allLocations ?? const []),
+        _allCellGroups = List<CellGroup>.from(allCellGroups ?? const []),
+        _analytics = analytics {
     _currentUser = user ?? _guest;
-    _analytics = analytics;
     _sharedPref = AppSharedPreferences(preferences: prefInstance);
     _cacheDir = cacheDir;
     _appDir = appDir;
+    _sortUsers();
+    _reindexUsers();
+    _reindexHeads();
   }
 
   // * meta related
-  void setMetadata(final String id, final EventMetadata data) => _metaData[id] = data;
+  void setMetadata(final String id, final EventMetadata data) =>
+      _metaData[id] = data;
   EventMetadata? getMetadata(final String id) => _metaData[id];
 
   // * event head related
-  List<EventHead> get eventHeads {
-    return UnmodifiableListView(_eventHeads);
-  }
+  List<EventHead> get eventHeads => UnmodifiableListView(_eventHeads);
 
-  EventHead getPostHead(final String id) => _eventHeads.firstWhere((e) => e.id == id);
+  EventHead? headById(final String id) => _headsById[id];
 
-  void addNewPostHead(final EventHead newHead) => _eventHeads.insert(0, newHead);
-
-  void addAllEventHeads(final List<EventHead> heads) => _eventHeads.addAll(heads);
+  void addNewPostHead(final EventHead newHead) => addOrUpdatePostHead(newHead);
 
   void addOrUpdatePostHead(final EventHead head) {
-    _eventHeads.removeWhere((element) => element.id.compareTo(head.id) == 0);
+    _eventHeads.removeWhere((element) => element.id == head.id);
     _eventHeads.insert(0, head);
+    _headsById[head.id] = head;
+    _notify(heads: true);
   }
 
-  void sortPostsByIndex() {
-    // 0 Relevant activity - Mixed smart sorting
-    // 1 Event date descending
-    // 2 Event date ascending
-    // 3 is for bookmarks. For now we default to the same as 0
-    switch (_postSortIndex) {
-      case 0:
-        // Smart relevancy sorting: current event, recent posts, and upcoming events
-        final DateTime now = DateTime.now();
-        final DateTime threeDaysAgo = now.subtract(const Duration(days: 3));
-
-        // Work with a copy and remove duplicates first
-        final Map<String, EventHead> uniqueHeadsMap = {};
-        for (var head in _eventHeads) {
-          uniqueHeadsMap[head.id] = head;
-        }
-        final List<EventHead> originalHeads = uniqueHeadsMap.values.toList();
-
-        // 1. Today's event (highest priority - event happening today)
-        final List<EventHead> todayEvents =
-            originalHeads.where((e) => e.eventDate != null && isAtSameDayAs(e.eventDate!)).toList();
-        todayEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-
-        // 2. Recent posts (last 3 days, excluding today's events)
-        final Set<String> alreadyIncludedIds = {...todayEvents.map((e) => e.id)};
-        final List<EventHead> recentPosts = originalHeads
-            .where((e) => !alreadyIncludedIds.contains(e.id) && e.recentDate.isAfter(threeDaysAgo))
-            .toList();
-        recentPosts.sort((a, b) => b.recentDate.compareTo(a.recentDate));
-        final List<EventHead> topRecentPosts = recentPosts.take(2).toList();
-
-        // 3. Upcoming events (next few events after today)
-        alreadyIncludedIds.addAll(topRecentPosts.map((e) => e.id));
-        final List<EventHead> upcomingEvents = originalHeads
-            .where((e) => !alreadyIncludedIds.contains(e.id) && e.eventDate != null && e.eventDate!.isAfter(now))
-            .toList();
-        upcomingEvents.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-        final List<EventHead> nextUpcoming = upcomingEvents.take(3).toList();
-
-        // 4. Everything else sorted by recent date
-        alreadyIncludedIds.addAll(nextUpcoming.map((e) => e.id));
-        final List<EventHead> remainingPosts = originalHeads.where((e) => !alreadyIncludedIds.contains(e.id)).toList();
-        remainingPosts.sort((a, b) => b.recentDate.compareTo(a.recentDate));
-
-        // Combine all lists in priority order
-        _eventHeads.clear();
-        _eventHeads.addAll(todayEvents); // Today's events first
-        _eventHeads.addAll(topRecentPosts); // Recent activity (2 posts)
-        _eventHeads.addAll(nextUpcoming); // Upcoming events (3 posts)
-        _eventHeads.addAll(remainingPosts); // Everything else
-
-        _analytics.logEvent(name: 'post sort', parameters: {'type': 'recent activity'});
-        break;
-      case 1:
-        // Remove duplicates first
-        final Map<String, EventHead> uniqueHeads1 = {};
-        for (var head in _eventHeads) {
-          uniqueHeads1[head.id] = head;
-        }
-        _eventHeads.clear();
-        _eventHeads.addAll(uniqueHeads1.values);
-
-        _eventHeads.sort((a, b) {
-          if (a.eventDate == null && b.eventDate == null) return 0;
-          if (a.eventDate == null) return 1;
-          if (b.eventDate == null) return -1;
-          return a.eventDate!.compareTo(b.eventDate!);
-        });
-        _analytics.logEvent(name: 'post sort', parameters: {'type': 'upcoming events'});
-        break;
-      case 2:
-        // Remove duplicates first
-        final Map<String, EventHead> uniqueHeads2 = {};
-        for (var head in _eventHeads) {
-          uniqueHeads2[head.id] = head;
-        }
-        _eventHeads.clear();
-        _eventHeads.addAll(uniqueHeads2.values);
-
-        _eventHeads.sort((a, b) {
-          if (a.eventDate == null && b.eventDate == null) return 0;
-          if (a.eventDate == null) return 1;
-          if (b.eventDate == null) return -1;
-          return b.eventDate!.compareTo(a.eventDate!);
-        });
-        _analytics.logEvent(name: 'post sort', parameters: {'type': 'past events'});
-        break;
-      case 3:
-        // Remove duplicates first
-        final Map<String, EventHead> uniqueHeads3 = {};
-        for (var head in _eventHeads) {
-          uniqueHeads3[head.id] = head;
-        }
-        _eventHeads.clear();
-        _eventHeads.addAll(uniqueHeads3.values);
-
-        _eventHeads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
-        _analytics.logEvent(name: 'post sort', parameters: {'type': 'bookmarks'});
-        break;
-    }
+  void setAllEventHeads(final List<EventHead> heads) {
+    _eventHeads
+      ..clear()
+      ..addAll(heads);
+    _reindexHeads();
+    notifyListeners();
   }
 
-  int get postSortIndex => _postSortIndex;
-  void setPostSortIndex(int newIndex) => _postSortIndex = newIndex;
+  void setRefreshedHeads(final List<EventHead> heads) =>
+      setAllEventHeads(heads);
 
-  void setRefreshedHeads(final List<EventHead> heads) {
-    _eventHeads.clear();
-    _eventHeads.addAll(heads);
-    sortPostsByIndex();
-  }
-
-  bool isAtSameDayAs(Object? thisDate) {
-    if (thisDate is DateTime) {
-      return thisDate.year == DateTime.now().year &&
-          thisDate.month == DateTime.now().month &&
-          thisDate.day == DateTime.now().day;
-    }
-    return false;
+  void _reindexHeads() {
+    _headsById
+      ..clear()
+      ..addEntries(_eventHeads.map((head) => MapEntry(head.id, head)));
   }
 
   // * user related
   bool get isCurrentUserGuest => _currentUser.id.compareTo('0') == 0;
   User get currentUser => _currentUser;
-  List<User> get allUsers => _allUsers;
+  List<User> get allUsers => UnmodifiableListView(_allUsers);
   List<UserTag> get allTags => UnmodifiableListView(_allTags);
-  List<UserTag> get activeTags => _allTags.where((tag) => tag.isActive).toList();
+  List<UserTag> get activeTags =>
+      _allTags.where((tag) => tag.isActive).toList();
+
+  User? userById(final String id) => _usersById[id];
+
+  void setAllUsers(final List<User> users) {
+    _allUsers
+      ..clear()
+      ..addAll(users);
+    _sortUsers();
+    _reindexUsers();
+    notifyListeners();
+  }
+
+  void addOrUpdateUser(final User user) {
+    _allUsers.removeWhere((u) => u.id == user.id);
+    _allUsers.add(user);
+    _sortUsers();
+    _usersById[user.id] = user;
+    notifyListeners();
+  }
+
+  void removeUser(final String id) {
+    _allUsers.removeWhere((u) => u.id == id);
+    _usersById.remove(id);
+    notifyListeners();
+  }
+
+  void _sortUsers() {
+    _allUsers.sort((a, b) {
+      final surname = a.surname.compareTo(b.surname);
+      if (surname == 0) {
+        return a.forname.compareTo(b.forname);
+      }
+      return surname;
+    });
+  }
+
+  void _reindexUsers() {
+    _usersById
+      ..clear()
+      ..addEntries(_allUsers.map((user) => MapEntry(user.id, user)));
+  }
 
   void setAllTags(final List<UserTag> tags) {
     _allTags
@@ -248,7 +213,8 @@ class AppContext extends ChangeNotifier {
   }
 
   List<PostTag> get allPostTags => UnmodifiableListView(_allPostTags);
-  List<PostTag> get activePostTags => _allPostTags.where((tag) => tag.isActive).toList();
+  List<PostTag> get activePostTags =>
+      _allPostTags.where((tag) => tag.isActive).toList();
 
   void setAllPostTags(final List<PostTag> tags) {
     _allPostTags
@@ -318,7 +284,8 @@ class AppContext extends ChangeNotifier {
 
   void _sortCellGroups() {
     _allCellGroups.sort((a, b) {
-      final statusOrder = _cellGroupStatusRank(a.status).compareTo(_cellGroupStatusRank(b.status));
+      final statusOrder = _cellGroupStatusRank(a.status)
+          .compareTo(_cellGroupStatusRank(b.status));
       if (statusOrder != 0) return statusOrder;
       return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });
@@ -382,9 +349,20 @@ class AppContext extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setUserToGuest() => _currentUser = _guest;
-  void setCurrentUser(final User? user) => _currentUser = user ?? _guest;
-  User getUserFromID(final String id) => _allUsers.firstWhere((e) => e.id == id);
+  void setUserToGuest() {
+    _currentUser = _guest;
+    notifyListeners();
+  }
+
+  void setCurrentUser(final User? user) {
+    _currentUser = user ?? _guest;
+    notifyListeners();
+  }
+
+  void setCurrentUserRoles(final List<UserRoleAssignment> roles) {
+    _currentUser.setRoles(roles);
+    notifyListeners();
+  }
 
   // Upgrade from guest to authenticated user (used during background login)
   void upgradeToAuthenticatedUser({
@@ -393,32 +371,47 @@ class AppContext extends ChangeNotifier {
     required List<User> allUsers,
   }) {
     _currentUser = user;
-    _eventHeads.clear();
-    _eventHeads.addAll(heads);
-    _allUsers.clear();
-    _allUsers.addAll(allUsers);
-    sortPostsByIndex();
+    _eventHeads
+      ..clear()
+      ..addAll(heads);
+    _allUsers
+      ..clear()
+      ..addAll(allUsers);
+    _sortUsers();
+    _reindexUsers();
+    _reindexHeads();
     notifyListeners();
   }
 
-  List<String> getTokensFromUserID(final String userID) => _userTokens[userID]!;
-  bool haveTokensForUserID(final String userID) => _userTokens.containsKey(userID);
-  void addTokensToUserID(final String userID, final List<String> tokens) => _userTokens[userID] = tokens;
-  String getAuthIDFromUID(final String uid) => _allUsers.firstWhere((e) => e.id == uid).authID;
+  List<String> getTokensFromUserID(final String userID) =>
+      _userTokens[userID] ?? const <String>[];
+  bool haveTokensForUserID(final String userID) =>
+      _userTokens.containsKey(userID);
+  void addTokensToUserID(final String userID, final List<String> tokens) =>
+      _userTokens[userID] = tokens;
+
+  String? authIdByUserId(final String uid) {
+    final user = _usersById[uid];
+    if (user == null) return null;
+    return user.authID;
+  }
 
   bool get useUserImageSrc => _useCurrentUserSrc;
   void setNewUserImage(final String newSrc) {
     _currentUser.setImgSrc(newSrc);
     _useCurrentUserSrc = true;
+    final directory = _usersById[_currentUser.id];
+    if (directory != null && !identical(directory, _currentUser)) {
+      directory.setImgSrc(newSrc);
+    }
+    notifyListeners();
   }
 
   // * data related
   AppSharedPreferences get sharedPref => _sharedPref;
 
-  // * other related
-  void rebuildPlease() => notifyListeners();
   String? get cacheDir => _cacheDir;
   String? get appDir => _appDir;
 
-  FirebaseAnalytics get analytics => _analytics;
+  FirebaseAnalytics get analytics => _analytics!;
 }

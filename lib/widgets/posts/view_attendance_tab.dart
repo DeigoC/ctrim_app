@@ -35,7 +35,8 @@ class ViewAttendanceTab extends StatefulWidget {
   State<ViewAttendanceTab> createState() => _ViewAttendanceTabState();
 }
 
-class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
+class _ViewAttendanceTabState extends State<ViewAttendanceTab>
+    with AutomaticKeepAliveClientMixin {
   static final MessagingManager _messagingManager = MessagingManager();
   static final AuthManager _authManager = AuthManager();
 
@@ -44,13 +45,27 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   Object? _loadError;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
     _loadAttendance();
   }
 
-  Future<void> _loadAttendance() async {
+  /// Loads attendance once per post view. Tab switches remount this widget;
+  /// reuse [EventContext] data so unsaved attendee edits are not wiped by a
+  /// refetch with [forceReplace].
+  Future<void> _loadAttendance({bool forceReload = false}) async {
     if (!_authManager.isSignedIn) {
+      setState(() {
+        _loading = false;
+        _loadError = null;
+      });
+      return;
+    }
+
+    if (!forceReload && widget.eventContext.hasLoadedAttendance) {
       setState(() {
         _loading = false;
         _loadError = null;
@@ -68,7 +83,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           await EventSupplementalDBManager(widget.eventContext.id)
               .fetchAttendance();
       if (!mounted) return;
-      widget.eventContext.setFetchedAttendance(attendance, forceReplace: true);
+      widget.eventContext.setFetchedAttendance(
+        attendance,
+        forceReplace: !widget.eventContext.isAttendanceDirty,
+      );
       setState(() => _loading = false);
       widget.onChanged();
     } catch (e) {
@@ -82,6 +100,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final appContext = Provider.of<AppContext>(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -99,7 +118,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         totalSteps: 1,
         error: _loadError,
         errorTitle: 'Could not load attendance',
-        onRetry: _loadAttendance,
+        onRetry: () => _loadAttendance(forceReload: true),
       );
     }
 
@@ -461,12 +480,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
           : 'Guest (legacy name-only)';
     }
     if (entry.userId != null) {
-      try {
-        final user = appContext.getUserFromID(entry.userId!);
-        if (user.isPlaceholder) return 'Placeholder';
-      } catch (_) {
-        // fall through
-      }
+      final user = appContext.userById(entry.userId!);
+      if (user != null && user.isPlaceholder) return 'Placeholder';
     }
     return 'Registered';
   }
@@ -478,11 +493,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
     Color fallbackColor,
   ) {
     if (userId != null) {
-      try {
-        final user = appContext.getUserFromID(userId);
+      final user = appContext.userById(userId);
+      if (user != null) {
         return MyUserAvatar(user, radius: 20);
-      } catch (_) {
-        // fall through
       }
     }
     return CircleAvatar(
@@ -492,11 +505,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   }
 
   String _displayNameForUserId(AppContext appContext, String userId) {
-    try {
-      return appContext.getUserFromID(userId).fullname;
-    } catch (_) {
-      return userId;
-    }
+    return appContext.userById(userId)?.fullname ?? userId;
   }
 
   bool _canPromote(InterestedEntry entry, AppContext appContext) {
@@ -506,11 +515,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
   String? _resolveUserIdForInterest(
       InterestedEntry entry, AppContext appContext) {
     if (entry.userId != null && entry.userId!.isNotEmpty) return entry.userId;
-    try {
-      return appContext.allUsers.firstWhere((u) => u.authID == entry.authId).id;
-    } catch (_) {
-      return null;
+    for (final user in appContext.allUsers) {
+      if (user.authID == entry.authId) return user.id;
     }
+    return null;
   }
 
   String _initials(String name) {
@@ -621,12 +629,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
       return;
     }
 
-    User? user;
-    try {
-      user = appContext.getUserFromID(userId);
-    } catch (_) {
-      user = null;
-    }
+    final user = appContext.userById(userId);
 
     final next = List<AttendeeEntry>.from(attendance.attendees)
       ..add(AttendeeEntry.user(
@@ -791,12 +794,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab> {
         next.add(byId[uid]!);
         continue;
       }
-      User? user;
-      try {
-        user = appContext.allUsers.firstWhere((u) => u.id == uid);
-      } catch (_) {
-        user = null;
-      }
+      final user = appContext.userById(uid);
       next.add(AttendeeEntry.user(
         userId: uid,
         displayName: user?.fullname ?? uid,

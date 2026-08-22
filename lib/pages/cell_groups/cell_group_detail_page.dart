@@ -130,7 +130,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     final resolved = <String, User>{};
     final missing = <String>[];
     for (final id in ids) {
-      final local = _findCachedUser(appContext, id);
+      final local = appContext.userById(id);
       if (local != null) {
         resolved[id] = local;
       } else {
@@ -149,8 +149,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       for (final user in fetched) {
         if (user == null) continue;
         resolved[user.id] = user;
-        if (_findCachedUser(appContext, user.id) == null) {
-          appContext.allUsers.add(user);
+        if (appContext.userById(user.id) == null) {
+          appContext.addOrUpdateUser(user);
         }
       }
     }
@@ -158,19 +158,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     return resolved;
   }
 
-  User? _findCachedUser(AppContext appContext, String id) {
-    for (final u in appContext.allUsers) {
-      if (u.id == id) return u;
-    }
-    return null;
-  }
-
   User? _userForId(String id) =>
       _usersById[id] ??
-      _findCachedUser(
-        Provider.of<AppContext>(context, listen: false),
-        id,
-      );
+      Provider.of<AppContext>(context, listen: false).userById(id);
 
   String _displayNameFor({User? user, String displayName = ''}) {
     if (user != null) return user.fullname;
@@ -234,7 +224,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     };
     final linked = result.map((uid) {
       final existing = existingById[uid];
-      final user = _userForId(uid) ?? _findCachedUser(appContext, uid);
+      final user = _userForId(uid) ?? appContext.userById(uid);
       final name = user?.fullname ?? existing?.displayName ?? '';
       if (existing != null) {
         if (name.isNotEmpty) existing.setDisplayName(name);

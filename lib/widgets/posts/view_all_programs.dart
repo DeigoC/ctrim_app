@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../models/user.dart';
 import '../../pages/events/edit_event_date_location_page.dart';
 import '../../pages/events/edit_program_role_page.dart';
 import '../../utility/app_context.dart';
@@ -74,7 +75,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               onTap: (tapContext) => _programTap(tapContext, index),
               selected: _selectedIndex == index,
               assignedUsers:
-                  (programRoles[index]["uids"] as List<String>).map((e) => _appContext.getUserFromID(e)).toList(),
+                  (programRoles[index]["uids"] as List<String>)
+                      .map((e) => _appContext.userById(e))
+                      .whereType<User>()
+                      .toList(),
               canEdit: editable,
               onEditClick: () => _openEditProgramPage(programRoles[index]),
               canMoveUp: editable && index > 0,

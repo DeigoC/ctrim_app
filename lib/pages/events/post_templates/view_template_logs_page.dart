@@ -202,15 +202,12 @@ class ViewTemplateLogsPage extends StatelessWidget {
   }
 
   User _userFor(AppContext appContext, String uid) {
-    try {
-      return appContext.getUserFromID(uid);
-    } catch (_) {
-      return User(
-        id: uid.isEmpty ? 'unknown' : uid,
-        forname: 'Unknown',
-        surname: 'User',
-      );
-    }
+    return appContext.userById(uid) ??
+        User(
+          id: uid.isEmpty ? 'unknown' : uid,
+          forname: 'Unknown',
+          surname: 'User',
+        );
   }
 
   void _showFullLog(

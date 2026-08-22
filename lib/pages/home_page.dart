@@ -72,13 +72,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _informationTabController = TabController(length: 4, vsync: this);
     _cellGroupsTabController = TabController(length: 2, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
-    _appContext.allUsers.sort(((a, b) {
-      final surname = a.surname.compareTo(b.surname);
-      if (surname == 0) {
-        return a.forname.compareTo(b.forname);
-      }
-      return surname;
-    }));
     _setupCloudOnMessage();
     _setupWebNotificationListeners();
 
@@ -269,7 +262,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           rebuildFunction: () {
             setState(() {
               // there's a potential that new posts have been added
-              _appContext.sortPostsByIndex();
             });
           });
     } else if (_selectedIndex == 1) {
@@ -409,18 +401,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint(
           '-----------------Hello from on message! Here is the message: ${message.data}');
-      _handleOnMessage(message).then((_) {
-        _appContext.rebuildPlease();
-      });
+      _handleOnMessage(message);
     });
 
     // when the app is opened in the background of device
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       debugPrint(
           '-----------------Hello from on message opened app! Here is the message: ${message.data}');
-      _handleOnMessageOpenedBackground(message).then((_) {
-        _appContext.rebuildPlease();
-      });
+      _handleOnMessageOpenedBackground(message);
     });
 
     FirebaseMessaging.instance.getInitialMessage().then((message) {
@@ -607,12 +595,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // in the case that the notification is on a Post Update - receiving word of a role
   Future<void> _updateUserRoles() async {
     final UserDBManager userDBManager = UserDBManager();
-    _appContext.currentUser.setRoles(
+    _appContext.setCurrentUserRoles(
         await userDBManager.fetchUserRoles(_appContext.currentUser.id));
-    if (mounted) {
-      // Refresh Personal tab + nav schedule badges.
-      _appContext.rebuildPlease();
-    }
   }
 
   // * maintenance work

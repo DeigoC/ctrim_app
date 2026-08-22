@@ -247,7 +247,7 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
         final newUser = await _registerUser(onProgress);
         if (!mounted) return;
         final appContext = Provider.of<AppContext>(context, listen: false);
-        appContext.allUsers.add(newUser);
+        appContext.addOrUpdateUser(newUser);
         await persistUsersLocalCache(appContext.allUsers);
       },
     );

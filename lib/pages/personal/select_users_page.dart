@@ -558,7 +558,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         }
         final user = User.fromMap(id, raw);
         if (!mounted) return;
-        appContext.allUsers.add(user);
+        appContext.addOrUpdateUser(user);
         await IDTrackerDBManager()
             .tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
         await persistUsersLocalCache(appContext.allUsers);

@@ -1196,8 +1196,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   Future<void> _fetchEssentialData() async {
     final allUsers = await UsersRepository().fetchUsers();
     final heads = await EventHeadsRepository().fetchEventHeads();
-    _appContext.allUsers.addAll(allUsers);
-    _appContext.addAllEventHeads(heads);
+    _appContext.setAllUsers(allUsers);
+    _appContext.setAllEventHeads(heads);
   }
 
   Future<void> _saveFCMToken() async {

@@ -41,19 +41,24 @@ void main() async {
   if (kIsWeb) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   } else {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
   }
 
   // Initialize Firebase App Check for DDoS/abuse protection.
   if (kDebugMode && kIsWeb) {
     // For web debug mode, we need to set the debug token
     // The debug token will be printed in the browser console on first run
-    debugPrint('🔧 Running in DEBUG mode - Firebase App Check will generate a debug token');
-    debugPrint('📋 Check your browser console for: "Firebase App Check debug token:"');
-    debugPrint('🔗 Add the token at: https://console.firebase.google.com/project/_/appcheck/apps');
+    debugPrint(
+        '🔧 Running in DEBUG mode - Firebase App Check will generate a debug token');
+    debugPrint(
+        '📋 Check your browser console for: "Firebase App Check debug token:"');
+    debugPrint(
+        '🔗 Add the token at: https://console.firebase.google.com/project/_/appcheck/apps');
 
     await FirebaseAppCheck.instance.activate(
-      providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'),
+      providerWeb:
+          ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'),
     );
 
     // Enable auto token refresh
@@ -61,7 +66,8 @@ void main() async {
   } else {
     // Production mode - use reCAPTCHA verification
     await FirebaseAppCheck.instance.activate(
-      providerWeb: ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'),
+      providerWeb:
+          ReCaptchaV3Provider('6Lezkk8sAAAAAHFUtJ6XpEviEaxFleXpMhZhHFfh'),
     );
   }
 
@@ -87,11 +93,15 @@ void main() async {
   } finally {}
 
   // * Always start as guest, then silently upgrade if credentials exist
-  final String? email = prefInstance.getString('email'), pass = prefInstance.getString('password');
+  final String? email = prefInstance.getString('email'),
+      pass = prefInstance.getString('password');
 
   // Create initial guest context and run app immediately
-  final AppContext guestContext =
-      AppContext(prefInstance: prefInstance, cacheDir: cacheDir, appDir: appDir, analytics: analytics);
+  final AppContext guestContext = AppContext(
+      prefInstance: prefInstance,
+      cacheDir: cacheDir,
+      appDir: appDir,
+      analytics: analytics);
 
   runApp(MultiProvider(
     providers: [
@@ -110,7 +120,8 @@ void main() async {
   }
 
   // Fetch essential data in background for all users (guests and authenticated)
-  _fetchEssentialDataInBackground(guestContext, prefInstance, authManager, email, pass);
+  _fetchEssentialDataInBackground(
+      guestContext, prefInstance, authManager, email, pass);
 }
 
 Future<void> _fetchEssentialDataInBackground(
@@ -128,42 +139,45 @@ Future<void> _fetchEssentialDataInBackground(
 
   // First, fetch event heads for guest users (or anyone) - this makes content visible immediately
   try {
-    heads = await eventHeadsRepository.fetchEventHeads();
-    final usersResult = await usersRepository.fetchUsersWithMeta();
+    late final List<EventHead> fetchedHeads;
+    late final UsersLoadResult usersResult;
+    await Future.wait([
+      eventHeadsRepository
+          .fetchEventHeads()
+          .then((value) => fetchedHeads = value),
+      usersRepository.fetchUsersWithMeta().then((value) => usersResult = value),
+    ]);
+    heads = fetchedHeads;
     allUsers = usersResult.users;
     if (!usersResult.fromCache) {
       prefInstance.setBool('fetchUserImages', true);
     }
 
-    guestContext.addAllEventHeads(heads);
-    guestContext.allUsers.addAll(allUsers);
+    guestContext.setAllEventHeads(heads);
+    guestContext.setAllUsers(allUsers);
 
-    try {
-      final allTags = await UserTagDBManager().fetchAllTags();
-      guestContext.setAllTags(allTags);
-    } catch (e) {
-      debugPrint('Error fetching user tags (deploy firestore.rules if needed): $e');
-    }
-    try {
-      final allPostTags = await PostTagDBManager().fetchAllTags();
-      guestContext.setAllPostTags(allPostTags);
-    } catch (e) {
-      debugPrint('Error fetching post tags (deploy firestore.rules if needed): $e');
-    }
-    try {
-      final allCellGroups = await CellGroupDBManager().fetchAllGroups();
-      guestContext.setAllCellGroups(allCellGroups);
-    } catch (e) {
-      debugPrint('Error fetching cell groups (deploy firestore.rules if needed): $e');
-    }
-    try {
-      final allLocations = await UserLocationDBManager().fetchAllLocations();
-      guestContext.setAllLocations(allLocations);
-    } catch (e) {
-      debugPrint('Error fetching user locations (deploy firestore.rules if needed): $e');
-    }
-    guestContext.sortPostsByIndex();
-    guestContext.rebuildPlease();
+    await Future.wait([
+      _tryLoadCatalog(
+        label: 'user tags',
+        fetch: () => UserTagDBManager().fetchAllTags(),
+        apply: guestContext.setAllTags,
+      ),
+      _tryLoadCatalog(
+        label: 'post tags',
+        fetch: () => PostTagDBManager().fetchAllTags(),
+        apply: guestContext.setAllPostTags,
+      ),
+      _tryLoadCatalog(
+        label: 'cell groups',
+        fetch: () => CellGroupDBManager().fetchAllGroups(),
+        apply: guestContext.setAllCellGroups,
+      ),
+      _tryLoadCatalog(
+        label: 'user locations',
+        fetch: () => UserLocationDBManager().fetchAllLocations(),
+        apply: guestContext.setAllLocations,
+      ),
+    ]);
 
     debugPrint('Successfully loaded ${heads.length} posts for guest user');
   } catch (e) {
@@ -189,8 +203,10 @@ Future<void> _fetchEssentialDataInBackground(
           loadedUsers = await usersRepository.fetchUsers();
         }
 
-        currentUser.setRoles(await userDBManager.fetchUserRoles(currentUser.id));
-        final scheduleService = UserScheduleService(userDBManager: userDBManager);
+        currentUser
+            .setRoles(await userDBManager.fetchUserRoles(currentUser.id));
+        final scheduleService =
+            UserScheduleService(userDBManager: userDBManager);
         await scheduleService.pruneStaleRoles(
           user: currentUser,
           eventHeads: loadedHeads,
@@ -205,11 +221,24 @@ Future<void> _fetchEssentialDataInBackground(
           allUsers: loadedUsers,
         );
 
-        debugPrint('Successfully upgraded guest to authenticated user: ${currentUser.forname}');
+        debugPrint(
+            'Successfully upgraded guest to authenticated user: ${currentUser.forname}');
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('Background login failed: $e');
       // Stay as guest with already-loaded data
     }
+  }
+}
+
+Future<void> _tryLoadCatalog<T>({
+  required String label,
+  required Future<List<T>> Function() fetch,
+  required void Function(List<T> records) apply,
+}) async {
+  try {
+    apply(await fetch());
+  } catch (e) {
+    debugPrint('Error fetching $label (deploy firestore.rules if needed): $e');
   }
 }

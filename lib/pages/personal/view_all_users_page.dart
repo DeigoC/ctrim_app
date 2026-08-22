@@ -88,9 +88,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
 
       final appContext = Provider.of<AppContext>(context, listen: false);
       final currentId = appContext.currentUser.id;
-      appContext.allUsers
-        ..clear()
-        ..addAll(users);
+      appContext.setAllUsers(users);
 
       final refreshedCurrent = users.where((u) => u.id == currentId);
       if (refreshedCurrent.isNotEmpty) {
@@ -109,7 +107,6 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         ),
         source: 'firestore-refresh',
       );
-      appContext.rebuildPlease();
     } catch (e, st) {
       debugPrint('[VolunteersDirectory] refresh failed: $e\n$st');
       if (mounted) {

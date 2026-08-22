@@ -368,7 +368,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           itemCount: postIDs.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (_, index) {
-            final thisHead = _appContext.getPostHead(postIDs[index]);
+            final thisHead = _appContext.headById(postIDs[index]);
+            if (thisHead == null) return const SizedBox.shrink();
             return PostHead(
               thisHead: thisHead,
               updatePost: () {
@@ -391,7 +392,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       future: future,
       builder: (_, snap) {
         if (snap.hasData) {
-          _appContext.addAllEventHeads([snap.data!]);
+          _appContext.addOrUpdatePostHead(snap.data!);
           return _buildScheduleCard(postID, isPast: isPast);
         }
         if (snap.hasError) {

@@ -716,8 +716,10 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
     if (result.isEmpty) {
       _eventContext.applyLeadSpeaker(uid: null);
     } else {
-      final user = appContext.getUserFromID(result.first);
-      _eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+      final user = appContext.userById(result.first);
+      if (user != null) {
+        _eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+      }
     }
     _eventContext.allowSavingOfTheEdit();
     setState(() {});
@@ -927,8 +929,8 @@ class _ViewEventPageState extends State<ViewEventPage> with SingleTickerProvider
             if (thisUID != currentUID) {
               try {
                 if (!appContext.haveTokensForUserID(thisUID)) {
-                  final String authID = appContext.getAuthIDFromUID(thisUID);
-                  if (authID.isNotEmpty) {
+                  final String? authID = appContext.authIdByUserId(thisUID);
+                  if (authID != null && authID.isNotEmpty) {
                     final List<String> fetchedTokens = await tokenResolver.resolveForAuthID(authID);
                     if (fetchedTokens.isNotEmpty) {
                       appContext.addTokensToUserID(thisUID, fetchedTokens);

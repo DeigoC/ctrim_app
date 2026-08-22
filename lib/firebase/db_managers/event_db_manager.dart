@@ -11,16 +11,52 @@ import '../../models/event/event_program.dart';
 import 'id_tracker.dart';
 
 class EventHeadDBManager {
-  static final CollectionReference _ref = FirebaseFirestore.instance.collection('events').withConverter<EventHead>(
-      fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!), toFirestore: (head, _) => head.toJson());
+  static final CollectionReference<EventHead> _ref = FirebaseFirestore.instance
+      .collection('events')
+      .withConverter<EventHead>(
+          fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!),
+          toFirestore: (head, _) => head.toJson());
 
   final IDTrackerDBManager _idTracker;
 
-  EventHeadDBManager({IDTrackerDBManager? idTracker}) : _idTracker = idTracker ?? IDTrackerDBManager();
+  EventHeadDBManager({IDTrackerDBManager? idTracker})
+      : _idTracker = idTracker ?? IDTrackerDBManager();
 
-  Future<List<EventHead>> fetchEventHeads() async {
-    final collection = await _ref.orderBy('RecentDate', descending: true).limit(40).get();
-    return List<EventHead>.from(collection.docs.map((e) => e.data()));
+  /// Recent edits plus dated windows so Upcoming/Past are not limited to
+  /// the 40 most recently updated heads. Single-field `EventDate` range
+  /// queries — no composite index.
+  static const int bulletinRecentLimit = 40;
+  static const int bulletinDatedLimit = 40;
+
+  Future<List<EventHead>> fetchEventHeads({DateTime? now}) async {
+    final clock = now ?? DateTime.now();
+    final startOfToday = DateTime(clock.year, clock.month, clock.day);
+
+    final snapshots = await Future.wait([
+      _ref
+          .orderBy('RecentDate', descending: true)
+          .limit(bulletinRecentLimit)
+          .get(),
+      _ref
+          .where('EventDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .orderBy('EventDate')
+          .limit(bulletinDatedLimit)
+          .get(),
+      _ref
+          .where('EventDate', isLessThan: Timestamp.fromDate(startOfToday))
+          .orderBy('EventDate', descending: true)
+          .limit(bulletinDatedLimit)
+          .get(),
+    ]);
+
+    final merged = <String, EventHead>{};
+    for (final snapshot in snapshots) {
+      for (final doc in snapshot.docs) {
+        merged.putIfAbsent(doc.id, () => doc.data());
+      }
+    }
+    return merged.values.toList();
   }
 
   Future<EventHead> fetchHead(final String id) async {
@@ -48,7 +84,8 @@ class EventHeadDBManager {
   /// Heads marked as period/season parents (`IsPeriodParent`).
   /// Sorted client-side by [RecentDate] so no composite index is required.
   Future<List<EventHead>> fetchPeriodParentHeads({int limit = 40}) async {
-    final collection = await _ref.where('IsPeriodParent', isEqualTo: true).limit(limit).get();
+    final collection =
+        await _ref.where('IsPeriodParent', isEqualTo: true).limit(limit).get();
     final heads = List<EventHead>.from(collection.docs.map((e) => e.data()));
     heads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
     return heads;
@@ -74,7 +111,10 @@ class EventSupplementalDBManager {
 
   EventSupplementalDBManager(String id) {
     _postId = id;
-    _colRef = FirebaseFirestore.instance.collection('events').doc(id).collection('supplemental');
+    _colRef = FirebaseFirestore.instance
+        .collection('events')
+        .doc(id)
+        .collection('supplemental');
   }
 
   // * Body related
@@ -134,8 +174,10 @@ class EventSupplementalDBManager {
     required String? oldParentId,
     required String? newParentId,
   }) async {
-    final String? oldId = (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
-    final String? newId = (newParentId == null || newParentId.isEmpty) ? null : newParentId;
+    final String? oldId =
+        (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
+    final String? newId =
+        (newParentId == null || newParentId.isEmpty) ? null : newParentId;
     if (oldId == newId) return {};
     if (newId == childId) {
       throw ArgumentError('A post cannot be its own parent');
@@ -193,7 +235,10 @@ class EventSupplementalDBManager {
     await _colRef.doc('logs').set(log.toJson());
   }
 
-  Future<void> addLogEntry({required String logMessage, required String uid, required DateTime ts}) async {
+  Future<void> addLogEntry(
+      {required String logMessage,
+      required String uid,
+      required DateTime ts}) async {
     final log = await fetchLog();
     log.addLog(log: logMessage, uid: uid, ts: ts);
     await _colRef.doc('logs').update(log.toJson());
@@ -262,7 +307,8 @@ class EventSupplementalDBManager {
       if (!attSnap.exists || attSnap.data() == null) {
         return EventAttendance();
       }
-      final result = EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
+      final result =
+          EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
       result.removeInterest(authId);
       tx.set(attRef, result.toJson());
       tx.update(headRef, {
@@ -277,7 +323,8 @@ class EventSupplementalDBManager {
 
   /// Replaces the full attendee list and syncs [AttendeeCount] (staff-managed).
   /// Preserves [EventAttendance.expectedUserIds] and interest.
-  Future<EventAttendance> saveAttendees(final List<AttendeeEntry> attendees) async {
+  Future<EventAttendance> saveAttendees(
+      final List<AttendeeEntry> attendees) async {
     final firestore = FirebaseFirestore.instance;
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
@@ -305,7 +352,8 @@ class EventSupplementalDBManager {
 
   /// Replaces the expected-attendee checklist (staff-managed). Preserves attendees
   /// and interest; does not change public head counts.
-  Future<EventAttendance> saveExpectedUserIds(final List<String> expectedUserIds) async {
+  Future<EventAttendance> saveExpectedUserIds(
+      final List<String> expectedUserIds) async {
     final firestore = FirebaseFirestore.instance;
     final attRef = _colRef.doc('attendance');
 

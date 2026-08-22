@@ -352,14 +352,12 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
         await _cacheLocalImage(sanitized);
         if (!mounted) return;
         _appContext.setNewUserImage(sanitized);
-        _syncAllUsersImgSrc(sanitized);
         await persistUsersLocalCache(_appContext.allUsers);
         await UserActivityRecorder().record(
           actorUserId: _appContext.currentUser.id,
           log: UserActivityMessages.updatedProfilePhoto,
           documentId: _appContext.currentUser.id,
         );
-        _appContext.rebuildPlease();
       },
     );
 
@@ -380,14 +378,6 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
     );
     _isSaved = true;
     _popRouteAfterAllowing(result: true);
-  }
-
-  void _syncAllUsersImgSrc(String src) {
-    final uid = _appContext.currentUser.id;
-    final index = _appContext.allUsers.indexWhere((u) => u.id == uid);
-    if (index == -1) return;
-    final existing = _appContext.allUsers[index];
-    existing.setImgSrc(src);
   }
 
   Future<void> _cacheLocalImage(String src) async {

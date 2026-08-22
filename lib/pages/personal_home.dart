@@ -889,7 +889,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             onChanged: (value) {
               if (value != null) {
                 appContext.sharedPref.setPreferredStartupTab(value);
-                appContext.rebuildPlease();
+                setState(() {});
                 Navigator.pop(context);
               }
             },
@@ -1186,7 +1186,6 @@ class _PersonalHomeState extends State<PersonalHome> {
     onProgress(completed: 1, total: total, message: 'Clearing local session…');
     widget.appContext.sharedPref.clearCreds();
     widget.appContext.setUserToGuest();
-    widget.appContext.rebuildPlease();
     widget.appContext.sharedPref.setLoggedOut(true);
 
     onProgress(completed: 2, total: total, message: 'Signing out…');

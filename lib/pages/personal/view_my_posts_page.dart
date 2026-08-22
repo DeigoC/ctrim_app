@@ -178,7 +178,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         ],
       ),
       child: PostHead(
-        thisHead: _appContext.getPostHead(postID),
+        thisHead: _appContext.headById(postID)!,
         updatePost: () {
           setState(() {});
         },

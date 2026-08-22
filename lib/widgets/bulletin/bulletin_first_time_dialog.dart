@@ -42,7 +42,7 @@ class _BulletinFirstTimeDialogState extends State<BulletinFirstTimeDialog> {
       banner: const AppDialogBanner(
         icon: Icons.tips_and_updates_rounded,
         message:
-            'Bookmark posts to easily find them later in the Bookmarks tab.',
+                        'Bookmark posts (long-press a card) and open them later from Sort & Filter.',
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -69,7 +69,7 @@ class _BulletinFirstTimeDialogState extends State<BulletinFirstTimeDialog> {
             icon: Icons.bookmark_rounded,
             title: 'Bookmark & Filter',
             description:
-                'Save important posts and sort by upcoming events, recent updates, or your bookmarks.',
+                        'Save important posts and sort or filter by what’s coming up, past events, or your bookmarks.',
             colorScheme: colorScheme,
             theme: theme,
           ),

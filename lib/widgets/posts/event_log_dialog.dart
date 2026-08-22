@@ -43,6 +43,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
     super.initState();
   }
 
+  Future<void> _cacheTokensForUser(final String uid) async {
+    if (_appContext.haveTokensForUserID(uid)) return;
+    final authID = _appContext.authIdByUserId(uid);
+    if (authID == null || authID.isEmpty) return;
+    final tokens = await _tokenResolver.resolveForAuthID(authID);
+    _appContext.addTokensToUserID(uid, tokens);
+  }
+
   @override
   Widget build(BuildContext context) {
     return UpdateLogDialog(
@@ -82,7 +90,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
       _appContext.setMetadata(entry.key, entry.value);
     }
     widget.eventContext.resetSavingOfTheEdit();
-    _appContext.rebuildPlease();
+    _appContext.addOrUpdatePostHead(widget.eventContext.head);
     widget.updatePage();
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -185,9 +193,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
     for (final String uid in missingContacts) {
-      final tokens = await _tokenResolver
-          .resolveForAuthID(_appContext.getAuthIDFromUID(uid));
-      _appContext.addTokensToUserID(uid, tokens);
+      await _cacheTokensForUser(uid);
     }
 
     // create token list of contributors
@@ -230,9 +236,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final resolved = await _tokenResolver
-                .resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, resolved);
+            await _cacheTokensForUser(thisUID);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -260,9 +264,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final resolved = await _tokenResolver
-                .resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, resolved);
+            await _cacheTokensForUser(thisUID);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -282,9 +284,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _tokenResolver
-              .resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+          await _cacheTokensForUser(thisUID);
         }
 
         allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -306,9 +306,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
     for (final String thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _tokenResolver
-              .resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+          await _cacheTokensForUser(thisUID);
         }
 
         allTokens.addAll(_appContext.getTokensFromUserID(thisUID));

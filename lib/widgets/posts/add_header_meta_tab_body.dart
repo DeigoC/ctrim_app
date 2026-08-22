@@ -330,11 +330,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   User? _resolveLeadSpeaker(AppContext appContext) {
     final uid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
     if (uid == null || uid.isEmpty) return null;
-    try {
-      return appContext.getUserFromID(uid);
-    } catch (_) {
-      return null;
-    }
+    return appContext.userById(uid);
   }
 
   Future<void> _onManageLeadSpeakerTap() async {
@@ -362,7 +358,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       if (result.isEmpty) {
         widget.eventContext.applyLeadSpeaker(uid: null);
       } else {
-        final user = appContext.getUserFromID(result.first);
+        final user = appContext.userById(result.first);
+        if (user == null) return;
         widget.eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
       }
     });
