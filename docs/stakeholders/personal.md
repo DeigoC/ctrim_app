@@ -57,7 +57,7 @@ Signed-in people see a profile header (including profile picture where set). Fro
 Depending on role, Personal may also show:
 
 - **People → Volunteers** — searchable directory of people  
-- **Admin / Leader tools → Post Templates** — reusable event blueprints  
+- **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Services** or **Cell Groups**  
 - **Admin tools →** people / tags / locations management *(area admins)*  
 
 See [People & roles](people-and-roles.md).

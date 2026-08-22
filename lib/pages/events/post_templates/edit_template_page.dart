@@ -44,6 +44,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final List<String> _subtitles;
   int? _defaultDayOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
+  late PostTemplateCategory _category;
+  late final PostTemplateCategory _initialCategory;
   bool _allowPop = false;
   bool _isSaved = false;
 
@@ -107,6 +109,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _initialLocation = widget.oldTemplate.location;
     _initialLeadSpeakerUID = widget.oldTemplate.leadSpeakerUID;
     _initialIsPeriodParent = widget.oldTemplate.isPeriodParent;
+    _category = widget.oldTemplate.category;
+    _initialCategory = _category;
     _defaultNotifyLocation = BroadcastAudience.includesLocationUmbrella(
       topics: widget.oldTemplate.topics,
       locationName: widget.oldTemplate.location,
@@ -156,6 +160,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       return true;
     if (widget.eventContext.metadata.isPeriodParent != _initialIsPeriodParent)
       return true;
+    if (_category != _initialCategory) return true;
     if (_defaultNotifyLocation != _initialDefaultNotifyLocation) return true;
     return false;
   }
@@ -259,6 +264,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           showNotificationControls: false,
         ),
         const Divider(height: 32),
+        _buildCategoryCard(),
+        const Divider(height: 32),
         _buildTemplateNotifyDefaultCard(),
         const Divider(height: 32),
         _buildSubtitleListEditor(),
@@ -266,6 +273,66 @@ class _EditTemplatePageState extends State<EditTemplatePage>
         _buildDayOfWeekPicker(),
         const SizedBox(height: 16),
       ],
+    );
+  }
+
+  Widget _buildCategoryCard() {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.category_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Category',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Groups this template under Services or Cell Groups on the '
+              'template list and when creating a post.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<PostTemplateCategory>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment<PostTemplateCategory>(
+                    value: PostTemplateCategory.service,
+                    label: Text(PostTemplateCategory.service.label),
+                    icon: const Icon(Icons.event_outlined),
+                  ),
+                  ButtonSegment<PostTemplateCategory>(
+                    value: PostTemplateCategory.cellGroup,
+                    label: Text(PostTemplateCategory.cellGroup.label),
+                    icon: const Icon(Icons.groups_outlined),
+                  ),
+                ],
+                selected: {_category},
+                onSelectionChanged: (selected) {
+                  if (selected.isEmpty) return;
+                  setState(() => _category = selected.first);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -937,6 +1004,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       'HeadTitle': _tecTitle.text.trim(),
       'Body': widget.eventContext.encodedBody,
       'Location': widget.eventContext.head.location,
+      'Category': _category.firestoreValue,
       'Topics': _defaultNotifyLocation
           ? [
               NotificationTopics.locationUmbrella(

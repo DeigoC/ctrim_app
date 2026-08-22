@@ -39,7 +39,7 @@ class SelectPostTemplatePage extends StatefulWidget {
 class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedCategory = 'All';
+  String _selectedLocation = 'All';
   List<PostTemplate> _allTemplates = [];
 
   bool _loading = true;
@@ -178,7 +178,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                 onChanged: _onSearchChanged,
               ),
               const SizedBox(height: 12),
-              if (_allTemplates.isNotEmpty) _buildCategoryFilter(colorScheme),
+              if (_allTemplates.isNotEmpty) _buildLocationFilter(colorScheme),
             ],
           ),
         ),
@@ -186,23 +186,23 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     );
   }
 
-  Widget _buildCategoryFilter(ColorScheme colorScheme) {
-    final categories = _getAvailableCategories();
+  Widget _buildLocationFilter(ColorScheme colorScheme) {
+    final locations = _getAvailableLocations();
 
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
+        itemCount: locations.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = _selectedCategory == category;
+          final location = locations[index];
+          final isSelected = _selectedLocation == location;
 
           return FilterChip(
-            label: Text(category),
+            label: Text(location),
             selected: isSelected,
-            onSelected: (selected) => _onCategoryChanged(category),
+            onSelected: (selected) => _onLocationChanged(location),
             backgroundColor: colorScheme.surfaceContainerHighest,
             selectedColor: colorScheme.primaryContainer,
             checkmarkColor: colorScheme.onPrimaryContainer,
@@ -273,7 +273,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                   ),
               textAlign: TextAlign.center,
             ),
-            if (_searchQuery.isNotEmpty || _selectedCategory != 'All') ...[
+            if (_searchQuery.isNotEmpty || _selectedLocation != 'All') ...[
               const SizedBox(height: 24),
               OutlinedButton.icon(
                 onPressed: _clearFilters,
@@ -294,6 +294,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       'HeadTitle': 'Blank Template',
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': 'Belfast',
+      'Category': PostTemplateCategory.service.firestoreValue,
       'Topics': [NotificationTopics.locationUmbrella('Belfast')],
       'TagIDs': <String>[],
       'CellGroupIDs': <String>[],
@@ -315,6 +316,11 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   Widget _buildBodyWithData(final List<PostTemplate> templates) {
+    final blankTemplates = templates.where((t) => t.id == 'blank').toList();
+    final realTemplates = templates.where((t) => t.id != 'blank').toList();
+    final hideEmptySections =
+        _searchQuery.isNotEmpty || _selectedLocation != 'All';
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -324,46 +330,166 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
                 .clamp(16.0, double.infinity)
             : 16.0;
 
-        if (!isWide) {
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(
-                horizontalPadding, 16, horizontalPadding, 16),
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemCount: templates.length,
-            itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
-          );
-        }
-
-        final left = <PostTemplate>[];
-        final right = <PostTemplate>[];
-        for (var i = 0; i < templates.length; i++) {
-          (i.isEven ? left : right).add(templates[i]);
-        }
-
-        Widget column(List<PostTemplate> items) {
-          return Column(
-            children: [
-              for (var i = 0; i < items.length; i++) ...[
-                if (i > 0) const SizedBox(height: 12),
-                _buildTemplateTile(items[i]),
-              ],
-            ],
-          );
-        }
-
-        return SingleChildScrollView(
+        return ListView(
           padding:
               EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: column(left)),
-              const SizedBox(width: 16),
-              Expanded(child: column(right)),
+          children: [
+            for (var i = 0; i < blankTemplates.length; i++) ...[
+              if (i > 0) const SizedBox(height: 12),
+              _buildTemplateTile(blankTemplates[i]),
             ],
-          ),
+            ..._buildVisibleCategorySections(
+              realTemplates: realTemplates,
+              isWide: isWide,
+              hideEmptySections: hideEmptySections,
+              insertLeadingGap: blankTemplates.isNotEmpty,
+            ),
+          ],
         );
       },
+    );
+  }
+
+  List<Widget> _buildVisibleCategorySections({
+    required List<PostTemplate> realTemplates,
+    required bool isWide,
+    required bool hideEmptySections,
+    required bool insertLeadingGap,
+  }) {
+    final sections =
+        <({PostTemplateCategory category, List<PostTemplate> templates})>[];
+    for (final category in PostTemplateCategory.values) {
+      final items = realTemplates.where((t) => t.category == category).toList();
+      if (items.isEmpty && hideEmptySections) continue;
+      sections.add((category: category, templates: items));
+    }
+
+    final widgets = <Widget>[];
+    for (var i = 0; i < sections.length; i++) {
+      if (insertLeadingGap || i > 0) {
+        widgets.add(const SizedBox(height: 20));
+      }
+      widgets.add(
+        _buildCategorySection(
+          category: sections[i].category,
+          templates: sections[i].templates,
+          isWide: isWide,
+        ),
+      );
+    }
+    return widgets;
+  }
+
+  Widget _buildCategorySection({
+    required PostTemplateCategory category,
+    required List<PostTemplate> templates,
+    required bool isWide,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isServices = category == PostTemplateCategory.service;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isServices ? Icons.event_outlined : Icons.groups_outlined,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.label,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isServices
+                            ? 'Sunday services and similar programmes'
+                            : 'Cell group meetings',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (templates.isEmpty)
+              Text(
+                'No ${category.label.toLowerCase()} templates.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              )
+            else
+              _buildSectionTiles(templates, isWide),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTiles(List<PostTemplate> templates, bool isWide) {
+    if (!isWide) {
+      return Column(
+        children: [
+          for (var i = 0; i < templates.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTemplateTile(templates[i]),
+          ],
+        ],
+      );
+    }
+
+    final left = <PostTemplate>[];
+    final right = <PostTemplate>[];
+    for (var i = 0; i < templates.length; i++) {
+      (i.isEven ? left : right).add(templates[i]);
+    }
+
+    Widget column(List<PostTemplate> items) {
+      return Column(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTemplateTile(items[i]),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: column(left)),
+        const SizedBox(width: 16),
+        Expanded(child: column(right)),
+      ],
     );
   }
 
@@ -598,9 +724,9 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     });
   }
 
-  void _onCategoryChanged(String category) {
+  void _onLocationChanged(String location) {
     setState(() {
-      _selectedCategory = category;
+      _selectedLocation = location;
     });
   }
 
@@ -608,37 +734,40 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     _searchController.clear();
     setState(() {
       _searchQuery = '';
-      _selectedCategory = 'All';
+      _selectedLocation = 'All';
     });
   }
 
-  List<String> _getAvailableCategories() {
-    final Set<String> categories = {'All'};
-
+  List<String> _getAvailableLocations() {
+    final locations = <String>{};
     for (final template in _allTemplates) {
+      if (template.id == 'blank') continue;
       if (template.location.isNotEmpty) {
-        categories.add(template.location);
+        locations.add(template.location);
       }
     }
-
-    return categories.toList()..sort();
+    final sorted = locations.toList()..sort();
+    return ['All', ...sorted];
   }
 
   List<PostTemplate> _getFilteredTemplates(List<PostTemplate> templates) {
     return templates.where((template) {
+      final isBlank = template.id == 'blank';
+
       // Search filter
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final matchesSearch = template.title.toLowerCase().contains(query) ||
             template.description.toLowerCase().contains(query) ||
-            template.location.toLowerCase().contains(query);
+            template.location.toLowerCase().contains(query) ||
+            template.category.label.toLowerCase().contains(query);
 
         if (!matchesSearch) return false;
       }
 
-      // Location filter
-      if (_selectedCategory != 'All') {
-        if (template.location != _selectedCategory) return false;
+      // Location filter — blank slate stays available regardless of location.
+      if (!isBlank && _selectedLocation != 'All') {
+        if (template.location != _selectedLocation) return false;
       }
 
       return true;

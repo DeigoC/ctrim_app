@@ -45,7 +45,12 @@ void main() {
           'tpl1',
           baseLocalMap(
             headMedia: [
-              {'title': 'Cover', 'src': 'cover.jpg', 'type': 'img', 'thumbnailSrc': null},
+              {
+                'title': 'Cover',
+                'src': 'cover.jpg',
+                'type': 'img',
+                'thumbnailSrc': null
+              },
             ],
             roles: [
               {
@@ -88,6 +93,21 @@ void main() {
         expect(period.toJson(true)['IsPeriodParent'], true);
       });
 
+      test('defaults Category to service when missing', () {
+        final template =
+            PostTemplate.fromMap(true, 'tpl-plain', baseLocalMap());
+        expect(template.category, PostTemplateCategory.service);
+        expect(template.toJson(true)['Category'], 'service');
+      });
+
+      test('parses Category cellGroup', () {
+        final map = baseLocalMap();
+        map['Category'] = 'cellGroup';
+        final template = PostTemplate.fromMap(true, 'tpl-cg-cat', map);
+        expect(template.category, PostTemplateCategory.cellGroup);
+        expect(template.toJson(true)['Category'], 'cellGroup');
+      });
+
       test('defaults CellGroupIDs to empty and reads list', () {
         final plain = PostTemplate.fromMap(true, 'tpl-plain', baseLocalMap());
         expect(plain.cellGroupIDs, isEmpty);
@@ -107,7 +127,8 @@ void main() {
         map['ExpectedAttendeeUserIDs'] = <String>['u1', 'u2'];
         final withExpected = PostTemplate.fromMap(true, 'tpl-exp', map);
         expect(withExpected.expectedAttendeeUserIDs, ['u1', 'u2']);
-        expect(withExpected.toJson(true)['ExpectedAttendeeUserIDs'], ['u1', 'u2']);
+        expect(
+            withExpected.toJson(true)['ExpectedAttendeeUserIDs'], ['u1', 'u2']);
       });
 
       test('accepts Hive-style Map<dynamic, dynamic> nested entries', () {
@@ -166,10 +187,20 @@ void main() {
           'key-pool',
           baseLocalMap(
             headMediaPool: [
-              {'title': 'Head', 'src': 'head.jpg', 'type': 'img', 'thumbnailSrc': null},
+              {
+                'title': 'Head',
+                'src': 'head.jpg',
+                'type': 'img',
+                'thumbnailSrc': null
+              },
             ],
             bodyMediaPool: [
-              {'title': 'Body', 'src': 'body.jpg', 'type': 'img', 'thumbnailSrc': null},
+              {
+                'title': 'Body',
+                'src': 'body.jpg',
+                'type': 'img',
+                'thumbnailSrc': null
+              },
             ],
           ),
         );
@@ -184,7 +215,12 @@ void main() {
           'key-pool-fallback',
           baseLocalMap(
             headMediaPool: [
-              {'title': 'Head', 'src': 'head.jpg', 'type': 'img', 'thumbnailSrc': null},
+              {
+                'title': 'Head',
+                'src': 'head.jpg',
+                'type': 'img',
+                'thumbnailSrc': null
+              },
             ],
           ),
         );
@@ -222,7 +258,8 @@ void main() {
       test('prepends a new log entry', () {
         final template = PostTemplate.fromMap(true, 'add-log', baseLocalMap());
         template.addLog(log: 'Created', uid: 'u1', ts: DateTime(2026, 8, 1));
-        template.addLog(log: 'Updated cover', uid: 'u2', ts: DateTime(2026, 8, 2));
+        template.addLog(
+            log: 'Updated cover', uid: 'u2', ts: DateTime(2026, 8, 2));
 
         expect(template.logs.length, 2);
         expect(template.logs.first['log'], 'Updated cover');
@@ -243,22 +280,48 @@ void main() {
           'roundtrip',
           baseLocalMap(
             headMedia: [
-              {'title': 'Cover', 'src': 'cover.jpg', 'type': 'img', 'thumbnailSrc': null},
+              {
+                'title': 'Cover',
+                'src': 'cover.jpg',
+                'type': 'img',
+                'thumbnailSrc': null
+              },
             ],
           ),
         );
-        original.addLog(log: 'Created', uid: 'u1', ts: DateTime(2026, 8, 1, 12));
+        original.addLog(
+            log: 'Created', uid: 'u1', ts: DateTime(2026, 8, 1, 12));
 
         final json = original.toJson(true);
         json['id'] = original.id;
-        final restored = PostTemplate.fromMap(true, json['id'] as String, Map<String, dynamic>.from(json));
+        final restored = PostTemplate.fromMap(
+            true, json['id'] as String, Map<String, dynamic>.from(json));
 
         expect(restored.title, original.title);
         expect(restored.headMedia.single['src'], 'cover.jpg');
         expect(restored.startTime, original.startTime);
+        expect(restored.category, PostTemplateCategory.service);
         expect(restored.logs.single['log'], 'Created');
         expect(restored.logs.single['uid'], 'u1');
         expect(restored.logs.single['ts'], DateTime(2026, 8, 1, 12));
+      });
+    });
+
+    group('PostTemplateCategory', () {
+      test('fromFirestore maps known values and defaults unknowns to service',
+          () {
+        expect(PostTemplateCategory.fromFirestore('cellGroup'),
+            PostTemplateCategory.cellGroup);
+        expect(PostTemplateCategory.fromFirestore('CELLGROUP'),
+            PostTemplateCategory.cellGroup);
+        expect(PostTemplateCategory.fromFirestore('service'),
+            PostTemplateCategory.service);
+        expect(PostTemplateCategory.fromFirestore(null),
+            PostTemplateCategory.service);
+        expect(PostTemplateCategory.fromFirestore(''),
+            PostTemplateCategory.service);
+        expect(PostTemplateCategory.fromFirestore('other'),
+            PostTemplateCategory.service);
       });
     });
   });

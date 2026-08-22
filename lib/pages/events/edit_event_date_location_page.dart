@@ -258,15 +258,33 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        onPressed: _onSelectStartClick,
-                        icon: Icon(
-                          Icons.edit,
-                          color: Theme.of(context).colorScheme.primary,
+                      if (_timeOnly)
+                        IconButton(
+                          onPressed: _onSelectStartTimeOnly,
+                          icon: Icon(
+                            Icons.edit,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          tooltip: 'Edit start time',
+                        )
+                      else ...[
+                        IconButton(
+                          onPressed: _onSelectStartDateOnly,
+                          icon: Icon(
+                            Icons.calendar_today,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          tooltip: 'Edit start date',
                         ),
-                        tooltip:
-                            _timeOnly ? 'Edit start time' : 'Edit start date',
-                      ),
+                        IconButton(
+                          onPressed: _onSelectEventStartTimeOnly,
+                          icon: Icon(
+                            Icons.schedule,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          tooltip: 'Edit start time',
+                        ),
+                      ],
                       IconButton(
                         onPressed: _onDeleteStartTimeClick,
                         icon: Icon(
@@ -659,12 +677,60 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   void _onSelectStartClick() {
     if (_timeOnly) {
       _onSelectStartTimeOnly();
-    } else {
-      _onSelectStartDateClick();
+      return;
     }
+    if (_start == null) {
+      _onSelectStartDateOnly();
+      return;
+    }
+    _showStartDateTimeEditSheet();
   }
 
-  void _onSelectStartDateClick() {
+  void _showStartDateTimeEditSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                child: Text(
+                  'Edit start',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_today),
+                title: const Text('Change date'),
+                subtitle: const Text('Keep the current start time'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _onSelectStartDateOnly();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.schedule),
+                title: const Text('Change start time'),
+                subtitle: const Text('Keep the current calendar date'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _onSelectEventStartTimeOnly();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _onSelectStartDateOnly() {
     final hadExistingStart = _start != null;
     showDatePicker(
             context: context,
@@ -694,6 +760,26 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
 
       await _onSelectStartTime(selectedStartDate);
     });
+  }
+
+  Future<void> _onSelectEventStartTimeOnly() async {
+    if (_start == null) return;
+    final selectedTOD = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_start!),
+      helpText: 'Event start time',
+    );
+    if (selectedTOD == null || !mounted) return;
+    await _applyStartDateTime(
+      DateTime(
+        _start!.year,
+        _start!.month,
+        _start!.day,
+        selectedTOD.hour,
+        selectedTOD.minute,
+      ),
+      promptForDuration: false,
+    );
   }
 
   Future<void> _onSelectStartTimeOnly() async {

@@ -101,7 +101,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           scrolledUnderElevation: 1,
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _loading ? null : _onCreateTemplateTap,
+          onPressed: _loading ? null : () => _onCreateTemplateTap(),
           icon: const Icon(Icons.add),
           label: const Text('New template'),
         ),
@@ -166,46 +166,146 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                 .clamp(16.0, double.infinity)
             : 16.0;
 
-        if (!isWide) {
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(
-                horizontalPadding, 16, horizontalPadding, 96),
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemCount: templates.length,
-            itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
-          );
-        }
-
-        final left = <PostTemplate>[];
-        final right = <PostTemplate>[];
-        for (var i = 0; i < templates.length; i++) {
-          (i.isEven ? left : right).add(templates[i]);
-        }
-
-        Widget column(List<PostTemplate> items) {
-          return Column(
-            children: [
-              for (var i = 0; i < items.length; i++) ...[
-                if (i > 0) const SizedBox(height: 12),
-                _buildTemplateTile(items[i]),
-              ],
-            ],
-          );
-        }
-
-        return SingleChildScrollView(
+        return ListView(
           padding:
               EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: column(left)),
-              const SizedBox(width: 16),
-              Expanded(child: column(right)),
+          children: [
+            for (var i = 0; i < PostTemplateCategory.values.length; i++) ...[
+              if (i > 0) const SizedBox(height: 20),
+              _buildCategorySection(
+                category: PostTemplateCategory.values[i],
+                templates: templates
+                    .where((t) => t.category == PostTemplateCategory.values[i])
+                    .toList(),
+                isWide: isWide,
+              ),
             ],
-          ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildCategorySection({
+    required PostTemplateCategory category,
+    required List<PostTemplate> templates,
+    required bool isWide,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isServices = category == PostTemplateCategory.service;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isServices ? Icons.event_outlined : Icons.groups_outlined,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.label,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isServices
+                            ? 'Sunday services and similar programmes'
+                            : 'Cell group meetings',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (templates.isEmpty)
+              Text(
+                'No ${category.label.toLowerCase()} templates yet.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              )
+            else
+              _buildSectionTiles(templates, isWide),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    _onCreateTemplateTap(initialCategory: category),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text('Add ${category.label} template'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTiles(List<PostTemplate> templates, bool isWide) {
+    if (!isWide) {
+      return Column(
+        children: [
+          for (var i = 0; i < templates.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTemplateTile(templates[i]),
+          ],
+        ],
+      );
+    }
+
+    final left = <PostTemplate>[];
+    final right = <PostTemplate>[];
+    for (var i = 0; i < templates.length; i++) {
+      (i.isEven ? left : right).add(templates[i]);
+    }
+
+    Widget column(List<PostTemplate> items) {
+      return Column(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTemplateTile(items[i]),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: column(left)),
+        const SizedBox(width: 16),
+        Expanded(child: column(right)),
+      ],
     );
   }
 
@@ -258,6 +358,15 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                         ),
                       ),
                     ],
+                    if (template.location.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        template.location,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -297,8 +406,12 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
   }
 
-  Future<void> _onCreateTemplateTap() async {
-    final details = await _showNewTemplateDetailsDialog();
+  Future<void> _onCreateTemplateTap({
+    PostTemplateCategory? initialCategory,
+  }) async {
+    final details = await _showNewTemplateDetailsDialog(
+      initialCategory: initialCategory ?? PostTemplateCategory.service,
+    );
     if (details == null || !mounted) return;
 
     final location = _appContext.currentUser.location;
@@ -306,6 +419,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       title: details.title,
       description: details.description,
       location: location,
+      category: details.category,
     );
     draft.addLog(
       log: 'Created',
@@ -394,14 +508,17 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     await _openEditTemplate(duplicated!);
   }
 
-  Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog() {
+  Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog({
+    required PostTemplateCategory initialCategory,
+  }) {
     // Material AlertDialog (not .adaptive): CupertinoAlertDialog on macOS/iOS
     // cannot host Material TextFormFields and throws a layout / Material error.
     // Controllers live on [_NewTemplateDetailsDialog] so they are not disposed
     // while the route is still animating out (which caused "used after disposed").
     return showDialog<_NewTemplateDetails>(
       context: context,
-      builder: (_) => const _NewTemplateDetailsDialog(),
+      builder: (_) =>
+          _NewTemplateDetailsDialog(initialCategory: initialCategory),
     );
   }
 
@@ -409,6 +526,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     required String title,
     required String description,
     required String location,
+    required PostTemplateCategory category,
   }) {
     return PostTemplate.fromMap(true, 'temp', {
       'Title': title,
@@ -416,6 +534,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'HeadTitle': title,
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': location,
+      'Category': category.firestoreValue,
       'Topics': [NotificationTopics.locationUmbrella(location)],
       'TagIDs': <String>[],
       'CellGroupIDs': <String>[],
@@ -510,14 +629,18 @@ class _NewTemplateDetails {
   const _NewTemplateDetails({
     required this.title,
     required this.description,
+    required this.category,
   });
 
   final String title;
   final String description;
+  final PostTemplateCategory category;
 }
 
 class _NewTemplateDetailsDialog extends StatefulWidget {
-  const _NewTemplateDetailsDialog();
+  const _NewTemplateDetailsDialog({required this.initialCategory});
+
+  final PostTemplateCategory initialCategory;
 
   @override
   State<_NewTemplateDetailsDialog> createState() =>
@@ -528,12 +651,14 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  late PostTemplateCategory _category;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
+    _category = widget.initialCategory;
   }
 
   @override
@@ -549,6 +674,7 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
       _NewTemplateDetails(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
+        category: _category,
       ),
     );
   }
@@ -589,6 +715,25 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
                   hintText: 'Short summary for admins',
                   border: OutlineInputBorder(),
                 ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<PostTemplateCategory>(
+                initialValue: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final category in PostTemplateCategory.values)
+                    DropdownMenuItem<PostTemplateCategory>(
+                      value: category,
+                      child: Text(category.label),
+                    ),
+                ],
+                onChanged: (selected) {
+                  if (selected == null) return;
+                  setState(() => _category = selected);
+                },
               ),
             ],
           ),
