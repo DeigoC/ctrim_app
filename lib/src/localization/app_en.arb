@@ -1117,5 +1117,29 @@
   "churchHubStatsRetry": "Retry",
   "@churchHubStatsRetry": {
     "description": "Retry loading church location snapshot"
+  },
+  "churchHubPagesTitle": "More about this church",
+  "@churchHubPagesTitle": {
+    "description": "Section title for extra church hub pages"
+  },
+  "churchHubNoPages": "No extra pages yet.",
+  "@churchHubNoPages": {
+    "description": "Empty state when a church hub has no nested pages"
+  },
+  "churchHubAddPage": "Add page",
+  "@churchHubAddPage": {
+    "description": "Button for area admins to add a nested church page"
+  },
+  "churchHubAddPageDescription": "Add a page for getting here, Sunday service, or other details.",
+  "@churchHubAddPageDescription": {
+    "description": "Helper text on the add church page card"
+  },
+  "churchHubPagesError": "Could not load extra pages.",
+  "@churchHubPagesError": {
+    "description": "Error when nested church pages fail to load"
+  },
+  "churchHubPagesRetry": "Retry",
+  "@churchHubPagesRetry": {
+    "description": "Retry loading nested church pages"
   }
 }

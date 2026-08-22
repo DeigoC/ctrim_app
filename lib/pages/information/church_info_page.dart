@@ -6,6 +6,7 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/cell_group.dart';
 import '../../models/event/event_head.dart';
 import '../../models/info/church_info.dart';
+import '../../models/info/church_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/church_location_stats.dart';
@@ -14,8 +15,10 @@ import '../../utility/refresh_cooldown.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/posts/post_head.dart';
 import '../cell_groups/cell_group_detail_page.dart';
+import 'church_page_info_page.dart';
 import 'edit_info_body_page.dart';
 import 'info_detail_scaffold.dart';
+import 'info_tab_widgets.dart';
 
 class ChurchInfoPage extends StatefulWidget {
   const ChurchInfoPage({super.key, required this.documentId});
@@ -37,6 +40,8 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   ChurchInfo? _church;
   ChurchLocationStats? _stats;
   Object? _statsError;
+  List<ChurchPage> _pages = const [];
+  Object? _pagesError;
 
   @override
   void initState() {
@@ -50,6 +55,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       _loading = true;
       _error = null;
       _statsError = null;
+      _pagesError = null;
     });
     try {
       final church = await _repository.fetchChurchById(
@@ -60,11 +66,24 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
 
       ChurchLocationStats? stats;
       Object? statsError;
-      if (church != null && church.hasLocation) {
+      List<ChurchPage> pages = const [];
+      Object? pagesError;
+      if (church != null) {
+        final pagesFuture = _repository.fetchChurchPages(
+          church.id,
+          forceRefresh: forceRefresh,
+        );
+        if (church.hasLocation) {
+          try {
+            stats = await _loadStats(church, appContext);
+          } catch (e) {
+            statsError = e;
+          }
+        }
         try {
-          stats = await _loadStats(church, appContext);
+          pages = await pagesFuture;
         } catch (e) {
-          statsError = e;
+          pagesError = e;
         }
       }
 
@@ -79,6 +98,8 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
         _church = church;
         _stats = stats;
         _statsError = statsError;
+        _pages = pages;
+        _pagesError = pagesError;
         _loading = false;
       });
     } catch (e) {
@@ -131,6 +152,34 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     }
   }
 
+  Future<void> _openChurchPage(final ChurchPage page) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChurchPageInfoPage(
+          churchId: page.churchId,
+          documentId: page.id,
+        ),
+      ),
+    );
+    if (mounted) {
+      await _load(forceRefresh: false);
+    }
+  }
+
+  Future<void> _openAddPage(final ChurchInfo church) async {
+    final changed = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditInfoBodyPage.forChurchPage(churchId: church.id),
+          ),
+        ) ??
+        false;
+    if (changed && mounted) {
+      await _load(forceRefresh: true);
+    }
+  }
+
   Future<void> _openMaps(final String url) async {
     await launchUrlString(url, mode: LaunchMode.externalApplication)
         .onError((error, stackTrace) async {
@@ -146,7 +195,9 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final canManageInfo =
-        Provider.of<AppContext>(context).currentUser.canManageInfo;
+        context.select((AppContext c) => c.currentUser.canManageInfo);
+    final canManageChurchPages =
+        context.select((AppContext c) => c.currentUser.canManageChurchPages);
 
     if (_loading && _church == null) {
       return const Scaffold(
@@ -192,12 +243,27 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
         church: church,
         onOpenMaps: church.hasMapLink ? () => _openMaps(church.mapLink) : null,
       ),
-      aboveBody: _ChurchHubSnapshot(
-        church: church,
-        stats: _stats,
-        statsError: _statsError,
-        loading: _loading,
-        onRetryStats: () => _load(forceRefresh: false),
+      aboveBody: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ChurchHubSnapshot(
+            church: church,
+            stats: _stats,
+            statsError: _statsError,
+            loading: _loading,
+            onRetryStats: () => _load(forceRefresh: false),
+          ),
+          const SizedBox(height: 20),
+          _ChurchHubPages(
+            pages: _pages,
+            pagesError: _pagesError,
+            loading: _loading,
+            canAdd: canManageChurchPages,
+            onRetry: () => _load(forceRefresh: false),
+            onOpenPage: _openChurchPage,
+            onAddPage: () => _openAddPage(church),
+          ),
+        ],
       ),
     );
   }
@@ -589,6 +655,111 @@ class _CellGroupsList extends StatelessWidget {
               ),
             );
           }),
+      ],
+    );
+  }
+}
+
+class _ChurchHubPages extends StatelessWidget {
+  const _ChurchHubPages({
+    required this.pages,
+    required this.pagesError,
+    required this.loading,
+    required this.canAdd,
+    required this.onRetry,
+    required this.onOpenPage,
+    required this.onAddPage,
+  });
+
+  final List<ChurchPage> pages;
+  final Object? pagesError;
+  final bool loading;
+  final bool canAdd;
+  final VoidCallback onRetry;
+  final ValueChanged<ChurchPage> onOpenPage;
+  final VoidCallback onAddPage;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    if (pagesError != null && pages.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.churchHubPagesError,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.error,
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(l10n.churchHubPagesRetry),
+          ),
+        ],
+      );
+    }
+
+    if (pages.isEmpty && loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (pages.isEmpty && !canAdd) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.churchHubPagesTitle,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (pages.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.churchHubNoPages,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        else
+          ...pages.map(
+            (page) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InfoTopicListCard(
+                title: page.title,
+                description: page.summary,
+                imageUrl: page.imgSrc,
+                heroTag: 'info_church_page_${page.churchId}_${page.id}',
+                fallbackIcon: Icons.article_outlined,
+                onTap: () => onOpenPage(page),
+              ),
+            ),
+          ),
+        if (canAdd)
+          InfoAddContentCard(
+            label: l10n.churchHubAddPage,
+            description: l10n.churchHubAddPageDescription,
+            onTap: onAddPage,
+          ),
       ],
     );
   }

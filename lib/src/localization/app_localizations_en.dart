@@ -846,4 +846,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchHubStatsRetry => 'Retry';
+
+  @override
+  String get churchHubPagesTitle => 'More about this church';
+
+  @override
+  String get churchHubNoPages => 'No extra pages yet.';
+
+  @override
+  String get churchHubAddPage => 'Add page';
+
+  @override
+  String get churchHubAddPageDescription =>
+      'Add a page for getting here, Sunday service, or other details.';
+
+  @override
+  String get churchHubPagesError => 'Could not load extra pages.';
+
+  @override
+  String get churchHubPagesRetry => 'Retry';
 }

@@ -46,7 +46,8 @@ These are not five separate “apps” — they stack:
 | Create posts / use post templates | — | — | — | Yes | Yes |
 | Edit **this** post (if author or contributor) | — | If listed | If listed | If listed | If listed |
 | Register / add people (incl. placeholders) | — | — | — | Yes | Yes |
-| Edit Information (churches, testimonials, CTRIM pages) | — | — | — | Yes | Yes |
+| Edit Information (church overview, testimonials, CTRIM pages) | — | — | — | Yes | Yes |
+| Extra pages on a church hub | — | — | — | — | Yes |
 | Manage tags, locations, cell-group **catalogue** | — | — | — | — | Yes |
 
 \*Signed-in people with access to Personal can open Volunteers when that section is available.
@@ -63,13 +64,13 @@ Leaders should be able to:
 
 - Create posts (and use templates)  
 - Add / register people they need for their work (including placeholders when needed)  
-- Edit the **Information** (CTRIM) section — churches, testimonials, and related pages  
+- Edit the **Information** (CTRIM) section — church overviews, testimonials, and related pages (not the extra pages on a church hub)  
 
 They are not a catch-all for every admin control; area-scoped settings (tags, locations, cell-group catalogue admin, and similar) stay with **Area admin** / **Site admin**.
 
 ## Area admin
 
-**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, and cell groups. Controls will continue to be gated by area assignment as that model lands fully.
+**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, cell groups, and extra pages on a church hub. Controls will continue to be gated by area assignment as that model lands fully.
 
 ## Site admin *(planned)*
 

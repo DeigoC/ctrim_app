@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
@@ -149,6 +150,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
     required this.notFoundMessage,
     required this.openEditor,
     required this.buildScaffold,
+    this.canEdit,
   });
 
   final Future<T?> Function({required bool forceRefresh}) load;
@@ -156,6 +158,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
   final String pageTitleFallback;
   final String notFoundMessage;
   final Future<bool> Function(BuildContext context, T info) openEditor;
+  final bool Function(User user)? canEdit;
   final Widget Function({
     required BuildContext context,
     required T info,
@@ -222,8 +225,8 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final canManageInfo =
-        context.select((AppContext c) => c.currentUser.canManageInfo);
+    final user = context.select((AppContext c) => c.currentUser);
+    final canEdit = (widget.canEdit ?? (u) => u.canManageInfo)(user);
 
     return FutureBuilder<T?>(
       future: _future,
@@ -268,7 +271,7 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
           context: context,
           info: info,
           onRefresh: _refresh,
-          onEdit: canManageInfo ? () => _openEditor(info) : null,
+          onEdit: canEdit ? () => _openEditor(info) : null,
         );
       },
     );

@@ -137,6 +137,9 @@ class User {
   /// Churches, testimonials, and CTRIM info add/edit/delete.
   bool get canManageInfo => isLeader;
 
+  /// Nested church hub pages (area admin). Leaders still edit the church overview.
+  bool get canManageChurchPages => _isAreaAdmin;
+
   /// Register/edit volunteers, user tags, post tags, locations.
   bool get canManageVolunteers => _isAreaAdmin;
 

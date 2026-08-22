@@ -9,7 +9,7 @@ The **CTRIM** tab holds longer-lived information for visitors — not the day-to
 | Section | Purpose |
 |---------|---------|
 | **About** | Orientation to CTRIM / the community — typically mission, vision, and core values, often with imagery |
-| **Churches** | A **hub per church** (for example Belfast): cover and gallery, maps link, and a snapshot of that location — recent posts, cell groups, and how many people are listed there — plus the longer written overview |
+| **Churches** | A **hub per church** (for example Belfast): cover and gallery, maps link, extra pages (getting here, Sunday service, and similar), and a snapshot of that location — recent posts, cell groups, and how many people are listed there — plus the longer written overview |
 | **Testimonials** | Stories and testimonies (same kind of rich layout) |
 | **Information** | Longer CTRIM info pages, grouped into **Principles** (“Our core ideologies”) and **Teachings** (“Simple lessons to get started!”) |
 
@@ -17,9 +17,13 @@ Content is meant to be readable on phone and web, with richer formatting than a 
 
 Each church is linked to **one location** (the same places used on posts, people, and cell groups). Opening a church shows counts only — not names — for posts in the last three months, cell groups at that place, and people with a profile there. **Open in Maps** appears when a maps link has been added.
 
+A church hub can also have extra **pages** for details that belong to that church (for example getting here or Sunday service). Anyone can read them; only **area admins** can add or change those extra pages. Leaders can still edit the church overview, location, and maps.
+
 ## Who can edit
 
-**Leaders** (including **area admins**, and later **site admins**) can add and edit this content.
+**Leaders** (including **area admins**, and later **site admins**) can add and edit church overviews, testimonials, and CTRIM information pages.
+
+**Area admins** can also add, edit, and delete the extra pages on a church hub.
 
 **Guests** and ordinary **signed-in members** cannot — they never see Add/Edit controls for these pages.
 

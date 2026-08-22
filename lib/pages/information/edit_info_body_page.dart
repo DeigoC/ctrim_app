@@ -1,6 +1,8 @@
 import 'package:ctrim_app/models/info/church_info.dart';
+import 'package:ctrim_app/models/info/church_page.dart';
 import 'package:ctrim_app/models/info/ctrim_info.dart';
 import 'package:ctrim_app/models/info/testimonial_info.dart';
+import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 import 'package:ctrim_app/utility/church_location.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
@@ -15,12 +17,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
-enum InfoEditorSection { church, testimonial, ctrim }
+enum InfoEditorSection { church, churchPage, testimonial, ctrim }
 
 class EditInfoBodyPage extends StatefulWidget {
   const EditInfoBodyPage._({
     required this.section,
     this.churchInfo,
+    this.churchPage,
+    this.churchId,
     this.testimonialInfo,
     this.ctrimInfo,
     this.initialCtrimCategory = CtrimInfoCategory.principle,
@@ -29,6 +33,17 @@ class EditInfoBodyPage extends StatefulWidget {
   factory EditInfoBodyPage.forChurch({final ChurchInfo? info}) {
     return EditInfoBodyPage._(
         section: InfoEditorSection.church, churchInfo: info);
+  }
+
+  factory EditInfoBodyPage.forChurchPage({
+    required final String churchId,
+    final ChurchPage? info,
+  }) {
+    return EditInfoBodyPage._(
+      section: InfoEditorSection.churchPage,
+      churchId: churchId,
+      churchPage: info,
+    );
   }
 
   factory EditInfoBodyPage.forTestimonial({final TestimonialInfo? info}) {
@@ -48,6 +63,8 @@ class EditInfoBodyPage extends StatefulWidget {
   }
 
   final ChurchInfo? churchInfo;
+  final ChurchPage? churchPage;
+  final String? churchId;
   final CtrimInfo? ctrimInfo;
   final CtrimInfoCategory initialCtrimCategory;
   final InfoEditorSection section;
@@ -55,6 +72,7 @@ class EditInfoBodyPage extends StatefulWidget {
 
   bool get isEditing => switch (section) {
         InfoEditorSection.church => churchInfo != null,
+        InfoEditorSection.churchPage => churchPage != null,
         InfoEditorSection.testimonial => testimonialInfo != null,
         InfoEditorSection.ctrim => ctrimInfo != null,
       };
@@ -165,17 +183,15 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     super.didChangeDependencies();
     if (_checkedAccess) return;
     _checkedAccess = true;
-    final canManage = Provider.of<AppContext>(context, listen: false)
-        .currentUser
-        .canManageInfo;
+    final user = Provider.of<AppContext>(context, listen: false).currentUser;
+    final canManage = widget.section == InfoEditorSection.churchPage
+        ? user.canManageChurchPages
+        : user.canManageInfo;
     if (!canManage) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Only area admins and leaders can edit this content.'),
-          ),
+          SnackBar(content: Text(_accessDeniedMessage())),
         );
         _popRouteAfterAllowing();
       });
@@ -357,7 +373,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       ),
     ];
 
-    if (widget.section != InfoEditorSection.church) {
+    if (widget.section != InfoEditorSection.church &&
+        widget.section != InfoEditorSection.churchPage) {
       fields.addAll([
         const SizedBox(height: 12),
         TextFormField(
@@ -379,9 +396,9 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
         TextFormField(
           controller: _summaryController,
           decoration: InputDecoration(
-            labelText: widget.section == InfoEditorSection.church
-                ? 'Summary / subtitle'
-                : 'Summary',
+            labelText: widget.section == InfoEditorSection.testimonial
+                ? 'Summary'
+                : 'Summary / subtitle',
           ),
           minLines: 2,
           maxLines: 3,
@@ -727,11 +744,9 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     }
 
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!appContext.currentUser.canManageInfo) {
+    if (!_canEditSection(appContext.currentUser)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Only area admins and leaders can edit this content.')),
+        SnackBar(content: Text(_accessDeniedMessage())),
       );
       return;
     }
@@ -805,6 +820,33 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
                 ? UserActivityMessages.createdChurchRecord
                 : UserActivityMessages.editedChurchRecord,
             documentId: church.id,
+          );
+          break;
+        case InfoEditorSection.churchPage:
+          final parentChurchId = widget.churchId ?? widget.churchPage?.churchId;
+          if (parentChurchId == null || parentChurchId.isEmpty) {
+            throw StateError('Church page editor is missing churchId.');
+          }
+          final existingPage = widget.churchPage;
+          final page = ChurchPage(
+            id: existingPage?.id ??
+                _generateDocumentId(_primaryController.text, 'church_page'),
+            churchId: parentChurchId,
+            title: _primaryController.text.trim(),
+            body: body,
+            imageSources: imageSources,
+            summary: _summaryController.text.trim(),
+            updatedBy: appContext.currentUser.id,
+            updatedAt: now,
+            displayOrder: displayOrder,
+          );
+          await _infoRepository.saveChurchPage(page);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingPage == null
+                ? UserActivityMessages.createdChurchPage
+                : UserActivityMessages.editedChurchPage,
+            documentId: page.id,
           );
           break;
         case InfoEditorSection.testimonial:
@@ -885,14 +927,16 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
 
   Future<void> _delete() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!appContext.currentUser.canManageInfo) {
+    if (!_canEditSection(appContext.currentUser)) {
       return;
     }
 
     final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
       title: 'Delete this content?',
-      content: 'This cannot be undone.',
+      content: widget.section == InfoEditorSection.church
+          ? 'This also deletes extra pages added for this church. This cannot be undone.'
+          : 'This cannot be undone.',
       confirmText: 'Delete',
       isDestructive: true,
     );
@@ -912,6 +956,18 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             actorUserId: appContext.currentUser.id,
             log: UserActivityMessages.deletedChurchRecord,
             documentId: widget.churchInfo!.id,
+          );
+          break;
+        case InfoEditorSection.churchPage:
+          final parentChurchId = widget.churchId ?? widget.churchPage!.churchId;
+          await _infoRepository.deleteChurchPage(
+            parentChurchId,
+            widget.churchPage!.id,
+          );
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedChurchPage,
+            documentId: widget.churchPage!.id,
           );
           break;
         case InfoEditorSection.testimonial:
@@ -997,6 +1053,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return List<dynamic>.from(widget.churchInfo?.body ?? _emptyBody);
+      case InfoEditorSection.churchPage:
+        return List<dynamic>.from(widget.churchPage?.body ?? _emptyBody);
       case InfoEditorSection.testimonial:
         return List<dynamic>.from(widget.testimonialInfo?.body ?? _emptyBody);
       case InfoEditorSection.ctrim:
@@ -1008,6 +1066,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return (widget.churchInfo?.displayOrder ?? 0).toString();
+      case InfoEditorSection.churchPage:
+        return (widget.churchPage?.displayOrder ?? 0).toString();
       case InfoEditorSection.testimonial:
         return (widget.testimonialInfo?.displayOrder ?? 0).toString();
       case InfoEditorSection.ctrim:
@@ -1019,6 +1079,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return (widget.churchInfo?.imageSources ?? const <String>[]).join('\n');
+      case InfoEditorSection.churchPage:
+        return (widget.churchPage?.imageSources ?? const <String>[]).join('\n');
       case InfoEditorSection.testimonial:
         return (widget.testimonialInfo?.imageSources ?? const <String>[])
             .join('\n');
@@ -1031,6 +1093,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return widget.churchInfo?.title ?? '';
+      case InfoEditorSection.churchPage:
+        return widget.churchPage?.title ?? '';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo?.name ?? '';
       case InfoEditorSection.ctrim:
@@ -1041,6 +1105,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   String _initialSecondaryValue() {
     switch (widget.section) {
       case InfoEditorSection.church:
+      case InfoEditorSection.churchPage:
         return '';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo?.church ?? '';
@@ -1053,6 +1118,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return widget.churchInfo?.summary ?? '';
+      case InfoEditorSection.churchPage:
+        return widget.churchPage?.summary ?? '';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo?.summary ?? '';
       case InfoEditorSection.ctrim:
@@ -1066,6 +1133,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
         return widget.churchInfo == null
             ? 'Add Church Info'
             : 'Edit Church Info';
+      case InfoEditorSection.churchPage:
+        return widget.churchPage == null
+            ? 'Add Church Page'
+            : 'Edit Church Page';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo == null
             ? 'Add Testimonial'
@@ -1080,6 +1151,9 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       case InfoEditorSection.church:
         return 'Tap here to write about this church — history, location, '
             'meeting times, or anything visitors should know…';
+      case InfoEditorSection.churchPage:
+        return 'Tap here to write this page — getting here, Sunday service, '
+            'or other details visitors should know…';
       case InfoEditorSection.testimonial:
         return 'Tap here to write the testimony…';
       case InfoEditorSection.ctrim:
@@ -1091,6 +1165,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return 'Church title';
+      case InfoEditorSection.churchPage:
+        return 'Page title';
       case InfoEditorSection.testimonial:
         return 'Name';
       case InfoEditorSection.ctrim:
@@ -1101,11 +1177,26 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   String _secondaryLabel() {
     switch (widget.section) {
       case InfoEditorSection.church:
+      case InfoEditorSection.churchPage:
         return '';
       case InfoEditorSection.testimonial:
         return 'Church';
       case InfoEditorSection.ctrim:
         return 'Description';
     }
+  }
+
+  bool _canEditSection(final User user) {
+    if (widget.section == InfoEditorSection.churchPage) {
+      return user.canManageChurchPages;
+    }
+    return user.canManageInfo;
+  }
+
+  String _accessDeniedMessage() {
+    if (widget.section == InfoEditorSection.churchPage) {
+      return 'Only area admins can edit church pages.';
+    }
+    return 'Only area admins and leaders can edit this content.';
   }
 }

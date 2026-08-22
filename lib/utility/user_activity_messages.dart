@@ -14,6 +14,10 @@ class UserActivityMessages {
   static const editedChurchRecord = 'Edited a church record';
   static const deletedChurchRecord = 'Deleted a church record';
 
+  static const createdChurchPage = 'Created a church page';
+  static const editedChurchPage = 'Edited a church page';
+  static const deletedChurchPage = 'Deleted a church page';
+
   static const createdTestimonial = 'Created a testimonial';
   static const editedTestimonial = 'Edited a testimonial';
   static const deletedTestimonial = 'Deleted a testimonial';

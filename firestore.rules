@@ -242,6 +242,24 @@ service cloud.firestore {
            request.auth.token.isLeader == true ||
            request.auth.token.isAreaAdmin == true ||
            request.auth.token.isAdmin == true);
+
+        // Nested church hub pages. Create/update: area admin / admin.
+        // Delete also allows Leaders so church-record cascade can clear pages.
+        match /pages/{pageId} {
+          allow read: if true;
+          allow create, update: if request.auth != null &&
+            (isAreaAdmin() ||
+             isAdmin() ||
+             request.auth.token.isAreaAdmin == true ||
+             request.auth.token.isAdmin == true);
+          allow delete: if request.auth != null &&
+            (isLeader() ||
+             isAreaAdmin() ||
+             isAdmin() ||
+             request.auth.token.isLeader == true ||
+             request.auth.token.isAreaAdmin == true ||
+             request.auth.token.isAdmin == true);
+        }
       }
     }
 

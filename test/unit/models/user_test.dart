@@ -20,6 +20,7 @@ void main() {
         expect(user.isAreaAdmin, false);
         expect(user.isLeader, false);
         expect(user.canManageInfo, false);
+        expect(user.canManageChurchPages, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, false);
         expect(user.canManageCellGroups, false);
@@ -50,6 +51,7 @@ void main() {
         expect(user.isAreaAdmin, true);
         expect(user.isLeader, true);
         expect(user.canManageInfo, true);
+        expect(user.canManageChurchPages, true);
         expect(user.canManageVolunteers, true);
         expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, true);
@@ -70,6 +72,7 @@ void main() {
         );
         expect(user.isLeader, true);
         expect(user.canManageInfo, true);
+        expect(user.canManageChurchPages, true);
         expect(user.canManageVolunteers, true);
         expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, true);
@@ -83,6 +86,7 @@ void main() {
           isLeader: true,
         );
         expect(user.canManageInfo, true);
+        expect(user.canManageChurchPages, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, false);
@@ -91,6 +95,7 @@ void main() {
       test('is false for regular users', () {
         final user = User(id: '1', forname: 'A', surname: 'B');
         expect(user.canManageInfo, false);
+        expect(user.canManageChurchPages, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, false);
         expect(user.canManageCellGroups, false);

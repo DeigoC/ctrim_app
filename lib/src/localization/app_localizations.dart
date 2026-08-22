@@ -1629,6 +1629,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get churchHubStatsRetry;
+
+  /// Section title for extra church hub pages
+  ///
+  /// In en, this message translates to:
+  /// **'More about this church'**
+  String get churchHubPagesTitle;
+
+  /// Empty state when a church hub has no nested pages
+  ///
+  /// In en, this message translates to:
+  /// **'No extra pages yet.'**
+  String get churchHubNoPages;
+
+  /// Button for area admins to add a nested church page
+  ///
+  /// In en, this message translates to:
+  /// **'Add page'**
+  String get churchHubAddPage;
+
+  /// Helper text on the add church page card
+  ///
+  /// In en, this message translates to:
+  /// **'Add a page for getting here, Sunday service, or other details.'**
+  String get churchHubAddPageDescription;
+
+  /// Error when nested church pages fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load extra pages.'**
+  String get churchHubPagesError;
+
+  /// Retry loading nested church pages
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get churchHubPagesRetry;
 }
 
 class _AppLocalizationsDelegate

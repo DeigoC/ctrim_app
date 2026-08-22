@@ -1,5 +1,6 @@
 import '../firebase/db_managers/info_db_manager.dart';
 import '../models/info/church_info.dart';
+import '../models/info/church_page.dart';
 import '../models/info/ctrim_info.dart';
 import '../models/info/testimonial_info.dart';
 import 'local_data_manager.dart';
@@ -10,10 +11,13 @@ class InfoRepository {
     ChurchInfoDBManager? churchInfoDBManager,
     TestimonialInfoDBManager? testimonialInfoDBManager,
     CtrimInfoDBManager? ctrimInfoDBManager,
+    ChurchPageDBManager? churchPageDBManager,
   })  : _localDataManager = localDataManager ?? LocalDataManager(),
         _churchInfoDBManager = churchInfoDBManager ?? ChurchInfoDBManager(),
-        _testimonialInfoDBManager = testimonialInfoDBManager ?? TestimonialInfoDBManager(),
-        _ctrimInfoDBManager = ctrimInfoDBManager ?? CtrimInfoDBManager();
+        _testimonialInfoDBManager =
+            testimonialInfoDBManager ?? TestimonialInfoDBManager(),
+        _ctrimInfoDBManager = ctrimInfoDBManager ?? CtrimInfoDBManager(),
+        _churchPageDBManager = churchPageDBManager ?? ChurchPageDBManager();
 
   static const String churchesSection = 'churches';
   static const String testimonialsSection = 'testimonials';
@@ -23,6 +27,7 @@ class InfoRepository {
   final ChurchInfoDBManager _churchInfoDBManager;
   final TestimonialInfoDBManager _testimonialInfoDBManager;
   final CtrimInfoDBManager _ctrimInfoDBManager;
+  final ChurchPageDBManager _churchPageDBManager;
 
   Future<List<ChurchInfo>> fetchChurches({bool forceRefresh = false}) async {
     return _loadCollection<ChurchInfo>(
@@ -37,11 +42,13 @@ class InfoRepository {
         }
       },
       fetchRemoteLastUpdate: _churchInfoDBManager.fetchLastUpdate,
-      sortRecords: (records) => _sortByDisplayOrder(records, (record) => record.displayOrder, (record) => record.title),
+      sortRecords: (records) => _sortByDisplayOrder(
+          records, (record) => record.displayOrder, (record) => record.title),
     );
   }
 
-  Future<ChurchInfo?> fetchChurchById(final String id, {bool forceRefresh = false}) async {
+  Future<ChurchInfo?> fetchChurchById(final String id,
+      {bool forceRefresh = false}) async {
     final records = await fetchChurches(forceRefresh: forceRefresh);
     return _firstWhereOrNull<ChurchInfo>(records, (record) => record.id == id);
   }
@@ -56,13 +63,68 @@ class InfoRepository {
   }
 
   Future<void> deleteChurchInfo(final String id) async {
+    await _churchPageDBManager.deleteAll(id);
+    await _localDataManager.clearChurchPages(id);
     await _churchInfoDBManager.delete(id);
     await _localDataManager.deleteChurchInfoData(id);
     final lastUpdate = await _churchInfoDBManager.fetchLastUpdate();
-    await _localDataManager.writeInfoCollectionLastUpdate(churchesSection, lastUpdate);
+    await _localDataManager.writeInfoCollectionLastUpdate(
+        churchesSection, lastUpdate);
   }
 
-  Future<List<TestimonialInfo>> fetchTestimonials({bool forceRefresh = false}) async {
+  Future<List<ChurchPage>> fetchChurchPages(
+    final String churchId, {
+    bool forceRefresh = false,
+  }) async {
+    return _loadCollection<ChurchPage>(
+      sectionKey: LocalDataManager.churchPagesSectionKey(churchId),
+      forceRefresh: forceRefresh,
+      fetchRemote: () => _churchPageDBManager.fetchAll(churchId),
+      readLocal: () => _localDataManager.readChurchPages(churchId),
+      writeLocal: (records) async {
+        await _localDataManager.clearChurchPages(churchId);
+        for (final record in records) {
+          await _localDataManager.writeChurchPageData(record);
+        }
+      },
+      fetchRemoteLastUpdate: () =>
+          _churchPageDBManager.fetchLastUpdate(churchId),
+      sortRecords: (records) => _sortByDisplayOrder(
+          records, (record) => record.displayOrder, (record) => record.title),
+    );
+  }
+
+  Future<ChurchPage?> fetchChurchPageById(
+    final String churchId,
+    final String id, {
+    bool forceRefresh = false,
+  }) async {
+    final records =
+        await fetchChurchPages(churchId, forceRefresh: forceRefresh);
+    return _firstWhereOrNull<ChurchPage>(records, (record) => record.id == id);
+  }
+
+  Future<void> saveChurchPage(final ChurchPage page) async {
+    await _churchPageDBManager.save(page.churchId, page.id, page);
+    await _localDataManager.writeChurchPageData(page);
+    await _localDataManager.writeInfoCollectionLastUpdate(
+      LocalDataManager.churchPagesSectionKey(page.churchId),
+      page.updatedAt.millisecondsSinceEpoch,
+    );
+  }
+
+  Future<void> deleteChurchPage(final String churchId, final String id) async {
+    await _churchPageDBManager.delete(churchId, id);
+    await _localDataManager.deleteChurchPageData(churchId, id);
+    final lastUpdate = await _churchPageDBManager.fetchLastUpdate(churchId);
+    await _localDataManager.writeInfoCollectionLastUpdate(
+      LocalDataManager.churchPagesSectionKey(churchId),
+      lastUpdate,
+    );
+  }
+
+  Future<List<TestimonialInfo>> fetchTestimonials(
+      {bool forceRefresh = false}) async {
     return _loadCollection<TestimonialInfo>(
       sectionKey: testimonialsSection,
       forceRefresh: forceRefresh,
@@ -75,13 +137,16 @@ class InfoRepository {
         }
       },
       fetchRemoteLastUpdate: _testimonialInfoDBManager.fetchLastUpdate,
-      sortRecords: (records) => _sortByDisplayOrder(records, (record) => record.displayOrder, (record) => record.name),
+      sortRecords: (records) => _sortByDisplayOrder(
+          records, (record) => record.displayOrder, (record) => record.name),
     );
   }
 
-  Future<TestimonialInfo?> fetchTestimonialById(final String id, {bool forceRefresh = false}) async {
+  Future<TestimonialInfo?> fetchTestimonialById(final String id,
+      {bool forceRefresh = false}) async {
     final records = await fetchTestimonials(forceRefresh: forceRefresh);
-    return _firstWhereOrNull<TestimonialInfo>(records, (record) => record.id == id);
+    return _firstWhereOrNull<TestimonialInfo>(
+        records, (record) => record.id == id);
   }
 
   Future<void> saveTestimonialInfo(final TestimonialInfo info) async {
@@ -97,7 +162,8 @@ class InfoRepository {
     await _testimonialInfoDBManager.delete(id);
     await _localDataManager.deleteTestimonialInfoData(id);
     final lastUpdate = await _testimonialInfoDBManager.fetchLastUpdate();
-    await _localDataManager.writeInfoCollectionLastUpdate(testimonialsSection, lastUpdate);
+    await _localDataManager.writeInfoCollectionLastUpdate(
+        testimonialsSection, lastUpdate);
   }
 
   Future<List<CtrimInfo>> fetchCtrimInfo({bool forceRefresh = false}) async {
@@ -113,11 +179,13 @@ class InfoRepository {
         }
       },
       fetchRemoteLastUpdate: _ctrimInfoDBManager.fetchLastUpdate,
-      sortRecords: (records) => _sortByDisplayOrder(records, (record) => record.displayOrder, (record) => record.title),
+      sortRecords: (records) => _sortByDisplayOrder(
+          records, (record) => record.displayOrder, (record) => record.title),
     );
   }
 
-  Future<CtrimInfo?> fetchCtrimInfoById(final String id, {bool forceRefresh = false}) async {
+  Future<CtrimInfo?> fetchCtrimInfoById(final String id,
+      {bool forceRefresh = false}) async {
     final records = await fetchCtrimInfo(forceRefresh: forceRefresh);
     return _firstWhereOrNull<CtrimInfo>(records, (record) => record.id == id);
   }
@@ -135,7 +203,8 @@ class InfoRepository {
     await _ctrimInfoDBManager.delete(id);
     await _localDataManager.deleteCtrimInfoData(id);
     final lastUpdate = await _ctrimInfoDBManager.fetchLastUpdate();
-    await _localDataManager.writeInfoCollectionLastUpdate(ctrimInfoSection, lastUpdate);
+    await _localDataManager.writeInfoCollectionLastUpdate(
+        ctrimInfoSection, lastUpdate);
   }
 
   Future<List<T>> _loadCollection<T>({
@@ -159,9 +228,12 @@ class InfoRepository {
       rethrow;
     }
 
-    final int localLastUpdate = await _localDataManager.readInfoCollectionLastUpdate(sectionKey);
+    final int localLastUpdate =
+        await _localDataManager.readInfoCollectionLastUpdate(sectionKey);
 
-    if (!forceRefresh && cachedRecords.isNotEmpty && remoteLastUpdate == localLastUpdate) {
+    if (!forceRefresh &&
+        cachedRecords.isNotEmpty &&
+        remoteLastUpdate == localLastUpdate) {
       return sortRecords(cachedRecords);
     }
 
@@ -175,7 +247,8 @@ class InfoRepository {
       rethrow;
     }
     await writeLocal(remoteRecords);
-    await _localDataManager.writeInfoCollectionLastUpdate(sectionKey, remoteLastUpdate);
+    await _localDataManager.writeInfoCollectionLastUpdate(
+        sectionKey, remoteLastUpdate);
     return sortRecords(remoteRecords);
   }
 
@@ -190,12 +263,15 @@ class InfoRepository {
       if (orderCompare != 0) {
         return orderCompare;
       }
-      return secondaryLabel(a).toLowerCase().compareTo(secondaryLabel(b).toLowerCase());
+      return secondaryLabel(a)
+          .toLowerCase()
+          .compareTo(secondaryLabel(b).toLowerCase());
     });
     return sorted;
   }
 
-  T? _firstWhereOrNull<T>(final List<T> records, final bool Function(T record) test) {
+  T? _firstWhereOrNull<T>(
+      final List<T> records, final bool Function(T record) test) {
     for (final record in records) {
       if (test(record)) {
         return record;
