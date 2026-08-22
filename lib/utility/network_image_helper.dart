@@ -14,6 +14,12 @@ class NetworkImageHelper {
     caseSensitive: false,
   );
 
+  /// Matches Google Drive file share links (`/file/d/<id>/…`).
+  static final RegExp _driveFilePathPattern = RegExp(
+    r'drive\.google\.com/file/d/([a-zA-Z0-9_-]+)',
+    caseSensitive: false,
+  );
+
   /// Whether [url] should go through the web CORS proxy.
   static bool needsCorsProxy(String url) {
     final trimmed = url.trim();
@@ -24,6 +30,20 @@ class NetworkImageHelper {
     } catch (_) {
       return false;
     }
+  }
+
+  /// Converts Google Drive share links to direct `uc?id=` URLs; otherwise trims.
+  ///
+  /// Same conversion used when testing media elsewhere in the app (profile
+  /// photos, gallery uploads, etc.).
+  static String sanitizeMediaUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return trimmed;
+    final match = _driveFilePathPattern.firstMatch(trimmed);
+    if (match != null) {
+      return 'https://drive.google.com/uc?id=${match.group(1)!}';
+    }
+    return trimmed;
   }
 
   /// Returns the URL with CORS proxy prefix on web for Drive URLs only.
