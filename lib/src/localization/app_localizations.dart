@@ -1000,16 +1000,16 @@ abstract class AppLocalizations {
   /// **'Scripture'**
   String get cellGroupsOverviewVerseTitle;
 
-  /// Placeholder Bible reference for CG overview
+  /// Bible reference for CG overview scripture card
   ///
   /// In en, this message translates to:
-  /// **'[Verse reference placeholder]'**
+  /// **'Acts 2:42, 46–47'**
   String get cellGroupsOverviewVerseReference;
 
-  /// Placeholder verse body for CG overview
+  /// Verse body for CG overview scripture card
   ///
   /// In en, this message translates to:
-  /// **'\"[Verse text placeholder — replace with the passage that underpins cell group life.]\"'**
+  /// **'\"They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer… They continued to meet together… And the Lord added to their number daily those who were being saved.\"'**
   String get cellGroupsOverviewVerseBody;
 
   /// Placeholder label where overview hero image will go

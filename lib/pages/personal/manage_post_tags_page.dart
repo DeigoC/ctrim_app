@@ -5,7 +5,6 @@ import '../../firebase/db_managers/post_tag_db_manager.dart';
 import '../../models/post_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
-import '../../utility/notification_topics.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -25,38 +24,13 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
   bool _loading = true;
   bool _saving = false;
 
-  static const List<({String name, String color, String streamKind})>
-      _defaultSeedTags = [
-    (
-      name: 'Sunday Worship',
-      color: '#6B4EAA',
-      streamKind: NotificationTopics.kindSundayService
-    ),
-    (
-      name: 'Midweek Service',
-      color: '#3D6B9E',
-      streamKind: NotificationTopics.kindMidweekService
-    ),
-    (
-      name: 'Growth Mentoring',
-      color: '#2E7D6F',
-      streamKind: NotificationTopics.kindGrowthMentoring
-    ),
-    (
-      name: 'Dawn Watch',
-      color: '#C45B2C',
-      streamKind: NotificationTopics.kindDawnWatch
-    ),
-    (
-      name: 'Overnight Prayer',
-      color: '#8B5A2B',
-      streamKind: NotificationTopics.kindOvernightPrayer
-    ),
-    (
-      name: 'Youth Caregroup',
-      color: '#4A7C59',
-      streamKind: NotificationTopics.kindYouthCaregroup
-    ),
+  static const List<({String name, String color})> _defaultSeedTags = [
+    (name: 'Sunday Worship', color: '#6B4EAA'),
+    (name: 'Midweek Service', color: '#3D6B9E'),
+    (name: 'Growth Mentoring', color: '#2E7D6F'),
+    (name: 'Dawn Watch', color: '#C45B2C'),
+    (name: 'Overnight Prayer', color: '#8B5A2B'),
+    (name: 'Youth Caregroup', color: '#4A7C59'),
   ];
 
   @override
@@ -144,17 +118,15 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
               itemCount: tags.length,
               itemBuilder: (_, index) {
                 final tag = tags[index];
-                final streamLabel = tag.isNotifiable
-                    ? l10n.managePostTagsStreamKindHint(tag.streamKind!)
-                    : l10n.managePostTagsNoStream;
                 return Card(
                   child: ListTile(
                     leading: PostTagChip(tag: tag),
                     title: Text(tag.name),
                     subtitle: Text(
-                      '${tag.isActive ? l10n.managePostTagsActive : l10n.managePostTagsInactive} · $streamLabel',
+                      tag.isActive
+                          ? l10n.managePostTagsActive
+                          : l10n.managePostTagsInactive,
                     ),
-                    isThreeLine: true,
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -216,8 +188,6 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
     final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: existing?.name ?? '');
     final colorController = TextEditingController(text: existing?.color ?? '');
-    final streamController =
-        TextEditingController(text: existing?.streamKind ?? '');
     final isEditing = existing != null;
 
     final saved = await showDialog<bool>(
@@ -244,15 +214,6 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
                     hintText: '#6B4EAA',
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: streamController,
-                  decoration: InputDecoration(
-                    labelText: l10n.managePostTagsStreamKindLabel,
-                    hintText: 'sunday-service',
-                    helperText: l10n.managePostTagsStreamKindHelper,
-                  ),
-                ),
               ],
             ),
           ),
@@ -275,16 +236,13 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
     if (saved != true || !mounted) {
       nameController.dispose();
       colorController.dispose();
-      streamController.dispose();
       return;
     }
 
     final name = nameController.text.trim();
     final color = colorController.text.trim();
-    final streamKind = streamController.text.trim();
     nameController.dispose();
     colorController.dispose();
-    streamController.dispose();
 
     setState(() => _saving = true);
     try {
@@ -292,7 +250,7 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
       if (isEditing) {
         existing.setName(name);
         existing.setColor(color.isEmpty ? null : color);
-        existing.setStreamKind(streamKind.isEmpty ? null : streamKind);
+        existing.setStreamKind(null);
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdatePostTag(existing);
         await UserActivityRecorder().record(
@@ -310,7 +268,6 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
         final tag = await _tagDBManager.createTag(
           name: name,
           color: color.isEmpty ? null : color,
-          streamKind: streamKind.isEmpty ? null : streamKind,
           displayOrder: nextOrder,
         );
         appContext.addOrUpdatePostTag(tag);
@@ -411,7 +368,6 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
         final tag = await _tagDBManager.createTag(
           name: seed.name,
           color: seed.color,
-          streamKind: seed.streamKind,
           displayOrder: i + 1,
         );
         appContext.addOrUpdatePostTag(tag);

@@ -41,7 +41,8 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 |------|---------|
 | **Template** | A reusable blueprint for a kind of event (title pattern, location, tags, roles, expected people, and similar). Leaders manage these under Personal → **Post Templates**. |
 | **Bulk create** | Create many dated posts from one template (e.g. a weekly series) without a push blast for every date. |
-| **Post tag** | A label on posts for browsing filters and, when set up, which notification stream a broadcast uses. |
+| **Post tag** | A label on posts for **browsing and filtering** the bulletin (for example Sunday Worship or Midweek). Not used for push notification opt-in. |
+| **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Some lines can be hidden from **guests**. |
 | **My Schedule** | Personal list of programme roles assigned to **you**. |
 | **My Posts** | Shortcut to posts **you** authored — not the full bulletin. |
@@ -49,7 +50,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Period parent** | A post marked as a container for a term or season; other meeting posts can attach underneath it. |
 | **Update log** | Short note organisers write when saving important edits; can notify people who **bookmarked** the post. **Change history** lets anyone open past logs from “Updated … by …”. |
 | **Recent activity** | Short list on a volunteer profile of the last few things that person saved in the app. Anyone who can open the profile sees the last few lines; **area admins** can open the full list. |
-| **Broadcast** | A push organisers send about a post to people who opted into the relevant topics (and optionally people already on roles). |
+| **Broadcast** | A push organisers send about a post to people who opted into **All {location} updates** for that post’s location (and optionally people already on programme roles). |
 
 ## Related pages
 

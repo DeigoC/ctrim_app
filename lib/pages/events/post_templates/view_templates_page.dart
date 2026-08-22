@@ -7,6 +7,7 @@ import '../../../utility/app_context.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import '../../../utility/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../utility/user_activity_messages.dart';
@@ -415,7 +416,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'HeadTitle': title,
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': location,
-      'Topics': [location],
+      'Topics': [NotificationTopics.locationUmbrella(location)],
       'TagIDs': <String>[],
       'CellGroupIDs': <String>[],
       'ExpectedAttendeeUserIDs': <String>[],
@@ -463,9 +464,6 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         .applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
     eventContext.applyExpectedAttendeeUserIDs(
         List<String>.from(postTemplate.expectedAttendeeUserIDs));
-    if (postTemplate.tagIDs.isEmpty && postTemplate.topics.isNotEmpty) {
-      eventContext.metadata.addAllTopics(postTemplate.topics);
-    }
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
     if (postTemplate.leadSpeakerUID != null &&
         postTemplate.leadSpeakerUID!.isNotEmpty) {

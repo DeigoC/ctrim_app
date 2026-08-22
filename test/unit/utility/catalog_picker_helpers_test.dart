@@ -1,25 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:ctrim_app/models/catalog_picker_entry.dart';
 import 'package:ctrim_app/models/cell_group.dart';
 import 'package:ctrim_app/models/post_tag.dart';
-import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/catalog_picker_helpers.dart';
 import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
   group('CatalogPickerHelpers', () {
-    late AppLocalizations l10n;
-
-    setUpAll(() async {
-      l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    });
-
-    test('fromPostTags maps notifiable tags with stream subtitle', () {
+    test('fromPostTags maps content tags for bulletin filtering', () {
       final entries = CatalogPickerHelpers.fromPostTags(
         [
           PostTag(
@@ -29,13 +18,12 @@ void main() {
           ),
           PostTag(id: 'youth', name: 'Youth'),
         ],
-        l10n: l10n,
       );
 
       expect(entries.length, 2);
-      expect(entries.first.isNotifiable, isTrue);
-      expect(entries.first.subtitle, contains('Sunday Worship Service'));
-      expect(entries.last.isNotifiable, isFalse);
+      expect(entries.first.label, 'Sunday Worship');
+      expect(entries.first.isNotifiable, isFalse);
+      expect(entries.last.label, 'Youth');
     });
 
     test('filterEntries matches search and notifiable filter', () {

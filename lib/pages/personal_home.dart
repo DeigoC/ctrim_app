@@ -11,7 +11,6 @@ import '../utility/app_context.dart';
 import '../utility/user_schedule_service.dart';
 import '../utility/notification_permission_prompt.dart';
 import '../utility/notification_subscription_service.dart';
-import '../utility/notification_topics.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/web_notification_lifecycle.dart';
 import '../widgets/user_avatar.dart';
@@ -1274,9 +1273,6 @@ class _PersonalHomeState extends State<PersonalHome> {
 
     if (result.isEnabled) {
       appContext.sharedPref.setSubscribedToBelfast(true);
-      for (final topic in NotificationTopics.serviceTopics) {
-        appContext.sharedPref.setSubscribedToTopic(topic, true);
-      }
 
       final webAuthId =
           kIsWeb && !appContext.isCurrentUserGuest ? authId : null;

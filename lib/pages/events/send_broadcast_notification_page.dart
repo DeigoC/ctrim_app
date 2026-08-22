@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../firebase/functions_manager.dart';
-import '../../utility/app_context.dart';
 import '../../utility/broadcast_audience.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -79,13 +77,9 @@ class _SendBroadcastNotificationPageState
       );
 
   List<String> get _resolvedTopics {
-    final appContext = Provider.of<AppContext>(context, listen: false);
     return BroadcastAudience.resolveFromPost(
       location: widget.eventContext.head.location,
-      tagIDs: widget.eventContext.head.tagIDs,
-      allTags: appContext.allPostTags,
       includeLocationUmbrella: _includeLocationUmbrella,
-      legacyTopics: widget.eventContext.metadata.topics,
     );
   }
 
@@ -160,8 +154,8 @@ class _SendBroadcastNotificationPageState
             if (_resolvedTopics.isEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'No broadcast audience selected. Enable All Belfast updates '
-                'or add topics in post settings.',
+                'No broadcast audience selected. Enable All '
+                '${widget.eventContext.head.location} updates below.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -192,14 +186,6 @@ class _SendBroadcastNotificationPageState
   Widget _buildAudienceSection(BuildContext context) {
     final theme = Theme.of(context);
     final location = widget.eventContext.head.location;
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final baseTopics = BroadcastAudience.resolveFromPost(
-      location: location,
-      tagIDs: widget.eventContext.head.tagIDs,
-      allTags: appContext.allPostTags,
-      includeLocationUmbrella: false,
-      legacyTopics: widget.eventContext.metadata.topics,
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,32 +197,11 @@ class _SendBroadcastNotificationPageState
           ),
         ),
         const SizedBox(height: 8),
-        if (baseTopics.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              'Post streams: ${BroadcastAudience.describe(baseTopics)}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              'This post has no notify streams — use All $location updates below, '
-              'or add content tags with a stream kind in post settings.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(NotificationTopics.locationUmbrellaLabel(location)),
           subtitle: Text(
-            'Also notify everyone opted into All $location updates',
+            'Notify everyone opted into All $location updates',
           ),
           value: _includeLocationUmbrella,
           onChanged: (value) {

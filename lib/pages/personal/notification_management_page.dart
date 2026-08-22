@@ -133,14 +133,11 @@ class _NotificationManagementPageState
     final otherNames =
         catalogNames.where((name) => name != primaryName).toList();
 
-    final streamKinds = _streamKindsForPrefs();
     final widgets = <Widget>[
       ..._buildLocationBlock(
         theme: theme,
         colorScheme: colorScheme,
-        wide: wide,
         locationName: primaryName,
-        streamKinds: streamKinds,
       ),
     ];
 
@@ -159,7 +156,7 @@ class _NotificationManagementPageState
               ),
             ),
             subtitle: Text(
-              'Topics for churches outside $primaryName',
+              'Updates for churches outside $primaryName',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -169,9 +166,7 @@ class _NotificationManagementPageState
                 ..._buildLocationBlock(
                   theme: theme,
                   colorScheme: colorScheme,
-                  wide: wide,
                   locationName: locationName,
-                  streamKinds: streamKinds,
                 ),
               ],
             ],
@@ -204,9 +199,7 @@ class _NotificationManagementPageState
   List<Widget> _buildLocationBlock({
     required ThemeData theme,
     required ColorScheme colorScheme,
-    required bool wide,
     required String locationName,
-    required List<String> streamKinds,
   }) {
     return [
       _buildSectionHeader(theme, colorScheme, locationName),
@@ -218,28 +211,8 @@ class _NotificationManagementPageState
           _buildLocationUmbrellaSwitch(locationName),
         ],
       ),
-      const SizedBox(height: 16),
-      _buildSectionHeader(theme, colorScheme, '$locationName services'),
-      const SizedBox(height: 8),
-      _buildServiceTopicsSection(
-        theme: theme,
-        colorScheme: colorScheme,
-        wide: wide,
-        locationName: locationName,
-        streamKinds: streamKinds,
-      ),
       const SizedBox(height: 24),
     ];
-  }
-
-  List<String> _streamKindsForPrefs() {
-    final fromTags = _appContext.allPostTags
-        .where((t) => t.isActive && t.isNotifiable)
-        .map((t) => t.streamKind!)
-        .toSet()
-        .toList();
-    if (fromTags.isNotEmpty) return fromTags;
-    return NotificationTopics.serviceStreamKinds;
   }
 
   Widget _buildLocationUmbrellaSwitch(String locationName) {
@@ -400,74 +373,6 @@ class _NotificationManagementPageState
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildServiceTopicsSection({
-    required ThemeData theme,
-    required ColorScheme colorScheme,
-    required bool wide,
-    required String locationName,
-    required List<String> streamKinds,
-  }) {
-    final topics = streamKinds
-        .map(
-          (kind) => NotificationTopics.streamTopic(
-            locationName: locationName,
-            streamKind: kind,
-          ),
-        )
-        .where((t) => t.isNotEmpty)
-        .toList();
-
-    List<Widget> switchesFor(List<String> topicIds) {
-      return [
-        for (var i = 0; i < topicIds.length; i++) ...[
-          if (i > 0)
-            Divider(
-              height: 1,
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-            ),
-          _buildTopicSwitch(
-            topic: topicIds[i],
-            title: NotificationTopics.labelFor(topicIds[i]),
-            value: _appContext.sharedPref.isSubscribedToTopic(topicIds[i]),
-          ),
-        ],
-      ];
-    }
-
-    if (!wide) {
-      return _buildTopicCard(
-        theme: theme,
-        colorScheme: colorScheme,
-        children: switchesFor(topics),
-      );
-    }
-
-    final midpoint = (topics.length / 2).ceil();
-    final left = topics.sublist(0, midpoint);
-    final right = topics.sublist(midpoint);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _buildTopicCard(
-            theme: theme,
-            colorScheme: colorScheme,
-            children: switchesFor(left),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildTopicCard(
-            theme: theme,
-            colorScheme: colorScheme,
-            children: switchesFor(right),
-          ),
-        ),
-      ],
     );
   }
 

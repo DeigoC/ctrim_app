@@ -3,38 +3,24 @@ import 'package:flutter/material.dart';
 import '../models/catalog_picker_entry.dart';
 import '../models/cell_group.dart';
 import '../models/post_tag.dart';
-import '../src/localization/app_localizations.dart';
-import '../utility/notification_topics.dart';
 import '../utility/post_tag_helpers.dart';
 import '../utility/volunteer_locations.dart';
 
 /// Builds and filters catalog rows for [SelectCatalogItemsPage].
 abstract final class CatalogPickerHelpers {
-  static List<CatalogPickerEntry> fromPostTags(
-    List<PostTag> tags, {
-    required AppLocalizations l10n,
-  }) {
-    return tags.map((tag) {
-      final kind = tag.streamKind;
-      final kindLabel = kind == null
-          ? null
-          : (NotificationTopics.serviceTopicLabels[kind] ?? kind);
-      final subtitle = kindLabel == null
-          ? l10n.managePostTagsNoStream
-          : l10n.managePostTagsStreamKindHint(kindLabel);
-      return CatalogPickerEntry(
-        id: tag.id,
-        label: tag.name,
-        subtitle: subtitle,
-        accentColor: PostTagHelpers.parseColor(tag.color),
-        icon: tag.isNotifiable
-            ? Icons.notifications_active_outlined
-            : Icons.label_outline,
-        isActive: tag.isActive,
-        isNotifiable: tag.isNotifiable,
-        displayOrder: tag.displayOrder,
-      );
-    }).toList();
+  static List<CatalogPickerEntry> fromPostTags(List<PostTag> tags) {
+    return tags
+        .map(
+          (tag) => CatalogPickerEntry(
+            id: tag.id,
+            label: tag.name,
+            accentColor: PostTagHelpers.parseColor(tag.color),
+            icon: Icons.label_outline,
+            isActive: tag.isActive,
+            displayOrder: tag.displayOrder,
+          ),
+        )
+        .toList();
   }
 
   static List<CatalogPickerEntry> fromCellGroups(List<CellGroup> groups) {

@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../utility/app_context.dart';
+import '../../../utility/broadcast_audience.dart';
+import '../../../utility/notification_topics.dart';
 import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/posts/add_header_meta_tab_body.dart';
@@ -58,6 +60,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final String _initialLocation;
   late final String? _initialLeadSpeakerUID;
   late final bool _initialIsPeriodParent;
+  late bool _defaultNotifyLocation;
+  late final bool _initialDefaultNotifyLocation;
 
   static const int _aboutTabIndex = 1;
   static const int _scheduleTabIndex = 2;
@@ -103,6 +107,11 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _initialLocation = widget.oldTemplate.location;
     _initialLeadSpeakerUID = widget.oldTemplate.leadSpeakerUID;
     _initialIsPeriodParent = widget.oldTemplate.isPeriodParent;
+    _defaultNotifyLocation = BroadcastAudience.includesLocationUmbrella(
+      topics: widget.oldTemplate.topics,
+      locationName: widget.oldTemplate.location,
+    );
+    _initialDefaultNotifyLocation = _defaultNotifyLocation;
     super.initState();
   }
 
@@ -147,6 +156,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       return true;
     if (widget.eventContext.metadata.isPeriodParent != _initialIsPeriodParent)
       return true;
+    if (_defaultNotifyLocation != _initialDefaultNotifyLocation) return true;
     return false;
   }
 
@@ -214,7 +224,10 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           currentUID: _appContext.currentUser.id),
       ViewAllPrograms(
         eventContext: widget.eventContext,
-        onProgramChanged: () => _updateBody(),
+        onProgramChanged: () {
+          setState(() {});
+          _updateBody();
+        },
         isAddingPost: true,
         timeOnlySchedule: true,
       ),
@@ -246,11 +259,65 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           showNotificationControls: false,
         ),
         const Divider(height: 32),
+        _buildTemplateNotifyDefaultCard(),
+        const Divider(height: 32),
         _buildSubtitleListEditor(),
         const Divider(height: 32),
         _buildDayOfWeekPicker(),
         const SizedBox(height: 16),
       ],
+    );
+  }
+
+  Widget _buildTemplateNotifyDefaultCard() {
+    final theme = Theme.of(context);
+    final location = widget.eventContext.head.location;
+    final umbrellaLabel = NotificationTopics.locationUmbrellaLabel(location);
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.notifications_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Default broadcast audience',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'When someone creates a post from this template, pre-fill who '
+              'receives a broadcast push. Location comes from the Schedule tab.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(umbrellaLabel),
+              subtitle: Text(
+                _defaultNotifyLocation
+                    ? 'New posts default to notifying $umbrellaLabel'
+                    : 'Organisers choose the audience when publishing',
+              ),
+              value: _defaultNotifyLocation,
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _defaultNotifyLocation = value);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -870,7 +937,12 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       'HeadTitle': _tecTitle.text.trim(),
       'Body': widget.eventContext.encodedBody,
       'Location': widget.eventContext.head.location,
-      'Topics': widget.oldTemplate.topics,
+      'Topics': _defaultNotifyLocation
+          ? [
+              NotificationTopics.locationUmbrella(
+                  widget.eventContext.head.location),
+            ]
+          : <String>[],
       'TagIDs': widget.eventContext.head.tagIDs,
       'CellGroupIDs': widget.eventContext.head.cellGroupIDs,
       'ExpectedAttendeeUserIDs': widget.eventContext.expectedAttendeeUserIDs,

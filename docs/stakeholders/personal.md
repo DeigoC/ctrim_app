@@ -67,7 +67,7 @@ See [People & roles](people-and-roles.md).
 **For you → Push Notifications** is where someone checks:
 
 - Whether **this device** is set up for alerts  
-- Per-topic / location switches  
+- Per-**location** switches (for example All Belfast updates)  
 - A **test send** to this device only  
 
 More detail: [Notifications](notifications.md). The **web app** is the current focus; there is also help to **add the app to the home screen**.

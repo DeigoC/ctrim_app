@@ -78,10 +78,8 @@ class PostTagPicker extends StatelessWidget {
         searchHint: l10n.postTagsSearchHint,
         emptyMessage: l10n.postTagsNoneAvailable,
         noResultsMessage: l10n.selectCatalogNoResults,
-        allEntries: CatalogPickerHelpers.fromPostTags(allTags, l10n: l10n),
+        allEntries: CatalogPickerHelpers.fromPostTags(allTags),
         selectedIds: selectedTagIDs,
-        showNotifiableFilter: true,
-        notifiableFilterLabel: l10n.postTagsNotifiableFilter,
       ),
     );
     if (result != null) {

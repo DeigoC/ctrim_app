@@ -10,7 +10,6 @@ import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
-import '../models/post_tag.dart';
 import '../models/user.dart';
 import 'broadcast_audience.dart';
 import 'parent_link.dart';
@@ -401,21 +400,11 @@ class EventContext {
     _metadata.setParentID(parentID);
   }
 
-  /// Recomputes FCM [Topics] from location + notifiable tags (+ optional location umbrella).
-  ///
-  /// When no notifiable tags are present, preserves non-umbrella entries from current Topics
-  /// so legacy posts keep working.
-  void syncNotificationTopics({
-    required List<PostTag> allTags,
-    required bool includeLocationUmbrella,
-  }) {
-    final legacy = List<String>.from(_metadata.topics);
+  /// Sets FCM [Topics] to the location umbrella when [includeLocationUmbrella] is true.
+  void syncNotificationTopics({required bool includeLocationUmbrella}) {
     final resolved = BroadcastAudience.resolveFromPost(
       location: _head.location,
-      tagIDs: _metadata.tagIDs.isNotEmpty ? _metadata.tagIDs : _head.tagIDs,
-      allTags: allTags,
       includeLocationUmbrella: includeLocationUmbrella,
-      legacyTopics: legacy,
     );
     _metadata.clearTopics();
     _metadata.addAllTopics(resolved);

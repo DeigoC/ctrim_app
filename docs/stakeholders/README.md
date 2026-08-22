@@ -34,7 +34,7 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 | [information.md](information.md) | Current | Churches, testimonials, CTRIM info |
 | [cell-groups.md](cell-groups.md) | Current | Cell Groups (in development) |
 | [people-and-roles.md](people-and-roles.md) | Current | Guest → volunteer → Leader / Area admin (+ capability grid) |
-| [notifications.md](notifications.md) | Current | Alerts & broadcasts |
+| [notifications.md](notifications.md) | Current | Location-based push alerts & broadcasts |
 | [platforms.md](platforms.md) | Current | iOS / Android / web |
 | [roadmap.md](roadmap.md) | Current | Priorities (update as they change) |
 | [how-to/index.md](how-to/index.md) | Current | How-to guides hub |

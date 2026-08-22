@@ -155,7 +155,8 @@ class CtrimInfoListTab extends StatelessWidget {
         itemCount: topicCards.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
-          childAspectRatio: crossAxisCount >= 3 ? 2.6 : 2.2,
+          // Taller cells so topic titles/descriptions do not overflow.
+          childAspectRatio: crossAxisCount >= 3 ? 2.0 : 1.7,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
@@ -215,7 +216,7 @@ class CtrimInfoListTab extends StatelessWidget {
               Text(
                 info.description,
                 style: const TextStyle(fontSize: 14, color: Colors.white70),
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ],

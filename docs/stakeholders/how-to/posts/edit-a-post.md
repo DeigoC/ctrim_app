@@ -64,10 +64,11 @@ Interest (“Mark interest”) saves immediately for the signed-in person; staff
 
 ### Notify / broadcast
 
-1. When the post is ready, use **broadcast** (or notify) if you want a push to opted-in audiences.  
-2. Confirm the audience before sending.  
+1. When the post is ready, use **broadcast** (or notify) if you want a push to people who opted into **All {location} updates** for that post’s location.  
+2. Confirm the audience before sending (for example **All Belfast updates**).  
+3. You can also notify people already on **programme roles** when creating the post, if that option is turned on.
 
-More on streams: [Notifications](../../notifications.md). Terms: [Key concepts](../../key-concepts.md).
+More detail: [Notifications](../../notifications.md). Terms: [Key concepts](../../key-concepts.md).
 
 ## Related
 

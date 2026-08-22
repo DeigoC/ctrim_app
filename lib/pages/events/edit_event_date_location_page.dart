@@ -959,7 +959,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
                 .compareTo(_originalAddress.toLowerCase()) !=
             0 ||
         widget.eventContext.program.online != _originalOnline ||
-        widget.eventContext.head.location.compareTo(_originalLocation) != 0 ||
+        _location.compareTo(_originalLocation) != 0 ||
         _originalMapLink.compareTo(_tecMapLink.text.trim()) != 0) {
       if (_start == null) {
         widget.eventContext.head.setEventDate(null);
@@ -984,13 +984,11 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
       final String newLocation = _location + (_online ? ' (Online)' : '');
       widget.eventContext.head.setLocation(newLocation);
 
-      final appContext = Provider.of<AppContext>(context, listen: false);
       final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
         topics: widget.eventContext.metadata.topics,
         locationName: newLocation,
       );
       widget.eventContext.syncNotificationTopics(
-        allTags: appContext.allPostTags,
         includeLocationUmbrella: includeUmbrella,
       );
 

@@ -1,4 +1,3 @@
-import 'package:ctrim_app/models/post_tag.dart';
 import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,68 +6,62 @@ void main() {
   group('BroadcastAudience', () {
     test('includesBelfastUmbrella detects umbrella topic', () {
       expect(
-        BroadcastAudience.includesBelfastUmbrella(['belfast-sunday-service']),
+        BroadcastAudience.includesBelfastUmbrella(['north-coast']),
         isFalse,
       );
       expect(
         BroadcastAudience.includesBelfastUmbrella(
-          ['belfast-sunday-service', NotificationTopics.belfastUmbrella],
+          ['north-coast', NotificationTopics.belfastUmbrella],
         ),
         isTrue,
       );
     });
 
-    test('resolve keeps post topics and optionally adds Belfast', () {
+    test('includesLocationUmbrella detects location umbrella', () {
       expect(
-        BroadcastAudience.resolve(
-          postTopics: ['belfast-sunday-service'],
-          includeBelfastUmbrella: false,
+        BroadcastAudience.includesLocationUmbrella(
+          topics: const ['Belfast'],
+          locationName: 'Belfast',
         ),
-        ['belfast-sunday-service'],
+        isTrue,
       );
       expect(
-        BroadcastAudience.resolve(
-          postTopics: ['belfast-sunday-service'],
-          includeBelfastUmbrella: true,
+        BroadcastAudience.includesLocationUmbrella(
+          topics: const ['north-coast'],
+          locationName: 'North Coast',
         ),
-        ['belfast-sunday-service', NotificationTopics.belfastUmbrella],
+        isTrue,
       );
-    });
-
-    test('resolve strips Belfast when include is false', () {
       expect(
-        BroadcastAudience.resolve(
-          postTopics: [
-            NotificationTopics.belfastUmbrella,
-            'belfast-sunday-service',
-          ],
-          includeBelfastUmbrella: false,
+        BroadcastAudience.includesLocationUmbrella(
+          topics: const ['belfast-sunday-service'],
+          locationName: 'Belfast',
         ),
-        ['belfast-sunday-service'],
+        isFalse,
       );
     });
 
-    test('resolve dedupes topics', () {
+    test('resolveFromPost returns location umbrella when enabled', () {
       expect(
-        BroadcastAudience.resolve(
-          postTopics: [
-            'belfast-sunday-service',
-            'belfast-sunday-service',
-            NotificationTopics.belfastUmbrella,
-          ],
-          includeBelfastUmbrella: true,
-        ),
-        ['belfast-sunday-service', NotificationTopics.belfastUmbrella],
-      );
-    });
-
-    test('resolve can be Belfast-only', () {
-      expect(
-        BroadcastAudience.resolve(
-          postTopics: const [],
-          includeBelfastUmbrella: true,
+        BroadcastAudience.resolveFromPost(
+          location: 'Belfast',
+          includeLocationUmbrella: true,
         ),
         [NotificationTopics.belfastUmbrella],
+      );
+      expect(
+        BroadcastAudience.resolveFromPost(
+          location: 'North Coast',
+          includeLocationUmbrella: true,
+        ),
+        ['north-coast'],
+      );
+      expect(
+        BroadcastAudience.resolveFromPost(
+          location: 'Portadown',
+          includeLocationUmbrella: false,
+        ),
+        isEmpty,
       );
     });
 
@@ -79,79 +72,8 @@ void main() {
         NotificationTopics.belfastUmbrellaLabel,
       );
       expect(
-        BroadcastAudience.describe([
-          NotificationTopics.sundayService,
-          NotificationTopics.belfastUmbrella,
-        ]),
-        '${NotificationTopics.labelFor(NotificationTopics.sundayService)}, '
-        '${NotificationTopics.belfastUmbrellaLabel}',
-      );
-    });
-
-    test('streamTopic keeps Belfast IDs frozen', () {
-      expect(
-        NotificationTopics.streamTopic(
-          locationName: 'Belfast',
-          streamKind: 'sunday-service',
-        ),
-        NotificationTopics.sundayService,
-      );
-      expect(
-        NotificationTopics.streamTopic(
-          locationName: 'Belfast (Online)',
-          streamKind: 'sunday-service',
-        ),
-        NotificationTopics.sundayService,
-      );
-      expect(
-        NotificationTopics.streamTopic(
-          locationName: 'Portadown',
-          streamKind: 'sunday-service',
-        ),
-        'portadown-sunday-service',
-      );
-    });
-
-    test('resolveFromPost derives streams from tags + location', () {
-      final tags = [
-        PostTag(
-          id: 'sun',
-          name: 'Sunday',
-          streamKind: NotificationTopics.kindSundayService,
-        ),
-        PostTag(id: 'filter-only', name: 'Special'),
-      ];
-
-      expect(
-        BroadcastAudience.resolveFromPost(
-          location: 'Portadown',
-          tagIDs: ['sun', 'filter-only'],
-          allTags: tags,
-          includeLocationUmbrella: true,
-        ),
-        ['portadown-sunday-service', 'Portadown'],
-      );
-      expect(
-        BroadcastAudience.resolveFromPost(
-          location: 'North Coast',
-          tagIDs: ['sun'],
-          allTags: tags,
-          includeLocationUmbrella: true,
-        ),
-        ['north-coast-sunday-service', 'north-coast'],
-      );
-    });
-
-    test('resolveFromPost falls back to legacy topics', () {
-      expect(
-        BroadcastAudience.resolveFromPost(
-          location: 'Belfast',
-          tagIDs: const [],
-          allTags: const [],
-          includeLocationUmbrella: false,
-          legacyTopics: [NotificationTopics.sundayService, 'Belfast'],
-        ),
-        [NotificationTopics.sundayService],
+        BroadcastAudience.describe(['north-coast']),
+        'north-coast',
       );
     });
   });

@@ -10,22 +10,20 @@ void main() {
       expect(NotificationTopics.postTopic('abc123'), 'post-abc123');
     });
 
-    test('labelFor returns display names for managed topics', () {
-      expect(NotificationTopics.labelFor(NotificationTopics.belfastUmbrella),
-          'All Belfast updates');
+    test('labelFor returns display names for location umbrellas', () {
       expect(
-        NotificationTopics.labelFor(NotificationTopics.sundayService),
-        'Sunday Worship Service',
+        NotificationTopics.labelFor(NotificationTopics.belfastUmbrella),
+        'All Belfast updates',
       );
       expect(NotificationTopics.labelFor('unknown-topic'), 'unknown-topic');
     });
 
-    test('serviceTopicLabels covers every service topic', () {
-      for (final topic in NotificationTopics.serviceTopics) {
-        expect(
-            NotificationTopics.serviceTopicLabels.containsKey(topic), isTrue);
-        expect(NotificationTopics.labelFor(topic), isNotEmpty);
-      }
+    test('locationUmbrella slugifies names with spaces', () {
+      expect(
+        NotificationTopics.locationUmbrella('North Coast'),
+        'north-coast',
+      );
+      expect(NotificationTopics.locationUmbrella('Portadown'), 'Portadown');
     });
   });
 
@@ -43,22 +41,22 @@ void main() {
       await instance.clear();
     });
 
-    test(
-        'topicsFromPrefs includes opted-in service topics and Belfast umbrella',
-        () {
+    test('topicsFromPrefs includes opted-in location umbrellas only', () {
       prefs.setSubscribedToTopic(NotificationTopics.sundayService, true);
-      prefs.setSubscribedToTopic(NotificationTopics.midweekService, false);
       prefs.setSubscribedToBelfast(true);
+      prefs.setSubscribedToTopic('Portadown', true);
 
-      final topics = NotificationSubscriptionService.topicsFromPrefs(prefs);
+      final topics = NotificationSubscriptionService.topicsFromPrefs(
+        prefs,
+        locationNames: const ['Belfast', 'Portadown'],
+      );
 
-      expect(topics, contains(NotificationTopics.sundayService));
-      expect(topics, isNot(contains(NotificationTopics.midweekService)));
       expect(topics, contains(NotificationTopics.belfastUmbrella));
+      expect(topics, contains('Portadown'));
+      expect(topics, isNot(contains(NotificationTopics.sundayService)));
     });
 
     test('topicsFromPrefs supports non-Belfast locations', () {
-      prefs.setSubscribedToTopic('portadown-sunday-service', true);
       prefs.setSubscribedToTopic('Portadown', true);
       prefs.setSubscribedToBelfast(false);
 
@@ -67,13 +65,12 @@ void main() {
         locationNames: const ['Portadown'],
       );
 
-      expect(topics, contains('portadown-sunday-service'));
       expect(topics, contains('Portadown'));
       expect(topics, isNot(contains(NotificationTopics.belfastUmbrella)));
     });
 
     test('allSubscribedTopics adds bookmark post topics', () {
-      prefs.setSubscribedToTopic(NotificationTopics.sundayService, true);
+      prefs.setSubscribedToBelfast(true);
       prefs.addPostBookmark('event-42');
 
       final topics = NotificationSubscriptionService.allSubscribedTopics(prefs);

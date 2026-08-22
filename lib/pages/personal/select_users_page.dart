@@ -49,8 +49,8 @@ class SelectUsersPage extends StatefulWidget {
   /// beyond the limit replaces the oldest selection.
   final int? maxSelection;
 
-  /// When true (and the signed-in user passes the create gate), empty search
-  /// offers "Create placeholder".
+  /// When true (and the signed-in user passes the create gate), a failed search
+  /// offers "Create placeholder" in the empty state (no app-bar shortcut).
   final bool allowCreatePlaceholder;
 
   /// When false, hides `IsPlaceholder` users unless already selected.
@@ -136,16 +136,6 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                   )
                 : Text(widget.title ?? l10n.selectUsersTitle),
             actions: [
-              if (widget.allowCreatePlaceholder)
-                IconButton(
-                  icon: const Icon(Icons.person_add_alt),
-                  tooltip: l10n.selectUsersCreatePlaceholder,
-                  onPressed: () => _onCreatePlaceholder(
-                    appContext,
-                    seedFromSearch:
-                        _isSearching && _searchQuery.trim().isNotEmpty,
-                  ),
-                ),
               IconButton(
                 icon: Icon(_isSearching ? Icons.close : Icons.search),
                 onPressed: () {

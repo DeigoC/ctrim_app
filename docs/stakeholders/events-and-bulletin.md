@@ -62,7 +62,7 @@ The **author** of a post, plus anyone listed as a **contributor** on that post, 
 - Who is attending / who is expected (including **Fill from cell group** when the post is linked to a cell group)  
 - Related people on the post  
 - Links to **related** posts and **period parents** (term / season containers)  
-- Sending a **broadcast** notification about the post to people who opted in  
+- Sending a **broadcast** notification about the post to people who opted into **All {location} updates** for that post’s location  
 
 ### Update logs & change history
 
@@ -71,6 +71,10 @@ When saving important edits, organisers can write a short **update log**. That n
 ## Templates & recurring programmes
 
 **Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**.
+
+When **choosing a template** to create a post, filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
+
+When **editing a template**, leaders can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
 **Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date.
 

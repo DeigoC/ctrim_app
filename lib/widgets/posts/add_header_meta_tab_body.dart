@@ -749,18 +749,14 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
 
   List<Widget> _buildNotificationControls(AppContext appContext) {
     final location = widget.eventContext.head.location;
-    final topics = widget.eventContext.metadata.topics;
     final notifyBroadcast = widget.eventContext.notifyBroadcast;
     final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
-      topics: topics,
+      topics: widget.eventContext.metadata.topics,
       locationName: location,
     );
     final audience = BroadcastAudience.resolveFromPost(
       location: location,
-      tagIDs: widget.eventContext.head.tagIDs,
-      allTags: appContext.allPostTags,
       includeLocationUmbrella: includeUmbrella,
-      legacyTopics: topics,
     );
 
     return [
@@ -769,7 +765,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         subtitle: notifyBroadcast
             ? Text(
                 audience.isEmpty
-                    ? 'Choose an audience below'
+                    ? 'Choose a location audience below'
                     : 'Will notify: ${BroadcastAudience.describe(audience)}',
               )
             : null,
@@ -782,7 +778,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           child: CheckboxListTile(
             title: Text(NotificationTopics.locationUmbrellaLabel(location)),
             subtitle: Text(
-              'Also reach everyone opted into All $location updates',
+              'People opted into All $location updates',
             ),
             value: includeUmbrella,
             onChanged: (newState) =>
@@ -899,22 +895,13 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
 
   void _onTagsChanged(final AppContext appContext, final Set<String> selected) {
     setState(() {
-      final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
-        topics: widget.eventContext.metadata.topics,
-        locationName: widget.eventContext.head.location,
-      );
       widget.eventContext.applyTagIDs(selected.toList());
-      widget.eventContext.syncNotificationTopics(
-        allTags: appContext.allPostTags,
-        includeLocationUmbrella: includeUmbrella,
-      );
     });
   }
 
   void _onNotifyLocationUmbrellaChange(final AppContext appContext, final bool include) {
     setState(() {
       widget.eventContext.syncNotificationTopics(
-        allTags: appContext.allPostTags,
         includeLocationUmbrella: include,
       );
     });

@@ -80,10 +80,7 @@ PostDraftReview buildPostDraftReview({
   );
   final broadcastAudience = BroadcastAudience.resolveFromPost(
     location: location,
-    tagIDs: head.tagIDs,
-    allTags: allTags,
     includeLocationUmbrella: includeUmbrella,
-    legacyTopics: topics,
   );
 
   final items = <PostDraftReviewItem>[

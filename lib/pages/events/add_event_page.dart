@@ -235,7 +235,6 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     const total = 4;
     onProgress(completed: 0, total: total, message: 'Creating post…');
     widget.eventContext.syncNotificationTopics(
-      allTags: _appContext.allPostTags,
       includeLocationUmbrella: BroadcastAudience.includesLocationUmbrella(
         topics: widget.eventContext.metadata.topics,
         locationName: widget.eventContext.head.location,
@@ -277,13 +276,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       debugPrint('---- NOTIFYING BROADCAST TOPICS ----');
       final topics = BroadcastAudience.resolveFromPost(
         location: widget.eventContext.head.location,
-        tagIDs: widget.eventContext.head.tagIDs,
-        allTags: _appContext.allPostTags,
         includeLocationUmbrella: BroadcastAudience.includesLocationUmbrella(
           topics: widget.eventContext.metadata.topics,
           locationName: widget.eventContext.head.location,
         ),
-        legacyTopics: widget.eventContext.metadata.topics,
       );
       for (final String topic in topics) {
         _notifyOfNewPost(newID, topic);

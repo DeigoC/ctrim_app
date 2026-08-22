@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/event_context.dart';
+import '../../../utility/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/post_template_mapper.dart';
 import '../../../utility/responsive_layout.dart';
@@ -293,7 +294,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       'HeadTitle': 'Blank Template',
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': 'Belfast',
-      'Topics': ['Belfast'],
+      'Topics': [NotificationTopics.locationUmbrella('Belfast')],
       'TagIDs': <String>[],
       'CellGroupIDs': <String>[],
       'ExpectedAttendeeUserIDs': <String>[],
@@ -554,23 +555,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
             'Online',
             colorScheme,
           ),
-
-        // Topics (first 2)
-        ...template.topics.take(2).map(
-              (topic) => _buildDetailChip(
-                Icons.tag,
-                topic,
-                colorScheme,
-              ),
-            ),
-
-        // More topics indicator
-        if (template.topics.length > 2)
-          _buildDetailChip(
-            Icons.more_horiz,
-            '+${template.topics.length - 2} more',
-            colorScheme,
-          ),
       ],
     );
   }
@@ -632,7 +616,9 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     final Set<String> categories = {'All'};
 
     for (final template in _allTemplates) {
-      categories.addAll(template.topics);
+      if (template.location.isNotEmpty) {
+        categories.add(template.location);
+      }
     }
 
     return categories.toList()..sort();
@@ -645,15 +631,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
         final query = _searchQuery.toLowerCase();
         final matchesSearch = template.title.toLowerCase().contains(query) ||
             template.description.toLowerCase().contains(query) ||
-            template.location.toLowerCase().contains(query) ||
-            template.topics.any((topic) => topic.toLowerCase().contains(query));
+            template.location.toLowerCase().contains(query);
 
         if (!matchesSearch) return false;
       }
 
-      // Category filter
+      // Location filter
       if (_selectedCategory != 'All') {
-        if (!template.topics.contains(_selectedCategory)) return false;
+        if (template.location != _selectedCategory) return false;
       }
 
       return true;
@@ -689,7 +674,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       currentUserID: appContext.currentUser.id,
       parentID: widget.eventContext.metadata.parentID,
       allUsers: appContext.allUsers,
-      allPostTags: appContext.allPostTags,
     );
 
     if (eventContext.head.eventDate != null) {

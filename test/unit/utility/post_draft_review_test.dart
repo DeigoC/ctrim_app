@@ -1,6 +1,5 @@
 import 'package:ctrim_app/models/post_tag.dart';
 import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/utility/notification_topics.dart';
 import 'package:ctrim_app/utility/post_draft_review.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,30 +57,19 @@ void main() {
     test('broadcast on with audience is informational', () {
       final context = EventContext.adding(currentUserID: 'author-1');
       context.setNotifyBroadcast(true);
-      context.applyTagIDs(['youth-tag']);
-      context.metadata.addAllTopics([
-        NotificationTopics.streamTopic(
-          locationName: 'Belfast',
-          streamKind: NotificationTopics.kindYouthCaregroup,
-        ),
-      ]);
+      context.syncNotificationTopics(includeLocationUmbrella: true);
 
       final review = buildPostDraftReview(
         eventContext: context,
         title: 'Youth Night',
         subtitle: 'This Friday',
-        allTags: [
-          PostTag(
-            id: 'youth-tag',
-            name: 'Youth',
-            streamKind: NotificationTopics.kindYouthCaregroup,
-          ),
-        ],
+        allTags: const [],
       );
 
       final broadcast = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.broadcastNotify);
       expect(broadcast.status, PostDraftReviewStatus.info);
       expect(broadcast.subtitle, contains('Will notify'));
+      expect(broadcast.subtitle, contains('Belfast'));
     });
 
     test('broadcast on without audience is a suggestion', () {

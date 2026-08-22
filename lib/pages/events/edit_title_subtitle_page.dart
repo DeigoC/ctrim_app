@@ -3,7 +3,6 @@ import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/pages/events/select_period_parent_page.dart';
 import 'package:ctrim_app/pages/personal/select_users_page.dart';
 import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/broadcast_audience.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/parent_link.dart';
@@ -184,15 +183,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
 
   void _onTagsChanged(AppContext appContext, Set<String> selected) {
     setState(() {
-      final includeUmbrella = BroadcastAudience.includesLocationUmbrella(
-        topics: widget.eventContext.metadata.topics,
-        locationName: widget.eventContext.head.location,
-      );
       widget.eventContext.applyTagIDs(selected.toList());
-      widget.eventContext.syncNotificationTopics(
-        allTags: appContext.allPostTags,
-        includeLocationUmbrella: includeUmbrella,
-      );
     });
   }
 
