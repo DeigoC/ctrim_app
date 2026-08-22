@@ -22,6 +22,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
     this.editTooltip = 'Edit',
     this.showCarouselWhenEmpty = true,
     this.carouselHeightFraction = 0.36,
+    this.aboveBody,
   });
 
   final String title;
@@ -34,6 +35,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
   final String editTooltip;
   final bool showCarouselWhenEmpty;
   final double carouselHeightFraction;
+  final Widget? aboveBody;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +98,10 @@ class InfoDetailPageScaffold extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         header,
+                        if (aboveBody != null) ...[
+                          const SizedBox(height: 16),
+                          aboveBody!,
+                        ],
                         const SizedBox(height: 12),
                         const Divider(),
                         const SizedBox(height: 8),
@@ -217,7 +223,7 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
   @override
   Widget build(BuildContext context) {
     final canManageInfo =
-        Provider.of<AppContext>(context).currentUser.canManageInfo;
+        context.select((AppContext c) => c.currentUser.canManageInfo);
 
     return FutureBuilder<T?>(
       future: _future,

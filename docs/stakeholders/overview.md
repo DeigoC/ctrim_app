@@ -22,7 +22,7 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | Area | What it is | More detail |
 |------|------------|-------------|
 | **Bulletin** | Shared event posts — browse, follow updates, organise | [Events & bulletin](events-and-bulletin.md) |
-| **CTRIM** (Information) | About, churches, testimonials, longer info pages | [Information](information.md) |
+| **CTRIM** (Information) | About, church location hubs, testimonials, longer info pages | [Information](information.md) |
 | **Cell Groups** | Small groups — in development and testing | [Cell Groups](cell-groups.md) |
 | **Personal** | Sign-in, profile, schedule, notifications, volunteers | [Personal](personal.md) |
 

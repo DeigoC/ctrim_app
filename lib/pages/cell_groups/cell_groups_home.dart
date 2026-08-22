@@ -123,7 +123,8 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final appContext = Provider.of<AppContext>(context);
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    context.select((AppContext c) => c.sessionEpoch);
     final canCreate = appContext.currentUser.canManageCellGroups;
     final onGroupsTab = widget.tabController.index == 1;
     final useSideNav =
@@ -274,7 +275,11 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
             if (widget.tabController.index == 1)
               IconButton(
                 icon: const Icon(Icons.refresh),
-                onPressed: _loading ? null : () { _refresh(); },
+                onPressed: _loading
+                    ? null
+                    : () {
+                        _refresh();
+                      },
               ),
           ],
           bottom: showTabBar

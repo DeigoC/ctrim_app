@@ -91,170 +91,169 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Consumer<AppContext>(builder: (context, appContext, child) {
-      final query = _listingQuery();
-      final heads = BulletinListing.apply(
-        heads: appContext.eventHeads,
-        query: query,
-      );
-      final int itemCount = heads.length;
+    context.select((AppContext c) => (c.headsEpoch, c.catalogsEpoch));
+    final appContext = _appContext;
+    final query = _listingQuery();
+    final heads = BulletinListing.apply(
+      heads: appContext.eventHeads,
+      query: query,
+    );
+    final int itemCount = heads.length;
 
-      return RefreshIndicator(
-        edgeOffset: kToolbarHeight + 20,
-        backgroundColor: colorScheme.surface,
-        color: colorScheme.primary,
-        onRefresh: () => _onRefresh().then((value) {
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            behavior: !appContext.currentUser.isLeader
-                ? SnackBarBehavior.floating
-                : null,
-            backgroundColor: colorScheme.inverseSurface,
-            content: Row(
-              children: [
-                Icon(Icons.check_circle,
-                    color: colorScheme.onInverseSurface, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'You are up to date!',
-                  style: TextStyle(color: colorScheme.onInverseSurface),
-                ),
-              ],
-            ),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 2),
-          ));
-        }),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double contentWidth = constraints.maxWidth;
-            final bool isWideScreen =
-                ResponsiveLayout.isWideScreen(contentWidth);
-            final double maxWidth =
-                ResponsiveLayout.maxContentWidth(contentWidth);
-            final double horizontalPadding = isWideScreen
-                ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
-                : 8.0;
+    return RefreshIndicator(
+      edgeOffset: kToolbarHeight + 20,
+      backgroundColor: colorScheme.surface,
+      color: colorScheme.primary,
+      onRefresh: () => _onRefresh().then((value) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          behavior: !appContext.currentUser.isLeader
+              ? SnackBarBehavior.floating
+              : null,
+          backgroundColor: colorScheme.inverseSurface,
+          content: Row(
+            children: [
+              Icon(Icons.check_circle,
+                  color: colorScheme.onInverseSurface, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'You are up to date!',
+                style: TextStyle(color: colorScheme.onInverseSurface),
+              ),
+            ],
+          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 2),
+        ));
+      }),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double contentWidth = constraints.maxWidth;
+          final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+          final double maxWidth =
+              ResponsiveLayout.maxContentWidth(contentWidth);
+          final double horizontalPadding = isWideScreen
+              ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+              : 8.0;
 
-            return CustomScrollView(
-              controller: widget.scrollController,
-              key: const PageStorageKey<String>('events_page'),
-              slivers: [
-                SliverAppBar(
-                  title: Row(
-                    children: [
-                      Icon(
-                        Icons.campaign,
-                        color: colorScheme.primary,
-                        size: 28,
+          return CustomScrollView(
+            controller: widget.scrollController,
+            key: const PageStorageKey<String>('events_page'),
+            slivers: [
+              SliverAppBar(
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.campaign,
+                      color: colorScheme.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Bulletin',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Bulletin',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
+                    ),
+                  ],
+                ),
+                centerTitle: false,
+                floating: true,
+                snap: true,
+                expandedHeight: 100,
+                backgroundColor: colorScheme.surface,
+                surfaceTintColor: colorScheme.surfaceTint,
+                actions: [
+                  IconButton(
+                    onPressed: () => _showFilterModel(context),
+                    tooltip: l10n.bulletinSortTooltip,
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      foregroundColor: colorScheme.primary,
+                    ),
+                    icon: Badge(
+                      isLabelVisible: query.showsNonDefaultBanner,
+                      child: const Icon(Icons.sort),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                leading: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  centerTitle: false,
-                  floating: true,
-                  snap: true,
-                  expandedHeight: 100,
-                  backgroundColor: colorScheme.surface,
-                  surfaceTintColor: colorScheme.surfaceTint,
-                  actions: [
-                    IconButton(
-                      onPressed: () => _showFilterModel(context),
-                      tooltip: l10n.bulletinSortTooltip,
-                      style: IconButton.styleFrom(
-                        backgroundColor:
-                            colorScheme.primaryContainer.withValues(alpha: 0.3),
-                        foregroundColor: colorScheme.primary,
-                      ),
-                      icon: Badge(
-                        isLabelVisible: query.showsNonDefaultBanner,
-                        child: const Icon(Icons.sort),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  leading: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      ViewEventsHome._ctrimLogo,
+                      fit: BoxFit.contain,
+                      height: kToolbarHeight,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        ViewEventsHome._ctrimLogo,
-                        fit: BoxFit.contain,
-                        height: kToolbarHeight,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.church,
-                            color: colorScheme.primary,
-                            size: 24,
-                          ),
+                        child: Icon(
+                          Icons.church,
+                          color: colorScheme.primary,
+                          size: 24,
                         ),
                       ),
                     ),
                   ),
                 ),
-                if (query.showsNonDefaultBanner)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: _buildFilterIndicator(
-                        appContext,
-                        colorScheme,
-                        l10n,
-                        query,
-                      ),
+              ),
+              if (query.showsNonDefaultBanner)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: _buildFilterIndicator(
+                      appContext,
+                      colorScheme,
+                      l10n,
+                      query,
                     ),
                   ),
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: 8,
-                  ),
-                  sliver: itemCount == 0
-                      ? _buildEmptyState(colorScheme, theme, l10n)
-                      : isWideScreen
-                          ? SliverToBoxAdapter(
-                              child: _buildWidePostRows(colorScheme, heads),
-                            )
-                          : SliverList.separated(
-                              itemCount: itemCount,
-                              itemBuilder: (_, index) => _buildPostCard(
-                                colorScheme,
-                                heads[index],
-                              ),
-                              separatorBuilder:
-                                  (BuildContext context, int index) =>
-                                      const SizedBox(height: 8),
+                ),
+              SliverPadding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 8,
+                ),
+                sliver: itemCount == 0
+                    ? _buildEmptyState(colorScheme, theme, l10n)
+                    : isWideScreen
+                        ? SliverToBoxAdapter(
+                            child: _buildWidePostRows(colorScheme, heads),
+                          )
+                        : SliverList.separated(
+                            itemCount: itemCount,
+                            itemBuilder: (_, index) => _buildPostCard(
+                              colorScheme,
+                              heads[index],
                             ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
-              ],
-            );
-          },
-        ),
-      );
-    });
+                            separatorBuilder:
+                                (BuildContext context, int index) =>
+                                    const SizedBox(height: 8),
+                          ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   /// Paired rows so left-to-right, top-to-bottom stays chronological.

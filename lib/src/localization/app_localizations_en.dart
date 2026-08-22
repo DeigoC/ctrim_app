@@ -780,4 +780,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bulletinBookmarksHelpTooltip => 'Learn about bookmarks';
+
+  @override
+  String get churchInfoPageTitle => 'Church Info';
+
+  @override
+  String get churchInfoNotFound => 'No church information found.';
+
+  @override
+  String get churchInfoEditTooltip => 'Edit church info';
+
+  @override
+  String get churchInfoLoadError => 'Could not load church';
+
+  @override
+  String get churchHubOpenMaps => 'Open in Maps';
+
+  @override
+  String get churchHubLocationUnset => 'Location not set';
+
+  @override
+  String get churchHubSetLocationHint =>
+      'Set a location when editing to show posts, cell groups, and people for this church.';
+
+  @override
+  String get churchHubSnapshotTitle => 'At this location';
+
+  @override
+  String get churchHubPostsLabel => 'Posts';
+
+  @override
+  String get churchHubPostsHint => 'Last 3 months';
+
+  @override
+  String get churchHubCellGroupsLabel => 'Cell Groups';
+
+  @override
+  String get churchHubCellGroupsHint => 'Active and paused';
+
+  @override
+  String get churchHubPeopleLabel => 'People';
+
+  @override
+  String get churchHubPeopleHint => 'Profiles here';
+
+  @override
+  String get churchHubRecentPosts => 'Recent posts';
+
+  @override
+  String get churchHubCellGroupsHere => 'Cell Groups here';
+
+  @override
+  String get churchHubNoRecentPosts => 'No posts in the last 3 months.';
+
+  @override
+  String get churchHubNoCellGroups => 'No cell groups at this location yet.';
+
+  @override
+  String churchHubMorePosts(int count) {
+    return 'And $count more';
+  }
+
+  @override
+  String get churchHubStatsError => 'Could not load location activity.';
+
+  @override
+  String get churchHubStatsRetry => 'Retry';
 }

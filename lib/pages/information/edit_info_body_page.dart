@@ -2,12 +2,14 @@ import 'package:ctrim_app/models/info/church_info.dart';
 import 'package:ctrim_app/models/info/ctrim_info.dart';
 import 'package:ctrim_app/models/info/testimonial_info.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/church_location.dart';
 import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:ctrim_app/utility/info_repository.dart';
 import 'package:ctrim_app/utility/network_image_helper.dart';
 import 'package:ctrim_app/utility/responsive_layout.dart';
 import 'package:ctrim_app/utility/user_activity_messages.dart';
 import 'package:ctrim_app/utility/user_activity_recorder.dart';
+import 'package:ctrim_app/utility/volunteer_locations.dart';
 import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -82,6 +84,14 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   late final String _initialDisplayOrder;
   late final CtrimInfoCategory _initialCtrimCategory;
   late CtrimInfoCategory _selectedCtrimCategory;
+  late final TextEditingController _mapLinkController;
+  late final TextEditingController _addressController;
+  late final String _initialLocation;
+  late final String _initialMapLink;
+  late final String _initialAddress;
+  String? _selectedLocation;
+  List<ChurchInfo> _allChurches = const [];
+  bool _churchesLoaded = false;
   bool _isSaving = false;
   bool _isDeleting = false;
   bool _isSaved = false;
@@ -113,11 +123,17 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     _initialDisplayOrder = _initialDisplayOrderValue();
     _initialCtrimCategory = widget.initialCtrimCategory;
     _selectedCtrimCategory = _initialCtrimCategory;
+    _initialLocation = widget.churchInfo?.location.trim() ?? '';
+    _initialMapLink = widget.churchInfo?.mapLink ?? '';
+    _initialAddress = widget.churchInfo?.address ?? '';
+    _selectedLocation = _initialLocation.isEmpty ? null : _initialLocation;
     _primaryController = TextEditingController(text: _initialPrimary);
     _secondaryController = TextEditingController(text: _initialSecondary);
     _summaryController = TextEditingController(text: _initialSummary);
     _imagesController = TextEditingController(text: _initialImages);
     _displayOrderController = TextEditingController(text: _initialDisplayOrder);
+    _mapLinkController = TextEditingController(text: _initialMapLink);
+    _addressController = TextEditingController(text: _initialAddress);
     _imagesController.addListener(_onImagesTextChanged);
     _imagesValidated = true;
   }
@@ -163,6 +179,13 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
         );
         _popRouteAfterAllowing();
       });
+      return;
+    }
+    if (widget.section == InfoEditorSection.church && !_churchesLoaded) {
+      _churchesLoaded = true;
+      _infoRepository.fetchChurches().then((churches) {
+        if (mounted) setState(() => _allChurches = churches);
+      });
     }
   }
 
@@ -174,6 +197,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     _summaryController.dispose();
     _imagesController.dispose();
     _displayOrderController.dispose();
+    _mapLinkController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -216,9 +241,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
                 tooltip: 'Delete',
               ),
             TextButton.icon(
-              onPressed: busy || (!_imagesValidated && _readImageSources().isNotEmpty)
-                  ? null
-                  : _save,
+              onPressed:
+                  busy || (!_imagesValidated && _readImageSources().isNotEmpty)
+                      ? null
+                      : _save,
               icon: _isSaving
                   ? const SizedBox(
                       width: 16,
@@ -289,6 +315,17 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
         _selectedCtrimCategory != _initialCtrimCategory) {
       return true;
     }
+    if (widget.section == InfoEditorSection.church) {
+      if ((_selectedLocation ?? '') != _initialLocation) {
+        return true;
+      }
+      if (_mapLinkController.text.trim() != _initialMapLink.trim()) {
+        return true;
+      }
+      if (_addressController.text.trim() != _initialAddress.trim()) {
+        return true;
+      }
+    }
 
     final currentBody =
         _editorKey.currentState?.getDocumentJson() ?? _initialBody;
@@ -350,6 +387,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
           maxLines: 3,
         ),
       ]);
+    }
+
+    if (widget.section == InfoEditorSection.church) {
+      fields.addAll(_buildChurchHubFields());
     }
 
     if (widget.section == InfoEditorSection.ctrim) {
@@ -440,6 +481,85 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     ]);
 
     return fields;
+  }
+
+  List<Widget> _buildChurchHubFields() {
+    final appContext = Provider.of<AppContext>(context);
+    final assignable = VolunteerLocations.assignableFrom(
+      appContext.activeLocations,
+    );
+    final occupied = ChurchLocation.occupiedLocationNames(
+      churches: _allChurches,
+      excludingId: widget.churchInfo?.id,
+    );
+    final names = List<String>.from(assignable);
+    if (_selectedLocation != null && !names.contains(_selectedLocation)) {
+      names.insert(0, _selectedLocation!);
+    }
+
+    return [
+      const SizedBox(height: 12),
+      DropdownButtonFormField<String>(
+        initialValue:
+            names.contains(_selectedLocation) ? _selectedLocation : null,
+        decoration: const InputDecoration(
+          labelText: 'Location',
+          helperText:
+              'Each church must use a unique location from the catalogue.',
+        ),
+        items: names.map(
+          (name) {
+            final taken = occupied.contains(name);
+            return DropdownMenuItem<String>(
+              value: name,
+              enabled: !taken,
+              child: Text(taken ? '$name (in use)' : name),
+            );
+          },
+        ).toList(),
+        onChanged: (value) => setState(() => _selectedLocation = value),
+        validator: (value) =>
+            (value == null || value.trim().isEmpty) ? 'Required' : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _addressController,
+        decoration: const InputDecoration(
+          labelText: 'Address',
+          helperText: 'Optional street address shown on the church page.',
+        ),
+        minLines: 1,
+        maxLines: 2,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _mapLinkController,
+        decoration: InputDecoration(
+          labelText: 'Maps URL',
+          helperText: 'Optional Google Maps (or similar) link.',
+          suffixIcon: IconButton(
+            onPressed: _onMapLinkHelpClick,
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Maps URL help',
+          ),
+        ),
+        keyboardType: TextInputType.url,
+      ),
+    ];
+  }
+
+  void _onMapLinkHelpClick() {
+    DialogManager.showAlertDialog(
+      context: context,
+      icon: Icons.map_outlined,
+      title: 'Maps URL',
+      content: 'Help people find this church with a direct map link.\n\n'
+          'How to get a Google Maps link:\n'
+          '1. Go to Google Maps\n'
+          '2. Search for the church address\n'
+          '3. Tap Share and copy the link\n'
+          '4. Paste it here',
+    );
   }
 
   Widget _buildImagePreviewRow() {
@@ -616,6 +736,31 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       return;
     }
 
+    if (widget.section == InfoEditorSection.church) {
+      final location = (_selectedLocation ?? '').trim();
+      var churches = _allChurches;
+      if (churches.isEmpty) {
+        churches = await _infoRepository.fetchChurches();
+        if (mounted) setState(() => _allChurches = churches);
+      }
+      if (!mounted) return;
+      final conflict = ChurchLocation.otherChurchUsingLocation(
+        churches: churches,
+        location: location,
+        excludingId: widget.churchInfo?.id,
+      );
+      if (conflict != null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: 'Location already used',
+          content: 'Location “$location” is already used by ${conflict.title}. '
+              'Each church must have its own location.',
+          isError: true,
+        );
+        return;
+      }
+    }
+
     setState(() {
       _isSaving = true;
     });
@@ -637,6 +782,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       switch (widget.section) {
         case InfoEditorSection.church:
           final existingChurch = widget.churchInfo;
+          final location = (_selectedLocation ?? '').trim();
           final church = ChurchInfo(
             id: existingChurch?.id ??
                 _generateDocumentId(_primaryController.text, 'church'),
@@ -645,6 +791,9 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             body: body,
             imageSources: imageSources,
             summary: _summaryController.text.trim(),
+            location: location,
+            mapLink: _mapLinkController.text.trim(),
+            address: _addressController.text.trim(),
             updatedBy: appContext.currentUser.id,
             updatedAt: now,
             displayOrder: displayOrder,

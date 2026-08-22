@@ -1503,6 +1503,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Learn about bookmarks'**
   String get bulletinBookmarksHelpTooltip;
+
+  /// App bar fallback title for a church hub page
+  ///
+  /// In en, this message translates to:
+  /// **'Church Info'**
+  String get churchInfoPageTitle;
+
+  /// Empty state when a church record cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'No church information found.'**
+  String get churchInfoNotFound;
+
+  /// Tooltip on the church hub edit button
+  ///
+  /// In en, this message translates to:
+  /// **'Edit church info'**
+  String get churchInfoEditTooltip;
+
+  /// Error title when the church hub fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load church'**
+  String get churchInfoLoadError;
+
+  /// Button that opens the church maps URL
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Maps'**
+  String get churchHubOpenMaps;
+
+  /// Chip when a church has no linked location
+  ///
+  /// In en, this message translates to:
+  /// **'Location not set'**
+  String get churchHubLocationUnset;
+
+  /// Hint on the church hub when location is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Set a location when editing to show posts, cell groups, and people for this church.'**
+  String get churchHubSetLocationHint;
+
+  /// Section title for church location snapshot counts
+  ///
+  /// In en, this message translates to:
+  /// **'At this location'**
+  String get churchHubSnapshotTitle;
+
+  /// Count tile label for bulletin posts
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get churchHubPostsLabel;
+
+  /// Hint under the posts count on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get churchHubPostsHint;
+
+  /// Count tile label for cell groups at the church location
+  ///
+  /// In en, this message translates to:
+  /// **'Cell Groups'**
+  String get churchHubCellGroupsLabel;
+
+  /// Hint under the cell groups count on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Active and paused'**
+  String get churchHubCellGroupsHint;
+
+  /// Count tile label for registered people at the church location
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get churchHubPeopleLabel;
+
+  /// Hint under the people count on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Profiles here'**
+  String get churchHubPeopleHint;
+
+  /// Heading above recent bulletin posts on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Recent posts'**
+  String get churchHubRecentPosts;
+
+  /// Heading above cell groups listed on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Cell Groups here'**
+  String get churchHubCellGroupsHere;
+
+  /// Empty state when the church location has no recent posts
+  ///
+  /// In en, this message translates to:
+  /// **'No posts in the last 3 months.'**
+  String get churchHubNoRecentPosts;
+
+  /// Empty state when the church location has no cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'No cell groups at this location yet.'**
+  String get churchHubNoCellGroups;
+
+  /// Shown when the church hub truncates the recent posts list
+  ///
+  /// In en, this message translates to:
+  /// **'And {count} more'**
+  String churchHubMorePosts(int count);
+
+  /// Error when the church hub snapshot query fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load location activity.'**
+  String get churchHubStatsError;
+
+  /// Retry loading church location snapshot
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get churchHubStatsRetry;
 }
 
 class _AppLocalizationsDelegate

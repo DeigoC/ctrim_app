@@ -39,7 +39,7 @@ class CtrimInfoListTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool canManageInfo =
-        Provider.of<AppContext>(context).currentUser.canManageInfo;
+        context.select((AppContext c) => c.currentUser.canManageInfo);
 
     return FutureBuilder<List<CtrimInfo>>(
       future: ctrimInfoFuture,

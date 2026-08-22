@@ -1028,5 +1028,94 @@
   "bulletinBookmarksHelpTooltip": "Learn about bookmarks",
   "@bulletinBookmarksHelpTooltip": {
     "description": "Tooltip on the bookmarks help button"
+  },
+  "churchInfoPageTitle": "Church Info",
+  "@churchInfoPageTitle": {
+    "description": "App bar fallback title for a church hub page"
+  },
+  "churchInfoNotFound": "No church information found.",
+  "@churchInfoNotFound": {
+    "description": "Empty state when a church record cannot be loaded"
+  },
+  "churchInfoEditTooltip": "Edit church info",
+  "@churchInfoEditTooltip": {
+    "description": "Tooltip on the church hub edit button"
+  },
+  "churchInfoLoadError": "Could not load church",
+  "@churchInfoLoadError": {
+    "description": "Error title when the church hub fails to load"
+  },
+  "churchHubOpenMaps": "Open in Maps",
+  "@churchHubOpenMaps": {
+    "description": "Button that opens the church maps URL"
+  },
+  "churchHubLocationUnset": "Location not set",
+  "@churchHubLocationUnset": {
+    "description": "Chip when a church has no linked location"
+  },
+  "churchHubSetLocationHint": "Set a location when editing to show posts, cell groups, and people for this church.",
+  "@churchHubSetLocationHint": {
+    "description": "Hint on the church hub when location is missing"
+  },
+  "churchHubSnapshotTitle": "At this location",
+  "@churchHubSnapshotTitle": {
+    "description": "Section title for church location snapshot counts"
+  },
+  "churchHubPostsLabel": "Posts",
+  "@churchHubPostsLabel": {
+    "description": "Count tile label for bulletin posts"
+  },
+  "churchHubPostsHint": "Last 3 months",
+  "@churchHubPostsHint": {
+    "description": "Hint under the posts count on a church hub"
+  },
+  "churchHubCellGroupsLabel": "Cell Groups",
+  "@churchHubCellGroupsLabel": {
+    "description": "Count tile label for cell groups at the church location"
+  },
+  "churchHubCellGroupsHint": "Active and paused",
+  "@churchHubCellGroupsHint": {
+    "description": "Hint under the cell groups count on a church hub"
+  },
+  "churchHubPeopleLabel": "People",
+  "@churchHubPeopleLabel": {
+    "description": "Count tile label for registered people at the church location"
+  },
+  "churchHubPeopleHint": "Profiles here",
+  "@churchHubPeopleHint": {
+    "description": "Hint under the people count on a church hub"
+  },
+  "churchHubRecentPosts": "Recent posts",
+  "@churchHubRecentPosts": {
+    "description": "Heading above recent bulletin posts on a church hub"
+  },
+  "churchHubCellGroupsHere": "Cell Groups here",
+  "@churchHubCellGroupsHere": {
+    "description": "Heading above cell groups listed on a church hub"
+  },
+  "churchHubNoRecentPosts": "No posts in the last 3 months.",
+  "@churchHubNoRecentPosts": {
+    "description": "Empty state when the church location has no recent posts"
+  },
+  "churchHubNoCellGroups": "No cell groups at this location yet.",
+  "@churchHubNoCellGroups": {
+    "description": "Empty state when the church location has no cell groups"
+  },
+  "churchHubMorePosts": "And {count} more",
+  "@churchHubMorePosts": {
+    "description": "Shown when the church hub truncates the recent posts list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "churchHubStatsError": "Could not load location activity.",
+  "@churchHubStatsError": {
+    "description": "Error when the church hub snapshot query fails"
+  },
+  "churchHubStatsRetry": "Retry",
+  "@churchHubStatsRetry": {
+    "description": "Retry loading church location snapshot"
   }
 }

@@ -65,83 +65,80 @@ class _PersonalHomeState extends State<PersonalHome> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Consumer<AppContext>(
-      builder: (context, appContext, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final double contentWidth = constraints.maxWidth;
-            final bool isWideScreen =
-                ResponsiveLayout.isWideScreen(contentWidth);
-            final double maxWidth =
-                ResponsiveLayout.maxContentWidth(contentWidth);
-            final double horizontalPadding = isWideScreen
-                ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
-                : 16.0;
+    context.select((AppContext c) => (c.sessionEpoch, c.headsEpoch));
+    final appContext = widget.appContext;
 
-            return CustomScrollView(
-              slivers: [
-                SliverAppBar.large(
-                  title: Text(
-                    'Personal',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double contentWidth = constraints.maxWidth;
+        final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final double maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
+        final double horizontalPadding = isWideScreen
+            ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
+            : 16.0;
+
+        return CustomScrollView(
+          slivers: [
+            SliverAppBar.large(
+              title: Text(
+                'Personal',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: false,
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
+              leading: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  centerTitle: false,
-                  backgroundColor: colorScheme.surface,
-                  surfaceTintColor: colorScheme.surfaceTint,
-                  leading: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        _ctrimLogo,
-                        fit: BoxFit.contain,
-                        height: kToolbarHeight,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.church_rounded,
-                            color: colorScheme.primary,
-                            size: 24,
-                          ),
-                        ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    _ctrimLogo,
+                    fit: BoxFit.contain,
+                    height: kToolbarHeight,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.church_rounded,
+                        color: colorScheme.primary,
+                        size: 24,
                       ),
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                      horizontalPadding, 8, horizontalPadding, 32),
-                  sliver: SliverToBoxAdapter(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: maxWidth),
-                        child: isWideScreen
-                            ? _buildWideBody(
-                                appContext, theme, colorScheme, contentWidth)
-                            : _buildNarrowBody(appContext, theme, colorScheme),
-                      ),
-                    ),
+              ),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                  horizontalPadding, 8, horizontalPadding, 32),
+              sliver: SliverToBoxAdapter(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: isWideScreen
+                        ? _buildWideBody(
+                            appContext, theme, colorScheme, contentWidth)
+                        : _buildNarrowBody(appContext, theme, colorScheme),
                   ),
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         );
       },
     );

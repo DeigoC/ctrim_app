@@ -149,31 +149,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppContext>(builder: (context, appContext, child) {
-      return PopScope(
-        canPop: false, // safety for the first session
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useRail = ResponsiveLayout.isWideScreen(constraints.maxWidth);
-            return Scaffold(
-              body: useRail
-                  ? _buildWideBody(appContext)
-                  : _buildSelectedBody(appContext),
-              floatingActionButton: _buildFAB(),
-              bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
-            );
-          },
-        ),
-      );
-    });
+    return PopScope(
+      canPop: false, // safety for the first session
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useRail = ResponsiveLayout.isWideScreen(constraints.maxWidth);
+          return Scaffold(
+            body: useRail ? _buildWideBody() : _buildSelectedBody(),
+            floatingActionButton:
+                _selectedIndex == 0 ? const _AddPostFab() : null,
+            bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
+          );
+        },
+      ),
+    );
   }
 
-  Widget _buildWideBody(final AppContext appContext) {
+  Widget _buildWideBody() {
     return Row(
       children: [
         _buildNavigationRail(),
         const VerticalDivider(width: 1),
-        Expanded(child: _buildSelectedBody(appContext)),
+        Expanded(child: _buildSelectedBody()),
       ],
     );
   }
@@ -199,7 +196,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       destinations: _destinations
           .map(
             (dest) => NavigationRailDestination(
-              icon: _navDestinationIcon(dest),
+              icon: dest.label == _personalLabel
+                  ? _PersonalNavIcon(icon: dest.icon)
+                  : Icon(dest.icon),
               label: Text(dest.label),
             ),
           )
@@ -223,7 +222,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       items: _destinations
           .map(
             (dest) => BottomNavigationBarItem(
-              icon: _navDestinationIcon(dest),
+              icon: dest.label == _personalLabel
+                  ? _PersonalNavIcon(icon: dest.icon)
+                  : Icon(dest.icon),
               label: dest.label,
             ),
           )
@@ -231,31 +232,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  /// Same count as Personal → My Schedule; badge only when > 0.
-  Widget _navDestinationIcon(_NavDestination dest) {
-    final icon = Icon(dest.icon);
-    if (dest.label != _personalLabel) return icon;
-
-    final count = _personalScheduleBadgeCount();
-    if (count == 0) return icon;
-
-    return Badge(
-      label: Text('$count'),
-      child: icon,
-    );
-  }
-
-  int _personalScheduleBadgeCount() {
-    if (_appContext.isCurrentUserGuest) return 0;
-    final user = _appContext.currentUser;
-    if (user.roles == null) return 0;
-    return UserScheduleService.upcomingPostCount(
-      user: user,
-      eventHeads: _appContext.eventHeads,
-    );
-  }
-
-  Widget _buildSelectedBody(final AppContext appContext) {
+  Widget _buildSelectedBody() {
     if (_selectedIndex == 0) {
       return ViewEventsHome(
           scrollController: _postsScrollController,
@@ -275,28 +252,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         scrollController: _cellGroupsScrollController,
       );
     }
-    return PersonalHome(appContext: appContext);
-  }
-
-  Widget? _buildFAB() {
-    if (_selectedIndex == 0 && _appContext.currentUser.canManagePostTemplates) {
-      return FloatingActionButton.extended(
-          icon: const Icon(Icons.post_add),
-          onPressed: () {
-            final String uid = _appContext.currentUser.id;
-            Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => SelectPostTemplatePage(
-                            eventContext:
-                                EventContext.adding(currentUserID: uid))))
-                .then((_) {
-              setState(() {});
-            });
-          },
-          label: const Text('Add Post'));
-    }
-    return null;
+    return PersonalHome(appContext: _appContext);
   }
 
   // * Logic
@@ -628,5 +584,58 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await localDataManager.deleteUserImage(user.id);
       }
     }
+  }
+}
+
+class _AddPostFab extends StatelessWidget {
+  const _AddPostFab();
+
+  @override
+  Widget build(BuildContext context) {
+    final canManage = context.select(
+      (AppContext c) => (c.sessionEpoch, c.currentUser.canManagePostTemplates),
+    );
+    if (!canManage.$2) return const SizedBox.shrink();
+
+    final uid = context.read<AppContext>().currentUser.id;
+    return FloatingActionButton.extended(
+      icon: const Icon(Icons.post_add),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SelectPostTemplatePage(
+              eventContext: EventContext.adding(currentUserID: uid),
+            ),
+          ),
+        );
+      },
+      label: const Text('Add Post'),
+    );
+  }
+}
+
+class _PersonalNavIcon extends StatelessWidget {
+  const _PersonalNavIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    context.select((AppContext c) => (c.sessionEpoch, c.headsEpoch));
+    final appContext = context.read<AppContext>();
+    if (appContext.isCurrentUserGuest) return Icon(icon);
+    final user = appContext.currentUser;
+    if (user.roles == null) return Icon(icon);
+    final count = UserScheduleService.upcomingPostCount(
+      user: user,
+      eventHeads: appContext.eventHeads,
+    );
+    final child = Icon(icon);
+    if (count == 0) return child;
+    return Badge(
+      label: Text('$count'),
+      child: child,
+    );
   }
 }

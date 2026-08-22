@@ -116,7 +116,7 @@ class AppContext extends ChangeNotifier {
       ..clear()
       ..addAll(heads);
     _reindexHeads();
-    notifyListeners();
+    _notify(heads: true);
   }
 
   void setRefreshedHeads(final List<EventHead> heads) =>
@@ -144,7 +144,7 @@ class AppContext extends ChangeNotifier {
       ..addAll(users);
     _sortUsers();
     _reindexUsers();
-    notifyListeners();
+    _notify(users: true);
   }
 
   void addOrUpdateUser(final User user) {
@@ -152,13 +152,13 @@ class AppContext extends ChangeNotifier {
     _allUsers.add(user);
     _sortUsers();
     _usersById[user.id] = user;
-    notifyListeners();
+    _notify(users: true);
   }
 
   void removeUser(final String id) {
     _allUsers.removeWhere((u) => u.id == id);
     _usersById.remove(id);
-    notifyListeners();
+    _notify(users: true);
   }
 
   void _sortUsers() {
@@ -186,7 +186,7 @@ class AppContext extends ChangeNotifier {
       if (orderCompare != 0) return orderCompare;
       return a.name.compareTo(b.name);
     });
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void addOrUpdateTag(final UserTag tag) {
@@ -197,12 +197,12 @@ class AppContext extends ChangeNotifier {
       if (orderCompare != 0) return orderCompare;
       return a.name.compareTo(b.name);
     });
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void removeTag(final String tagId) {
     _allTags.removeWhere((t) => t.id == tagId);
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   UserTag? tagById(final String tagId) {
@@ -225,7 +225,7 @@ class AppContext extends ChangeNotifier {
       if (orderCompare != 0) return orderCompare;
       return a.name.compareTo(b.name);
     });
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void addOrUpdatePostTag(final PostTag tag) {
@@ -236,12 +236,12 @@ class AppContext extends ChangeNotifier {
       if (orderCompare != 0) return orderCompare;
       return a.name.compareTo(b.name);
     });
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void removePostTag(final String tagId) {
     _allPostTags.removeWhere((t) => t.id == tagId);
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   PostTag? postTagById(final String tagId) {
@@ -260,19 +260,19 @@ class AppContext extends ChangeNotifier {
       ..clear()
       ..addAll(groups);
     _sortCellGroups();
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void addOrUpdateCellGroup(final CellGroup group) {
     _allCellGroups.removeWhere((g) => g.id == group.id);
     _allCellGroups.add(group);
     _sortCellGroups();
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void removeCellGroup(final String groupId) {
     _allCellGroups.removeWhere((g) => g.id == groupId);
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   CellGroup? cellGroupById(final String groupId) {
@@ -317,7 +317,7 @@ class AppContext extends ChangeNotifier {
       if (orderCompare != 0) return orderCompare;
       return a.name.compareTo(b.name);
     });
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void addOrUpdateLocation(final UserLocation location) {
@@ -328,12 +328,12 @@ class AppContext extends ChangeNotifier {
       if (orderCompare != 0) return orderCompare;
       return a.name.compareTo(b.name);
     });
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   void removeLocation(final String locationId) {
     _allLocations.removeWhere((l) => l.id == locationId);
-    notifyListeners();
+    _notify(catalogs: true);
   }
 
   /// Updates in-memory user location strings after a definition rename.
@@ -343,25 +343,26 @@ class AppContext extends ChangeNotifier {
         user.setLocation(newName);
       }
     }
-    if (_currentUser.location == oldName) {
+    final currentChanged = _currentUser.location == oldName;
+    if (currentChanged) {
       _currentUser.setLocation(newName);
     }
-    notifyListeners();
+    _notify(users: true, session: currentChanged);
   }
 
   void setUserToGuest() {
     _currentUser = _guest;
-    notifyListeners();
+    _notify(session: true);
   }
 
   void setCurrentUser(final User? user) {
     _currentUser = user ?? _guest;
-    notifyListeners();
+    _notify(session: true);
   }
 
   void setCurrentUserRoles(final List<UserRoleAssignment> roles) {
     _currentUser.setRoles(roles);
-    notifyListeners();
+    _notify(session: true);
   }
 
   // Upgrade from guest to authenticated user (used during background login)
@@ -380,7 +381,7 @@ class AppContext extends ChangeNotifier {
     _sortUsers();
     _reindexUsers();
     _reindexHeads();
-    notifyListeners();
+    _notify(session: true, users: true, heads: true);
   }
 
   List<String> getTokensFromUserID(final String userID) =>
@@ -404,7 +405,7 @@ class AppContext extends ChangeNotifier {
     if (directory != null && !identical(directory, _currentUser)) {
       directory.setImgSrc(newSrc);
     }
-    notifyListeners();
+    _notify(session: true);
   }
 
   // * data related

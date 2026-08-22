@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/utility/app_context.dart';
 
 void main() {
@@ -148,6 +149,38 @@ void main() {
       final ctx = context(users: [user(id: 'u1', authID: 'auth-1')]);
       expect(ctx.authIdByUserId('u1'), 'auth-1');
       expect(ctx.authIdByUserId('missing'), isNull);
+    });
+
+    test('epochs bump only the mutated slice', () {
+      final ctx = context();
+      expect(ctx.sessionEpoch, 0);
+      expect(ctx.usersEpoch, 0);
+      expect(ctx.headsEpoch, 0);
+      expect(ctx.catalogsEpoch, 0);
+
+      ctx.setAllTags([
+        UserTag(id: 't1', name: 'Leader'),
+      ]);
+      expect(ctx.catalogsEpoch, 1);
+      expect(ctx.headsEpoch, 0);
+      expect(ctx.usersEpoch, 0);
+      expect(ctx.sessionEpoch, 0);
+
+      ctx.setAllEventHeads([head('h1')]);
+      expect(ctx.headsEpoch, 1);
+      expect(ctx.catalogsEpoch, 1);
+      expect(ctx.usersEpoch, 0);
+
+      ctx.setAllUsers([user(id: 'u1')]);
+      expect(ctx.usersEpoch, 1);
+      expect(ctx.headsEpoch, 1);
+      expect(ctx.sessionEpoch, 0);
+
+      ctx.setCurrentUser(user(id: 'me'));
+      expect(ctx.sessionEpoch, 1);
+      expect(ctx.usersEpoch, 1);
+      expect(ctx.headsEpoch, 1);
+      expect(ctx.catalogsEpoch, 1);
     });
   });
 }

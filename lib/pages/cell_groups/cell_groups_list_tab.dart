@@ -33,7 +33,8 @@ class CellGroupsListTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final appContext = Provider.of<AppContext>(context);
+    context.select((AppContext c) => (c.catalogsEpoch, c.usersEpoch));
+    final appContext = Provider.of<AppContext>(context, listen: false);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -255,8 +256,7 @@ class _CellGroupCard extends StatelessWidget {
         },
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final stripWidth =
-                (constraints.maxWidth * 0.2).clamp(72.0, 112.0);
+            final stripWidth = (constraints.maxWidth * 0.2).clamp(72.0, 112.0);
             return ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 132),
               child: Stack(

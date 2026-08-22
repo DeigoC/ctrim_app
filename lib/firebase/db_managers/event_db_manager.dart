@@ -59,6 +59,22 @@ class EventHeadDBManager {
     return merged.values.toList();
   }
 
+  /// Heads with [EventHead.eventDate] in [[startInclusive], [endExclusive]).
+  ///
+  /// Single-field `EventDate` range — no composite index. Caller filters
+  /// by location (and anything else) on the client.
+  Future<List<EventHead>> fetchHeadsWithEventDateInRange({
+    required DateTime startInclusive,
+    required DateTime endExclusive,
+  }) async {
+    final snapshot = await _ref
+        .where('EventDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startInclusive))
+        .where('EventDate', isLessThan: Timestamp.fromDate(endExclusive))
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
   Future<EventHead> fetchHead(final String id) async {
     return await _ref.doc(id).get().then((value) => value.data() as EventHead);
   }
