@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../utility/post_draft_review.dart';
+import '../../utility/responsive_layout.dart';
 import '../action_sheet.dart';
+import '../app_dialog.dart';
 
-/// Advisory bottom sheet shown before saving a new post.
+/// Advisory confirmation shown before saving a new post.
 class PostSaveReviewSheet extends StatelessWidget {
   const PostSaveReviewSheet({
     super.key,
@@ -11,19 +13,93 @@ class PostSaveReviewSheet extends StatelessWidget {
     required this.onNavigateToTab,
     required this.onSave,
     required this.onCancel,
+    this.asDialog = false,
   });
 
   final PostDraftReview review;
   final ValueChanged<PostDraftReviewTab> onNavigateToTab;
   final VoidCallback onSave;
   final VoidCallback onCancel;
+  final bool asDialog;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final summaryItems = review.items.take(3).toList();
-    final detailItems = review.items.skip(3).toList();
+    final colorScheme = Theme.of(context).colorScheme;
+    final suggestions = review.suggestionItems;
+    final infos = review.infoItems;
+    final readies = review.readyItems;
+
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: SingleChildScrollView(
+            child: ActionSheetShell(
+              icon: Icons.fact_check_outlined,
+              title: 'Ready to save?',
+              subtitle: review.sheetSubtitle,
+              scrollable: false,
+              decorateSurface: false,
+              children: [
+                if (suggestions.isNotEmpty) ...[
+                  const ActionSheetSectionLabel('Still optional'),
+                  ...suggestions.map((item) => _ReviewRow(
+                        item: item,
+                        onTap: item.isTappable
+                            ? () => _onItemTap(context, item)
+                            : null,
+                      )),
+                ],
+                if (infos.isNotEmpty) ...[
+                  const ActionSheetSectionLabel('Notifications'),
+                  ...infos.map((item) => _ReviewRow(
+                        item: item,
+                        onTap: item.isTappable
+                            ? () => _onItemTap(context, item)
+                            : null,
+                      )),
+                ],
+                if (readies.isNotEmpty)
+                  _ReadySection(
+                    items: readies,
+                    initiallyExpanded: suggestions.isEmpty,
+                    onItemTap: (item) => _onItemTap(context, item),
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, asDialog ? 20 : 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onCancel,
+                  child: const Text('Go back'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onSave,
+                  icon: const Icon(Icons.save, size: 18),
+                  label: const Text('Save post'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (asDialog) {
+      return Material(
+        color: colorScheme.surface,
+        child: body,
+      );
+    }
 
     return Container(
       constraints: BoxConstraints(
@@ -38,54 +114,7 @@ class PostSaveReviewSheet extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: ActionSheetShell(
-                  icon: Icons.fact_check_outlined,
-                  title: 'Ready to save?',
-                  subtitle: review.sheetSubtitle,
-                  children: [
-                    const ActionSheetSectionLabel('Summary'),
-                    ...summaryItems.map((item) => _ReviewRow(
-                          item: item,
-                          onTap: item.isTappable ? () => _onItemTap(context, item) : null,
-                        )),
-                    const ActionSheetSectionLabel('Details'),
-                    ...detailItems.map((item) => _ReviewRow(
-                          item: item,
-                          onTap: item.isTappable ? () => _onItemTap(context, item) : null,
-                        )),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: onCancel,
-                      child: const Text('Go back'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: onSave,
-                      icon: const Icon(Icons.save, size: 18),
-                      label: const Text('Save post'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        child: body,
       ),
     );
   }
@@ -95,6 +124,75 @@ class PostSaveReviewSheet extends StatelessWidget {
     if (tab == null) return;
     Navigator.of(context).pop(false);
     onNavigateToTab(tab);
+  }
+}
+
+class _ReadySection extends StatefulWidget {
+  const _ReadySection({
+    required this.items,
+    required this.initiallyExpanded,
+    required this.onItemTap,
+  });
+
+  final List<PostDraftReviewItem> items;
+  final bool initiallyExpanded;
+  final ValueChanged<PostDraftReviewItem> onItemTap;
+
+  @override
+  State<_ReadySection> createState() => _ReadySectionState();
+}
+
+class _ReadySectionState extends State<_ReadySection> {
+  late bool _expanded = widget.initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final count = widget.items.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'LOOKING GOOD · $count',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 20,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (_expanded)
+          ...widget.items.map((item) => _ReviewRow(
+                item: item,
+                onTap: item.isTappable ? () => widget.onItemTap(item) : null,
+              )),
+      ],
+    );
   }
 }
 
@@ -131,7 +229,8 @@ class _ReviewRow extends StatelessWidget {
                     color: statusStyle.iconBackground,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(statusStyle.icon, color: statusStyle.iconColor, size: 20),
+                  child: Icon(statusStyle.icon,
+                      color: statusStyle.iconColor, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -140,7 +239,8 @@ class _ReviewRow extends StatelessWidget {
                     children: [
                       Text(
                         item.title,
-                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       if (item.subtitle != null) ...[
                         const SizedBox(height: 2),
@@ -155,7 +255,8 @@ class _ReviewRow extends StatelessWidget {
                   ),
                 ),
                 if (onTap != null)
-                  Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
+                  Icon(Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant, size: 20),
               ],
             ),
           ),
@@ -164,7 +265,8 @@ class _ReviewRow extends StatelessWidget {
     );
   }
 
-  _ReviewStatusStyle _statusStyle(ColorScheme colorScheme, PostDraftReviewStatus status) {
+  _ReviewStatusStyle _statusStyle(
+      ColorScheme colorScheme, PostDraftReviewStatus status) {
     switch (status) {
       case PostDraftReviewStatus.ready:
         return _ReviewStatusStyle(
@@ -184,7 +286,8 @@ class _ReviewRow extends StatelessWidget {
         return _ReviewStatusStyle(
           icon: Icons.notifications_active_outlined,
           iconColor: colorScheme.secondary,
-          iconBackground: colorScheme.secondaryContainer.withValues(alpha: 0.65),
+          iconBackground:
+              colorScheme.secondaryContainer.withValues(alpha: 0.65),
           background: colorScheme.secondaryContainer.withValues(alpha: 0.22),
         );
     }
@@ -205,23 +308,54 @@ class _ReviewStatusStyle {
   final Color background;
 }
 
-/// Shows the save review sheet and returns whether the user chose to save.
+/// Shows the save review and returns whether the user chose to save.
+///
+/// On wide screens this is a centered dialog; on phones it stays a bottom sheet.
 Future<bool> showPostSaveReviewSheet({
   required BuildContext context,
   required PostDraftReview review,
   required ValueChanged<PostDraftReviewTab> onNavigateToTab,
 }) async {
+  final size = MediaQuery.sizeOf(context);
+  final asDialog = ResponsiveLayout.isWideScreen(size.width);
+
+  Widget buildReview(BuildContext sheetContext) => PostSaveReviewSheet(
+        review: review,
+        asDialog: asDialog,
+        onNavigateToTab: onNavigateToTab,
+        onSave: () => Navigator.of(sheetContext).pop(true),
+        onCancel: () => Navigator.of(sheetContext).pop(false),
+      );
+
+  if (asDialog) {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        insetPadding: AppDialog.insetPadding,
+        shape: AppDialog.shape,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: ResponsiveLayout.reviewDialogMaxWidth,
+            maxHeight: size.height * 0.85,
+          ),
+          child: buildReview(dialogContext),
+        ),
+      ),
+    );
+    return result ?? false;
+  }
+
   final result = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Colors.transparent,
-    builder: (sheetContext) => PostSaveReviewSheet(
-      review: review,
-      onNavigateToTab: onNavigateToTab,
-      onSave: () => Navigator.of(sheetContext).pop(true),
-      onCancel: () => Navigator.of(sheetContext).pop(false),
+    constraints: BoxConstraints(
+      maxWidth: size.width,
+      maxHeight: size.height * 0.88,
     ),
+    builder: buildReview,
   );
   return result ?? false;
 }

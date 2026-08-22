@@ -8,6 +8,8 @@ import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/schedule_duration_picker.dart';
+import '../../widgets/app_dialog.dart';
+import '../../utility/dialog_manager.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {
   const EditEventDateLocationPage({
@@ -819,101 +821,55 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     final DateTime start, {
     bool promptForDuration = true,
   }) async {
+    final DateTime? previousStart = _start;
+    final DateTime? previousEnd = _end;
     setState(() {
       _start = start;
-      if (_end != null) {
+      if (previousEnd != null && previousStart != null) {
+        _end = start.add(previousEnd.difference(previousStart));
+      } else if (_end != null) {
         _end = DateTime(
             start.year, start.month, start.day, _end!.hour, _end!.minute);
       }
     });
     if (!promptForDuration || !mounted) return;
     await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                title: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.schedule,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text('Event Duration'),
-                  ],
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'How long will your event last?',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest
-                            .withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Choose whether this is an all-day event or has a specific end time.',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      setState(() {
-                        _isAllDay = true;
-                      });
-                    },
-                    icon: const Icon(Icons.today),
-                    label: const Text('All Day'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      await _onSelectEndTimeClick();
-                    },
-                    icon: const Icon(Icons.schedule),
-                    label: const Text('Set End Time'),
-                  ),
-                ]));
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AppDialog(
+        icon: Icons.schedule,
+        title: 'Event Duration',
+        message: 'How long will your event last?',
+        banner: const AppDialogBanner(
+          message:
+              'Choose whether this is an all-day event or has a specific end time.',
+        ),
+        actions: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _onSelectEndTimeClick();
+              },
+              icon: const Icon(Icons.schedule, size: 18),
+              label: const Text('Set end time'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _isAllDay = true;
+                });
+              },
+              icon: const Icon(Icons.today, size: 18),
+              label: const Text('All day'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _onSelectEndTimeClick() async {
@@ -1083,176 +1039,32 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   void _mapLinkHelpClick() {
-    showDialog(
+    DialogManager.showAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.map,
-                color: Theme.of(context).colorScheme.onTertiaryContainer,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Map Link Help'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Help attendees find your event location with a direct map link.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primaryContainer
-                    .withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'How to get a Google Maps link:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '1. Go to Google Maps\n2. Search for your event address\n3. Click the "Share" button\n4. Copy the link and paste it here',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
+      icon: Icons.map_outlined,
+      title: 'Map Link Help',
+      content:
+          'Help attendees find your event location with a direct map link.\n\n'
+          'How to get a Google Maps link:\n'
+          '1. Go to Google Maps\n'
+          '2. Search for your event address\n'
+          '3. Click the Share button\n'
+          '4. Copy the link and paste it here',
     );
   }
 
   void _onOnlineMeetingLinkHelpClick() {
-    showDialog(
+    DialogManager.showAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.videocam,
-                color: Theme.of(context).colorScheme.onSecondaryContainer,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Online Meeting Link'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Provide the link where attendees can join your online event.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .secondaryContainer
-                    .withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.video_call,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Examples:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• Zoom meeting links\n• Microsoft Teams links\n• Google Meet links\n• YouTube live streams',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
+      icon: Icons.videocam_outlined,
+      title: 'Online Meeting Link',
+      content:
+          'Provide the link where attendees can join your online event.\n\n'
+          'Examples:\n'
+          '• Zoom meeting links\n'
+          '• Microsoft Teams links\n'
+          '• Google Meet links\n'
+          '• YouTube live streams',
     );
   }
 }

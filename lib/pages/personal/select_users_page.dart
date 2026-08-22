@@ -13,6 +13,7 @@ import 'package:ctrim_app/utility/user_activity_recorder.dart';
 import 'package:ctrim_app/utility/user_tag_helpers.dart';
 import 'package:ctrim_app/utility/volunteer_locations.dart';
 import 'package:ctrim_app/widgets/app_search_bar.dart';
+import 'package:ctrim_app/widgets/app_dialog.dart';
 import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:ctrim_app/widgets/user_tag_chip.dart';
 import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
@@ -488,39 +489,35 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.selectUsersCreatePlaceholderTitle),
-        content: Column(
+      builder: (ctx) => AppDialog(
+        icon: Icons.person_add_alt_1_outlined,
+        title: l10n.selectUsersCreatePlaceholderTitle,
+        message: l10n.selectUsersCreatePlaceholderBody,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l10n.selectUsersCreatePlaceholderBody),
-            const SizedBox(height: 16),
             TextField(
               controller: forenameController,
               autofocus: true,
-              decoration: InputDecoration(
-                labelText: l10n.selectUsersForename,
-                border: const OutlineInputBorder(),
+              decoration: AppDialog.inputDecoration(
+                label: l10n.selectUsersForename,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: surnameController,
-              decoration: InputDecoration(
-                labelText: l10n.selectUsersSurname,
-                border: const OutlineInputBorder(),
+              decoration: AppDialog.inputDecoration(
+                label: l10n.selectUsersSurname,
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.cancel)),
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.selectUsersCreate)),
-        ],
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(ctx).pop(false),
+          cancelLabel: l10n.cancel,
+          onConfirm: () => Navigator.of(ctx).pop(true),
+          confirmLabel: l10n.selectUsersCreate,
+        ),
       ),
     );
 

@@ -11,6 +11,8 @@ import '../../utility/user_activity_recorder.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/post_tag_chip.dart';
 import '../../widgets/role_access_gate.dart';
+import '../../widgets/app_dialog.dart';
+import '../../utility/dialog_manager.dart';
 
 class ManagePostTagsPage extends StatefulWidget {
   const ManagePostTagsPage({super.key});
@@ -193,42 +195,38 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-              isEditing ? l10n.managePostTagsEdit : l10n.managePostTagsAdd),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration:
-                      InputDecoration(labelText: l10n.managePostTagsNameLabel),
-                  autofocus: true,
+        return AppDialog(
+          icon: isEditing ? Icons.edit_outlined : Icons.add,
+          title: isEditing ? l10n.managePostTagsEdit : l10n.managePostTagsAdd,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: AppDialog.inputDecoration(
+                  label: l10n.managePostTagsNameLabel,
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: colorController,
-                  decoration: InputDecoration(
-                    labelText: l10n.managePostTagsColorLabel,
-                    hintText: '#6B4EAA',
-                  ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: colorController,
+                decoration: AppDialog.inputDecoration(
+                  label: l10n.managePostTagsColorLabel,
+                  hint: '#6B4EAA',
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(l10n.cancel)),
-            FilledButton(
-              onPressed: () {
-                if (nameController.text.trim().isEmpty) return;
-                Navigator.pop(dialogContext, true);
-              },
-              child: Text(isEditing ? l10n.save : l10n.managePostTagsCreate),
-            ),
-          ],
+          actions: AppDialogActions(
+            onCancel: () => Navigator.pop(dialogContext),
+            cancelLabel: l10n.cancel,
+            onConfirm: () {
+              if (nameController.text.trim().isEmpty) return;
+              Navigator.pop(dialogContext, true);
+            },
+            confirmLabel: isEditing ? l10n.save : l10n.managePostTagsCreate,
+          ),
         );
       },
     );
@@ -306,20 +304,14 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.managePostTagsDelete),
-        content: Text(l10n.managePostTagsDeleteConfirm(tag.name)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(l10n.cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.managePostTagsDelete)),
-        ],
-      ),
+      title: l10n.managePostTagsDelete,
+      content: l10n.managePostTagsDeleteConfirm(tag.name),
+      confirmText: l10n.managePostTagsDelete,
+      cancelText: l10n.cancel,
+      icon: Icons.delete_outline,
+      isDestructive: true,
     );
     if (confirmed != true || !mounted) return;
 

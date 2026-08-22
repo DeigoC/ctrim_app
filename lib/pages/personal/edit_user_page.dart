@@ -19,6 +19,7 @@ import '../../utility/user_activity_recorder.dart';
 import '../../utility/users_local_cache.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/user_tag_picker.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../utility/responsive_layout.dart';
@@ -556,42 +557,26 @@ class _EditUserPageState extends State<EditUserPage> {
     final email = await showDialog<String>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _authID.isEmpty
-                    ? 'Enter the email they used when registering in the app. '
-                        'Their Auth ID will be linked to this volunteer profile.'
-                    : 'Enter the new account email. The previous Auth link will be cleared '
-                        '(temp accounts are not deleted automatically).',
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                autofocus: true,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-                onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
-              ),
-            ],
+        return AppDialog(
+          icon: Icons.link,
+          title: _authID.isEmpty ? 'Link account' : 'Reassign account',
+          message: _authID.isEmpty
+              ? 'Enter the email they used when registering in the app. '
+                  'Their Auth ID will be linked to this volunteer profile.'
+              : 'Enter the new account email. The previous Auth link will be cleared '
+                  '(temp accounts are not deleted automatically).',
+          child: TextField(
+            controller: emailController,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            decoration: AppDialog.inputDecoration(label: 'Email'),
+            onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel')),
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(ctx).pop(emailController.text.trim()),
-              child: const Text('Search'),
-            ),
-          ],
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(ctx).pop(),
+            onConfirm: () => Navigator.of(ctx).pop(emailController.text.trim()),
+            confirmLabel: 'Search',
+          ),
         );
       },
     );
@@ -649,23 +634,15 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Future<void> _onUnlinkAccountClick() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Unlink account'),
-        content: const Text(
+      title: 'Unlink account',
+      content:
           'Remove the login link from this profile? They will not be able to sign in as this '
           'volunteer until you link an account again. Schedule and profile data are kept.',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Unlink')),
-        ],
-      ),
+      confirmText: 'Unlink',
+      icon: Icons.link_off,
+      isDestructive: true,
     );
     if (!mounted || confirmed != true) return;
 

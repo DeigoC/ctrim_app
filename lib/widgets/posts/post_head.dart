@@ -8,6 +8,7 @@ import '../../pages/view_gallery_page.dart';
 import '../../utility/network_image_helper.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
+import '../app_dialog.dart';
 
 /// Relationship of a post relative to the currently viewed post.
 /// Only used on [PostHead] in related-posts views — not the main bulletin.
@@ -32,7 +33,8 @@ class PostHead extends StatefulWidget {
   _PostHeadState createState() => _PostHeadState();
 }
 
-class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin {
+class _PostHeadState extends State<PostHead>
+    with SingleTickerProviderStateMixin {
   static const double _titleFontSize = 22, _subtitleFontSize = 15;
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM • HH:mm');
 
@@ -102,7 +104,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
                   children: [
                     // Header with info button
                     Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 8, top: 12),
+                      padding:
+                          const EdgeInsets.only(left: 16, right: 8, top: 12),
                       child: Row(
                         children: [
                           Expanded(child: _buildStatusRow(theme, colorScheme)),
@@ -183,7 +186,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
                   width: 120,
                   height: 120,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _leadSpeakerInitialsAvatar(theme, colorScheme, name),
+                  errorBuilder: (_, __, ___) =>
+                      _leadSpeakerInitialsAvatar(theme, colorScheme, name),
                 ),
               )
             else
@@ -191,7 +195,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
             const SizedBox(height: 12),
             Text(
               name,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -209,11 +214,15 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _leadSpeakerInitialsAvatar(ThemeData theme, ColorScheme colorScheme, String name) {
+  Widget _leadSpeakerInitialsAvatar(
+      ThemeData theme, ColorScheme colorScheme, String name) {
     final parts = name.trim().split(RegExp(r'\s+'));
     final initials = parts.isEmpty
         ? '?'
-        : parts.take(2).map((p) => p.isNotEmpty ? p[0].toUpperCase() : '').join();
+        : parts
+            .take(2)
+            .map((p) => p.isNotEmpty ? p[0].toUpperCase() : '')
+            .join();
     return CircleAvatar(
       radius: 60,
       backgroundColor: colorScheme.primaryContainer,
@@ -242,7 +251,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildMediaLayout(List<Map<String, dynamic>> media, BuildContext context) {
+  Widget _buildMediaLayout(
+      List<Map<String, dynamic>> media, BuildContext context) {
     if (media.length == 1) {
       return _buildMediaSlot(media.first, 0, context);
     } else if (media.length == 2) {
@@ -360,11 +370,24 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildRelationBadge(ThemeData theme, ColorScheme colorScheme, PostRelationTag tag) {
+  Widget _buildRelationBadge(
+      ThemeData theme, ColorScheme colorScheme, PostRelationTag tag) {
     final (label, icon, color) = switch (tag) {
-      PostRelationTag.parent => ('Parent', Icons.arrow_upward, colorScheme.primary),
-      PostRelationTag.sibling => ('Sibling', Icons.compare_arrows, colorScheme.tertiary),
-      PostRelationTag.child => ('Child', Icons.arrow_downward, colorScheme.secondary),
+      PostRelationTag.parent => (
+          'Parent',
+          Icons.arrow_upward,
+          colorScheme.primary
+        ),
+      PostRelationTag.sibling => (
+          'Sibling',
+          Icons.compare_arrows,
+          colorScheme.tertiary
+        ),
+      PostRelationTag.child => (
+          'Child',
+          Icons.arrow_downward,
+          colorScheme.secondary
+        ),
     };
 
     return Container(
@@ -490,7 +513,9 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  widget.thisHead.imageCount > 0 ? Icons.image : Icons.play_circle,
+                  widget.thisHead.imageCount > 0
+                      ? Icons.image
+                      : Icons.play_circle,
                   size: 14,
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -519,7 +544,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildMediaSlot(Map<String, dynamic> entry, int index, BuildContext context) {
+  Widget _buildMediaSlot(
+      Map<String, dynamic> entry, int index, BuildContext context) {
     return entry['type']!.compareTo('img') == 0
         ? ImageMediaSlot(
             key: ValueKey('${widget.thisHead.id}-${entry['src']}'),
@@ -577,7 +603,8 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
   void _onHeadTap(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: widget.thisHead)),
+      MaterialPageRoute(
+          builder: (_) => ViewEventPage(eventHead: widget.thisHead)),
     ).then((_) => widget.updatePost());
   }
 
@@ -598,19 +625,10 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
   void _showPostInfo(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(
-              Icons.info_outline,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            const Text('Post Details'),
-          ],
-        ),
-        content: Column(
+      builder: (_) => AppDialog(
+        icon: Icons.info_outline,
+        title: 'Post Details',
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -618,19 +636,19 @@ class _PostHeadState extends State<PostHead> with SingleTickerProviderStateMixin
             const SizedBox(height: 8),
             _buildInfoRow('Location', widget.thisHead.location, context),
             const SizedBox(height: 8),
-            _buildInfoRow('Media Count', '${widget.thisHead.mediaCount}', context),
+            _buildInfoRow(
+                'Media Count', '${widget.thisHead.mediaCount}', context),
             if (widget.thisHead.hasEventDate) ...[
               const SizedBox(height: 8),
-              _buildInfoRow('Event Status', widget.thisHead.eventStatusText, context),
+              _buildInfoRow(
+                  'Event Status', widget.thisHead.eventStatusText, context),
             ],
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+        actions: AppDialogActions(
+          onConfirm: () => Navigator.pop(context),
+          confirmLabel: 'Close',
+        ),
       ),
     );
   }

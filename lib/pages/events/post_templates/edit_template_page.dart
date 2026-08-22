@@ -19,6 +19,7 @@ import '../../../widgets/posts/view_all_programs.dart';
 import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
 import '../../../widgets/posts/template_log_dialog.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../add_media_file_page.dart';
 import '../add_program_role_page.dart';
@@ -529,36 +530,33 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Subtitle'),
-        content: TextField(
+      builder: (context) => AppDialog(
+        icon: Icons.subtitles_outlined,
+        title: 'Add Subtitle',
+        child: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Subtitle text',
-            hintText: 'Enter subtitle text...',
+          decoration: AppDialog.inputDecoration(
+            label: 'Subtitle text',
+            hint: 'Enter subtitle text...',
+            maxLines: 2,
           ),
           maxLines: 2,
           maxLength: 128,
           autofocus: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isNotEmpty) {
-                setState(() {
-                  _subtitles.add(text);
-                });
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () {
+            final text = controller.text.trim();
+            if (text.isNotEmpty) {
+              setState(() {
+                _subtitles.add(text);
+              });
+              Navigator.of(context).pop();
+            }
+          },
+          confirmLabel: 'Add',
+        ),
       ),
     );
   }
@@ -567,67 +565,50 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     final controller = TextEditingController(text: currentSubtitle);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Subtitle'),
-        content: TextField(
+      builder: (context) => AppDialog(
+        icon: Icons.edit_outlined,
+        title: 'Edit Subtitle',
+        child: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Subtitle text',
-            hintText: 'Enter subtitle text...',
+          decoration: AppDialog.inputDecoration(
+            label: 'Subtitle text',
+            hint: 'Enter subtitle text...',
+            maxLines: 2,
           ),
           maxLines: 2,
           maxLength: 128,
           autofocus: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isNotEmpty) {
-                setState(() {
-                  _subtitles[index] = text;
-                });
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () {
+            final text = controller.text.trim();
+            if (text.isNotEmpty) {
+              setState(() {
+                _subtitles[index] = text;
+              });
+              Navigator.of(context).pop();
+            }
+          },
+          confirmLabel: 'Save',
+        ),
       ),
     );
   }
 
-  void _onRemoveSubtitle(int index) {
-    showDialog(
+  void _onRemoveSubtitle(int index) async {
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Subtitle'),
-        content:
-            Text('Are you sure you want to delete "${_subtitles[index]}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              setState(() {
-                _subtitles.removeAt(index);
-              });
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Subtitle',
+      content: 'Are you sure you want to delete "${_subtitles[index]}"?',
+      confirmText: 'Delete',
+      icon: Icons.delete_outline,
+      isDestructive: true,
     );
+    if (!confirmed || !mounted) return;
+    setState(() {
+      _subtitles.removeAt(index);
+    });
   }
 
   // * Cover Image Pool (stored as BodyMediaPool)

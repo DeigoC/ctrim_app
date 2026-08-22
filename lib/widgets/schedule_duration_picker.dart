@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../utility/dialog_manager.dart';
+import '../widgets/app_dialog.dart';
 
 /// Preset lengths shown when setting a schedule item's end time.
 const List<({String label, int minutes, IconData icon})>
@@ -95,100 +96,58 @@ class _ScheduleDurationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.7,
-          maxWidth: 400,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return AppDialog(
+      icon: Icons.timer_outlined,
+      title: title,
+      scrollable: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.45,
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.primaryColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+            for (final preset in kScheduleDurationPresets)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  backgroundColor: colorScheme.primaryContainer,
+                  child: Icon(
+                    preset.icon,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                title: Text(preset.label),
+                subtitle: Text(
+                  'Ends at ${timeFormat.format(_endOnStartDay(preset.minutes))}',
+                ),
+                trailing: Icon(Icons.chevron_right,
+                    color: colorScheme.onSurfaceVariant),
+                onTap: () => Navigator.of(context).pop(
+                  _endOnStartDay(preset.minutes),
                 ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.timer, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.all(8),
-                children: [
-                  for (final preset in kScheduleDurationPresets)
-                    Card(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 2, horizontal: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: theme.colorScheme.primaryContainer,
-                          child: Icon(
-                            preset.icon,
-                            color: theme.colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        title: Text(preset.label),
-                        subtitle: Text(
-                          'Ends at ${timeFormat.format(_endOnStartDay(preset.minutes))}',
-                        ),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () => Navigator.of(context).pop(
-                          _endOnStartDay(preset.minutes),
-                        ),
-                      ),
-                    ),
-                  const Divider(),
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: theme.colorScheme.primaryContainer,
-                      child: Icon(
-                        Icons.edit_calendar,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    title: const Text('Custom finish time'),
-                    subtitle: const Text('Set a specific end time'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () =>
-                        Navigator.of(context).pop(_customFinishTimeSentinel),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+            const Divider(),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: colorScheme.primaryContainer,
+                child: Icon(
+                  Icons.edit_calendar,
+                  color: colorScheme.onPrimaryContainer,
                 ),
               ),
+              title: const Text('Custom finish time'),
+              subtitle: const Text('Set a specific end time'),
+              trailing: Icon(Icons.chevron_right,
+                  color: colorScheme.onSurfaceVariant),
+              onTap: () => Navigator.of(context).pop(_customFinishTimeSentinel),
             ),
           ],
         ),
+      ),
+      actions: AppDialogActions(
+        onCancel: () => Navigator.of(context).pop(),
       ),
     );
   }

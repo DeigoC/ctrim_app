@@ -19,6 +19,7 @@ import '../utility/user_schedule_service.dart';
 import '../utility/web_notification_lifecycle.dart';
 import '../utility/notification_subscription_service.dart';
 import '../utility/web_notification_deep_link.dart';
+import '../widgets/app_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -41,8 +42,7 @@ class _NavDestination {
   final String label;
 }
 
-class _HomePageState extends State<HomePage>
-    with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   static const List<_NavDestination> _destinations = [
     _NavDestination(icon: Icons.library_books, label: 'Bulletin'),
     _NavDestination(icon: Icons.church, label: 'CTRIM'),
@@ -132,7 +132,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _reconcileNotificationSubscriptions() async {
-    if (_appContext.isCurrentUserGuest || _appContext.sharedPref.loggedOut) return;
+    if (_appContext.isCurrentUserGuest || _appContext.sharedPref.loggedOut)
+      return;
 
     final authID = kIsWeb ? AuthManager().currentAuthUID : null;
     if (kIsWeb && (authID == null || authID.isEmpty)) return;
@@ -347,39 +348,19 @@ class _HomePageState extends State<HomePage>
     if (appContext.sharedPref.isFirstOpen) {
       // Show welcome dialog without notification pressure
       await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => Dialog(
-              child: SingleChildScrollView(
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                child: Text('Welcome! 👋',
-                                    style: TextStyle(
-                                        fontSize: 21,
-                                        fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.start)),
-                            const SizedBox(height: 16),
-                            const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                child: Text(
-                                    'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
-                                    textAlign: TextAlign.start,
-                                    style: TextStyle(fontSize: 16))),
-                            const SizedBox(height: 8),
-                            Align(
-                                alignment: Alignment.centerRight,
-                                child: Padding(
-                                    padding: const EdgeInsets.only(right: 16.0),
-                                    child: TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Get Started',
-                                            style: TextStyle(fontSize: 16)))))
-                          ])))));
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AppDialog(
+          icon: Icons.waving_hand_outlined,
+          title: 'Welcome!',
+          message:
+              'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
+          actions: AppDialogActions(
+            onConfirm: () => Navigator.pop(context),
+            confirmLabel: 'Get Started',
+          ),
+        ),
+      );
 
       appContext.sharedPref.nowOpened();
     }
@@ -586,73 +567,39 @@ class _HomePageState extends State<HomePage>
 
     bool result = false;
 
-    final List<Widget> buttonChildren = [
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(closeText ?? 'Ok', style: const TextStyle(fontSize: 16)))
-    ];
-    if (openingPage) {
-      buttonChildren.add(TextButton(
-          onPressed: () {
-            result = true;
-            Navigator.of(context).pop();
-          },
-          child: const Text('Show More', style: TextStyle(fontSize: 16))));
-    }
-
     await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) {
-          // ! wrap this in an orientation builder!
-          return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              child: SingleChildScrollView(
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                    imageUrl != null
-                        ? Container(
-                            foregroundDecoration: BoxDecoration(
-                                borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(16),
-                                    topRight: Radius.circular(16)),
-                                image: DecorationImage(
-                                    image: NetworkImage(
-                                        NetworkImageHelper.getImageUrl(
-                                            imageUrl)),
-                                    fit: BoxFit.fill)),
-                            child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Image.network(
-                                    NetworkImageHelper.getImageUrl(
-                                        imageUrl)) // so jank lol! It works though
-                                ))
-                        : Container(),
-                    imageUrl != null
-                        ? const SizedBox(height: 16)
-                        : const SizedBox(height: 24),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(notification.title!,
-                            style: const TextStyle(
-                                fontSize: 21, fontWeight: FontWeight.bold))),
-                    const SizedBox(height: 8),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(notification.body!,
-                            style: const TextStyle(fontSize: 16))),
-                    const SizedBox(height: 8),
-                    Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: buttonChildren)),
-                    const SizedBox(height: 16)
-                  ])));
-        });
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AppDialog(
+        icon: imageUrl == null ? Icons.notifications_outlined : null,
+        title: notification.title,
+        message: notification.body,
+        maxWidth: ResponsiveLayout.reviewDialogMaxWidth,
+        child: imageUrl == null
+            ? null
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  NetworkImageHelper.getImageUrl(imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+        actions: openingPage
+            ? AppDialogActions(
+                onCancel: () => Navigator.of(context).pop(),
+                cancelLabel: closeText ?? 'Ok',
+                onConfirm: () {
+                  result = true;
+                  Navigator.of(context).pop();
+                },
+                confirmLabel: 'Show More',
+              )
+            : AppDialogActions(
+                onConfirm: () => Navigator.of(context).pop(),
+                confirmLabel: closeText ?? 'Ok',
+              ),
+      ),
+    );
 
     return result;
   }

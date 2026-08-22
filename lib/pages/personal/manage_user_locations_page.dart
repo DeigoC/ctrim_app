@@ -11,6 +11,8 @@ import '../../utility/user_activity_recorder.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/role_access_gate.dart';
+import '../../widgets/app_dialog.dart';
+import '../../utility/dialog_manager.dart';
 
 class ManageUserLocationsPage extends StatefulWidget {
   const ManageUserLocationsPage({super.key});
@@ -196,29 +198,29 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(isEditing
+        return AppDialog(
+          icon:
+              isEditing ? Icons.edit_outlined : Icons.add_location_alt_outlined,
+          title: isEditing
               ? l10n.manageUserLocationsEdit
-              : l10n.manageUserLocationsAdd),
-          content: TextField(
+              : l10n.manageUserLocationsAdd,
+          child: TextField(
             controller: nameController,
-            decoration:
-                InputDecoration(labelText: l10n.manageUserLocationsNameLabel),
+            decoration: AppDialog.inputDecoration(
+              label: l10n.manageUserLocationsNameLabel,
+            ),
             autofocus: true,
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(l10n.cancel)),
-            FilledButton(
-              onPressed: () {
-                if (nameController.text.trim().isEmpty) return;
-                Navigator.pop(dialogContext, true);
-              },
-              child:
-                  Text(isEditing ? l10n.save : l10n.manageUserLocationsCreate),
-            ),
-          ],
+          actions: AppDialogActions(
+            onCancel: () => Navigator.pop(dialogContext),
+            cancelLabel: l10n.cancel,
+            onConfirm: () {
+              if (nameController.text.trim().isEmpty) return;
+              Navigator.pop(dialogContext, true);
+            },
+            confirmLabel:
+                isEditing ? l10n.save : l10n.manageUserLocationsCreate,
+          ),
         );
       },
     );
@@ -307,21 +309,14 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.manageUserLocationsDelete),
-        content: Text(l10n.manageUserLocationsDeleteConfirm(location.name)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(l10n.cancel)),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(l10n.manageUserLocationsDelete),
-          ),
-        ],
-      ),
+      title: l10n.manageUserLocationsDelete,
+      content: l10n.manageUserLocationsDeleteConfirm(location.name),
+      confirmText: l10n.manageUserLocationsDelete,
+      cancelText: l10n.cancel,
+      icon: Icons.delete_outline,
+      isDestructive: true,
     );
     if (confirmed != true || !mounted) return;
 

@@ -17,7 +17,9 @@ void main() {
 
       expect(review.suggestionCount, greaterThan(0));
       expect(
-        review.items.where((item) => item.status == PostDraftReviewStatus.suggestion).map((e) => e.kind),
+        review.items
+            .where((item) => item.status == PostDraftReviewStatus.suggestion)
+            .map((e) => e.kind),
         containsAll([
           PostDraftReviewKind.eventDate,
           PostDraftReviewKind.scheduleRoles,
@@ -43,9 +45,12 @@ void main() {
         allTags: const [],
       );
 
-      final titleItem = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.title);
-      final subtitleItem = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.subtitle);
-      final locationItem = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.location);
+      final titleItem = review.items
+          .firstWhere((item) => item.kind == PostDraftReviewKind.title);
+      final subtitleItem = review.items
+          .firstWhere((item) => item.kind == PostDraftReviewKind.subtitle);
+      final locationItem = review.items
+          .firstWhere((item) => item.kind == PostDraftReviewKind.location);
 
       expect(titleItem.status, PostDraftReviewStatus.ready);
       expect(titleItem.subtitle, 'Youth Night');
@@ -66,7 +71,8 @@ void main() {
         allTags: const [],
       );
 
-      final broadcast = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.broadcastNotify);
+      final broadcast = review.items.firstWhere(
+          (item) => item.kind == PostDraftReviewKind.broadcastNotify);
       expect(broadcast.status, PostDraftReviewStatus.info);
       expect(broadcast.subtitle, contains('Will notify'));
       expect(broadcast.subtitle, contains('Belfast'));
@@ -83,7 +89,8 @@ void main() {
         allTags: const [],
       );
 
-      final broadcast = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.broadcastNotify);
+      final broadcast = review.items.firstWhere(
+          (item) => item.kind == PostDraftReviewKind.broadcastNotify);
       expect(broadcast.status, PostDraftReviewStatus.suggestion);
       expect(broadcast.subtitle, contains('no audience'));
     });
@@ -108,7 +115,8 @@ void main() {
         allTags: const [],
       );
 
-      final scheduled = review.items.firstWhere((item) => item.kind == PostDraftReviewKind.scheduledNotify);
+      final scheduled = review.items.firstWhere(
+          (item) => item.kind == PostDraftReviewKind.scheduledNotify);
       expect(scheduled.status, PostDraftReviewStatus.suggestion);
     });
 
@@ -117,11 +125,13 @@ void main() {
       context.head.setEventDate(DateTime(2026, 8, 24, 10));
       context.applyTagIDs(['tag-1']);
       context.applyCellGroupIDs(['cg-1']);
-      context.head.setLeadSpeaker(uid: 'speaker-1', name: 'Alex', imgSrc: 'img');
+      context.head
+          .setLeadSpeaker(uid: 'speaker-1', name: 'Alex', imgSrc: 'img');
       context.head.addMediaItem(type: 'img', src: 'cover.jpg', title: 'Cover');
       context.applyContributorUIDs(['editor-1']);
       context.applyExpectedAttendeeUserIDs(['member-1']);
-      context.media.addMediaFile({'type': 'img', 'src': 'gallery.jpg', 'title': 'Photo'});
+      context.media.addMediaFile(
+          {'type': 'img', 'src': 'gallery.jpg', 'title': 'Photo'});
       context.program.addRole(
         uids: const ['user-a'],
         title: 'Welcome',
@@ -141,6 +151,44 @@ void main() {
 
       expect(review.suggestionCount, 0);
       expect(review.sheetSubtitle, contains('look good'));
+    });
+
+    test('groups items by status', () {
+      final context = EventContext.adding(currentUserID: 'author-1');
+      context.setNotifyBroadcast(true);
+      context.syncNotificationTopics(includeLocationUmbrella: true);
+
+      final review = buildPostDraftReview(
+        eventContext: context,
+        title: 'Sunday Service',
+        subtitle: 'Join us this week',
+        allTags: const [],
+      );
+
+      expect(
+        review.suggestionItems
+            .every((item) => item.status == PostDraftReviewStatus.suggestion),
+        isTrue,
+      );
+      expect(
+        review.infoItems
+            .every((item) => item.status == PostDraftReviewStatus.info),
+        isTrue,
+      );
+      expect(
+        review.readyItems
+            .every((item) => item.status == PostDraftReviewStatus.ready),
+        isTrue,
+      );
+      expect(review.suggestionItems, isNotEmpty);
+      expect(review.infoItems, isNotEmpty);
+      expect(review.readyItems, isNotEmpty);
+      expect(
+        review.suggestionItems.length +
+            review.infoItems.length +
+            review.readyItems.length,
+        review.items.length,
+      );
     });
   });
 }

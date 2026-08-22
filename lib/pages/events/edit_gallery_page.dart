@@ -5,6 +5,7 @@ import '../../utility/event_context.dart';
 import '../../utility/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
+import '../../widgets/app_dialog.dart';
 import 'add_media_file_page.dart';
 import 'select_template_cover_page.dart';
 import '../../utility/responsive_layout.dart';
@@ -25,8 +26,11 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
 
   @override
   void initState() {
-    _originalGallerySrcs = List<String>.from(widget.eventContext.media.allMedia.map<String>((e) => e['src']!).toList());
-    _originalHeadSrcs = List<String>.from(widget.eventContext.head.media.map<String>((e) => e['src']!).toList());
+    _originalGallerySrcs = List<String>.from(widget.eventContext.media.allMedia
+        .map<String>((e) => e['src']!)
+        .toList());
+    _originalHeadSrcs = List<String>.from(
+        widget.eventContext.head.media.map<String>((e) => e['src']!).toList());
 
     for (var entry in widget.eventContext.media.allMedia) {
       _originalGalleryCaptions[entry['src']!] = entry['title']!;
@@ -56,8 +60,9 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   Widget _buildBody() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SafeArea(
       top: false,
@@ -71,7 +76,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
             foregroundColor: colorScheme.onSurface,
           ),
           SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
+            padding: EdgeInsets.symmetric(
+                horizontal: webHorizontalPadding, vertical: 8),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Key Media Section
@@ -80,7 +86,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+                    side: BorderSide(
+                        color: colorScheme.outline.withValues(alpha: 0.12)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -108,15 +115,17 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 children: [
                                   Text(
                                     'Key Media',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   Text(
                                     '${widget.eventContext.head.media.length}/4 items · shown on the post card',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                          color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                        ),
+                                      color: colorScheme.onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -136,7 +145,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                           ...widget.eventContext.head.media.asMap().entries.map(
                                 (entry) => Padding(
                                   padding: EdgeInsets.only(
-                                      bottom: entry.key < widget.eventContext.head.media.length - 1 ? 12 : 0),
+                                      bottom: entry.key <
+                                              widget.eventContext.head.media
+                                                      .length -
+                                                  1
+                                          ? 12
+                                          : 0),
                                   child: _buildMediaBox(entry.value, true),
                                 ),
                               ),
@@ -146,7 +160,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: colorScheme.outline.withValues(alpha: 0.3),
+                                color:
+                                    colorScheme.outline.withValues(alpha: 0.3),
                               ),
                               borderRadius: BorderRadius.circular(12),
                               color: colorScheme.surface,
@@ -156,22 +171,25 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 Icon(
                                   Icons.star_border,
                                   size: 48,
-                                  color: colorScheme.onSurface.withValues(alpha: 0.4),
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'No Key Media Yet',
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                      ),
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Choose a cover from a template pool, or add media below and mark it as key',
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                        color: colorScheme.onSurface.withValues(alpha: 0.5),
-                                      ),
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
+                                  ),
                                 ),
                               ],
                             ),
@@ -180,7 +198,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: _onChooseTemplateCover,
-                          icon: const Icon(Icons.photo_library_outlined, size: 18),
+                          icon: const Icon(Icons.photo_library_outlined,
+                              size: 18),
                           label: const Text('Choose from template cover pool'),
                         ),
                       ],
@@ -195,7 +214,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+                    side: BorderSide(
+                        color: colorScheme.outline.withValues(alpha: 0.12)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -223,15 +243,17 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 children: [
                                   Text(
                                     'Post Media',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   Text(
                                     '${widget.eventContext.media.allMedia.length} items · gallery on the Media tab',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                          color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                        ),
+                                      color: colorScheme.onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -251,16 +273,20 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                           children: [
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () => _onAddMediaTap(initialIsVideo: false),
-                                icon: const Icon(Icons.image_outlined, size: 18),
+                                onPressed: () =>
+                                    _onAddMediaTap(initialIsVideo: false),
+                                icon:
+                                    const Icon(Icons.image_outlined, size: 18),
                                 label: const Text('Add image'),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () => _onAddMediaTap(initialIsVideo: true),
-                                icon: const Icon(Icons.videocam_outlined, size: 18),
+                                onPressed: () =>
+                                    _onAddMediaTap(initialIsVideo: true),
+                                icon: const Icon(Icons.videocam_outlined,
+                                    size: 18),
                                 label: const Text('Add video'),
                               ),
                             ),
@@ -299,16 +325,16 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                       Text(
                         'No Media Files Yet',
                         style: theme.textTheme.titleLarge?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Add an image or video from a URL (Google Drive links work too).',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
+                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
                       ),
                     ],
                   ),
@@ -322,7 +348,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemCount: widget.eventContext.media.allMedia.length,
                 itemBuilder: (_, index) {
-                  final Map<String, dynamic> thisEntry = widget.eventContext.media.allMedia[index];
+                  final Map<String, dynamic> thisEntry =
+                      widget.eventContext.media.allMedia[index];
                   return _buildMediaBox(thisEntry, false);
                 },
               ),
@@ -335,15 +362,19 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     );
   }
 
-  Widget _buildMediaBox(final Map<String, dynamic> thisEntry, final bool isKey) {
-    final bool isPartOfHead = !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
+  Widget _buildMediaBox(
+      final Map<String, dynamic> thisEntry, final bool isKey) {
+    final bool isPartOfHead =
+        !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
 
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.12)),
+        side: BorderSide(
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.12)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -355,7 +386,10 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 aspectRatio: 16 / 9,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                   ),
                   child: _buildMediaViewer(thisEntry, isKey),
                 ),
@@ -387,7 +421,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 top: 12,
                 left: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(12),
@@ -396,7 +431,9 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        thisEntry['type'] == 'vid' ? Icons.videocam : Icons.image,
+                        thisEntry['type'] == 'vid'
+                            ? Icons.videocam
+                            : Icons.image,
                         size: 14,
                         color: Colors.white,
                       ),
@@ -424,7 +461,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                   children: [
                     if (isPartOfHead || isKey)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
@@ -435,7 +473,9 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             Icon(
                               Icons.star,
                               size: 14,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -443,7 +483,9 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                               ),
                             ),
                           ],
@@ -468,20 +510,33 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  thisEntry['title']!.isEmpty ? 'No caption added' : thisEntry['title']!,
+                  thisEntry['title']!.isEmpty
+                      ? 'No caption added'
+                      : thisEntry['title']!,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontStyle: thisEntry['title']!.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        fontStyle: thisEntry['title']!.isEmpty
+                            ? FontStyle.italic
+                            : FontStyle.normal,
                         color: thisEntry['title']!.isEmpty
-                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
+                            ? Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.5)
                             : Theme.of(context).colorScheme.onSurface,
-                        fontWeight: thisEntry['title']!.isEmpty ? FontWeight.normal : FontWeight.w500,
+                        fontWeight: thisEntry['title']!.isEmpty
+                            ? FontWeight.normal
+                            : FontWeight.w500,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -502,7 +557,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     );
   }
 
-  Widget _buildMediaViewer(final Map<String, dynamic> thisEntry, final bool isKey) {
+  Widget _buildMediaViewer(
+      final Map<String, dynamic> thisEntry, final bool isKey) {
     if (thisEntry['type']!.compareTo('img') == 0) {
       return ImageMediaSlot(
         key: ValueKey('${isKey ? 'key' : 'media'}-${thisEntry['src']}'),
@@ -511,10 +567,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
         postID: isKey ? 'key' : 'media',
       );
     }
-    return VideoMediaSlot(postId: widget.eventContext.id, mediaEntry: thisEntry, onTap: null);
+    return VideoMediaSlot(
+        postId: widget.eventContext.id, mediaEntry: thisEntry, onTap: null);
   }
 
-  Widget _buildQuickActions(final Map<String, dynamic> thisEntry, final bool isKey) {
+  Widget _buildQuickActions(
+      final Map<String, dynamic> thisEntry, final bool isKey) {
     final List<Widget> actions = [];
 
     // Star/Unstar action for non-key media
@@ -642,41 +700,53 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     widget.eventContext.allowSavingOfTheEdit();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Key graphic updated — save the post to keep the change')),
+      const SnackBar(
+          content:
+              Text('Key graphic updated — save the post to keep the change')),
     );
   }
 
   bool _canBeKeyMedia(final String src) {
     return widget.eventContext.head.media.length < 4 &&
-        !widget.eventContext.head.media.map<String>((e) => e['src']!).toList().contains(src);
+        !widget.eventContext.head.media
+            .map<String>((e) => e['src']!)
+            .toList()
+            .contains(src);
   }
 
   void _shouldBeAbleToSave() {
-    if (_originalGallerySrcs.length != widget.eventContext.media.allMedia.length ||
+    if (_originalGallerySrcs.length !=
+            widget.eventContext.media.allMedia.length ||
         _originalHeadSrcs.length != widget.eventContext.head.media.length) {
       widget.eventContext.allowSavingOfTheEdit();
       return;
     }
 
-    for (final String src in widget.eventContext.media.allMedia.map<String>((e) => e['src']!).toList()) {
+    for (final String src in widget.eventContext.media.allMedia
+        .map<String>((e) => e['src']!)
+        .toList()) {
       if (!_originalGallerySrcs.contains(src)) {
         widget.eventContext.allowSavingOfTheEdit();
         return;
       } else if (_originalGalleryCaptions.containsKey(src) &&
           _originalGalleryCaptions[src] !=
-              widget.eventContext.media.allMedia.firstWhere((e) => e.containsValue(src))['title']) {
+              widget.eventContext.media.allMedia
+                  .firstWhere((e) => e.containsValue(src))['title']) {
         widget.eventContext.allowSavingOfTheEdit();
         return;
       }
     }
 
-    for (final String src in widget.eventContext.head.media.map<String>((e) => e['src']!).toList()) {
+    for (final String src in widget.eventContext.head.media
+        .map<String>((e) => e['src']!)
+        .toList()) {
       if (!_originalHeadSrcs.contains(src)) {
         widget.eventContext.allowSavingOfTheEdit();
         return;
       } else if (_originalHeadCaptions.containsKey(src) &&
           _originalHeadCaptions[src] !=
-              widget.eventContext.head.media.firstWhere((e) => e.containsValue(src))['title']) {
+              widget.eventContext.head.media
+                  .firstWhere((e) => e.containsValue(src))['title']) {
         widget.eventContext.allowSavingOfTheEdit();
         return;
       }
@@ -696,9 +766,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     widget.eventContext.allowSavingOfTheEdit();
   }
 
-  void _deleteMediaClick(final Map<String, dynamic> thisEntry, final bool isKey) {
+  void _deleteMediaClick(
+      final Map<String, dynamic> thisEntry, final bool isKey) {
     DialogManager.showConfirmationDialog(
-            context: context, title: 'Delete Media Item', content: 'Are you sure you want to continue?')
+            context: context,
+            title: 'Delete Media Item',
+            content: 'Are you sure you want to continue?')
         .then((confirmation) {
       if (confirmation) {
         setState(() {
@@ -713,62 +786,38 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   void _onEditMediaEntry(final Map<String, dynamic> thisEntry) {
-    final TextEditingController captionController = TextEditingController(text: thisEntry['title']);
+    final TextEditingController captionController =
+        TextEditingController(text: thisEntry['title']);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(
-              Icons.edit,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            const Text('Edit Caption'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Add a caption to describe this ${thisEntry['type'] == 'vid' ? 'video' : 'image'}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: captionController,
-              decoration: const InputDecoration(
-                label: Text('Caption'),
-                hintText: 'Enter a descriptive caption...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title),
-              ),
-              maxLength: 32,
-              maxLines: 2,
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: (newText) => thisEntry['title'] = newText,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+      builder: (context) => AppDialog(
+        icon: Icons.edit_outlined,
+        title: 'Edit Caption',
+        message:
+            'Add a caption to describe this ${thisEntry['type'] == 'vid' ? 'video' : 'image'}',
+        child: TextField(
+          controller: captionController,
+          decoration: AppDialog.inputDecoration(
+            label: 'Caption',
+            hint: 'Enter a descriptive caption...',
+            prefixIcon: const Icon(Icons.title),
+            maxLines: 2,
           ),
-          FilledButton(
-            onPressed: () {
-              thisEntry['title'] = captionController.text.trim();
-              Navigator.of(context).pop();
-              setState(() {});
-            },
-            child: const Text('Save'),
-          ),
-        ],
+          maxLength: 32,
+          maxLines: 2,
+          textCapitalization: TextCapitalization.sentences,
+          onChanged: (newText) => thisEntry['title'] = newText,
+        ),
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () {
+            thisEntry['title'] = captionController.text.trim();
+            Navigator.of(context).pop();
+            setState(() {});
+          },
+          confirmLabel: 'Save',
+        ),
       ),
     ).then((_) {
       captionController.dispose();
@@ -776,164 +825,29 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   void _onKeyMediaHelpClick() {
-    showDialog(
+    DialogManager.showAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.star,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Key Media'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Key media are the most important images and videos for your event.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Features:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• First image becomes the event thumbnail\n• Displayed prominently in event previews\n• Maximum of 4 key media items\n• Can be images or videos',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
+      icon: Icons.star_outline,
+      title: 'Key Media',
+      content:
+          'Key media are the most important images and videos for your event.\n\n'
+          '• First image becomes the event thumbnail\n'
+          '• Displayed prominently in event previews\n'
+          '• Maximum of 4 key media items\n'
+          '• Can be images or videos',
     );
   }
 
   void _onPostMediaHelpClick() {
-    showDialog(
+    DialogManager.showAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.photo_library,
-                color: Theme.of(context).colorScheme.onSecondaryContainer,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Post Media'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'All images and videos associated with your event.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.tips_and_updates,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Tips:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• Add captions to describe your media\n• Mark important items as key media\n• Videos can have custom thumbnails\n• Organize your media gallery',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
+      icon: Icons.photo_library_outlined,
+      title: 'Post Media',
+      content: 'All images and videos associated with your event.\n\n'
+          '• Add captions to describe your media\n'
+          '• Mark important items as key media\n'
+          '• Videos can have custom thumbnails\n'
+          '• Organize your media gallery',
     );
   }
 
@@ -943,23 +857,27 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
         context: context,
         barrierDismissible: false,
         barrierLabel: 'Edit Thumbnail Src',
-        builder: (_) => VideoThumbnailEditDialog(thisEntry: thisEntry, postId: widget.eventContext.id)).then((_) {
+        builder: (_) => VideoThumbnailEditDialog(
+            thisEntry: thisEntry, postId: widget.eventContext.id)).then((_) {
       setState(() {
         debugPrint("new thumbnail src is ${thisEntry['thumbnailSrc']}");
         // ! bear in mind there's that issue where you don't actually see the new image at first
-        widget.eventContext.allowSavingOfTheEdit(); // just blindly allow it for now
+        widget.eventContext
+            .allowSavingOfTheEdit(); // just blindly allow it for now
       });
     });
   }
 }
 
 class VideoThumbnailEditDialog extends StatefulWidget {
-  const VideoThumbnailEditDialog({super.key, required this.thisEntry, required this.postId});
+  const VideoThumbnailEditDialog(
+      {super.key, required this.thisEntry, required this.postId});
   final Map<String, dynamic> thisEntry;
   final String postId;
 
   @override
-  State<VideoThumbnailEditDialog> createState() => _VideoThumbnailEditDialogState();
+  State<VideoThumbnailEditDialog> createState() =>
+      _VideoThumbnailEditDialogState();
 }
 
 class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
@@ -969,7 +887,8 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
   void initState() {
     final String src = widget.thisEntry['thumbnailSrc'] ?? '';
     debugPrint('src at init is $src');
-    _tecThumbnailSrc = TextEditingController(text: widget.thisEntry['thumbnailSrc']);
+    _tecThumbnailSrc =
+        TextEditingController(text: widget.thisEntry['thumbnailSrc']);
     super.initState();
   }
 
@@ -981,29 +900,31 @@ class _VideoThumbnailEditDialogState extends State<VideoThumbnailEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-          TextField(
-            controller: _tecThumbnailSrc,
-            decoration: InputDecoration(
-                hintText: 'https://...',
-                label: const Text('Video Thumbnail'),
-                suffixIcon: IconButton(onPressed: _onClearThumbnailSrc, icon: const Icon(Icons.clear))),
+    return AppDialog(
+      icon: Icons.image_outlined,
+      title: 'Video thumbnail',
+      message: 'Paste a public image URL used as the video preview.',
+      child: TextField(
+        controller: _tecThumbnailSrc,
+        decoration: AppDialog.inputDecoration(
+          label: 'Thumbnail URL',
+          hint: 'https://...',
+          suffixIcon: IconButton(
+            onPressed: _onClearThumbnailSrc,
+            icon: const Icon(Icons.clear),
           ),
-          const SizedBox(height: 8),
-          TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                _deleteOldThumbnail().then((_) {
-                  if (!context.mounted) return;
-                  widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                });
-              })
-        ]),
+        ),
+      ),
+      actions: AppDialogActions(
+        onConfirm: () {
+          _deleteOldThumbnail().then((_) {
+            if (!context.mounted) return;
+            widget.thisEntry['thumbnailSrc'] = _tecThumbnailSrc.text;
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          });
+        },
+        confirmLabel: 'Save',
       ),
     );
   }

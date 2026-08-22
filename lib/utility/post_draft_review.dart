@@ -51,8 +51,21 @@ class PostDraftReview {
 
   final List<PostDraftReviewItem> items;
 
-  int get suggestionCount =>
-      items.where((item) => item.status == PostDraftReviewStatus.suggestion).length;
+  int get suggestionCount => items
+      .where((item) => item.status == PostDraftReviewStatus.suggestion)
+      .length;
+
+  List<PostDraftReviewItem> get suggestionItems => items
+      .where((item) => item.status == PostDraftReviewStatus.suggestion)
+      .toList(growable: false);
+
+  List<PostDraftReviewItem> get infoItems => items
+      .where((item) => item.status == PostDraftReviewStatus.info)
+      .toList(growable: false);
+
+  List<PostDraftReviewItem> get readyItems => items
+      .where((item) => item.status == PostDraftReviewStatus.ready)
+      .toList(growable: false);
 
   String get sheetSubtitle {
     if (suggestionCount == 0) {
@@ -179,7 +192,8 @@ PostDraftReviewItem _scheduleRolesItem(EventProgram program) {
       kind: PostDraftReviewKind.scheduleRoles,
       status: PostDraftReviewStatus.suggestion,
       title: 'Schedule',
-      subtitle: '$roleCount ${roleCount == 1 ? 'role' : 'roles'}, none assigned yet',
+      subtitle:
+          '$roleCount ${roleCount == 1 ? 'role' : 'roles'}, none assigned yet',
       tab: PostDraftReviewTab.schedule,
     );
   }
@@ -188,7 +202,8 @@ PostDraftReviewItem _scheduleRolesItem(EventProgram program) {
     kind: PostDraftReviewKind.scheduleRoles,
     status: PostDraftReviewStatus.ready,
     title: 'Schedule',
-    subtitle: '$roleCount ${roleCount == 1 ? 'role' : 'roles'}, $assignedCount assigned',
+    subtitle:
+        '$roleCount ${roleCount == 1 ? 'role' : 'roles'}, $assignedCount assigned',
     tab: PostDraftReviewTab.schedule,
   );
 }
@@ -308,7 +323,8 @@ PostDraftReviewItem _contributorsItem(int contributorCount) {
     kind: PostDraftReviewKind.contributors,
     status: PostDraftReviewStatus.ready,
     title: 'Contributors',
-    subtitle: '$contributorCount contributor${contributorCount == 1 ? '' : 's'}',
+    subtitle:
+        '$contributorCount contributor${contributorCount == 1 ? '' : 's'}',
     tab: PostDraftReviewTab.header,
   );
 }

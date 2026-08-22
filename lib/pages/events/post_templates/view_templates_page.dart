@@ -14,6 +14,7 @@ import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/load_progress_body.dart';
 import '../../../widgets/role_access_gate.dart';
+import '../../../widgets/app_dialog.dart';
 import 'edit_template_page.dart';
 
 class ViewTemplatesPage extends StatefulWidget {
@@ -511,8 +512,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog({
     required PostTemplateCategory initialCategory,
   }) {
-    // Material AlertDialog (not .adaptive): CupertinoAlertDialog on macOS/iOS
-    // cannot host Material TextFormFields and throws a layout / Material error.
+    // AppDialog (not Cupertino): TextFormFields need Material.
     // Controllers live on [_NewTemplateDetailsDialog] so they are not disposed
     // while the route is still animating out (which caused "used after disposed").
     return showDialog<_NewTemplateDetails>(
@@ -681,74 +681,64 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('New template'),
-      content: Form(
+    return AppDialog(
+      icon: Icons.post_add_outlined,
+      title: 'New template',
+      child: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'e.g. Sunday Service',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Enter a title';
-                  }
-                  return null;
-                },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _titleController,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: AppDialog.inputDecoration(
+                label: 'Title',
+                hint: 'e.g. Sunday Service',
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                textCapitalization: TextCapitalization.sentences,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Enter a title';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _descriptionController,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: 2,
+              decoration: AppDialog.inputDecoration(
+                label: 'Description (optional)',
+                hint: 'Short summary for admins',
                 maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Description (optional)',
-                  hintText: 'Short summary for admins',
-                  border: OutlineInputBorder(),
-                ),
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<PostTemplateCategory>(
-                initialValue: _category,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final category in PostTemplateCategory.values)
-                    DropdownMenuItem<PostTemplateCategory>(
-                      value: category,
-                      child: Text(category.label),
-                    ),
-                ],
-                onChanged: (selected) {
-                  if (selected == null) return;
-                  setState(() => _category = selected);
-                },
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<PostTemplateCategory>(
+              initialValue: _category,
+              decoration: AppDialog.inputDecoration(label: 'Category'),
+              items: [
+                for (final category in PostTemplateCategory.values)
+                  DropdownMenuItem<PostTemplateCategory>(
+                    value: category,
+                    child: Text(category.label),
+                  ),
+              ],
+              onChanged: (selected) {
+                if (selected == null) return;
+                setState(() => _category = selected);
+              },
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _onCreate,
-          child: const Text('Create'),
-        ),
-      ],
+      actions: AppDialogActions(
+        onCancel: () => Navigator.of(context).pop(),
+        onConfirm: _onCreate,
+        confirmLabel: 'Create',
+      ),
     );
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../app_dialog.dart';
+import '../../utility/responsive_layout.dart';
+
 class TimedButtonDialog extends StatefulWidget {
   const TimedButtonDialog({super.key});
 
@@ -29,125 +32,52 @@ class TimedButtonDialogState extends State<TimedButtonDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Icon
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.explore_rounded,
-                    size: 48,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Welcome Title
-              Text(
-                'Welcome to CTRIM! 🎉',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Introduction
-              Text(
-                'You\'re all set! Here\'s what you can explore:',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Feature List
-              _buildFeatureItem(
-                icon: Icons.library_books_rounded,
-                title: 'Events & Posts',
-                description: 'View upcoming events, services, and community updates. Tap any post to see full details.',
-                colorScheme: colorScheme,
-                theme: theme,
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildFeatureItem(
-                icon: Icons.church_rounded,
-                title: 'CTRIM Information',
-                description: 'Learn about our churches, read testimonials, and explore ministry information.',
-                colorScheme: colorScheme,
-                theme: theme,
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildFeatureItem(
-                icon: Icons.person_rounded,
-                title: 'Personal Hub',
-                description: 'Create an account to stay connected. Staff features are granted by administrators.',
-                colorScheme: colorScheme,
-                theme: theme,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Bottom Note
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 20,
-                      color: colorScheme.onSecondaryContainer,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'You\'re browsing as a guest. Visit the Personal tab to create an account anytime.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Action Button
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: _enabledOk ? () => Navigator.of(context).pop() : null,
-                  child: const Text('Get Started'),
-                ),
-              ),
-            ],
+    return AppDialog(
+      icon: Icons.explore_rounded,
+      title: 'Welcome to CTRIM!',
+      message: 'You\'re all set! Here\'s what you can explore:',
+      messageAlign: TextAlign.start,
+      maxWidth: ResponsiveLayout.reviewDialogMaxWidth,
+      banner: const AppDialogBanner(
+        icon: Icons.info_outline_rounded,
+        message:
+            'You\'re browsing as a guest. Visit the Personal tab to create an account anytime.',
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildFeatureItem(
+            icon: Icons.library_books_rounded,
+            title: 'Events & Posts',
+            description:
+                'View upcoming events, services, and community updates. Tap any post to see full details.',
+            colorScheme: colorScheme,
+            theme: theme,
           ),
-        ),
+          const SizedBox(height: 16),
+          _buildFeatureItem(
+            icon: Icons.church_rounded,
+            title: 'CTRIM Information',
+            description:
+                'Learn about our churches, read testimonials, and explore ministry information.',
+            colorScheme: colorScheme,
+            theme: theme,
+          ),
+          const SizedBox(height: 16),
+          _buildFeatureItem(
+            icon: Icons.person_rounded,
+            title: 'Personal Hub',
+            description:
+                'Create an account to stay connected. Staff features are granted by administrators.',
+            colorScheme: colorScheme,
+            theme: theme,
+          ),
+        ],
+      ),
+      actions: AppDialogActions(
+        onConfirm: _enabledOk ? () => Navigator.of(context).pop() : null,
+        confirmEnabled: _enabledOk,
+        confirmLabel: 'Get Started',
       ),
     );
   }

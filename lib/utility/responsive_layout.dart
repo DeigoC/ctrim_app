@@ -21,6 +21,9 @@ abstract final class ResponsiveLayout {
   static const double loginMaxWidth = 500;
   static const double chordMaxWidth = 900;
   static const double dialogMaxWidth = 420;
+
+  /// Checklist / review dialogs that need a bit more room than [dialogMaxWidth].
+  static const double reviewDialogMaxWidth = 560;
   static const double dialogAvatarMaxRadius = 120;
 
   /// Desktop content column cap — also used for modal bottom sheets.
@@ -71,15 +74,19 @@ abstract final class ResponsiveLayout {
     return 2;
   }
 
-  static double dialogAvatarRadius(double screenWidth, {double fraction = 0.25}) {
+  static double dialogAvatarRadius(double screenWidth,
+      {double fraction = 0.25}) {
     return (screenWidth * fraction).clamp(48.0, dialogAvatarMaxRadius);
   }
 
-  static double dialogAvatarRadiusFromHeight(double screenHeight, {double fraction = 0.25}) {
+  static double dialogAvatarRadiusFromHeight(double screenHeight,
+      {double fraction = 0.25}) {
     return (screenHeight * fraction).clamp(48.0, dialogAvatarMaxRadius);
   }
 
-  static double horizontalGutterOf(BuildContext context, {GutterStyle style = GutterStyle.standard, double narrowPadding = 0}) {
-    return horizontalGutter(MediaQuery.sizeOf(context).width, style: style, narrowPadding: narrowPadding);
+  static double horizontalGutterOf(BuildContext context,
+      {GutterStyle style = GutterStyle.standard, double narrowPadding = 0}) {
+    return horizontalGutter(MediaQuery.sizeOf(context).width,
+        style: style, narrowPadding: narrowPadding);
   }
 }

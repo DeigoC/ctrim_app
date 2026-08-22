@@ -14,6 +14,7 @@ import '../utility/notification_subscription_service.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/web_notification_lifecycle.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/app_dialog.dart';
 import '../utility/pwa_install_service.dart';
 import '../widgets/personal/add_to_home_screen_dialog.dart';
 import 'events/post_templates/view_templates_page.dart';
@@ -304,7 +305,9 @@ class _PersonalHomeState extends State<PersonalHome> {
           Text(
             'Welcome to CTRIM',
             textAlign: TextAlign.center,
-            style: (wide ? theme.textTheme.headlineSmall : theme.textTheme.titleLarge)
+            style: (wide
+                    ? theme.textTheme.headlineSmall
+                    : theme.textTheme.titleLarge)
                 ?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onPrimaryContainer,
@@ -878,9 +881,10 @@ class _PersonalHomeState extends State<PersonalHome> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Choose Startup Tab'),
-          content: RadioGroup<int>(
+        return AppDialog(
+          icon: Icons.tab_outlined,
+          title: 'Choose Startup Tab',
+          child: RadioGroup<int>(
             groupValue: currentTab,
             onChanged: (value) {
               if (value != null) {
@@ -889,38 +893,35 @@ class _PersonalHomeState extends State<PersonalHome> {
                 Navigator.pop(context);
               }
             },
-            child: Column(
+            child: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 RadioListTile<int>(
-                  title: const Text('Events'),
-                  subtitle: const Text('Open to the Posts/Bulletin tab'),
+                  title: Text('Events'),
+                  subtitle: Text('Open to the Posts/Bulletin tab'),
                   value: 0,
                 ),
                 RadioListTile<int>(
-                  title: const Text('Information'),
-                  subtitle: const Text('Open to the CTRIM Information tab'),
+                  title: Text('Information'),
+                  subtitle: Text('Open to the CTRIM Information tab'),
                   value: 1,
                 ),
                 RadioListTile<int>(
-                  title: const Text('Cell Groups'),
-                  subtitle: const Text('Open to the Cell Groups tab'),
+                  title: Text('Cell Groups'),
+                  subtitle: Text('Open to the Cell Groups tab'),
                   value: 2,
                 ),
                 RadioListTile<int>(
-                  title: const Text('Personal'),
-                  subtitle: const Text('Open to the Personal tab'),
+                  title: Text('Personal'),
+                  subtitle: Text('Open to the Personal tab'),
                   value: 3,
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-          ],
+          actions: AppDialogActions(
+            onCancel: () => Navigator.pop(context),
+          ),
         );
       },
     );
@@ -944,9 +945,10 @@ class _PersonalHomeState extends State<PersonalHome> {
         return AnimatedBuilder(
           animation: settingsController,
           builder: (context, _) {
-            return AlertDialog(
-              title: const Text('Appearance'),
-              content: RadioGroup<ThemeMode>(
+            return AppDialog(
+              icon: Icons.palette_outlined,
+              title: 'Appearance',
+              child: RadioGroup<ThemeMode>(
                 groupValue: settingsController.themeMode,
                 onChanged: (value) async {
                   if (value == null) return;
@@ -974,12 +976,9 @@ class _PersonalHomeState extends State<PersonalHome> {
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
-                ),
-              ],
+              actions: AppDialogActions(
+                onCancel: () => Navigator.pop(dialogContext),
+              ),
             );
           },
         );

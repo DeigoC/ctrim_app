@@ -223,50 +223,37 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     });
   }
 
-  void _saveUserClick() {
+  void _saveUserClick() async {
     final isPlaceholder = !_hasLinkedAuth;
-    showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog.adaptive(
-            title: Text(isPlaceholder ? 'Save placeholder' : 'Save User'),
-            content: Text(isPlaceholder
-                ? 'Create a profile with no login account? You can link their email later from Edit User.'
-                : 'Are you sure all details are finished?'),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    final saved =
-                        await DialogManager.runWithSteppedProgressDialog(
-                      context: context,
-                      title: isPlaceholder
-                          ? 'Creating placeholder'
-                          : 'Registering user',
-                      initialMessage: isPlaceholder
-                          ? 'Creating profile…'
-                          : 'Checking account…',
-                      errorTitle: 'Could not register user',
-                      action: (onProgress) async {
-                        final newUser = await _registerUser(onProgress);
-                        if (!mounted) return;
-                        final appContext =
-                            Provider.of<AppContext>(context, listen: false);
-                        appContext.allUsers.add(newUser);
-                        await persistUsersLocalCache(appContext.allUsers);
-                      },
-                    );
-                    if (!mounted || !saved) return;
-                    _isSaved = true;
-                    _popRouteAfterAllowing();
-                  },
-                  child: const Text('Save')),
-            ],
-          );
-        });
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: isPlaceholder ? 'Save placeholder' : 'Save User',
+      content: isPlaceholder
+          ? 'Create a profile with no login account? You can link their email later from Edit User.'
+          : 'Are you sure all details are finished?',
+      confirmText: 'Save',
+      icon: isPlaceholder
+          ? Icons.person_outline
+          : Icons.person_add_alt_1_outlined,
+    );
+    if (!confirmed || !mounted) return;
+
+    final saved = await DialogManager.runWithSteppedProgressDialog(
+      context: context,
+      title: isPlaceholder ? 'Creating placeholder' : 'Registering user',
+      initialMessage: isPlaceholder ? 'Creating profile…' : 'Checking account…',
+      errorTitle: 'Could not register user',
+      action: (onProgress) async {
+        final newUser = await _registerUser(onProgress);
+        if (!mounted) return;
+        final appContext = Provider.of<AppContext>(context, listen: false);
+        appContext.allUsers.add(newUser);
+        await persistUsersLocalCache(appContext.allUsers);
+      },
+    );
+    if (!mounted || !saved) return;
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 
   Future<ctrim.User> _registerUser(LoadProgressReporter onProgress) async {
