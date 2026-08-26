@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
@@ -13,10 +11,13 @@ import '../utility/notification_permission_prompt.dart';
 import '../utility/notification_subscription_service.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/web_notification_lifecycle.dart';
-import '../widgets/user_avatar.dart';
-import '../widgets/app_dialog.dart';
 import '../utility/pwa_install_service.dart';
 import '../widgets/personal/add_to_home_screen_dialog.dart';
+import '../widgets/personal/personal_action_section.dart';
+import '../widgets/personal/personal_admin_section.dart';
+import '../widgets/personal/personal_logout_section.dart';
+import '../widgets/personal/personal_profile_card.dart';
+import '../widgets/personal/personal_settings_section.dart';
 import 'events/post_templates/view_templates_page.dart';
 import 'personal/guest_registration_page.dart';
 import 'personal/edit_profile_picture_page.dart';
@@ -30,7 +31,6 @@ import 'personal/manage_user_locations_page.dart';
 import 'personal/manage_user_tags_page.dart';
 import 'personal/manage_post_tags_page.dart';
 import '../utility/responsive_layout.dart';
-import '../src/settings/settings_controller.dart';
 
 class PersonalHome extends StatefulWidget {
   const PersonalHome({super.key, required this.appContext});
@@ -42,11 +42,6 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-  static const String _slideDeckUtilsUrl =
-      'https://church-slidedeck-utils.streamlit.app/';
-  static const String _stakeholderDocsUrl =
-      'https://deigoc.github.io/ctrim_app/';
-  // static const String _readmeUrl = 'https://www.craft.me/s/D1p8C4tzitcOwY';
 
   @override
   void initState() {
@@ -153,36 +148,40 @@ class _PersonalHomeState extends State<PersonalHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (appContext.isCurrentUserGuest)
-          _buildGuestWelcomeCard(theme, colorScheme, wide: false)
-        else
-          _buildUserProfileCard(appContext, theme, colorScheme, wide: false),
+        PersonalProfileCard(appContext: appContext, wide: false),
         const SizedBox(height: 24),
-        _buildActionSection(
+        PersonalActionSection(
           title: 'For you',
           actions: _forYouActions(appContext, theme, colorScheme),
-          theme: theme,
-          colorScheme: colorScheme,
           wide: false,
         ),
         if (peopleActions.isNotEmpty) ...[
           const SizedBox(height: 24),
-          _buildActionSection(
+          PersonalActionSection(
             title: 'People',
             actions: peopleActions,
-            theme: theme,
-            colorScheme: colorScheme,
             wide: false,
           ),
         ],
         if (showAdmin) ...[
           const SizedBox(height: 24),
-          _buildAdminSection(appContext, theme, colorScheme, wide: false),
+          PersonalAdminSection(
+            appContext: appContext,
+            wide: false,
+            onViewTemplates: _openViewTemplatesClick,
+            onManageUserTags: _openManageUserTagsClick,
+            onManagePostTags: _openManagePostTagsClick,
+            onManageUserLocations: _openManageUserLocationsClick,
+          ),
         ],
         const SizedBox(height: 24),
-        _buildSettingsSection(appContext, theme, colorScheme, wide: false),
+        PersonalSettingsSection(
+          appContext: appContext,
+          wide: false,
+          onShareWebApp: _openShareWebAppClick,
+        ),
         const SizedBox(height: 24),
-        _buildLogoutSection(theme, colorScheme),
+        PersonalLogoutSection(onLogout: _onLogoutClick),
       ],
     );
   }
@@ -201,26 +200,19 @@ class _PersonalHomeState extends State<PersonalHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (appContext.isCurrentUserGuest)
-          _buildGuestWelcomeCard(theme, colorScheme, wide: true)
-        else
-          _buildUserProfileCard(appContext, theme, colorScheme, wide: true),
+        PersonalProfileCard(appContext: appContext, wide: true),
         const SizedBox(height: 28),
-        _buildActionSection(
+        PersonalActionSection(
           title: 'For you',
           actions: _forYouActions(appContext, theme, colorScheme),
-          theme: theme,
-          colorScheme: colorScheme,
           wide: true,
           gridColumns: actionColumns,
         ),
         if (peopleActions.isNotEmpty) ...[
           const SizedBox(height: 28),
-          _buildActionSection(
+          PersonalActionSection(
             title: 'People',
             actions: peopleActions,
-            theme: theme,
-            colorScheme: colorScheme,
             wide: true,
             gridColumns: actionColumns,
           ),
@@ -231,202 +223,54 @@ class _PersonalHomeState extends State<PersonalHome> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _buildAdminSection(
-                  appContext,
-                  theme,
-                  colorScheme,
+                child: PersonalAdminSection(
+                  appContext: appContext,
                   wide: true,
                   gridColumns: 1,
+                  onViewTemplates: _openViewTemplatesClick,
+                  onManageUserTags: _openManageUserTagsClick,
+                  onManagePostTags: _openManagePostTagsClick,
+                  onManageUserLocations: _openManageUserLocationsClick,
                 ),
               ),
               const SizedBox(width: 20),
               Expanded(
-                child: _buildSettingsSection(
-                  appContext,
-                  theme,
-                  colorScheme,
+                child: PersonalSettingsSection(
+                  appContext: appContext,
                   wide: true,
                   gridColumns: 1,
+                  onShareWebApp: _openShareWebAppClick,
                 ),
               ),
             ],
           )
         else
-          _buildSettingsSection(
-            appContext,
-            theme,
-            colorScheme,
+          PersonalSettingsSection(
+            appContext: appContext,
             wide: true,
             gridColumns: actionColumns,
+            onShareWebApp: _openShareWebAppClick,
           ),
         const SizedBox(height: 28),
         Align(
           alignment: Alignment.centerLeft,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: _buildLogoutSection(theme, colorScheme),
+            child: PersonalLogoutSection(onLogout: _onLogoutClick),
           ),
         ),
       ],
     );
   }
 
-  // * UI Components
-
-  Widget _buildGuestWelcomeCard(
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required bool wide,
-  }) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.secondaryContainer.withValues(alpha: 0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: wide
-          ? const EdgeInsets.symmetric(horizontal: 28, vertical: 28)
-          : const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Icon(Icons.person_outline_rounded,
-              size: wide ? 48 : 40, color: colorScheme.primary),
-          const SizedBox(height: 16),
-          Text(
-            'Welcome to CTRIM',
-            textAlign: TextAlign.center,
-            style: (wide
-                    ? theme.textTheme.headlineSmall
-                    : theme.textTheme.titleLarge)
-                ?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onPrimaryContainer,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Create an account to manage your schedule, notifications, and profile.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserProfileCard(
-    AppContext appContext,
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required bool wide,
-  }) {
-    final double avatarRadius = wide ? 40 : 28;
-    final EdgeInsets padding = wide
-        ? const EdgeInsets.symmetric(horizontal: 28, vertical: 24)
-        : const EdgeInsets.all(20);
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.secondaryContainer.withValues(alpha: 0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: padding,
-      child: Row(
-        children: [
-          Hero(
-            tag: 'user_avatar_${appContext.currentUser.id}',
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.12),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: MyUserAvatar(
-                appContext.currentUser,
-                radius: avatarRadius,
-              ),
-            ),
-          ),
-          SizedBox(width: wide ? 24 : 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hi, ${appContext.currentUser.forname}!',
-                  style: (wide
-                          ? theme.textTheme.headlineSmall
-                          : theme.textTheme.titleLarge)
-                      ?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  appContext.currentUser.location,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color:
-                        colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                  ),
-                ),
-                if (appContext.currentUser.isAreaAdmin) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Admin',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<_PersonalAction> _forYouActions(
+  List<PersonalAction> _forYouActions(
       AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
     final l10n = AppLocalizations.of(context)!;
-    final actions = <_PersonalAction>[];
+    final actions = <PersonalAction>[];
 
     if (appContext.isCurrentUserGuest) {
       actions.add(
-        _PersonalAction(
+        PersonalAction(
           icon: Icons.login_rounded,
           title: 'Sign In or Create Account',
           subtitle: 'Access your account or register',
@@ -438,7 +282,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     }
 
     actions.add(
-      _PersonalAction(
+      PersonalAction(
         icon: Icons.checklist_rounded,
         title: l10n.mySchedule,
         subtitle: l10n.myScheduleSubtitle,
@@ -448,7 +292,7 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
     );
     actions.add(
-      _PersonalAction(
+      PersonalAction(
         icon: Icons.notifications_active_rounded,
         title: 'Push Notifications',
         subtitle: 'Manage notification settings',
@@ -459,7 +303,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     if (!appContext.sharedPref.isFirstOpen &&
         appContext.sharedPref.fcmToken.isEmpty) {
       actions.add(
-        _PersonalAction(
+        PersonalAction(
           icon: Icons.notifications_none_rounded,
           title: 'Enable Notifications',
           subtitle: 'Get updates from CTRIM',
@@ -469,14 +313,14 @@ class _PersonalHomeState extends State<PersonalHome> {
       );
     }
     actions.addAll([
-      _PersonalAction(
+      PersonalAction(
         icon: Icons.article_rounded,
         title: 'My Posts',
         subtitle: 'View your created posts',
         onTap: _onOpenPostsClick,
         iconColor: colorScheme.primary,
       ),
-      _PersonalAction(
+      PersonalAction(
         icon: Icons.account_circle_outlined,
         title: 'Profile picture',
         subtitle: 'Update your photo URL',
@@ -488,13 +332,13 @@ class _PersonalHomeState extends State<PersonalHome> {
     return actions;
   }
 
-  List<_PersonalAction> _peopleActions(
+  List<PersonalAction> _peopleActions(
       AppContext appContext, ColorScheme colorScheme) {
     if (appContext.isCurrentUserGuest) return const [];
 
     final l10n = AppLocalizations.of(context)!;
     return [
-      _PersonalAction(
+      PersonalAction(
         icon: Icons.people_rounded,
         title: l10n.volunteersMenuTitle,
         subtitle: l10n.volunteersMenuSubtitle,
@@ -503,508 +347,6 @@ class _PersonalHomeState extends State<PersonalHome> {
         iconColor: colorScheme.secondary,
       ),
     ];
-  }
-
-  Widget _buildActionSection({
-    required String title,
-    required List<_PersonalAction> actions,
-    required ThemeData theme,
-    required ColorScheme colorScheme,
-    required bool wide,
-    int gridColumns = 2,
-    IconData? titleIcon,
-  }) {
-    if (actions.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Row(
-            children: [
-              if (titleIcon != null) ...[
-                Icon(titleIcon, size: 20, color: colorScheme.primary),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (wide)
-          _buildActionGrid(actions, theme, colorScheme, columns: gridColumns)
-        else
-          _buildActionListCard(actions, theme, colorScheme),
-      ],
-    );
-  }
-
-  List<_PersonalAction> _adminActions(
-      AppContext appContext, ColorScheme colorScheme) {
-    final l10n = AppLocalizations.of(context)!;
-    final actions = <_PersonalAction>[];
-    if (appContext.currentUser.canManagePostTemplates) {
-      actions.add(
-        _PersonalAction(
-          icon: Icons.newspaper_rounded,
-          title: 'Post Templates',
-          subtitle: 'Create and edit post templates',
-          onTap: _openViewTemplatesClick,
-          iconColor: colorScheme.primary,
-        ),
-      );
-    }
-    if (appContext.currentUser.canManageVolunteers) {
-      actions.add(
-        _PersonalAction(
-          icon: Icons.label_rounded,
-          title: l10n.manageUserTagsMenuTitle,
-          subtitle: l10n.manageUserTagsMenuSubtitle,
-          onTap: _openManageUserTagsClick,
-          iconColor: colorScheme.primary,
-        ),
-      );
-      actions.add(
-        _PersonalAction(
-          icon: Icons.style_rounded,
-          title: l10n.managePostTagsMenuTitle,
-          subtitle: l10n.managePostTagsMenuSubtitle,
-          onTap: _openManagePostTagsClick,
-          iconColor: colorScheme.primary,
-        ),
-      );
-      actions.add(
-        _PersonalAction(
-          icon: Icons.location_on_rounded,
-          title: l10n.manageUserLocationsMenuTitle,
-          subtitle: l10n.manageUserLocationsMenuSubtitle,
-          onTap: _openManageUserLocationsClick,
-          iconColor: colorScheme.primary,
-        ),
-      );
-    }
-    return actions;
-  }
-
-  Widget _buildAdminSection(
-    AppContext appContext,
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required bool wide,
-    int gridColumns = 1,
-  }) {
-    final showTemplates = appContext.currentUser.canManagePostTemplates;
-    final showUserTags = appContext.currentUser.canManageVolunteers;
-    final sectionTitle = showUserTags && !showTemplates
-        ? 'Admin Tools'
-        : showTemplates && !showUserTags
-            ? 'Leader Tools'
-            : 'Admin Tools';
-
-    return _buildActionSection(
-      title: sectionTitle,
-      titleIcon: Icons.admin_panel_settings_rounded,
-      actions: _adminActions(appContext, colorScheme),
-      theme: theme,
-      colorScheme: colorScheme,
-      wide: wide,
-      gridColumns: gridColumns,
-    );
-  }
-
-  List<_PersonalAction> _settingsActions(
-      AppContext appContext, ColorScheme colorScheme) {
-    final actions = <_PersonalAction>[];
-    final settingsController = Provider.of<SettingsController>(context);
-    final themeLabel = _themeModeLabel(settingsController.themeMode);
-
-    actions.add(
-      _PersonalAction(
-        icon: Icons.brightness_6_rounded,
-        title: 'Appearance',
-        subtitle: themeLabel,
-        onTap: () {
-          HapticFeedback.lightImpact();
-          _showThemeModeDialog(settingsController);
-        },
-        iconColor: colorScheme.tertiary,
-      ),
-    );
-
-    if (!appContext.isCurrentUserGuest) {
-      final currentTab = appContext.sharedPref.preferredStartupTab;
-      final tabName = currentTab == 0
-          ? 'Events'
-          : currentTab == 2
-              ? 'Cell Groups'
-              : currentTab == 3
-                  ? 'Personal'
-                  : 'Information';
-      actions.add(
-        _PersonalAction(
-          icon: Icons.home_rounded,
-          title: 'Startup Tab',
-          subtitle: 'Opens to: $tabName',
-          onTap: () {
-            HapticFeedback.lightImpact();
-            _showStartupTabDialog(appContext, Theme.of(context), colorScheme);
-          },
-          iconColor: colorScheme.tertiary,
-        ),
-      );
-    }
-
-    actions.addAll([
-      _PersonalAction(
-        icon: Icons.share_rounded,
-        title: 'Share Web App',
-        subtitle: 'Share link or add to home screen',
-        onTap: _openShareWebAppClick,
-        iconColor: colorScheme.tertiary,
-      ),
-      _PersonalAction(
-        icon: Icons.menu_book_rounded,
-        title: 'Product guide',
-        subtitle: 'How the app works — open to everyone',
-        onTap: () => launchUrlString(_stakeholderDocsUrl),
-        iconColor: colorScheme.primary,
-      ),
-      _PersonalAction(
-        icon: Icons.slideshow_rounded,
-        title: 'Slide Deck Utils',
-        subtitle: 'Create slides or extract text from PDF/PPTX',
-        onTap: () => launchUrlString(_slideDeckUtilsUrl),
-        iconColor: colorScheme.primary,
-      ),
-      _PersonalAction(
-        icon: Icons.privacy_tip_rounded,
-        title: 'Privacy Policy',
-        subtitle: 'View our privacy policy',
-        onTap: () => launchUrlString(
-            'https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b'),
-        iconColor: colorScheme.secondary,
-      ),
-      _PersonalAction(
-        icon: Icons.contact_page_rounded,
-        title: 'Terms and Conditions',
-        subtitle: 'View terms and conditions',
-        onTap: () =>
-            launchUrlString('https://ctrim-terms-and-conditions.web.app'),
-        iconColor: colorScheme.primary,
-      ),
-    ]);
-
-    if (kIsWeb) {
-      actions.add(
-        _PersonalAction(
-          icon: Icons.no_accounts_rounded,
-          title: 'Account Deletion Request',
-          subtitle: 'Request account removal',
-          onTap: () => launchUrlString('https://ctrim-account-removal.web.app'),
-          iconColor: colorScheme.error,
-        ),
-      );
-    }
-
-    return actions;
-  }
-
-  Widget _buildSettingsSection(
-    AppContext appContext,
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required bool wide,
-    int gridColumns = 1,
-  }) {
-    return _buildActionSection(
-      title: 'Settings',
-      titleIcon: Icons.settings_outlined,
-      actions: _settingsActions(appContext, colorScheme),
-      theme: theme,
-      colorScheme: colorScheme,
-      wide: wide,
-      gridColumns: gridColumns,
-    );
-  }
-
-  Widget _buildActionListCard(
-    List<_PersonalAction> actions,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < actions.length; i++) ...[
-            if (i > 0) const Divider(height: 1, indent: 72),
-            _buildModernListTile(
-              icon: actions[i].icon,
-              title: actions[i].title,
-              subtitle: actions[i].subtitle,
-              onTap: actions[i].onTap,
-              theme: theme,
-              colorScheme: colorScheme,
-              iconColor: actions[i].iconColor,
-              trailing: actions[i].trailing,
-              isFirst: i == 0,
-              isLast: i == actions.length - 1,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionGrid(
-    List<_PersonalAction> actions,
-    ThemeData theme,
-    ColorScheme colorScheme, {
-    required int columns,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final spacing = 12.0;
-        final itemWidth = columns <= 1
-            ? constraints.maxWidth
-            : (constraints.maxWidth - spacing * (columns - 1)) / columns;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final action in actions)
-              SizedBox(
-                width: itemWidth,
-                child: _buildActionGridCard(action, theme, colorScheme),
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildActionGridCard(
-    _PersonalAction action,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
-    return Card(
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-          width: 1,
-        ),
-      ),
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          action.onTap();
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: action.iconColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      action.icon,
-                      color: action.iconColor,
-                      size: 22,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (action.trailing != null)
-                    action.trailing!
-                  else
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                action.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                action.subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showStartupTabDialog(
-      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
-    final currentTab = appContext.sharedPref.preferredStartupTab;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AppDialog(
-          icon: Icons.tab_outlined,
-          title: 'Choose Startup Tab',
-          child: RadioGroup<int>(
-            groupValue: currentTab,
-            onChanged: (value) {
-              if (value != null) {
-                appContext.sharedPref.setPreferredStartupTab(value);
-                setState(() {});
-                Navigator.pop(context);
-              }
-            },
-            child: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<int>(
-                  title: Text('Events'),
-                  subtitle: Text('Open to the Posts/Bulletin tab'),
-                  value: 0,
-                ),
-                RadioListTile<int>(
-                  title: Text('Information'),
-                  subtitle: Text('Open to the CTRIM Information tab'),
-                  value: 1,
-                ),
-                RadioListTile<int>(
-                  title: Text('Cell Groups'),
-                  subtitle: Text('Open to the Cell Groups tab'),
-                  value: 2,
-                ),
-                RadioListTile<int>(
-                  title: Text('Personal'),
-                  subtitle: Text('Open to the Personal tab'),
-                  value: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: AppDialogActions(
-            onCancel: () => Navigator.pop(context),
-          ),
-        );
-      },
-    );
-  }
-
-  String _themeModeLabel(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'Light';
-      case ThemeMode.dark:
-        return 'Dark';
-      case ThemeMode.system:
-        return 'Match device';
-    }
-  }
-
-  void _showThemeModeDialog(SettingsController settingsController) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AnimatedBuilder(
-          animation: settingsController,
-          builder: (context, _) {
-            return AppDialog(
-              icon: Icons.palette_outlined,
-              title: 'Appearance',
-              child: RadioGroup<ThemeMode>(
-                groupValue: settingsController.themeMode,
-                onChanged: (value) async {
-                  if (value == null) return;
-                  await settingsController.updateThemeMode(value);
-                  if (dialogContext.mounted) Navigator.pop(dialogContext);
-                },
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    RadioListTile<ThemeMode>(
-                      title: Text('Match device'),
-                      subtitle: Text('Follow the system light or dark setting'),
-                      value: ThemeMode.system,
-                    ),
-                    RadioListTile<ThemeMode>(
-                      title: Text('Light'),
-                      subtitle: Text('Always use light mode'),
-                      value: ThemeMode.light,
-                    ),
-                    RadioListTile<ThemeMode>(
-                      title: Text('Dark'),
-                      subtitle: Text('Always use dark mode'),
-                      value: ThemeMode.dark,
-                    ),
-                  ],
-                ),
-              ),
-              actions: AppDialogActions(
-                onCancel: () => Navigator.pop(dialogContext),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildLogoutSection(ThemeData theme, ColorScheme colorScheme) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.errorContainer,
-          width: 1,
-        ),
-      ),
-      child: _buildModernListTile(
-        icon: Icons.logout_rounded,
-        title: 'Sign Out',
-        subtitle: 'Sign out of your account',
-        onTap: _onLogoutClick,
-        theme: theme,
-        colorScheme: colorScheme,
-        iconColor: colorScheme.error,
-        isFirst: true,
-        isLast: true,
-      ),
-    );
   }
 
   Widget? _buildScheduleBadge(
@@ -1028,92 +370,6 @@ class _PersonalHomeState extends State<PersonalHome> {
         style: theme.textTheme.labelSmall?.copyWith(
           color: colorScheme.onErrorContainer,
           fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModernListTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required ThemeData theme,
-    required ColorScheme colorScheme,
-    required Color iconColor,
-    Widget? trailing,
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.vertical(
-          top: isFirst ? const Radius.circular(16) : Radius.zero,
-          bottom: isLast ? const Radius.circular(16) : Radius.zero,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 20,
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Trailing
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing,
-              ] else ...[
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ],
-            ],
-          ),
         ),
       ),
     );
@@ -1307,22 +563,4 @@ class _PersonalHomeState extends State<PersonalHome> {
       SnackBar(content: Text(hint), duration: const Duration(seconds: 4)),
     );
   }
-}
-
-class _PersonalAction {
-  const _PersonalAction({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    required this.iconColor,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Color iconColor;
-  final Widget? trailing;
 }
