@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/user.dart';
-import '../models/user_tag.dart';
+import '../../models/user.dart';
+import '../../models/user_tag.dart';
 
 /// Helpers for resolving and styling admin-managed user tags.
 class UserTagHelpers {
@@ -42,7 +42,8 @@ class UserTagHelpers {
     required List<UserTag> allTags,
     bool activeOnly = true,
   }) {
-    return resolveTags(tagIDs: user.tagIDs, allTags: allTags, activeOnly: activeOnly);
+    return resolveTags(
+        tagIDs: user.tagIDs, allTags: allTags, activeOnly: activeOnly);
   }
 
   static bool userMatchesTagFilter({
@@ -59,7 +60,8 @@ class UserTagHelpers {
 
   /// Surname, then forename (case-insensitive).
   static int compareUsersBySurname(User a, User b) {
-    final bySurname = a.surname.toLowerCase().compareTo(b.surname.toLowerCase());
+    final bySurname =
+        a.surname.toLowerCase().compareTo(b.surname.toLowerCase());
     if (bySurname != 0) return bySurname;
     return a.forname.toLowerCase().compareTo(b.forname.toLowerCase());
   }
@@ -77,7 +79,9 @@ class UserTagHelpers {
     if (orderCompare != 0) return orderCompare;
 
     if (tagsA.isNotEmpty && tagsB.isNotEmpty) {
-      final nameCompare = tagsA.first.name.toLowerCase().compareTo(tagsB.first.name.toLowerCase());
+      final nameCompare = tagsA.first.name
+          .toLowerCase()
+          .compareTo(tagsB.first.name.toLowerCase());
       if (nameCompare != 0) return nameCompare;
     }
 

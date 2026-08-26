@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../utility/dialog_manager.dart';
-import '../widgets/app_dialog.dart';
+import 'common/app_dialog.dart';
 
 /// Preset lengths shown when setting a schedule item's end time.
 const List<({String label, int minutes, IconData icon})>

@@ -1,9 +1,9 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/messaging_manager.dart';
-import 'app_shared_preferences.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/messaging_manager.dart';
+import '../app_shared_preferences.dart';
 import 'notification_debug.dart';
 import 'notification_subscription_service.dart';
 
@@ -11,7 +11,8 @@ import 'notification_subscription_service.dart';
 class WebNotificationLifecycle {
   final MessagingManager _messagingManager = MessagingManager();
   final EveryoneDBManager _everyoneDBManager = EveryoneDBManager();
-  final NotificationSubscriptionService _subscriptionService = NotificationSubscriptionService();
+  final NotificationSubscriptionService _subscriptionService =
+      NotificationSubscriptionService();
 
   Future<String?> register({
     required String authId,
@@ -27,9 +28,11 @@ class WebNotificationLifecycle {
 
       String? token;
       if (requestPermission) {
-        token = await _messagingManager.requestPermissionAndToken(authId: authId);
+        token =
+            await _messagingManager.requestPermissionAndToken(authId: authId);
       } else {
-        final settings = await FirebaseMessaging.instance.getNotificationSettings();
+        final settings =
+            await FirebaseMessaging.instance.getNotificationSettings();
         if (settings.authorizationStatus != AuthorizationStatus.authorized &&
             settings.authorizationStatus != AuthorizationStatus.provisional) {
           NotificationDebug.warn('Web notification permission not granted');
@@ -39,9 +42,11 @@ class WebNotificationLifecycle {
       }
 
       if (token != null) {
-        await _syncToEveryone(authId: authId, token: token, onTokenSaved: onTokenSaved);
+        await _syncToEveryone(
+            authId: authId, token: token, onTokenSaved: onTokenSaved);
         if (prefs != null) {
-          await _subscriptionService.reconcile(prefs: prefs, webAuthId: webAuthId ?? authId);
+          await _subscriptionService.reconcile(
+              prefs: prefs, webAuthId: webAuthId ?? authId);
         }
       }
       return token;
@@ -63,22 +68,27 @@ class WebNotificationLifecycle {
       authId: authId,
       onRefreshed: (token) async {
         final previousToken = prefs?.fcmToken ?? '';
-        if (prefs != null && previousToken.isNotEmpty && previousToken != token) {
+        if (prefs != null &&
+            previousToken.isNotEmpty &&
+            previousToken != token) {
           await _subscriptionService.migrateWebTopicsAfterTokenRefresh(
             oldToken: previousToken,
             newToken: token,
             prefs: prefs,
           );
         }
-        await _syncToEveryone(authId: authId, token: token, onTokenSaved: onTokenSaved);
+        await _syncToEveryone(
+            authId: authId, token: token, onTokenSaved: onTokenSaved);
         if (prefs != null) {
-          await _subscriptionService.reconcile(prefs: prefs, webAuthId: webAuthId ?? authId);
+          await _subscriptionService.reconcile(
+              prefs: prefs, webAuthId: webAuthId ?? authId);
         }
       },
     );
   }
 
-  Future<void> unregister({required String authId, required String token}) async {
+  Future<void> unregister(
+      {required String authId, required String token}) async {
     if (!kIsWeb) return;
 
     NotificationDebug.section('WebNotificationLifecycle.unregister');
@@ -91,8 +101,10 @@ class WebNotificationLifecycle {
     required String token,
     void Function(String token)? onTokenSaved,
   }) async {
-    await _everyoneDBManager.addTokenForAuthID(authID: authId, token: token, platform: 'Web');
+    await _everyoneDBManager.addTokenForAuthID(
+        authID: authId, token: token, platform: 'Web');
     onTokenSaved?.call(token);
-    NotificationDebug.log('Token synced to notification_tokens and everyone/device_tokens');
+    NotificationDebug.log(
+        'Token synced to notification_tokens and everyone/device_tokens');
   }
 }

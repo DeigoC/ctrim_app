@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../utility/responsive_layout.dart';
+import '../../utility/responsive_layout.dart';
 
 /// Shared chrome for modal action sheets (post admin, template edit, bulletin sort).
 class ActionSheetShell extends StatelessWidget {

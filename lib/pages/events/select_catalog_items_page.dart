@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../models/catalog_picker_entry.dart';
 import '../../src/localization/app_localizations.dart';
-import '../../utility/catalog_picker_helpers.dart';
+import '../../utility/catalog/catalog_picker_helpers.dart';
 import '../../utility/responsive_layout.dart';
-import '../../utility/volunteer_locations.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/app_search_bar.dart';
 
 /// Full-screen searchable multi-select picker for admin catalogs (post tags,

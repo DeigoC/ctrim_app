@@ -7,7 +7,7 @@ import '../../../models/user.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../widgets/user_avatar.dart';
-import '../../../widgets/app_dialog.dart';
+import '../../../widgets/common/app_dialog.dart';
 
 /// Read-only change history for a [PostTemplate] (embedded `Logs` entries).
 class ViewTemplateLogsPage extends StatelessWidget {

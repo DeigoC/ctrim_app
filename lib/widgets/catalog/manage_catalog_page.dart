@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../models/user.dart';
-import '../utility/responsive_layout.dart';
-import 'app_dialog.dart';
-import 'load_progress_body.dart';
-import 'role_access_gate.dart';
+import '../../models/user.dart';
+import '../../utility/responsive_layout.dart';
+import '../common/app_dialog.dart';
+import '../common/load_progress_body.dart';
+import '../role_access_gate.dart';
 
 /// L10n strings for a catalog manage screen (tags, locations, …).
 class ManageCatalogCopy {

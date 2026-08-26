@@ -10,7 +10,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/app_dialog.dart';
+import '../../widgets/common/app_dialog.dart';
 import 'add_media_drive_helpers.dart';
 import 'add_media_image_test.dart';
 import 'add_media_source_form.dart';

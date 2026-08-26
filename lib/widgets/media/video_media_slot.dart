@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 
 class VideoMediaSlot extends StatefulWidget {

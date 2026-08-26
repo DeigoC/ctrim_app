@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../src/settings/settings_controller.dart';
 import '../../utility/app_context.dart';
-import '../app_dialog.dart';
+import '../common/app_dialog.dart';
 import 'personal_action_section.dart';
 
 class PersonalSettingsSection extends StatefulWidget {

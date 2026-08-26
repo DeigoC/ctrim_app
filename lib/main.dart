@@ -20,7 +20,7 @@ import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'utility/app_context.dart';
 import 'utility/event_heads_repository.dart';
-import 'utility/local_data_manager.dart';
+import 'utility/cache/local_data_manager.dart';
 import 'utility/user_schedule_service.dart';
 import 'utility/users_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';

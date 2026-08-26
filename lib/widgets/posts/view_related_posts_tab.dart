@@ -5,7 +5,7 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_metadata.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
-import '../load_progress_body.dart';
+import '../common/load_progress_body.dart';
 import 'post_head.dart';
 
 class ViewRelatedPostsTab extends StatefulWidget {

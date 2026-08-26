@@ -1,5 +1,5 @@
-import 'package:ctrim_app/utility/broadcast_audience.dart';
-import 'package:ctrim_app/utility/notification_topics.dart';
+import 'package:ctrim_app/utility/notifications/broadcast_audience.dart';
+import 'package:ctrim_app/utility/notifications/notification_topics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

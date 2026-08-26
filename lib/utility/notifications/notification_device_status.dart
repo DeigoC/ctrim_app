@@ -1,12 +1,12 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/messaging_manager.dart';
-import 'app_shared_preferences.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/messaging_manager.dart';
+import '../app_shared_preferences.dart';
 import 'notification_debug.dart';
 import 'notification_subscription_service.dart';
-import 'pwa_install_service.dart';
+import '../pwa_install_service.dart';
 
 /// Snapshot of whether this browser/device can receive pushes.
 class NotificationDeviceStatus {
@@ -33,8 +33,7 @@ class NotificationDeviceStatus {
       permission == AuthorizationStatus.provisional;
 
   /// iOS Safari/Chrome in a normal tab cannot reliably receive web push.
-  bool get needsHomeScreenInstall =>
-      isWeb && isIosBrowser && !isPwaInstalled;
+  bool get needsHomeScreenInstall => isWeb && isIosBrowser && !isPwaInstalled;
 
   bool get looksHealthy =>
       permissionGranted && hasLocalToken && !needsHomeScreenInstall;
@@ -91,8 +90,7 @@ class NotificationDeviceStatusService {
     required AppSharedPreferences prefs,
     String? webAuthId,
   }) async {
-    final settings =
-        await FirebaseMessaging.instance.getNotificationSettings();
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
     final permission = settings.authorizationStatus;
 
     String? token;
@@ -110,9 +108,7 @@ class NotificationDeviceStatusService {
     }
 
     final preview = hasToken
-        ? (effective.length > 20
-            ? '${effective.substring(0, 20)}…'
-            : effective)
+        ? (effective.length > 20 ? '${effective.substring(0, 20)}…' : effective)
         : null;
 
     return NotificationDeviceStatus(

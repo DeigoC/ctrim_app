@@ -52,7 +52,8 @@ class NotificationSendResult {
       parts.add('$failureCount failed');
     }
     if (invalidTokenCount > 0) {
-      parts.add('$invalidTokenCount stale token${invalidTokenCount == 1 ? '' : 's'} removed');
+      parts.add(
+          '$invalidTokenCount stale token${invalidTokenCount == 1 ? '' : 's'} removed');
     }
 
     if (parts.isEmpty) {

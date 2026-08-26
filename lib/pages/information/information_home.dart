@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../models/info/church_info.dart';
-import '../models/info/ctrim_info.dart';
-import '../models/info/testimonial_info.dart';
-import '../utility/info_repository.dart';
-import '../utility/responsive_layout.dart';
-import 'information/about_tab.dart';
-import 'information/churches_tab.dart';
-import 'information/ctrim_info_list_tab.dart';
-import 'information/testimonials_tab.dart';
+import '../../models/info/church_info.dart';
+import '../../models/info/ctrim_info.dart';
+import '../../models/info/testimonial_info.dart';
+import '../../utility/info_repository.dart';
+import '../../utility/responsive_layout.dart';
+import 'about_tab.dart';
+import 'churches_tab.dart';
+import 'ctrim_info_list_tab.dart';
+import 'testimonials_tab.dart';
 
 class InformationHome extends StatefulWidget {
   const InformationHome({

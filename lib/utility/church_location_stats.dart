@@ -1,7 +1,7 @@
 import '../models/cell_group.dart';
 import '../models/event/event_head.dart';
 import '../models/user.dart';
-import 'volunteer_locations.dart';
+import 'catalog/volunteer_locations.dart';
 
 /// Rolling window for church-hub bulletin activity.
 class ChurchLocationWindows {

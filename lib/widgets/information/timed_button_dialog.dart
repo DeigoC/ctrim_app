@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../app_dialog.dart';
+import '../common/app_dialog.dart';
 import '../../utility/responsive_layout.dart';
 
 class TimedButtonDialog extends StatefulWidget {

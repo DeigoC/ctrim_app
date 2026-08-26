@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../utility/responsive_layout.dart';
+import '../../utility/responsive_layout.dart';
 
 /// Shared Material 3 dialog chrome: capped width, 28px corners, icon + title + actions.
 ///

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../models/catalog_picker_entry.dart';
-import '../models/cell_group.dart';
-import '../models/post_tag.dart';
-import '../utility/post_tag_helpers.dart';
-import '../utility/volunteer_locations.dart';
+import '../../models/catalog_picker_entry.dart';
+import '../../models/cell_group.dart';
+import '../../models/post_tag.dart';
+import 'post_tag_helpers.dart';
+import 'volunteer_locations.dart';
 
 /// Builds and filters catalog rows for [SelectCatalogItemsPage].
 abstract final class CatalogPickerHelpers {
@@ -41,7 +41,8 @@ abstract final class CatalogPickerHelpers {
 
   static List<String> locationFilterOptions(List<CatalogPickerEntry> entries) {
     final locations = entries
-        .where((entry) => entry.isActive && (entry.location?.isNotEmpty ?? false))
+        .where(
+            (entry) => entry.isActive && (entry.location?.isNotEmpty ?? false))
         .map((entry) => entry.location!)
         .toSet()
         .toList()

@@ -1,9 +1,9 @@
 import 'package:ctrim_app/models/catalog_picker_entry.dart';
 import 'package:ctrim_app/models/cell_group.dart';
 import 'package:ctrim_app/models/post_tag.dart';
-import 'package:ctrim_app/utility/catalog_picker_helpers.dart';
-import 'package:ctrim_app/utility/notification_topics.dart';
-import 'package:ctrim_app/utility/volunteer_locations.dart';
+import 'package:ctrim_app/utility/catalog/catalog_picker_helpers.dart';
+import 'package:ctrim_app/utility/notifications/notification_topics.dart';
+import 'package:ctrim_app/utility/catalog/volunteer_locations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

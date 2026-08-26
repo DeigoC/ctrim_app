@@ -1,6 +1,6 @@
 import '../models/event/event_head.dart';
-import 'post_tag_helpers.dart';
-import 'volunteer_locations.dart';
+import 'catalog/post_tag_helpers.dart';
+import 'catalog/volunteer_locations.dart';
 
 /// How bulletin cards are ordered after filters apply.
 enum BulletinSort {

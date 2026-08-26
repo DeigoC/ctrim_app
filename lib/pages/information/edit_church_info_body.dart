@@ -7,7 +7,7 @@ import '../../utility/church_location.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../utility/volunteer_locations.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import 'edit_info_body_shared.dart';
 
 class EditChurchInfoBody extends StatefulWidget {

@@ -8,7 +8,7 @@ import '../../pages/view_gallery_page.dart';
 import '../../utility/network_image_helper.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
-import '../app_dialog.dart';
+import '../common/app_dialog.dart';
 
 /// Relationship of a post relative to the currently viewed post.
 /// Only used on [PostHead] in related-posts views — not the main bulletin.

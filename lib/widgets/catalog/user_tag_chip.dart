@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../models/post_tag.dart';
-import '../utility/post_tag_helpers.dart';
+import '../../models/user_tag.dart';
+import '../../utility/catalog/user_tag_helpers.dart';
 import 'colored_chip.dart';
 
-class PostTagChip extends StatelessWidget {
-  const PostTagChip({
+class UserTagChip extends StatelessWidget {
+  const UserTagChip({
     super.key,
     required this.tag,
     this.dense = false,
@@ -13,7 +13,7 @@ class PostTagChip extends StatelessWidget {
     this.onTap,
   });
 
-  final PostTag tag;
+  final UserTag tag;
   final bool dense;
   final bool selected;
   final VoidCallback? onTap;
@@ -22,7 +22,7 @@ class PostTagChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return ColoredChip(
       label: tag.name,
-      color: PostTagHelpers.parseColor(tag.color),
+      color: UserTagHelpers.parseColor(tag.color),
       dense: dense,
       selected: selected,
       onTap: onTap,
@@ -30,15 +30,15 @@ class PostTagChip extends StatelessWidget {
   }
 }
 
-class PostTagChipRow extends StatelessWidget {
-  const PostTagChipRow({
+class UserTagChipRow extends StatelessWidget {
+  const UserTagChipRow({
     super.key,
     required this.tags,
     this.dense = false,
     this.alignment = WrapAlignment.start,
   });
 
-  final List<PostTag> tags;
+  final List<UserTag> tags;
   final bool dense;
   final WrapAlignment alignment;
 
@@ -47,7 +47,7 @@ class PostTagChipRow extends StatelessWidget {
     return ColoredChipRow(
       alignment: alignment,
       children: [
-        for (final tag in tags) PostTagChip(tag: tag, dense: dense),
+        for (final tag in tags) UserTagChip(tag: tag, dense: dense),
       ],
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/user_location.dart';
-import 'package:ctrim_app/utility/volunteer_locations.dart';
+import 'package:ctrim_app/utility/catalog/volunteer_locations.dart';
 
 void main() {
   group('VolunteerLocations', () {

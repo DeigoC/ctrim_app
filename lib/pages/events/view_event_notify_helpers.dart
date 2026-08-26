@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import '../../firebase/functions_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
-import '../../utility/notification_send_result.dart';
-import '../../utility/notification_token_resolver.dart';
+import '../../utility/notifications/notification_send_result.dart';
+import '../../utility/notifications/notification_token_resolver.dart';
 
 class ScheduledRoleReminder {
   const ScheduledRoleReminder({

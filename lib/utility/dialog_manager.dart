@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/user.dart';
-import '../utility/app_context.dart';
-import '../utility/user_tag_helpers.dart';
-import '../widgets/app_dialog.dart';
-import '../widgets/load_progress_body.dart';
+import 'app_context.dart';
+import 'catalog/user_tag_helpers.dart';
+import '../widgets/common/app_dialog.dart';
+import '../widgets/common/load_progress_body.dart';
 import '../widgets/user_avatar.dart';
-import '../widgets/user_tag_chip.dart';
+import '../widgets/catalog/user_tag_chip.dart';
 import 'responsive_layout.dart';
 
 /// Reports determinate load progress for stepped dialogs.

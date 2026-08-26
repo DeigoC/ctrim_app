@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 
 class InfoAddContentCard extends StatelessWidget {

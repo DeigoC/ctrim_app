@@ -13,9 +13,9 @@ import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/notification_permission_prompt.dart';
+import '../../utility/notifications/notification_permission_prompt.dart';
 import '../../utility/responsive_layout.dart';
-import '../../utility/web_notification_lifecycle.dart';
+import '../../utility/notifications/web_notification_lifecycle.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

@@ -1,4 +1,4 @@
-import 'package:ctrim_app/utility/notification_send_result.dart';
+import 'package:ctrim_app/utility/notifications/notification_send_result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

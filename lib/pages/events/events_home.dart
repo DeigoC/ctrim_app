@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../models/event/event_head.dart';
-import '../utility/app_context.dart';
-import '../utility/bulletin_listing.dart';
-import '../utility/event_heads_repository.dart';
-import '../utility/refresh_cooldown.dart';
-import '../utility/responsive_layout.dart';
-import '../widgets/bulletin/bulletin_first_time_dialog.dart';
-import '../widgets/bulletin/bulletin_setting_sheet.dart';
-import '../widgets/posts/post_head.dart';
-import '../utility/post_tag_helpers.dart';
-import '../utility/volunteer_locations.dart';
-import '../src/localization/app_localizations.dart';
+import '../../models/event/event_head.dart';
+import '../../utility/app_context.dart';
+import '../../utility/bulletin_listing.dart';
+import '../../utility/event_heads_repository.dart';
+import '../../utility/cache/refresh_cooldown.dart';
+import '../../utility/responsive_layout.dart';
+import '../../widgets/bulletin/bulletin_first_time_dialog.dart';
+import '../../widgets/bulletin/bulletin_setting_sheet.dart';
+import '../../widgets/posts/post_head.dart';
+import '../../utility/catalog/post_tag_helpers.dart';
+import '../../utility/catalog/volunteer_locations.dart';
+import '../../src/localization/app_localizations.dart';
 
 class ViewEventsHome extends StatefulWidget {
   const ViewEventsHome(

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:share_plus/share_plus.dart';
 import '../../utility/event_context.dart';
-import '../app_dialog.dart';
+import '../common/app_dialog.dart';
 import '../quill_editor_wrapper.dart';
 
 class ViewPostBody extends StatelessWidget {

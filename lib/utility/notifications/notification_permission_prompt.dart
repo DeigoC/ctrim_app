@@ -4,14 +4,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/messaging_manager.dart';
-import 'app_shared_preferences.dart';
-import 'dialog_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/messaging_manager.dart';
+import '../app_shared_preferences.dart';
+import '../dialog_manager.dart';
 import 'notification_subscription_service.dart';
 import 'notification_topics.dart';
-import 'pwa_install_service.dart';
-import 'responsive_layout.dart';
+import '../pwa_install_service.dart';
+import '../responsive_layout.dart';
 import 'web_notification_lifecycle.dart';
 
 /// Outcome of [NotificationPermissionPrompt.promptAndRegister].

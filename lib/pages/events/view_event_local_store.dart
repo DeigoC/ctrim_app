@@ -1,7 +1,7 @@
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../utility/event_context.dart';
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 
 /// First line of a cached post txt file: `{recentDateMs}-{appVersion}`.
 bool cachedPostDataIsCurrent({

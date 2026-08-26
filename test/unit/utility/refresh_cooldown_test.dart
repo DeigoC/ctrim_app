@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ctrim_app/utility/refresh_cooldown.dart';
+import 'package:ctrim_app/utility/cache/refresh_cooldown.dart';
 
 void main() {
   group('hasRefreshCooldownElapsed', () {

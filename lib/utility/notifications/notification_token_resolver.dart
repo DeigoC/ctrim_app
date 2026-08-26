@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import '../firebase/db_managers/everyone_db_manager.dart';
-import '../firebase/messaging_manager.dart';
+import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/messaging_manager.dart';
 import 'notification_debug.dart';
 
 /// Merges native device tokens (everyone/supplemental) with web FCM tokens.
@@ -13,7 +13,8 @@ class NotificationTokenResolver {
     try {
       final tokens = <String>{};
 
-      final deviceTokens = await _everyoneDBManager.fetchTokensFromAuthID(authID);
+      final deviceTokens =
+          await _everyoneDBManager.fetchTokensFromAuthID(authID);
       tokens.addAll(deviceTokens);
 
       final webTokens = await MessagingManager.getWebTokensForAuthId(authID);
@@ -25,7 +26,8 @@ class NotificationTokenResolver {
       return tokens.toList();
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
-        NotificationDebug.warn('resolveForAuthID($authID): permission denied — skipping tokens');
+        NotificationDebug.warn(
+            'resolveForAuthID($authID): permission denied — skipping tokens');
         return [];
       }
       rethrow;

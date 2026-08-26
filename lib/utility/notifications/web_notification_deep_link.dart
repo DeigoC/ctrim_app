@@ -12,7 +12,8 @@ class WebNotificationDeepLink {
       final uri = Uri.parse(html.window.location.href);
       final postId = uri.queryParameters['postId'];
       final infoPage = uri.queryParameters['infoPage'];
-      if ((postId == null || postId.isEmpty) && (infoPage == null || infoPage.isEmpty)) {
+      if ((postId == null || postId.isEmpty) &&
+          (infoPage == null || infoPage.isEmpty)) {
         return const {};
       }
 

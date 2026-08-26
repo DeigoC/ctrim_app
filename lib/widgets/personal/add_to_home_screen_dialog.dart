@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../utility/pwa_install_service.dart';
 import '../../utility/responsive_layout.dart';
-import '../app_dialog.dart';
+import '../common/app_dialog.dart';
 
 /// Soft prompt for web users to install / add CTRIM to the home screen.
 class AddToHomeScreenDialog extends StatefulWidget {

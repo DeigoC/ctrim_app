@@ -4,7 +4,7 @@ import '../../models/post_template.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/post_template_loader.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 
 /// Pick a cover image from templates that have a key-graphic (cover) pool.
 ///

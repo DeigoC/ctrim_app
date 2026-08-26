@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../action_sheet.dart';
+import '../common/action_sheet.dart';
 
 /// Template editor actions, styled like [PostEditSheet] / BulletinSettingSheet.
 class TemplateEditSheet extends StatelessWidget {

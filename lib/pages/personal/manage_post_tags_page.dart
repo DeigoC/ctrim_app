@@ -8,8 +8,8 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../widgets/manage_catalog_page.dart';
-import '../../widgets/post_tag_chip.dart';
+import '../../widgets/catalog/manage_catalog_page.dart';
+import '../../widgets/catalog/post_tag_chip.dart';
 
 class ManagePostTagsPage extends StatefulWidget {
   const ManagePostTagsPage({super.key});

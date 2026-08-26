@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/users_local_cache.dart';
+import 'package:ctrim_app/utility/cache/users_local_cache.dart';
 
 void main() {
   group('effectiveIsPlaceholder', () {

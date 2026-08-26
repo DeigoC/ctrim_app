@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 
 /// A widget that downloads and caches images for display.

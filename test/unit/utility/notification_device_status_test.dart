@@ -1,4 +1,4 @@
-import 'package:ctrim_app/utility/notification_device_status.dart';
+import 'package:ctrim_app/utility/notifications/notification_device_status.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 

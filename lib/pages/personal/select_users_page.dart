@@ -8,17 +8,17 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/persist_users_local_cache.dart';
+import '../../utility/cache/persist_users_local_cache.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../utility/user_tag_helpers.dart';
-import '../../utility/volunteer_locations.dart';
+import '../../utility/catalog/user_tag_helpers.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/app_search_bar.dart';
-import '../../widgets/app_dialog.dart';
+import '../../widgets/common/app_dialog.dart';
 import '../../widgets/user_avatar.dart';
-import '../../widgets/user_tag_chip.dart';
-import '../../widgets/user_tag_filter_bar.dart';
+import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/catalog/user_tag_filter_bar.dart';
 import 'view_user_roles_page.dart';
 
 /// Full-screen multi-select picker for volunteers and placeholder profiles.

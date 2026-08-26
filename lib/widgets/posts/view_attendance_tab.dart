@@ -13,11 +13,11 @@ import '../../pages/personal/select_users_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/notification_topics.dart';
+import '../../utility/notifications/notification_topics.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../load_progress_body.dart';
+import '../common/load_progress_body.dart';
 import '../user_avatar.dart';
 
 /// People tab: interested (self-serve) + expected checklist + attendees (author/contributor).

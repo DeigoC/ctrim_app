@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../models/post_tag.dart';
-import '../pages/events/select_catalog_items_page.dart';
-import '../src/localization/app_localizations.dart';
-import '../utility/catalog_picker_helpers.dart';
-import '../utility/post_tag_helpers.dart';
+import '../../models/post_tag.dart';
+import '../../pages/events/select_catalog_items_page.dart';
+import '../../src/localization/app_localizations.dart';
+import '../../utility/catalog/catalog_picker_helpers.dart';
+import '../../utility/catalog/post_tag_helpers.dart';
 import 'catalog_picker_card.dart';
 import 'post_tag_chip.dart';
 

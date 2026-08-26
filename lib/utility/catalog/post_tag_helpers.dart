@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/event/event_head.dart';
-import '../models/post_tag.dart';
+import '../../models/event/event_head.dart';
+import '../../models/post_tag.dart';
 import 'user_tag_helpers.dart';
 
 /// Helpers for resolving and filtering admin-managed post content tags.
@@ -36,7 +36,8 @@ class PostTagHelpers {
     required List<PostTag> allTags,
     bool activeOnly = true,
   }) {
-    return resolveTags(tagIDs: head.tagIDs, allTags: allTags, activeOnly: activeOnly);
+    return resolveTags(
+        tagIDs: head.tagIDs, allTags: allTags, activeOnly: activeOnly);
   }
 
   static bool headMatchesTagFilter({

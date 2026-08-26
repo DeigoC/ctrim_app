@@ -15,7 +15,7 @@ import '../utility/dialog_manager.dart';
 import '../utility/event_heads_repository.dart';
 import '../utility/responsive_layout.dart';
 import '../utility/users_repository.dart';
-import '../utility/web_notification_lifecycle.dart';
+import '../utility/notifications/web_notification_lifecycle.dart';
 import 'home_page.dart';
 import 'welcome_hero_header.dart';
 import 'welcome_login_tab.dart';

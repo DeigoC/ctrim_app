@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../app_dialog.dart';
+import '../common/app_dialog.dart';
 
 /// Material 3 dialog that collects a short update note before save.
 ///

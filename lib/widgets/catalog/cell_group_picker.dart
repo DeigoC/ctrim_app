@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../models/cell_group.dart';
-import '../pages/events/select_catalog_items_page.dart';
-import '../src/localization/app_localizations.dart';
-import '../utility/catalog_picker_helpers.dart';
+import '../../models/cell_group.dart';
+import '../../pages/events/select_catalog_items_page.dart';
+import '../../src/localization/app_localizations.dart';
+import '../../utility/catalog/catalog_picker_helpers.dart';
 import 'catalog_picker_card.dart';
 
 /// Multi-select picker for linking bulletin posts / templates to cell groups.

@@ -1,4 +1,4 @@
-import '../models/user.dart';
+import '../../models/user.dart';
 
 /// Line-oriented local cache for the volunteers directory.
 ///

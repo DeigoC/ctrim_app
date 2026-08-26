@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/user_tag.dart';
-import '../src/localization/app_localizations.dart';
+import '../../models/user_tag.dart';
+import '../../src/localization/app_localizations.dart';
 import 'catalog_picker_card.dart';
 import 'user_tag_chip.dart';
 

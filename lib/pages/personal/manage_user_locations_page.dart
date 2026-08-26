@@ -8,8 +8,8 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../utility/volunteer_locations.dart';
-import '../../widgets/manage_catalog_page.dart';
+import '../../utility/catalog/volunteer_locations.dart';
+import '../../widgets/catalog/manage_catalog_page.dart';
 
 class ManageUserLocationsPage extends StatefulWidget {
   const ManageUserLocationsPage({super.key});

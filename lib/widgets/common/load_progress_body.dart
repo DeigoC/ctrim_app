@@ -39,7 +39,10 @@ class LoadProgressBody extends StatelessWidget {
                 Text(
                   errorTitle,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -63,7 +66,8 @@ class LoadProgressBody extends StatelessWidget {
       );
     }
 
-    final double? progress = totalSteps > 0 ? (completedSteps / totalSteps).clamp(0.0, 1.0) : null;
+    final double? progress =
+        totalSteps > 0 ? (completedSteps / totalSteps).clamp(0.0, 1.0) : null;
 
     return Center(
       child: Padding(

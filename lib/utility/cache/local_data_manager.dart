@@ -4,11 +4,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../models/info/church_info.dart';
-import '../models/info/church_page.dart';
-import '../models/info/ctrim_info.dart';
-import '../models/info/testimonial_info.dart';
-import '../models/post_template.dart';
+import '../../models/info/church_info.dart';
+import '../../models/info/church_page.dart';
+import '../../models/info/ctrim_info.dart';
+import '../../models/info/testimonial_info.dart';
+import '../../models/post_template.dart';
 
 class LocalDataManager {
   static bool _initialized = false;
