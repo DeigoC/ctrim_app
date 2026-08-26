@@ -27,9 +27,10 @@
 
 ## Placeholders
 
-1. When assigning someone who isn’t in the directory yet, use **create placeholder** (wording may vary) from the people picker.  
-2. Fill in at least a name so the roster stays clear.  
-3. Later, when they sign in, their account can be linked — describe that flow here once screenshots exist.  
+1. Open the people picker (for example **Manage members** on a programme role, attendance, or cell members). Existing placeholders appear in the list; use the **Placeholders** chip to show only those profiles.  
+2. If they are not listed yet, search for their name; when nothing matches, tap **Create placeholder**.  
+3. Fill in forename and surname. The new profile is created and selected so you can assign them immediately.  
+4. Later, when they sign in, their account can be linked — describe that flow here once screenshots exist.  
 
 ## Related
 

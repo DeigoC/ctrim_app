@@ -7,10 +7,14 @@ import '../../../utility/app_context.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/local_data_manager.dart';
+import '../../../utility/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/responsive_layout.dart';
+import '../../../utility/user_activity_messages.dart';
+import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/load_progress_body.dart';
 import '../../../widgets/role_access_gate.dart';
+import '../../../widgets/app_dialog.dart';
 import 'edit_template_page.dart';
 
 class ViewTemplatesPage extends StatefulWidget {
@@ -67,7 +71,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         },
       );
       if (!mounted) return;
-      templates.sort((a, b) => a.headTitle.compareTo(b.headTitle));
+      templates.sort((a, b) => a.title.compareTo(b.title));
       setState(() {
         _templates = templates;
         _loading = false;
@@ -98,7 +102,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           scrolledUnderElevation: 1,
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _loading ? null : _onCreateTemplateTap,
+          onPressed: _loading ? null : () => _onCreateTemplateTap(),
           icon: const Icon(Icons.add),
           label: const Text('New template'),
         ),
@@ -163,46 +167,146 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                 .clamp(16.0, double.infinity)
             : 16.0;
 
-        if (!isWide) {
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(
-                horizontalPadding, 16, horizontalPadding, 96),
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemCount: templates.length,
-            itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
-          );
-        }
-
-        final left = <PostTemplate>[];
-        final right = <PostTemplate>[];
-        for (var i = 0; i < templates.length; i++) {
-          (i.isEven ? left : right).add(templates[i]);
-        }
-
-        Widget column(List<PostTemplate> items) {
-          return Column(
-            children: [
-              for (var i = 0; i < items.length; i++) ...[
-                if (i > 0) const SizedBox(height: 12),
-                _buildTemplateTile(items[i]),
-              ],
-            ],
-          );
-        }
-
-        return SingleChildScrollView(
+        return ListView(
           padding:
               EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: column(left)),
-              const SizedBox(width: 16),
-              Expanded(child: column(right)),
+          children: [
+            for (var i = 0; i < PostTemplateCategory.values.length; i++) ...[
+              if (i > 0) const SizedBox(height: 20),
+              _buildCategorySection(
+                category: PostTemplateCategory.values[i],
+                templates: templates
+                    .where((t) => t.category == PostTemplateCategory.values[i])
+                    .toList(),
+                isWide: isWide,
+              ),
             ],
-          ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildCategorySection({
+    required PostTemplateCategory category,
+    required List<PostTemplate> templates,
+    required bool isWide,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isServices = category == PostTemplateCategory.service;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isServices ? Icons.event_outlined : Icons.groups_outlined,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.label,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isServices
+                            ? 'Sunday services and similar programmes'
+                            : 'Cell group meetings',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (templates.isEmpty)
+              Text(
+                'No ${category.label.toLowerCase()} templates yet.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              )
+            else
+              _buildSectionTiles(templates, isWide),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    _onCreateTemplateTap(initialCategory: category),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text('Add ${category.label} template'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTiles(List<PostTemplate> templates, bool isWide) {
+    if (!isWide) {
+      return Column(
+        children: [
+          for (var i = 0; i < templates.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTemplateTile(templates[i]),
+          ],
+        ],
+      );
+    }
+
+    final left = <PostTemplate>[];
+    final right = <PostTemplate>[];
+    for (var i = 0; i < templates.length; i++) {
+      (i.isEven ? left : right).add(templates[i]);
+    }
+
+    Widget column(List<PostTemplate> items) {
+      return Column(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTemplateTile(items[i]),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: column(left)),
+        const SizedBox(width: 16),
+        Expanded(child: column(right)),
+      ],
     );
   }
 
@@ -255,13 +359,12 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
                         ),
                       ),
                     ],
-                    if (template.headTitle.isNotEmpty) ...[
-                      const SizedBox(height: 10),
+                    if (template.location.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       Text(
-                        template.headTitle,
+                        template.location,
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -304,16 +407,20 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
   }
 
-  Future<void> _onCreateTemplateTap() async {
-    final details = await _showNewTemplateDetailsDialog();
+  Future<void> _onCreateTemplateTap({
+    PostTemplateCategory? initialCategory,
+  }) async {
+    final details = await _showNewTemplateDetailsDialog(
+      initialCategory: initialCategory ?? PostTemplateCategory.service,
+    );
     if (details == null || !mounted) return;
 
     final location = _appContext.currentUser.location;
     final draft = _buildBlankTemplate(
       title: details.title,
       description: details.description,
-      headTitle: details.headTitle,
       location: location,
+      category: details.category,
     );
     draft.addLog(
       log: 'Created',
@@ -337,6 +444,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         final local = LocalDataManager();
         await local.writePostTemplateData(createdTemplate!);
         await local.writeLastPostTemplateUpdate(result.lastUpdate);
+        await UserActivityRecorder().record(
+          actorUserId: _appContext.currentUser.id,
+          log: UserActivityMessages.createdPostTemplate,
+          documentId: result.id,
+        );
       },
     );
 
@@ -368,9 +480,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
             completed: 0, total: total, message: 'Duplicating template…');
         final copyData = source.toJson(true);
         copyData['Title'] = 'Copy of ${source.title}';
-        copyData['HeadTitle'] = source.headTitle.isEmpty
-            ? copyData['Title']
-            : 'Copy of ${source.headTitle}';
+        copyData['HeadTitle'] = copyData['Title'];
         // Fresh history for the new document — do not copy source Logs.
         copyData['Logs'] = <Map<String, dynamic>>[];
         final draft = PostTemplate.fromMap(true, 'temp', copyData);
@@ -385,6 +495,11 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
         final local = LocalDataManager();
         await local.writePostTemplateData(duplicated!);
         await local.writeLastPostTemplateUpdate(result.lastUpdate);
+        await UserActivityRecorder().record(
+          actorUserId: _appContext.currentUser.id,
+          log: UserActivityMessages.createdPostTemplate,
+          documentId: result.id,
+        );
       },
     );
 
@@ -394,111 +509,36 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     await _openEditTemplate(duplicated!);
   }
 
-  Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog() async {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final headTitleController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final result = await showDialog<_NewTemplateDetails>(
+  Future<_NewTemplateDetails?> _showNewTemplateDetailsDialog({
+    required PostTemplateCategory initialCategory,
+  }) {
+    // AppDialog (not Cupertino): TextFormFields need Material.
+    // Controllers live on [_NewTemplateDetailsDialog] so they are not disposed
+    // while the route is still animating out (which caused "used after disposed").
+    return showDialog<_NewTemplateDetails>(
       context: context,
-      builder: (dialogContext) {
-        final theme = Theme.of(dialogContext);
-        return AlertDialog.adaptive(
-          title: const Text('New template'),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: titleController,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      hintText: 'e.g. Sunday Service',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter a title';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: headTitleController,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'List heading (optional)',
-                      hintText: 'Defaults to title',
-                      helperText: 'Shown in the template picker list',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: descriptionController,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (optional)',
-                      hintText: 'Short summary for admins',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (!(formKey.currentState?.validate() ?? false)) return;
-                final title = titleController.text.trim();
-                final headTitle = headTitleController.text.trim().isEmpty
-                    ? title
-                    : headTitleController.text.trim();
-                Navigator.of(dialogContext).pop(
-                  _NewTemplateDetails(
-                    title: title,
-                    headTitle: headTitle,
-                    description: descriptionController.text.trim(),
-                  ),
-                );
-              },
-              child: Text('Create', style: theme.textTheme.labelLarge),
-            ),
-          ],
-        );
-      },
+      builder: (_) =>
+          _NewTemplateDetailsDialog(initialCategory: initialCategory),
     );
-
-    titleController.dispose();
-    descriptionController.dispose();
-    headTitleController.dispose();
-    return result;
   }
 
   PostTemplate _buildBlankTemplate({
     required String title,
     required String description,
-    required String headTitle,
     required String location,
+    required PostTemplateCategory category,
   }) {
     return PostTemplate.fromMap(true, 'temp', {
       'Title': title,
       'Description': description.isEmpty ? 'New post template' : description,
-      'HeadTitle': headTitle,
+      'HeadTitle': title,
       'Body': r'[{"insert":"Hello, time to start writing!\n"}]',
       'Location': location,
-      'Topics': [location],
+      'Category': category.firestoreValue,
+      'Topics': [NotificationTopics.locationUmbrella(location)],
       'TagIDs': <String>[],
       'CellGroupIDs': <String>[],
+      'ExpectedAttendeeUserIDs': <String>[],
       'Contributors': <String>[],
       'LeadSpeakerUID': null,
       'IsPeriodParent': false,
@@ -539,10 +579,10 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.media.addAllMediaFiles(postTemplate.media);
 
     eventContext.applyTagIDs(List<String>.from(postTemplate.tagIDs));
-    eventContext.applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
-    if (postTemplate.tagIDs.isEmpty && postTemplate.topics.isNotEmpty) {
-      eventContext.metadata.addAllTopics(postTemplate.topics);
-    }
+    eventContext
+        .applyCellGroupIDs(List<String>.from(postTemplate.cellGroupIDs));
+    eventContext.applyExpectedAttendeeUserIDs(
+        List<String>.from(postTemplate.expectedAttendeeUserIDs));
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
     if (postTemplate.leadSpeakerUID != null &&
         postTemplate.leadSpeakerUID!.isNotEmpty) {
@@ -588,11 +628,117 @@ enum _TemplateAction { edit, duplicate }
 class _NewTemplateDetails {
   const _NewTemplateDetails({
     required this.title,
-    required this.headTitle,
     required this.description,
+    required this.category,
   });
 
   final String title;
-  final String headTitle;
   final String description;
+  final PostTemplateCategory category;
+}
+
+class _NewTemplateDetailsDialog extends StatefulWidget {
+  const _NewTemplateDetailsDialog({required this.initialCategory});
+
+  final PostTemplateCategory initialCategory;
+
+  @override
+  State<_NewTemplateDetailsDialog> createState() =>
+      _NewTemplateDetailsDialogState();
+}
+
+class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late PostTemplateCategory _category;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _category = widget.initialCategory;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _onCreate() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.of(context).pop(
+      _NewTemplateDetails(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        category: _category,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      icon: Icons.post_add_outlined,
+      title: 'New template',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _titleController,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: AppDialog.inputDecoration(
+                label: 'Title',
+                hint: 'e.g. Sunday Service',
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Enter a title';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _descriptionController,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: 2,
+              decoration: AppDialog.inputDecoration(
+                label: 'Description (optional)',
+                hint: 'Short summary for admins',
+                maxLines: 2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<PostTemplateCategory>(
+              initialValue: _category,
+              decoration: AppDialog.inputDecoration(label: 'Category'),
+              items: [
+                for (final category in PostTemplateCategory.values)
+                  DropdownMenuItem<PostTemplateCategory>(
+                    value: category,
+                    child: Text(category.label),
+                  ),
+              ],
+              onChanged: (selected) {
+                if (selected == null) return;
+                setState(() => _category = selected);
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: AppDialogActions(
+        onCancel: () => Navigator.of(context).pop(),
+        onConfirm: _onCreate,
+        confirmLabel: 'Create',
+      ),
+    );
+  }
 }

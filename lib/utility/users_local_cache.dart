@@ -15,61 +15,62 @@ class UsersLocalCache {
 
   /// Builds the string written to [LocalDataManager.writeUsersList].
   static String encode({
-    required String idTracker,
+    required int lastUpdate,
     required String appVersion,
     required Iterable<User> users,
   }) {
-    final buffer = StringBuffer('$idTracker-$appVersion');
+    final buffer = StringBuffer('$lastUpdate-$appVersion');
     for (final user in users) {
-      buffer.write('\n${user.id}');
-      buffer.write('\n${user.forname}');
-      buffer.write('\n${user.surname}');
-      buffer.write('\n${user.imgSrc}');
+      buffer.write('\n${_field(user.id)}');
+      buffer.write('\n${_field(user.forname)}');
+      buffer.write('\n${_field(user.surname)}');
+      buffer.write('\n${_field(user.imgSrc)}');
       buffer.write('\n${user.isLeader ? '1' : '0'}');
       buffer.write('\n${user.isAreaAdmin ? '1' : '0'}');
-      buffer.write('\n${user.location}');
-      buffer.write('\n${user.authID}');
-      buffer.write('\n${user.tagIDs.join(',')}');
+      buffer.write('\n${_field(user.location)}');
+      buffer.write('\n${_field(user.authID)}');
+      buffer.write('\n${_field(user.tagIDs.join(','))}');
       buffer.write('\n${user.isPlaceholder ? '1' : '0'}');
-      buffer.write('\n${user.createdByUserID}');
+      buffer.write('\n${_field(user.createdByUserID)}');
     }
     return buffer.toString();
   }
 
+  static String _field(String value) =>
+      value.replaceAll('\r', '').replaceAll('\n', ' ');
+
   /// Parses [lines] from [LocalDataManager.readUsers].
   ///
   /// Returns `null` when the body length does not match a known chunk size
-  /// (caller should refetch from Firestore).
+  /// or every matching layout looks scrambled (caller should refetch).
   static List<User>? tryDecode(List<String> lines) {
     if (lines.isEmpty) return null;
     final body = lines.length == 1 && lines.first.isEmpty
         ? <String>[]
         : List<String>.from(lines);
-    if (body.isNotEmpty && body.first.contains('-')) {
-      // Header may already have been removed by the caller; keep flexible.
-    }
-    final data = body;
-    if (data.isEmpty) return <User>[];
-
-    final chunkSize = _detectChunkSize(data.length);
-    if (chunkSize == null) return null;
-
-    final result = <User>[];
-    final chunks = data.length ~/ chunkSize;
-    for (var i = 0; i < chunks; i++) {
-      final start = i * chunkSize;
-      final entry = data.sublist(start, start + chunkSize);
-      result.add(_userFromEntry(entry, chunkSize));
-    }
-    return result;
+    if (body.isEmpty) return <User>[];
+    return decodeBody(body);
   }
 
   /// Decodes cache body lines (header already stripped).
   static List<User>? decodeBody(List<String> bodyLines) {
     if (bodyLines.isEmpty) return <User>[];
-    final chunkSize = _detectChunkSize(bodyLines.length);
-    if (chunkSize == null) return null;
+    final candidates = <int>[
+      if (bodyLines.length % chunkSizeV3 == 0) chunkSizeV3,
+      if (bodyLines.length % chunkSizeV2 == 0) chunkSizeV2,
+      if (bodyLines.length % chunkSizeV1 == 0) chunkSizeV1,
+    ];
+    if (candidates.isEmpty) return null;
 
+    for (final chunkSize in candidates) {
+      final decoded = _decodeWithChunkSize(bodyLines, chunkSize);
+      if (!looksScrambled(decoded)) return decoded;
+    }
+    return null;
+  }
+
+  static List<User> _decodeWithChunkSize(
+      List<String> bodyLines, int chunkSize) {
     final result = <User>[];
     final chunks = bodyLines.length ~/ chunkSize;
     for (var i = 0; i < chunks; i++) {
@@ -80,23 +81,40 @@ class UsersLocalCache {
     return result;
   }
 
-  static int? _detectChunkSize(int dataLength) {
-    if (dataLength % chunkSizeV3 == 0) return chunkSizeV3;
-    if (dataLength % chunkSizeV2 == 0) return chunkSizeV2;
-    if (dataLength % chunkSizeV1 == 0) return chunkSizeV1;
-    return null;
+  /// True when fields have rotated (Drive URLs as location, empty ids, etc.).
+  static bool looksScrambled(List<User> users) {
+    for (final user in users) {
+      if (user.id.trim().isEmpty) return true;
+      if (user.id.contains(',')) return true;
+      if (_looksLikeUrl(user.id) ||
+          _looksLikeUrl(user.forname) ||
+          _looksLikeUrl(user.location)) {
+        return true;
+      }
+      if (user.location == '0' || user.location == '1') return true;
+    }
+    return false;
+  }
+
+  static bool _looksLikeUrl(String value) {
+    final trimmed = value.trim().toLowerCase();
+    return trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.contains('drive.google.com');
   }
 
   static User _userFromEntry(List<String> entry, int chunkSize) {
     final tagIDs = chunkSize >= chunkSizeV2 && entry.length > 8
         ? entry[8].split(',').where((e) => e.isNotEmpty).toList()
         : <String>[];
-    final isPlaceholder = chunkSize >= chunkSizeV3
-        ? entry[9] == '1'
-        // Legacy caches omitted the flag — empty AuthID implies placeholder.
-        : entry[7].trim().isEmpty;
-    final createdByUserID =
-        chunkSize >= chunkSizeV3 ? entry[10] : '';
+    final isPlaceholder = effectiveIsPlaceholder(
+      authID: entry[7],
+      fallbackIsPlaceholder: chunkSize >= chunkSizeV3
+          ? entry[9] == '1'
+          // Legacy caches omitted the flag — empty AuthID implies placeholder.
+          : entry[7].trim().isEmpty,
+    );
+    final createdByUserID = chunkSize >= chunkSizeV3 ? entry[10] : '';
 
     return User(
       id: entry[0],

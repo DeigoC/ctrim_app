@@ -11,7 +11,9 @@ bool canCreatePlaceholderUser({
 }) {
   if (actor.isAreaAdmin) return true;
   if (isCellGroupLeader) return true;
-  if (postAuthorUid != null && postAuthorUid.isNotEmpty && postAuthorUid == actor.id) {
+  if (postAuthorUid != null &&
+      postAuthorUid.isNotEmpty &&
+      postAuthorUid == actor.id) {
     return true;
   }
   return false;
@@ -39,8 +41,33 @@ bool canLinkPlaceholderAuth({
   if (actor.isAreaAdmin) return true;
   if (!target.isPlaceholder) return false;
   if (target.authID.isNotEmpty) return false;
-  return target.createdByUserID.isNotEmpty && target.createdByUserID == actor.id;
+  return target.createdByUserID.isNotEmpty &&
+      target.createdByUserID == actor.id;
 }
 
 /// Whether [actor] may unlink Auth from [target] (area admin only).
 bool canUnlinkUserAuth({required User actor}) => actor.isAreaAdmin;
+
+/// Picker-minted placeholders (have a creator). Used to decide whether a
+/// non-admin should see the Volunteers "Placeholders" filter chip.
+bool isTransientVolunteerPlaceholder(User user) {
+  if (!user.isPlaceholder) return false;
+  return user.createdByUserID.trim().isNotEmpty;
+}
+
+/// Whether [user] should appear in the Volunteers directory for [viewer]
+/// given the placeholders filter.
+///
+/// Off: hide every `IsPlaceholder` profile (including legacy empty-Auth
+/// backfill rows). On: placeholders only — area admins see all of them;
+/// others only see ones they created.
+bool isVisibleInVolunteerDirectory({
+  required User user,
+  required User viewer,
+  required bool placeholdersOnly,
+}) {
+  if (!placeholdersOnly) return !user.isPlaceholder;
+  if (!user.isPlaceholder) return false;
+  if (viewer.isAreaAdmin) return true;
+  return user.createdByUserID == viewer.id;
+}

@@ -24,7 +24,8 @@ class RoleAccessGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AppContext>(context).currentUser;
+    context.select((AppContext c) => c.sessionEpoch);
+    final user = Provider.of<AppContext>(context, listen: false).currentUser;
     if (allow(user)) {
       return child;
     }

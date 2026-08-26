@@ -1,22 +1,34 @@
-import 'package:ctrim_app/models/info/church_info.dart';
-import 'package:ctrim_app/models/info/ctrim_info.dart';
-import 'package:ctrim_app/models/info/testimonial_info.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/info_repository.dart';
-import 'package:ctrim_app/utility/responsive_layout.dart';
-import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
-enum InfoEditorSection { church, testimonial, ctrim }
+import '../../models/info/church_info.dart';
+import '../../models/info/church_page.dart';
+import '../../models/info/ctrim_info.dart';
+import '../../models/info/testimonial_info.dart';
+import '../../models/user.dart';
+import '../../utility/app_context.dart';
+import '../../utility/church_location.dart';
+import '../../utility/dialog_manager.dart';
+import '../../utility/info_repository.dart';
+import '../../utility/network_image_helper.dart';
+import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
+import '../../utility/volunteer_locations.dart';
+import '../../widgets/quill_editor_wrapper.dart';
+
+enum InfoEditorSection { church, churchPage, testimonial, ctrim }
 
 class EditInfoBodyPage extends StatefulWidget {
   const EditInfoBodyPage._({
     required this.section,
     this.churchInfo,
+    this.churchPage,
+    this.churchId,
     this.testimonialInfo,
     this.ctrimInfo,
+    this.initialCtrimCategory = CtrimInfoCategory.principle,
   });
 
   factory EditInfoBodyPage.forChurch({final ChurchInfo? info}) {
@@ -24,23 +36,44 @@ class EditInfoBodyPage extends StatefulWidget {
         section: InfoEditorSection.church, churchInfo: info);
   }
 
+  factory EditInfoBodyPage.forChurchPage({
+    required final String churchId,
+    final ChurchPage? info,
+  }) {
+    return EditInfoBodyPage._(
+      section: InfoEditorSection.churchPage,
+      churchId: churchId,
+      churchPage: info,
+    );
+  }
+
   factory EditInfoBodyPage.forTestimonial({final TestimonialInfo? info}) {
     return EditInfoBodyPage._(
         section: InfoEditorSection.testimonial, testimonialInfo: info);
   }
 
-  factory EditInfoBodyPage.forCtrim({final CtrimInfo? info}) {
+  factory EditInfoBodyPage.forCtrim({
+    final CtrimInfo? info,
+    final CtrimInfoCategory initialCategory = CtrimInfoCategory.principle,
+  }) {
     return EditInfoBodyPage._(
-        section: InfoEditorSection.ctrim, ctrimInfo: info);
+      section: InfoEditorSection.ctrim,
+      ctrimInfo: info,
+      initialCtrimCategory: info?.category ?? initialCategory,
+    );
   }
 
   final ChurchInfo? churchInfo;
+  final ChurchPage? churchPage;
+  final String? churchId;
   final CtrimInfo? ctrimInfo;
+  final CtrimInfoCategory initialCtrimCategory;
   final InfoEditorSection section;
   final TestimonialInfo? testimonialInfo;
 
   bool get isEditing => switch (section) {
         InfoEditorSection.church => churchInfo != null,
+        InfoEditorSection.churchPage => churchPage != null,
         InfoEditorSection.testimonial => testimonialInfo != null,
         InfoEditorSection.ctrim => ctrimInfo != null,
       };
@@ -68,11 +101,26 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   late final String _initialSummary;
   late final String _initialImages;
   late final String _initialDisplayOrder;
+  late final CtrimInfoCategory _initialCtrimCategory;
+  late CtrimInfoCategory _selectedCtrimCategory;
+  late final TextEditingController _mapLinkController;
+  late final TextEditingController _addressController;
+  late final String _initialLocation;
+  late final String _initialMapLink;
+  late final String _initialAddress;
+  String? _selectedLocation;
+  List<ChurchInfo> _allChurches = const [];
+  bool _churchesLoaded = false;
   bool _isSaving = false;
   bool _isDeleting = false;
   bool _isSaved = false;
   bool _allowPop = false;
   bool _checkedAccess = false;
+  bool _testingImages = false;
+  bool _imagesValidated = true;
+  bool _showImageTestSuccess = false;
+  String? _imageValidationMessage;
+  List<String> _previewImageUrls = const <String>[];
 
   void _popRouteAfterAllowing({final Object? result}) {
     setState(() => _allowPop = true);
@@ -92,11 +140,43 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     _initialSummary = _initialSummaryValue();
     _initialImages = _initialImageSourcesValue();
     _initialDisplayOrder = _initialDisplayOrderValue();
+    _initialCtrimCategory = widget.initialCtrimCategory;
+    _selectedCtrimCategory = _initialCtrimCategory;
+    _initialLocation = widget.churchInfo?.location.trim() ?? '';
+    _initialMapLink = widget.churchInfo?.mapLink ?? '';
+    _initialAddress = widget.churchInfo?.address ?? '';
+    _selectedLocation = _initialLocation.isEmpty ? null : _initialLocation;
     _primaryController = TextEditingController(text: _initialPrimary);
     _secondaryController = TextEditingController(text: _initialSecondary);
     _summaryController = TextEditingController(text: _initialSummary);
     _imagesController = TextEditingController(text: _initialImages);
     _displayOrderController = TextEditingController(text: _initialDisplayOrder);
+    _mapLinkController = TextEditingController(text: _initialMapLink);
+    _addressController = TextEditingController(text: _initialAddress);
+    _imagesController.addListener(_onImagesTextChanged);
+    _imagesValidated = true;
+  }
+
+  void _onImagesTextChanged() {
+    final current = _readImageSources();
+    final initial = _parseImageSourcesText(_initialImages);
+    final unchanged = _stringListsEqual(current, initial);
+    final empty = current.isEmpty;
+    if (!mounted) return;
+    setState(() {
+      if (empty || unchanged) {
+        _imagesValidated = true;
+        _imageValidationMessage = null;
+        if (empty) {
+          _previewImageUrls = const <String>[];
+          _showImageTestSuccess = false;
+        }
+      } else {
+        _imagesValidated = false;
+        _imageValidationMessage = null;
+        _showImageTestSuccess = false;
+      }
+    });
   }
 
   @override
@@ -104,29 +184,38 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     super.didChangeDependencies();
     if (_checkedAccess) return;
     _checkedAccess = true;
-    final canManage =
-        Provider.of<AppContext>(context, listen: false).currentUser.canManageInfo;
+    final user = Provider.of<AppContext>(context, listen: false).currentUser;
+    final canManage = widget.section == InfoEditorSection.churchPage
+        ? user.canManageChurchPages
+        : user.canManageInfo;
     if (!canManage) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Only area admins and leaders can edit this content.'),
-          ),
+          SnackBar(content: Text(_accessDeniedMessage())),
         );
         _popRouteAfterAllowing();
+      });
+      return;
+    }
+    if (widget.section == InfoEditorSection.church && !_churchesLoaded) {
+      _churchesLoaded = true;
+      _infoRepository.fetchChurches().then((churches) {
+        if (mounted) setState(() => _allChurches = churches);
       });
     }
   }
 
   @override
   void dispose() {
+    _imagesController.removeListener(_onImagesTextChanged);
     _primaryController.dispose();
     _secondaryController.dispose();
     _summaryController.dispose();
     _imagesController.dispose();
     _displayOrderController.dispose();
+    _mapLinkController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -169,7 +258,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
                 tooltip: 'Delete',
               ),
             TextButton.icon(
-              onPressed: busy ? null : _save,
+              onPressed:
+                  busy || (!_imagesValidated && _readImageSources().isNotEmpty)
+                      ? null
+                      : _save,
               icon: _isSaving
                   ? const SizedBox(
                       width: 16,
@@ -206,7 +298,9 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
                       showCodeBlock: true,
                       multiRowsDisplay: true,
                       placeholder: _bodyPlaceholder(),
+                      expands: false,
                       minHeight: 180,
+                      maxHeight: 420,
                     ),
                   ],
                 ),
@@ -233,6 +327,21 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     }
     if (_displayOrderController.text.trim() != _initialDisplayOrder.trim()) {
       return true;
+    }
+    if (widget.section == InfoEditorSection.ctrim &&
+        _selectedCtrimCategory != _initialCtrimCategory) {
+      return true;
+    }
+    if (widget.section == InfoEditorSection.church) {
+      if ((_selectedLocation ?? '') != _initialLocation) {
+        return true;
+      }
+      if (_mapLinkController.text.trim() != _initialMapLink.trim()) {
+        return true;
+      }
+      if (_addressController.text.trim() != _initialAddress.trim()) {
+        return true;
+      }
     }
 
     final currentBody =
@@ -265,7 +374,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       ),
     ];
 
-    if (widget.section != InfoEditorSection.church) {
+    if (widget.section != InfoEditorSection.church &&
+        widget.section != InfoEditorSection.churchPage) {
       fields.addAll([
         const SizedBox(height: 12),
         TextFormField(
@@ -287,12 +397,45 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
         TextFormField(
           controller: _summaryController,
           decoration: InputDecoration(
-            labelText: widget.section == InfoEditorSection.church
-                ? 'Summary / subtitle'
-                : 'Summary',
+            labelText: widget.section == InfoEditorSection.testimonial
+                ? 'Summary'
+                : 'Summary / subtitle',
           ),
           minLines: 2,
           maxLines: 3,
+        ),
+      ]);
+    }
+
+    if (widget.section == InfoEditorSection.church) {
+      fields.addAll(_buildChurchHubFields());
+    }
+
+    if (widget.section == InfoEditorSection.ctrim) {
+      fields.addAll([
+        const SizedBox(height: 12),
+        DropdownButtonFormField<CtrimInfoCategory>(
+          initialValue: _selectedCtrimCategory,
+          decoration: const InputDecoration(
+            labelText: 'Section',
+            helperText:
+                'Principles appear under “Our core ideologies”; Teachings under '
+                '“Simple lessons to get started!”',
+          ),
+          items: CtrimInfoCategory.values
+              .map(
+                (category) => DropdownMenuItem<CtrimInfoCategory>(
+                  value: category,
+                  child: Text(category.label),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() => _selectedCtrimCategory = value);
+          },
         ),
       ]);
     }
@@ -307,17 +450,282 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       const SizedBox(height: 12),
       TextFormField(
         controller: _imagesController,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: 'Image URLs',
           helperText:
-              'Enter one image URL per line. The first image is used as the cover.',
+              'Enter one image URL per line. The first image is used as the cover. '
+              'Google Drive share links are converted automatically when you test.',
+          suffixIcon: IconButton(
+            onPressed: _onImageHelpClick,
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Image URL help',
+          ),
         ),
         minLines: 3,
         maxLines: 6,
+        keyboardType: TextInputType.url,
       ),
+      const SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: _testingImages || _imagesController.text.trim().isEmpty
+              ? null
+              : _testImagesClick,
+          icon: _testingImages
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.visibility_outlined),
+          label: Text(_testingImages ? 'Testing…' : 'Test images'),
+        ),
+      ),
+      if (_imageValidationMessage != null) ...[
+        const SizedBox(height: 4),
+        Text(
+          _imageValidationMessage!,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+        ),
+      ],
+      if (_previewImageUrls.isNotEmpty &&
+          (_testingImages || _showImageTestSuccess)) ...[
+        const SizedBox(height: 12),
+        _buildImagePreviewRow(),
+      ],
     ]);
 
     return fields;
+  }
+
+  List<Widget> _buildChurchHubFields() {
+    final appContext = Provider.of<AppContext>(context);
+    final assignable = VolunteerLocations.assignableFrom(
+      appContext.activeLocations,
+    );
+    final occupied = ChurchLocation.occupiedLocationNames(
+      churches: _allChurches,
+      excludingId: widget.churchInfo?.id,
+    );
+    final names = List<String>.from(assignable);
+    if (_selectedLocation != null && !names.contains(_selectedLocation)) {
+      names.insert(0, _selectedLocation!);
+    }
+
+    return [
+      const SizedBox(height: 12),
+      DropdownButtonFormField<String>(
+        initialValue:
+            names.contains(_selectedLocation) ? _selectedLocation : null,
+        decoration: const InputDecoration(
+          labelText: 'Location',
+          helperText:
+              'Each church must use a unique location from the catalogue.',
+        ),
+        items: names.map(
+          (name) {
+            final taken = occupied.contains(name);
+            return DropdownMenuItem<String>(
+              value: name,
+              enabled: !taken,
+              child: Text(taken ? '$name (in use)' : name),
+            );
+          },
+        ).toList(),
+        onChanged: (value) => setState(() => _selectedLocation = value),
+        validator: (value) =>
+            (value == null || value.trim().isEmpty) ? 'Required' : null,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _addressController,
+        decoration: const InputDecoration(
+          labelText: 'Address',
+          helperText: 'Optional street address shown on the church page.',
+        ),
+        minLines: 1,
+        maxLines: 2,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _mapLinkController,
+        decoration: InputDecoration(
+          labelText: 'Maps URL',
+          helperText: 'Optional Google Maps (or similar) link.',
+          suffixIcon: IconButton(
+            onPressed: _onMapLinkHelpClick,
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Maps URL help',
+          ),
+        ),
+        keyboardType: TextInputType.url,
+      ),
+    ];
+  }
+
+  void _onMapLinkHelpClick() {
+    DialogManager.showAlertDialog(
+      context: context,
+      icon: Icons.map_outlined,
+      title: 'Maps URL',
+      content: 'Help people find this church with a direct map link.\n\n'
+          'How to get a Google Maps link:\n'
+          '1. Go to Google Maps\n'
+          '2. Search for the church address\n'
+          '3. Tap Share and copy the link\n'
+          '4. Paste it here',
+    );
+  }
+
+  Widget _buildImagePreviewRow() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _imagesValidated ? 'Image preview' : 'Testing images…',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _previewImageUrls.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final url = _previewImageUrls[index];
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: ColoredBox(
+                    color: colorScheme.surfaceContainerHighest,
+                    child: Image.network(
+                      NetworkImageHelper.getImageUrl(url),
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.broken_image_outlined,
+                        color: colorScheme.error,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (_showImageTestSuccess) ...[
+          const SizedBox(height: 8),
+          Text(
+            _previewImageUrls.length == 1
+                ? 'Image loaded successfully.'
+                : 'All ${_previewImageUrls.length} images loaded successfully.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.primary,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _testImagesClick() async {
+    final sanitized = _readImageSources();
+    if (sanitized.isEmpty) return;
+
+    // Rewrite the field with converted Drive links so saved data matches what we tested.
+    final sanitizedText = sanitized.join('\n');
+    if (_imagesController.text.trim() != sanitizedText) {
+      _imagesController.removeListener(_onImagesTextChanged);
+      _imagesController.text = sanitizedText;
+      _imagesController.addListener(_onImagesTextChanged);
+    }
+
+    setState(() {
+      _testingImages = true;
+      _imagesValidated = false;
+      _showImageTestSuccess = false;
+      _imageValidationMessage = null;
+      _previewImageUrls = sanitized;
+    });
+
+    try {
+      for (final url in sanitized) {
+        final imageUrl = NetworkImageHelper.getImageUrl(url);
+        // No custom headers: Flutter web CORS preflight fails if User-Agent is set.
+        final response = await http
+            .get(Uri.parse(imageUrl))
+            .timeout(const Duration(seconds: 30));
+        if (response.statusCode != 200) {
+          throw Exception('HTTP ${response.statusCode} for $url');
+        }
+        if (response.bodyBytes.isEmpty) {
+          throw Exception('Empty response for $url');
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _testingImages = false;
+        _imagesValidated = true;
+        _showImageTestSuccess = true;
+        _imageValidationMessage = null;
+        _previewImageUrls = sanitized;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      final isDrive = sanitized.any((url) => url.contains('drive.google.com'));
+      setState(() {
+        _testingImages = false;
+        _imagesValidated = false;
+        _showImageTestSuccess = false;
+        _imageValidationMessage = isDrive
+            ? 'Could not load one or more images. For Google Drive, share as '
+                '“Anyone with the link” (Viewer), then test again.'
+            : 'Could not load one or more images. Check each URL is a public '
+                'HTTPS image link and try again.';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load image: $error'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _onImageHelpClick() {
+    DialogManager.showAlertDialog(
+      context: context,
+      title: 'Adding images',
+      content:
+          'Provide web links to the image files you want (one URL per line).\n\n'
+          'When providing specific/personal media files, upload them to Google Drive, '
+          'change access to “Anyone with the link”, and paste that link here. '
+          'Share links are converted to direct links when you tap Test images.\n\n'
+          'Supported formats:\n'
+          '• Direct HTTPS URLs to images\n'
+          '• Google Drive public links\n'
+          '• Any publicly accessible image URL\n\n'
+          'Tip: Keep images reasonably small so they load quickly on mobile.',
+    );
   }
 
   Future<void> _save() async {
@@ -325,14 +733,48 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       return;
     }
 
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!appContext.currentUser.canManageInfo) {
+    final imageSources = _readImageSources();
+    if (imageSources.isNotEmpty && !_imagesValidated) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text(
-                'Only area admins and leaders can edit this content.')),
+          content: Text('Test the image URLs before saving.'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
+    }
+
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    if (!_canEditSection(appContext.currentUser)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_accessDeniedMessage())),
+      );
+      return;
+    }
+
+    if (widget.section == InfoEditorSection.church) {
+      final location = (_selectedLocation ?? '').trim();
+      var churches = _allChurches;
+      if (churches.isEmpty) {
+        churches = await _infoRepository.fetchChurches();
+        if (mounted) setState(() => _allChurches = churches);
+      }
+      if (!mounted) return;
+      final conflict = ChurchLocation.otherChurchUsingLocation(
+        churches: churches,
+        location: location,
+        excludingId: widget.churchInfo?.id,
+      );
+      if (conflict != null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: 'Location already used',
+          content: 'Location “$location” is already used by ${conflict.title}. '
+              'Each church must have its own location.',
+          isError: true,
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -342,6 +784,13 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     try {
       final body = _editorKey.currentState?.getDocumentJson() ?? _initialBody;
       final imageSources = _readImageSources();
+      // Persist sanitised Drive links (same as after a successful Test).
+      final sanitisedText = imageSources.join('\n');
+      if (_imagesController.text.trim() != sanitisedText) {
+        _imagesController.removeListener(_onImagesTextChanged);
+        _imagesController.text = sanitisedText;
+        _imagesController.addListener(_onImagesTextChanged);
+      }
       final displayOrder =
           int.tryParse(_displayOrderController.text.trim()) ?? 0;
       final now = DateTime.now();
@@ -349,6 +798,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       switch (widget.section) {
         case InfoEditorSection.church:
           final existingChurch = widget.churchInfo;
+          final location = (_selectedLocation ?? '').trim();
           final church = ChurchInfo(
             id: existingChurch?.id ??
                 _generateDocumentId(_primaryController.text, 'church'),
@@ -357,11 +807,48 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             body: body,
             imageSources: imageSources,
             summary: _summaryController.text.trim(),
+            location: location,
+            mapLink: _mapLinkController.text.trim(),
+            address: _addressController.text.trim(),
             updatedBy: appContext.currentUser.id,
             updatedAt: now,
             displayOrder: displayOrder,
           );
           await _infoRepository.saveChurchInfo(church);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingChurch == null
+                ? UserActivityMessages.createdChurchRecord
+                : UserActivityMessages.editedChurchRecord,
+            documentId: church.id,
+          );
+          break;
+        case InfoEditorSection.churchPage:
+          final parentChurchId = widget.churchId ?? widget.churchPage?.churchId;
+          if (parentChurchId == null || parentChurchId.isEmpty) {
+            throw StateError('Church page editor is missing churchId.');
+          }
+          final existingPage = widget.churchPage;
+          final page = ChurchPage(
+            id: existingPage?.id ??
+                _generateDocumentId(_primaryController.text, 'church_page'),
+            churchId: parentChurchId,
+            title: _primaryController.text.trim(),
+            body: body,
+            imageSources: imageSources,
+            summary: _summaryController.text.trim(),
+            updatedBy: appContext.currentUser.id,
+            updatedAt: now,
+            displayOrder: displayOrder,
+          );
+          await _infoRepository.saveChurchPage(page);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingPage == null
+                ? UserActivityMessages.createdChurchPage
+                : UserActivityMessages.editedChurchPage,
+            documentId: page.id,
+          );
           break;
         case InfoEditorSection.testimonial:
           final existingTestimonial = widget.testimonialInfo;
@@ -378,6 +865,13 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             displayOrder: displayOrder,
           );
           await _infoRepository.saveTestimonialInfo(testimonial);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingTestimonial == null
+                ? UserActivityMessages.createdTestimonial
+                : UserActivityMessages.editedTestimonial,
+            documentId: testimonial.id,
+          );
           break;
         case InfoEditorSection.ctrim:
           final existingInfo = widget.ctrimInfo;
@@ -392,8 +886,16 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
             updatedBy: appContext.currentUser.id,
             updatedAt: now,
             displayOrder: displayOrder,
+            category: _selectedCtrimCategory,
           );
           await _infoRepository.saveCtrimInfo(info);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: existingInfo == null
+                ? UserActivityMessages.createdCtrimInfo
+                : UserActivityMessages.editedCtrimInfo,
+            documentId: info.id,
+          );
           break;
       }
 
@@ -426,14 +928,16 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
 
   Future<void> _delete() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!appContext.currentUser.canManageInfo) {
+    if (!_canEditSection(appContext.currentUser)) {
       return;
     }
 
     final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
       title: 'Delete this content?',
-      content: 'This cannot be undone.',
+      content: widget.section == InfoEditorSection.church
+          ? 'This also deletes extra pages added for this church. This cannot be undone.'
+          : 'This cannot be undone.',
       confirmText: 'Delete',
       isDestructive: true,
     );
@@ -449,13 +953,40 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       switch (widget.section) {
         case InfoEditorSection.church:
           await _infoRepository.deleteChurchInfo(widget.churchInfo!.id);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedChurchRecord,
+            documentId: widget.churchInfo!.id,
+          );
+          break;
+        case InfoEditorSection.churchPage:
+          final parentChurchId = widget.churchId ?? widget.churchPage!.churchId;
+          await _infoRepository.deleteChurchPage(
+            parentChurchId,
+            widget.churchPage!.id,
+          );
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedChurchPage,
+            documentId: widget.churchPage!.id,
+          );
           break;
         case InfoEditorSection.testimonial:
           await _infoRepository
               .deleteTestimonialInfo(widget.testimonialInfo!.id);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedTestimonial,
+            documentId: widget.testimonialInfo!.id,
+          );
           break;
         case InfoEditorSection.ctrim:
           await _infoRepository.deleteCtrimInfo(widget.ctrimInfo!.id);
+          await UserActivityRecorder().record(
+            actorUserId: appContext.currentUser.id,
+            log: UserActivityMessages.deletedCtrimInfo,
+            documentId: widget.ctrimInfo!.id,
+          );
           break;
       }
 
@@ -499,17 +1030,32 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   }
 
   List<String> _readImageSources() {
-    return _imagesController.text
+    return _parseImageSourcesText(_imagesController.text);
+  }
+
+  List<String> _parseImageSourcesText(final String text) {
+    return text
         .split('\n')
-        .map((entry) => entry.trim())
+        .map(NetworkImageHelper.sanitizeMediaUrl)
         .where((entry) => entry.isNotEmpty)
         .toList();
+  }
+
+  bool _stringListsEqual(final List<String> a, final List<String> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   List<dynamic> _resolveInitialBody() {
     switch (widget.section) {
       case InfoEditorSection.church:
         return List<dynamic>.from(widget.churchInfo?.body ?? _emptyBody);
+      case InfoEditorSection.churchPage:
+        return List<dynamic>.from(widget.churchPage?.body ?? _emptyBody);
       case InfoEditorSection.testimonial:
         return List<dynamic>.from(widget.testimonialInfo?.body ?? _emptyBody);
       case InfoEditorSection.ctrim:
@@ -521,6 +1067,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return (widget.churchInfo?.displayOrder ?? 0).toString();
+      case InfoEditorSection.churchPage:
+        return (widget.churchPage?.displayOrder ?? 0).toString();
       case InfoEditorSection.testimonial:
         return (widget.testimonialInfo?.displayOrder ?? 0).toString();
       case InfoEditorSection.ctrim:
@@ -532,6 +1080,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return (widget.churchInfo?.imageSources ?? const <String>[]).join('\n');
+      case InfoEditorSection.churchPage:
+        return (widget.churchPage?.imageSources ?? const <String>[]).join('\n');
       case InfoEditorSection.testimonial:
         return (widget.testimonialInfo?.imageSources ?? const <String>[])
             .join('\n');
@@ -544,6 +1094,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return widget.churchInfo?.title ?? '';
+      case InfoEditorSection.churchPage:
+        return widget.churchPage?.title ?? '';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo?.name ?? '';
       case InfoEditorSection.ctrim:
@@ -554,6 +1106,7 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   String _initialSecondaryValue() {
     switch (widget.section) {
       case InfoEditorSection.church:
+      case InfoEditorSection.churchPage:
         return '';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo?.church ?? '';
@@ -566,6 +1119,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return widget.churchInfo?.summary ?? '';
+      case InfoEditorSection.churchPage:
+        return widget.churchPage?.summary ?? '';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo?.summary ?? '';
       case InfoEditorSection.ctrim:
@@ -579,6 +1134,10 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
         return widget.churchInfo == null
             ? 'Add Church Info'
             : 'Edit Church Info';
+      case InfoEditorSection.churchPage:
+        return widget.churchPage == null
+            ? 'Add Church Page'
+            : 'Edit Church Page';
       case InfoEditorSection.testimonial:
         return widget.testimonialInfo == null
             ? 'Add Testimonial'
@@ -593,6 +1152,9 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
       case InfoEditorSection.church:
         return 'Tap here to write about this church — history, location, '
             'meeting times, or anything visitors should know…';
+      case InfoEditorSection.churchPage:
+        return 'Tap here to write this page — getting here, Sunday service, '
+            'or other details visitors should know…';
       case InfoEditorSection.testimonial:
         return 'Tap here to write the testimony…';
       case InfoEditorSection.ctrim:
@@ -604,6 +1166,8 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
     switch (widget.section) {
       case InfoEditorSection.church:
         return 'Church title';
+      case InfoEditorSection.churchPage:
+        return 'Page title';
       case InfoEditorSection.testimonial:
         return 'Name';
       case InfoEditorSection.ctrim:
@@ -614,11 +1178,26 @@ class _EditInfoBodyPageState extends State<EditInfoBodyPage> {
   String _secondaryLabel() {
     switch (widget.section) {
       case InfoEditorSection.church:
+      case InfoEditorSection.churchPage:
         return '';
       case InfoEditorSection.testimonial:
         return 'Church';
       case InfoEditorSection.ctrim:
         return 'Description';
     }
+  }
+
+  bool _canEditSection(final User user) {
+    if (widget.section == InfoEditorSection.churchPage) {
+      return user.canManageChurchPages;
+    }
+    return user.canManageInfo;
+  }
+
+  String _accessDeniedMessage() {
+    if (widget.section == InfoEditorSection.churchPage) {
+      return 'Only area admins can edit church pages.';
+    }
+    return 'Only area admins and leaders can edit this content.';
   }
 }

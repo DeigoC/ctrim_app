@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/user.dart';
 import '../../utility/app_context.dart';
+import '../../utility/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/information/info_image_carousel.dart';
 import '../../widgets/load_progress_body.dart';
@@ -21,6 +23,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
     this.editTooltip = 'Edit',
     this.showCarouselWhenEmpty = true,
     this.carouselHeightFraction = 0.36,
+    this.aboveBody,
   });
 
   final String title;
@@ -33,6 +36,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
   final String editTooltip;
   final bool showCarouselWhenEmpty;
   final double carouselHeightFraction;
+  final Widget? aboveBody;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +99,10 @@ class InfoDetailPageScaffold extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         header,
+                        if (aboveBody != null) ...[
+                          const SizedBox(height: 16),
+                          aboveBody!,
+                        ],
                         const SizedBox(height: 12),
                         const Divider(),
                         const SizedBox(height: 8),
@@ -142,6 +150,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
     required this.notFoundMessage,
     required this.openEditor,
     required this.buildScaffold,
+    this.canEdit,
   });
 
   final Future<T?> Function({required bool forceRefresh}) load;
@@ -149,6 +158,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
   final String pageTitleFallback;
   final String notFoundMessage;
   final Future<bool> Function(BuildContext context, T info) openEditor;
+  final bool Function(User user)? canEdit;
   final Widget Function({
     required BuildContext context,
     required T info,
@@ -180,8 +190,14 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
   }
 
   Future<void> _refresh() async {
+    final pref = Provider.of<AppContext>(context, listen: false).sharedPref;
+    if (!pref.canRefreshInfo) {
+      await Future.delayed(kRefreshCooldownBusyWait);
+      return;
+    }
+    pref.setInfoRefreshTime();
     setState(() {
-      _future = _load(forceRefresh: true);
+      _future = _load(forceRefresh: false);
     });
     await _future;
   }
@@ -209,8 +225,8 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final canManageInfo =
-        Provider.of<AppContext>(context).currentUser.canManageInfo;
+    final user = context.select((AppContext c) => c.currentUser);
+    final canEdit = (widget.canEdit ?? (u) => u.canManageInfo)(user);
 
     return FutureBuilder<T?>(
       future: _future,
@@ -255,7 +271,7 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
           context: context,
           info: info,
           onRefresh: _refresh,
-          onEdit: canManageInfo ? () => _openEditor(info) : null,
+          onEdit: canEdit ? () => _openEditor(info) : null,
         );
       },
     );

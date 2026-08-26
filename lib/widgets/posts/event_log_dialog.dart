@@ -9,7 +9,9 @@ import '../../firebase/functions_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/event_heads_repository.dart';
 import '../../utility/local_data_manager.dart';
+import 'update_log_dialog.dart';
 
 class EventLogDialog extends StatefulWidget {
   const EventLogDialog(
@@ -30,10 +32,8 @@ class EventLogDialog extends StatefulWidget {
 class _EventLogDialogState extends State<EventLogDialog> {
   late final AppContext _appContext;
   late final String _currentUserName, _currentUID;
-  final TextEditingController _tecLog = TextEditingController();
   final CloudFunctionManager _cloudFunctionManager = CloudFunctionManager();
   final NotificationTokenResolver _tokenResolver = NotificationTokenResolver();
-  bool _canSave = false;
 
   @override
   void initState() {
@@ -43,67 +43,35 @@ class _EventLogDialogState extends State<EventLogDialog> {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    _tecLog.dispose();
-    super.dispose();
+  Future<void> _cacheTokensForUser(final String uid) async {
+    if (_appContext.haveTokensForUserID(uid)) return;
+    final authID = _appContext.authIdByUserId(uid);
+    if (authID == null || authID.isEmpty) return;
+    final tokens = await _tokenResolver.resolveForAuthID(authID);
+    _appContext.addTokensToUserID(uid, tokens);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                  controller: _tecLog,
-                  decoration: const InputDecoration(hintText: 'e.g. Added new images!', label: Text('Update Log')),
-                  maxLength: 128,
-                  maxLines: null,
-                  onChanged: _onTextChange),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.end,
-                children: [
-                  TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                  TextButton.icon(
-                      onPressed: _canSave ? _saveClick : null,
-                      icon: const Icon(Icons.cloud_upload),
-                      label: const Text('Save'))
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    return UpdateLogDialog(
+      title: 'Save changes',
+      subtitle:
+          'Add a short update. People who bookmarked this post will be notified.',
+      hintText: 'e.g. Added new images',
+      confirmLabel: 'Save post',
+      onSave: _saveClick,
     );
   }
 
-  // * Logic
-
-  void _onTextChange(String newString) {
-    if (_canSave && newString.trim().isEmpty) {
-      setState(() {
-        _canSave = false;
-      });
-    } else if (!_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    }
-  }
-
-  void _saveClick() async {
+  Future<void> _saveClick(String log) async {
     final confirmation = await DialogManager.showConfirmationDialog(
         context: context,
-        title: 'Confirm Save?',
-        content: 'This log will be sent to all who have bookmarked this post. Are you sure you want to continue?',
-        confirmText: 'Yes',
-        cancelText: 'Cancel');
+        title: 'Confirm save?',
+        content:
+            'This note will be sent to everyone who bookmarked this post. Continue?',
+        confirmText: 'Save',
+        cancelText: 'Cancel',
+        icon: Icons.notifications_active_outlined);
 
     if (!confirmation || !mounted) return;
 
@@ -112,38 +80,50 @@ class _EventLogDialogState extends State<EventLogDialog> {
       title: 'Uploading Changes',
       initialMessage: 'Saving post…',
       errorTitle: 'Could not save changes',
-      action: (onProgress) => _performUpdate(_appContext.currentUser.id, onProgress),
+      action: (onProgress) =>
+          _performUpdate(_appContext.currentUser.id, log, onProgress),
     );
     if (!mounted || !saved) return;
-    _appContext.setMetadata(widget.eventContext.id, widget.eventContext.metadata);
+    _appContext.setMetadata(
+        widget.eventContext.id, widget.eventContext.metadata);
     for (final entry in widget.eventContext.lastParentLinkSync.entries) {
       _appContext.setMetadata(entry.key, entry.value);
     }
     widget.eventContext.resetSavingOfTheEdit();
+    _appContext.addOrUpdatePostHead(widget.eventContext.head);
     widget.updatePage();
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Changes Saved!'), behavior: SnackBarBehavior.floating));
   }
 
-  Future<void> _performUpdate(final String uid, LoadProgressReporter onProgress) async {
+  Future<void> _performUpdate(final String uid, final String log,
+      LoadProgressReporter onProgress) async {
     const total = 3;
     onProgress(completed: 0, total: total, message: 'Saving post…');
     final LocalDataManager localDataManager = LocalDataManager();
     final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    await widget.eventContext.updatePost(log: _tecLog.text.trim(), uid: uid);
-    final content = widget.eventContext.transformPostToTxtFile(packageInfo.version);
+    await widget.eventContext.updatePost(log: log, uid: uid);
+    final content =
+        widget.eventContext.transformPostToTxtFile(packageInfo.version);
     localDataManager.writePostData(widget.eventContext.id, content);
+    try {
+      await persistEventHeadsLocalCache(List.of(_appContext.eventHeads));
+    } catch (e) {
+      debugPrint('Could not persist event heads after post save: $e');
+    }
 
     try {
       if (widget.eventContext.head.eventDate != null) {
-        onProgress(completed: 1, total: total, message: 'Syncing schedule roles…');
+        onProgress(
+            completed: 1, total: total, message: 'Syncing schedule roles…');
         await _cloudFunctionManager.syncUserRolesForPost(
           postId: widget.eventContext.id,
           removedUserIds: widget.eventContext.collectRoleRemovalUserIds(),
         );
       } else {
-        onProgress(completed: 1, total: total, message: 'Sending notifications…');
+        onProgress(
+            completed: 1, total: total, message: 'Sending notifications…');
       }
 
       onProgress(completed: 2, total: total, message: 'Sending notifications…');
@@ -157,32 +137,35 @@ class _EventLogDialogState extends State<EventLogDialog> {
         tasks.add(_sendRoleRemovals());
       }
       await Future.wait(tasks);
-      _sendPostNotification();
+      _sendPostNotification(log);
     } catch (e, stack) {
-      debugPrint('Post saved but follow-up notifications/sync failed: $e\n$stack');
+      debugPrint(
+          'Post saved but follow-up notifications/sync failed: $e\n$stack');
     }
   }
 
-  Future<void> _sendPostNotification() async {
+  Future<void> _sendPostNotification(String log) async {
     // message to topic
     // message to author + contributors
     // hmm basically both will use the same title-subtitle but we should mention who updated it
 
-    final String subtitle = _tecLog.text.trim();
-    final String adminSubtitle = '$_currentUserName updated: $subtitle';
+    final String adminSubtitle = '$_currentUserName updated: $log';
     final String? keyGraphic = widget.eventContext.head.getKeyGraphic();
 
     final List<String> deviceTokens = await _getAdminContactTokens();
 
     if (deviceTokens.isNotEmpty) {
       await _cloudFunctionManager.sendMessageToSelectedTokens(
-          tokens: deviceTokens, title: widget.originalTitle, body: adminSubtitle, data: _notificationdata);
+          tokens: deviceTokens,
+          title: widget.originalTitle,
+          body: adminSubtitle,
+          data: _notificationdata);
     }
 
     await _cloudFunctionManager.sendToTopic(
         topic: widget.topic,
         title: widget.originalTitle,
-        body: subtitle,
+        body: log,
         data: _notificationdata,
         iOSImage: keyGraphic,
         androidImage: keyGraphic);
@@ -193,35 +176,41 @@ class _EventLogDialogState extends State<EventLogDialog> {
     // Remember to remove the current user from this list
     // Fetch all the contributor device tokens (unless it's the current user)
 
-    final List<String> missingContacts = widget.eventContext.metadata.contributorUIDs
+    final List<String> missingContacts = widget
+        .eventContext.metadata.contributorUIDs
         .where((contributorID) =>
-            contributorID.compareTo(_currentUID) != 0 && !_appContext.haveTokensForUserID(contributorID))
+            contributorID.compareTo(_currentUID) != 0 &&
+            !_appContext.haveTokensForUserID(contributorID))
         .toList();
 
     // fetch the author contact (if the current user isn't already the author)
     if (_currentUID.compareTo(widget.eventContext.metadata.authorUID) != 0 &&
-        !_appContext.haveTokensForUserID(widget.eventContext.metadata.authorUID)) {
+        !_appContext
+            .haveTokensForUserID(widget.eventContext.metadata.authorUID)) {
       missingContacts.add(widget.eventContext.metadata.authorUID);
     }
 
     // fetch and add any missing contacts we need for this operation
     debugPrint('missing contacts are: $missingContacts');
     for (final String uid in missingContacts) {
-      final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(uid));
-      _appContext.addTokensToUserID(uid, tokens);
+      await _cacheTokensForUser(uid);
     }
 
     // create token list of contributors
     final List<String> deviceTokens = List<String>.empty(growable: true);
-    for (final String contributorID in widget.eventContext.metadata.contributorUIDs) {
+    for (final String contributorID
+        in widget.eventContext.metadata.contributorUIDs) {
       if (_appContext.currentUser.id.compareTo(contributorID) != 0) {
         deviceTokens.addAll(_appContext.getTokensFromUserID(contributorID));
       }
     }
 
     // add the author tokens
-    if (_appContext.currentUser.id.compareTo(widget.eventContext.metadata.authorUID) != 0) {
-      deviceTokens.addAll(_appContext.getTokensFromUserID(widget.eventContext.metadata.authorUID));
+    if (_appContext.currentUser.id
+            .compareTo(widget.eventContext.metadata.authorUID) !=
+        0) {
+      deviceTokens.addAll(_appContext
+          .getTokensFromUserID(widget.eventContext.metadata.authorUID));
     }
 
     return deviceTokens;
@@ -229,13 +218,15 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   // sends notifications and handles the user roles document for addition of role
   Future<void> _sortRoleAdditions() async {
-    final DateFormat dateFormat = DateFormat('EEE, MMM d'), timeFormat = DateFormat('HH:mm');
+    final DateFormat dateFormat = DateFormat('EEE, MMM d'),
+        timeFormat = DateFormat('HH:mm');
     final String title =
         "📣 $_currentUserName has assinged you to a task for ${dateFormat.format(widget.eventContext.head.eventDate!)}";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
       debugPrint('----- this addition entry looks like: $additionEntry');
-      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
+      final roleEntry = widget.eventContext.program.roles
+          .firstWhere((e) => e['id'] == additionEntry.key);
       final DateTime start = roleEntry['start'];
       final String body =
           "You are assigned to '${roleEntry['title']!}' for ${widget.originalTitle} at ${timeFormat.format(start)}";
@@ -245,8 +236,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final resolved = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, resolved);
+            await _cacheTokensForUser(thisUID);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -261,18 +251,20 @@ class _EventLogDialogState extends State<EventLogDialog> {
   Future<void> _sendRoleRemovals() async {
     final String title = "$_currentUserName has removed you from a role";
 
-    debugPrint('on the removals: the entries look like:${widget.eventContext.roleRemovalals.entries}');
+    debugPrint(
+        'on the removals: the entries look like:${widget.eventContext.roleRemovalals.entries}');
     for (final removalEntry in widget.eventContext.roleRemovalals.entries) {
-      final String roleTitle = widget.eventContext.deletedRoleTitle(removalEntry.key);
-      final String body = "You are no longer assigned to '$roleTitle' for ${widget.originalTitle}";
+      final String roleTitle =
+          widget.eventContext.deletedRoleTitle(removalEntry.key);
+      final String body =
+          "You are no longer assigned to '$roleTitle' for ${widget.originalTitle}";
 
       final List<String> tokens = [];
       for (final thisUID in removalEntry.value) {
         if (thisUID != _currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
             debugPrint('fetching tokens for UID: $thisUID');
-            final resolved = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-            _appContext.addTokensToUserID(thisUID, resolved);
+            await _cacheTokensForUser(thisUID);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -285,14 +277,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   Future<void> _sendContributorAdditionNotificaitons() async {
     const String title = "Contributor update";
-    final String body = "You can modify aspects of the post: '${widget.originalTitle}'";
+    final String body =
+        "You can modify aspects of the post: '${widget.originalTitle}'";
     final List<String> allTokens = List<String>.empty(growable: true);
 
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+          await _cacheTokensForUser(thisUID);
         }
 
         allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -307,14 +299,14 @@ class _EventLogDialogState extends State<EventLogDialog> {
 
   Future<void> _sendContributorRemovalNotificaitons() async {
     const String title = "Contributor update";
-    final String body = "You have been removed as a contributor for '${widget.originalTitle}'";
+    final String body =
+        "You have been removed as a contributor for '${widget.originalTitle}'";
     final List<String> allTokens = List<String>.empty(growable: true);
 
     for (final String thisUID in widget.eventContext.contributorRemovalUIDs) {
       if (thisUID != _currentUID) {
         if (!_appContext.haveTokensForUserID(thisUID)) {
-          final tokens = await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
-          _appContext.addTokensToUserID(thisUID, tokens);
+          await _cacheTokensForUser(thisUID);
         }
 
         allTokens.addAll(_appContext.getTokensFromUserID(thisUID));
@@ -332,15 +324,18 @@ class _EventLogDialogState extends State<EventLogDialog> {
     final UserDBManager userDBManager = UserDBManager();
 
     // then add the new contributors
-    for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
+    for (final String contributorID
+        in widget.eventContext.contributorAdditionUIDs) {
       await userDBManager.addPostToUser(contributorID, postID, 'contributor');
     }
 
     // then remove the old contributors
-    for (final String contributorID in widget.eventContext.contributorRemovalUIDs) {
+    for (final String contributorID
+        in widget.eventContext.contributorRemovalUIDs) {
       await userDBManager.removePostFromUser(contributorID, postID);
     }
   }
 
-  Map<String, String> get _notificationdata => {'PostID': widget.eventContext.id};
+  Map<String, String> get _notificationdata =>
+      {'PostID': widget.eventContext.id};
 }

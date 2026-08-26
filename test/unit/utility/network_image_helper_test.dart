@@ -58,4 +58,35 @@ void main() {
       expect(NetworkImageHelper.getImageUrl(public), public);
     });
   });
+
+  group('NetworkImageHelper.sanitizeMediaUrl', () {
+    test('converts Drive file share links to uc?id=', () {
+      expect(
+        NetworkImageHelper.sanitizeMediaUrl(
+          'https://drive.google.com/file/d/1abcXYZ/view?usp=sharing',
+        ),
+        'https://drive.google.com/uc?id=1abcXYZ',
+      );
+      expect(
+        NetworkImageHelper.sanitizeMediaUrl(
+          'https://drive.google.com/file/d/1abcXYZ/view?usp=drive_link',
+        ),
+        'https://drive.google.com/uc?id=1abcXYZ',
+      );
+    });
+
+    test('leaves direct and non-Drive urls trimmed only', () {
+      expect(
+        NetworkImageHelper.sanitizeMediaUrl(
+          '  https://drive.google.com/uc?id=1abc  ',
+        ),
+        'https://drive.google.com/uc?id=1abc',
+      );
+      expect(
+        NetworkImageHelper.sanitizeMediaUrl(' https://example.com/a.png '),
+        'https://example.com/a.png',
+      );
+      expect(NetworkImageHelper.sanitizeMediaUrl(''), '');
+    });
+  });
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../firebase/functions_manager.dart';
-import '../../utility/app_context.dart';
 import '../../utility/broadcast_audience.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -33,6 +31,15 @@ class _SendBroadcastNotificationPageState
   late String _selectedPreset;
   late bool _includeLocationUmbrella;
   bool _sending = false;
+  bool _allowPop = false;
+  bool _isSaved = false;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -70,13 +77,9 @@ class _SendBroadcastNotificationPageState
       );
 
   List<String> get _resolvedTopics {
-    final appContext = Provider.of<AppContext>(context, listen: false);
     return BroadcastAudience.resolveFromPost(
       location: widget.eventContext.head.location,
-      tagIDs: widget.eventContext.head.tagIDs,
-      allTags: appContext.allPostTags,
       includeLocationUmbrella: _includeLocationUmbrella,
-      legacyTopics: widget.eventContext.metadata.topics,
     );
   }
 
@@ -85,7 +88,16 @@ class _SendBroadcastNotificationPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(title: const Text('Send Broadcast')),
       body: ResponsiveContent(
         narrowPadding: 16,
@@ -142,8 +154,8 @@ class _SendBroadcastNotificationPageState
             if (_resolvedTopics.isEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'No broadcast audience selected. Enable All Belfast updates '
-                'or add topics in post settings.',
+                'No broadcast audience selected. Enable All '
+                '${widget.eventContext.head.location} updates below.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -167,20 +179,13 @@ class _SendBroadcastNotificationPageState
           ],
         ),
       ),
+    ),
     );
   }
 
   Widget _buildAudienceSection(BuildContext context) {
     final theme = Theme.of(context);
     final location = widget.eventContext.head.location;
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final baseTopics = BroadcastAudience.resolveFromPost(
-      location: location,
-      tagIDs: widget.eventContext.head.tagIDs,
-      allTags: appContext.allPostTags,
-      includeLocationUmbrella: false,
-      legacyTopics: widget.eventContext.metadata.topics,
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,32 +197,11 @@ class _SendBroadcastNotificationPageState
           ),
         ),
         const SizedBox(height: 8),
-        if (baseTopics.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              'Post streams: ${BroadcastAudience.describe(baseTopics)}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              'This post has no notify streams — use All $location updates below, '
-              'or add content tags with a stream kind in post settings.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(NotificationTopics.locationUmbrellaLabel(location)),
           subtitle: Text(
-            'Also notify everyone opted into All $location updates',
+            'Notify everyone opted into All $location updates',
           ),
           value: _includeLocationUmbrella,
           onChanged: (value) {
@@ -368,13 +352,15 @@ class _SendBroadcastNotificationPageState
         message: combined.feedbackMessage,
         isError: combined.hasFailures && !combined.hasSuccess,
       );
-      Navigator.of(context).pop();
+      _isSaved = true;
+      _popRouteAfterAllowing();
     } catch (e) {
       if (!mounted) return;
       setState(() => _sending = false);
       DialogManager.showSnackBar(
         context: context,
-        message: 'Failed to send broadcast: $e',
+        message:
+            'Failed to send broadcast: ${CloudFunctionManager.callableError(e)}',
         isError: true,
       );
     }

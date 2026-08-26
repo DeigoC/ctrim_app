@@ -34,6 +34,17 @@ void main() {
       expect(json['Role'], CellGroupMemberRole.host);
       expect(json['JoinedAt'], isA<Timestamp>());
     });
+
+    test('fromMap coerces numeric UserId to string', () {
+      final member = CellGroupRosterMember.fromMap({
+        'UserId': 42,
+        'DisplayName': '',
+        'Role': CellGroupMemberRole.member,
+        'Status': CellGroupMemberStatus.active,
+      });
+      expect(member.userId, '42');
+      expect(member.isLinkedUser, true);
+    });
   });
 
   group('CellGroupRoster', () {

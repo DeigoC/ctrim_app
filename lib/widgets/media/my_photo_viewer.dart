@@ -1,11 +1,17 @@
 import 'dart:typed_data';
-import 'package:ctrim_app/utility/local_data_manager.dart';
-import 'package:ctrim_app/utility/network_image_helper.dart';
+
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
+import '../../utility/local_data_manager.dart';
+import '../../utility/network_image_helper.dart';
+
 class MyPhotoViewer extends StatelessWidget {
-  const MyPhotoViewer({super.key, required this.src, required this.postID, required this.onLockTap});
+  const MyPhotoViewer(
+      {super.key,
+      required this.src,
+      required this.postID,
+      required this.onLockTap});
   final String src;
   final String postID;
   final Function onLockTap;
@@ -43,7 +49,8 @@ class MyPhotoViewer extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.broken_image_outlined, size: 64, color: Colors.grey),
+                    Icon(Icons.broken_image_outlined,
+                        size: 64, color: Colors.grey),
                     SizedBox(height: 16),
                     Text('Failed to load image'),
                   ],

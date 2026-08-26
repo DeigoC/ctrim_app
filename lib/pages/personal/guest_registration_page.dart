@@ -15,7 +15,7 @@ class GuestRegistrationPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Create Account'),
+        title: const Text('Sign In or Create Account'),
         centerTitle: false,
         elevation: 0,
       ),

@@ -18,11 +18,22 @@ class MyApp extends StatelessWidget {
   static ThemeData _themeFor({Brightness? brightness}) {
     final base = brightness == null
         ? ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue)
-        : ThemeData(brightness: brightness, useMaterial3: true, colorSchemeSeed: Colors.blue);
+        : ThemeData(
+            brightness: brightness,
+            useMaterial3: true,
+            colorSchemeSeed: Colors.blue);
     // Override Flutter's default 640px sheet cap; width is refined per-frame in [builder].
     return base.copyWith(
       bottomSheetTheme: base.bottomSheetTheme.copyWith(
-        constraints: const BoxConstraints(maxWidth: ResponsiveLayout.desktopContentMaxWidth),
+        constraints: const BoxConstraints(
+            maxWidth: ResponsiveLayout.desktopContentMaxWidth),
+      ),
+      dialogTheme: DialogThemeData(
+        constraints: const BoxConstraints(
+            maxWidth: ResponsiveLayout.reviewDialogMaxWidth),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       ),
     );
   }
@@ -54,7 +65,8 @@ class MyApp extends StatelessWidget {
             return Theme(
               data: theme.copyWith(
                 bottomSheetTheme: theme.bottomSheetTheme.copyWith(
-                  constraints: ResponsiveLayout.bottomSheetConstraintsOf(context),
+                  constraints:
+                      ResponsiveLayout.bottomSheetConstraintsOf(context),
                 ),
               ),
               child: child ?? const SizedBox.shrink(),

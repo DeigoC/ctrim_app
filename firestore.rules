@@ -62,6 +62,13 @@ service cloud.firestore {
         request.resource.data.interested.keys().hasOnly([request.auth.uid]);
     }
 
+    /// Caller is the volunteer whose `users/{userId}` profile is being written.
+    function isOwnVolunteerProfile() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(userId)).data.AuthID
+          == request.auth.uid;
+    }
+
     // Default: deny all deletes, allow reads only with more specific rules below
     match /{document=**} {
       allow delete: if false;
@@ -133,10 +140,14 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ImgSrc'])
       ) || isPlaceholderCreatorNameOnlyUpdate();
 
-      // Role/post tracking updated by workers when managing events
+      // Role/post tracking updated by workers when managing events.
+      // Activity is guest-readable; workers may only append their own log
+      // (area/global admins seed empty activity when registering people).
       match /supplemental/{document}{
         allow read: if true;
-        allow write: if isAdmin() || isAreaAdmin() || isWorker();
+        allow write: if document == 'activity'
+          ? (isAdmin() || isAreaAdmin() || isOwnVolunteerProfile())
+          : (isAdmin() || isAreaAdmin() || isWorker());
       }
     }
 
@@ -177,19 +188,30 @@ service cloud.firestore {
       }
     }
 
+    /// Signed-in users may bump collection watermarks (profile photo, interest
+    /// counts) without touching ID counters.
+    function isLastUpdateOnlyTrackerUpdate() {
+      return request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastUpdate']);
+    }
+
     match /id_tracker/{docId}{
-      // Allow anyone to read tracker (needed for guest user caching)
+      // Allow anyone to read tracker (needed for guest user/event caching)
       allow read: if true;
       
       allow create: if false;
 
       // users counter: area admins register volunteers; events: leaders;
-      // cell_groups: area admins create catalogue records
-      allow write: if docId == 'users'
-        ? (isAreaAdmin() || isLeader() || isAdmin())
-        : docId == 'cell_groups'
-          ? (isAreaAdmin() || isAdmin())
-          : (isLeader() || isAdmin());
+      // cell_groups: area admins create catalogue records.
+      // lastUpdate-only: any signed-in user (self-serve photo / attendance denorm).
+      allow update: if isLastUpdateOnlyTrackerUpdate() || (
+        docId == 'users'
+          ? (isAreaAdmin() || isLeader() || isAdmin())
+          : docId == 'cell_groups'
+            ? (isAreaAdmin() || isAdmin())
+            : (isLeader() || isAdmin())
+      );
     }
 
     match /post_templates/{documents=**}{
@@ -220,6 +242,24 @@ service cloud.firestore {
            request.auth.token.isLeader == true ||
            request.auth.token.isAreaAdmin == true ||
            request.auth.token.isAdmin == true);
+
+        // Nested church hub pages. Create/update: area admin / admin.
+        // Delete also allows Leaders so church-record cascade can clear pages.
+        match /pages/{pageId} {
+          allow read: if true;
+          allow create, update: if request.auth != null &&
+            (isAreaAdmin() ||
+             isAdmin() ||
+             request.auth.token.isAreaAdmin == true ||
+             request.auth.token.isAdmin == true);
+          allow delete: if request.auth != null &&
+            (isLeader() ||
+             isAreaAdmin() ||
+             isAdmin() ||
+             request.auth.token.isLeader == true ||
+             request.auth.token.isAreaAdmin == true ||
+             request.auth.token.isAdmin == true);
+        }
       }
     }
 

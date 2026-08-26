@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/user.dart';
 import '../utility/app_context.dart';
 import '../utility/user_tag_helpers.dart';
+import '../widgets/app_dialog.dart';
 import '../widgets/load_progress_body.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/user_tag_chip.dart';
@@ -34,8 +35,8 @@ class DialogManager {
       );
 
       return Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85,
+        constraints: const BoxConstraints(
+          maxWidth: ResponsiveLayout.dialogMaxWidth,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -57,14 +58,18 @@ class DialogManager {
                 ),
                 child: MyUserAvatar(
                   selectedUser,
-                  radius: MediaQuery.of(context).size.width * 0.18,
+                  radius: ResponsiveLayout.dialogAvatarRadius(
+                    MediaQuery.sizeOf(context).width,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             // User name with better typography
             Text(
-              currentUserAdmin ? '${selectedUser.fullname} (${selectedUser.id})' : selectedUser.fullname,
+              currentUserAdmin
+                  ? '${selectedUser.fullname} (${selectedUser.id})'
+                  : selectedUser.fullname,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colorScheme.onSurface,
@@ -91,7 +96,8 @@ class DialogManager {
                 if (selectedUser.isAreaAdmin) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
@@ -127,8 +133,8 @@ class DialogManager {
 
       return Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85,
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          maxWidth: ResponsiveLayout.reviewDialogMaxWidth,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -152,7 +158,9 @@ class DialogManager {
                 ),
                 child: MyUserAvatar(
                   selectedUser,
-                  radius: MediaQuery.of(context).size.height * 0.15,
+                  radius: ResponsiveLayout.dialogAvatarRadiusFromHeight(
+                    MediaQuery.sizeOf(context).height,
+                  ),
                 ),
               ),
             ),
@@ -164,7 +172,9 @@ class DialogManager {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    currentUserAdmin ? '${selectedUser.fullname} (${selectedUser.id})' : selectedUser.fullname,
+                    currentUserAdmin
+                        ? '${selectedUser.fullname} (${selectedUser.id})'
+                        : selectedUser.fullname,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colorScheme.onSurface,
@@ -189,7 +199,8 @@ class DialogManager {
                       if (selectedUser.isAreaAdmin) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(12),
@@ -222,16 +233,11 @@ class DialogManager {
       context: context,
       builder: (context) => OrientationBuilder(
         builder: (context, orientation) {
-          return Dialog(
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: SingleChildScrollView(
-              child: orientation == Orientation.portrait
-                  ? buildVerticalUserViewer(selectedUser)
-                  : buildHorizontalUserViewer(selectedUser),
-            ),
+          return AppDialog(
+            maxWidth: ResponsiveLayout.reviewDialogMaxWidth,
+            child: orientation == Orientation.portrait
+                ? buildVerticalUserViewer(selectedUser)
+                : buildHorizontalUserViewer(selectedUser),
           );
         },
       ),
@@ -245,44 +251,19 @@ class DialogManager {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-
-        return AlertDialog.adaptive(
-          icon: Icon(
-            Icons.warning_rounded,
-            color: colorScheme.error,
-            size: 32,
+        return AppDialog(
+          icon: Icons.warning_rounded,
+          isError: true,
+          title: 'Discard Changes?',
+          message:
+              'All unsaved changes will be lost. This action cannot be undone.',
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(context).pop(false),
+            cancelLabel: 'Keep Editing',
+            onConfirm: () => Navigator.of(context).pop(true),
+            confirmLabel: 'Discard',
+            isDestructive: true,
           ),
-          title: Text(
-            'Discard Changes?',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            'All unsaved changes will be lost. This action cannot be undone.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Keep Editing',
-                style: TextStyle(color: colorScheme.primary),
-              ),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.error,
-                foregroundColor: colorScheme.onError,
-              ),
-              child: const Text('Discard'),
-            ),
-          ],
         );
       },
     );
@@ -298,40 +279,36 @@ class DialogManager {
     required int affectedCount,
   }) async {
     HapticFeedback.lightImpact();
-    final String itemLabel = affectedCount == 1 ? '1 later item' : '$affectedCount later items';
+    final String itemLabel =
+        affectedCount == 1 ? '1 later item' : '$affectedCount later items';
 
     return showDialog<bool>(
       context: context,
       builder: (context) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-
-        return AlertDialog.adaptive(
-          icon: Icon(Icons.schedule, color: colorScheme.primary, size: 32),
-          title: Text(
-            'Update schedule timing?',
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+        return AppDialog(
+          icon: Icons.schedule,
+          title: 'Update schedule timing?',
+          message: 'This change affects $itemLabel.\n\n'
+              'Shift following items to keep the sequence, or keep their times '
+              '(items may overlap).',
+          actions: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Shift following'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Keep times'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
           ),
-          content: Text(
-            'This change affects $itemLabel.\n\n'
-            'Shift following items to keep the sequence, or keep their times '
-            '(items may overlap).',
-            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Keep times'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Shift following'),
-            ),
-          ],
         );
       },
     );
@@ -353,51 +330,19 @@ class DialogManager {
       context: context,
       barrierDismissible: barrierDismissible,
       builder: (context) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-
-        return AlertDialog.adaptive(
-          icon: icon != null
-              ? Icon(
-                  icon,
-                  color: isDestructive ? colorScheme.error : colorScheme.primary,
-                  size: 32,
-                )
-              : null,
-          title: Text(
-            title,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+        return AppDialog(
+          icon: icon ??
+              (isDestructive ? Icons.warning_rounded : Icons.help_outline),
+          isError: isDestructive,
+          title: title,
+          message: content,
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(context).pop(false),
+            cancelLabel: cancelText,
+            onConfirm: () => Navigator.of(context).pop(true),
+            confirmLabel: confirmText,
+            isDestructive: isDestructive,
           ),
-          content: Text(
-            content,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                cancelText,
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
-              ),
-            ),
-            isDestructive
-                ? FilledButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.onError,
-                    ),
-                    child: Text(confirmText),
-                  )
-                : FilledButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(confirmText),
-                  ),
-          ],
         );
       },
     );
@@ -419,38 +364,15 @@ class DialogManager {
       context: context,
       barrierDismissible: barrierDismissible,
       builder: (context) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-
-        return AlertDialog.adaptive(
-          icon: icon != null
-              ? Icon(
-                  icon,
-                  color: isError ? colorScheme.error : colorScheme.primary,
-                  size: 32,
-                )
-              : null,
-          title: Text(
-            title,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: isError ? colorScheme.error : null,
-            ),
+        return AppDialog(
+          icon: icon ?? (isError ? Icons.error_outline : Icons.info_outline),
+          isError: isError,
+          title: title,
+          message: content,
+          actions: AppDialogActions(
+            onConfirm: () => Navigator.of(context).pop(),
+            confirmLabel: closeText,
           ),
-          content: SingleChildScrollView(
-            child: Text(
-              content,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(closeText),
-            ),
-          ],
         );
       },
     );
@@ -567,7 +489,8 @@ class DialogManager {
             color: isError ? colorScheme.onError : colorScheme.onInverseSurface,
           ),
         ),
-        backgroundColor: isError ? colorScheme.error : colorScheme.inverseSurface,
+        backgroundColor:
+            isError ? colorScheme.error : colorScheme.inverseSurface,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -577,7 +500,8 @@ class DialogManager {
         action: actionLabel != null && onActionPressed != null
             ? SnackBarAction(
                 label: actionLabel,
-                textColor: isError ? colorScheme.onError : colorScheme.inversePrimary,
+                textColor:
+                    isError ? colorScheme.onError : colorScheme.inversePrimary,
                 onPressed: onActionPressed,
               )
             : null,
@@ -606,48 +530,25 @@ class _ProgressDialogBody extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Dialog(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: ResponsiveLayout.dialogMaxWidth),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (stepped) ...[
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                LoadProgressBody(
-                  message: subtitle ?? 'Please wait…',
-                  completedSteps: completedSteps,
-                  totalSteps: totalSteps,
-                  padding: EdgeInsets.zero,
-                ),
-              ] else ...[
+    return AppDialog(
+      icon: stepped ? null : Icons.hourglass_top_outlined,
+      title: title,
+      child: stepped
+          ? LoadProgressBody(
+              message: subtitle ?? 'Please wait…',
+              completedSteps: completedSteps,
+              totalSteps: totalSteps,
+              padding: EdgeInsets.zero,
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 CircularProgressIndicator(
                   strokeWidth: 3,
                   color: colorScheme.primary,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -657,10 +558,7 @@ class _ProgressDialogBody extends StatelessWidget {
                   ),
                 ],
               ],
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
@@ -680,50 +578,14 @@ class _ProgressErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Dialog(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: ResponsiveLayout.dialogMaxWidth),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline, color: colorScheme.error, size: 40),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.error,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: onClose,
-                  child: Text(closeLabel),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return AppDialog(
+      icon: Icons.error_outline,
+      isError: true,
+      title: title,
+      message: description,
+      actions: AppDialogActions(
+        onConfirm: onClose,
+        confirmLabel: closeLabel,
       ),
     );
   }

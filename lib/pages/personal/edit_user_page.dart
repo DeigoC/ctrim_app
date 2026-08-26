@@ -14,9 +14,12 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/persist_users_local_cache.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/user_auth_link.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../utility/users_local_cache.dart';
 import '../../utility/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/user_tag_picker.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../utility/responsive_layout.dart';
@@ -53,6 +56,7 @@ class _EditUserPageState extends State<EditUserPage> {
   bool _hasChanges = false;
   bool _imageValidated = true;
   bool _authLinkChanged = false;
+  bool _allowPop = false;
 
   Future<String?>? _emailFuture;
 
@@ -120,6 +124,13 @@ class _EditUserPageState extends State<EditUserPage> {
     return a.containsAll(b);
   }
 
+  void _popRouteAfterAllowing({Object? result}) {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return RoleAccessGate(
@@ -128,10 +139,18 @@ class _EditUserPageState extends State<EditUserPage> {
           canEditPlaceholderProfile(actor: user, target: widget.user),
       deniedMessage: 'You cannot edit this user.',
       child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          Navigator.of(context).pop(_authLinkChanged || result == true);
+        canPop: _allowPop || !_hasChanges,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop || _allowPop) return;
+          if (!_hasChanges) {
+            _popRouteAfterAllowing(result: _authLinkChanged || result == true);
+            return;
+          }
+          final shouldPop =
+              await DialogManager.discardChanges(context: context);
+          if (shouldPop && mounted) {
+            _popRouteAfterAllowing(result: _authLinkChanged || result == true);
+          }
         },
         child: Scaffold(
           appBar: AppBar(
@@ -376,7 +395,7 @@ class _EditUserPageState extends State<EditUserPage> {
                   _buildEmailField(),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _locationDropdownValue(context),
+                    initialValue: _locationDropdownValue(context),
                     decoration: const InputDecoration(
                       labelText: 'Location*',
                       border: OutlineInputBorder(),
@@ -414,25 +433,27 @@ class _EditUserPageState extends State<EditUserPage> {
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
-                      title: const Text('Area Admin'),
+                      title: const Text('Leader'),
                       subtitle: const Text(
-                          'Can manage users and access admin features'),
-                      value: _isAreaAdmin,
+                          'Create posts, register people, and edit Information'),
+                      value: _isLeader || _isAreaAdmin,
                       onChanged: (value) {
                         setState(() {
-                          _isAreaAdmin = value;
+                          _isLeader = value;
+                          if (!value) _isAreaAdmin = false;
                         });
                         _updateChangeState();
                       },
                     ),
                     SwitchListTile(
-                      title: const Text('Leader'),
-                      subtitle:
-                          const Text('Has leadership privileges in the app'),
-                      value: _isLeader,
+                      title: const Text('Area Admin'),
+                      subtitle: const Text(
+                          'Leader plus people, tags, locations, and cell groups'),
+                      value: _isAreaAdmin,
                       onChanged: (value) {
                         setState(() {
-                          _isLeader = value;
+                          _isAreaAdmin = value;
+                          if (value) _isLeader = true;
                         });
                         _updateChangeState();
                       },
@@ -517,14 +538,12 @@ class _EditUserPageState extends State<EditUserPage> {
 
   void _replaceUserInAppContext(User updated) {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final allUsers = appContext.allUsers;
-    final index = allUsers.indexWhere((u) => u.id == updated.id);
-    if (index == -1) return;
+    final existing = appContext.userById(updated.id);
+    if (existing == null) return;
 
-    final existing = allUsers[index];
     if (existing.roles != null) updated.setRoles(existing.roles!.toList());
     if (existing.posts != null) updated.setPosts(existing.posts!.toList());
-    allUsers[index] = updated;
+    appContext.addOrUpdateUser(updated);
 
     if (appContext.currentUser.id == updated.id) {
       appContext.setCurrentUser(updated);
@@ -536,42 +555,26 @@ class _EditUserPageState extends State<EditUserPage> {
     final email = await showDialog<String>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(_authID.isEmpty ? 'Link account' : 'Reassign account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _authID.isEmpty
-                    ? 'Enter the email they used when registering in the app. '
-                        'Their Auth ID will be linked to this volunteer profile.'
-                    : 'Enter the new account email. The previous Auth link will be cleared '
-                        '(temp accounts are not deleted automatically).',
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                autofocus: true,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-                onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
-              ),
-            ],
+        return AppDialog(
+          icon: Icons.link,
+          title: _authID.isEmpty ? 'Link account' : 'Reassign account',
+          message: _authID.isEmpty
+              ? 'Enter the email they used when registering in the app. '
+                  'Their Auth ID will be linked to this volunteer profile.'
+              : 'Enter the new account email. The previous Auth link will be cleared '
+                  '(temp accounts are not deleted automatically).',
+          child: TextField(
+            controller: emailController,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            decoration: AppDialog.inputDecoration(label: 'Email'),
+            onSubmitted: (value) => Navigator.of(ctx).pop(value.trim()),
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel')),
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(ctx).pop(emailController.text.trim()),
-              child: const Text('Search'),
-            ),
-          ],
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(ctx).pop(),
+            onConfirm: () => Navigator.of(ctx).pop(emailController.text.trim()),
+            confirmLabel: 'Search',
+          ),
         );
       },
     );
@@ -592,6 +595,8 @@ class _EditUserPageState extends State<EditUserPage> {
               'No account found for that email. Ask them to register first.');
         }
         onProgress(completed: 1, total: total, message: 'Linking account…');
+        final actorUserId =
+            Provider.of<AppContext>(context, listen: false).currentUser.id;
         final updated = await _authLinkService.linkAuth(
           user: _userSnapshot(),
           newAuthID: authID,
@@ -609,6 +614,11 @@ class _EditUserPageState extends State<EditUserPage> {
         await persistUsersLocalCache(
           Provider.of<AppContext>(context, listen: false).allUsers,
         );
+        await UserActivityRecorder().record(
+          actorUserId: actorUserId,
+          log: UserActivityMessages.linkedVolunteerAccount,
+          documentId: updated.id,
+        );
       },
     );
 
@@ -622,23 +632,15 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Future<void> _onUnlinkAccountClick() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Unlink account'),
-        content: const Text(
+      title: 'Unlink account',
+      content:
           'Remove the login link from this profile? They will not be able to sign in as this '
           'volunteer until you link an account again. Schedule and profile data are kept.',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Unlink')),
-        ],
-      ),
+      confirmText: 'Unlink',
+      icon: Icons.link_off,
+      isDestructive: true,
     );
     if (!mounted || confirmed != true) return;
 
@@ -648,6 +650,8 @@ class _EditUserPageState extends State<EditUserPage> {
       subtitle: 'Removing login link…',
       errorTitle: 'Could not unlink account',
       action: () async {
+        final actorUserId =
+            Provider.of<AppContext>(context, listen: false).currentUser.id;
         final updated =
             await _authLinkService.unlinkAuth(user: _userSnapshot());
         if (!mounted) return;
@@ -660,6 +664,11 @@ class _EditUserPageState extends State<EditUserPage> {
         });
         await persistUsersLocalCache(
           Provider.of<AppContext>(context, listen: false).allUsers,
+        );
+        await UserActivityRecorder().record(
+          actorUserId: actorUserId,
+          log: UserActivityMessages.unlinkedVolunteerAccount,
+          documentId: updated.id,
         );
       },
     );
@@ -801,6 +810,11 @@ class _EditUserPageState extends State<EditUserPage> {
       if (mounted) {
         _replaceUserInAppContext(userToSave);
         await persistUsersLocalCache(appContext.allUsers);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.editedVolunteerProfile,
+          documentId: userToSave.id,
+        );
 
         setState(() {
           _isPlaceholder = userToSave.isPlaceholder;
@@ -818,7 +832,7 @@ class _EditUserPageState extends State<EditUserPage> {
           ),
         );
 
-        Navigator.pop(context, true); // Return true to indicate success
+        _popRouteAfterAllowing(result: true); // Return true to indicate success
       }
     } catch (e) {
       if (mounted) {

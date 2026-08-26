@@ -1,20 +1,25 @@
-import 'package:ctrim_app/firebase/db_managers/post_template_db_manager.dart';
-import 'package:ctrim_app/models/post_template.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/utility/local_data_manager.dart';
-import 'package:ctrim_app/utility/network_image_helper.dart';
-import 'package:ctrim_app/utility/responsive_layout.dart';
-import 'package:ctrim_app/widgets/posts/template_edit_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../firebase/db_managers/post_template_db_manager.dart';
+import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
+import '../../../utility/broadcast_audience.dart';
+import '../../../utility/dialog_manager.dart';
+import '../../../utility/event_context.dart';
+import '../../../utility/local_data_manager.dart';
+import '../../../utility/network_image_helper.dart';
+import '../../../utility/notification_topics.dart';
+import '../../../utility/responsive_layout.dart';
+import '../../../utility/user_activity_messages.dart';
+import '../../../utility/user_activity_recorder.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../../widgets/posts/template_edit_sheet.dart';
+import '../../../widgets/posts/template_log_dialog.dart';
 import '../../../widgets/posts/view_all_programs.dart';
 import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
-import '../../../widgets/posts/template_log_dialog.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../add_media_file_page.dart';
 import '../add_program_role_page.dart';
@@ -23,7 +28,8 @@ import '../edit_gallery_page.dart';
 import 'view_template_logs_page.dart';
 
 class EditTemplatePage extends StatefulWidget {
-  const EditTemplatePage({super.key, required this.eventContext, required this.oldTemplate});
+  const EditTemplatePage(
+      {super.key, required this.eventContext, required this.oldTemplate});
   final EventContext eventContext;
   final PostTemplate oldTemplate;
 
@@ -31,29 +37,141 @@ class EditTemplatePage extends StatefulWidget {
   State<EditTemplatePage> createState() => _EditTemplatePageState();
 }
 
-class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerProviderStateMixin {
+class _EditTemplatePageState extends State<EditTemplatePage>
+    with SingleTickerProviderStateMixin {
   late final AppContext _appContext;
   late final TabController _tabController;
   late final TextEditingController _tecTitle, _tecSubtitle;
   late final List<String> _subtitles;
   int? _defaultDayOfWeek;
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
+  late PostTemplateCategory _category;
+  late final PostTemplateCategory _initialCategory;
+  bool _allowPop = false;
+  bool _isSaved = false;
+
+  late final String _initialTitle;
+  late final String _initialSubtitle;
+  late final List<String> _initialSubtitles;
+  late final int? _initialDefaultDayOfWeek;
+  late final List<String> _initialHeadPoolSrcs;
+  late final List<String> _initialBodyPoolSrcs;
+  late final List<String> _initialTagIDs;
+  late final List<String> _initialCellGroupIDs;
+  late final List<String> _initialExpectedAttendeeUserIDs;
+  late final List<String> _initialContributorUIDs;
+  late final String _initialLocation;
+  late final String? _initialLeadSpeakerUID;
+  late final bool _initialIsPeriodParent;
+  late bool _defaultNotifyLocation;
+  late final bool _initialDefaultNotifyLocation;
 
   static const int _aboutTabIndex = 1;
   static const int _scheduleTabIndex = 2;
   static const int _mediaTabIndex = 3;
+
+  void _popRouteAfterAllowing() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     _tabController = TabController(length: 4, vsync: this);
     _tecTitle = TextEditingController(text: widget.eventContext.head.title);
-    _tecSubtitle = TextEditingController(text: widget.eventContext.head.subtitle);
+    _tecSubtitle =
+        TextEditingController(text: widget.eventContext.head.subtitle);
     _subtitles = List<String>.from(widget.oldTemplate.subtitles);
     _defaultDayOfWeek = widget.oldTemplate.defaultDayOfWeek;
-    _headMediaPool = widget.oldTemplate.headMediaPool.map((e) => Map<String, dynamic>.from(e)).toList();
-    _bodyMediaPool = widget.oldTemplate.bodyMediaPool.map((e) => Map<String, dynamic>.from(e)).toList();
+    _headMediaPool = widget.oldTemplate.headMediaPool
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+    _bodyMediaPool = widget.oldTemplate.bodyMediaPool
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    _initialTitle = _tecTitle.text;
+    _initialSubtitle = _tecSubtitle.text;
+    _initialSubtitles = List<String>.from(_subtitles);
+    _initialDefaultDayOfWeek = _defaultDayOfWeek;
+    _initialHeadPoolSrcs =
+        _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList();
+    _initialBodyPoolSrcs =
+        _bodyMediaPool.map((e) => (e['src'] as String?) ?? '').toList();
+    _initialTagIDs = List<String>.from(widget.oldTemplate.tagIDs);
+    _initialCellGroupIDs = List<String>.from(widget.oldTemplate.cellGroupIDs);
+    _initialExpectedAttendeeUserIDs =
+        List<String>.from(widget.oldTemplate.expectedAttendeeUserIDs);
+    _initialContributorUIDs =
+        List<String>.from(widget.oldTemplate.contributors);
+    _initialLocation = widget.oldTemplate.location;
+    _initialLeadSpeakerUID = widget.oldTemplate.leadSpeakerUID;
+    _initialIsPeriodParent = widget.oldTemplate.isPeriodParent;
+    _category = widget.oldTemplate.category;
+    _initialCategory = _category;
+    _defaultNotifyLocation = BroadcastAudience.includesLocationUmbrella(
+      topics: widget.oldTemplate.topics,
+      locationName: widget.oldTemplate.location,
+    );
+    _initialDefaultNotifyLocation = _defaultNotifyLocation;
     super.initState();
+  }
+
+  bool _hasUnsavedChanges() {
+    if (widget.eventContext.canSaveTheEditing) return true;
+    if (_tecTitle.text.trim() != _initialTitle.trim()) return true;
+    if (_tecSubtitle.text.trim() != _initialSubtitle.trim()) return true;
+    if (_defaultDayOfWeek != _initialDefaultDayOfWeek) return true;
+    if (!_sameStringLists(_subtitles, _initialSubtitles)) return true;
+    if (!_sameStringLists(
+      _headMediaPool.map((e) => (e['src'] as String?) ?? '').toList(),
+      _initialHeadPoolSrcs,
+    )) {
+      return true;
+    }
+    if (!_sameStringLists(
+      _bodyMediaPool.map((e) => (e['src'] as String?) ?? '').toList(),
+      _initialBodyPoolSrcs,
+    )) {
+      return true;
+    }
+    if (!_sameStringLists(widget.eventContext.head.tagIDs, _initialTagIDs))
+      return true;
+    if (!_sameStringLists(
+        widget.eventContext.head.cellGroupIDs, _initialCellGroupIDs)) {
+      return true;
+    }
+    if (!_sameStringLists(
+      widget.eventContext.expectedAttendeeUserIDs,
+      _initialExpectedAttendeeUserIDs,
+    )) {
+      return true;
+    }
+    if (!_sameStringLists(
+      widget.eventContext.metadata.contributorUIDs,
+      _initialContributorUIDs,
+    )) {
+      return true;
+    }
+    if (widget.eventContext.head.location != _initialLocation) return true;
+    if (widget.eventContext.metadata.leadSpeakerUID != _initialLeadSpeakerUID)
+      return true;
+    if (widget.eventContext.metadata.isPeriodParent != _initialIsPeriodParent)
+      return true;
+    if (_category != _initialCategory) return true;
+    if (_defaultNotifyLocation != _initialDefaultNotifyLocation) return true;
+    return false;
+  }
+
+  bool _sameStringLists(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -69,13 +187,29 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     return RoleAccessGate(
       allow: (user) => user.canManagePostTemplates,
       deniedMessage: 'Only leaders can edit post templates.',
-      child: Scaffold(body: _buildBody()),
+      child: PopScope(
+        canPop: _allowPop || _isSaved,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop || _allowPop || _isSaved) return;
+          if (!_hasUnsavedChanges()) {
+            _popRouteAfterAllowing();
+            return;
+          }
+          final shouldPop =
+              await DialogManager.discardChanges(context: context);
+          if (shouldPop && mounted) {
+            _popRouteAfterAllowing();
+          }
+        },
+        child: Scaffold(body: _buildBody()),
+      ),
     );
   }
 
   Widget _buildBody() {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 0);
 
     return NestedScrollView(
         headerSliverBuilder: (_, __) {
@@ -91,8 +225,18 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     return TabBarView(controller: _tabController, children: [
       _buildHeaderTab(),
       ViewPostBody(
-          eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
-      ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
+          eventContext: widget.eventContext,
+          updateBody: () => _updateBody(),
+          currentUID: _appContext.currentUser.id),
+      ViewAllPrograms(
+        eventContext: widget.eventContext,
+        onProgramChanged: () {
+          setState(() {});
+          _updateBody();
+        },
+        isAddingPost: true,
+        timeOnlySchedule: true,
+      ),
       _buildMediaTab(),
     ]);
   }
@@ -101,7 +245,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     return Column(
       children: [
         _buildCoverMediaPoolEditor(),
-        Expanded(child: ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)),
+        Expanded(
+            child: ViewEventMediaTab(
+                eventContext: widget.eventContext,
+                currentUID: _appContext.currentUser.id)),
       ],
     );
   }
@@ -113,25 +260,132 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         AddEventHeadMeta(
           tecTitle: _tecTitle,
           tecSubtitle: _tecSubtitle,
-          onRequiredFieldChange: (_) => null,
+          onRequiredFieldChange: (_) => setState(() {}),
           eventContext: widget.eventContext,
+          showNotificationControls: false,
         ),
+        const Divider(height: 32),
+        _buildCategoryCard(),
+        const Divider(height: 32),
+        _buildTemplateNotifyDefaultCard(),
         const Divider(height: 32),
         _buildSubtitleListEditor(),
-        const Divider(height: 32),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Period parent'),
-          subtitle: const Text('Posts from this template start as period parents'),
-          value: widget.eventContext.metadata.isPeriodParent,
-          onChanged: (value) {
-            setState(() => widget.eventContext.applyIsPeriodParent(value));
-          },
-        ),
         const Divider(height: 32),
         _buildDayOfWeekPicker(),
         const SizedBox(height: 16),
       ],
+    );
+  }
+
+  Widget _buildCategoryCard() {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.category_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Category',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Groups this template under Services or Cell Groups on the '
+              'template list and when creating a post.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<PostTemplateCategory>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment<PostTemplateCategory>(
+                    value: PostTemplateCategory.service,
+                    label: Text(PostTemplateCategory.service.label),
+                    icon: const Icon(Icons.event_outlined),
+                  ),
+                  ButtonSegment<PostTemplateCategory>(
+                    value: PostTemplateCategory.cellGroup,
+                    label: Text(PostTemplateCategory.cellGroup.label),
+                    icon: const Icon(Icons.groups_outlined),
+                  ),
+                ],
+                selected: {_category},
+                onSelectionChanged: (selected) {
+                  if (selected.isEmpty) return;
+                  setState(() => _category = selected.first);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemplateNotifyDefaultCard() {
+    final theme = Theme.of(context);
+    final location = widget.eventContext.head.location;
+    final umbrellaLabel = NotificationTopics.locationUmbrellaLabel(location);
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.notifications_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Default broadcast audience',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'When someone creates a post from this template, pre-fill who '
+              'receives a broadcast push. Location comes from the Schedule tab.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(umbrellaLabel),
+              subtitle: Text(
+                _defaultNotifyLocation
+                    ? 'New posts default to notifying $umbrellaLabel'
+                    : 'Organisers choose the audience when publishing',
+              ),
+              value: _defaultNotifyLocation,
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _defaultNotifyLocation = value);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -150,7 +404,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 const SizedBox(width: 8),
                 Text(
                   'Default Day of Week',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -194,17 +451,18 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 const SizedBox(width: 8),
                 Text(
                   'Template Subtitles',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               'Add multiple subtitles that can be randomly or manually selected when creating posts from this template.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             if (_subtitles.isEmpty)
@@ -272,36 +530,33 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Subtitle'),
-        content: TextField(
+      builder: (context) => AppDialog(
+        icon: Icons.subtitles_outlined,
+        title: 'Add Subtitle',
+        child: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Subtitle text',
-            hintText: 'Enter subtitle text...',
+          decoration: AppDialog.inputDecoration(
+            label: 'Subtitle text',
+            hint: 'Enter subtitle text...',
+            maxLines: 2,
           ),
           maxLines: 2,
           maxLength: 128,
           autofocus: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isNotEmpty) {
-                setState(() {
-                  _subtitles.add(text);
-                });
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () {
+            final text = controller.text.trim();
+            if (text.isNotEmpty) {
+              setState(() {
+                _subtitles.add(text);
+              });
+              Navigator.of(context).pop();
+            }
+          },
+          confirmLabel: 'Add',
+        ),
       ),
     );
   }
@@ -310,66 +565,50 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final controller = TextEditingController(text: currentSubtitle);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Subtitle'),
-        content: TextField(
+      builder: (context) => AppDialog(
+        icon: Icons.edit_outlined,
+        title: 'Edit Subtitle',
+        child: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Subtitle text',
-            hintText: 'Enter subtitle text...',
+          decoration: AppDialog.inputDecoration(
+            label: 'Subtitle text',
+            hint: 'Enter subtitle text...',
+            maxLines: 2,
           ),
           maxLines: 2,
           maxLength: 128,
           autofocus: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isNotEmpty) {
-                setState(() {
-                  _subtitles[index] = text;
-                });
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () {
+            final text = controller.text.trim();
+            if (text.isNotEmpty) {
+              setState(() {
+                _subtitles[index] = text;
+              });
+              Navigator.of(context).pop();
+            }
+          },
+          confirmLabel: 'Save',
+        ),
       ),
     );
   }
 
-  void _onRemoveSubtitle(int index) {
-    showDialog(
+  void _onRemoveSubtitle(int index) async {
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Subtitle'),
-        content: Text('Are you sure you want to delete "${_subtitles[index]}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              setState(() {
-                _subtitles.removeAt(index);
-              });
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Subtitle',
+      content: 'Are you sure you want to delete "${_subtitles[index]}"?',
+      confirmText: 'Delete',
+      icon: Icons.delete_outline,
+      isDestructive: true,
     );
+    if (!confirmed || !mounted) return;
+    setState(() {
+      _subtitles.removeAt(index);
+    });
   }
 
   // * Cover Image Pool (stored as BodyMediaPool)
@@ -389,7 +628,10 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 const SizedBox(width: 8),
                 Text(
                   'Cover Image Pool',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -397,10 +639,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
             Text(
               'Add cover images that are randomly or manually picked as the post key graphic when creating posts '
               '(including bulk create). URLs are tested first; Google Drive share links are converted automatically.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             if (_bodyMediaPool.isEmpty)
@@ -416,10 +656,14 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
                 ),
               )
             else
-              ..._bodyMediaPool.asMap().entries.map((entry) => _buildPoolMediaItem(
-                    entry.value,
-                    onDelete: () => setState(() => _bodyMediaPool.removeAt(entry.key)),
-                  )),
+              ..._bodyMediaPool
+                  .asMap()
+                  .entries
+                  .map((entry) => _buildPoolMediaItem(
+                        entry.value,
+                        onDelete: () =>
+                            setState(() => _bodyMediaPool.removeAt(entry.key)),
+                      )),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: _onAddCoverPoolItem,
@@ -432,11 +676,13 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  Widget _buildPoolMediaItem(Map<String, dynamic> item, {required VoidCallback onDelete}) {
+  Widget _buildPoolMediaItem(Map<String, dynamic> item,
+      {required VoidCallback onDelete}) {
     final bool isVideo = item['type'] == 'vid';
     final String? thumbnailSrc = item['thumbnailSrc'];
     final String src = item['src'] ?? '';
-    final String? title = item['title']?.isNotEmpty == true ? item['title'] : null;
+    final String? title =
+        item['title']?.isNotEmpty == true ? item['title'] : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -448,7 +694,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
           child: SizedBox(
             width: 56,
             height: 56,
-            child: _buildPoolItemThumbnail(isVideo: isVideo, thumbnailSrc: thumbnailSrc, src: src),
+            child: _buildPoolItemThumbnail(
+                isVideo: isVideo, thumbnailSrc: thumbnailSrc, src: src),
           ),
         ),
         title: Text(
@@ -472,7 +719,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     );
   }
 
-  Widget _buildPoolItemThumbnail({required bool isVideo, String? thumbnailSrc, required String src}) {
+  Widget _buildPoolItemThumbnail(
+      {required bool isVideo, String? thumbnailSrc, required String src}) {
     final displaySrc = isVideo ? thumbnailSrc : src;
     if (displaySrc != null && displaySrc.isNotEmpty) {
       return Image.network(
@@ -519,11 +767,12 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final hasKeyGraphic = widget.eventContext.head.getKeyGraphic() != null;
+    final hasKeyGraphic = _previewKeyGraphicSrc() != null;
 
     return [
       SliverAppBar(
-        expandedHeight: hasKeyGraphic ? MediaQuery.of(context).size.height * 0.33 : null,
+        expandedHeight:
+            hasKeyGraphic ? MediaQuery.of(context).size.height * 0.33 : null,
         flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
@@ -555,7 +804,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('Edit'),
             style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+              backgroundColor:
+                  colorScheme.primaryContainer.withValues(alpha: 0.8),
               foregroundColor: colorScheme.onPrimaryContainer,
             ),
           ),
@@ -563,7 +813,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
         ],
       ),
       SliverPadding(
-        padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
+        padding:
+            EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 8),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             TabBar(
@@ -585,8 +836,33 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     ];
   }
 
+  /// Template AppBar preview: fixed head media → cover pool → lead speaker.
+  String? _previewKeyGraphicSrc() {
+    final fromHead = _firstImageSrc(widget.eventContext.head.media);
+    if (fromHead != null) return fromHead;
+
+    final coverPool =
+        _bodyMediaPool.isNotEmpty ? _bodyMediaPool : _headMediaPool;
+    final fromPool = _firstImageSrc(coverPool);
+    if (fromPool != null) return fromPool;
+
+    final speaker = widget.eventContext.head.leadSpeakerImgSrc;
+    if (speaker != null && speaker.isNotEmpty) return speaker;
+    return null;
+  }
+
+  String? _firstImageSrc(List<Map<String, dynamic>> items) {
+    for (final entry in items) {
+      if (entry['type'] == 'img') {
+        final src = entry['src'] as String?;
+        if (src != null && src.isNotEmpty) return src;
+      }
+    }
+    return null;
+  }
+
   Widget? _buildAppBarBackground() {
-    final keyGraphic = widget.eventContext.head.getKeyGraphic();
+    final keyGraphic = _previewKeyGraphicSrc();
     if (keyGraphic == null) return null;
     return Image.network(
       NetworkImageHelper.getImageUrl(keyGraphic),
@@ -600,7 +876,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(28), topRight: Radius.circular(28)),
       ),
       builder: (_) => TemplateEditSheet(
         onEditAbout: _onEditBodyClick,
@@ -613,8 +890,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
 
   void _onEditBodyClick() {
     Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
-        .then((_) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) =>
+                EditBodyPage(eventContext: widget.eventContext))).then((_) {
       setState(() {});
       _tabController.animateTo(_aboutTabIndex);
     });
@@ -622,7 +902,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
 
   void _onAddScheduleItem() async {
     Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
+    Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) =>
+                    AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
       setState(() {});
@@ -632,8 +916,11 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
 
   void _onEditMediaTap() {
     Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
-        .then((_) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) =>
+                EditGalleryPage(eventContext: widget.eventContext))).then((_) {
       setState(() {});
       _tabController.animateTo(_mediaTabIndex);
     });
@@ -646,7 +933,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   void _openChangeHistory() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ViewTemplateLogsPage(template: widget.oldTemplate)),
+      MaterialPageRoute(
+          builder: (_) => ViewTemplateLogsPage(template: widget.oldTemplate)),
     );
   }
 
@@ -666,10 +954,12 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       title: 'Saving template',
       initialMessage: 'Preparing template…',
       errorTitle: 'Could not save template',
-      action: (onProgress) => _performTemplateSave(onProgress, logMessage: logMessage),
+      action: (onProgress) =>
+          _performTemplateSave(onProgress, logMessage: logMessage),
     );
     if (!mounted || !saved) return;
-    Navigator.of(context).pop();
+    _isSaved = true;
+    _popRouteAfterAllowing();
   }
 
   Future<void> _performTemplateSave(
@@ -692,12 +982,19 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     final Map<String, dynamic> templateData = {
       'Title': _tecTitle.text.trim(),
       'Description': widget.oldTemplate.description,
-      'HeadTitle': widget.oldTemplate.headTitle, // unlikely we'll be updating this anytime soon...?
+      'HeadTitle': _tecTitle.text.trim(),
       'Body': widget.eventContext.encodedBody,
       'Location': widget.eventContext.head.location,
-      'Topics': widget.oldTemplate.topics,
+      'Category': _category.firestoreValue,
+      'Topics': _defaultNotifyLocation
+          ? [
+              NotificationTopics.locationUmbrella(
+                  widget.eventContext.head.location),
+            ]
+          : <String>[],
       'TagIDs': widget.eventContext.head.tagIDs,
       'CellGroupIDs': widget.eventContext.head.cellGroupIDs,
+      'ExpectedAttendeeUserIDs': widget.eventContext.expectedAttendeeUserIDs,
       'Contributors': widget.eventContext.metadata.contributorUIDs,
       'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
       'IsPeriodParent': widget.eventContext.metadata.isPeriodParent,
@@ -716,7 +1013,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
       'DefaultDayOfWeek': _defaultDayOfWeek,
       'Logs': widget.oldTemplate.toJson(true)['Logs'],
     };
-    final PostTemplate updatedTemplate = PostTemplate.fromMap(true, widget.eventContext.id, templateData);
+    final PostTemplate updatedTemplate =
+        PostTemplate.fromMap(true, widget.eventContext.id, templateData);
     updatedTemplate.addLog(
       log: logMessage,
       uid: _appContext.currentUser.id,
@@ -727,7 +1025,13 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
     onProgress(completed: 1, total: total, message: 'Saving to cloud…');
     debugPrint('---- begin saving template ID (${updatedTemplate.id}) to DB');
     final PostTemplateDBManager postTemplateDBManager = PostTemplateDBManager();
-    final int lastUpdate = await postTemplateDBManager.updateTemplate(updatedTemplate);
+    final int lastUpdate =
+        await postTemplateDBManager.updateTemplate(updatedTemplate);
+    await UserActivityRecorder().record(
+      actorUserId: _appContext.currentUser.id,
+      log: UserActivityMessages.editedPostTemplate,
+      documentId: updatedTemplate.id,
+    );
 
     // Upsert locally — do not clear the whole box (would wipe other templates).
     onProgress(completed: 2, total: total, message: 'Updating local copy…');
@@ -739,7 +1043,8 @@ class _EditTemplatePageState extends State<EditTemplatePage> with SingleTickerPr
   }
 
   List<Map<String, dynamic>> _rolesToJson() {
-    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
+    final List<Map<String, dynamic>> result =
+        List<Map<String, dynamic>>.empty(growable: true);
     for (final entry in widget.eventContext.program.roles) {
       var start = entry['start'];
       var end = entry['end'];

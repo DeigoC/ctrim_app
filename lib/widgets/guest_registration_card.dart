@@ -7,14 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../firebase/auth_manager.dart';
-import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
-import '../firebase/messaging_manager.dart';
-import '../models/user.dart' as ctrim;
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../utility/persist_users_local_cache.dart';
+import '../widgets/app_dialog.dart';
+import '../utility/event_heads_repository.dart';
+import '../utility/notification_permission_prompt.dart';
+import '../utility/users_repository.dart';
 
 class GuestRegistrationCard extends StatefulWidget {
   const GuestRegistrationCard({super.key});
@@ -31,7 +31,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final FocusNode _passwordFocusNode = FocusNode();
@@ -115,7 +116,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
             // Toggle between Sign Up and Sign In
             Container(
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -169,7 +171,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                     decoration: InputDecoration(
                       labelText: 'Email',
                       hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined, color: colorScheme.onSurfaceVariant),
+                      prefixIcon: Icon(Icons.email_outlined,
+                          color: colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: colorScheme.outline),
@@ -180,10 +183,12 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                        borderSide:
+                            BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      fillColor: colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -205,11 +210,13 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                     focusNode: _passwordFocusNode,
                     enabled: !_isLoading,
                     obscureText: !_showPassword,
-                    textInputAction: _isSignUp ? TextInputAction.next : TextInputAction.done,
+                    textInputAction:
+                        _isSignUp ? TextInputAction.next : TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Enter your password',
-                      prefixIcon: Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
+                      prefixIcon: Icon(Icons.lock_outline,
+                          color: colorScheme.onSurfaceVariant),
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
@@ -217,7 +224,9 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                           });
                         },
                         icon: Icon(
-                          _showPassword ? Icons.visibility_off : Icons.visibility,
+                          _showPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -231,10 +240,12 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                        borderSide:
+                            BorderSide(color: colorScheme.primary, width: 2),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      fillColor: colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -266,7 +277,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                       decoration: InputDecoration(
                         labelText: 'Confirm Password',
                         hintText: 'Re-enter your password',
-                        prefixIcon: Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
+                        prefixIcon: Icon(Icons.lock_outline,
+                            color: colorScheme.onSurfaceVariant),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -274,7 +286,9 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                             });
                           },
                           icon: Icon(
-                            _showConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                            _showConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -288,10 +302,12 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                          borderSide:
+                              BorderSide(color: colorScheme.primary, width: 2),
                         ),
                         filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                        fillColor: colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -325,7 +341,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    colorScheme.onPrimary),
                               ),
                             )
                           : Text(
@@ -363,7 +380,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
               onPressed: _isLoading
                   ? null
                   : () {
-                      final appContext = Provider.of<AppContext>(context, listen: false);
+                      final appContext =
+                          Provider.of<AppContext>(context, listen: false);
                       appContext.sharedPref.setDismissedGuestBanner(true);
                       if (mounted) {
                         setState(() {});
@@ -402,7 +420,9 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
           label,
           textAlign: TextAlign.center,
           style: theme.textTheme.titleMedium?.copyWith(
-            color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? colorScheme.onPrimary
+                : colorScheme.onSurfaceVariant,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -513,31 +533,19 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        icon: Icon(Icons.mark_email_read_outlined, size: 48, color: Theme.of(context).colorScheme.primary),
-        title: const Text('Verify Your Email'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'We\'ve sent a verification link to:\n\n${_emailController.text.trim()}\n\nPlease check your email and click the verification link.',
-              textAlign: TextAlign.center,
-            ),
-          ],
+      builder: (context) => AppDialog(
+        icon: Icons.mark_email_read_outlined,
+        title: 'Verify Your Email',
+        message:
+            'We\'ve sent a verification link to:\n\n${_emailController.text.trim()}\n\nPlease check your email and click the verification link.',
+        actions: AppDialogActions(
+          onCancel: () => Navigator.pop(context),
+          onConfirm: () async {
+            Navigator.pop(context);
+            await _checkVerificationAndComplete();
+          },
+          confirmLabel: "I've Verified",
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _checkVerificationAndComplete();
-            },
-            child: const Text('I\'ve Verified'),
-          ),
-        ],
       ),
     );
   }
@@ -575,7 +583,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
   }
 
   Future<void> _completeAuthentication(bool isNewUser) async {
-    await DialogManager.runWithSteppedProgressDialog(
+    final ready = await DialogManager.runWithSteppedProgressDialog(
       title: 'Welcome to CTRIM!',
       initialMessage: 'Saving credentials…',
       context: context,
@@ -591,19 +599,23 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
         );
 
         if (isNewUser) {
-          onProgress(completed: 1, total: total, message: 'Creating your profile…');
+          onProgress(
+              completed: 1, total: total, message: 'Creating your profile…');
           await _everyoneDBManager.createUser(
             _authManager.currentAuthUID,
             _emailController.text.trim(),
           );
         } else {
-          onProgress(completed: 1, total: total, message: 'Setting up notifications…');
+          onProgress(
+              completed: 1, total: total, message: 'Setting up notifications…');
         }
 
-        onProgress(completed: 2, total: total, message: 'Setting up notifications…');
+        onProgress(
+            completed: 2, total: total, message: 'Setting up notifications…');
         await _migrateFCMToken();
 
-        onProgress(completed: 3, total: total, message: 'Loading posts and people…');
+        onProgress(
+            completed: 3, total: total, message: 'Loading posts and people…');
         await _fetchEssentialData();
 
         appContext.sharedPref.setLoggedOut(false);
@@ -611,43 +623,51 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       },
     );
 
-    if (mounted) {
-      setState(() {});
+    if (!mounted || !ready) return;
+
+    // Soft-ask before the browser Allow prompt (web); skip cold getToken during setup.
+    if (kIsWeb) {
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      await NotificationPermissionPrompt.maybePromptAfterAuth(
+        context: context,
+        prefs: appContext.sharedPref,
+        authId: _authManager.currentAuthUID,
+      );
+      if (!mounted) return;
     }
+
+    // Return to Personal (this card lives on GuestRegistrationPage).
+    Navigator.of(context).pop();
   }
 
   Future<void> _migrateFCMToken() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    String? token = appContext.sharedPref.guestFcmToken;
+    final token = appContext.sharedPref.guestFcmToken;
 
-    // If no guest token, try to get a new one
-    if (token.isEmpty) {
-      final messagingManager = MessagingManager();
-      token = await messagingManager.getToken();
-    }
+    // Only migrate an existing guest token. Do not call getToken() here — that
+    // can trigger the browser permission prompt without an in-app explainer.
+    if (token.isEmpty) return;
 
-    if (token != null && token.isNotEmpty) {
-      debugPrint('Migrating FCM token: $token');
-      final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
-      appContext.sharedPref.saveFCMToken(token);
-      appContext.sharedPref.clearGuestFCMToken();
-      await _everyoneDBManager.addTokenForAuthID(
-        authID: _authManager.currentAuthUID,
-        token: token,
-        platform: platformName,
-      );
-    }
+    debugPrint('Migrating FCM token: $token');
+    final String platformName = kIsWeb ? 'Web' : Platform.operatingSystem;
+    appContext.sharedPref.saveFCMToken(token);
+    appContext.sharedPref.clearGuestFCMToken();
+    await _everyoneDBManager.addTokenForAuthID(
+      authID: _authManager.currentAuthUID,
+      token: token,
+      platform: platformName,
+    );
   }
 
   Future<void> _fetchEssentialData() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
 
-    final allUsers = await _fetchUsers();
-    final heads = await eventHeadDBManager.fetchEventHeads();
+    final allUsers = await UsersRepository().fetchUsers();
+    final heads = await EventHeadsRepository().fetchEventHeads();
 
     // Fetch current user
-    final currentUser = await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
+    final currentUser =
+        await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
 
     if (currentUser != null) {
       // Update context with authenticated user data
@@ -657,15 +677,6 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
         allUsers: allUsers,
       );
     }
-  }
-
-  Future<List<ctrim.User>> _fetchUsers() async {
-    debugPrint('--fetching users from DB');
-    final List<ctrim.User> allUsers = await _userDBManager.fetchAllUsers();
-
-    debugPrint('--writing users from DB');
-    await persistUsersLocalCache(allUsers);
-    return allUsers;
   }
 
   Future<void> _handleForgotPassword() async {
@@ -697,7 +708,8 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       errorTitle: 'Could not send reset link',
       action: () async {
         try {
-          await _authManager.sendPasswordResetEmail(_emailController.text.trim());
+          await _authManager
+              .sendPasswordResetEmail(_emailController.text.trim());
         } on auth.FirebaseAuthException catch (e) {
           throw Exception(_firebaseAuthMessage(e));
         }

@@ -108,7 +108,7 @@ class InfoAddContentCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final bool compact = constraints.maxHeight < 130;
+              final bool compact = constraints.maxHeight < 175;
 
               if (compact) {
                 return Row(
@@ -332,7 +332,7 @@ class InfoTopicListCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (description.isNotEmpty) ...[
@@ -342,7 +342,7 @@ class InfoTopicListCard extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -509,7 +509,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool canManageInfo =
-        Provider.of<AppContext>(context).currentUser.canManageInfo;
+        context.select((AppContext c) => c.currentUser.canManageInfo);
 
     return FutureBuilder<List<T>>(
       future: future,

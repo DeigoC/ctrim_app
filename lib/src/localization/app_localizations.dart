@@ -184,6 +184,12 @@ abstract class AppLocalizations {
   /// **'Admin'**
   String get userProfileAdminBadge;
 
+  /// Badge shown when a volunteer leads an active or paused cell group
+  ///
+  /// In en, this message translates to:
+  /// **'CG Leader'**
+  String get userProfileCellGroupLeaderBadge;
+
   /// Section title on a volunteer profile for schedule preview
   ///
   /// In en, this message translates to:
@@ -219,6 +225,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Untitled event'**
   String get userProfileUntitledEvent;
+
+  /// Section title for the last few volunteer activity records
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get userProfileRecentActivity;
+
+  /// Empty state when a volunteer has no recorded activity
+  ///
+  /// In en, this message translates to:
+  /// **'No recent activity'**
+  String get userProfileNoRecentActivity;
+
+  /// Area-admin button to open the full activity paper trail
+  ///
+  /// In en, this message translates to:
+  /// **'View all activity'**
+  String get userProfileViewAllActivity;
+
+  /// App bar title for the full volunteer activity log
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get userActivityPageTitle;
+
+  /// Access denied copy on the full activity page
+  ///
+  /// In en, this message translates to:
+  /// **'Only area admins can view the full activity log.'**
+  String get userActivityDenied;
+
+  /// Subtitle showing the Firestore document ID for paper trailing
+  ///
+  /// In en, this message translates to:
+  /// **'Record {id}'**
+  String userActivityDocumentId(String id);
 
   /// Generic cancel button label
   ///
@@ -381,6 +423,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No post tags yet. Area admins can create tags in Admin Tools.'**
   String get postTagsNoneAvailable;
+
+  /// Summary when a post has no content tags assigned
+  ///
+  /// In en, this message translates to:
+  /// **'No tags selected'**
+  String get postTagsNoneSelected;
+
+  /// Opens the searchable post tag picker
+  ///
+  /// In en, this message translates to:
+  /// **'Manage tags'**
+  String get postTagsManage;
+
+  /// Title for the full-screen post tag picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select content tags'**
+  String get postTagsSelectTitle;
+
+  /// Search hint on the post tag picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search tags...'**
+  String get postTagsSearchHint;
+
+  /// Filter chip to show only post tags that drive push streams
+  ///
+  /// In en, this message translates to:
+  /// **'Notification streams'**
+  String get postTagsNotifiableFilter;
 
   /// Title for the admin page that manages post content tag definitions
   ///
@@ -658,6 +730,18 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String selectUsersSelected(int count);
 
+  /// Selected count on a catalog tag/group picker page
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectCatalogSelected(int count);
+
+  /// Empty state when catalog picker filters hide every item
+  ///
+  /// In en, this message translates to:
+  /// **'No matches for your search or filters.'**
+  String get selectCatalogNoResults;
+
   /// Button to open the volunteer picker from schedule assignment
   ///
   /// In en, this message translates to:
@@ -748,11 +832,17 @@ abstract class AppLocalizations {
   /// **'Placeholder · {location}'**
   String selectUsersPlaceholderSubtitle(String location);
 
-  /// Toggle to include placeholder profiles in the Volunteers list
+  /// Filter chip to show only placeholder profiles in the Volunteers list
   ///
   /// In en, this message translates to:
-  /// **'Show placeholders'**
+  /// **'Placeholders'**
   String get volunteersShowPlaceholders;
+
+  /// Empty state when the placeholders filter returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No placeholder profiles to show'**
+  String get volunteersEmptyPlaceholders;
 
   /// Badge on placeholder volunteer cards
   ///
@@ -777,6 +867,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Team'**
   String get volunteersSortTags;
+
+  /// Filter chip to show volunteers with the Leader permission
+  ///
+  /// In en, this message translates to:
+  /// **'Leaders'**
+  String get volunteersFilterLeaders;
+
+  /// Filter chip to show volunteers who are area admins
+  ///
+  /// In en, this message translates to:
+  /// **'Admins'**
+  String get volunteersFilterAdmins;
+
+  /// Filter chip to show volunteers who lead a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'CG Leaders'**
+  String get volunteersFilterCellGroupLeaders;
+
+  /// Empty state when a role filter returns no volunteers
+  ///
+  /// In en, this message translates to:
+  /// **'No volunteers match the selected roles'**
+  String get volunteersEmptyRoles;
 
   /// Button that opens the volunteer tag filter sheet
   ///
@@ -826,11 +940,173 @@ abstract class AppLocalizations {
   /// **'No active cell groups yet. Area admins can create them in the Cell Groups section.'**
   String get cellGroupsNoneAvailable;
 
+  /// Summary when a post is not linked to any cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'No cell groups selected'**
+  String get cellGroupsNoneSelected;
+
+  /// Opens the searchable cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Manage cell groups'**
+  String get cellGroupsManage;
+
+  /// Title for the full-screen cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select cell groups'**
+  String get cellGroupsSelectTitle;
+
+  /// Search hint on the cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search cell groups...'**
+  String get cellGroupsSearchHint;
+
   /// Main nav / home title for the Cell Groups section
   ///
   /// In en, this message translates to:
   /// **'Cell Groups'**
   String get cellGroupsSectionTitle;
+
+  /// Cell Groups section tab: teaching / overview content
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get cellGroupsTabOverview;
+
+  /// Cell Groups section tab: catalogue list of groups
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get cellGroupsTabGroups;
+
+  /// Headline on the Cell Groups overview tab
+  ///
+  /// In en, this message translates to:
+  /// **'Life in small groups'**
+  String get cellGroupsOverviewHeadline;
+
+  /// Short intro blurb on the Cell Groups overview tab
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups are small gatherings that meet regularly outside the main service — focused on Bible study, care, prayer, and discipleship, usually in homes and led by trained members.'**
+  String get cellGroupsOverviewIntro;
+
+  /// Title above the verse card on CG overview
+  ///
+  /// In en, this message translates to:
+  /// **'Scripture'**
+  String get cellGroupsOverviewVerseTitle;
+
+  /// Bible reference for CG overview scripture card
+  ///
+  /// In en, this message translates to:
+  /// **'Acts 2:42, 46–47'**
+  String get cellGroupsOverviewVerseReference;
+
+  /// Verse body for CG overview scripture card
+  ///
+  /// In en, this message translates to:
+  /// **'\"They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer… They continued to meet together… And the Lord added to their number daily those who were being saved.\"'**
+  String get cellGroupsOverviewVerseBody;
+
+  /// Placeholder label where overview hero image will go
+  ///
+  /// In en, this message translates to:
+  /// **'Image coming soon'**
+  String get cellGroupsOverviewImagePlaceholder;
+
+  /// Title for the Cell Groups overview activity dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get cellGroupsActivityTitle;
+
+  /// Subtitle under the activity dashboard title
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings linked to cell groups'**
+  String get cellGroupsActivitySubtitle;
+
+  /// Primary metric: CG meetings in the past 3 weeks
+  ///
+  /// In en, this message translates to:
+  /// **'Recent meetings'**
+  String get cellGroupsActivityPastMeetings;
+
+  /// Hint under the past meetings count
+  ///
+  /// In en, this message translates to:
+  /// **'Past 3 weeks'**
+  String get cellGroupsActivityPastMeetingsHint;
+
+  /// Primary metric: sum of attendees for past-window CG meetings
+  ///
+  /// In en, this message translates to:
+  /// **'Attendees'**
+  String get cellGroupsActivityPastAttendees;
+
+  /// Hint under the past attendees total
+  ///
+  /// In en, this message translates to:
+  /// **'Checked in · past 3 weeks'**
+  String get cellGroupsActivityPastAttendeesHint;
+
+  /// Primary metric: CG meetings in the coming week including today
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get cellGroupsActivityUpcoming;
+
+  /// Hint under the upcoming meetings count
+  ///
+  /// In en, this message translates to:
+  /// **'Today + next 6 days'**
+  String get cellGroupsActivityUpcomingHint;
+
+  /// Secondary metric label for active cell group count
+  ///
+  /// In en, this message translates to:
+  /// **'Active groups'**
+  String get cellGroupsActivityActiveGroupsLabel;
+
+  /// Secondary metric label for total MemberCount across active groups
+  ///
+  /// In en, this message translates to:
+  /// **'Members in active groups'**
+  String get cellGroupsActivityTotalMembersLabel;
+
+  /// Secondary metric label for distinct groups with a past-window meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Groups that met · past 3 weeks'**
+  String get cellGroupsActivityGroupsMetLabel;
+
+  /// Secondary metric label for average attendees per past meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Avg attendance · past 3 weeks'**
+  String get cellGroupsActivityAvgAttendanceLabel;
+
+  /// Secondary metric label shown when some groups are paused
+  ///
+  /// In en, this message translates to:
+  /// **'Paused groups'**
+  String get cellGroupsActivityPausedGroupsLabel;
+
+  /// Error message when activity stats fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load activity right now.'**
+  String get cellGroupsActivityLoadError;
+
+  /// Retry button for activity stats load failure
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get cellGroupsActivityRetry;
 
   /// Empty state on the Cell Groups list
   ///
@@ -850,10 +1126,10 @@ abstract class AppLocalizations {
   /// **'Edit group'**
   String get cellGroupsEdit;
 
-  /// Action to manage cell group members
+  /// Action to manage cell group members (UI: Cell Members, not Roster)
   ///
   /// In en, this message translates to:
-  /// **'Manage roster'**
+  /// **'Manage cell members'**
   String get cellGroupsManageRoster;
 
   /// Section title for linked bulletin posts on CG detail
@@ -880,10 +1156,10 @@ abstract class AppLocalizations {
   /// **'Leaders'**
   String get cellGroupsLeadersLabel;
 
-  /// Title for the cell group roster page
+  /// Section title for CG members on detail (UI label; code/Firestore may still say roster)
   ///
   /// In en, this message translates to:
-  /// **'Roster'**
+  /// **'Cell Members'**
   String get cellGroupsRosterTitle;
 
   /// Button to open user picker for roster
@@ -892,17 +1168,11 @@ abstract class AppLocalizations {
   /// **'Add members'**
   String get cellGroupsAddMembers;
 
-  /// Button to add a free-text roster name
+  /// Hint under Add members: use picker / Create placeholder
   ///
   /// In en, this message translates to:
-  /// **'Add by name'**
-  String get cellGroupsAddFreeText;
-
-  /// Hint for free-text roster member dialog
-  ///
-  /// In en, this message translates to:
-  /// **'Name (no app account)'**
-  String get cellGroupsFreeTextHint;
+  /// **'Search for someone, or create a temporary profile if they are not listed.'**
+  String get cellGroupsRosterAddHint;
 
   /// Cell group status: active
   ///
@@ -927,6 +1197,474 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in to see more details about this group.'**
   String get cellGroupsGuestSignInHint;
+
+  /// Section title for CG summary / cadence on detail
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get cellGroupsAboutTitle;
+
+  /// Section title for cell group photo gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get cellGroupsPhotosTitle;
+
+  /// Helper under Photos on edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Add a wide group photo as the cover for the detail page. Catalogue tiles still show the first leader’s portrait.'**
+  String get cellGroupsPhotosHint;
+
+  /// Empty state when editing CG photos
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet.'**
+  String get cellGroupsPhotosEmpty;
+
+  /// Button to add a cell group photo
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get cellGroupsAddPhoto;
+
+  /// Badge / label for the key graphic on a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get cellGroupsCoverPhoto;
+
+  /// Hint on a non-cover photo in CG edit
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to set as cover'**
+  String get cellGroupsSetAsCover;
+
+  /// SnackBar when a video is added to a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups only support images for now.'**
+  String get cellGroupsPhotosImagesOnly;
+
+  /// Label for cell group name on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get cellGroupsNameLabel;
+
+  /// Placeholder example for cell group name
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Young Adults'**
+  String get cellGroupsNameHint;
+
+  /// Helper under cell group name field
+  ///
+  /// In en, this message translates to:
+  /// **'The public title on the Groups list and the group page.'**
+  String get cellGroupsNameHelper;
+
+  /// Validation when cell group name is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get cellGroupsNameRequired;
+
+  /// Label for cell group summary on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get cellGroupsSummaryLabel;
+
+  /// Placeholder for cell group summary
+  ///
+  /// In en, this message translates to:
+  /// **'Who this group is for, and what you usually do'**
+  String get cellGroupsSummaryHint;
+
+  /// Helper under cell group summary field
+  ///
+  /// In en, this message translates to:
+  /// **'Short description on the catalogue card and in About.'**
+  String get cellGroupsSummaryHelper;
+
+  /// Label for usual meeting weekday on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting weekday'**
+  String get cellGroupsWeekdayLabel;
+
+  /// Helper under cell group weekday dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Usual day this group meets. Leave unset if it varies.'**
+  String get cellGroupsWeekdayHelper;
+
+  /// Dropdown option when no meeting weekday is chosen
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get cellGroupsWeekdayNotSet;
+
+  /// Label for usual meeting time on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting time'**
+  String get cellGroupsTimeLabel;
+
+  /// Placeholder example for meeting time
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 19:30'**
+  String get cellGroupsTimeHint;
+
+  /// Helper under cell group meeting time field
+  ///
+  /// In en, this message translates to:
+  /// **'Usual start time, shown with the weekday on the Groups list.'**
+  String get cellGroupsTimeHelper;
+
+  /// Label for cell group status on create/edit
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get cellGroupsStatusLabel;
+
+  /// Helper under cell group status dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Active groups appear in the catalogue. Paused groups stay listed as paused. Archived groups are hidden.'**
+  String get cellGroupsStatusHelper;
+
+  /// Helper under leaders on create/edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'People who lead this group. Catalogue tiles use the first leader’s portrait.'**
+  String get cellGroupsLeadersHint;
+
+  /// Button to pick cell group leaders
+  ///
+  /// In en, this message translates to:
+  /// **'Choose leaders'**
+  String get cellGroupsChooseLeaders;
+
+  /// Title of the bulletin sort and filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & Filter'**
+  String get bulletinSortFilterTitle;
+
+  /// Subtitle of the bulletin sort and filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to organize your events'**
+  String get bulletinSortFilterSubtitle;
+
+  /// App bar tooltip for the bulletin sort and filter button
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & Filter'**
+  String get bulletinSortTooltip;
+
+  /// Section label for bulletin sort order
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get bulletinSortSection;
+
+  /// Default bulletin sort: today, then upcoming, then the rest
+  ///
+  /// In en, this message translates to:
+  /// **'Relevancy'**
+  String get bulletinSortRelevancy;
+
+  /// Explains relevancy sort on the bulletin
+  ///
+  /// In en, this message translates to:
+  /// **'Today first, then what’s coming up'**
+  String get bulletinSortRelevancySubtitle;
+
+  /// Bulletin sort by earliest event date
+  ///
+  /// In en, this message translates to:
+  /// **'Soonest first'**
+  String get bulletinSortSoonest;
+
+  /// Explains soonest-first sort
+  ///
+  /// In en, this message translates to:
+  /// **'Earliest event date at the top'**
+  String get bulletinSortSoonestSubtitle;
+
+  /// Bulletin sort by latest event date
+  ///
+  /// In en, this message translates to:
+  /// **'Latest first'**
+  String get bulletinSortLatest;
+
+  /// Explains latest-first sort
+  ///
+  /// In en, this message translates to:
+  /// **'Most recent event date at the top'**
+  String get bulletinSortLatestSubtitle;
+
+  /// Section label for bulletin time and bookmark filters
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get bulletinShowSection;
+
+  /// Time filter that does not hide past or upcoming posts
+  ///
+  /// In en, this message translates to:
+  /// **'All posts'**
+  String get bulletinShowAll;
+
+  /// Filter the bulletin to upcoming events
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get bulletinShowUpcoming;
+
+  /// Filter the bulletin to past events
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get bulletinShowPast;
+
+  /// Filter the bulletin to bookmarked posts
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks'**
+  String get bulletinShowBookmarks;
+
+  /// Section label for bulletin location filter
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get bulletinLocationSection;
+
+  /// Helper under bulletin location chips
+  ///
+  /// In en, this message translates to:
+  /// **'Show posts for a specific place'**
+  String get bulletinLocationSubtitle;
+
+  /// Helper under bulletin content tag chips
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow the bulletin by content type'**
+  String get bulletinTagsSubtitle;
+
+  /// Banner listing the active bulletin sort and filters
+  ///
+  /// In en, this message translates to:
+  /// **'Showing: {parts}'**
+  String bulletinShowing(String parts);
+
+  /// Clears bulletin sort and filters back to defaults
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get bulletinClearFilters;
+
+  /// Empty state title when no bulletin posts match
+  ///
+  /// In en, this message translates to:
+  /// **'No Events Found'**
+  String get bulletinEmptyTitle;
+
+  /// Empty state body when bulletin filters hide every post
+  ///
+  /// In en, this message translates to:
+  /// **'There are no events matching your current filters.\nTry adjusting your sort or filters.'**
+  String get bulletinEmptyBody;
+
+  /// Button on the empty bulletin to open sort and filter
+  ///
+  /// In en, this message translates to:
+  /// **'Change Filter'**
+  String get bulletinChangeFilter;
+
+  /// Title of the bookmarks help dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarked Posts'**
+  String get bulletinBookmarksHelpTitle;
+
+  /// Explains how bookmarks work on the bulletin
+  ///
+  /// In en, this message translates to:
+  /// **'You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.'**
+  String get bulletinBookmarksHelpBody;
+
+  /// Tooltip on the bookmarks help button
+  ///
+  /// In en, this message translates to:
+  /// **'Learn about bookmarks'**
+  String get bulletinBookmarksHelpTooltip;
+
+  /// App bar fallback title for a church hub page
+  ///
+  /// In en, this message translates to:
+  /// **'Church Info'**
+  String get churchInfoPageTitle;
+
+  /// Empty state when a church record cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'No church information found.'**
+  String get churchInfoNotFound;
+
+  /// Tooltip on the church hub edit button
+  ///
+  /// In en, this message translates to:
+  /// **'Edit church info'**
+  String get churchInfoEditTooltip;
+
+  /// Error title when the church hub fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load church'**
+  String get churchInfoLoadError;
+
+  /// Button that opens the church maps URL
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Maps'**
+  String get churchHubOpenMaps;
+
+  /// Chip when a church has no linked location
+  ///
+  /// In en, this message translates to:
+  /// **'Location not set'**
+  String get churchHubLocationUnset;
+
+  /// Hint on the church hub when location is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Set a location when editing to show posts, cell groups, and people for this church.'**
+  String get churchHubSetLocationHint;
+
+  /// Section title for church location snapshot counts
+  ///
+  /// In en, this message translates to:
+  /// **'At this location'**
+  String get churchHubSnapshotTitle;
+
+  /// Count tile label for bulletin posts
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get churchHubPostsLabel;
+
+  /// Hint under the posts count on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get churchHubPostsHint;
+
+  /// Count tile label for cell groups at the church location
+  ///
+  /// In en, this message translates to:
+  /// **'Cell Groups'**
+  String get churchHubCellGroupsLabel;
+
+  /// Hint under the cell groups count on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Active and paused'**
+  String get churchHubCellGroupsHint;
+
+  /// Count tile label for registered people at the church location
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get churchHubPeopleLabel;
+
+  /// Hint under the people count on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Profiles here'**
+  String get churchHubPeopleHint;
+
+  /// Heading above recent bulletin posts on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Recent posts'**
+  String get churchHubRecentPosts;
+
+  /// Heading above cell groups listed on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Cell Groups here'**
+  String get churchHubCellGroupsHere;
+
+  /// Empty state when the church location has no recent posts
+  ///
+  /// In en, this message translates to:
+  /// **'No posts in the last 3 months.'**
+  String get churchHubNoRecentPosts;
+
+  /// Empty state when the church location has no cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'No cell groups at this location yet.'**
+  String get churchHubNoCellGroups;
+
+  /// Shown when the church hub truncates the recent posts list
+  ///
+  /// In en, this message translates to:
+  /// **'And {count} more'**
+  String churchHubMorePosts(int count);
+
+  /// Error when the church hub snapshot query fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load location activity.'**
+  String get churchHubStatsError;
+
+  /// Retry loading church location snapshot
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get churchHubStatsRetry;
+
+  /// Section title for extra church hub pages
+  ///
+  /// In en, this message translates to:
+  /// **'More about this church'**
+  String get churchHubPagesTitle;
+
+  /// Empty state when a church hub has no nested pages
+  ///
+  /// In en, this message translates to:
+  /// **'No extra pages yet.'**
+  String get churchHubNoPages;
+
+  /// Button for area admins to add a nested church page
+  ///
+  /// In en, this message translates to:
+  /// **'Add page'**
+  String get churchHubAddPage;
+
+  /// Helper text on the add church page card
+  ///
+  /// In en, this message translates to:
+  /// **'Add a page for getting here, Sunday service, or other details.'**
+  String get churchHubAddPageDescription;
+
+  /// Error when nested church pages fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load extra pages.'**
+  String get churchHubPagesError;
+
+  /// Retry loading nested church pages
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get churchHubPagesRetry;
 }
 
 class _AppLocalizationsDelegate

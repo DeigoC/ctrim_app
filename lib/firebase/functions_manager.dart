@@ -32,7 +32,16 @@ class CloudFunctionManager {
       'AndroidImage': androidImage ?? '',
     };
 
-    await _callCloudFunction('send_to_topic', callParams);
+    Object? topicError;
+    var topicSent = false;
+    try {
+      await _callCloudFunction('send_to_topic', callParams);
+      topicSent = true;
+    } catch (e) {
+      topicError = e;
+      NotificationDebug.error('send_to_topic failed; still trying web tokens', e);
+    }
+
     final webResult = await _sendToWebTokens(
       topic: topic,
       title: title,
@@ -42,10 +51,14 @@ class CloudFunctionManager {
       iOSImage: iOSImage,
     );
 
+    if (!topicSent && webResult.successCount == 0) {
+      throw topicError ?? StateError('Failed to send broadcast');
+    }
+
     return NotificationSendResult(
-      topicSent: true,
+      topicSent: topicSent,
       successCount: webResult.successCount,
-      failureCount: webResult.failureCount,
+      failureCount: webResult.failureCount + (topicSent ? 0 : 1),
       invalidTokenCount: webResult.invalidTokenCount,
       webRecipientCount: webResult.webRecipientCount,
     );
@@ -142,6 +155,18 @@ class CloudFunctionManager {
       NotificationDebug.error('$name failed', e);
       rethrow;
     }
+  }
+
+  /// User-facing text for a Cloud Functions / FCM send failure.
+  static String callableError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final message = error.message?.trim();
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+      return error.code;
+    }
+    return error.toString();
   }
 
   NotificationSendResult _parseSendResult(

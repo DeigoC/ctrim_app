@@ -36,5 +36,37 @@ void main() {
         'Belfast',
       );
     });
+
+    test('normalizePostLocation strips online suffix', () {
+      expect(
+        VolunteerLocations.normalizePostLocation('Portadown (Online)'),
+        'Portadown',
+      );
+      expect(VolunteerLocations.normalizePostLocation('Belfast'), 'Belfast');
+    });
+
+    test('postLocationMatchesFilter compares base location', () {
+      expect(
+        VolunteerLocations.postLocationMatchesFilter(
+          postLocation: 'North Coast (Online)',
+          locationFilter: VolunteerLocations.all,
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerLocations.postLocationMatchesFilter(
+          postLocation: 'North Coast (Online)',
+          locationFilter: 'North Coast',
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerLocations.postLocationMatchesFilter(
+          postLocation: 'Belfast',
+          locationFilter: 'Portadown',
+        ),
+        isFalse,
+      );
+    });
   });
 }

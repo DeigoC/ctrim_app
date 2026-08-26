@@ -7,15 +7,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/app_dialog.dart';
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({
     super.key,
     required this.eventContext,
     this.initialIsVideo = false,
+
     /// When true, pops with the tested/sanitised media map instead of
     /// writing into [eventContext.media] (used by template media pools).
     this.returnResultOnly = false,
@@ -29,16 +32,37 @@ class AddMediaFilePage extends StatefulWidget {
 }
 
 class _AddMediaFilePageState extends State<AddMediaFilePage> {
-  final TextEditingController _tecSrc = TextEditingController(), _tecThumbnailSrc = TextEditingController();
+  final TextEditingController _tecSrc = TextEditingController(),
+      _tecThumbnailSrc = TextEditingController();
   final FocusNode _srcFocusNode = FocusNode();
-  final RegExp _driveRegExp = RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
+  final RegExp _driveRegExp =
+      RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
   final int _maxImageSizeKB = 1536; // 1.5mb
   final int _maxVideoSizeMB = 128;
   VideoPlayerController? _videoPlayerController;
-  bool _canSave = false, _canTestSrc = false, _isVideo = false, _isTesting = false;
+  bool _canSave = false,
+      _canTestSrc = false,
+      _isVideo = false,
+      _isTesting = false;
+  bool _allowPop = false;
+  bool _isSaved = false;
   String _src = '';
   File? _tmpFile;
   int? _mediaFileSizeBytes;
+
+  void _popRouteAfterAllowing({Object? result}) {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
+
+  bool _hasUnsavedChanges() {
+    return _tecSrc.text.trim().isNotEmpty ||
+        _tecThumbnailSrc.text.trim().isNotEmpty ||
+        _canSave ||
+        _isTesting;
+  }
 
   @override
   void initState() {
@@ -62,41 +86,60 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(_isVideo ? 'Add video' : 'Add image'),
+    return PopScope(
+      canPop: _allowPop || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || _allowPop || _isSaved) return;
+        if (!_hasUnsavedChanges()) {
+          _popRouteAfterAllowing();
+          return;
+        }
+        final shouldPop = await DialogManager.discardChanges(context: context);
+        if (shouldPop && mounted) {
+          _popRouteAfterAllowing();
+        }
+      },
+      child: Scaffold(
         backgroundColor: colorScheme.surface,
-        actions: [
-          if (_canSave)
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: FilledButton.tonalIcon(
-                onPressed: _onSaveClick,
-                icon: const Icon(Icons.check, size: 18),
-                label: const Text('Add'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.tertiaryContainer,
-                  foregroundColor: colorScheme.onTertiaryContainer,
+        appBar: AppBar(
+          title: Text(_isVideo ? 'Add video' : 'Add image'),
+          backgroundColor: colorScheme.surface,
+          actions: [
+            if (_canSave)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: FilledButton.tonalIcon(
+                  onPressed: _onSaveClick,
+                  icon: const Icon(Icons.check, size: 18),
+                  label: const Text('Add'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colorScheme.tertiaryContainer,
+                    foregroundColor: colorScheme.onTertiaryContainer,
+                  ),
                 ),
               ),
-            ),
-          IconButton(onPressed: _showHelp, icon: const Icon(Icons.help_outline), tooltip: 'Help'),
-          const SizedBox(width: 4),
-        ],
+            IconButton(
+                onPressed: _showHelp,
+                icon: const Icon(Icons.help_outline),
+                tooltip: 'Help'),
+            const SizedBox(width: 4),
+          ],
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
+      padding:
+          EdgeInsets.symmetric(vertical: 16, horizontal: webHorizontalPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -108,7 +151,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, size: 20, color: colorScheme.onPrimaryContainer),
+                  Icon(Icons.info_outline,
+                      size: 20, color: colorScheme.onPrimaryContainer),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -130,7 +174,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+              side: BorderSide(
+                  color: colorScheme.outline.withValues(alpha: 0.12)),
             ),
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.3,
@@ -144,7 +189,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+              side: BorderSide(
+                  color: colorScheme.outline.withValues(alpha: 0.12)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -158,15 +204,16 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                       Text(
                         'Media source',
                         style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Tap the field to paste a link from your clipboard. Google Drive share links are converted automatically.',
-                    style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -207,7 +254,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
+              side: BorderSide(
+                  color: colorScheme.outline.withValues(alpha: 0.12)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -221,8 +269,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                       Text(
                         'Media type',
                         style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -281,7 +329,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _canTestSrc && !_isTesting ? _onTestSrcClick : null,
+                  onPressed:
+                      _canTestSrc && !_isTesting ? _onTestSrcClick : null,
                   icon: _isTesting
                       ? const SizedBox(
                           width: 16,
@@ -325,12 +374,17 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+              ? Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withValues(alpha: 0.3)
               : Theme.of(context).colorScheme.surface,
         ),
         child: Column(
@@ -340,14 +394,19 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               size: 32,
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  : Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
             ),
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 4),
@@ -355,7 +414,10 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -435,7 +497,10 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7),
                 ),
           ),
         ],
@@ -501,7 +566,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                       '(Viewer). Open the file in Drive → Share → General access, '
                       'then paste the link and test again.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.85),
+                            color:
+                                colorScheme.onSurface.withValues(alpha: 0.85),
                             height: 1.35,
                           ),
                     ),
@@ -558,7 +624,10 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7),
                 ),
           ),
         ],
@@ -566,7 +635,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     );
   }
 
-  Widget _buildFileSizeError(String title, String subtitle, String url, String buttonText) {
+  Widget _buildFileSizeError(
+      String title, String subtitle, String url, String buttonText) {
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -598,7 +668,10 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7),
                 ),
           ),
           const SizedBox(height: 16),
@@ -634,20 +707,29 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               Icon(
                 _isVideo ? Icons.videocam_outlined : Icons.image_outlined,
                 size: 64,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
                 'Media Preview',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
                     ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Add a URL and test to see preview',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.5),
                     ),
               ),
             ],
@@ -683,7 +765,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             return Center(
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
                     : null,
               ),
             );
@@ -771,7 +854,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
             // Initialize video player
             if (kIsWeb) {
-              _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(_src));
+              _videoPlayerController =
+                  VideoPlayerController.networkUrl(Uri.parse(_src));
             } else {
               _videoPlayerController = VideoPlayerController.file(_tmpFile!);
             }
@@ -846,14 +930,18 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.info_outline,
+                    size: 16, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Video is ready! You can add a thumbnail URL above for better preview.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -871,7 +959,9 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     if (url.trim().isEmpty) return false;
     try {
       final uri = Uri.parse(url.trim());
-      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https') && uri.hasAuthority;
+      return uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.hasAuthority;
     } catch (e) {
       return false;
     }
@@ -910,7 +1000,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
         _mediaFileSizeBytes = response.bodyBytes.length;
         return await tmp.writeAsBytes(response.bodyBytes);
       } else {
-        throw Exception('HTTP ${response.statusCode}: Failed to fetch media file');
+        throw Exception(
+            'HTTP ${response.statusCode}: Failed to fetch media file');
       }
     } catch (e) {
       debugPrint('Error fetching file: $e');
@@ -928,14 +1019,17 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       final srcUrl = NetworkImageHelper.getImageUrl(_src);
       debugPrint('Validating web media from: $srcUrl');
 
-      final response = await http.get(Uri.parse(srcUrl)).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(Uri.parse(srcUrl))
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         _mediaFileSizeBytes = response.bodyBytes.length;
         debugPrint('Media size on web: $_mediaFileSizeBytes bytes');
         return null; // Web mode: no local file cache
       } else {
-        throw Exception('HTTP ${response.statusCode}: Failed to validate media');
+        throw Exception(
+            'HTTP ${response.statusCode}: Failed to validate media');
       }
     } catch (e) {
       debugPrint('Error validating media on web: $e');
@@ -970,7 +1064,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not read clipboard. Paste manually (⌘V / Ctrl+V).'),
+          content:
+              Text('Could not read clipboard. Paste manually (⌘V / Ctrl+V).'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -991,68 +1086,53 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.save, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(widget.returnResultOnly ? 'Add Media' : 'Save Media'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(confirmMessage),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        _isVideo ? Icons.videocam : Icons.image,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Type: ${_isVideo ? 'Video' : 'Image'}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Source: ${_src.length > 50 ? '${_src.substring(0, 47)}...' : _src}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ),
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return AppDialog(
+          icon: Icons.save_outlined,
+          title: widget.returnResultOnly ? 'Add Media' : 'Save Media',
+          message: confirmMessage,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      _isVideo ? Icons.videocam : Icons.image,
+                      size: 16,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Type: ${_isVideo ? 'Video' : 'Image'}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Source: ${_src.length > 50 ? '${_src.substring(0, 47)}...' : _src}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () {
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(context).pop(),
+            onConfirm: () {
               final Map<String, dynamic> data = {
                 'title': '',
                 'src': _src,
@@ -1064,19 +1144,21 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               }
 
               if (widget.returnResultOnly) {
-                Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(data); // Return media map
+                Navigator.of(context).pop();
+                _isSaved = true;
+                _popRouteAfterAllowing(result: data);
                 return;
               }
 
               widget.eventContext.media.addMediaFile(data);
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Close page
+              Navigator.of(context).pop();
+              _isSaved = true;
+              _popRouteAfterAllowing();
             },
-            child: Text(widget.returnResultOnly ? 'Add' : 'Save'),
+            confirmLabel: widget.returnResultOnly ? 'Add' : 'Save',
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1103,7 +1185,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       if (trimmedText.isEmpty) {
         _canTestSrc = false;
       } else {
-        _canTestSrc = _isValidUrl(trimmedText) || _driveRegExp.hasMatch(trimmedText);
+        _canTestSrc =
+            _isValidUrl(trimmedText) || _driveRegExp.hasMatch(trimmedText);
       }
 
       // Reset states when URL changes
@@ -1148,94 +1231,26 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   void _showHelp() {
-    showDialog(
+    DialogManager.showAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.help_outline, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 8),
-            const Text('Adding Media Files'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHelpSection(
-                'Supported Sources',
-                '• Direct HTTPS URLs to images/videos\n• Google Drive public links\n• Any publicly accessible media URL',
-                Icons.link,
-              ),
-              const SizedBox(height: 16),
-              _buildHelpSection(
-                'File Size Limits',
-                '• Images: Maximum $_maxImageSizeKB KB\n• Videos: Maximum $_maxVideoSizeMB MB',
-                Icons.storage,
-              ),
-              const SizedBox(height: 16),
-              _buildHelpSection(
-                'Google Drive Setup',
-                '1. Upload file to Google Drive\n2. Right-click → Share\n3. Change access to "Anyone with the link"\n4. Copy and paste the share link',
-                Icons.cloud,
-              ),
-              const SizedBox(height: 16),
-              _buildHelpSection(
-                'Tips',
-                '• Test your URL before saving\n• For videos, add a thumbnail for better preview\n• Compress large files using the suggested tools',
-                Icons.tips_and_updates,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHelpSection(String title, String content, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primaryContainer,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            content,
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-            ),
-          ),
-        ],
-      ),
+      icon: Icons.help_outline,
+      title: 'Adding Media Files',
+      content: 'Supported sources\n'
+          '• Direct HTTPS URLs to images/videos\n'
+          '• Google Drive public links\n'
+          '• Any publicly accessible media URL\n\n'
+          'File size limits\n'
+          '• Images: Maximum $_maxImageSizeKB KB\n'
+          '• Videos: Maximum $_maxVideoSizeMB MB\n\n'
+          'Google Drive setup\n'
+          '1. Upload file to Google Drive\n'
+          '2. Right-click → Share\n'
+          '3. Change access to “Anyone with the link”\n'
+          '4. Copy and paste the share link\n\n'
+          'Tips\n'
+          '• Test your URL before saving\n'
+          '• For videos, add a thumbnail for better preview\n'
+          '• Compress large files using the suggested tools',
     );
   }
 }

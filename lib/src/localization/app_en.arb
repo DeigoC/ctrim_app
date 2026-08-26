@@ -74,6 +74,10 @@
   "@userProfileAdminBadge": {
     "description": "Badge shown when a volunteer is an area admin"
   },
+  "userProfileCellGroupLeaderBadge": "CG Leader",
+  "@userProfileCellGroupLeaderBadge": {
+    "description": "Badge shown when a volunteer leads an active or paused cell group"
+  },
   "userProfileUpcomingTasks": "Upcoming tasks",
   "@userProfileUpcomingTasks": {
     "description": "Section title on a volunteer profile for schedule preview"
@@ -97,6 +101,35 @@
   "userProfileUntitledEvent": "Untitled event",
   "@userProfileUntitledEvent": {
     "description": "Fallback event title on profile schedule preview"
+  },
+  "userProfileRecentActivity": "Recent activity",
+  "@userProfileRecentActivity": {
+    "description": "Section title for the last few volunteer activity records"
+  },
+  "userProfileNoRecentActivity": "No recent activity",
+  "@userProfileNoRecentActivity": {
+    "description": "Empty state when a volunteer has no recorded activity"
+  },
+  "userProfileViewAllActivity": "View all activity",
+  "@userProfileViewAllActivity": {
+    "description": "Area-admin button to open the full activity paper trail"
+  },
+  "userActivityPageTitle": "Activity",
+  "@userActivityPageTitle": {
+    "description": "App bar title for the full volunteer activity log"
+  },
+  "userActivityDenied": "Only area admins can view the full activity log.",
+  "@userActivityDenied": {
+    "description": "Access denied copy on the full activity page"
+  },
+  "userActivityDocumentId": "Record {id}",
+  "@userActivityDocumentId": {
+    "description": "Subtitle showing the Firestore document ID for paper trailing",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
   },
   "cancel": "Cancel",
   "@cancel": {
@@ -215,6 +248,26 @@
   "postTagsNoneAvailable": "No post tags yet. Area admins can create tags in Admin Tools.",
   "@postTagsNoneAvailable": {
     "description": "Message when no post tags exist for assignment"
+  },
+  "postTagsNoneSelected": "No tags selected",
+  "@postTagsNoneSelected": {
+    "description": "Summary when a post has no content tags assigned"
+  },
+  "postTagsManage": "Manage tags",
+  "@postTagsManage": {
+    "description": "Opens the searchable post tag picker"
+  },
+  "postTagsSelectTitle": "Select content tags",
+  "@postTagsSelectTitle": {
+    "description": "Title for the full-screen post tag picker"
+  },
+  "postTagsSearchHint": "Search tags...",
+  "@postTagsSearchHint": {
+    "description": "Search hint on the post tag picker"
+  },
+  "postTagsNotifiableFilter": "Notification streams",
+  "@postTagsNotifiableFilter": {
+    "description": "Filter chip to show only post tags that drive push streams"
   },
   "managePostTagsTitle": "Manage Post Tags",
   "@managePostTagsTitle": {
@@ -435,6 +488,19 @@
       }
     }
   },
+  "selectCatalogSelected": "{count} selected",
+  "@selectCatalogSelected": {
+    "description": "Selected count on a catalog tag/group picker page",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectCatalogNoResults": "No matches for your search or filters.",
+  "@selectCatalogNoResults": {
+    "description": "Empty state when catalog picker filters hide every item"
+  },
   "selectUsersManageMembers": "Manage members",
   "@selectUsersManageMembers": {
     "description": "Button to open the volunteer picker from schedule assignment"
@@ -500,9 +566,13 @@
       }
     }
   },
-  "volunteersShowPlaceholders": "Show placeholders",
+  "volunteersShowPlaceholders": "Placeholders",
   "@volunteersShowPlaceholders": {
-    "description": "Toggle to include placeholder profiles in the Volunteers list"
+    "description": "Filter chip to show only placeholder profiles in the Volunteers list"
+  },
+  "volunteersEmptyPlaceholders": "No placeholder profiles to show",
+  "@volunteersEmptyPlaceholders": {
+    "description": "Empty state when the placeholders filter returns no volunteers"
   },
   "volunteersPlaceholderBadge": "Placeholder",
   "@volunteersPlaceholderBadge": {
@@ -519,6 +589,22 @@
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
     "description": "Sort volunteers by primary team tag"
+  },
+  "volunteersFilterLeaders": "Leaders",
+  "@volunteersFilterLeaders": {
+    "description": "Filter chip to show volunteers with the Leader permission"
+  },
+  "volunteersFilterAdmins": "Admins",
+  "@volunteersFilterAdmins": {
+    "description": "Filter chip to show volunteers who are area admins"
+  },
+  "volunteersFilterCellGroupLeaders": "CG Leaders",
+  "@volunteersFilterCellGroupLeaders": {
+    "description": "Filter chip to show volunteers who lead a cell group"
+  },
+  "volunteersEmptyRoles": "No volunteers match the selected roles",
+  "@volunteersEmptyRoles": {
+    "description": "Empty state when a role filter returns no volunteers"
   },
   "volunteersFilterTags": "Tags",
   "@volunteersFilterTags": {
@@ -557,9 +643,117 @@
   "@cellGroupsNoneAvailable": {
     "description": "Empty state when no cell groups exist for assignment"
   },
+  "cellGroupsNoneSelected": "No cell groups selected",
+  "@cellGroupsNoneSelected": {
+    "description": "Summary when a post is not linked to any cell groups"
+  },
+  "cellGroupsManage": "Manage cell groups",
+  "@cellGroupsManage": {
+    "description": "Opens the searchable cell group picker"
+  },
+  "cellGroupsSelectTitle": "Select cell groups",
+  "@cellGroupsSelectTitle": {
+    "description": "Title for the full-screen cell group picker"
+  },
+  "cellGroupsSearchHint": "Search cell groups...",
+  "@cellGroupsSearchHint": {
+    "description": "Search hint on the cell group picker"
+  },
   "cellGroupsSectionTitle": "Cell Groups",
   "@cellGroupsSectionTitle": {
     "description": "Main nav / home title for the Cell Groups section"
+  },
+  "cellGroupsTabOverview": "Overview",
+  "@cellGroupsTabOverview": {
+    "description": "Cell Groups section tab: teaching / overview content"
+  },
+  "cellGroupsTabGroups": "Groups",
+  "@cellGroupsTabGroups": {
+    "description": "Cell Groups section tab: catalogue list of groups"
+  },
+  "cellGroupsOverviewHeadline": "Life in small groups",
+  "@cellGroupsOverviewHeadline": {
+    "description": "Headline on the Cell Groups overview tab"
+  },
+  "cellGroupsOverviewIntro": "Cell groups are small gatherings that meet regularly outside the main service — focused on Bible study, care, prayer, and discipleship, usually in homes and led by trained members.",
+  "@cellGroupsOverviewIntro": {
+    "description": "Short intro blurb on the Cell Groups overview tab"
+  },
+  "cellGroupsOverviewVerseTitle": "Scripture",
+  "@cellGroupsOverviewVerseTitle": {
+    "description": "Title above the verse card on CG overview"
+  },
+  "cellGroupsOverviewVerseReference": "Acts 2:42, 46–47",
+  "@cellGroupsOverviewVerseReference": {
+    "description": "Bible reference for CG overview scripture card"
+  },
+  "cellGroupsOverviewVerseBody": "\"They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer… They continued to meet together… And the Lord added to their number daily those who were being saved.\"",
+  "@cellGroupsOverviewVerseBody": {
+    "description": "Verse body for CG overview scripture card"
+  },
+  "cellGroupsOverviewImagePlaceholder": "Image coming soon",
+  "@cellGroupsOverviewImagePlaceholder": {
+    "description": "Placeholder label where overview hero image will go"
+  },
+  "cellGroupsActivityTitle": "Activity",
+  "@cellGroupsActivityTitle": {
+    "description": "Title for the Cell Groups overview activity dashboard"
+  },
+  "cellGroupsActivitySubtitle": "Meetings linked to cell groups",
+  "@cellGroupsActivitySubtitle": {
+    "description": "Subtitle under the activity dashboard title"
+  },
+  "cellGroupsActivityPastMeetings": "Recent meetings",
+  "@cellGroupsActivityPastMeetings": {
+    "description": "Primary metric: CG meetings in the past 3 weeks"
+  },
+  "cellGroupsActivityPastMeetingsHint": "Past 3 weeks",
+  "@cellGroupsActivityPastMeetingsHint": {
+    "description": "Hint under the past meetings count"
+  },
+  "cellGroupsActivityPastAttendees": "Attendees",
+  "@cellGroupsActivityPastAttendees": {
+    "description": "Primary metric: sum of attendees for past-window CG meetings"
+  },
+  "cellGroupsActivityPastAttendeesHint": "Checked in · past 3 weeks",
+  "@cellGroupsActivityPastAttendeesHint": {
+    "description": "Hint under the past attendees total"
+  },
+  "cellGroupsActivityUpcoming": "Coming up",
+  "@cellGroupsActivityUpcoming": {
+    "description": "Primary metric: CG meetings in the coming week including today"
+  },
+  "cellGroupsActivityUpcomingHint": "Today + next 6 days",
+  "@cellGroupsActivityUpcomingHint": {
+    "description": "Hint under the upcoming meetings count"
+  },
+  "cellGroupsActivityActiveGroupsLabel": "Active groups",
+  "@cellGroupsActivityActiveGroupsLabel": {
+    "description": "Secondary metric label for active cell group count"
+  },
+  "cellGroupsActivityTotalMembersLabel": "Members in active groups",
+  "@cellGroupsActivityTotalMembersLabel": {
+    "description": "Secondary metric label for total MemberCount across active groups"
+  },
+  "cellGroupsActivityGroupsMetLabel": "Groups that met · past 3 weeks",
+  "@cellGroupsActivityGroupsMetLabel": {
+    "description": "Secondary metric label for distinct groups with a past-window meeting"
+  },
+  "cellGroupsActivityAvgAttendanceLabel": "Avg attendance · past 3 weeks",
+  "@cellGroupsActivityAvgAttendanceLabel": {
+    "description": "Secondary metric label for average attendees per past meeting"
+  },
+  "cellGroupsActivityPausedGroupsLabel": "Paused groups",
+  "@cellGroupsActivityPausedGroupsLabel": {
+    "description": "Secondary metric label shown when some groups are paused"
+  },
+  "cellGroupsActivityLoadError": "Couldn’t load activity right now.",
+  "@cellGroupsActivityLoadError": {
+    "description": "Error message when activity stats fail to load"
+  },
+  "cellGroupsActivityRetry": "Retry",
+  "@cellGroupsActivityRetry": {
+    "description": "Retry button for activity stats load failure"
   },
   "cellGroupsEmpty": "No cell groups yet.",
   "@cellGroupsEmpty": {
@@ -573,9 +767,9 @@
   "@cellGroupsEdit": {
     "description": "Action to edit a cell group profile"
   },
-  "cellGroupsManageRoster": "Manage roster",
+  "cellGroupsManageRoster": "Manage cell members",
   "@cellGroupsManageRoster": {
-    "description": "Action to manage cell group members"
+    "description": "Action to manage cell group members (UI: Cell Members, not Roster)"
   },
   "cellGroupsMeetingTrail": "Recent meetings",
   "@cellGroupsMeetingTrail": {
@@ -598,21 +792,17 @@
   "@cellGroupsLeadersLabel": {
     "description": "Label for leaders list on CG detail"
   },
-  "cellGroupsRosterTitle": "Roster",
+  "cellGroupsRosterTitle": "Cell Members",
   "@cellGroupsRosterTitle": {
-    "description": "Title for the cell group roster page"
+    "description": "Section title for CG members on detail (UI label; code/Firestore may still say roster)"
   },
   "cellGroupsAddMembers": "Add members",
   "@cellGroupsAddMembers": {
     "description": "Button to open user picker for roster"
   },
-  "cellGroupsAddFreeText": "Add by name",
-  "@cellGroupsAddFreeText": {
-    "description": "Button to add a free-text roster name"
-  },
-  "cellGroupsFreeTextHint": "Name (no app account)",
-  "@cellGroupsFreeTextHint": {
-    "description": "Hint for free-text roster member dialog"
+  "cellGroupsRosterAddHint": "Search for someone, or create a temporary profile if they are not listed.",
+  "@cellGroupsRosterAddHint": {
+    "description": "Hint under Add members: use picker / Create placeholder"
   },
   "cellGroupsStatusActive": "Active",
   "@cellGroupsStatusActive": {
@@ -629,5 +819,327 @@
   "cellGroupsGuestSignInHint": "Sign in to see more details about this group.",
   "@cellGroupsGuestSignInHint": {
     "description": "Hint on CG detail for guests"
+  },
+  "cellGroupsAboutTitle": "About",
+  "@cellGroupsAboutTitle": {
+    "description": "Section title for CG summary / cadence on detail"
+  },
+  "cellGroupsPhotosTitle": "Photos",
+  "@cellGroupsPhotosTitle": {
+    "description": "Section title for cell group photo gallery"
+  },
+  "cellGroupsPhotosHint": "Add a wide group photo as the cover for the detail page. Catalogue tiles still show the first leader’s portrait.",
+  "@cellGroupsPhotosHint": {
+    "description": "Helper under Photos on edit cell group"
+  },
+  "cellGroupsPhotosEmpty": "No photos yet.",
+  "@cellGroupsPhotosEmpty": {
+    "description": "Empty state when editing CG photos"
+  },
+  "cellGroupsAddPhoto": "Add photo",
+  "@cellGroupsAddPhoto": {
+    "description": "Button to add a cell group photo"
+  },
+  "cellGroupsCoverPhoto": "Cover",
+  "@cellGroupsCoverPhoto": {
+    "description": "Badge / label for the key graphic on a cell group"
+  },
+  "cellGroupsSetAsCover": "Tap to set as cover",
+  "@cellGroupsSetAsCover": {
+    "description": "Hint on a non-cover photo in CG edit"
+  },
+  "cellGroupsPhotosImagesOnly": "Cell groups only support images for now.",
+  "@cellGroupsPhotosImagesOnly": {
+    "description": "SnackBar when a video is added to a cell group"
+  },
+  "cellGroupsNameLabel": "Name",
+  "@cellGroupsNameLabel": {
+    "description": "Label for cell group name on create/edit"
+  },
+  "cellGroupsNameHint": "e.g. Young Adults",
+  "@cellGroupsNameHint": {
+    "description": "Placeholder example for cell group name"
+  },
+  "cellGroupsNameHelper": "The public title on the Groups list and the group page.",
+  "@cellGroupsNameHelper": {
+    "description": "Helper under cell group name field"
+  },
+  "cellGroupsNameRequired": "Name is required",
+  "@cellGroupsNameRequired": {
+    "description": "Validation when cell group name is empty"
+  },
+  "cellGroupsSummaryLabel": "Summary",
+  "@cellGroupsSummaryLabel": {
+    "description": "Label for cell group summary on create/edit"
+  },
+  "cellGroupsSummaryHint": "Who this group is for, and what you usually do",
+  "@cellGroupsSummaryHint": {
+    "description": "Placeholder for cell group summary"
+  },
+  "cellGroupsSummaryHelper": "Short description on the catalogue card and in About.",
+  "@cellGroupsSummaryHelper": {
+    "description": "Helper under cell group summary field"
+  },
+  "cellGroupsWeekdayLabel": "Meeting weekday",
+  "@cellGroupsWeekdayLabel": {
+    "description": "Label for usual meeting weekday on create/edit"
+  },
+  "cellGroupsWeekdayHelper": "Usual day this group meets. Leave unset if it varies.",
+  "@cellGroupsWeekdayHelper": {
+    "description": "Helper under cell group weekday dropdown"
+  },
+  "cellGroupsWeekdayNotSet": "Not set",
+  "@cellGroupsWeekdayNotSet": {
+    "description": "Dropdown option when no meeting weekday is chosen"
+  },
+  "cellGroupsTimeLabel": "Meeting time",
+  "@cellGroupsTimeLabel": {
+    "description": "Label for usual meeting time on create/edit"
+  },
+  "cellGroupsTimeHint": "e.g. 19:30",
+  "@cellGroupsTimeHint": {
+    "description": "Placeholder example for meeting time"
+  },
+  "cellGroupsTimeHelper": "Usual start time, shown with the weekday on the Groups list.",
+  "@cellGroupsTimeHelper": {
+    "description": "Helper under cell group meeting time field"
+  },
+  "cellGroupsStatusLabel": "Status",
+  "@cellGroupsStatusLabel": {
+    "description": "Label for cell group status on create/edit"
+  },
+  "cellGroupsStatusHelper": "Active groups appear in the catalogue. Paused groups stay listed as paused. Archived groups are hidden.",
+  "@cellGroupsStatusHelper": {
+    "description": "Helper under cell group status dropdown"
+  },
+  "cellGroupsLeadersHint": "People who lead this group. Catalogue tiles use the first leader’s portrait.",
+  "@cellGroupsLeadersHint": {
+    "description": "Helper under leaders on create/edit cell group"
+  },
+  "cellGroupsChooseLeaders": "Choose leaders",
+  "@cellGroupsChooseLeaders": {
+    "description": "Button to pick cell group leaders"
+  },
+  "bulletinSortFilterTitle": "Sort & Filter",
+  "@bulletinSortFilterTitle": {
+    "description": "Title of the bulletin sort and filter sheet"
+  },
+  "bulletinSortFilterSubtitle": "Choose how to organize your events",
+  "@bulletinSortFilterSubtitle": {
+    "description": "Subtitle of the bulletin sort and filter sheet"
+  },
+  "bulletinSortTooltip": "Sort & Filter",
+  "@bulletinSortTooltip": {
+    "description": "App bar tooltip for the bulletin sort and filter button"
+  },
+  "bulletinSortSection": "Sort",
+  "@bulletinSortSection": {
+    "description": "Section label for bulletin sort order"
+  },
+  "bulletinSortRelevancy": "Relevancy",
+  "@bulletinSortRelevancy": {
+    "description": "Default bulletin sort: today, then upcoming, then the rest"
+  },
+  "bulletinSortRelevancySubtitle": "Today first, then what’s coming up",
+  "@bulletinSortRelevancySubtitle": {
+    "description": "Explains relevancy sort on the bulletin"
+  },
+  "bulletinSortSoonest": "Soonest first",
+  "@bulletinSortSoonest": {
+    "description": "Bulletin sort by earliest event date"
+  },
+  "bulletinSortSoonestSubtitle": "Earliest event date at the top",
+  "@bulletinSortSoonestSubtitle": {
+    "description": "Explains soonest-first sort"
+  },
+  "bulletinSortLatest": "Latest first",
+  "@bulletinSortLatest": {
+    "description": "Bulletin sort by latest event date"
+  },
+  "bulletinSortLatestSubtitle": "Most recent event date at the top",
+  "@bulletinSortLatestSubtitle": {
+    "description": "Explains latest-first sort"
+  },
+  "bulletinShowSection": "Show",
+  "@bulletinShowSection": {
+    "description": "Section label for bulletin time and bookmark filters"
+  },
+  "bulletinShowAll": "All posts",
+  "@bulletinShowAll": {
+    "description": "Time filter that does not hide past or upcoming posts"
+  },
+  "bulletinShowUpcoming": "Upcoming",
+  "@bulletinShowUpcoming": {
+    "description": "Filter the bulletin to upcoming events"
+  },
+  "bulletinShowPast": "Past",
+  "@bulletinShowPast": {
+    "description": "Filter the bulletin to past events"
+  },
+  "bulletinShowBookmarks": "Bookmarks",
+  "@bulletinShowBookmarks": {
+    "description": "Filter the bulletin to bookmarked posts"
+  },
+  "bulletinLocationSection": "Location",
+  "@bulletinLocationSection": {
+    "description": "Section label for bulletin location filter"
+  },
+  "bulletinLocationSubtitle": "Show posts for a specific place",
+  "@bulletinLocationSubtitle": {
+    "description": "Helper under bulletin location chips"
+  },
+  "bulletinTagsSubtitle": "Narrow the bulletin by content type",
+  "@bulletinTagsSubtitle": {
+    "description": "Helper under bulletin content tag chips"
+  },
+  "bulletinShowing": "Showing: {parts}",
+  "@bulletinShowing": {
+    "description": "Banner listing the active bulletin sort and filters",
+    "placeholders": {
+      "parts": {
+        "type": "String"
+      }
+    }
+  },
+  "bulletinClearFilters": "Clear filters",
+  "@bulletinClearFilters": {
+    "description": "Clears bulletin sort and filters back to defaults"
+  },
+  "bulletinEmptyTitle": "No Events Found",
+  "@bulletinEmptyTitle": {
+    "description": "Empty state title when no bulletin posts match"
+  },
+  "bulletinEmptyBody": "There are no events matching your current filters.\nTry adjusting your sort or filters.",
+  "@bulletinEmptyBody": {
+    "description": "Empty state body when bulletin filters hide every post"
+  },
+  "bulletinChangeFilter": "Change Filter",
+  "@bulletinChangeFilter": {
+    "description": "Button on the empty bulletin to open sort and filter"
+  },
+  "bulletinBookmarksHelpTitle": "Bookmarked Posts",
+  "@bulletinBookmarksHelpTitle": {
+    "description": "Title of the bookmarks help dialog"
+  },
+  "bulletinBookmarksHelpBody": "You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.",
+  "@bulletinBookmarksHelpBody": {
+    "description": "Explains how bookmarks work on the bulletin"
+  },
+  "bulletinBookmarksHelpTooltip": "Learn about bookmarks",
+  "@bulletinBookmarksHelpTooltip": {
+    "description": "Tooltip on the bookmarks help button"
+  },
+  "churchInfoPageTitle": "Church Info",
+  "@churchInfoPageTitle": {
+    "description": "App bar fallback title for a church hub page"
+  },
+  "churchInfoNotFound": "No church information found.",
+  "@churchInfoNotFound": {
+    "description": "Empty state when a church record cannot be loaded"
+  },
+  "churchInfoEditTooltip": "Edit church info",
+  "@churchInfoEditTooltip": {
+    "description": "Tooltip on the church hub edit button"
+  },
+  "churchInfoLoadError": "Could not load church",
+  "@churchInfoLoadError": {
+    "description": "Error title when the church hub fails to load"
+  },
+  "churchHubOpenMaps": "Open in Maps",
+  "@churchHubOpenMaps": {
+    "description": "Button that opens the church maps URL"
+  },
+  "churchHubLocationUnset": "Location not set",
+  "@churchHubLocationUnset": {
+    "description": "Chip when a church has no linked location"
+  },
+  "churchHubSetLocationHint": "Set a location when editing to show posts, cell groups, and people for this church.",
+  "@churchHubSetLocationHint": {
+    "description": "Hint on the church hub when location is missing"
+  },
+  "churchHubSnapshotTitle": "At this location",
+  "@churchHubSnapshotTitle": {
+    "description": "Section title for church location snapshot counts"
+  },
+  "churchHubPostsLabel": "Posts",
+  "@churchHubPostsLabel": {
+    "description": "Count tile label for bulletin posts"
+  },
+  "churchHubPostsHint": "Last 3 months",
+  "@churchHubPostsHint": {
+    "description": "Hint under the posts count on a church hub"
+  },
+  "churchHubCellGroupsLabel": "Cell Groups",
+  "@churchHubCellGroupsLabel": {
+    "description": "Count tile label for cell groups at the church location"
+  },
+  "churchHubCellGroupsHint": "Active and paused",
+  "@churchHubCellGroupsHint": {
+    "description": "Hint under the cell groups count on a church hub"
+  },
+  "churchHubPeopleLabel": "People",
+  "@churchHubPeopleLabel": {
+    "description": "Count tile label for registered people at the church location"
+  },
+  "churchHubPeopleHint": "Profiles here",
+  "@churchHubPeopleHint": {
+    "description": "Hint under the people count on a church hub"
+  },
+  "churchHubRecentPosts": "Recent posts",
+  "@churchHubRecentPosts": {
+    "description": "Heading above recent bulletin posts on a church hub"
+  },
+  "churchHubCellGroupsHere": "Cell Groups here",
+  "@churchHubCellGroupsHere": {
+    "description": "Heading above cell groups listed on a church hub"
+  },
+  "churchHubNoRecentPosts": "No posts in the last 3 months.",
+  "@churchHubNoRecentPosts": {
+    "description": "Empty state when the church location has no recent posts"
+  },
+  "churchHubNoCellGroups": "No cell groups at this location yet.",
+  "@churchHubNoCellGroups": {
+    "description": "Empty state when the church location has no cell groups"
+  },
+  "churchHubMorePosts": "And {count} more",
+  "@churchHubMorePosts": {
+    "description": "Shown when the church hub truncates the recent posts list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "churchHubStatsError": "Could not load location activity.",
+  "@churchHubStatsError": {
+    "description": "Error when the church hub snapshot query fails"
+  },
+  "churchHubStatsRetry": "Retry",
+  "@churchHubStatsRetry": {
+    "description": "Retry loading church location snapshot"
+  },
+  "churchHubPagesTitle": "More about this church",
+  "@churchHubPagesTitle": {
+    "description": "Section title for extra church hub pages"
+  },
+  "churchHubNoPages": "No extra pages yet.",
+  "@churchHubNoPages": {
+    "description": "Empty state when a church hub has no nested pages"
+  },
+  "churchHubAddPage": "Add page",
+  "@churchHubAddPage": {
+    "description": "Button for area admins to add a nested church page"
+  },
+  "churchHubAddPageDescription": "Add a page for getting here, Sunday service, or other details.",
+  "@churchHubAddPageDescription": {
+    "description": "Helper text on the add church page card"
+  },
+  "churchHubPagesError": "Could not load extra pages.",
+  "@churchHubPagesError": {
+    "description": "Error when nested church pages fail to load"
+  },
+  "churchHubPagesRetry": "Retry",
+  "@churchHubPagesRetry": {
+    "description": "Retry loading nested church pages"
   }
 }

@@ -60,6 +60,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userProfileAdminBadge => 'Admin';
 
   @override
+  String get userProfileCellGroupLeaderBadge => 'CG Leader';
+
+  @override
   String get userProfileUpcomingTasks => 'Upcoming tasks';
 
   @override
@@ -76,6 +79,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userProfileUntitledEvent => 'Untitled event';
+
+  @override
+  String get userProfileRecentActivity => 'Recent activity';
+
+  @override
+  String get userProfileNoRecentActivity => 'No recent activity';
+
+  @override
+  String get userProfileViewAllActivity => 'View all activity';
+
+  @override
+  String get userActivityPageTitle => 'Activity';
+
+  @override
+  String get userActivityDenied =>
+      'Only area admins can view the full activity log.';
+
+  @override
+  String userActivityDocumentId(String id) {
+    return 'Record $id';
+  }
 
   @override
   String get cancel => 'Cancel';
@@ -164,6 +188,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get postTagsNoneAvailable =>
       'No post tags yet. Area admins can create tags in Admin Tools.';
+
+  @override
+  String get postTagsNoneSelected => 'No tags selected';
+
+  @override
+  String get postTagsManage => 'Manage tags';
+
+  @override
+  String get postTagsSelectTitle => 'Select content tags';
+
+  @override
+  String get postTagsSearchHint => 'Search tags...';
+
+  @override
+  String get postTagsNotifiableFilter => 'Notification streams';
 
   @override
   String get managePostTagsTitle => 'Manage Post Tags';
@@ -322,6 +361,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String selectCatalogSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectCatalogNoResults => 'No matches for your search or filters.';
+
+  @override
   String get selectUsersManageMembers => 'Manage members';
 
   @override
@@ -372,7 +419,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get volunteersShowPlaceholders => 'Show placeholders';
+  String get volunteersShowPlaceholders => 'Placeholders';
+
+  @override
+  String get volunteersEmptyPlaceholders => 'No placeholder profiles to show';
 
   @override
   String get volunteersPlaceholderBadge => 'Placeholder';
@@ -385,6 +435,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersSortTags => 'Team';
+
+  @override
+  String get volunteersFilterLeaders => 'Leaders';
+
+  @override
+  String get volunteersFilterAdmins => 'Admins';
+
+  @override
+  String get volunteersFilterCellGroupLeaders => 'CG Leaders';
+
+  @override
+  String get volunteersEmptyRoles => 'No volunteers match the selected roles';
 
   @override
   String get volunteersFilterTags => 'Tags';
@@ -416,7 +478,92 @@ class AppLocalizationsEn extends AppLocalizations {
       'No active cell groups yet. Area admins can create them in the Cell Groups section.';
 
   @override
+  String get cellGroupsNoneSelected => 'No cell groups selected';
+
+  @override
+  String get cellGroupsManage => 'Manage cell groups';
+
+  @override
+  String get cellGroupsSelectTitle => 'Select cell groups';
+
+  @override
+  String get cellGroupsSearchHint => 'Search cell groups...';
+
+  @override
   String get cellGroupsSectionTitle => 'Cell Groups';
+
+  @override
+  String get cellGroupsTabOverview => 'Overview';
+
+  @override
+  String get cellGroupsTabGroups => 'Groups';
+
+  @override
+  String get cellGroupsOverviewHeadline => 'Life in small groups';
+
+  @override
+  String get cellGroupsOverviewIntro =>
+      'Cell groups are small gatherings that meet regularly outside the main service — focused on Bible study, care, prayer, and discipleship, usually in homes and led by trained members.';
+
+  @override
+  String get cellGroupsOverviewVerseTitle => 'Scripture';
+
+  @override
+  String get cellGroupsOverviewVerseReference => 'Acts 2:42, 46–47';
+
+  @override
+  String get cellGroupsOverviewVerseBody =>
+      '\"They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer… They continued to meet together… And the Lord added to their number daily those who were being saved.\"';
+
+  @override
+  String get cellGroupsOverviewImagePlaceholder => 'Image coming soon';
+
+  @override
+  String get cellGroupsActivityTitle => 'Activity';
+
+  @override
+  String get cellGroupsActivitySubtitle => 'Meetings linked to cell groups';
+
+  @override
+  String get cellGroupsActivityPastMeetings => 'Recent meetings';
+
+  @override
+  String get cellGroupsActivityPastMeetingsHint => 'Past 3 weeks';
+
+  @override
+  String get cellGroupsActivityPastAttendees => 'Attendees';
+
+  @override
+  String get cellGroupsActivityPastAttendeesHint => 'Checked in · past 3 weeks';
+
+  @override
+  String get cellGroupsActivityUpcoming => 'Coming up';
+
+  @override
+  String get cellGroupsActivityUpcomingHint => 'Today + next 6 days';
+
+  @override
+  String get cellGroupsActivityActiveGroupsLabel => 'Active groups';
+
+  @override
+  String get cellGroupsActivityTotalMembersLabel => 'Members in active groups';
+
+  @override
+  String get cellGroupsActivityGroupsMetLabel =>
+      'Groups that met · past 3 weeks';
+
+  @override
+  String get cellGroupsActivityAvgAttendanceLabel =>
+      'Avg attendance · past 3 weeks';
+
+  @override
+  String get cellGroupsActivityPausedGroupsLabel => 'Paused groups';
+
+  @override
+  String get cellGroupsActivityLoadError => 'Couldn’t load activity right now.';
+
+  @override
+  String get cellGroupsActivityRetry => 'Retry';
 
   @override
   String get cellGroupsEmpty => 'No cell groups yet.';
@@ -428,7 +575,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsEdit => 'Edit group';
 
   @override
-  String get cellGroupsManageRoster => 'Manage roster';
+  String get cellGroupsManageRoster => 'Manage cell members';
 
   @override
   String get cellGroupsMeetingTrail => 'Recent meetings';
@@ -445,16 +592,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsLeadersLabel => 'Leaders';
 
   @override
-  String get cellGroupsRosterTitle => 'Roster';
+  String get cellGroupsRosterTitle => 'Cell Members';
 
   @override
   String get cellGroupsAddMembers => 'Add members';
 
   @override
-  String get cellGroupsAddFreeText => 'Add by name';
-
-  @override
-  String get cellGroupsFreeTextHint => 'Name (no app account)';
+  String get cellGroupsRosterAddHint =>
+      'Search for someone, or create a temporary profile if they are not listed.';
 
   @override
   String get cellGroupsStatusActive => 'Active';
@@ -468,4 +613,256 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cellGroupsGuestSignInHint =>
       'Sign in to see more details about this group.';
+
+  @override
+  String get cellGroupsAboutTitle => 'About';
+
+  @override
+  String get cellGroupsPhotosTitle => 'Photos';
+
+  @override
+  String get cellGroupsPhotosHint =>
+      'Add a wide group photo as the cover for the detail page. Catalogue tiles still show the first leader’s portrait.';
+
+  @override
+  String get cellGroupsPhotosEmpty => 'No photos yet.';
+
+  @override
+  String get cellGroupsAddPhoto => 'Add photo';
+
+  @override
+  String get cellGroupsCoverPhoto => 'Cover';
+
+  @override
+  String get cellGroupsSetAsCover => 'Tap to set as cover';
+
+  @override
+  String get cellGroupsPhotosImagesOnly =>
+      'Cell groups only support images for now.';
+
+  @override
+  String get cellGroupsNameLabel => 'Name';
+
+  @override
+  String get cellGroupsNameHint => 'e.g. Young Adults';
+
+  @override
+  String get cellGroupsNameHelper =>
+      'The public title on the Groups list and the group page.';
+
+  @override
+  String get cellGroupsNameRequired => 'Name is required';
+
+  @override
+  String get cellGroupsSummaryLabel => 'Summary';
+
+  @override
+  String get cellGroupsSummaryHint =>
+      'Who this group is for, and what you usually do';
+
+  @override
+  String get cellGroupsSummaryHelper =>
+      'Short description on the catalogue card and in About.';
+
+  @override
+  String get cellGroupsWeekdayLabel => 'Meeting weekday';
+
+  @override
+  String get cellGroupsWeekdayHelper =>
+      'Usual day this group meets. Leave unset if it varies.';
+
+  @override
+  String get cellGroupsWeekdayNotSet => 'Not set';
+
+  @override
+  String get cellGroupsTimeLabel => 'Meeting time';
+
+  @override
+  String get cellGroupsTimeHint => 'e.g. 19:30';
+
+  @override
+  String get cellGroupsTimeHelper =>
+      'Usual start time, shown with the weekday on the Groups list.';
+
+  @override
+  String get cellGroupsStatusLabel => 'Status';
+
+  @override
+  String get cellGroupsStatusHelper =>
+      'Active groups appear in the catalogue. Paused groups stay listed as paused. Archived groups are hidden.';
+
+  @override
+  String get cellGroupsLeadersHint =>
+      'People who lead this group. Catalogue tiles use the first leader’s portrait.';
+
+  @override
+  String get cellGroupsChooseLeaders => 'Choose leaders';
+
+  @override
+  String get bulletinSortFilterTitle => 'Sort & Filter';
+
+  @override
+  String get bulletinSortFilterSubtitle => 'Choose how to organize your events';
+
+  @override
+  String get bulletinSortTooltip => 'Sort & Filter';
+
+  @override
+  String get bulletinSortSection => 'Sort';
+
+  @override
+  String get bulletinSortRelevancy => 'Relevancy';
+
+  @override
+  String get bulletinSortRelevancySubtitle =>
+      'Today first, then what’s coming up';
+
+  @override
+  String get bulletinSortSoonest => 'Soonest first';
+
+  @override
+  String get bulletinSortSoonestSubtitle => 'Earliest event date at the top';
+
+  @override
+  String get bulletinSortLatest => 'Latest first';
+
+  @override
+  String get bulletinSortLatestSubtitle => 'Most recent event date at the top';
+
+  @override
+  String get bulletinShowSection => 'Show';
+
+  @override
+  String get bulletinShowAll => 'All posts';
+
+  @override
+  String get bulletinShowUpcoming => 'Upcoming';
+
+  @override
+  String get bulletinShowPast => 'Past';
+
+  @override
+  String get bulletinShowBookmarks => 'Bookmarks';
+
+  @override
+  String get bulletinLocationSection => 'Location';
+
+  @override
+  String get bulletinLocationSubtitle => 'Show posts for a specific place';
+
+  @override
+  String get bulletinTagsSubtitle => 'Narrow the bulletin by content type';
+
+  @override
+  String bulletinShowing(String parts) {
+    return 'Showing: $parts';
+  }
+
+  @override
+  String get bulletinClearFilters => 'Clear filters';
+
+  @override
+  String get bulletinEmptyTitle => 'No Events Found';
+
+  @override
+  String get bulletinEmptyBody =>
+      'There are no events matching your current filters.\nTry adjusting your sort or filters.';
+
+  @override
+  String get bulletinChangeFilter => 'Change Filter';
+
+  @override
+  String get bulletinBookmarksHelpTitle => 'Bookmarked Posts';
+
+  @override
+  String get bulletinBookmarksHelpBody =>
+      'You will be notified of updates made to the posts you bookmark.\n\nTo bookmark a post, tap and hold on any event card.';
+
+  @override
+  String get bulletinBookmarksHelpTooltip => 'Learn about bookmarks';
+
+  @override
+  String get churchInfoPageTitle => 'Church Info';
+
+  @override
+  String get churchInfoNotFound => 'No church information found.';
+
+  @override
+  String get churchInfoEditTooltip => 'Edit church info';
+
+  @override
+  String get churchInfoLoadError => 'Could not load church';
+
+  @override
+  String get churchHubOpenMaps => 'Open in Maps';
+
+  @override
+  String get churchHubLocationUnset => 'Location not set';
+
+  @override
+  String get churchHubSetLocationHint =>
+      'Set a location when editing to show posts, cell groups, and people for this church.';
+
+  @override
+  String get churchHubSnapshotTitle => 'At this location';
+
+  @override
+  String get churchHubPostsLabel => 'Posts';
+
+  @override
+  String get churchHubPostsHint => 'Last 3 months';
+
+  @override
+  String get churchHubCellGroupsLabel => 'Cell Groups';
+
+  @override
+  String get churchHubCellGroupsHint => 'Active and paused';
+
+  @override
+  String get churchHubPeopleLabel => 'People';
+
+  @override
+  String get churchHubPeopleHint => 'Profiles here';
+
+  @override
+  String get churchHubRecentPosts => 'Recent posts';
+
+  @override
+  String get churchHubCellGroupsHere => 'Cell Groups here';
+
+  @override
+  String get churchHubNoRecentPosts => 'No posts in the last 3 months.';
+
+  @override
+  String get churchHubNoCellGroups => 'No cell groups at this location yet.';
+
+  @override
+  String churchHubMorePosts(int count) {
+    return 'And $count more';
+  }
+
+  @override
+  String get churchHubStatsError => 'Could not load location activity.';
+
+  @override
+  String get churchHubStatsRetry => 'Retry';
+
+  @override
+  String get churchHubPagesTitle => 'More about this church';
+
+  @override
+  String get churchHubNoPages => 'No extra pages yet.';
+
+  @override
+  String get churchHubAddPage => 'Add page';
+
+  @override
+  String get churchHubAddPageDescription =>
+      'Add a page for getting here, Sunday service, or other details.';
+
+  @override
+  String get churchHubPagesError => 'Could not load extra pages.';
+
+  @override
+  String get churchHubPagesRetry => 'Retry';
 }

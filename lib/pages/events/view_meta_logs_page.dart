@@ -9,6 +9,8 @@ import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/app_dialog.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 
 class ViewMetaLogsPage extends StatefulWidget {
@@ -25,9 +27,12 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   static final DateFormat _dateFormat = DateFormat('d MMM yyyy. HH:mm');
   @override
   void initState() {
-    _originalContributors = List.from(widget.eventContext.metadata.contributorUIDs, growable: false);
+    _originalContributors = List.from(
+        widget.eventContext.metadata.contributorUIDs,
+        growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _appContext.analytics.logScreenView(screenName: 'Meta-logs for Post:${widget.eventContext.id}');
+    _appContext.analytics.logScreenView(
+        screenName: 'Meta-logs for Post:${widget.eventContext.id}');
     widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
   }
@@ -52,164 +57,207 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   Widget _buildWithData(BuildContext context) {
     final List<User> allUsers = _appContext.allUsers;
-    final User mainAdmin = allUsers.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.authorUID) == 0);
-    final List<User> selectedUsers =
-        allUsers.where((element) => widget.eventContext.metadata.contributorUIDs.contains(element.id)).toList();
-    final bool isAuthor = widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
-        widget.eventContext.isUserContributor(_appContext.currentUser.id);
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final User mainAdmin = _userFor(widget.eventContext.metadata.authorUID);
+    final List<User> selectedUsers = allUsers
+        .where((element) =>
+            widget.eventContext.metadata.contributorUIDs.contains(element.id))
+        .toList();
+    final bool isAuthor =
+        widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
+            widget.eventContext.isUserContributor(_appContext.currentUser.id);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 0);
 
     return CustomScrollView(
       slivers: [
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding + 16),
           sliver: SliverToBoxAdapter(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const SizedBox(height: 16),
-            // Author Section
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
+                const SizedBox(height: 16),
+                // Author Section
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.person,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Author',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: Icon(
+                                Icons.person,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Author',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            mainAdmin.fullname,
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                          ),
+                          subtitle: Text(
+                            'Event creator and owner',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.7),
+                                    ),
+                          ),
+                          leading: MyUserAvatar(mainAdmin),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        mainAdmin.fullname,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                      subtitle: Text(
-                        'Event creator and owner',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                            ),
-                      ),
-                      leading: MyUserAvatar(mainAdmin),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Contributors Section
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final bool stackManage = constraints.maxWidth < 420;
-                        final headerIcon = Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.group,
-                            color: Theme.of(context).colorScheme.onSecondaryContainer,
-                            size: 20,
-                          ),
-                        );
-                        final titles = Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Contributors',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                const SizedBox(height: 16),
+                // Contributors Section
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final bool stackManage = constraints.maxWidth < 420;
+                            final headerIcon = Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              Text(
-                                'People who can edit this event',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                                    ),
+                              child: Icon(
+                                Icons.group,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer,
+                                size: 20,
                               ),
-                            ],
-                          ),
-                        );
-                        final manageButton = isAuthor
-                            ? FilledButton.icon(
-                                onPressed: _manageContributorsTap,
-                                icon: const Icon(Icons.person_add_alt_1, size: 18),
-                                label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                                ),
-                              )
-                            : null;
+                            );
+                            final titles = Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Contributors',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    'People who can edit this event',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.7),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            final manageButton = isAuthor
+                                ? FilledButton.icon(
+                                    onPressed: _manageContributorsTap,
+                                    icon: const Icon(Icons.person_add_alt_1,
+                                        size: 18),
+                                    label: Text(AppLocalizations.of(context)!
+                                        .selectUsersManageContributors),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .secondary,
+                                      foregroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .onSecondary,
+                                    ),
+                                  )
+                                : null;
 
-                        if (stackManage) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(children: [headerIcon, const SizedBox(width: 12), titles]),
-                              if (manageButton != null) ...[
-                                const SizedBox(height: 12),
-                                manageButton,
+                            if (stackManage) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(children: [
+                                    headerIcon,
+                                    const SizedBox(width: 12),
+                                    titles
+                                  ]),
+                                  if (manageButton != null) ...[
+                                    const SizedBox(height: 12),
+                                    manageButton,
+                                  ],
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              children: [
+                                headerIcon,
+                                const SizedBox(width: 12),
+                                titles,
+                                if (manageButton != null) ...[
+                                  const SizedBox(width: 8),
+                                  manageButton,
+                                ],
                               ],
-                            ],
-                          );
-                        }
-
-                        return Row(
-                          children: [
-                            headerIcon,
-                            const SizedBox(width: 12),
-                            titles,
-                            if (manageButton != null) ...[
-                              const SizedBox(width: 8),
-                              manageButton,
-                            ],
-                          ],
-                        );
-                      },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _buildContributors(selectedUsers, isAuthor: isAuthor),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildContributors(selectedUsers, isAuthor: isAuthor),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ])),
+                const SizedBox(height: 24),
+              ])),
         ),
         // Change History Section
         SliverPadding(
@@ -249,7 +297,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               ? SliverToBoxAdapter(
                   child: Card(
                     elevation: 1,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Column(
@@ -257,28 +306,46 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.5),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.history_edu,
                               size: 48,
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
                             ),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'No changes yet',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.7),
                                 ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Event changes and updates will appear here as they happen.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
                                 ),
                             textAlign: TextAlign.center,
                           ),
@@ -291,13 +358,15 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                   itemCount: widget.eventContext.log.logs.length,
                   itemBuilder: (_, index) {
                     final thisEntry = widget.eventContext.log.logs[index];
-                    final thisU = allUsers.firstWhere((e) => e.id.compareTo(thisEntry['uid']) == 0);
+                    final thisU = _userFor(thisEntry['uid'] as String);
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       elevation: 1,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         title: Text(
                           thisEntry['log'],
                           maxLines: 2,
@@ -308,18 +377,26 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
                           margin: const EdgeInsets.only(top: 4),
                           child: Text(
                             _dateFormat.format(thisEntry['ts']),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
                           ),
                         ),
                         leading: MyUserAvatar(thisU),
                         trailing: Icon(
                           Icons.arrow_forward_ios,
                           size: 16,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.4),
                         ),
-                        onTap: () => _showFullLog(thisEntry, webHorizontalPadding),
+                        onTap: () =>
+                            _showFullLog(thisEntry, webHorizontalPadding),
                       ),
                     );
                   }),
@@ -331,13 +408,17 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     );
   }
 
-  Widget _buildContributors(final List<User> selectedUsers, {required bool isAuthor}) {
+  Widget _buildContributors(final List<User> selectedUsers,
+      {required bool isAuthor}) {
     if (selectedUsers.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
@@ -347,14 +428,20 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
           children: [
             Icon(
               Icons.person_off_outlined,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.45),
               size: 32,
             ),
             const SizedBox(height: 8),
             Text(
               'No contributors added yet',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.75),
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -363,7 +450,10 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               'Contributors can edit this post alongside the author.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
                   ),
             ),
             if (isAuthor) ...[
@@ -388,18 +478,26 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
             leading: MyUserAvatar(selectedUsers[i]),
             title: Text(
               selectedUsers[i].fullname,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(fontWeight: FontWeight.w500),
             ),
             subtitle: Text(
               selectedUsers[i].location,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7),
                   ),
             ),
             trailing: isAuthor
                 ? IconButton(
-                    icon: Icon(Icons.remove_circle_outline, color: Theme.of(context).colorScheme.error),
-                    onPressed: () => _onRemoveContributorClick(selectedUsers[i]),
+                    icon: Icon(Icons.remove_circle_outline,
+                        color: Theme.of(context).colorScheme.error),
+                    onPressed: () =>
+                        _onRemoveContributorClick(selectedUsers[i]),
                     tooltip: 'Remove contributor',
                   )
                 : null,
@@ -410,180 +508,58 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
   }
 
   // * Logic
-  void _showFullLog(final Map<String, dynamic> entry, final double horizontalPadding) {
-    final thisU = _appContext.getUserFromID(entry['uid']);
-    showDialog(
-        context: context,
-        builder: (_) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
-              child: Dialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          MyUserAvatar(thisU),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  thisU.fullname,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                      ),
-                                ),
-                                Text(
-                                  _dateFormat.format(entry['ts']),
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Content
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  entry['log'],
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        height: 1.5,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  FilledButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: const Text('Close'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ));
-  }
-
-  void _onRemoveContributorClick(final User thisU) {
+  void _showFullLog(
+      final Map<String, dynamic> entry, final double horizontalPadding) {
+    final thisU = _userFor(entry['uid'] as String);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.person_remove,
-                color: Theme.of(context).colorScheme.onErrorContainer,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Remove Contributor'),
-          ],
-        ),
-        content: Column(
+      builder: (_) => AppDialog(
+        title: thisU.fullname,
+        message: _dateFormat.format(entry['ts']),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Are you sure you want to remove ${thisU.fullname} as a contributor?',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'They will no longer be able to edit this event.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                ],
+            MyUserAvatar(thisU),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                entry['log'] as String,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(height: 1.5),
               ),
             ),
           ],
         ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final updated = List<String>.from(widget.eventContext.metadata.contributorUIDs)..remove(thisU.id);
-              setState(() {
-                widget.eventContext.applyContributorUIDs(updated);
-                widget.eventContext.allowSavingOfTheEdit();
-              });
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: const Text('Remove'),
-          ),
-        ],
+        actions: AppDialogActions(
+          onConfirm: () => Navigator.of(context).pop(),
+          confirmLabel: 'Close',
+        ),
       ),
     );
+  }
+
+  Future<void> _onRemoveContributorClick(final User thisU) async {
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Remove Contributor',
+      content:
+          'Are you sure you want to remove ${thisU.fullname} as a contributor?\n\n'
+          'They will no longer be able to edit this event.',
+      confirmText: 'Remove',
+      icon: Icons.person_remove_outlined,
+      isDestructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    final updated =
+        List<String>.from(widget.eventContext.metadata.contributorUIDs)
+          ..remove(thisU.id);
+    setState(() {
+      widget.eventContext.applyContributorUIDs(updated);
+      widget.eventContext.allowSavingOfTheEdit();
+    });
   }
 
   Future<void> _manageContributorsTap() async {
@@ -591,7 +567,8 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
       context,
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
-          selectedUIDs: List<String>.from(widget.eventContext.metadata.contributorUIDs),
+          selectedUIDs:
+              List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -611,10 +588,12 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
 
   void _checkForChangesToContributors() {
     bool haveContributorsChange = false;
-    if (_originalContributors.length != widget.eventContext.metadata.contributorUIDs.length) {
+    if (_originalContributors.length !=
+        widget.eventContext.metadata.contributorUIDs.length) {
       haveContributorsChange = true;
     } else {
-      for (final newContributorID in widget.eventContext.metadata.contributorUIDs) {
+      for (final newContributorID
+          in widget.eventContext.metadata.contributorUIDs) {
         if (!_originalContributors.contains(newContributorID)) {
           haveContributorsChange = true;
           break;
@@ -625,5 +604,14 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
     if (haveContributorsChange) {
       widget.eventContext.allowSavingOfTheEdit();
     }
+  }
+
+  User _userFor(final String uid) {
+    return _appContext.userById(uid) ??
+        User(
+          id: uid.isEmpty ? 'unknown' : uid,
+          forname: 'Unknown',
+          surname: 'User',
+        );
   }
 }

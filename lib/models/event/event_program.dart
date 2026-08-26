@@ -79,6 +79,11 @@ class EventProgram {
   String get mapLink => _mapLink;
   DateTime? get finishTime => _finishTime;
 
+  /// URL opened by the Maps / Join action on the program schedule card.
+  String get locationLaunchUrl => _online ? _address : _mapLink;
+
+  bool get hasLocationLaunchUrl => locationLaunchUrl.trim().isNotEmpty;
+
   void setAllDay(final bool state) => _allDay = state;
   void setFinishTime(final DateTime? finish) => _finishTime = finish;
   void setOnline(final bool state) => _online = state;
@@ -129,6 +134,25 @@ class EventProgram {
       if (start == null || end == null || start.isBefore(threshold)) continue;
       role['start'] = start.add(delta);
       role['end'] = end.add(delta);
+    }
+  }
+
+  /// Moves every role onto [newDay]'s calendar date relative to [oldDay],
+  /// preserving each role's clock time (and any overnight day offset).
+  void rebaseRolesToCalendarDate({
+    required DateTime oldDay,
+    required DateTime newDay,
+  }) {
+    final oldDateOnly = DateTime(oldDay.year, oldDay.month, oldDay.day);
+    final newDateOnly = DateTime(newDay.year, newDay.month, newDay.day);
+    final delta = newDateOnly.difference(oldDateOnly);
+    if (delta == Duration.zero) return;
+
+    for (final role in _roles) {
+      final start = role['start'] as DateTime?;
+      final end = role['end'] as DateTime?;
+      if (start != null) role['start'] = start.add(delta);
+      if (end != null) role['end'] = end.add(delta);
     }
   }
 

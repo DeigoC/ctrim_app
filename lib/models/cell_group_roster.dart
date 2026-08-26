@@ -15,7 +15,10 @@ class CellGroupMemberStatus {
   static const String inactive = 'inactive';
 }
 
-/// One row on a cell group roster (registered, placeholder, or free-text).
+/// One row on a cell group roster (registered or placeholder user).
+///
+/// Free-text rows (`DisplayName` only) are legacy-read only; new adds use a
+/// linked `UserId` (registered or placeholder).
 class CellGroupRosterMember {
   late String _userId, _displayName, _role, _status;
   DateTime? _joinedAt;
@@ -35,11 +38,18 @@ class CellGroupRosterMember {
   }
 
   CellGroupRosterMember.fromMap(final Map<String, dynamic> data)
-      : _userId = (data['UserId'] as String?) ?? '',
+      : _userId = _parseId(data['UserId']),
         _displayName = (data['DisplayName'] as String?) ?? '',
         _role = (data['Role'] as String?) ?? CellGroupMemberRole.member,
         _status = (data['Status'] as String?) ?? CellGroupMemberStatus.active,
         _joinedAt = _parseTimestamp(data['JoinedAt']);
+
+  /// Firestore may store numeric ids; coerce like [CellGroup] leader id lists.
+  static String _parseId(final dynamic raw) {
+    if (raw == null) return '';
+    if (raw is String) return raw.trim();
+    return raw.toString().trim();
+  }
 
   static DateTime? _parseTimestamp(final dynamic raw) {
     if (raw is Timestamp) return raw.toDate();

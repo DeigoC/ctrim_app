@@ -2,10 +2,40 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Hardcoded grouping for post templates (Services vs Cell Groups).
+enum PostTemplateCategory {
+  service('service', 'Services'),
+  cellGroup('cellGroup', 'Cell Groups');
+
+  const PostTemplateCategory(this.firestoreValue, this.label);
+
+  final String firestoreValue;
+  final String label;
+
+  static PostTemplateCategory fromFirestore(final dynamic rawValue) {
+    final value = (rawValue ?? '').toString().trim().toLowerCase();
+    if (value == cellGroup.firestoreValue.toLowerCase()) {
+      return cellGroup;
+    }
+    // Missing / unknown values default to Services so existing records
+    // stay in the first section without a data migration.
+    return service;
+  }
+}
+
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
-  late List<String> _topics, _tagIDs, _cellGroupIDs, _contributorUIDs, _subtitles;
-  late List<Map<String, dynamic>> _headMedia, _media, _headMediaPool, _bodyMediaPool;
+  PostTemplateCategory _category = PostTemplateCategory.service;
+  late List<String> _topics,
+      _tagIDs,
+      _cellGroupIDs,
+      _expectedAttendeeUserIDs,
+      _contributorUIDs,
+      _subtitles;
+  late List<Map<String, dynamic>> _headMedia,
+      _media,
+      _headMediaPool,
+      _bodyMediaPool;
   late List<Map<String, dynamic>> _logs;
   String? _leadSpeakerUID;
   bool _isPeriodParent = false;
@@ -17,7 +47,8 @@ class PostTemplate {
   bool _allDay = false, _online = false;
   int? _defaultDayOfWeek;
 
-  PostTemplate.fromMap(final bool forLocal, final String id, final Map<String, dynamic> data) {
+  PostTemplate.fromMap(
+      final bool forLocal, final String id, final Map<String, dynamic> data) {
     _id = id;
 
     // head - meta related
@@ -25,12 +56,20 @@ class PostTemplate {
     _description = data['Description'];
     _headTitle = data['HeadTitle'];
     _topics = List.from(data['Topics']);
-    _tagIDs = data['TagIDs'] != null ? List<String>.from(data['TagIDs']) : <String>[];
-    _cellGroupIDs =
-        data['CellGroupIDs'] != null ? List<String>.from(data['CellGroupIDs']) : <String>[];
+    _tagIDs =
+        data['TagIDs'] != null ? List<String>.from(data['TagIDs']) : <String>[];
+    _cellGroupIDs = data['CellGroupIDs'] != null
+        ? List<String>.from(data['CellGroupIDs'])
+        : <String>[];
+    _expectedAttendeeUserIDs = data['ExpectedAttendeeUserIDs'] != null
+        ? List<String>.from(data['ExpectedAttendeeUserIDs'])
+        : <String>[];
     _contributorUIDs = List.from(data['Contributors']);
-    _subtitles = data['Subtitles'] != null ? List<String>.from(data['Subtitles']) : <String>[];
+    _subtitles = data['Subtitles'] != null
+        ? List<String>.from(data['Subtitles'])
+        : <String>[];
     _location = data['Location'];
+    _category = PostTemplateCategory.fromFirestore(data['Category']);
     _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
     _isPeriodParent = data['IsPeriodParent'] == true;
 
@@ -72,7 +111,9 @@ class PostTemplate {
     _bodyMediaPool = data['BodyMediaPool'] != null
         ? _parseMedia(_asStringKeyedMapList(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
-    _defaultDayOfWeek = data['DefaultDayOfWeek'] != null ? data['DefaultDayOfWeek'] as int? : null;
+    _defaultDayOfWeek = data['DefaultDayOfWeek'] != null
+        ? data['DefaultDayOfWeek'] as int?
+        : null;
     _logs = _parseLogs(forLocal, data['Logs']);
   }
 
@@ -80,10 +121,14 @@ class PostTemplate {
     dynamic startTime = _startTime;
     dynamic endTime = _finishTime;
     if (_startTime != null) {
-      startTime = forLocal ? _startTime!.millisecondsSinceEpoch : Timestamp.fromDate(_startTime!);
+      startTime = forLocal
+          ? _startTime!.millisecondsSinceEpoch
+          : Timestamp.fromDate(_startTime!);
     }
     if (_finishTime != null) {
-      endTime = forLocal ? _finishTime!.millisecondsSinceEpoch : Timestamp.fromDate(_finishTime!);
+      endTime = forLocal
+          ? _finishTime!.millisecondsSinceEpoch
+          : Timestamp.fromDate(_finishTime!);
     }
 
     return {
@@ -92,9 +137,11 @@ class PostTemplate {
       'HeadTitle': _headTitle,
       'Body': _body,
       'Location': _location,
+      'Category': _category.firestoreValue,
       'Topics': _topics,
       'TagIDs': _tagIDs,
       'CellGroupIDs': _cellGroupIDs,
+      'ExpectedAttendeeUserIDs': _expectedAttendeeUserIDs,
       'Contributors': _contributorUIDs,
       'LeadSpeakerUID': _leadSpeakerUID,
       'IsPeriodParent': _isPeriodParent,
@@ -122,6 +169,7 @@ class PostTemplate {
   String get headTitle => _headTitle;
   String get body => _body;
   String get location => _location;
+  PostTemplateCategory get category => _category;
   String get mapLink => _mapLink;
   String get address => _address;
   bool get allDay => _allDay;
@@ -145,6 +193,8 @@ class PostTemplate {
   List<String> get topics => _topics;
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
   List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
+  List<String> get expectedAttendeeUserIDs =>
+      UnmodifiableListView(_expectedAttendeeUserIDs);
   List<String> get subtitles => _subtitles;
   String? get leadSpeakerUID => _leadSpeakerUID;
   bool get isPeriodParent => _isPeriodParent;
@@ -152,12 +202,17 @@ class PostTemplate {
   /// Change history entries: `{uid, log, ts}` — newest first after [addLog].
   List<Map<String, dynamic>> get logs => UnmodifiableListView(_logs);
 
-  void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
+  void setTagIDs(final List<String> tagIDs) =>
+      _tagIDs = List<String>.from(tagIDs);
   void setCellGroupIDs(final List<String> cellGroupIDs) =>
       _cellGroupIDs = List<String>.from(cellGroupIDs);
 
+  void setExpectedAttendeeUserIDs(final List<String> userIds) =>
+      _expectedAttendeeUserIDs = List<String>.from(userIds);
+
   /// Prepends a change-history entry (same shape as post [EventLog] entries).
-  void addLog({required String log, required String uid, required DateTime ts}) =>
+  void addLog(
+          {required String log, required String uid, required DateTime ts}) =>
       _logs.insert(0, {'log': log, 'uid': uid, 'ts': ts});
 
   void setLogs(final List<Map<String, dynamic>> logs) =>
@@ -174,6 +229,7 @@ class PostTemplate {
   void setAddress(final String address) => _address = address;
   void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
   void setIsPeriodParent(final bool value) => _isPeriodParent = value;
+  void setCategory(final PostTemplateCategory value) => _category = value;
 
   void setStartTime(final DateTime? start) => _startTime = start;
   void setEndtime(final DateTime? end) => _finishTime = end;
@@ -188,7 +244,8 @@ class PostTemplate {
 
   void removeSubtitle(final String subtitle) => _subtitles.remove(subtitle);
 
-  void setSubtitles(final List<String> subtitles) => _subtitles = List<String>.from(subtitles);
+  void setSubtitles(final List<String> subtitles) =>
+      _subtitles = List<String>.from(subtitles);
 
   String? getRandomSubtitle() {
     if (_subtitles.isEmpty) return null;
@@ -203,7 +260,8 @@ class PostTemplate {
     }
   }
 
-  void removeHeadMediaPoolItem(final String src) => _headMediaPool.removeWhere((e) => e['src'] == src);
+  void removeHeadMediaPoolItem(final String src) =>
+      _headMediaPool.removeWhere((e) => e['src'] == src);
 
   void setHeadMediaPool(final List<Map<String, dynamic>> pool) =>
       _headMediaPool = pool.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -221,7 +279,8 @@ class PostTemplate {
     }
   }
 
-  void removeBodyMediaPoolItem(final String src) => _bodyMediaPool.removeWhere((e) => e['src'] == src);
+  void removeBodyMediaPoolItem(final String src) =>
+      _bodyMediaPool.removeWhere((e) => e['src'] == src);
 
   void setBodyMediaPool(final List<Map<String, dynamic>> pool) =>
       _bodyMediaPool = pool.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -249,16 +308,21 @@ class PostTemplate {
         .toList();
   }
 
-  List<Map<String, dynamic>> _parseRoles(final bool forLocal, final List<Map<String, dynamic>> rawData) {
+  List<Map<String, dynamic>> _parseRoles(
+      final bool forLocal, final List<Map<String, dynamic>> rawData) {
     final List<Map<String, dynamic>> result = List.empty(growable: true);
     for (final entry in rawData) {
       DateTime? start;
       DateTime? end;
       if (entry['start'] != null) {
-        start = forLocal ? DateTime.fromMillisecondsSinceEpoch(entry['start']) : (entry['start'] as Timestamp).toDate();
+        start = forLocal
+            ? DateTime.fromMillisecondsSinceEpoch(entry['start'])
+            : (entry['start'] as Timestamp).toDate();
       }
       if (entry['end'] != null) {
-        end = forLocal ? DateTime.fromMillisecondsSinceEpoch(entry['end']) : (entry['end'] as Timestamp).toDate();
+        end = forLocal
+            ? DateTime.fromMillisecondsSinceEpoch(entry['end'])
+            : (entry['end'] as Timestamp).toDate();
       }
 
       result.add({
@@ -275,27 +339,38 @@ class PostTemplate {
     return result;
   }
 
-  List<Map<String, dynamic>> _parseMedia(final List<Map<String, dynamic>> data) {
-    final List<Map<String, dynamic>> results = List<Map<String, dynamic>>.empty(growable: true);
+  List<Map<String, dynamic>> _parseMedia(
+      final List<Map<String, dynamic>> data) {
+    final List<Map<String, dynamic>> results =
+        List<Map<String, dynamic>>.empty(growable: true);
 
     for (final entry in data) {
-      results.add(
-          {'title': entry['title'], 'src': entry['src'], 'type': entry['type'], 'thumbnailSrc': entry['thumbnailSrc']});
+      results.add({
+        'title': entry['title'],
+        'src': entry['src'],
+        'type': entry['type'],
+        'thumbnailSrc': entry['thumbnailSrc']
+      });
     }
 
     return results;
   }
 
   List<Map<String, dynamic>> _rolesToJson(final bool forLocal) {
-    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
+    final List<Map<String, dynamic>> result =
+        List<Map<String, dynamic>>.empty(growable: true);
     for (final entry in _roles) {
       var start = entry['start'];
       var end = entry['end'];
       if (start != null) {
-        start = forLocal ? (entry['start'] as DateTime).millisecondsSinceEpoch : Timestamp.fromDate(entry['start']);
+        start = forLocal
+            ? (entry['start'] as DateTime).millisecondsSinceEpoch
+            : Timestamp.fromDate(entry['start']);
       }
       if (end != null) {
-        end = forLocal ? (entry['end'] as DateTime).millisecondsSinceEpoch : Timestamp.fromDate(entry['end']);
+        end = forLocal
+            ? (entry['end'] as DateTime).millisecondsSinceEpoch
+            : Timestamp.fromDate(entry['end']);
       }
 
       result.add({
@@ -312,7 +387,8 @@ class PostTemplate {
     return result;
   }
 
-  List<Map<String, dynamic>> _parseLogs(final bool forLocal, final dynamic raw) {
+  List<Map<String, dynamic>> _parseLogs(
+      final bool forLocal, final dynamic raw) {
     if (raw == null) return <Map<String, dynamic>>[];
     final List<Map<String, dynamic>> result = <Map<String, dynamic>>[];
     for (final entry in _asStringKeyedMapList(raw)) {

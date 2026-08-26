@@ -5,7 +5,8 @@ import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
 
 void main() {
   group('placeholder_user_permissions', () {
-    final admin = User(id: '1', forname: 'Ada', surname: 'Admin', isAreaAdmin: true);
+    final admin =
+        User(id: '1', forname: 'Ada', surname: 'Admin', isAreaAdmin: true);
     final author = User(id: '2', forname: 'Pat', surname: 'Author');
     final other = User(id: '3', forname: 'Oli', surname: 'Other');
     final placeholder = User(
@@ -57,33 +58,40 @@ void main() {
 
     group('canEditPlaceholderProfile', () {
       test('allows admin for anyone', () {
-        expect(canEditPlaceholderProfile(actor: admin, target: placeholder), isTrue);
+        expect(canEditPlaceholderProfile(actor: admin, target: placeholder),
+            isTrue);
         expect(canEditPlaceholderProfile(actor: admin, target: linked), isTrue);
       });
 
       test('allows creator only while still a placeholder', () {
-        expect(canEditPlaceholderProfile(actor: author, target: placeholder), isTrue);
-        expect(canEditPlaceholderProfile(actor: author, target: linked), isFalse);
+        expect(canEditPlaceholderProfile(actor: author, target: placeholder),
+            isTrue);
+        expect(
+            canEditPlaceholderProfile(actor: author, target: linked), isFalse);
       });
 
       test('denies other users', () {
-        expect(canEditPlaceholderProfile(actor: other, target: placeholder), isFalse);
+        expect(canEditPlaceholderProfile(actor: other, target: placeholder),
+            isFalse);
       });
     });
 
     group('canLinkPlaceholderAuth', () {
       test('allows admin always', () {
-        expect(canLinkPlaceholderAuth(actor: admin, target: placeholder), isTrue);
+        expect(
+            canLinkPlaceholderAuth(actor: admin, target: placeholder), isTrue);
         expect(canLinkPlaceholderAuth(actor: admin, target: linked), isTrue);
       });
 
       test('allows creator only for unlinked placeholder', () {
-        expect(canLinkPlaceholderAuth(actor: author, target: placeholder), isTrue);
+        expect(
+            canLinkPlaceholderAuth(actor: author, target: placeholder), isTrue);
         expect(canLinkPlaceholderAuth(actor: author, target: linked), isFalse);
       });
 
       test('denies other users', () {
-        expect(canLinkPlaceholderAuth(actor: other, target: placeholder), isFalse);
+        expect(
+            canLinkPlaceholderAuth(actor: other, target: placeholder), isFalse);
       });
     });
 
@@ -91,6 +99,137 @@ void main() {
       test('admin only', () {
         expect(canUnlinkUserAuth(actor: admin), isTrue);
         expect(canUnlinkUserAuth(actor: author), isFalse);
+      });
+    });
+
+    group('isTransientVolunteerPlaceholder', () {
+      test('true only for placeholders with a creator', () {
+        expect(isTransientVolunteerPlaceholder(placeholder), isTrue);
+        expect(
+          isTransientVolunteerPlaceholder(
+            User(
+              id: '11',
+              forname: 'Legacy',
+              surname: 'Unlinked',
+              isPlaceholder: true,
+              createdByUserID: '',
+            ),
+          ),
+          isFalse,
+        );
+        expect(isTransientVolunteerPlaceholder(linked), isFalse);
+        expect(isTransientVolunteerPlaceholder(author), isFalse);
+      });
+    });
+
+    group('isVisibleInVolunteerDirectory', () {
+      final legacyUnlinked = User(
+        id: '11',
+        forname: 'Legacy',
+        surname: 'Unlinked',
+        isPlaceholder: true,
+        createdByUserID: '',
+      );
+
+      test('always shows linked / non-placeholder profiles', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: author,
+            viewer: other,
+            placeholdersOnly: false,
+          ),
+          isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: linked,
+            viewer: other,
+            placeholdersOnly: false,
+          ),
+          isTrue,
+        );
+      });
+
+      test('hides all placeholders unless the filter is on', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: admin,
+            placeholdersOnly: false,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: admin,
+            placeholdersOnly: false,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isTrue,
+        );
+      });
+
+      test('placeholders filter hides linked / non-placeholder profiles', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: author,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: linked,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+      });
+
+      test('non-admin only sees own minted placeholders when filter is on', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: author,
+            placeholdersOnly: true,
+          ),
+          isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: other,
+            placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+        // Legacy backfill rows have no creator — area admin only.
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: author,
+            placeholdersOnly: true,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: legacyUnlinked,
+            viewer: admin,
+            placeholdersOnly: true,
+          ),
+          isTrue,
+        );
       });
     });
   });

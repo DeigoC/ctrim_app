@@ -4,10 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:share_plus/share_plus.dart';
 import '../../utility/event_context.dart';
+import '../app_dialog.dart';
 import '../quill_editor_wrapper.dart';
 
 class ViewPostBody extends StatelessWidget {
-  const ViewPostBody({super.key, required this.eventContext, required this.updateBody, required this.currentUID});
+  const ViewPostBody(
+      {super.key,
+      required this.eventContext,
+      required this.updateBody,
+      required this.currentUID});
   final EventContext eventContext;
   final Function updateBody;
   final String currentUID;
@@ -32,9 +37,11 @@ class ViewPostBody extends StatelessWidget {
           children: [
             // Header with share button
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -45,7 +52,8 @@ class ViewPostBody extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.article_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                      Icon(Icons.article_outlined,
+                          size: 18, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Text(
                         'Post Content',
@@ -71,7 +79,11 @@ class ViewPostBody extends StatelessWidget {
       ))),
     ];
 
-    return SafeArea(top: false, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children));
+    return SafeArea(
+        top: false,
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children));
   }
 
   Widget _buildShareButton(BuildContext context) {
@@ -82,7 +94,8 @@ class ViewPostBody extends StatelessWidget {
       icon: const Icon(Icons.share, size: 18),
       tooltip: 'Save content',
       style: IconButton.styleFrom(
-        backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        backgroundColor:
+            colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         foregroundColor: colorScheme.onSurfaceVariant,
         padding: const EdgeInsets.all(8),
       ),
@@ -120,7 +133,8 @@ class ViewPostBody extends StatelessWidget {
       await SharePlus.instance.share(
         ShareParams(
           text: finalContent,
-          sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+          sharePositionOrigin:
+              box != null ? box.localToGlobal(Offset.zero) & box.size : null,
         ),
       );
     }
@@ -133,7 +147,8 @@ class ViewPostBody extends StatelessWidget {
       final result = await SharePlus.instance.share(ShareParams(text: content));
 
       // If share was dismissed or failed, offer clipboard option
-      if (result.status == ShareResultStatus.dismissed || result.status == ShareResultStatus.unavailable) {
+      if (result.status == ShareResultStatus.dismissed ||
+          result.status == ShareResultStatus.unavailable) {
         if (!context.mounted) return;
         await _showCopyDialog(context, content);
       }
@@ -150,61 +165,48 @@ class ViewPostBody extends StatelessWidget {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.share),
-        title: const Text('Share Post'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Your browser may not support native sharing but you can still copy the content to your clipboard:',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                content,
-                style: theme.textTheme.bodySmall,
-                maxLines: 5,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+      builder: (context) => AppDialog(
+        icon: Icons.share_outlined,
+        title: 'Share Post',
+        message:
+            'Your browser may not support native sharing but you can still copy the content to your clipboard:',
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            content,
+            style: theme.textTheme.bodySmall,
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: content));
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text('Copied to clipboard!'),
-                      ],
-                    ),
-                    duration: Duration(seconds: 2),
+        actions: AppDialogActions(
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () async {
+            await Clipboard.setData(ClipboardData(text: content));
+            if (context.mounted) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text('Copied to clipboard!'),
+                    ],
                   ),
-                );
-              }
-            },
-            icon: const Icon(Icons.copy, size: 18),
-            label: const Text('Copy to Clipboard'),
-          ),
-        ],
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+          confirmLabel: 'Copy',
+          confirmIcon: Icons.copy,
+        ),
       ),
     );
   }

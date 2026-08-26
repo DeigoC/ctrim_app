@@ -12,12 +12,12 @@ What stakeholders should know is **shipping, finishing, or planned** — not a f
 - **Attendance** — continue so **post contributors** (not only the author) can manage who’s attending  
 - **Area-scoped admin** — gate certain admin controls by the area a person is assigned to  
 - **Site admin** *(planned working title)* — a level above area admin without the location restriction  
-- Keep **Information** editing with **Leaders** and area/site admins — not guests or ordinary signed-in members  
+- Keep **Information** editing with **Leaders** (including area/site admins) — not guests or ordinary signed-in members  
 
 ## In place or finishing
 
 - **Interest** on posts (“follow updates”) and attendance lists for organisers  
-- **Post tags** and notification streams (including location umbrellas such as “All Belfast updates”)  
+- **Post tags** for bulletin browsing; **location-based** push opt-in (for example All Belfast updates)  
 - **Volunteers** directory (filters, tags, placeholders)  
 - **Cell Groups** foundation in the app (catalogue, leaders, roster, meeting trail) — expanding through testing  
 - **Stakeholder documentation** (this site)
@@ -30,7 +30,7 @@ What stakeholders should know is **shipping, finishing, or planned** — not a f
 | Small groups | Always **Cell Group** |
 | Placeholders | Documented publicly |
 | Interest | “Follow updates” (not formal RSVP) |
-| Information editing | Leaders + area/site admins; not guests or ordinary members |
+| Information editing | Leaders (including area/site admins); not guests or ordinary members |
 | Platforms | Web first; store apps later |
 
 ## Related pages

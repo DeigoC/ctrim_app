@@ -6,9 +6,13 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/load_progress_body.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../widgets/user_tag_chip.dart';
+import '../../widgets/app_dialog.dart';
+import '../../utility/dialog_manager.dart';
 
 class ManageUserTagsPage extends StatefulWidget {
   const ManageUserTagsPage({super.key});
@@ -187,40 +191,38 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-              isEditing ? l10n.manageUserTagsEdit : l10n.manageUserTagsAdd),
-          content: Column(
+        return AppDialog(
+          icon: isEditing ? Icons.edit_outlined : Icons.add,
+          title: isEditing ? l10n.manageUserTagsEdit : l10n.manageUserTagsAdd,
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration:
-                    InputDecoration(labelText: l10n.manageUserTagsNameLabel),
+                decoration: AppDialog.inputDecoration(
+                  label: l10n.manageUserTagsNameLabel,
+                ),
                 autofocus: true,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: colorController,
-                decoration: InputDecoration(
-                  labelText: l10n.manageUserTagsColorLabel,
-                  hintText: '#6B4EAA',
+                decoration: AppDialog.inputDecoration(
+                  label: l10n.manageUserTagsColorLabel,
+                  hint: '#6B4EAA',
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(l10n.cancel)),
-            FilledButton(
-              onPressed: () {
-                if (nameController.text.trim().isEmpty) return;
-                Navigator.pop(dialogContext, true);
-              },
-              child: Text(isEditing ? l10n.save : l10n.manageUserTagsCreate),
-            ),
-          ],
+          actions: AppDialogActions(
+            onCancel: () => Navigator.pop(dialogContext),
+            cancelLabel: l10n.cancel,
+            onConfirm: () {
+              if (nameController.text.trim().isEmpty) return;
+              Navigator.pop(dialogContext, true);
+            },
+            confirmLabel: isEditing ? l10n.save : l10n.manageUserTagsCreate,
+          ),
         );
       },
     );
@@ -244,6 +246,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
         existing.setColor(color.isEmpty ? null : color);
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdateTag(existing);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.editedUserTag,
+          documentId: existing.id,
+        );
       } else {
         final nextOrder = appContext.allTags.isEmpty
             ? 1
@@ -257,6 +264,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           displayOrder: nextOrder,
         );
         appContext.addOrUpdateTag(tag);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdUserTag,
+          documentId: tag.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -287,20 +299,14 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await DialogManager.showConfirmationDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.manageUserTagsDelete),
-        content: Text(l10n.manageUserTagsDeleteConfirm(tag.name)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(l10n.cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.manageUserTagsDelete)),
-        ],
-      ),
+      title: l10n.manageUserTagsDelete,
+      content: l10n.manageUserTagsDeleteConfirm(tag.name),
+      confirmText: l10n.manageUserTagsDelete,
+      cancelText: l10n.cancel,
+      icon: Icons.delete_outline,
+      isDestructive: true,
     );
     if (confirmed != true || !mounted) return;
 
@@ -309,6 +315,12 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       await _tagDBManager.deleteTag(tag.id);
       if (!mounted) return;
       Provider.of<AppContext>(context, listen: false).removeTag(tag.id);
+      await UserActivityRecorder().record(
+        actorUserId:
+            Provider.of<AppContext>(context, listen: false).currentUser.id,
+        log: UserActivityMessages.deletedUserTag,
+        documentId: tag.id,
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -346,6 +358,11 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           displayOrder: i + 1,
         );
         appContext.addOrUpdateTag(tag);
+        await UserActivityRecorder().record(
+          actorUserId: appContext.currentUser.id,
+          log: UserActivityMessages.createdUserTag,
+          documentId: tag.id,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

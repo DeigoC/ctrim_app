@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,9 +12,10 @@ import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
-import '../../utility/web_notification_lifecycle.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/notification_permission_prompt.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/web_notification_lifecycle.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -78,7 +80,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     return PopScope(
       canPop: _loggedIn,
-      onPopInvokedWithResult: (didPop, result) => _loggedIn ? null : _onWillPop(),
+      onPopInvokedWithResult: (didPop, result) {
+        // Imperative Navigator.pop ignores canPop; only block system back / gestures.
+        if (didPop || _loggedIn) return;
+        _onWillPop();
+      },
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
@@ -393,15 +399,25 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       return;
     }
 
-    // PopScope reads canPop from the last build. Update _loggedIn via setState,
-    // then pop on the next frame so canPop is true and the route can close.
+    // Soft-ask before the browser Allow prompt (web), then close.
+    if (kIsWeb) {
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      await NotificationPermissionPrompt.maybePromptAfterAuth(
+        context: context,
+        prefs: appContext.sharedPref,
+        authId: _authManager.currentAuthUID,
+      );
+      if (!mounted) return;
+    }
+
+    // Mark logged-in before pop so onPopInvoked does not show the "sign in
+    // required" alert. Navigator.pop is imperative and closes even when canPop
+    // was false on the previous build.
     setState(() {
       _isLoading = false;
       _loggedIn = true;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
+    Navigator.of(context).pop();
   }
 
   Future<void> _logUserToApp(
@@ -411,24 +427,31 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
 
-    // Defer token registration on first open; HomePage shows welcome before any prompt.
-    if (!appContext.sharedPref.isFirstOpen) {
-      if (kIsWeb) {
-        final lifecycle = WebNotificationLifecycle();
-        await lifecycle.register(
+    // Defer token work on first open; soft-ask after login handles web permission.
+    // On native, quietly attach an existing token if the OS already granted access.
+    if (!appContext.sharedPref.isFirstOpen && !kIsWeb) {
+      final MessagingManager messagingManager = MessagingManager();
+      final String? token = await messagingManager.getToken();
+      if (token != null) {
+        final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
+        everyoneDBManager.addTokenForAuthID(
+          authID: authID,
+          token: token,
+          platform: Platform.operatingSystem,
+        );
+        appContext.sharedPref.saveFCMToken(token);
+      }
+    } else if (!appContext.sharedPref.isFirstOpen && kIsWeb) {
+      // If permission was already granted earlier, sync token without prompting.
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        await WebNotificationLifecycle().register(
           authId: authID,
           onTokenSaved: appContext.sharedPref.saveFCMToken,
           prefs: appContext.sharedPref,
           webAuthId: authID,
         );
-      } else {
-        final MessagingManager messagingManager = MessagingManager();
-        final String? token = await messagingManager.getToken();
-        if (token != null) {
-          final EveryoneDBManager everyoneDBManager = EveryoneDBManager();
-          everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
-          appContext.sharedPref.saveFCMToken(token);
-        }
       }
     }
 

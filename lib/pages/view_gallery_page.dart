@@ -1,14 +1,18 @@
-import 'package:ctrim_app/utility/dialog_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../utility/app_context.dart';
+import '../utility/dialog_manager.dart';
 import '../widgets/media/my_photo_viewer.dart';
 import '../widgets/media/my_video_player.dart';
 
 class ViewGalleryPage extends StatefulWidget {
-  const ViewGalleryPage({super.key, required this.media, required this.initialIndex, required this.postId});
+  const ViewGalleryPage(
+      {super.key,
+      required this.media,
+      required this.initialIndex,
+      required this.postId});
   final List<Map<String, dynamic>> media;
   final int initialIndex;
   final String postId;
@@ -33,7 +37,8 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     debugPrint('length is ${widget.media.length}');
     for (final entry in widget.media) {
       if (entry['type'] == 'vid') {
-        _videoControllers[entry['src']!] = VideoPlayerController.networkUrl(Uri.parse(entry['src']!));
+        _videoControllers[entry['src']!] =
+            VideoPlayerController.networkUrl(Uri.parse(entry['src']!));
       }
     }
 
@@ -78,7 +83,9 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
               for (var videoPlayer in _videoControllers.values) {
                 // pause all videos that aren't the current one being switched to
                 if (videoPlayer.value.isInitialized &&
-                    widget.media.indexWhere((entry) => entry['src']!.compareTo(videoPlayer.dataSource) == 0) !=
+                    widget.media.indexWhere((entry) =>
+                            entry['src']!.compareTo(videoPlayer.dataSource) ==
+                            0) !=
                         newIndex) {
                   videoPlayer.pause();
                   videoPlayer.seekTo(Duration.zero);
@@ -90,7 +97,9 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
             physics: _lockScreen ? const NeverScrollableScrollPhysics() : null,
             itemCount: widget.media.length,
             controller: _pageController,
-            itemBuilder: (_, index) => _lockScreen ? _buildMediaBody(index) : _buildWithDismissible(index)));
+            itemBuilder: (_, index) => _lockScreen
+                ? _buildMediaBody(index)
+                : _buildWithDismissible(index)));
   }
 
   Widget _buildWithDismissible(int index) {
@@ -128,7 +137,10 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
                 child: AppBar(
                   backgroundColor: Colors.transparent.withValues(alpha: 0.3),
                   iconTheme: const IconThemeData(color: Colors.white),
-                  actions: [IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))],
+                  actions: [
+                    IconButton(
+                        onPressed: _onHelpClick, icon: const Icon(Icons.help))
+                  ],
                 ),
               ),
             )),
@@ -137,7 +149,8 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
           child: Container(
             color: Colors.black.withValues(alpha: 0.55),
             child: ListTile(
-                title: Text(thisEntry['title']!, style: const TextStyle(color: Colors.white)),
+                title: Text(thisEntry['title']!,
+                    style: const TextStyle(color: Colors.white)),
                 leading: const Icon(Icons.photo_library, color: Colors.white)),
           ),
         )
@@ -167,7 +180,8 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
           showControls: !_lockScreen,
           videoPlayerController: _videoControllers[thisMediaSrc]!);
     } else if (type.compareTo('img') == 0) {
-      return MyPhotoViewer(src: thisMediaSrc, postID: widget.postId, onLockTap: _onLockTap);
+      return MyPhotoViewer(
+          src: thisMediaSrc, postID: widget.postId, onLockTap: _onLockTap);
     }
 
     return const Center(child: Text('Something went wrong'));

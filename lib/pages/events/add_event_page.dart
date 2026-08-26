@@ -12,9 +12,11 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/notification_token_resolver.dart';
+import '../../utility/post_draft_review.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/action_sheet.dart';
 import '../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../widgets/posts/post_save_review_sheet.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
@@ -30,7 +32,8 @@ class AddEventPage extends StatefulWidget {
   State<AddEventPage> createState() => _AddEventPageState();
 }
 
-class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderStateMixin {
+class _AddEventPageState extends State<AddEventPage>
+    with SingleTickerProviderStateMixin {
   // * Required variables
   late final AppContext _appContext;
   late final TabController _tabController;
@@ -55,7 +58,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _appContext = Provider.of<AppContext>(context, listen: false);
     _tabController = TabController(length: 4, vsync: this);
     _tecTitle = TextEditingController(text: widget.eventContext.head.title);
-    _tecSubtitle = TextEditingController(text: widget.eventContext.head.subtitle);
+    _tecSubtitle =
+        TextEditingController(text: widget.eventContext.head.subtitle);
+    // Template-mapped drafts already have title/subtitle/body; evaluate once so
+    // Save appears without requiring an extra field edit.
+    _canSave = _okToSave();
     super.initState();
   }
 
@@ -69,8 +76,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 0);
 
     return PopScope(
       canPop: _allowPop,
@@ -83,16 +91,20 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       },
       child: Scaffold(
           floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
           floatingActionButton: _canSave
               ? SizedBox(
                   width: MediaQuery.of(context).size.width * 0.7,
                   child: FloatingActionButton.extended(
-                      onPressed: _onSaveClick, label: const Text('Save New Post'), icon: const Icon(Icons.save)),
+                      onPressed: _onSaveClick,
+                      label: const Text('Save New Post'),
+                      icon: const Icon(Icons.save)),
                 )
               : null,
           body: NestedScrollView(
-              headerSliverBuilder: (_, __) => _buildHeaderSliver(webHorizontalPadding),
+              headerSliverBuilder: (_, __) =>
+                  _buildHeaderSliver(webHorizontalPadding),
               body: Padding(
                 padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
                 child: _buildTabBody(),
@@ -101,7 +113,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   List<Widget> _buildHeaderSliver(final double horizontalPadding) {
-    final bool onDark = SchedulerBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+    final bool onDark =
+        SchedulerBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
 
     return [
       SliverAppBar(
@@ -112,12 +126,14 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
               onPressed: () => _showSettings(),
               icon: const Icon(Icons.more_horiz, color: Colors.white),
               label: const Text('Edit', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.withValues(alpha: 0.55))),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.withValues(alpha: 0.55))),
           const SizedBox(width: 8)
         ],
       ),
       SliverPadding(
-          padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: horizontalPadding),
+          padding: EdgeInsets.symmetric(
+              vertical: 8.0, horizontal: horizontalPadding),
           sliver: SliverList(
               delegate: SliverChildListDelegate([
             TabBar(
@@ -143,7 +159,9 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       alignment: Alignment.bottomRight,
       children: [
         Positioned.fill(
-            child: Image.network(NetworkImageHelper.getImageUrl(widget.eventContext.head.getKeyGraphic()!),
+            child: Image.network(
+                NetworkImageHelper.getImageUrl(
+                    widget.eventContext.head.getKeyGraphic()!),
                 fit: BoxFit.cover))
       ],
     );
@@ -158,9 +176,16 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
         eventContext: widget.eventContext,
       ),
       ViewPostBody(
-          eventContext: widget.eventContext, updateBody: () => _updateBody(), currentUID: _appContext.currentUser.id),
-      ViewAllPrograms(eventContext: widget.eventContext, onProgramChanged: () => _updateBody(), isAddingPost: true),
-      ViewEventMediaTab(eventContext: widget.eventContext, currentUID: _appContext.currentUser.id)
+          eventContext: widget.eventContext,
+          updateBody: () => _updateBody(),
+          currentUID: _appContext.currentUser.id),
+      ViewAllPrograms(
+          eventContext: widget.eventContext,
+          onProgramChanged: () => _updateBody(),
+          isAddingPost: true),
+      ViewEventMediaTab(
+          eventContext: widget.eventContext,
+          currentUID: _appContext.currentUser.id)
     ]);
   }
 
@@ -172,15 +197,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   void _onRequiredFieldTextChange(final String newText) {
-    if (_okToSave() && !_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    } else if (!_okToSave() && _canSave) {
-      setState(() {
-        _canSave = false;
-      });
-    }
+    // Always rebuild so the AppBar key graphic updates when the cover or
+    // lead-speaker portrait changes (not only when save eligibility flips).
+    setState(() {
+      _canSave = _okToSave();
+    });
   }
 
   // the core requirements of a post - title, subtitle, an update to the body
@@ -212,30 +233,28 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
   }
 
   Future<bool> _confirmSave() async {
-    bool result = false;
-    await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-              title: const Text('Save Post'),
-              content: const Text('Are you sure all details are correct?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                TextButton(
-                    onPressed: () {
-                      result = true;
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Save')),
-              ],
-            ));
-    return result;
+    final review = buildPostDraftReview(
+      eventContext: widget.eventContext,
+      title: _tecTitle.text.trim(),
+      subtitle: _tecSubtitle.text.trim(),
+      allTags: _appContext.allPostTags,
+    );
+    if (!mounted) return false;
+
+    return showPostSaveReviewSheet(
+      context: context,
+      review: review,
+      onNavigateToTab: (tab) {
+        _tabController.animateTo(tab.index);
+        setState(() {});
+      },
+    );
   }
 
   Future<void> _savePost(LoadProgressReporter onProgress) async {
     const total = 4;
     onProgress(completed: 0, total: total, message: 'Creating post…');
     widget.eventContext.syncNotificationTopics(
-      allTags: _appContext.allPostTags,
       includeLocationUmbrella: BroadcastAudience.includesLocationUmbrella(
         topics: widget.eventContext.metadata.topics,
         locationName: widget.eventContext.head.location,
@@ -261,7 +280,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     _notifyContributorAdditions(newID);
 
     if (widget.eventContext.head.eventDate != null) {
-      onProgress(completed: 2, total: total, message: 'Syncing schedule roles…');
+      onProgress(
+          completed: 2, total: total, message: 'Syncing schedule roles…');
       await _cloudFunctionManager.syncUserRolesForPost(postId: newID);
     } else {
       onProgress(completed: 2, total: total, message: 'Sending notifications…');
@@ -277,13 +297,10 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       debugPrint('---- NOTIFYING BROADCAST TOPICS ----');
       final topics = BroadcastAudience.resolveFromPost(
         location: widget.eventContext.head.location,
-        tagIDs: widget.eventContext.head.tagIDs,
-        allTags: _appContext.allPostTags,
         includeLocationUmbrella: BroadcastAudience.includesLocationUmbrella(
           topics: widget.eventContext.metadata.topics,
           locationName: widget.eventContext.head.location,
         ),
-        legacyTopics: widget.eventContext.metadata.topics,
       );
       for (final String topic in topics) {
         _notifyOfNewPost(newID, topic);
@@ -295,7 +312,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final String? parentID = widget.eventContext.metadata.parentID;
 
     if (parentID != null) {
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+      final EventSupplementalDBManager dbManager =
+          EventSupplementalDBManager(parentID);
       debugPrint('updating parent post metadata');
 
       // update parent metadata
@@ -313,15 +331,17 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       // update the parent's recent date
       EventHead parentHead;
       if (_appContext.eventHeads.any((e) => e.id == parentID)) {
-        parentHead = _appContext.getPostHead(parentID);
+        parentHead = _appContext.headById(parentID)!;
       } else {
         parentHead = await _headDBManager.fetchHead(parentID);
       }
 
       if (parentHead.recentDate.second == 59) {
-        parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: -58)));
+        parentHead.setRecentDate(
+            parentHead.recentDate.add(const Duration(seconds: -58)));
       } else {
-        parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: 1)));
+        parentHead.setRecentDate(
+            parentHead.recentDate.add(const Duration(seconds: 1)));
       }
       _headDBManager.updateHead(parentHead);
       _appContext.addOrUpdatePostHead(parentHead);
@@ -340,13 +360,16 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   Future<void> _notifyContributorAdditions(final String newID) async {
     const String title = "Contributor update";
-    final String body = "You can modify aspects of the post: '${_tecTitle.text.trim()}'";
+    final String body =
+        "You can modify aspects of the post: '${_tecTitle.text.trim()}'";
     final List<String> allTokens = List<String>.empty(growable: true);
 
     for (final String thisUID in widget.eventContext.contributorAdditionUIDs) {
       if (!_appContext.haveTokensForUserID(thisUID)) {
+        final authID = _appContext.authIdByUserId(thisUID);
+        if (authID == null || authID.isEmpty) continue;
         final List<String> tokens =
-            await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
+            await _tokenResolver.resolveForAuthID(authID);
         _appContext.addTokensToUserID(thisUID, tokens);
       }
 
@@ -370,38 +393,49 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
     final String title = "📣 $currentUserName has assigned you to a task!";
 
     for (final additionEntry in widget.eventContext.roleAdditions.entries) {
-      final roleEntry = widget.eventContext.program.roles.firstWhere((e) => e['id'] == additionEntry.key);
-      final String body = "'${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
+      final roleEntry = widget.eventContext.program.roles
+          .firstWhere((e) => e['id'] == additionEntry.key);
+      final String body =
+          "'${roleEntry['title']!}' for ${_tecTitle.text.trim()}";
 
       final List<String> tokens = [];
       for (final thisUID in additionEntry.value) {
         if (thisUID != currentUID) {
           if (!_appContext.haveTokensForUserID(thisUID)) {
+            final authID = _appContext.authIdByUserId(thisUID);
+            if (authID == null || authID.isEmpty) continue;
             final List<String> fetchedTokens =
-                await _tokenResolver.resolveForAuthID(_appContext.getAuthIDFromUID(thisUID));
+                await _tokenResolver.resolveForAuthID(authID);
             _appContext.addTokensToUserID(thisUID, fetchedTokens);
           }
 
           tokens.addAll(_appContext.getTokensFromUserID(thisUID));
         }
       }
-      _cloudFunctionManager
-          .sendMessageToSelectedTokens(tokens: tokens, title: title, body: body, data: {'PostID': newPostID});
+      _cloudFunctionManager.sendMessageToSelectedTokens(
+          tokens: tokens,
+          title: title,
+          body: body,
+          data: {'PostID': newPostID});
     }
   }
 
   Future<void> _updateAllUserPostInvolvement(final String newPostID) async {
     // first up, the author
-    await _userDBManager.addPostToUser(_appContext.currentUser.id, newPostID, 'author');
+    await _userDBManager.addPostToUser(
+        _appContext.currentUser.id, newPostID, 'author');
 
     // then all the contributors
-    for (final String contributorID in widget.eventContext.contributorAdditionUIDs) {
-      await _userDBManager.addPostToUser(contributorID, newPostID, 'contributor');
+    for (final String contributorID
+        in widget.eventContext.contributorAdditionUIDs) {
+      await _userDBManager.addPostToUser(
+          contributorID, newPostID, 'contributor');
     }
   }
 
   Future<bool> _onWillPop() async {
-    final bool confirmation = await DialogManager.discardChanges(context: context);
+    final bool confirmation =
+        await DialogManager.discardChanges(context: context);
     if (confirmation) {
       // reset all supplemental parts - media, program, body, head, metadata
       // logs should remain untouched at this point
@@ -416,7 +450,8 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(28), topRight: Radius.circular(28)),
       ),
       builder: (_) => ActionSheetShell(
         icon: Icons.edit_note,
@@ -457,8 +492,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   void _onEditBodyClick() {
     Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditBodyPage(eventContext: widget.eventContext)))
-        .then((_) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) =>
+                EditBodyPage(eventContext: widget.eventContext))).then((_) {
       setState(() {
         _onRequiredFieldTextChange('');
       });
@@ -467,7 +505,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   void _onAddScheduleItem() async {
     Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => AddEventProgramPage(eventContext: widget.eventContext)))
+    Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) =>
+                    AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
       setState(() {});
@@ -476,8 +518,11 @@ class _AddEventPageState extends State<AddEventPage> with SingleTickerProviderSt
 
   void _onEditMediaTap() {
     Navigator.of(context).pop();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)))
-        .then((_) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) =>
+                EditGalleryPage(eventContext: widget.eventContext))).then((_) {
       setState(() {});
     });
   }

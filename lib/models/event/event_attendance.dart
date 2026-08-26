@@ -41,7 +41,8 @@ class InterestedEntry {
   DateTime get ts => _ts;
 }
 
-/// Staff-managed attendee: registered user or free-text external guest.
+/// Staff-managed attendee: registered/placeholder user, or legacy free-text guest.
+/// New guests should be added as placeholder users via [SelectUsersPage], not as externals.
 class AttendeeEntry {
   static const String typeUser = 'user';
   static const String typeExternal = 'external';
@@ -127,13 +128,20 @@ class AttendeeEntry {
 /// Private supplemental doc: `events/{id}/supplemental/attendance`.
 ///
 /// [interested] is a map keyed by Firebase Auth UID so rules can allow self-serve toggles.
+/// [expectedUserIds] is the staff-managed “usual people” checklist for quick check-off
+/// into [attendees] (e.g. recurring cell-group meetings).
 class EventAttendance {
   late final Map<String, InterestedEntry> _interested;
   late final List<AttendeeEntry> _attendees;
+  late final List<String> _expectedUserIds;
 
-  EventAttendance() {
+  EventAttendance({List<String> expectedUserIds = const []}) {
     _interested = <String, InterestedEntry>{};
     _attendees = List<AttendeeEntry>.empty(growable: true);
+    _expectedUserIds = <String>[
+      for (final id in expectedUserIds)
+        if (id.isNotEmpty) id,
+    ];
   }
 
   EventAttendance.fromMap(Map<String, dynamic> data) {
@@ -157,6 +165,16 @@ class EventAttendance {
         }
       }
     }
+
+    _expectedUserIds = List<String>.empty(growable: true);
+    final rawExpected = data['expectedUserIds'] ?? data['ExpectedAttendeeUserIDs'];
+    if (rawExpected is List) {
+      for (final id in rawExpected) {
+        if (id is String && id.isNotEmpty && !_expectedUserIds.contains(id)) {
+          _expectedUserIds.add(id);
+        }
+      }
+    }
   }
 
   Map<String, Object?> toJson() {
@@ -165,14 +183,17 @@ class EventAttendance {
         for (final e in _interested.entries) e.key: e.value.toJson(),
       },
       'attendees': _attendees.map((e) => e.toJson()).toList(),
+      'expectedUserIds': List<String>.from(_expectedUserIds),
     };
   }
 
   Map<String, InterestedEntry> get interested => UnmodifiableMapView(_interested);
   List<AttendeeEntry> get attendees => UnmodifiableListView(_attendees);
+  List<String> get expectedUserIds => UnmodifiableListView(_expectedUserIds);
 
   int get interestedCount => _interested.length;
   int get attendeeCount => _attendees.length;
+  int get expectedCount => _expectedUserIds.length;
 
   bool hasInterest(String authId) => _interested.containsKey(authId);
 
@@ -185,6 +206,14 @@ class EventAttendance {
   bool hasUserAttendee(String userId) =>
       _attendees.any((e) => e.isUser && e.userId == userId);
 
+  bool hasExpectedUser(String userId) => _expectedUserIds.contains(userId);
+
+  void setExpectedUserIds(List<String> userIds) {
+    _expectedUserIds
+      ..clear()
+      ..addAll({for (final id in userIds) if (id.isNotEmpty) id});
+  }
+
   void addAttendee(AttendeeEntry entry) {
     if (entry.isUser && entry.userId != null && hasUserAttendee(entry.userId!)) {
       return;
@@ -193,4 +222,13 @@ class EventAttendance {
   }
 
   void removeAttendeeById(String id) => _attendees.removeWhere((e) => e.id == id);
+
+  /// Snapshot map used when replacing one list while preserving the others.
+  Map<String, dynamic> toMutableMap() => {
+        'interested': {
+          for (final e in _interested.entries) e.key: e.value.toJson(),
+        },
+        'attendees': _attendees.map((e) => e.toJson()).toList(),
+        'expectedUserIds': List<String>.from(_expectedUserIds),
+      };
 }

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/models/user_activity_log.dart';
+import 'package:ctrim_app/models/user_activity_record.dart';
 import 'package:ctrim_app/models/user_post_involvement.dart';
 import 'package:ctrim_app/models/user_role_assignment.dart';
 
@@ -18,6 +20,7 @@ void main() {
         expect(user.isAreaAdmin, false);
         expect(user.isLeader, false);
         expect(user.canManageInfo, false);
+        expect(user.canManageChurchPages, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, false);
         expect(user.canManageCellGroups, false);
@@ -48,6 +51,7 @@ void main() {
         expect(user.isAreaAdmin, true);
         expect(user.isLeader, true);
         expect(user.canManageInfo, true);
+        expect(user.canManageChurchPages, true);
         expect(user.canManageVolunteers, true);
         expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, true);
@@ -66,9 +70,11 @@ void main() {
           surname: 'B',
           isAreaAdmin: true,
         );
+        expect(user.isLeader, true);
         expect(user.canManageInfo, true);
+        expect(user.canManageChurchPages, true);
         expect(user.canManageVolunteers, true);
-        expect(user.canManagePostTemplates, false);
+        expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, true);
       });
 
@@ -80,6 +86,7 @@ void main() {
           isLeader: true,
         );
         expect(user.canManageInfo, true);
+        expect(user.canManageChurchPages, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, true);
         expect(user.canManageCellGroups, false);
@@ -88,6 +95,7 @@ void main() {
       test('is false for regular users', () {
         final user = User(id: '1', forname: 'A', surname: 'B');
         expect(user.canManageInfo, false);
+        expect(user.canManageChurchPages, false);
         expect(user.canManageVolunteers, false);
         expect(user.canManagePostTemplates, false);
         expect(user.canManageCellGroups, false);
@@ -121,7 +129,24 @@ void main() {
         expect(user.imgSrc, 'https://example.com/alice.png');
         expect(user.tagIDs, ['tag-1', 'tag-2']);
         expect(user.createdByUserID, '3');
+        // Linked Auth clears a stale IsPlaceholder flag.
+        expect(user.isPlaceholder, false);
+      });
+
+      test('fromMap keeps IsPlaceholder when AuthID is empty', () {
+        final user = User.fromMap('99', {
+          'Forename': 'Temp',
+          'Surname': 'Person',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+          'CreatedByUserID': '3',
+          'IsPlaceholder': true,
+        });
         expect(user.isPlaceholder, true);
+        expect(user.createdByUserID, '3');
       });
 
       test('fromMap defaults Tags to empty list when missing', () {
@@ -137,6 +162,22 @@ void main() {
         expect(user.tagIDs, isEmpty);
         expect(user.isPlaceholder, false);
         expect(user.createdByUserID, '');
+      });
+
+      test('fromMap treats area admin as a leader even if IsLeader is false',
+          () {
+        final user = User.fromMap('1', {
+          'Forename': 'A',
+          'Surname': 'B',
+          'Location': 'Belfast',
+          'IsAreaAdmin': true,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+        });
+        expect(user.isAreaAdmin, true);
+        expect(user.isLeader, true);
+        expect(user.canManagePostTemplates, true);
       });
     });
 
@@ -179,6 +220,18 @@ void main() {
         final json = user.toJson() as Map<String, dynamic>;
         expect(json['Tags'], ['a', 'b']);
       });
+
+      test('writes IsLeader true when the user is an area admin', () {
+        final user = User(
+          id: '1',
+          forname: 'Ada',
+          surname: 'Admin',
+          isAreaAdmin: true,
+        );
+        final json = user.toJson() as Map<String, dynamic>;
+        expect(json['IsAreaAdmin'], true);
+        expect(json['IsLeader'], true);
+      });
     });
 
     group('computed name getters', () {
@@ -205,6 +258,12 @@ void main() {
       test('shortenedFullName handles hyphenated surname', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith-Jones');
         expect(user.shortenedFullName, 'John SJ.');
+      });
+
+      test('initials and shortenedFullName tolerate empty names', () {
+        final user = User(id: '1', forname: '', surname: '');
+        expect(user.initials, '?');
+        expect(user.shortenedFullName, '?');
       });
     });
 
@@ -234,19 +293,22 @@ void main() {
         expect(user.roles, isNotNull);
         expect(user.roles!.length, 1);
         expect(user.roles!.first.title, 'Leader');
-        expect(() => user.roles!.add(user.roles!.first), throwsUnsupportedError);
+        expect(
+            () => user.roles!.add(user.roles!.first), throwsUnsupportedError);
       });
 
       test('setPosts stores and returns an unmodifiable list', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
+          UserPostInvolvement(
+              postID: 'post-1', ownership: PostOwnership.author),
         ]);
 
         expect(user.posts, isNotNull);
         expect(user.posts!.length, 1);
         expect(user.posts!.first.postID, 'post-1');
-        expect(() => user.posts!.add(user.posts!.first), throwsUnsupportedError);
+        expect(
+            () => user.posts!.add(user.posts!.first), throwsUnsupportedError);
       });
 
       test('removeRoles removes matching entries', () {
@@ -273,11 +335,30 @@ void main() {
         expect(user.roles!.first.postID, 'p2');
       });
 
+      test('setActivity stores the log without affecting toJson', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith');
+        final log = UserActivityLog([
+          UserActivityRecord(
+            log: 'Edited a bulletin post',
+            ts: DateTime(2026, 8, 14),
+            documentId: '42',
+          ),
+        ]);
+        user.setActivity(log);
+
+        expect(user.activity, isNotNull);
+        expect(user.activity!.records.length, 1);
+        expect(user.toJson().containsKey('Logs'), isFalse);
+        expect(user.toJson().containsKey('activity'), isFalse);
+      });
+
       test('removeAllPosts removes matching entries', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
         user.setPosts([
-          UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
-          UserPostInvolvement(postID: 'post-2', ownership: PostOwnership.contributor),
+          UserPostInvolvement(
+              postID: 'post-1', ownership: PostOwnership.author),
+          UserPostInvolvement(
+              postID: 'post-2', ownership: PostOwnership.contributor),
         ]);
         user.removeAllPosts(['post-1']);
 
@@ -296,7 +377,11 @@ void main() {
       });
 
       test('hasTag and hasAnyTag work', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith', tagIDs: ['worship', 'tech']);
+        final user = User(
+            id: '1',
+            forname: 'John',
+            surname: 'Smith',
+            tagIDs: ['worship', 'tech']);
         expect(user.hasTag('worship'), isTrue);
         expect(user.hasTag('usher'), isFalse);
         expect(user.hasAnyTag(['usher', 'tech']), isTrue);

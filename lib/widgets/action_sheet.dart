@@ -10,17 +10,89 @@ class ActionSheetShell extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.scrollable = true,
+    this.decorateSurface = true,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final List<Widget> children;
+  final bool scrollable;
+
+  /// When false, skips the surface fill and top-only radius (parent already clips).
+  final bool decorateSurface;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    Widget content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: colorScheme.primary, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.outline.withValues(alpha: 0.1),
+                colorScheme.outline.withValues(alpha: 0.3),
+                colorScheme.outline.withValues(alpha: 0.1),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...children,
+        const SizedBox(height: 20),
+      ],
+    );
+
+    if (scrollable) {
+      content = SingleChildScrollView(child: content);
+    }
+
+    if (!decorateSurface) return content;
 
     return Container(
       decoration: BoxDecoration(
@@ -30,69 +102,7 @@ class ActionSheetShell extends StatelessWidget {
           topRight: Radius.circular(28),
         ),
       ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icon, color: colorScheme.primary, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.outline.withValues(alpha: 0.1),
-                      colorScheme.outline.withValues(alpha: 0.3),
-                      colorScheme.outline.withValues(alpha: 0.1),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...children,
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
+      child: SafeArea(child: content),
     );
   }
 }
@@ -152,9 +162,11 @@ class ActionSheetOption extends StatelessWidget {
     Widget? resolvedTrailing = trailing;
     if (resolvedTrailing == null) {
       if (selected) {
-        resolvedTrailing = Icon(Icons.check_circle, color: colorScheme.primary, size: 20);
+        resolvedTrailing =
+            Icon(Icons.check_circle, color: colorScheme.primary, size: 20);
       } else if (showChevron) {
-        resolvedTrailing = Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant);
+        resolvedTrailing =
+            Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant);
       }
     }
 
@@ -217,7 +229,8 @@ class ActionSheetOptionGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = ResponsiveLayout.isWideScreen(constraints.maxWidth) ? 2 : 1;
+        final columns =
+            ResponsiveLayout.isWideScreen(constraints.maxWidth) ? 2 : 1;
         const spacing = 8.0;
         const horizontal = 16.0;
 

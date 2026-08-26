@@ -15,9 +15,11 @@ import '../utility/event_context.dart';
 import '../utility/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
 import '../utility/responsive_layout.dart';
+import '../utility/user_schedule_service.dart';
 import '../utility/web_notification_lifecycle.dart';
 import '../utility/notification_subscription_service.dart';
 import '../utility/web_notification_deep_link.dart';
+import '../widgets/app_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
 import 'events_home.dart';
@@ -40,8 +42,7 @@ class _NavDestination {
   final String label;
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   static const List<_NavDestination> _destinations = [
     _NavDestination(icon: Icons.library_books, label: 'Bulletin'),
     _NavDestination(icon: Icons.church, label: 'CTRIM'),
@@ -49,7 +50,10 @@ class _HomePageState extends State<HomePage>
     _NavDestination(icon: Icons.person, label: 'Personal'),
   ];
 
+  static const String _personalLabel = 'Personal';
+
   late final TabController _informationTabController;
+  late final TabController _cellGroupsTabController;
   late int _selectedIndex;
 
   late final AppContext _appContext;
@@ -66,14 +70,8 @@ class _HomePageState extends State<HomePage>
     _selectedIndex = _appContext.sharedPref.preferredStartupTab;
 
     _informationTabController = TabController(length: 4, vsync: this);
+    _cellGroupsTabController = TabController(length: 2, vsync: this);
     _appContext.sharedPref.setPostRefreshTime();
-    _appContext.allUsers.sort(((a, b) {
-      final surname = a.surname.compareTo(b.surname);
-      if (surname == 0) {
-        return a.forname.compareTo(b.forname);
-      }
-      return surname;
-    }));
     _setupCloudOnMessage();
     _setupWebNotificationListeners();
 
@@ -127,7 +125,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _reconcileNotificationSubscriptions() async {
-    if (_appContext.isCurrentUserGuest || _appContext.sharedPref.loggedOut) return;
+    if (_appContext.isCurrentUserGuest || _appContext.sharedPref.loggedOut)
+      return;
 
     final authID = kIsWeb ? AuthManager().currentAuthUID : null;
     if (kIsWeb && (authID == null || authID.isEmpty)) return;
@@ -141,6 +140,7 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     _informationTabController.dispose();
+    _cellGroupsTabController.dispose();
     _postsScrollController.dispose();
     _informationScrollController.dispose();
     _cellGroupsScrollController.dispose();
@@ -149,31 +149,28 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppContext>(builder: (context, appContext, child) {
-      return PopScope(
-        canPop: false, // safety for the first session
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useRail = ResponsiveLayout.isWideScreen(constraints.maxWidth);
-            return Scaffold(
-              body: useRail
-                  ? _buildWideBody(appContext)
-                  : _buildSelectedBody(appContext),
-              floatingActionButton: _buildFAB(),
-              bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
-            );
-          },
-        ),
-      );
-    });
+    return PopScope(
+      canPop: false, // safety for the first session
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useRail = ResponsiveLayout.isWideScreen(constraints.maxWidth);
+          return Scaffold(
+            body: useRail ? _buildWideBody() : _buildSelectedBody(),
+            floatingActionButton:
+                _selectedIndex == 0 ? const _AddPostFab() : null,
+            bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
+          );
+        },
+      ),
+    );
   }
 
-  Widget _buildWideBody(final AppContext appContext) {
+  Widget _buildWideBody() {
     return Row(
       children: [
         _buildNavigationRail(),
         const VerticalDivider(width: 1),
-        Expanded(child: _buildSelectedBody(appContext)),
+        Expanded(child: _buildSelectedBody()),
       ],
     );
   }
@@ -199,7 +196,9 @@ class _HomePageState extends State<HomePage>
       destinations: _destinations
           .map(
             (dest) => NavigationRailDestination(
-              icon: Icon(dest.icon),
+              icon: dest.label == _personalLabel
+                  ? _PersonalNavIcon(icon: dest.icon)
+                  : Icon(dest.icon),
               label: Text(dest.label),
             ),
           )
@@ -208,17 +207,24 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildBottomNavigationBar() {
+    final colorScheme = Theme.of(context).colorScheme;
+    // 4+ items default to shifting (white icons); force fixed + theme colors.
     return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.transparent,
       elevation: 0,
       currentIndex: _selectedIndex,
       onTap: _onNavigationItemTap,
+      selectedItemColor: colorScheme.primary,
+      unselectedItemColor: colorScheme.onSurfaceVariant,
       unselectedFontSize: 8,
       selectedFontSize: 12,
       items: _destinations
           .map(
             (dest) => BottomNavigationBarItem(
-              icon: Icon(dest.icon),
+              icon: dest.label == _personalLabel
+                  ? _PersonalNavIcon(icon: dest.icon)
+                  : Icon(dest.icon),
               label: dest.label,
             ),
           )
@@ -226,14 +232,13 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildSelectedBody(final AppContext appContext) {
+  Widget _buildSelectedBody() {
     if (_selectedIndex == 0) {
       return ViewEventsHome(
           scrollController: _postsScrollController,
           rebuildFunction: () {
             setState(() {
               // there's a potential that new posts have been added
-              _appContext.sortPostsByIndex();
             });
           });
     } else if (_selectedIndex == 1) {
@@ -242,30 +247,12 @@ class _HomePageState extends State<HomePage>
         scrollController: _informationScrollController,
       );
     } else if (_selectedIndex == 2) {
-      return CellGroupsHome(scrollController: _cellGroupsScrollController);
+      return CellGroupsHome(
+        tabController: _cellGroupsTabController,
+        scrollController: _cellGroupsScrollController,
+      );
     }
-    return PersonalHome(appContext: appContext);
-  }
-
-  Widget? _buildFAB() {
-    if (_selectedIndex == 0 && _appContext.currentUser.canManagePostTemplates) {
-      return FloatingActionButton.extended(
-          icon: const Icon(Icons.post_add),
-          onPressed: () {
-            final String uid = _appContext.currentUser.id;
-            Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => SelectPostTemplatePage(
-                            eventContext:
-                                EventContext.adding(currentUserID: uid))))
-                .then((_) {
-              setState(() {});
-            });
-          },
-          label: const Text('Add Post'));
-    }
-    return null;
+    return PersonalHome(appContext: _appContext);
   }
 
   // * Logic
@@ -309,39 +296,19 @@ class _HomePageState extends State<HomePage>
     if (appContext.sharedPref.isFirstOpen) {
       // Show welcome dialog without notification pressure
       await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => Dialog(
-              child: SingleChildScrollView(
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                child: Text('Welcome! 👋',
-                                    style: TextStyle(
-                                        fontSize: 21,
-                                        fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.start)),
-                            const SizedBox(height: 16),
-                            const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                child: Text(
-                                    'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
-                                    textAlign: TextAlign.start,
-                                    style: TextStyle(fontSize: 16))),
-                            const SizedBox(height: 8),
-                            Align(
-                                alignment: Alignment.centerRight,
-                                child: Padding(
-                                    padding: const EdgeInsets.only(right: 16.0),
-                                    child: TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Get Started',
-                                            style: TextStyle(fontSize: 16)))))
-                          ])))));
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AppDialog(
+          icon: Icons.waving_hand_outlined,
+          title: 'Welcome!',
+          message:
+              'Thanks for visiting the CTRIM app! Stay connected with the latest updates, events, and announcements from CTRIM Belfast.',
+          actions: AppDialogActions(
+            onConfirm: () => Navigator.pop(context),
+            confirmLabel: 'Get Started',
+          ),
+        ),
+      );
 
       appContext.sharedPref.nowOpened();
     }
@@ -390,18 +357,14 @@ class _HomePageState extends State<HomePage>
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint(
           '-----------------Hello from on message! Here is the message: ${message.data}');
-      _handleOnMessage(message).then((_) {
-        _appContext.rebuildPlease();
-      });
+      _handleOnMessage(message);
     });
 
     // when the app is opened in the background of device
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       debugPrint(
           '-----------------Hello from on message opened app! Here is the message: ${message.data}');
-      _handleOnMessageOpenedBackground(message).then((_) {
-        _appContext.rebuildPlease();
-      });
+      _handleOnMessageOpenedBackground(message);
     });
 
     FirebaseMessaging.instance.getInitialMessage().then((message) {
@@ -548,73 +511,39 @@ class _HomePageState extends State<HomePage>
 
     bool result = false;
 
-    final List<Widget> buttonChildren = [
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(closeText ?? 'Ok', style: const TextStyle(fontSize: 16)))
-    ];
-    if (openingPage) {
-      buttonChildren.add(TextButton(
-          onPressed: () {
-            result = true;
-            Navigator.of(context).pop();
-          },
-          child: const Text('Show More', style: TextStyle(fontSize: 16))));
-    }
-
     await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) {
-          // ! wrap this in an orientation builder!
-          return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              child: SingleChildScrollView(
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                    imageUrl != null
-                        ? Container(
-                            foregroundDecoration: BoxDecoration(
-                                borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(16),
-                                    topRight: Radius.circular(16)),
-                                image: DecorationImage(
-                                    image: NetworkImage(
-                                        NetworkImageHelper.getImageUrl(
-                                            imageUrl)),
-                                    fit: BoxFit.fill)),
-                            child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Image.network(
-                                    NetworkImageHelper.getImageUrl(
-                                        imageUrl)) // so jank lol! It works though
-                                ))
-                        : Container(),
-                    imageUrl != null
-                        ? const SizedBox(height: 16)
-                        : const SizedBox(height: 24),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(notification.title!,
-                            style: const TextStyle(
-                                fontSize: 21, fontWeight: FontWeight.bold))),
-                    const SizedBox(height: 8),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(notification.body!,
-                            style: const TextStyle(fontSize: 16))),
-                    const SizedBox(height: 8),
-                    Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: buttonChildren)),
-                    const SizedBox(height: 16)
-                  ])));
-        });
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AppDialog(
+        icon: imageUrl == null ? Icons.notifications_outlined : null,
+        title: notification.title,
+        message: notification.body,
+        maxWidth: ResponsiveLayout.reviewDialogMaxWidth,
+        child: imageUrl == null
+            ? null
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  NetworkImageHelper.getImageUrl(imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+        actions: openingPage
+            ? AppDialogActions(
+                onCancel: () => Navigator.of(context).pop(),
+                cancelLabel: closeText ?? 'Ok',
+                onConfirm: () {
+                  result = true;
+                  Navigator.of(context).pop();
+                },
+                confirmLabel: 'Show More',
+              )
+            : AppDialogActions(
+                onConfirm: () => Navigator.of(context).pop(),
+                confirmLabel: closeText ?? 'Ok',
+              ),
+      ),
+    );
 
     return result;
   }
@@ -622,7 +551,7 @@ class _HomePageState extends State<HomePage>
   // in the case that the notification is on a Post Update - receiving word of a role
   Future<void> _updateUserRoles() async {
     final UserDBManager userDBManager = UserDBManager();
-    _appContext.currentUser.setRoles(
+    _appContext.setCurrentUserRoles(
         await userDBManager.fetchUserRoles(_appContext.currentUser.id));
   }
 
@@ -655,5 +584,58 @@ class _HomePageState extends State<HomePage>
         await localDataManager.deleteUserImage(user.id);
       }
     }
+  }
+}
+
+class _AddPostFab extends StatelessWidget {
+  const _AddPostFab();
+
+  @override
+  Widget build(BuildContext context) {
+    final canManage = context.select(
+      (AppContext c) => (c.sessionEpoch, c.currentUser.canManagePostTemplates),
+    );
+    if (!canManage.$2) return const SizedBox.shrink();
+
+    final uid = context.read<AppContext>().currentUser.id;
+    return FloatingActionButton.extended(
+      icon: const Icon(Icons.post_add),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SelectPostTemplatePage(
+              eventContext: EventContext.adding(currentUserID: uid),
+            ),
+          ),
+        );
+      },
+      label: const Text('Add Post'),
+    );
+  }
+}
+
+class _PersonalNavIcon extends StatelessWidget {
+  const _PersonalNavIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    context.select((AppContext c) => (c.sessionEpoch, c.headsEpoch));
+    final appContext = context.read<AppContext>();
+    if (appContext.isCurrentUserGuest) return Icon(icon);
+    final user = appContext.currentUser;
+    if (user.roles == null) return Icon(icon);
+    final count = UserScheduleService.upcomingPostCount(
+      user: user,
+      eventHeads: appContext.eventHeads,
+    );
+    final child = Icon(icon);
+    if (count == 0) return child;
+    return Badge(
+      label: Text('$count'),
+      child: child,
+    );
   }
 }

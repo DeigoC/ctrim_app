@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import '../firebase/db_managers/cell_group_db_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_attendance.dart';
@@ -9,10 +10,11 @@ import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
-import '../models/post_tag.dart';
 import '../models/user.dart';
 import 'broadcast_audience.dart';
 import 'parent_link.dart';
+import 'user_activity_messages.dart';
+import 'user_activity_recorder.dart';
 
 class EventContext {
   late final EventHead _head;
@@ -23,8 +25,11 @@ class EventContext {
   late final String _currentUID;
   final EventBody _body = EventBody();
   EventAttendance? _attendance;
+  bool _attendanceDirty = false;
 
-  bool _canSaveTheEditing = false, _notifyBroadcast = false, _notifyScheduledMembers = false;
+  bool _canSaveTheEditing = false,
+      _notifyBroadcast = false,
+      _notifyScheduledMembers = false;
 
   /// Parent id as loaded / last saved — used to sync [ChildrenIDs] on save.
   String? _baselineParentID;
@@ -40,9 +45,14 @@ class EventContext {
   // template subtitles list (for posts created from templates)
   List<String>? _templateSubtitles;
 
+  /// Draft expected attendees for create / template edit (written to attendance on publish).
+  final List<String> _expectedAttendeeUserIDs = <String>[];
+
   // for viewing and editing
   EventContext.viewing(
-      {required final EventHead eventHead, required final String currentUID, final List<String>? data}) {
+      {required final EventHead eventHead,
+      required final String currentUID,
+      final List<String>? data}) {
     _head = eventHead;
     _canSaveTheEditing = false;
     _currentUID = currentUID;
@@ -52,7 +62,10 @@ class EventContext {
     }
   }
 
-  EventContext.adding({required final String currentUserID, final String? parentID, final String? id}) {
+  EventContext.adding(
+      {required final String currentUserID,
+      final String? parentID,
+      final String? id}) {
     _metadata = EventMetadata(authorUID: currentUserID, parentID: parentID);
     _baselineParentID = parentID;
     _program = EventProgram();
@@ -67,10 +80,13 @@ class EventContext {
   bool get notifyBroadcast => _notifyBroadcast;
   bool get notifyScheduledMembers => _notifyScheduledMembers;
   void setNotifyBroadcast(final bool newState) => _notifyBroadcast = newState;
-  void setNotifyScheduledMembers(final bool newState) => _notifyScheduledMembers = newState;
+  void setNotifyScheduledMembers(final bool newState) =>
+      _notifyScheduledMembers = newState;
 
   // * Body Related
-  bool get isBodyUntouched => _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') == 0;
+  bool get isBodyUntouched =>
+      _body.json.compareTo(r'[{"insert":"Hello, time to start writing!\n"}]') ==
+      0;
   List<dynamic> get body => _body.decodedJson;
   String get encodedBody => _body.json;
   bool isSameJson(final List<dynamic> json) => _body.compareTo(json) == 0;
@@ -119,10 +135,41 @@ class EventContext {
   // * Attendance Related (private supplemental; null until fetched / signed-in load)
   EventAttendance? get attendance => _attendance;
   bool get hasLoadedAttendance => _attendance != null;
-  void setFetchedAttendance(final EventAttendance attendance) {
+  bool get isAttendanceDirty => _attendanceDirty;
+
+  /// Applies a server attendance snapshot.
+  ///
+  /// When [forceReplace] is false and staff lists are dirty (unsaved local edits),
+  /// only [interested] is taken from the server so self-serve interest toggles do
+  /// not wipe pending attendee/expected changes.
+  void setFetchedAttendance(final EventAttendance attendance,
+      {bool forceReplace = false}) {
+    if (!forceReplace && _attendanceDirty && _attendance != null) {
+      _attendance = EventAttendance.fromMap({
+        'interested': {
+          for (final e in attendance.interested.entries)
+            e.key: e.value.toJson(),
+        },
+        'attendees': _attendance!.attendees.map((e) => e.toJson()).toList(),
+        'expectedUserIds': List<String>.from(_attendance!.expectedUserIds),
+      });
+    } else {
+      _attendance = attendance;
+      if (forceReplace) {
+        _attendanceDirty = false;
+      }
+    }
+    _head.setInterestedCount(_attendance!.interestedCount);
+    _head.setAttendeeCount(_attendance!.attendeeCount);
+  }
+
+  /// Local staff edit to attendees / expected checklist; enables post Save.
+  void applyStaffAttendanceEdit(final EventAttendance attendance) {
     _attendance = attendance;
     _head.setInterestedCount(attendance.interestedCount);
     _head.setAttendeeCount(attendance.attendeeCount);
+    _attendanceDirty = true;
+    _canSaveTheEditing = true;
   }
 
   // * General logic
@@ -137,7 +184,8 @@ class EventContext {
     final IDTrackerDBManager idTrackerDBManager = IDTrackerDBManager();
     final String newID = await idTrackerDBManager.getAndIncrementEventID();
 
-    final EventSupplementalDBManager dbManager = EventSupplementalDBManager(newID);
+    final EventSupplementalDBManager dbManager =
+        EventSupplementalDBManager(newID);
     final EventHeadDBManager headDBManager = EventHeadDBManager();
     final DateTime now = DateTime.now();
 
@@ -151,8 +199,18 @@ class EventContext {
     headToUpload.setTagIDs(_head.tagIDs);
     headToUpload.setCellGroupIDs(_head.cellGroupIDs);
     headToUpload.setIsPeriodParent(_metadata.isPeriodParent);
+    if (_head.hasLeadSpeaker) {
+      headToUpload.setLeadSpeaker(
+        uid: _head.leadSpeakerUID,
+        imgSrc: _head.leadSpeakerImgSrc,
+        name: _head.leadSpeakerName,
+      );
+    }
     for (final mediaEntry in _head.media) {
-      headToUpload.addMediaItem(src: mediaEntry['src']!, type: mediaEntry['type']!, title: mediaEntry['title']!);
+      headToUpload.addMediaItem(
+          src: mediaEntry['src']!,
+          type: mediaEntry['type']!,
+          title: mediaEntry['title']!);
     }
 
     // metadata
@@ -168,7 +226,14 @@ class EventContext {
     await dbManager.addMetadata(_metadata);
     await dbManager.setLog(_log);
     await dbManager.addProgram(_program);
-    await dbManager.setAttendance(EventAttendance());
+    final expectedIds = await resolveExpectedUserIdsForNewPost();
+    await dbManager
+        .setAttendance(EventAttendance(expectedUserIds: expectedIds));
+    await UserActivityRecorder().record(
+      actorUserId: uid,
+      log: UserActivityMessages.createdBulletinPost,
+      documentId: newID,
+    );
     return newID;
   }
 
@@ -189,12 +254,14 @@ class EventContext {
         postId: id,
         newParentId: newParent,
         childrenOf: (candidateId) async {
-          if (candidateId == id) return List<String>.from(_metadata.childrenPostIDs);
+          if (candidateId == id)
+            return List<String>.from(_metadata.childrenPostIDs);
           return EventSupplementalDBManager(candidateId).fetchChildrenIDs();
         },
       );
       if (createsCycle) {
-        throw StateError('Cannot set parent: would create a related-post cycle');
+        throw StateError(
+            'Cannot set parent: would create a related-post cycle');
       }
       _lastParentLinkSync = await dbManager.syncChildrenLinkage(
         childId: id,
@@ -211,6 +278,22 @@ class EventContext {
     await dbManager.updateMetadata(_metadata);
     await dbManager.updateProgram(_program);
     await dbManager.updateMedia(_media);
+
+    if (_attendanceDirty && _attendance != null) {
+      final saved = await dbManager.saveStaffManagedAttendance(
+        attendees: List<AttendeeEntry>.from(_attendance!.attendees),
+        expectedUserIds: List<String>.from(_attendance!.expectedUserIds),
+      );
+      _attendance = saved;
+      _head.setInterestedCount(saved.interestedCount);
+      _head.setAttendeeCount(saved.attendeeCount);
+      _attendanceDirty = false;
+    }
+    await UserActivityRecorder().record(
+      actorUserId: uid,
+      log: UserActivityMessages.editedBulletinPost,
+      documentId: id,
+    );
   }
 
   /// User IDs removed from program roles during the current edit (for CF role sync).
@@ -224,7 +307,8 @@ class EventContext {
 
   String get id => _head.id;
   bool isUserAdminOfPost(final String currentUID) =>
-      _metadata.authorUID.compareTo(currentUID) == 0 || _metadata.contributorUIDs.contains(currentUID);
+      _metadata.authorUID.compareTo(currentUID) == 0 ||
+      _metadata.contributorUIDs.contains(currentUID);
 
   void allowSavingOfTheEdit() => _canSaveTheEditing = true;
 
@@ -245,13 +329,16 @@ class EventContext {
     }
     _notifyBroadcast = true;
     _notifyScheduledMembers = true;
+    _attendanceDirty = false;
     _canSaveTheEditing = false;
   }
 
   bool get canSaveTheEditing => _canSaveTheEditing;
 
-  bool isUserContributor(final String currentUID) => _metadata.contributorUIDs.contains(currentUID);
-  bool isUserAuthor(final String currentUID) => _metadata.authorUID.compareTo(currentUID) == 0;
+  bool isUserContributor(final String currentUID) =>
+      _metadata.contributorUIDs.contains(currentUID);
+  bool isUserAuthor(final String currentUID) =>
+      _metadata.authorUID.compareTo(currentUID) == 0;
 
   /// Keeps head and metadata [TagIDs] in sync.
   void applyTagIDs(final List<String> tagIDs) {
@@ -265,6 +352,43 @@ class EventContext {
     _metadata.setCellGroupIDs(cellGroupIDs);
   }
 
+  /// Draft expected attendees for new posts / templates (not the live attendance doc).
+  List<String> get expectedAttendeeUserIDs =>
+      UnmodifiableListView(_expectedAttendeeUserIDs);
+
+  void applyExpectedAttendeeUserIDs(final List<String> userIds) {
+    _expectedAttendeeUserIDs
+      ..clear()
+      ..addAll({
+        for (final id in userIds)
+          if (id.isNotEmpty) id
+      });
+  }
+
+  /// Resolves expected IDs for a new post: draft list, else linked CG roster members.
+  Future<List<String>> resolveExpectedUserIdsForNewPost() async {
+    if (_expectedAttendeeUserIDs.isNotEmpty) {
+      return List<String>.from(_expectedAttendeeUserIDs);
+    }
+    final cgIds = _head.cellGroupIDs;
+    if (cgIds.isEmpty) return <String>[];
+
+    final ids = <String>{};
+    for (final cgId in cgIds) {
+      try {
+        final roster = await CellGroupSupplementalDBManager(cgId).fetchRoster();
+        for (final member in roster.members) {
+          if (member.isLinkedUser && member.isActive) {
+            ids.add(member.userId);
+          }
+        }
+      } catch (_) {
+        // Roster may be unavailable; skip that group.
+      }
+    }
+    return ids.toList();
+  }
+
   /// Keeps head denorm and metadata [IsPeriodParent] in sync.
   void applyIsPeriodParent(final bool value) {
     _metadata.setIsPeriodParent(value);
@@ -276,28 +400,19 @@ class EventContext {
     _metadata.setParentID(parentID);
   }
 
-  /// Recomputes FCM [Topics] from location + notifiable tags (+ optional location umbrella).
-  ///
-  /// When no notifiable tags are present, preserves non-umbrella entries from current Topics
-  /// so legacy posts keep working.
-  void syncNotificationTopics({
-    required List<PostTag> allTags,
-    required bool includeLocationUmbrella,
-  }) {
-    final legacy = List<String>.from(_metadata.topics);
+  /// Sets FCM [Topics] to the location umbrella when [includeLocationUmbrella] is true.
+  void syncNotificationTopics({required bool includeLocationUmbrella}) {
     final resolved = BroadcastAudience.resolveFromPost(
       location: _head.location,
-      tagIDs: _metadata.tagIDs.isNotEmpty ? _metadata.tagIDs : _head.tagIDs,
-      allTags: allTags,
       includeLocationUmbrella: includeLocationUmbrella,
-      legacyTopics: legacy,
     );
     _metadata.clearTopics();
     _metadata.addAllTopics(resolved);
   }
 
   void _initialiseInternalLists() {
-    if (_metadata.authorUID == _currentUID || _metadata.contributorUIDs.contains(_currentUID)) {
+    if (_metadata.authorUID == _currentUID ||
+        _metadata.contributorUIDs.contains(_currentUID)) {
       _contributorAdditionUIDs = List<String>.empty(growable: true);
       _contributorRemovalUIDs = List<String>.empty(growable: true);
     } else {
@@ -305,7 +420,8 @@ class EventContext {
       _contributorRemovalUIDs = List.empty();
     }
 
-    if (_metadata.contributorUIDs.contains(_currentUID) || _metadata.authorUID == _currentUID) {
+    if (_metadata.contributorUIDs.contains(_currentUID) ||
+        _metadata.authorUID == _currentUID) {
       _roleAdditions = <int, List<String>>{};
       _roleRemovals = <int, List<String>>{};
       _deletedRoleTitle = <int, String>{};
@@ -333,7 +449,8 @@ class EventContext {
     // * Program - Details
     result += '\n----PROGRAM_DETAILS_START----';
     result += '\n${_program.allDay ? '1' : '0'}';
-    result += '\n${_program.finishTime != null ? _program.finishTime!.millisecondsSinceEpoch.toString() : 'null'}';
+    result +=
+        '\n${_program.finishTime != null ? _program.finishTime!.millisecondsSinceEpoch.toString() : 'null'}';
     result += '\n${_program.online ? '1' : '0'}';
     result += '\n${_program.address}';
     result += '\n${_program.mapLink}';
@@ -346,8 +463,10 @@ class EventContext {
       result += '\n${role['uids']}';
       result += '\n${role['title'] as String}';
       result += '\n${(role['detail'] as String).replaceAll('\n', r'\n')}';
-      result += '\n${role['start'] != null ? (role['start'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
-      result += '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
+      result +=
+          '\n${role['start'] != null ? (role['start'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
+      result +=
+          '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['for_guests'] == true ? '1' : '0'}';
       result += '\n${role['id'] as int}';
     }
@@ -394,12 +513,13 @@ class EventContext {
   // refer to the transform method for parsing to a full post
   void _setWholePostFromTxt(List<String> lines) {
     // * Body - whole json as 1 line?
-    final int bodyStartIndex = lines.indexWhere((element) => element.contains('----BODY_START----'));
+    final int bodyStartIndex =
+        lines.indexWhere((element) => element.contains('----BODY_START----'));
     _body.setJson(lines[bodyStartIndex + 1]);
 
     // * Program - Details
-    final int programDetailStartIndex =
-        lines.indexWhere((element) => element.contains('----PROGRAM_DETAILS_START----'));
+    final int programDetailStartIndex = lines.indexWhere(
+        (element) => element.contains('----PROGRAM_DETAILS_START----'));
     final int allDayIndex = programDetailStartIndex + 1;
     final int finishTimeIndex = programDetailStartIndex + 2;
     final int onlineIndex = programDetailStartIndex + 3;
@@ -410,22 +530,28 @@ class EventContext {
     _program.setAllDay(lines[allDayIndex].compareTo('1') == 0);
     _program.setFinishTime(lines[finishTimeIndex].compareTo('null') == 0
         ? null
-        : DateTime.fromMillisecondsSinceEpoch(int.parse(lines[finishTimeIndex])));
+        : DateTime.fromMillisecondsSinceEpoch(
+            int.parse(lines[finishTimeIndex])));
     _program.setOnline(lines[onlineIndex] == '1');
     _program.setAddress(lines[addressIndex]);
     _program.setMapLink(lines[mapLinkIndex]);
 
     // * Program - Roles
-    final int programRoleStartIndex = lines.indexWhere((element) => element.contains('----PROGRAM_ROLES_START----'));
-    final int programRoleEndIndex = lines.indexWhere((element) => element.contains('----PROGRAM_ROLES_END----'));
+    final int programRoleStartIndex = lines.indexWhere(
+        (element) => element.contains('----PROGRAM_ROLES_START----'));
+    final int programRoleEndIndex = lines
+        .indexWhere((element) => element.contains('----PROGRAM_ROLES_END----'));
     if (programRoleEndIndex != programRoleStartIndex + 1) {
       // sublist and create the roles from it
-      _initialiseProgramRoles(lines.sublist(programRoleStartIndex + 1, programRoleEndIndex));
+      _initialiseProgramRoles(
+          lines.sublist(programRoleStartIndex + 1, programRoleEndIndex));
     }
 
     // * Media
-    final int mediaStartIndex = lines.indexWhere((element) => element.contains('----MEDIA_START----'));
-    final int mediaEndIndex = lines.indexWhere((element) => element.contains('----MEDIA_END----'));
+    final int mediaStartIndex =
+        lines.indexWhere((element) => element.contains('----MEDIA_START----'));
+    final int mediaEndIndex =
+        lines.indexWhere((element) => element.contains('----MEDIA_END----'));
     _media = EventMedia();
     if (mediaEndIndex != mediaStartIndex + 1) {
       // build roles from sublist
@@ -433,26 +559,34 @@ class EventContext {
     }
 
     // * Logs
-    final int logsStartIndex = lines.indexWhere((element) => element.contains('----LOGS_START----'));
-    final int logsEndIndex = lines.indexWhere((element) => element.contains('----LOGS_END----'));
+    final int logsStartIndex =
+        lines.indexWhere((element) => element.contains('----LOGS_START----'));
+    final int logsEndIndex =
+        lines.indexWhere((element) => element.contains('----LOGS_END----'));
     // build logs from sublist
     _initialiseLogs(lines.sublist(logsStartIndex + 1, logsEndIndex));
 
     // * Metadata
-    final int metadataStartIndex = lines.indexWhere((element) => element.contains('----META_START----'));
+    final int metadataStartIndex =
+        lines.indexWhere((element) => element.contains('----META_START----'));
     _metadata = EventMetadata(
         authorUID: lines[metadataStartIndex + 1],
-        parentID: lines[metadataStartIndex + 4] == 'null' ? null : lines[metadataStartIndex + 4]);
+        parentID: lines[metadataStartIndex + 4] == 'null'
+            ? null
+            : lines[metadataStartIndex + 4]);
 
     _metadata.setLastUID(lines[metadataStartIndex + 2]);
-    _metadata.contributorUIDs.addAll(_getListFromData(lines[metadataStartIndex + 3]));
-    _metadata.childrenPostIDs.addAll(_getListFromData(lines[metadataStartIndex + 5]));
+    _metadata.contributorUIDs
+        .addAll(_getListFromData(lines[metadataStartIndex + 3]));
+    _metadata.childrenPostIDs
+        .addAll(_getListFromData(lines[metadataStartIndex + 5]));
 
     String rawTopicsData = lines.elementAt(metadataStartIndex + 6);
     if (!rawTopicsData.contains('----META_END----')) {
       _metadata.addAllTopics(_getListFromData(rawTopicsData));
       final String rawLeadSpeaker = lines.elementAt(metadataStartIndex + 7);
-      if (!rawLeadSpeaker.contains('----META_END----') && rawLeadSpeaker != 'null') {
+      if (!rawLeadSpeaker.contains('----META_END----') &&
+          rawLeadSpeaker != 'null') {
         _metadata.setLeadSpeakerUID(rawLeadSpeaker);
       }
       if (lines.length > metadataStartIndex + 8) {
@@ -467,7 +601,8 @@ class EventContext {
   }
 
   List<String> _getListFromData(final String rawData) {
-    final String contributorLine = rawData.replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
+    final String contributorLine =
+        rawData.replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
     final List<String> contributors = List.empty(growable: true);
     if (contributorLine.isNotEmpty && !contributorLine.contains(',')) {
       contributors.add(contributorLine);
@@ -483,14 +618,18 @@ class EventContext {
     const int chunkSize = 7;
     final int numberOfChunks = data.length ~/ chunkSize;
 
-    final List<List<String>> roles = List<List<String>>.generate(numberOfChunks, (index) {
+    final List<List<String>> roles =
+        List<List<String>>.generate(numberOfChunks, (index) {
       int startIndex = index * chunkSize;
       int endIndex = (index + 1) * chunkSize;
       return data.sublist(startIndex, endIndex);
     });
 
     for (final roleDataSet in roles) {
-      final String uidLine = roleDataSet[0].replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '');
+      final String uidLine = roleDataSet[0]
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll(' ', '');
       final List<String> uids = List<String>.empty(growable: true);
       if (uidLine.isNotEmpty && !uidLine.contains(',')) {
         uids.add(uidLine);
@@ -518,7 +657,8 @@ class EventContext {
     const int chunkSize = 4;
     final int numberOfChunks = data.length ~/ chunkSize;
 
-    final List<List<String>> media = List<List<String>>.generate(numberOfChunks, (index) {
+    final List<List<String>> media =
+        List<List<String>>.generate(numberOfChunks, (index) {
       int startIndex = index * chunkSize;
       int endIndex = (index + 1) * chunkSize;
       return data.sublist(startIndex, endIndex);
@@ -526,10 +666,15 @@ class EventContext {
 
     for (final mediaItem in media) {
       if (mediaItem.length == 4) {
-        _media.addMediaFile(
-            {'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2], 'thumbnailSrc': mediaItem[3]});
+        _media.addMediaFile({
+          'type': mediaItem[0],
+          'src': mediaItem[1],
+          'title': mediaItem[2],
+          'thumbnailSrc': mediaItem[3]
+        });
       } else {
-        _media.addMediaFile({'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
+        _media.addMediaFile(
+            {'type': mediaItem[0], 'src': mediaItem[1], 'title': mediaItem[2]});
       }
     }
   }
@@ -539,7 +684,8 @@ class EventContext {
     const int chunkSize = 3;
     final int numberOfChunks = data.length ~/ chunkSize;
 
-    final List<List<String>> logs = List<List<String>>.generate(numberOfChunks, (index) {
+    final List<List<String>> logs =
+        List<List<String>>.generate(numberOfChunks, (index) {
       int startIndex = index * chunkSize;
       int endIndex = (index + 1) * chunkSize;
       return data.sublist(startIndex, endIndex);
@@ -561,8 +707,10 @@ class EventContext {
     }
   }
 
-  Map<int, List<String>> get roleAdditions => UnmodifiableMapView(_roleAdditions);
-  Map<int, List<String>> get roleRemovalals => UnmodifiableMapView(_roleRemovals);
+  Map<int, List<String>> get roleAdditions =>
+      UnmodifiableMapView(_roleAdditions);
+  Map<int, List<String>> get roleRemovalals =>
+      UnmodifiableMapView(_roleRemovals);
   String deletedRoleTitle(final int id) => _deletedRoleTitle[id]!;
 
   void addRoleAdditionNotification(final Iterable<String> uids, final int id) {
@@ -579,9 +727,11 @@ class EventContext {
     _roleRemovals[id]!.addAll(uids);
   }
 
-  void addRoleDeletionTitle(final int id, final String title) => _deletedRoleTitle[id] = title;
+  void addRoleDeletionTitle(final int id, final String title) =>
+      _deletedRoleTitle[id] = title;
 
-  void removeRoleAdditionNotification(final int id) => _roleAdditions.remove(id);
+  void removeRoleAdditionNotification(final int id) =>
+      _roleAdditions.remove(id);
 
   List<String> get contributorAdditionUIDs => _contributorAdditionUIDs;
   List<String> get contributorRemovalUIDs => _contributorRemovalUIDs;
@@ -642,20 +792,26 @@ class EventContext {
       }
     }
     // Keep UID even if user list does not contain them yet.
-    _head.setLeadSpeaker(uid: uid, imgSrc: _head.leadSpeakerImgSrc, name: _head.leadSpeakerName);
+    _head.setLeadSpeaker(
+        uid: uid, imgSrc: _head.leadSpeakerImgSrc, name: _head.leadSpeakerName);
   }
 
   // template subtitles
   List<String>? get templateSubtitles => _templateSubtitles;
-  void setTemplateSubtitles(final List<String>? subtitles) => _templateSubtitles = subtitles;
+  void setTemplateSubtitles(final List<String>? subtitles) =>
+      _templateSubtitles = subtitles;
 
   // template media pools
   List<Map<String, dynamic>>? _templateHeadMediaPool;
   List<Map<String, dynamic>>? _templateBodyMediaPool;
 
-  List<Map<String, dynamic>>? get templateHeadMediaPool => _templateHeadMediaPool;
-  void setTemplateHeadMediaPool(final List<Map<String, dynamic>>? pool) => _templateHeadMediaPool = pool;
+  List<Map<String, dynamic>>? get templateHeadMediaPool =>
+      _templateHeadMediaPool;
+  void setTemplateHeadMediaPool(final List<Map<String, dynamic>>? pool) =>
+      _templateHeadMediaPool = pool;
 
-  List<Map<String, dynamic>>? get templateBodyMediaPool => _templateBodyMediaPool;
-  void setTemplateBodyMediaPool(final List<Map<String, dynamic>>? pool) => _templateBodyMediaPool = pool;
+  List<Map<String, dynamic>>? get templateBodyMediaPool =>
+      _templateBodyMediaPool;
+  void setTemplateBodyMediaPool(final List<Map<String, dynamic>>? pool) =>
+      _templateBodyMediaPool = pool;
 }

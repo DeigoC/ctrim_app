@@ -3,6 +3,7 @@
 from firebase_functions import firestore_fn, https_fn, options
 from firebase_admin import firestore, initialize_app, messaging
 
+from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error
 from user_role_sync import sync_post_program_roles, sync_program_roles_from_change
 from notification_auth import require_notification_sender
 from token_pruning import is_invalid_token_error, prune_invalid_tokens
@@ -40,11 +41,21 @@ def _parse_data_dict(req_data) -> dict[str, str]:
     return {data_keys: data_values}
 
 
-def _build_multicast_message(req_data, tokens: list[str]) -> messaging.MulticastMessage:
-    data_dict = _parse_data_dict(req_data)
-    ios_image = str(req_data.get('iOSImage', '')).strip()
-    android_image = str(req_data.get('AndroidImage', '')).strip()
+def _https_error_from_fcm(exc: BaseException) -> https_fn.HttpsError:
+    return https_fn.HttpsError(
+        code=https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+        message=str(exc) or 'FCM send failed',
+    )
 
+
+def _notification_payload(req_data) -> messaging.Notification:
+    return messaging.Notification(
+        title=str(req_data.get('Title', '')),
+        body=str(req_data.get('Body', '')),
+    )
+
+
+def _apns_android_configs(ios_image: str, android_image: str):
     apns = messaging.APNSConfig(
         payload=messaging.APNSPayload(aps=messaging.Aps(mutable_content=True)),
     )
@@ -59,14 +70,19 @@ def _build_multicast_message(req_data, tokens: list[str]) -> messaging.Multicast
         android = messaging.AndroidConfig(
             notification=messaging.AndroidNotification(image=android_image),
         )
+    return apns, android
 
+
+def _build_multicast_message(req_data, tokens: list[str]) -> messaging.MulticastMessage:
+    data_dict = _parse_data_dict(req_data)
+    ios_image = fcm_image_url(req_data.get('iOSImage', ''))
+    android_image = fcm_image_url(req_data.get('AndroidImage', ''))
+
+    apns, android = _apns_android_configs(ios_image, android_image)
     return messaging.MulticastMessage(
         tokens=tokens,
         data=data_dict,
-        notification=messaging.Notification(
-            title=req_data['Title'],
-            body=req_data['Body'],
-        ),
+        notification=_notification_payload(req_data),
         apns=apns,
         android=android,
     )
@@ -136,44 +152,48 @@ def send_notification_to_multiple_tokens(req: https_fn.CallableRequest) -> any:
     }
 
 
-@https_fn.on_call(region='europe-west1')
-def send_to_topic(req: https_fn.CallableRequest) -> any:
-    require_notification_sender(req)
-    topic = str(req.data['Topic'])
-    data_dict = _parse_data_dict(req.data)
-    ios_image = str(req.data.get('iOSImage', '')).strip()
-    android_image = str(req.data.get('AndroidImage', '')).strip()
-
-    print(f'--------------- Topic is {topic}')
-    print(f'--------------- DataDict is {data_dict}')
-
-    apns = messaging.APNSConfig(
-        payload=messaging.APNSPayload(aps=messaging.Aps(mutable_content=True)),
-    )
-    if ios_image:
-        apns = messaging.APNSConfig(
-            payload=messaging.APNSPayload(aps=messaging.Aps(mutable_content=True)),
-            fcm_options=messaging.APNSFCMOptions(image=ios_image),
-        )
-
-    android = messaging.AndroidConfig()
-    if android_image:
-        android = messaging.AndroidConfig(
-            notification=messaging.AndroidNotification(image=android_image),
-        )
-
-    msg = messaging.Message(
+def _build_topic_message(req_data, *, include_images: bool) -> messaging.Message:
+    topic = str(req_data.get('Topic', ''))
+    data_dict = _parse_data_dict(req_data)
+    ios_image = fcm_image_url(req_data.get('iOSImage', '')) if include_images else ''
+    android_image = fcm_image_url(req_data.get('AndroidImage', '')) if include_images else ''
+    apns, android = _apns_android_configs(ios_image, android_image)
+    return messaging.Message(
         topic=topic,
         data=data_dict,
-        notification=messaging.Notification(
-            title=req.data['Title'],
-            body=req.data['Body'],
-        ),
+        notification=_notification_payload(req_data),
         apns=apns,
         android=android,
     )
 
-    messaging.send(msg)
+
+@https_fn.on_call(region='europe-west1')
+def send_to_topic(req: https_fn.CallableRequest) -> any:
+    require_notification_sender(req)
+    topic = str(req.data.get('Topic', ''))
+    if not is_valid_fcm_topic(topic):
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+            message=f'Invalid FCM topic name: {topic!r}',
+        )
+
+    data_dict = _parse_data_dict(req.data)
+    print(f'--------------- Topic is {topic}')
+    print(f'--------------- DataDict is {data_dict}')
+
+    try:
+        messaging.send(_build_topic_message(req.data, include_images=True))
+    except Exception as exc:  # noqa: BLE001 — map FCM failures to callable errors
+        print(f'FCM topic send failed: {exc}')
+        if looks_like_image_error(exc):
+            try:
+                messaging.send(_build_topic_message(req.data, include_images=False))
+                return {'result': 'finished sending to topic!', 'image_omitted': True}
+            except Exception as retry_exc:  # noqa: BLE001
+                print(f'FCM topic retry without image failed: {retry_exc}')
+                raise _https_error_from_fcm(retry_exc) from retry_exc
+        raise _https_error_from_fcm(exc) from exc
+
     return {'result': 'finished sending to topic!'}
 
 

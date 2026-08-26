@@ -1,12 +1,12 @@
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/user_schedule_service.dart';
-import 'package:ctrim_app/widgets/load_progress_body.dart';
-import 'package:ctrim_app/widgets/posts/post_head.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/user_schedule_service.dart';
+import '../../widgets/load_progress_body.dart';
+import '../../widgets/posts/post_head.dart';
 
 class ViewMyPostsPage extends StatefulWidget {
   const ViewMyPostsPage({super.key});
@@ -48,7 +48,8 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
     });
 
     try {
-      final posts = await _scheduleService.fetchPosts(_appContext.currentUser.id);
+      final posts =
+          await _scheduleService.fetchPosts(_appContext.currentUser.id);
       if (!mounted) return;
 
       setState(() {
@@ -78,8 +79,9 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: const Text('My Posts'), actions: [IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))]),
+      appBar: AppBar(title: const Text('My Posts'), actions: [
+        IconButton(onPressed: _onHelpClick, icon: const Icon(Icons.help))
+      ]),
       body: _buildBody(),
     );
   }
@@ -119,13 +121,15 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         final double contentWidth = constraints.maxWidth;
         final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
         final double horizontalPadding = isWideScreen
-            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) / 2)
+            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) /
+                    2)
                 .clamp(16.0, double.infinity)
             : 8.0;
 
         if (!isWideScreen) {
           return ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+            padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding, vertical: 8),
             itemCount: postIDs.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, index) => _buildPostCard(postIDs[index]),
@@ -150,7 +154,8 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         }
 
         return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+          padding:
+              EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -178,7 +183,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
         ],
       ),
       child: PostHead(
-        thisHead: _appContext.getPostHead(postID),
+        thisHead: _appContext.headById(postID)!,
         updatePost: () {
           setState(() {});
         },
@@ -188,7 +193,9 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
 
   void _onHelpClick() {
     DialogManager.showAlertDialog(
-        context: context, title: 'My Posts Page', content: 'Recent posts that you can edit will show in this page');
+        context: context,
+        title: 'My Posts Page',
+        content: 'Recent posts that you can edit will show in this page');
   }
 
   Future<void> _pruneStalePosts() async {

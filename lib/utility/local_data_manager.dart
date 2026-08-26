@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:ctrim_app/models/info/church_info.dart';
-import 'package:ctrim_app/models/info/ctrim_info.dart';
-import 'package:ctrim_app/models/info/testimonial_info.dart';
-import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import '../models/info/church_info.dart';
+import '../models/info/church_page.dart';
+import '../models/info/ctrim_info.dart';
+import '../models/info/testimonial_info.dart';
+import '../models/post_template.dart';
 
 class LocalDataManager {
   static bool _initialized = false;
@@ -15,11 +17,13 @@ class LocalDataManager {
   static const String _postDataBox = 'post_data';
   static const String _templatesBox = 'templates';
   static const String _churchInfoBox = 'church_info';
+  static const String _churchPagesBox = 'church_pages';
   static const String _ctrimInfoBox = 'ctrim_info';
   static const String _testimonialInfoBox = 'testimonial_info';
   static const String _metadataBox = 'metadata';
   static const String _imagesCacheBox = 'images_cache';
   static const String _cacheTimestampsBox = 'cache_timestamps';
+  static const String _eventHeadsBox = 'event_heads';
 
   // Cache size limits (in bytes)
   static const int maxCacheSizeBytes = 50 * 1024 * 1024; // 50MB
@@ -39,11 +43,13 @@ class LocalDataManager {
       Hive.openBox(_postDataBox),
       Hive.openBox(_templatesBox),
       Hive.openBox(_churchInfoBox),
+      Hive.openBox(_churchPagesBox),
       Hive.openBox(_ctrimInfoBox),
       Hive.openBox(_testimonialInfoBox),
       Hive.openBox(_metadataBox),
       Hive.openBox(_imagesCacheBox),
       Hive.openBox(_cacheTimestampsBox),
+      Hive.openBox(_eventHeadsBox),
     ]);
 
     _initialized = true;
@@ -100,6 +106,27 @@ class LocalDataManager {
     return null;
   }
 
+  // * Event heads (bulletin list)
+  Future<void> writeEventHeads(final List<Map<String, dynamic>> heads) async {
+    final box = Hive.box(_eventHeadsBox);
+    await box.put('event_heads', heads);
+  }
+
+  Future<List<Map<String, dynamic>>> readEventHeads() async {
+    final box = Hive.box(_eventHeadsBox);
+    final dynamic content = box.get('event_heads');
+    if (content is! List) {
+      return <Map<String, dynamic>>[];
+    }
+    final result = <Map<String, dynamic>>[];
+    for (final entry in content) {
+      if (entry is Map) {
+        result.add(Map<String, dynamic>.from(entry));
+      }
+    }
+    return result;
+  }
+
   // * Post Tracking
   Future<void> writePostTrack(final List<String> postTrack) async {
     final box = Hive.box(_postTrackBox);
@@ -154,8 +181,10 @@ class LocalDataManager {
         final dynamic data = box.get(key);
         if (data != null && data is Map) {
           try {
-            final Map<String, dynamic> contentJson = Map<String, dynamic>.from(data);
-            results.add(PostTemplate.fromMap(true, contentJson['id'], contentJson));
+            final Map<String, dynamic> contentJson =
+                Map<String, dynamic>.from(data);
+            results.add(
+                PostTemplate.fromMap(true, contentJson['id'], contentJson));
           } catch (e) {
             debugPrint('Error deserializing template $key: $e - skipping');
             // Skip corrupted/outdated cached templates
@@ -243,7 +272,8 @@ class LocalDataManager {
 
   Future<List<ChurchInfo>> readAllChurchInfo() async {
     final box = Hive.box(_churchInfoBox);
-    return _readAllInfoRecords<ChurchInfo>(box, (id, data) => ChurchInfo.fromMap(id, data));
+    return _readAllInfoRecords<ChurchInfo>(
+        box, (id, data) => ChurchInfo.fromMap(id, data));
   }
 
   Future<void> clearChurchInfo() async {
@@ -254,6 +284,60 @@ class LocalDataManager {
   Future<void> deleteChurchInfoData(final String id) async {
     final box = Hive.box(_churchInfoBox);
     await box.delete(id);
+  }
+
+  static String churchPagesSectionKey(final String churchId) =>
+      'church_pages_$churchId';
+
+  static String churchPageCacheKey(
+          final String churchId, final String pageId) =>
+      '$churchId::$pageId';
+
+  Future<void> writeChurchPageData(final ChurchPage page) async {
+    final box = Hive.box(_churchPagesBox);
+    await box.put(
+        churchPageCacheKey(page.churchId, page.id), page.toCacheJson());
+  }
+
+  Future<List<ChurchPage>> readChurchPages(final String churchId) async {
+    final box = Hive.box(_churchPagesBox);
+    final prefix = '$churchId::';
+    final results = <ChurchPage>[];
+    for (final key in box.keys) {
+      final keyStr = key.toString();
+      if (!keyStr.startsWith(prefix)) {
+        continue;
+      }
+      final dynamic data = box.get(key);
+      if (data is Map) {
+        try {
+          final map = Map<String, dynamic>.from(data);
+          final id = (map['id'] ?? keyStr.substring(prefix.length)).toString();
+          results.add(ChurchPage.fromMap(id, churchId, map));
+        } catch (e) {
+          debugPrint('Error deserializing church page cache entry $key: $e');
+        }
+      }
+    }
+    return results;
+  }
+
+  Future<void> clearChurchPages(final String churchId) async {
+    final box = Hive.box(_churchPagesBox);
+    final prefix = '$churchId::';
+    final keys =
+        box.keys.where((key) => key.toString().startsWith(prefix)).toList();
+    for (final key in keys) {
+      await box.delete(key);
+    }
+  }
+
+  Future<void> deleteChurchPageData(
+    final String churchId,
+    final String id,
+  ) async {
+    final box = Hive.box(_churchPagesBox);
+    await box.delete(churchPageCacheKey(churchId, id));
   }
 
   Future<void> writeCtrimInfoData(final CtrimInfo info) async {
@@ -272,7 +356,8 @@ class LocalDataManager {
 
   Future<List<CtrimInfo>> readAllCtrimInfo() async {
     final box = Hive.box(_ctrimInfoBox);
-    return _readAllInfoRecords<CtrimInfo>(box, (id, data) => CtrimInfo.fromMap(id, data));
+    return _readAllInfoRecords<CtrimInfo>(
+        box, (id, data) => CtrimInfo.fromMap(id, data));
   }
 
   Future<void> clearCtrimInfo() async {
@@ -301,7 +386,8 @@ class LocalDataManager {
 
   Future<List<TestimonialInfo>> readAllTestimonialInfo() async {
     final box = Hive.box(_testimonialInfoBox);
-    return _readAllInfoRecords<TestimonialInfo>(box, (id, data) => TestimonialInfo.fromMap(id, data));
+    return _readAllInfoRecords<TestimonialInfo>(
+        box, (id, data) => TestimonialInfo.fromMap(id, data));
   }
 
   Future<void> clearTestimonialInfo() async {
@@ -314,7 +400,7 @@ class LocalDataManager {
     await box.delete(id);
   }
 
-  Future<int> readInfoCollectionLastUpdate(final String sectionKey) async {
+  Future<int> readCollectionLastUpdate(final String sectionKey) async {
     final box = Hive.box(_metadataBox);
     final dynamic value = box.get('${sectionKey}_last_update');
     if (value is int) {
@@ -329,9 +415,19 @@ class LocalDataManager {
     return 0;
   }
 
-  Future<void> writeInfoCollectionLastUpdate(final String sectionKey, final int value) async {
+  Future<void> writeCollectionLastUpdate(
+      final String sectionKey, final int value) async {
     final box = Hive.box(_metadataBox);
     await box.put('${sectionKey}_last_update', value);
+  }
+
+  Future<int> readInfoCollectionLastUpdate(final String sectionKey) async {
+    return readCollectionLastUpdate(sectionKey);
+  }
+
+  Future<void> writeInfoCollectionLastUpdate(
+      final String sectionKey, final int value) async {
+    await writeCollectionLastUpdate(sectionKey, value);
   }
 
   Future<bool> haveCheckedInfoCollectionUpdates(final String sectionKey) async {
@@ -353,7 +449,8 @@ class LocalDataManager {
 
   // * User Profile Images (cross-platform)
   /// Save user profile image bytes to cache
-  Future<void> writeUserImage(final String userId, final Uint8List imageBytes) async {
+  Future<void> writeUserImage(
+      final String userId, final Uint8List imageBytes) async {
     final key = 'user_$userId';
     await _writeCachedImage(key, imageBytes);
   }
@@ -391,7 +488,8 @@ class LocalDataManager {
 
   // * Media Images Cache
   /// Save media image bytes to cache
-  Future<void> writeMediaImage(final String mediaKey, final Uint8List imageBytes) async {
+  Future<void> writeMediaImage(
+      final String mediaKey, final Uint8List imageBytes) async {
     final key = 'media_$mediaKey';
     await _writeCachedImage(key, imageBytes);
   }
@@ -423,13 +521,15 @@ class LocalDataManager {
 
   // * Video Thumbnails Cache
   /// Save video thumbnail bytes to cache
-  Future<void> writeVideoThumbnail(final String postId, final String videoKey, final Uint8List imageBytes) async {
+  Future<void> writeVideoThumbnail(final String postId, final String videoKey,
+      final Uint8List imageBytes) async {
     final key = 'video_${postId}_$videoKey';
     await _writeCachedImage(key, imageBytes);
   }
 
   /// Read video thumbnail bytes from cache
-  Future<Uint8List?> readVideoThumbnail(final String postId, final String videoKey) async {
+  Future<Uint8List?> readVideoThumbnail(
+      final String postId, final String videoKey) async {
     final key = 'video_${postId}_$videoKey';
     final box = Hive.box(_imagesCacheBox);
     final dynamic data = box.get(key);
@@ -442,13 +542,15 @@ class LocalDataManager {
   }
 
   /// Delete video thumbnail from cache
-  Future<void> deleteVideoThumbnail(final String postId, final String videoKey) async {
+  Future<void> deleteVideoThumbnail(
+      final String postId, final String videoKey) async {
     final box = Hive.box(_imagesCacheBox);
     await box.delete('video_${postId}_$videoKey');
   }
 
   /// Check if video thumbnail exists in cache
-  Future<bool> hasVideoThumbnail(final String postId, final String videoKey) async {
+  Future<bool> hasVideoThumbnail(
+      final String postId, final String videoKey) async {
     final box = Hive.box(_imagesCacheBox);
     return box.containsKey('video_${postId}_$videoKey');
   }
@@ -522,7 +624,8 @@ class LocalDataManager {
     }
 
     // Sort by timestamp (oldest first)
-    final sortedKeys = keyTimestamps.keys.toList()..sort((a, b) => keyTimestamps[a]!.compareTo(keyTimestamps[b]!));
+    final sortedKeys = keyTimestamps.keys.toList()
+      ..sort((a, b) => keyTimestamps[a]!.compareTo(keyTimestamps[b]!));
 
     // Calculate how many to remove
     int numToRemove;
@@ -538,14 +641,16 @@ class LocalDataManager {
 
     final keysToRemove = sortedKeys.take(numToRemove).toList();
 
-    debugPrint('Evicting $numToRemove cache entries (${forceEviction ? "forced" : "normal"})');
+    debugPrint(
+        'Evicting $numToRemove cache entries (${forceEviction ? "forced" : "normal"})');
 
     // Remove from both boxes
     await box.deleteAll(keysToRemove);
     await timestampsBox.deleteAll(keysToRemove);
 
     final newSize = await getCurrentCacheSize();
-    debugPrint('Cache size after eviction: ${(newSize / 1024 / 1024).toStringAsFixed(2)}MB');
+    debugPrint(
+        'Cache size after eviction: ${(newSize / 1024 / 1024).toStringAsFixed(2)}MB');
   }
 
   /// Get current cache size in bytes
@@ -620,8 +725,8 @@ class LocalDataManager {
     }
   }
 
-  List<T> _readAllInfoRecords<T>(
-      final Box<dynamic> box, final T Function(String id, Map<String, dynamic> data) fromMap) {
+  List<T> _readAllInfoRecords<T>(final Box<dynamic> box,
+      final T Function(String id, Map<String, dynamic> data) fromMap) {
     final List<T> results = <T>[];
 
     for (final key in box.keys) {

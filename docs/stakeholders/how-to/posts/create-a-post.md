@@ -15,7 +15,7 @@ Creating a post usually starts from a **template**, then fills in the date and d
 ## Steps
 
 1. Open the app and go where new posts are created (**Add Post** on the bulletin, or via **Post Templates** from Personal — confirm the exact entry point in screenshots).  
-2. Choose a **template** from the list.  
+2. Choose a **template** from the list. Templates are grouped into **Services** and **Cell Groups**; filter by **location** if you have many templates.  
    <!-- Screenshot: ../../assets/images/create-post-01-templates.png -->  
 3. Set the **date** (and any other fields the template asks for).  
 4. Review the draft details (title, location, roles, media pool).  

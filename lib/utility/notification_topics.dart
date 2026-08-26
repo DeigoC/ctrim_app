@@ -80,17 +80,28 @@ class NotificationTopics {
         .trim();
   }
 
+  static final RegExp _fcmTopicPattern = RegExp(r'^[a-zA-Z0-9\-_.~%]+$');
+
+  static bool isValidFcmTopic(String topic) =>
+      topic.isNotEmpty && _fcmTopicPattern.hasMatch(topic);
+
   /// Location umbrella topic. Belfast stays the literal string [belfastUmbrella].
+  ///
+  /// Other locations keep their display name when it is already a valid FCM
+  /// topic (`Portadown`). Names with spaces (`North Coast`) use [locationSlug]
+  /// so `messaging.send` does not reject the topic.
   static String locationUmbrella(String locationName) {
     final name = locationNameForStreams(locationName);
     if (locationSlug(name) == 'belfast') return belfastUmbrella;
-    return name.isEmpty ? belfastUmbrella : name;
+    if (name.isEmpty) return belfastUmbrella;
+    if (isValidFcmTopic(name)) return name;
+    return locationSlug(name);
   }
 
   static String locationUmbrellaLabel(String locationName) {
-    final umbrella = locationUmbrella(locationName);
-    if (umbrella == belfastUmbrella) return belfastUmbrellaLabel;
-    return 'All $umbrella updates';
+    final name = locationNameForStreams(locationName);
+    if (locationSlug(name) == 'belfast') return belfastUmbrellaLabel;
+    return 'All $name updates';
   }
 
   /// `{locationSlug}-{streamKind}` — Belfast IDs match historical constants.

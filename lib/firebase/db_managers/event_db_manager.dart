@@ -8,14 +8,71 @@ import '../../models/event/event_log.dart';
 import '../../models/event/event_media.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/event/event_program.dart';
+import 'id_tracker.dart';
 
 class EventHeadDBManager {
-  static final CollectionReference _ref = FirebaseFirestore.instance.collection('events').withConverter<EventHead>(
-      fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!), toFirestore: (head, _) => head.toJson());
+  static final CollectionReference<EventHead> _ref = FirebaseFirestore.instance
+      .collection('events')
+      .withConverter<EventHead>(
+          fromFirestore: (snap, _) => EventHead.fromMap(snap.id, snap.data()!),
+          toFirestore: (head, _) => head.toJson());
 
-  Future<List<EventHead>> fetchEventHeads() async {
-    final collection = await _ref.orderBy('RecentDate', descending: true).limit(40).get();
-    return List<EventHead>.from(collection.docs.map((e) => e.data()));
+  final IDTrackerDBManager _idTracker;
+
+  EventHeadDBManager({IDTrackerDBManager? idTracker})
+      : _idTracker = idTracker ?? IDTrackerDBManager();
+
+  /// Recent edits plus dated windows so Upcoming/Past are not limited to
+  /// the 40 most recently updated heads. Single-field `EventDate` range
+  /// queries — no composite index.
+  static const int bulletinRecentLimit = 40;
+  static const int bulletinDatedLimit = 40;
+
+  Future<List<EventHead>> fetchEventHeads({DateTime? now}) async {
+    final clock = now ?? DateTime.now();
+    final startOfToday = DateTime(clock.year, clock.month, clock.day);
+
+    final snapshots = await Future.wait([
+      _ref
+          .orderBy('RecentDate', descending: true)
+          .limit(bulletinRecentLimit)
+          .get(),
+      _ref
+          .where('EventDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .orderBy('EventDate')
+          .limit(bulletinDatedLimit)
+          .get(),
+      _ref
+          .where('EventDate', isLessThan: Timestamp.fromDate(startOfToday))
+          .orderBy('EventDate', descending: true)
+          .limit(bulletinDatedLimit)
+          .get(),
+    ]);
+
+    final merged = <String, EventHead>{};
+    for (final snapshot in snapshots) {
+      for (final doc in snapshot.docs) {
+        merged.putIfAbsent(doc.id, () => doc.data());
+      }
+    }
+    return merged.values.toList();
+  }
+
+  /// Heads with [EventHead.eventDate] in [[startInclusive], [endExclusive]).
+  ///
+  /// Single-field `EventDate` range — no composite index. Caller filters
+  /// by location (and anything else) on the client.
+  Future<List<EventHead>> fetchHeadsWithEventDateInRange({
+    required DateTime startInclusive,
+    required DateTime endExclusive,
+  }) async {
+    final snapshot = await _ref
+        .where('EventDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startInclusive))
+        .where('EventDate', isLessThan: Timestamp.fromDate(endExclusive))
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
   }
 
   Future<EventHead> fetchHead(final String id) async {
@@ -32,16 +89,19 @@ class EventHeadDBManager {
 
   Future<void> saveNewHead(final EventHead head) async {
     await _ref.doc(head.id).set(head);
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 
   /// Heads marked as period/season parents (`IsPeriodParent`).
   /// Sorted client-side by [RecentDate] so no composite index is required.
   Future<List<EventHead>> fetchPeriodParentHeads({int limit = 40}) async {
-    final collection = await _ref.where('IsPeriodParent', isEqualTo: true).limit(limit).get();
+    final collection =
+        await _ref.where('IsPeriodParent', isEqualTo: true).limit(limit).get();
     final heads = List<EventHead>.from(collection.docs.map((e) => e.data()));
     heads.sort((a, b) => b.recentDate.compareTo(a.recentDate));
     return heads;
@@ -57,6 +117,7 @@ class EventHeadDBManager {
       'InterestedCount': interestedCount < 0 ? 0 : interestedCount,
       'AttendeeCount': attendeeCount < 0 ? 0 : attendeeCount,
     });
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 }
 
@@ -66,7 +127,10 @@ class EventSupplementalDBManager {
 
   EventSupplementalDBManager(String id) {
     _postId = id;
-    _colRef = FirebaseFirestore.instance.collection('events').doc(id).collection('supplemental');
+    _colRef = FirebaseFirestore.instance
+        .collection('events')
+        .doc(id)
+        .collection('supplemental');
   }
 
   // * Body related
@@ -126,8 +190,10 @@ class EventSupplementalDBManager {
     required String? oldParentId,
     required String? newParentId,
   }) async {
-    final String? oldId = (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
-    final String? newId = (newParentId == null || newParentId.isEmpty) ? null : newParentId;
+    final String? oldId =
+        (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
+    final String? newId =
+        (newParentId == null || newParentId.isEmpty) ? null : newParentId;
     if (oldId == newId) return {};
     if (newId == childId) {
       throw ArgumentError('A post cannot be its own parent');
@@ -185,7 +251,10 @@ class EventSupplementalDBManager {
     await _colRef.doc('logs').set(log.toJson());
   }
 
-  Future<void> addLogEntry({required String logMessage, required String uid, required DateTime ts}) async {
+  Future<void> addLogEntry(
+      {required String logMessage,
+      required String uid,
+      required DateTime ts}) async {
     final log = await fetchLog();
     log.addLog(log: logMessage, uid: uid, ts: ts);
     await _colRef.doc('logs').update(log.toJson());
@@ -216,29 +285,31 @@ class EventSupplementalDBManager {
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
 
-    return firestore.runTransaction((tx) async {
+    final attendance = await firestore.runTransaction((tx) async {
       final attSnap = await tx.get(attRef);
-      final attendance = attSnap.exists && attSnap.data() != null
+      final result = attSnap.exists && attSnap.data() != null
           ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
           : EventAttendance();
 
       if (interested) {
-        attendance.putInterest(InterestedEntry(
+        result.putInterest(InterestedEntry(
           authId: authId,
           displayName: displayName,
           userId: userId,
         ));
       } else {
-        attendance.removeInterest(authId);
+        result.removeInterest(authId);
       }
 
-      tx.set(attRef, attendance.toJson());
+      tx.set(attRef, result.toJson());
       tx.update(headRef, {
-        'InterestedCount': attendance.interestedCount,
-        'AttendeeCount': attendance.attendeeCount,
+        'InterestedCount': result.interestedCount,
+        'AttendeeCount': result.attendeeCount,
       });
-      return attendance;
+      return result;
     });
+    await _touchEventsLastUpdate();
+    return attendance;
   }
 
   /// Removes any interest entry (moderation by workers / post admins).
@@ -247,26 +318,59 @@ class EventSupplementalDBManager {
     final headRef = firestore.collection('events').doc(_postId);
     final attRef = _colRef.doc('attendance');
 
-    return firestore.runTransaction((tx) async {
+    final attendance = await firestore.runTransaction((tx) async {
       final attSnap = await tx.get(attRef);
       if (!attSnap.exists || attSnap.data() == null) {
         return EventAttendance();
       }
-      final attendance = EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
-      attendance.removeInterest(authId);
-      tx.set(attRef, attendance.toJson());
+      final result =
+          EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>);
+      result.removeInterest(authId);
+      tx.set(attRef, result.toJson());
       tx.update(headRef, {
-        'InterestedCount': attendance.interestedCount,
-        'AttendeeCount': attendance.attendeeCount,
+        'InterestedCount': result.interestedCount,
+        'AttendeeCount': result.attendeeCount,
       });
-      return attendance;
+      return result;
     });
+    await _touchEventsLastUpdate();
+    return attendance;
   }
 
   /// Replaces the full attendee list and syncs [AttendeeCount] (staff-managed).
-  Future<EventAttendance> saveAttendees(final List<AttendeeEntry> attendees) async {
+  /// Preserves [EventAttendance.expectedUserIds] and interest.
+  Future<EventAttendance> saveAttendees(
+      final List<AttendeeEntry> attendees) async {
     final firestore = FirebaseFirestore.instance;
     final headRef = firestore.collection('events').doc(_postId);
+    final attRef = _colRef.doc('attendance');
+
+    final updated = await firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      final attendance = attSnap.exists && attSnap.data() != null
+          ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
+          : EventAttendance();
+
+      final data = attendance.toMutableMap();
+      data['attendees'] = attendees.map((e) => e.toJson()).toList();
+      final result = EventAttendance.fromMap(data);
+
+      tx.set(attRef, result.toJson());
+      tx.update(headRef, {
+        'InterestedCount': result.interestedCount,
+        'AttendeeCount': result.attendeeCount,
+      });
+      return result;
+    });
+    await _touchEventsLastUpdate();
+    return updated;
+  }
+
+  /// Replaces the expected-attendee checklist (staff-managed). Preserves attendees
+  /// and interest; does not change public head counts.
+  Future<EventAttendance> saveExpectedUserIds(
+      final List<String> expectedUserIds) async {
+    final firestore = FirebaseFirestore.instance;
     final attRef = _colRef.doc('attendance');
 
     return firestore.runTransaction((tx) async {
@@ -275,12 +379,35 @@ class EventSupplementalDBManager {
           ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
           : EventAttendance();
 
-      final updated = EventAttendance.fromMap({
-        'interested': {
-          for (final e in attendance.interested.entries) e.key: e.value.toJson(),
-        },
-        'attendees': attendees.map((e) => e.toJson()).toList(),
-      });
+      final data = attendance.toMutableMap();
+      data['expectedUserIds'] = expectedUserIds;
+      final updated = EventAttendance.fromMap(data);
+
+      tx.set(attRef, updated.toJson());
+      return updated;
+    });
+  }
+
+  /// Replaces staff-managed attendees + expected checklist in one write.
+  /// Preserves [interested] from the server (self-serve may have changed meanwhile).
+  Future<EventAttendance> saveStaffManagedAttendance({
+    required final List<AttendeeEntry> attendees,
+    required final List<String> expectedUserIds,
+  }) async {
+    final firestore = FirebaseFirestore.instance;
+    final headRef = firestore.collection('events').doc(_postId);
+    final attRef = _colRef.doc('attendance');
+
+    final saved = await firestore.runTransaction((tx) async {
+      final attSnap = await tx.get(attRef);
+      final attendance = attSnap.exists && attSnap.data() != null
+          ? EventAttendance.fromMap(attSnap.data() as Map<String, dynamic>)
+          : EventAttendance();
+
+      final data = attendance.toMutableMap();
+      data['attendees'] = attendees.map((e) => e.toJson()).toList();
+      data['expectedUserIds'] = expectedUserIds;
+      final updated = EventAttendance.fromMap(data);
 
       tx.set(attRef, updated.toJson());
       tx.update(headRef, {
@@ -289,5 +416,11 @@ class EventSupplementalDBManager {
       });
       return updated;
     });
+    await _touchEventsLastUpdate();
+    return saved;
+  }
+
+  Future<void> _touchEventsLastUpdate() async {
+    await IDTrackerDBManager().tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
   }
 }

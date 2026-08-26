@@ -2,9 +2,12 @@
 
 Welcome — this site explains what the **CTRIM Community** app is for, who it serves, and what it can do today. No technical background needed.
 
+This is an open passion project. Source code: [github.com/DeigoC/ctrim_app](https://github.com/DeigoC/ctrim_app).
+
 ## Start here
 
 - **[Product overview](overview.md)** — pitch, audiences, and what the app is / isn’t  
+- **[Key concepts](key-concepts.md)** — short definitions (post, volunteer, interest, bookmark, …)  
 - **[How-to guides](how-to/index.md)** — step-by-step tasks (posts, information, people)  
 - **[Roadmap & priorities](roadmap.md)** — what’s shipping or planned  
 
@@ -19,6 +22,7 @@ Welcome — this site explains what the **CTRIM Community** app is for, who it s
 | Members, volunteers, leaders, area / site admins | [People & roles](people-and-roles.md) |
 | Alerts & preferences | [Notifications](notifications.md) |
 | Phone & web | [Platforms](platforms.md) |
+| Glossary | [Key concepts](key-concepts.md) |
 
 ## How-to guides
 
