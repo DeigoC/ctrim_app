@@ -11,7 +11,7 @@ import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
 import '../models/event/event_program.dart';
 import '../models/user.dart';
-import 'broadcast_audience.dart';
+import 'notifications/broadcast_audience.dart';
 import 'parent_link.dart';
 import 'user_activity_messages.dart';
 import 'user_activity_recorder.dart';

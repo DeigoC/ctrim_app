@@ -3,7 +3,7 @@ import '../models/info/church_info.dart';
 import '../models/info/church_page.dart';
 import '../models/info/ctrim_info.dart';
 import '../models/info/testimonial_info.dart';
-import 'local_data_manager.dart';
+import 'cache/local_data_manager.dart';
 
 class InfoRepository {
   InfoRepository({

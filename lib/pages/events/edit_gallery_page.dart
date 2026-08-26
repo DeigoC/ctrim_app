@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
-import '../../widgets/app_dialog.dart';
+import '../../widgets/common/app_dialog.dart';
 import 'add_media_file_page.dart';
 import 'select_template_cover_page.dart';
 import '../../utility/responsive_layout.dart';

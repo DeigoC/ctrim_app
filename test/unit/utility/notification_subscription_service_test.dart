@@ -1,6 +1,6 @@
 import 'package:ctrim_app/utility/app_shared_preferences.dart';
-import 'package:ctrim_app/utility/notification_subscription_service.dart';
-import 'package:ctrim_app/utility/notification_topics.dart';
+import 'package:ctrim_app/utility/notifications/notification_subscription_service.dart';
+import 'package:ctrim_app/utility/notifications/notification_topics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

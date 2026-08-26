@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../utility/post_draft_review.dart';
 import '../../utility/responsive_layout.dart';
-import '../action_sheet.dart';
-import '../app_dialog.dart';
+import '../common/action_sheet.dart';
+import '../common/app_dialog.dart';
 
 /// Advisory confirmation shown before saving a new post.
 class PostSaveReviewSheet extends StatelessWidget {

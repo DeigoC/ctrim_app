@@ -5,14 +5,11 @@ import '../../firebase/db_managers/post_tag_db_manager.dart';
 import '../../models/post_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
-import '../../utility/responsive_layout.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../widgets/load_progress_body.dart';
-import '../../widgets/post_tag_chip.dart';
-import '../../widgets/role_access_gate.dart';
-import '../../widgets/app_dialog.dart';
-import '../../utility/dialog_manager.dart';
+import '../../widgets/catalog/manage_catalog_page.dart';
+import '../../widgets/catalog/post_tag_chip.dart';
 
 class ManagePostTagsPage extends StatefulWidget {
   const ManagePostTagsPage({super.key});
@@ -52,202 +49,75 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
-    final horizontalPadding = isWide
-        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2)
-            .clamp(0.0, double.infinity)
-        : 0.0;
-
-    return RoleAccessGate(
-      allow: (user) => user.canManageVolunteers,
+  ManageCatalogCopy _copy(AppLocalizations l10n) {
+    return ManageCatalogCopy(
+      title: l10n.managePostTagsTitle,
+      add: l10n.managePostTagsAdd,
+      empty: l10n.managePostTagsEmpty,
+      seedDefaults: l10n.managePostTagsSeedDefaults,
+      loadingMessage: 'Loading tags…',
       deniedMessage: 'Only area admins can manage post tags.',
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.managePostTagsTitle),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: l10n.managePostTagsAdd,
-              onPressed: _saving ? null : () => _showTagDialog(),
-            ),
-          ],
-        ),
-        body: Consumer<AppContext>(
-          builder: (context, appContext, _) {
-            if (_loading) {
-              return const LoadProgressBody(
-                message: 'Loading tags…',
-                completedSteps: 0,
-                totalSteps: 1,
-              );
-            }
-
-            final tags = appContext.allPostTags;
-            if (tags.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(l10n.managePostTagsEmpty,
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _saving ? null : _seedDefaultTags,
-                        icon: const Icon(Icons.auto_awesome),
-                        label: Text(l10n.managePostTagsSeedDefaults),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _saving ? null : () => _showTagDialog(),
-                        icon: const Icon(Icons.add),
-                        label: Text(l10n.managePostTagsAdd),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              itemCount: tags.length,
-              itemBuilder: (_, index) {
-                final tag = tags[index];
-                return Card(
-                  child: ListTile(
-                    leading: PostTagChip(tag: tag),
-                    title: Text(tag.name),
-                    subtitle: Text(
-                      tag.isActive
-                          ? l10n.managePostTagsActive
-                          : l10n.managePostTagsInactive,
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_upward),
-                          tooltip: l10n.managePostTagsMoveUp,
-                          onPressed: index == 0 || _saving
-                              ? null
-                              : () => _moveTag(index, -1),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_downward),
-                          tooltip: l10n.managePostTagsMoveDown,
-                          onPressed: index == tags.length - 1 || _saving
-                              ? null
-                              : () => _moveTag(index, 1),
-                        ),
-                        PopupMenuButton<String>(
-                          onSelected: (value) => _onMenuAction(tag, value),
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                                value: 'edit',
-                                child: Text(l10n.managePostTagsEdit)),
-                            PopupMenuItem(
-                              value: 'toggle',
-                              child: Text(tag.isActive
-                                  ? l10n.managePostTagsDeactivate
-                                  : l10n.managePostTagsActivate),
-                            ),
-                            PopupMenuItem(
-                                value: 'delete',
-                                child: Text(l10n.managePostTagsDelete)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
+      active: l10n.managePostTagsActive,
+      inactive: l10n.managePostTagsInactive,
+      moveUp: l10n.managePostTagsMoveUp,
+      moveDown: l10n.managePostTagsMoveDown,
+      edit: l10n.managePostTagsEdit,
+      activate: l10n.managePostTagsActivate,
+      deactivate: l10n.managePostTagsDeactivate,
+      delete: l10n.managePostTagsDelete,
     );
   }
 
-  Future<void> _onMenuAction(final PostTag tag, final String action) async {
-    switch (action) {
-      case 'edit':
-        await _showTagDialog(existing: tag);
-      case 'toggle':
-        await _setTagActive(tag, !tag.isActive);
-      case 'delete':
-        await _deleteTag(tag);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Consumer<AppContext>(
+      builder: (context, appContext, _) {
+        return ManageCatalogPage<PostTag>(
+          copy: _copy(l10n),
+          allow: (user) => user.canManageVolunteers,
+          loading: _loading,
+          saving: _saving,
+          items: appContext.allPostTags,
+          itemLeading: (tag) => PostTagChip(tag: tag),
+          itemName: (tag) => tag.name,
+          itemIsActive: (tag) => tag.isActive,
+          onAdd: _showTagDialog,
+          onSeed: _seedDefaultTags,
+          onEdit: (tag) => _showTagDialog(existing: tag),
+          onToggle: (tag) => _setTagActive(tag, !tag.isActive),
+          onDelete: _deleteTag,
+          onMove: _moveTag,
+        );
+      },
+    );
   }
 
   Future<void> _showTagDialog({PostTag? existing}) async {
     final l10n = AppLocalizations.of(context)!;
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final colorController = TextEditingController(text: existing?.color ?? '');
     final isEditing = existing != null;
-
-    final saved = await showDialog<bool>(
+    final result = await showCatalogItemDialog(
       context: context,
-      builder: (dialogContext) {
-        return AppDialog(
-          icon: isEditing ? Icons.edit_outlined : Icons.add,
-          title: isEditing ? l10n.managePostTagsEdit : l10n.managePostTagsAdd,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: AppDialog.inputDecoration(
-                  label: l10n.managePostTagsNameLabel,
-                ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: colorController,
-                decoration: AppDialog.inputDecoration(
-                  label: l10n.managePostTagsColorLabel,
-                  hint: '#6B4EAA',
-                ),
-              ),
-            ],
-          ),
-          actions: AppDialogActions(
-            onCancel: () => Navigator.pop(dialogContext),
-            cancelLabel: l10n.cancel,
-            onConfirm: () {
-              if (nameController.text.trim().isEmpty) return;
-              Navigator.pop(dialogContext, true);
-            },
-            confirmLabel: isEditing ? l10n.save : l10n.managePostTagsCreate,
-          ),
-        );
-      },
+      isEditing: isEditing,
+      addTitle: l10n.managePostTagsAdd,
+      editTitle: l10n.managePostTagsEdit,
+      nameLabel: l10n.managePostTagsNameLabel,
+      createLabel: l10n.managePostTagsCreate,
+      saveLabel: l10n.save,
+      cancelLabel: l10n.cancel,
+      initialName: existing?.name,
+      colorLabel: l10n.managePostTagsColorLabel,
+      colorHint: '#6B4EAA',
+      initialColor: existing?.color,
     );
-
-    if (saved != true || !mounted) {
-      nameController.dispose();
-      colorController.dispose();
-      return;
-    }
-
-    final name = nameController.text.trim();
-    final color = colorController.text.trim();
-    nameController.dispose();
-    colorController.dispose();
+    if (result == null || !mounted) return;
 
     setState(() => _saving = true);
     try {
       final appContext = Provider.of<AppContext>(context, listen: false);
-      if (isEditing) {
-        existing.setName(name);
-        existing.setColor(color.isEmpty ? null : color);
+      if (existing != null) {
+        existing.setName(result.name);
+        existing.setColor(result.color);
         existing.setStreamKind(null);
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdatePostTag(existing);
@@ -264,8 +134,8 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
                     .reduce((a, b) => a > b ? a : b) +
                 1;
         final tag = await _tagDBManager.createTag(
-          name: name,
-          color: color.isEmpty ? null : color,
+          name: result.name,
+          color: result.color,
           displayOrder: nextOrder,
         );
         appContext.addOrUpdatePostTag(tag);

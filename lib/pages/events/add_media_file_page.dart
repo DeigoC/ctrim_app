@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/app_dialog.dart';
+import '../../widgets/common/app_dialog.dart';
+import 'add_media_drive_helpers.dart';
+import 'add_media_image_test.dart';
+import 'add_media_source_form.dart';
+import 'add_media_video_test.dart';
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({
@@ -35,8 +38,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   final TextEditingController _tecSrc = TextEditingController(),
       _tecThumbnailSrc = TextEditingController();
   final FocusNode _srcFocusNode = FocusNode();
-  final RegExp _driveRegExp =
-      RegExp(r"drive.google.com/file/d/([a-zA-Z0-9_-]+)");
   final int _maxImageSizeKB = 1536; // 1.5mb
   final int _maxVideoSizeMB = 128;
   VideoPlayerController? _videoPlayerController;
@@ -183,144 +184,19 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // URL Input Card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                  color: colorScheme.outline.withValues(alpha: 0.12)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.link, color: colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Media source',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tap the field to paste a link from your clipboard. Google Drive share links are converted automatically.',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _tecSrc,
-                    focusNode: _srcFocusNode,
-                    onChanged: _onSrcTextChange,
-                    onTap: _pasteMediaUrlFromClipboardIfEmpty,
-                    decoration: InputDecoration(
-                      hintText: 'Tap to paste URL from clipboard',
-                      label: const Text('Media URL*'),
-                      border: const OutlineInputBorder(),
-                      prefixIcon: Icon(_isVideo ? Icons.videocam : Icons.image),
-                      suffixIcon: _tecSrc.text.isNotEmpty
-                          ? IconButton(
-                              onPressed: _onClearMediaSrc,
-                              icon: const Icon(Icons.clear),
-                              tooltip: 'Clear URL',
-                            )
-                          : IconButton(
-                              onPressed: _pasteMediaUrlFromClipboardIfEmpty,
-                              icon: const Icon(Icons.content_paste),
-                              tooltip: 'Paste from clipboard',
-                            ),
-                    ),
-                    keyboardType: TextInputType.url,
-                    textInputAction: TextInputAction.done,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildUrlValidationMessage(),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Media Type Card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                  color: colorScheme.outline.withValues(alpha: 0.12)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.category_outlined, color: colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Media type',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildMediaTypeOption(
-                          icon: Icons.image,
-                          label: 'Image',
-                          isSelected: !_isVideo,
-                          onTap: () => _onIsVideoChange(false),
-                          subtitle: 'Max $_maxImageSizeKB KB',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildMediaTypeOption(
-                          icon: Icons.videocam,
-                          label: 'Video',
-                          isSelected: _isVideo,
-                          onTap: () => _onIsVideoChange(true),
-                          subtitle: 'Max $_maxVideoSizeMB MB',
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_isVideo) ...[
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _tecThumbnailSrc,
-                      decoration: InputDecoration(
-                        hintText: 'https://example.com/thumbnail.jpg',
-                        label: const Text('Video Thumbnail URL (Optional)'),
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.image),
-                        suffixIcon: _tecThumbnailSrc.text.isNotEmpty
-                            ? IconButton(
-                                onPressed: _onClearThumbnailSrc,
-                                icon: const Icon(Icons.clear),
-                                tooltip: 'Clear thumbnail URL',
-                              )
-                            : null,
-                      ),
-                      keyboardType: TextInputType.url,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          AddMediaSourceForm(
+            srcController: _tecSrc,
+            thumbnailController: _tecThumbnailSrc,
+            srcFocusNode: _srcFocusNode,
+            isVideo: _isVideo,
+            maxImageSizeKB: _maxImageSizeKB,
+            maxVideoSizeMB: _maxVideoSizeMB,
+            onSrcChanged: _onSrcTextChange,
+            onSrcTap: _pasteMediaUrlFromClipboardIfEmpty,
+            onClearSrc: _onClearMediaSrc,
+            onPasteSrc: _pasteMediaUrlFromClipboardIfEmpty,
+            onIsVideoChange: _onIsVideoChange,
+            onClearThumbnail: _onClearThumbnailSrc,
           ),
           const SizedBox(height: 24),
 
@@ -356,334 +232,6 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             ),
           ),
           const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMediaTypeOption({
-    required IconData icon,
-    required String label,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline,
-            width: isSelected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          color: isSelected
-              ? Theme.of(context)
-                  .colorScheme
-                  .primaryContainer
-                  .withValues(alpha: 0.3)
-              : Theme.of(context).colorScheme.surface,
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUrlValidationMessage() {
-    if (_tecSrc.text.trim().isEmpty) return const SizedBox.shrink();
-
-    final bool isValid = _isValidUrl(_tecSrc.text);
-    final bool isGoogleDrive = _driveRegExp.hasMatch(_tecSrc.text);
-
-    if (isGoogleDrive) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.info, color: Colors.blue, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Google Drive link detected - will be automatically converted to direct link',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue.shade700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (!isValid) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.error, color: Colors.red, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Please enter a valid URL starting with https://',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.red.shade700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildLoadingState(String message) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.7),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _isGoogleDriveUrl(String url) => url.contains('drive.google.com');
-
-  Widget _buildErrorState(String message) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final bool showDriveHint =
-        _isGoogleDriveUrl(_src) || _isGoogleDriveUrl(_tecSrc.text);
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: Colors.red.shade400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Error',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.red.shade700,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 8),
-          SelectionArea(
-            child: SelectableText(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-            ),
-          ),
-          if (showDriveHint) ...[
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colorScheme.primary.withValues(alpha: 0.25),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.link, size: 18, color: colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Google Drive files must be shared as “Anyone with the link” '
-                      '(Viewer). Open the file in Drive → Share → General access, '
-                      'then paste the link and test again.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                colorScheme.onSurface.withValues(alpha: 0.85),
-                            height: 1.35,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: message));
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Error copied to clipboard'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            icon: const Icon(Icons.copy, size: 18),
-            label: const Text('Copy error'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuccessState(String message) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 48,
-            color: Colors.green.shade600,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Ready!',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.green.shade700,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.7),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFileSizeError(
-      String title, String subtitle, String url, String buttonText) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.warning_amber,
-            size: 48,
-            color: Colors.orange.shade400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'File Too Large',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.orange.shade700,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.7),
-                ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () => launchUrlString(url),
-            icon: const Icon(Icons.open_in_new),
-            label: Text(buttonText),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-          ),
         ],
       ),
     );
@@ -751,221 +299,71 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildImageTest() {
-    if (_canSave) {
-      // On web or when ready, show the image from URL
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          NetworkImageHelper.getImageUrl(_src),
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return _buildErrorState('Failed to load image: $error');
-          },
-        ),
-      );
-    }
-
-    return FutureBuilder(
-      future: _fetchFile(true),
-      builder: (_, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState('Checking image...');
-        }
-
-        if (snap.hasData || (kIsWeb && _mediaFileSizeBytes != null)) {
-          _canTestSrc = true;
-          _tmpFile = snap.data;
-
-          final size = _mediaFileSizeBytes ?? (_tmpFile?.lengthSync() ?? 0);
-          final double sizeInKb = size / 1024;
-
-          if (sizeInKb <= _maxImageSizeKB || _mediaFileSizeBytes == 0) {
-            debugPrint('image size is good: $sizeInKb KB');
-            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-              setState(() {
-                _canSave = true;
-              });
-            });
-            return _buildSuccessState(_mediaFileSizeBytes == 0
-                ? 'Image is ready! (Size validation skipped on web)'
-                : 'Image is ready! Size: ${sizeInKb.toStringAsFixed(1)} KB');
-          } else {
-            _canSave = false;
-            _canTestSrc = true;
-            return _buildFileSizeError(
-              'Image too large: ${sizeInKb.toStringAsFixed(1)} KB',
-              'Maximum size is $_maxImageSizeKB KB. Please compress the image.',
-              'https://imagecompressor.com',
-              'Compress Image Online',
-            );
-          }
-        }
-
-        if (snap.hasError) {
-          _canTestSrc = true;
-          debugPrint('Error fetching image: ${snap.error}');
-          return _buildErrorState('Failed to load image: ${snap.error}');
-        }
-
-        return _buildLoadingState('Preparing...');
+    return AddMediaImageTest(
+      canSave: _canSave,
+      getSrc: () => _src,
+      getInputUrl: () => _tecSrc.text,
+      maxImageSizeKB: _maxImageSizeKB,
+      fetchFile: () => _fetchFile(true),
+      mediaFileSizeBytes: () => _mediaFileSizeBytes,
+      onFetched: (file) {
+        _canTestSrc = true;
+        _tmpFile = file;
+      },
+      onReadyToSave: () {
+        setState(() {
+          _canSave = true;
+        });
+      },
+      onFileTooLarge: () {
+        _canSave = false;
+        _canTestSrc = true;
+      },
+      onFetchFailed: () {
+        _canTestSrc = true;
       },
     );
   }
 
   Widget _buildVideoPlayerTest() {
-    if (_canSave) {
-      // On web, use network video player
-      if (kIsWeb) {
-        return _buildVideoPlayer();
-      }
-      // On native, use cached file
-      return _buildVideoPlayer();
-    }
-
-    return FutureBuilder(
-      future: _fetchFile(false),
-      builder: (_, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState('Checking video...');
-        }
-
-        if (snap.hasData || (kIsWeb && _mediaFileSizeBytes != null)) {
+    return AddMediaVideoPlayerTest(
+      canSave: _canSave,
+      getSrc: () => _src,
+      getInputUrl: () => _tecSrc.text,
+      maxVideoSizeMB: _maxVideoSizeMB,
+      fetchFile: () => _fetchFile(false),
+      mediaFileSizeBytes: () => _mediaFileSizeBytes,
+      videoPlayerController: _videoPlayerController,
+      isVideo: _isVideo,
+      onFetched: (file) {
+        _canTestSrc = true;
+        _tmpFile = file;
+      },
+      onControllerCreated: (controller) {
+        _videoPlayerController = controller;
+      },
+      onVideoReady: () {
+        setState(() {
+          _canSave = true;
+          _videoPlayerController!.play();
+        });
+      },
+      onVideoInitFailed: () {
+        setState(() {
           _canTestSrc = true;
-          _tmpFile = snap.data;
-
-          final size = _mediaFileSizeBytes ?? (_tmpFile?.lengthSync() ?? 0);
-          final double sizeInMb = size / (1024 * 1024);
-
-          if (sizeInMb <= _maxVideoSizeMB || _mediaFileSizeBytes == 0) {
-            debugPrint('video size is good: $sizeInMb MB');
-
-            // Initialize video player
-            if (kIsWeb) {
-              _videoPlayerController =
-                  VideoPlayerController.networkUrl(Uri.parse(_src));
-            } else {
-              _videoPlayerController = VideoPlayerController.file(_tmpFile!);
-            }
-
-            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-              _videoPlayerController!.initialize().then((_) {
-                setState(() {
-                  _canSave = true;
-                  _videoPlayerController!.play();
-                });
-              }).catchError((error) {
-                debugPrint('Error initializing video player: $error');
-                setState(() {
-                  _canTestSrc = true;
-                });
-              });
-            });
-
-            return _buildLoadingState('Initializing video player...');
-          } else {
-            _canTestSrc = true;
-            _canSave = false;
-            return _buildFileSizeError(
-              'Video too large: ${sizeInMb.toStringAsFixed(1)} MB',
-              'Maximum size is $_maxVideoSizeMB MB. Please compress the video.',
-              'https://www.freeconvert.com/video-compressor',
-              'Compress Video Online',
-            );
-          }
-        }
-
-        if (snap.hasError) {
-          _canTestSrc = true;
-          debugPrint('Error fetching video: ${snap.error}');
-          return _buildErrorState('Failed to load video: ${snap.error}');
-        }
-
-        return _buildLoadingState('Preparing...');
+        });
+      },
+      onFileTooLarge: () {
+        _canTestSrc = true;
+        _canSave = false;
+      },
+      onFetchFailed: () {
+        _canTestSrc = true;
       },
     );
   }
 
-  Widget _buildVideoPlayer() {
-    if (!_videoPlayerController!.value.isInitialized) {
-      return _buildLoadingState('Initializing video...');
-    }
-
-    debugPrint('Video player initialized!');
-    _videoPlayerController!.play();
-    _videoPlayerController!.setLooping(true);
-
-    return Column(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.black,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: _videoPlayerController!.value.aspectRatio,
-                child: VideoPlayer(_videoPlayerController!),
-              ),
-            ),
-          ),
-        ),
-        if (_isVideo) ...[
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline,
-                    size: 16, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Video is ready! You can add a thumbnail URL above for better preview.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
   // * Logic
-
-  bool _isValidUrl(String url) {
-    if (url.trim().isEmpty) return false;
-    try {
-      final uri = Uri.parse(url.trim());
-      return uri.hasScheme &&
-          (uri.scheme == 'http' || uri.scheme == 'https') &&
-          uri.hasAuthority;
-    } catch (e) {
-      return false;
-    }
-  }
 
   Future<File?> _fetchFile(final bool isImage) async {
     if (kIsWeb) {
@@ -1052,7 +450,9 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
       final text = data?.text?.trim() ?? '';
       if (text.isEmpty) return;
-      if (!_isValidUrl(text) && !_driveRegExp.hasMatch(text)) return;
+      if (!isValidMediaUrl(text) && !driveShareLinkRegExp.hasMatch(text)) {
+        return;
+      }
 
       _tecSrc.value = TextEditingValue(
         text: text,
@@ -1138,7 +538,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                 'src': _src,
                 'type': _isVideo ? 'vid' : 'img',
               };
-              final thumbnail = _sanitiseUrl(_tecThumbnailSrc.text);
+              final thumbnail = sanitiseMediaUrl(_tecThumbnailSrc.text);
               if (_isVideo && thumbnail.isNotEmpty) {
                 data['thumbnailSrc'] = thumbnail;
               }
@@ -1185,8 +585,8 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       if (trimmedText.isEmpty) {
         _canTestSrc = false;
       } else {
-        _canTestSrc =
-            _isValidUrl(trimmedText) || _driveRegExp.hasMatch(trimmedText);
+        _canTestSrc = isValidMediaUrl(trimmedText) ||
+            driveShareLinkRegExp.hasMatch(trimmedText);
       }
 
       // Reset states when URL changes
@@ -1216,19 +616,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     return _isVideo ? 'Add video to gallery' : 'Add image to gallery';
   }
 
-  String _sanitiseSrc() => _sanitiseUrl(_tecSrc.text);
-
-  /// Converts Google Drive share links to direct `uc?id=` URLs; otherwise trims.
-  String _sanitiseUrl(String raw) {
-    final trimmed = raw.trim();
-    final match = _driveRegExp.firstMatch(trimmed);
-    if (match != null) {
-      final id = match.group(1)!;
-      debugPrint('Link is a GoogleDrive Share link. Parsing now. ID is $id');
-      return 'https://drive.google.com/uc?id=$id';
-    }
-    return trimmed;
-  }
+  String _sanitiseSrc() => sanitiseMediaUrl(_tecSrc.text);
 
   void _showHelp() {
     DialogManager.showAlertDialog(

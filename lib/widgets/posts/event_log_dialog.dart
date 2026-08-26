@@ -3,14 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-import '../../utility/notification_token_resolver.dart';
+import '../../utility/notifications/notification_token_resolver.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../firebase/functions_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/event_heads_repository.dart';
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 import 'update_log_dialog.dart';
 
 class EventLogDialog extends StatefulWidget {

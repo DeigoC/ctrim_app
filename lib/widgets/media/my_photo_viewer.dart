@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 
 class MyPhotoViewer extends StatelessWidget {

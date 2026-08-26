@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'bulletin_listing.dart';
-import 'refresh_cooldown.dart';
+import 'cache/refresh_cooldown.dart';
 
 class AppSharedPreferences {
   late final SharedPreferences _pref;

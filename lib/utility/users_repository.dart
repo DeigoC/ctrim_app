@@ -4,10 +4,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../models/user.dart';
-import 'collection_cache_policy.dart';
-import 'local_data_manager.dart';
-import 'persist_users_local_cache.dart';
-import 'users_local_cache.dart';
+import 'cache/collection_cache_policy.dart';
+import 'cache/local_data_manager.dart';
+import 'cache/persist_users_local_cache.dart';
+import 'cache/users_local_cache.dart';
 
 class UsersLoadResult {
   const UsersLoadResult({required this.users, required this.fromCache});

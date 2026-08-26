@@ -6,7 +6,7 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 
 /// Picks a period/season parent post (`IsPeriodParent == true`).
 ///

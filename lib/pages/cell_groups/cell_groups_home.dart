@@ -6,7 +6,7 @@ import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
-import '../../utility/refresh_cooldown.dart';
+import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import 'cell_groups_list_tab.dart';
 import 'cell_groups_overview_tab.dart';

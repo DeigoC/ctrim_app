@@ -7,7 +7,7 @@ import '../../models/user_activity_log.dart';
 import '../../models/user_activity_record.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/role_access_gate.dart';
 
 class ViewUserActivityPage extends StatefulWidget {

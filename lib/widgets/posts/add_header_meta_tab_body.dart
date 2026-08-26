@@ -7,13 +7,13 @@ import '../../models/user.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
-import '../../utility/broadcast_audience.dart';
+import '../../utility/notifications/broadcast_audience.dart';
 import '../../utility/event_context.dart';
-import '../../utility/notification_topics.dart';
+import '../../utility/notifications/notification_topics.dart';
 import '../../utility/placeholder_user_permissions.dart';
-import '../cell_group_picker.dart';
+import '../catalog/cell_group_picker.dart';
 import '../my_avatar_stack.dart';
-import '../post_tag_picker.dart';
+import '../catalog/post_tag_picker.dart';
 import '../user_avatar.dart';
 
 class AddEventHeadMeta extends StatefulWidget {

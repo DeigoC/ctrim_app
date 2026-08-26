@@ -14,11 +14,11 @@ import '../../utility/app_context.dart';
 import '../../utility/bulk_post_dates.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/post_template_mapper.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 
 enum _BulkPostRelation { child, sibling }
 

@@ -2,11 +2,9 @@ import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/everyone_db_manager.dart';
@@ -15,10 +13,14 @@ import '../firebase/messaging_manager.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/event_heads_repository.dart';
+import '../utility/responsive_layout.dart';
 import '../utility/users_repository.dart';
-import '../utility/web_notification_lifecycle.dart';
+import '../utility/notifications/web_notification_lifecycle.dart';
 import 'home_page.dart';
-import '../../utility/responsive_layout.dart';
+import 'welcome_hero_header.dart';
+import 'welcome_login_tab.dart';
+import 'welcome_register_tab.dart';
+import 'welcome_waiting_verification.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -27,7 +29,8 @@ class WelcomePage extends StatefulWidget {
   State<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin {
+class _WelcomePageState extends State<WelcomePage>
+    with TickerProviderStateMixin {
   late final TabController _tabController;
   late final AppContext _appContext;
   late final AnimationController _heroAnimationController;
@@ -39,8 +42,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
   // Form controllers
   final TextEditingController _tecRegistrationEmail = TextEditingController();
-  final TextEditingController _tecRegistrationPassword = TextEditingController();
-  final TextEditingController _tecRegistrationPasswordConfirmation = TextEditingController();
+  final TextEditingController _tecRegistrationPassword =
+      TextEditingController();
+  final TextEditingController _tecRegistrationPasswordConfirmation =
+      TextEditingController();
   final TextEditingController _tecLoginEmail = TextEditingController();
   final TextEditingController _tecLoginPassword = TextEditingController();
 
@@ -157,31 +162,46 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     final size = MediaQuery.of(context).size;
 
     // Responsive padding
-    final double horizontalPadding = ResponsiveLayout.horizontalGutter(size.width, style: GutterStyle.medium, narrowPadding: 24.0);
+    final double horizontalPadding = ResponsiveLayout.horizontalGutter(
+        size.width,
+        style: GutterStyle.medium,
+        narrowPadding: 24.0);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: _isWaitingForVerification
-            ? _buildWaitingForVerification(theme, colorScheme)
+            ? WelcomeWaitingVerification(
+                theme: theme,
+                colorScheme: colorScheme,
+                email: _tecRegistrationEmail.text.trim(),
+                isLoading: _isLoading,
+                onRefresh: _onRefreshVerificationClick,
+              )
             : _buildMainContent(theme, colorScheme, horizontalPadding),
       ),
     );
   }
 
-  Widget _buildMainContent(ThemeData theme, ColorScheme colorScheme, double horizontalPadding) {
+  Widget _buildMainContent(
+      ThemeData theme, ColorScheme colorScheme, double horizontalPadding) {
     return NestedScrollView(
       headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
         return [
           // Hero Header Section - Collapsible
           SliverToBoxAdapter(
-            child: _buildHeroHeader(theme, colorScheme),
+            child: WelcomeHeroHeader(
+              theme: theme,
+              colorScheme: colorScheme,
+              fadeAnimation: _heroFadeAnimation,
+              scaleAnimation: _heroScaleAnimation,
+            ),
           ),
 
           // Tab Bar - Sticky
           SliverPersistentHeader(
             pinned: true,
-            delegate: _StickyTabBarDelegate(
+            delegate: StickyTabBarDelegate(
               child: AnimatedBuilder(
                 animation: _contentFadeAnimation,
                 builder: (context, child) {
@@ -189,10 +209,12 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                     opacity: _contentFadeAnimation.value,
                     child: Container(
                       color: colorScheme.surface,
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          color: colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: TabBar(
@@ -208,17 +230,20 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                           ),
                           unselectedLabelStyle: theme.textTheme.titleMedium,
                           indicatorSize: TabBarIndicatorSize.tab,
-                          labelPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          labelPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           tabs: const [
                             Tab(
                               child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                                 child: Text('Sign Up'),
                               ),
                             ),
                             Tab(
                               child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                                 child: Text('Sign In'),
                               ),
                             ),
@@ -245,692 +270,54 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildRegistrationTab(theme, colorScheme),
-                    _buildLoginTab(theme, colorScheme),
+                    WelcomeRegisterTab(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      formKey: _registrationFormKey,
+                      emailController: _tecRegistrationEmail,
+                      passwordController: _tecRegistrationPassword,
+                      confirmPasswordController:
+                          _tecRegistrationPasswordConfirmation,
+                      passwordFocusNode: _fnRegisterPassword,
+                      confirmPasswordFocusNode: _fnConfirmPassword,
+                      showPassword: _showRegisterPassword,
+                      showConfirmPassword: _showConfirmPassword,
+                      isLoading: _isLoading,
+                      onTogglePassword: () {
+                        setState(() {
+                          _showRegisterPassword = !_showRegisterPassword;
+                        });
+                      },
+                      onToggleConfirmPassword: () {
+                        setState(() {
+                          _showConfirmPassword = !_showConfirmPassword;
+                        });
+                      },
+                      onRegister: _registerClick,
+                    ),
+                    WelcomeLoginTab(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      formKey: _loginFormKey,
+                      emailController: _tecLoginEmail,
+                      passwordController: _tecLoginPassword,
+                      passwordFocusNode: _fnLoginPassword,
+                      showPassword: _showLoginPassword,
+                      isLoading: _isLoading,
+                      onTogglePassword: () {
+                        setState(() {
+                          _showLoginPassword = !_showLoginPassword;
+                        });
+                      },
+                      onLogin: _loginClick,
+                      onForgotEmail: _onForgotEmailClick,
+                    ),
                   ],
                 ),
               ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildHeroHeader(ThemeData theme, ColorScheme colorScheme) {
-    // Get text scale factor to adjust sizes for accessibility
-    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1.0);
-    final isLargeText = textScaleFactor > 1.2;
-
-    // Adjust sizes based on text scaling for better accessibility
-    final logoSize = isLargeText ? 80.0 : 120.0;
-    final logoPadding = isLargeText ? 16.0 : 32.0;
-    final spacing = isLargeText ? 12.0 : 24.0;
-
-    return AnimatedBuilder(
-      animation: _heroFadeAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _heroScaleAnimation.value,
-          child: Opacity(
-            opacity: _heroFadeAnimation.value,
-            child: Container(
-              padding: EdgeInsets.all(logoPadding),
-              child: Column(
-                children: [
-                  // App Logo
-                  Container(
-                    width: logoSize,
-                    height: logoSize,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(isLargeText ? 24 : 32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(isLargeText ? 24 : 32),
-                      child: Image.asset(
-                        'assets/images/ctrim_logo.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.church_rounded,
-                            size: logoSize * 0.5,
-                            color: colorScheme.onPrimaryContainer,
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: spacing),
-
-                  // Welcome Text
-                  Text(
-                    'Welcome to CTRIM',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  SizedBox(height: spacing / 3),
-
-                  Text(
-                    'Connect, grow, and thrive in faith',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLoginTab(ThemeData theme, ColorScheme colorScheme) {
-    return SingleChildScrollView(
-      child: Form(
-        key: _loginFormKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 24),
-
-            // Email Field
-            TextFormField(
-              controller: _tecLoginEmail,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              enabled: !_isLoading,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email address',
-                prefixIcon: Icon(
-                  Icons.email_outlined,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) => _fnLoginPassword.requestFocus(),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Password Field
-            TextFormField(
-              controller: _tecLoginPassword,
-              focusNode: _fnLoginPassword,
-              obscureText: !_showLoginPassword,
-              textInputAction: TextInputAction.done,
-              enabled: !_isLoading,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: 'Enter your password',
-                prefixIcon: Icon(
-                  Icons.lock_outline,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _showLoginPassword = !_showLoginPassword;
-                    });
-                  },
-                  icon: Icon(
-                    _showLoginPassword ? Icons.visibility_off : Icons.visibility,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) => _loginClick(),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Forgot Password Link
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _isLoading ? null : _onForgotEmailClick,
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.primary,
-                ),
-                child: Text(
-                  'Forgot Password?',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Login Button
-            SizedBox(
-              height: 56,
-              child: FilledButton(
-                onPressed: _isLoading ? null : _loginClick,
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 2,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.login,
-                            size: 20,
-                            color: colorScheme.onPrimary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Sign In',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegistrationTab(ThemeData theme, ColorScheme colorScheme) {
-    return SingleChildScrollView(
-      child: Form(
-        key: _registrationFormKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 24),
-
-            // Email Field
-            TextFormField(
-              controller: _tecRegistrationEmail,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              enabled: !_isLoading,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email address',
-                prefixIcon: Icon(
-                  Icons.email_outlined,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) => _fnRegisterPassword.requestFocus(),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Password Field
-            TextFormField(
-              controller: _tecRegistrationPassword,
-              focusNode: _fnRegisterPassword,
-              obscureText: !_showRegisterPassword,
-              textInputAction: TextInputAction.next,
-              enabled: !_isLoading,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: 'Create a strong password',
-                prefixIcon: Icon(
-                  Icons.lock_outline,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _showRegisterPassword = !_showRegisterPassword;
-                    });
-                  },
-                  icon: Icon(
-                    _showRegisterPassword ? Icons.visibility_off : Icons.visibility,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                if (value.length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) => _fnConfirmPassword.requestFocus(),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Confirm Password Field
-            TextFormField(
-              controller: _tecRegistrationPasswordConfirmation,
-              focusNode: _fnConfirmPassword,
-              obscureText: !_showConfirmPassword,
-              textInputAction: TextInputAction.done,
-              enabled: !_isLoading,
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                hintText: 'Re-enter your password',
-                prefixIcon: Icon(
-                  Icons.lock_outline,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _showConfirmPassword = !_showConfirmPassword;
-                    });
-                  },
-                  icon: Icon(
-                    _showConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _tecRegistrationPassword.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) => _registerClick(),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Register Button
-            SizedBox(
-              height: 56,
-              child: FilledButton(
-                onPressed: _isLoading ? null : _registerClick,
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 2,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person_add,
-                            size: 20,
-                            color: colorScheme.onPrimary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Create Account',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Legal Section (only for web)
-            if (kIsWeb) _buildLegalStuffSection(theme, colorScheme),
-
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegalStuffSection(ThemeData theme, ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outlineVariant,
-          width: 1,
-        ),
-      ),
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-          children: <TextSpan>[
-            const TextSpan(
-              text: 'By creating an account, you agree to our ',
-            ),
-            TextSpan(
-              text: 'Terms and Conditions',
-              style: TextStyle(
-                color: colorScheme.primary,
-                decoration: TextDecoration.underline,
-                fontWeight: FontWeight.w500,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  launchUrlString('https://ctrim-terms-and-conditions.web.app');
-                },
-            ),
-            const TextSpan(text: ' and '),
-            TextSpan(
-              text: 'Privacy Policy',
-              style: TextStyle(
-                color: colorScheme.primary,
-                decoration: TextDecoration.underline,
-                fontWeight: FontWeight.w500,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  launchUrlString('https://www.freeprivacypolicy.com/live/fca9721d-4812-408f-b30b-56811f3f651b');
-                },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWaitingForVerification(ThemeData theme, ColorScheme colorScheme) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Verification Icon
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.mark_email_read_outlined,
-                size: 64,
-                color: colorScheme.onPrimaryContainer,
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Title
-            Text(
-              'Check Your Email',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Description
-            Text(
-              'We\'ve sent a verification link to your email address. Please check your inbox and click the link to verify your account.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 32),
-
-            // Email address display
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: colorScheme.outlineVariant,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.email_outlined,
-                    color: colorScheme.onSurfaceVariant,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _tecRegistrationEmail.text.trim(),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Refresh Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: FilledButton.icon(
-                onPressed: _isLoading ? null : _onRefreshVerificationClick,
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: _isLoading
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
-                        ),
-                      )
-                    : Icon(
-                        Icons.refresh,
-                        color: colorScheme.onPrimary,
-                      ),
-                label: Text(
-                  _isLoading ? 'Checking...' : 'I\'ve Verified My Email',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onPrimary,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Help text
-            Text(
-              'Didn\'t receive the email? Check your spam folder or try refreshing.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -987,7 +374,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   }
 
   Future<void> _attemptToFetchAndSetUser() async {
-    final u = await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
+    final u =
+        await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
     _appContext.setCurrentUser(u);
   }
 
@@ -1017,7 +405,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
         errorTitle: 'Could not send reset link',
         action: () async {
           try {
-            await _authManager.sendPasswordResetEmail(_tecLoginEmail.text.trim());
+            await _authManager
+                .sendPasswordResetEmail(_tecLoginEmail.text.trim());
           } on auth.FirebaseAuthException catch (e) {
             throw Exception(_firebaseAuthMessage(e));
           }
@@ -1172,16 +561,21 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
         _saveCreds(fromRegistration);
 
         if (fromRegistration) {
-          onProgress(completed: 1, total: total, message: 'Creating your profile…');
-          await _everyoneDBManager.createUser(_authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
+          onProgress(
+              completed: 1, total: total, message: 'Creating your profile…');
+          await _everyoneDBManager.createUser(
+              _authManager.currentAuthUID, _tecRegistrationEmail.text.trim());
         } else {
-          onProgress(completed: 1, total: total, message: 'Setting up notifications…');
+          onProgress(
+              completed: 1, total: total, message: 'Setting up notifications…');
         }
 
-        onProgress(completed: 2, total: total, message: 'Setting up notifications…');
+        onProgress(
+            completed: 2, total: total, message: 'Setting up notifications…');
         _saveFCMToken();
 
-        onProgress(completed: 3, total: total, message: 'Loading posts and people…');
+        onProgress(
+            completed: 3, total: total, message: 'Loading posts and people…');
         await _fetchEssentialData();
         _appContext.sharedPref.setLoggedOut(false);
       },
@@ -1190,7 +584,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     if (!mounted || !ready) return;
     debugPrint('opened home page here');
     Navigator.of(context).pop(); // pop this page
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const HomePage()));
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
   Future<void> _fetchEssentialData() async {
@@ -1220,7 +615,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     if (token != null) {
       debugPrint('token to save is $token');
       _appContext.sharedPref.saveFCMToken(token);
-      _everyoneDBManager.addTokenForAuthID(authID: authID, token: token, platform: Platform.operatingSystem);
+      _everyoneDBManager.addTokenForAuthID(
+          authID: authID, token: token, platform: Platform.operatingSystem);
     }
   }
 
@@ -1228,33 +624,13 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     if (fromRegistration) {
       debugPrint(
           'Creds to save are: ${_tecRegistrationEmail.text.trim()} with password ${_tecRegistrationPassword.text}');
-      _appContext.sharedPref.saveCreds(_tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
+      _appContext.sharedPref.saveCreds(
+          _tecRegistrationEmail.text.trim(), _tecRegistrationPassword.text);
     } else {
-      debugPrint('Creds to save are: ${_tecLoginEmail.text.trim()} with password ${_tecLoginPassword.text}');
-      _appContext.sharedPref.saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
+      debugPrint(
+          'Creds to save are: ${_tecLoginEmail.text.trim()} with password ${_tecLoginPassword.text}');
+      _appContext.sharedPref
+          .saveCreds(_tecLoginEmail.text.trim(), _tecLoginPassword.text);
     }
-  }
-}
-
-// Sticky Tab Bar Delegate for persistent header
-class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _StickyTabBarDelegate({required this.child});
-
-  @override
-  double get minExtent => 72.0;
-
-  @override
-  double get maxExtent => 72.0;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
-    return false;
   }
 }

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../utility/local_data_manager.dart';
+import '../../utility/cache/local_data_manager.dart';
 
 class MyVideoPlayer extends StatefulWidget {
   const MyVideoPlayer(

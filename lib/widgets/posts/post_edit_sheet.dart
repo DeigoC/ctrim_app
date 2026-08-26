@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../action_sheet.dart';
+import '../common/action_sheet.dart';
 
 /// Admin/editor actions for a post, styled like BulletinSettingSheet.
 class PostEditSheet extends StatelessWidget {

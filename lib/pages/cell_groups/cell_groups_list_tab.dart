@@ -7,7 +7,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/my_avatar_stack.dart';
 import 'cell_group_detail_page.dart';
 

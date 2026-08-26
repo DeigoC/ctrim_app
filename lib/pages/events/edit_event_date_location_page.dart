@@ -3,12 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../utility/app_context.dart';
-import '../../utility/broadcast_audience.dart';
+import '../../utility/notifications/broadcast_audience.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
-import '../../utility/volunteer_locations.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/schedule_duration_picker.dart';
-import '../../widgets/app_dialog.dart';
+import '../../widgets/common/app_dialog.dart';
 import '../../utility/dialog_manager.dart';
 
 class EditEventDateLocationPage extends StatefulWidget {

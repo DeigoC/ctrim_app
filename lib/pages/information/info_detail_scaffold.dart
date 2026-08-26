@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
-import '../../utility/refresh_cooldown.dart';
+import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/information/info_image_carousel.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/quill_editor_wrapper.dart';
 
 /// Shared detail layout for church / testimonial / CTRIM info pages.

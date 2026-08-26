@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/post_tag.dart';
-import 'package:ctrim_app/utility/post_tag_helpers.dart';
+import 'package:ctrim_app/utility/catalog/post_tag_helpers.dart';
 
 void main() {
   group('PostTagHelpers', () {

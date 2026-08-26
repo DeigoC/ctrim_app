@@ -1,6 +1,6 @@
 import 'package:ctrim_app/models/user.dart';
 import 'package:ctrim_app/models/user_tag.dart';
-import 'package:ctrim_app/utility/user_tag_helpers.dart';
+import 'package:ctrim_app/utility/catalog/user_tag_helpers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

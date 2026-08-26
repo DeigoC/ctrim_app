@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ctrim_app/utility/collection_cache_policy.dart';
+import 'package:ctrim_app/utility/cache/collection_cache_policy.dart';
 
 void main() {
   group('shouldUseLocalCollectionCache', () {

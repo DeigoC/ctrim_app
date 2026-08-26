@@ -3,22 +3,17 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../utility/notification_token_resolver.dart';
-import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/local_data_manager.dart';
-import '../../utility/notification_send_result.dart';
-import '../../utility/notification_topics.dart';
+import '../../utility/cache/local_data_manager.dart';
+import '../../utility/notifications/notification_topics.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/posts/event_log_dialog.dart';
@@ -29,7 +24,7 @@ import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
-import 'add_program_role_page.dart';
+import 'edit_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
@@ -39,6 +34,8 @@ import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
 import '../personal/select_users_page.dart';
 import '../../utility/responsive_layout.dart';
+import 'view_event_local_store.dart';
+import 'view_event_notify_helpers.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({super.key, required this.eventHead});
@@ -265,7 +262,10 @@ class _ViewEventPageState extends State<ViewEventPage>
     try {
       _updateLoadProgress(
           completed: 0, total: 1, message: 'Checking saved copy…');
-      final List<String> data = await _attemptToGetExistingPostData();
+      final List<String> data = await readCachedPostDataIfCurrent(
+        postId: widget.eventHead.id,
+        recentDate: widget.eventHead.recentDate,
+      );
       if (!mounted) return;
 
       if (data.isNotEmpty) {
@@ -287,7 +287,7 @@ class _ViewEventPageState extends State<ViewEventPage>
       Provider.of<AppContext>(context, listen: false)
           .setMetadata(_eventContext.id, _eventContext.metadata);
       _figureOutTabs();
-      _savePostDataToLocalStorage();
+      writeCachedPostData(_eventContext, trackPost: true);
       _checkToUnbookForContributor();
       setState(() => _haveFetchedPost = true);
     } catch (e, stack) {
@@ -912,42 +912,6 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   String get _topic => NotificationTopics.postTopic(_eventContext.id);
 
-  Future<List<String>> _attemptToGetExistingPostData() async {
-    final LocalDataManager localDataManager = LocalDataManager();
-    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final List<String> content =
-        await localDataManager.readPostData(widget.eventHead.id);
-
-    bool canUseLocalContent = false;
-    if (content.isNotEmpty) {
-      final firstLine = content[0].split('-');
-      if (firstLine.length == 2) {
-        canUseLocalContent = int.parse(firstLine[0]) ==
-                widget.eventHead.recentDate.millisecondsSinceEpoch &&
-            firstLine[1] == packageInfo.version;
-      }
-    }
-
-    if (canUseLocalContent) {
-      return content;
-    }
-    return List.empty();
-  }
-
-  Future<void> _savePostDataToLocalStorage() async {
-    final LocalDataManager localDataManager = LocalDataManager();
-    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final String content =
-        _eventContext.transformPostToTxtFile(packageInfo.version);
-
-    await localDataManager.writePostData(_eventContext.id, content);
-    final postTrack = await localDataManager.readPostTrack();
-    if (!postTrack.contains(_eventContext.id)) {
-      postTrack.add(_eventContext.id);
-      await localDataManager.writePostTrack(postTrack);
-    }
-  }
-
   bool get _canSaveEditing =>
       _haveFetchedPost && _eventContext.canSaveTheEditing;
 
@@ -988,101 +952,15 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   Future<void> _sendRoleNotifications() async {
     try {
-      final AppContext appContext =
-          Provider.of<AppContext>(context, listen: false);
-      final CloudFunctionManager cloudFunctionManager = CloudFunctionManager();
-      final NotificationTokenResolver tokenResolver =
-          NotificationTokenResolver();
-      final DateFormat dateFormat = DateFormat('EEE, MMM d'),
-          timeFormat = DateFormat('HH:mm');
-
-      final String currentUID = appContext.currentUser.id;
-      final String title =
-          "📣 Reminder of your task - ${dateFormat.format(_eventContext.head.eventDate!)}!";
-
-      var combined = const NotificationSendResult();
-      var usersWithoutTokens = 0;
-
-      for (final roleEntry in _eventContext.program.roles) {
-        try {
-          final DateTime? startingTime = roleEntry['start'];
-          if (startingTime == null) {
-            debugPrint('Warning: Role entry missing start time, skipping...');
-            continue;
-          }
-
-          final String roleTitle = roleEntry['title'] ?? 'Untitled Role';
-          final String body =
-              "'$roleTitle' for ${_eventContext.head.title}.\nStarting ${timeFormat.format(startingTime)}";
-          final List<String> tokens = [];
-          final List<dynamic> uidsRaw = roleEntry['uids'] ?? [];
-          final List<String> uids = uidsRaw.whereType<String>().toList();
-
-          for (final thisUID in uids) {
-            if (thisUID != currentUID) {
-              try {
-                if (!appContext.haveTokensForUserID(thisUID)) {
-                  final String? authID = appContext.authIdByUserId(thisUID);
-                  if (authID != null && authID.isNotEmpty) {
-                    final List<String> fetchedTokens =
-                        await tokenResolver.resolveForAuthID(authID);
-                    if (fetchedTokens.isNotEmpty) {
-                      appContext.addTokensToUserID(thisUID, fetchedTokens);
-                      tokens.addAll(fetchedTokens);
-                    } else {
-                      usersWithoutTokens++;
-                    }
-                  } else {
-                    debugPrint(
-                        'Warning: Could not get authID for user $thisUID, skipping...');
-                    usersWithoutTokens++;
-                  }
-                } else {
-                  tokens.addAll(appContext.getTokensFromUserID(thisUID));
-                }
-              } catch (e) {
-                debugPrint('Error fetching tokens for user $thisUID: $e');
-                usersWithoutTokens++;
-                continue;
-              }
-            }
-          }
-
-          if (tokens.isNotEmpty) {
-            try {
-              final result =
-                  await cloudFunctionManager.sendMessageToSelectedTokens(
-                tokens: tokens,
-                title: title,
-                body: body,
-                data: {'PostID': _eventContext.id},
-              );
-              combined = combined.merge(result);
-            } catch (e) {
-              debugPrint(
-                  'Error sending notification for role "$roleTitle": $e');
-              combined =
-                  combined.merge(const NotificationSendResult(failureCount: 1));
-            }
-          }
-        } catch (e) {
-          debugPrint('Error processing role entry: $e');
-          combined =
-              combined.merge(const NotificationSendResult(failureCount: 1));
-          continue;
-        }
-      }
-
+      final result = await sendScheduledMemberRoleNotifications(
+        appContext: Provider.of<AppContext>(context, listen: false),
+        eventContext: _eventContext,
+      );
       if (mounted) {
-        var message = combined.feedbackMessage;
-        if (usersWithoutTokens > 0) {
-          message =
-              '$message · $usersWithoutTokens member${usersWithoutTokens == 1 ? '' : 's'} had no device';
-        }
         DialogManager.showSnackBar(
           context: context,
-          message: message,
-          isError: combined.hasFailures && !combined.hasSuccess,
+          message: result.feedbackMessage,
+          isError: result.combined.hasFailures && !result.combined.hasSuccess,
         );
       }
     } catch (e) {

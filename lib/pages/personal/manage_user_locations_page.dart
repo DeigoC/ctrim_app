@@ -5,14 +5,11 @@ import '../../firebase/db_managers/user_location_db_manager.dart';
 import '../../models/user_location.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
-import '../../utility/responsive_layout.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../utility/volunteer_locations.dart';
-import '../../widgets/load_progress_body.dart';
-import '../../widgets/role_access_gate.dart';
-import '../../widgets/app_dialog.dart';
-import '../../utility/dialog_manager.dart';
+import '../../utility/catalog/volunteer_locations.dart';
+import '../../widgets/catalog/manage_catalog_page.dart';
 
 class ManageUserLocationsPage extends StatefulWidget {
   const ManageUserLocationsPage({super.key});
@@ -48,211 +45,96 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
-    final horizontalPadding = isWide
-        ? ((screenWidth - ResponsiveLayout.maxContentWidth(screenWidth)) / 2)
-            .clamp(0.0, double.infinity)
-        : 0.0;
-
-    return RoleAccessGate(
-      allow: (user) => user.canManageVolunteers,
+  ManageCatalogCopy _copy(AppLocalizations l10n) {
+    return ManageCatalogCopy(
+      title: l10n.manageUserLocationsTitle,
+      add: l10n.manageUserLocationsAdd,
+      empty: l10n.manageUserLocationsEmpty,
+      seedDefaults: l10n.manageUserLocationsSeedDefaults,
+      loadingMessage: 'Loading locations…',
       deniedMessage: 'Only area admins can manage user locations.',
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.manageUserLocationsTitle),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: l10n.manageUserLocationsAdd,
-              onPressed: _saving ? null : () => _showLocationDialog(),
-            ),
-          ],
-        ),
-        body: Consumer<AppContext>(
-          builder: (context, appContext, _) {
-            if (_loading) {
-              return const LoadProgressBody(
-                message: 'Loading locations…',
-                completedSteps: 0,
-                totalSteps: 1,
-              );
-            }
-
-            final locations = appContext.allLocations;
-            if (locations.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(l10n.manageUserLocationsEmpty,
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _saving ? null : _seedDefaultLocations,
-                        icon: const Icon(Icons.auto_awesome),
-                        label: Text(l10n.manageUserLocationsSeedDefaults),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _saving ? null : () => _showLocationDialog(),
-                        icon: const Icon(Icons.add),
-                        label: Text(l10n.manageUserLocationsAdd),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              itemCount: locations.length,
-              itemBuilder: (_, index) {
-                final location = locations[index];
-                return Card(
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.location_on_outlined,
-                      color: location.isActive
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    title: Text(location.name),
-                    subtitle: Text(
-                      location.isActive
-                          ? l10n.manageUserLocationsActive
-                          : l10n.manageUserLocationsInactive,
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_upward),
-                          tooltip: l10n.manageUserLocationsMoveUp,
-                          onPressed: index == 0 || _saving
-                              ? null
-                              : () => _moveLocation(index, -1),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_downward),
-                          tooltip: l10n.manageUserLocationsMoveDown,
-                          onPressed: index == locations.length - 1 || _saving
-                              ? null
-                              : () => _moveLocation(index, 1),
-                        ),
-                        PopupMenuButton<String>(
-                          onSelected: (value) => _onMenuAction(location, value),
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                                value: 'edit',
-                                child: Text(l10n.manageUserLocationsEdit)),
-                            PopupMenuItem(
-                              value: 'toggle',
-                              child: Text(
-                                location.isActive
-                                    ? l10n.manageUserLocationsDeactivate
-                                    : l10n.manageUserLocationsActivate,
-                              ),
-                            ),
-                            PopupMenuItem(
-                                value: 'delete',
-                                child: Text(l10n.manageUserLocationsDelete)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
+      active: l10n.manageUserLocationsActive,
+      inactive: l10n.manageUserLocationsInactive,
+      moveUp: l10n.manageUserLocationsMoveUp,
+      moveDown: l10n.manageUserLocationsMoveDown,
+      edit: l10n.manageUserLocationsEdit,
+      activate: l10n.manageUserLocationsActivate,
+      deactivate: l10n.manageUserLocationsDeactivate,
+      delete: l10n.manageUserLocationsDelete,
     );
   }
 
-  Future<void> _onMenuAction(
-      final UserLocation location, final String action) async {
-    switch (action) {
-      case 'edit':
-        await _showLocationDialog(existing: location);
-      case 'toggle':
-        await _setLocationActive(location, !location.isActive);
-      case 'delete':
-        await _deleteLocation(location);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Consumer<AppContext>(
+      builder: (context, appContext, _) {
+        return ManageCatalogPage<UserLocation>(
+          copy: _copy(l10n),
+          allow: (user) => user.canManageVolunteers,
+          loading: _loading,
+          saving: _saving,
+          items: appContext.allLocations,
+          itemLeading: (location) => Icon(
+            Icons.location_on_outlined,
+            color: location.isActive
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          ),
+          itemName: (location) => location.name,
+          itemIsActive: (location) => location.isActive,
+          onAdd: _showLocationDialog,
+          onSeed: _seedDefaultLocations,
+          onEdit: (location) => _showLocationDialog(existing: location),
+          onToggle: (location) =>
+              _setLocationActive(location, !location.isActive),
+          onDelete: _deleteLocation,
+          onMove: _moveLocation,
+        );
+      },
+    );
   }
 
   Future<void> _showLocationDialog({UserLocation? existing}) async {
     final l10n = AppLocalizations.of(context)!;
-    final nameController = TextEditingController(text: existing?.name ?? '');
     final isEditing = existing != null;
-
-    final saved = await showDialog<bool>(
+    final result = await showCatalogItemDialog(
       context: context,
-      builder: (dialogContext) {
-        return AppDialog(
-          icon:
-              isEditing ? Icons.edit_outlined : Icons.add_location_alt_outlined,
-          title: isEditing
-              ? l10n.manageUserLocationsEdit
-              : l10n.manageUserLocationsAdd,
-          child: TextField(
-            controller: nameController,
-            decoration: AppDialog.inputDecoration(
-              label: l10n.manageUserLocationsNameLabel,
-            ),
-            autofocus: true,
-          ),
-          actions: AppDialogActions(
-            onCancel: () => Navigator.pop(dialogContext),
-            cancelLabel: l10n.cancel,
-            onConfirm: () {
-              if (nameController.text.trim().isEmpty) return;
-              Navigator.pop(dialogContext, true);
-            },
-            confirmLabel:
-                isEditing ? l10n.save : l10n.manageUserLocationsCreate,
-          ),
-        );
-      },
+      isEditing: isEditing,
+      addTitle: l10n.manageUserLocationsAdd,
+      editTitle: l10n.manageUserLocationsEdit,
+      nameLabel: l10n.manageUserLocationsNameLabel,
+      createLabel: l10n.manageUserLocationsCreate,
+      saveLabel: l10n.save,
+      cancelLabel: l10n.cancel,
+      initialName: existing?.name,
+      addIcon: Icons.add_location_alt_outlined,
     );
-
-    if (saved != true || !mounted) {
-      nameController.dispose();
-      return;
-    }
-
-    final name = nameController.text.trim();
-    nameController.dispose();
+    if (result == null || !mounted) return;
 
     final appContext = Provider.of<AppContext>(context, listen: false);
     final duplicate = appContext.allLocations.any(
-      (l) => l.name.toLowerCase() == name.toLowerCase() && l.id != existing?.id,
+      (l) =>
+          l.name.toLowerCase() == result.name.toLowerCase() &&
+          l.id != existing?.id,
     );
     if (duplicate) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.manageUserLocationsDuplicate(name))),
+        SnackBar(content: Text(l10n.manageUserLocationsDuplicate(result.name))),
       );
       return;
     }
 
     setState(() => _saving = true);
     try {
-      if (isEditing) {
+      if (existing != null) {
         final oldName = existing.name;
         await _locationDBManager.renameLocation(
-            location: existing, newName: name);
+            location: existing, newName: result.name);
         appContext.addOrUpdateLocation(existing);
-        if (oldName != name) {
-          appContext.renameUsersLocation(oldName, name);
+        if (oldName != result.name) {
+          appContext.renameUsersLocation(oldName, result.name);
         }
         await UserActivityRecorder().record(
           actorUserId: appContext.currentUser.id,
@@ -267,7 +149,7 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
                     .reduce((a, b) => a > b ? a : b) +
                 1;
         final location = await _locationDBManager.createLocation(
-          name: name,
+          name: result.name,
           displayOrder: nextOrder,
         );
         appContext.addOrUpdateLocation(location);

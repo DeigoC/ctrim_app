@@ -5,7 +5,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/posts/post_head.dart';
 
 class ViewMyPostsPage extends StatefulWidget {

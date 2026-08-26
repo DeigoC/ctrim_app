@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_head.dart';
-import 'collection_cache_policy.dart';
-import 'local_data_manager.dart';
+import 'cache/collection_cache_policy.dart';
+import 'cache/local_data_manager.dart';
 
 /// Loads bulletin event heads from Hive when `id_tracker/events.lastUpdate` matches.
 class EventHeadsRepository {

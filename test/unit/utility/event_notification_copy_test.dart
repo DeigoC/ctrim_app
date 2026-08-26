@@ -1,4 +1,4 @@
-import 'package:ctrim_app/utility/event_notification_copy.dart';
+import 'package:ctrim_app/utility/notifications/event_notification_copy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

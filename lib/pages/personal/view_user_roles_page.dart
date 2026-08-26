@@ -6,10 +6,10 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
-import '../../utility/refresh_cooldown.dart';
+import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
-import '../../widgets/load_progress_body.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/posts/post_head.dart';
 import '../events/view_event_page.dart';
 

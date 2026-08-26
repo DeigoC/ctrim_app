@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../firebase/functions_manager.dart';
-import '../../utility/broadcast_audience.dart';
+import '../../utility/notifications/broadcast_audience.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/event_notification_copy.dart';
-import '../../utility/notification_send_result.dart';
-import '../../utility/notification_topics.dart';
+import '../../utility/notifications/event_notification_copy.dart';
+import '../../utility/notifications/notification_send_result.dart';
+import '../../utility/notifications/notification_topics.dart';
 import '../../widgets/responsive_content.dart';
 
 /// Compose and send a broadcast push for a post.

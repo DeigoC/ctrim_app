@@ -7,13 +7,13 @@ import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart' as ctrim;
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/persist_users_local_cache.dart';
+import '../../utility/cache/persist_users_local_cache.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
-import '../../utility/volunteer_locations.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
-import '../../widgets/user_tag_picker.dart';
+import '../../widgets/catalog/user_tag_picker.dart';
 
 class RegisterUserPage extends StatefulWidget {
   const RegisterUserPage({super.key});

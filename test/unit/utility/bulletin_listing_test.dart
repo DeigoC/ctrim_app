@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/utility/bulletin_listing.dart';
-import 'package:ctrim_app/utility/volunteer_locations.dart';
+import 'package:ctrim_app/utility/catalog/volunteer_locations.dart';
 
 void main() {
   final now = DateTime(2026, 8, 22, 14, 0);

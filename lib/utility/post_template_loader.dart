@@ -1,6 +1,6 @@
 import '../firebase/db_managers/post_template_db_manager.dart';
 import '../models/post_template.dart';
-import 'local_data_manager.dart';
+import 'cache/local_data_manager.dart';
 
 typedef PostTemplateLoadProgress = void Function({
   required int completed,

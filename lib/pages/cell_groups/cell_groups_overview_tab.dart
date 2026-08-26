@@ -7,7 +7,7 @@ import '../../utility/app_context.dart';
 import '../../utility/cell_group_activity_stats.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/media/cached_image_widget.dart';
-import '../information/info_tab_widgets.dart';
+import '../../widgets/information/info_section_card.dart';
 
 /// Intro / teaching content for Cell Groups (first tab), plus activity snapshot.
 class CellGroupsOverviewTab extends StatefulWidget {

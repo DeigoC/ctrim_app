@@ -1,6 +1,6 @@
 import '../models/post_template.dart';
 import '../models/user.dart';
-import 'broadcast_audience.dart';
+import 'notifications/broadcast_audience.dart';
 import 'event_context.dart';
 
 class PostTemplateMapper {

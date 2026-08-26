@@ -7,8 +7,8 @@ import '../../firebase/functions_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/notification_device_status.dart';
-import '../../utility/notification_topics.dart';
+import '../../utility/notifications/notification_device_status.dart';
+import '../../utility/notifications/notification_topics.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/responsive_content.dart';
 

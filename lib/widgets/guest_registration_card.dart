@@ -11,9 +11,9 @@ import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
-import '../widgets/app_dialog.dart';
+import 'common/app_dialog.dart';
 import '../utility/event_heads_repository.dart';
-import '../utility/notification_permission_prompt.dart';
+import '../utility/notifications/notification_permission_prompt.dart';
 import '../utility/users_repository.dart';
 
 class GuestRegistrationCard extends StatefulWidget {

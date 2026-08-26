@@ -1,7 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-import '../utility/notification_debug.dart';
-import '../utility/notification_send_result.dart';
+import '../utility/notifications/notification_debug.dart';
+import '../utility/notifications/notification_send_result.dart';
 import 'messaging_manager.dart';
 
 class CloudFunctionManager {

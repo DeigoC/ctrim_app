@@ -6,15 +6,15 @@ import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
-import '../../../utility/local_data_manager.dart';
-import '../../../utility/notification_topics.dart';
+import '../../../utility/cache/local_data_manager.dart';
+import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
-import '../../../widgets/load_progress_body.dart';
+import '../../../widgets/common/load_progress_body.dart';
 import '../../../widgets/role_access_gate.dart';
-import '../../../widgets/app_dialog.dart';
+import '../../../widgets/common/app_dialog.dart';
 import 'edit_template_page.dart';
 
 class ViewTemplatesPage extends StatefulWidget {

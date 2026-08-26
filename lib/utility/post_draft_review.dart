@@ -1,8 +1,8 @@
 import '../models/event/event_program.dart';
 import '../models/post_tag.dart';
-import 'broadcast_audience.dart';
+import 'notifications/broadcast_audience.dart';
 import 'event_context.dart';
-import 'event_notification_copy.dart';
+import 'notifications/event_notification_copy.dart';
 
 enum PostDraftReviewStatus { ready, suggestion, info }
 

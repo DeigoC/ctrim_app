@@ -5,9 +5,9 @@ import '../../models/post_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/bulletin_listing.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/volunteer_locations.dart';
-import '../action_sheet.dart';
-import '../post_tag_chip.dart';
+import '../../utility/catalog/volunteer_locations.dart';
+import '../common/action_sheet.dart';
+import '../catalog/post_tag_chip.dart';
 
 class BulletinSettingSheet extends StatefulWidget {
   const BulletinSettingSheet({
