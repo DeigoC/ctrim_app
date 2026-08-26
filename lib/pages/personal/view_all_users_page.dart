@@ -1,25 +1,26 @@
-import 'package:ctrim_app/utility/users_repository.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/models/user_tag.dart';
-import 'package:ctrim_app/pages/personal/edit_user_page.dart';
-import 'package:ctrim_app/pages/personal/register_user_page.dart';
-import 'package:ctrim_app/pages/personal/view_user_profile_page.dart';
-import 'package:ctrim_app/src/localization/app_localizations.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
-import 'package:ctrim_app/utility/refresh_cooldown.dart';
-import 'package:ctrim_app/utility/responsive_layout.dart';
-import 'package:ctrim_app/utility/user_tag_helpers.dart';
-import 'package:ctrim_app/utility/volunteer_locations.dart';
-import 'package:ctrim_app/utility/volunteer_role_helpers.dart';
-import 'package:ctrim_app/widgets/action_sheet.dart';
-import 'package:ctrim_app/widgets/app_search_bar.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
-import 'package:ctrim_app/widgets/user_tag_chip.dart';
-import 'package:ctrim_app/widgets/volunteer_role_badge.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../models/user.dart';
+import '../../models/user_tag.dart';
+import '../../src/localization/app_localizations.dart';
+import '../../utility/app_context.dart';
+import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/refresh_cooldown.dart';
+import '../../utility/responsive_layout.dart';
+import '../../utility/user_tag_helpers.dart';
+import '../../utility/users_repository.dart';
+import '../../utility/volunteer_locations.dart';
+import '../../utility/volunteer_role_helpers.dart';
+import '../../widgets/action_sheet.dart';
+import '../../widgets/app_search_bar.dart';
+import '../../widgets/user_avatar.dart';
+import '../../widgets/user_tag_chip.dart';
+import '../../widgets/volunteer_role_badge.dart';
+import 'edit_user_page.dart';
+import 'register_user_page.dart';
+import 'view_user_profile_page.dart';
 
 enum _VolunteerSortMode { surname, tags }
 

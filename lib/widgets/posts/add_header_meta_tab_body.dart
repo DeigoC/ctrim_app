@@ -1,18 +1,20 @@
 import 'dart:math';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/pages/personal/select_users_page.dart';
-import 'package:ctrim_app/src/localization/app_localizations.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/broadcast_audience.dart';
-import 'package:ctrim_app/utility/event_context.dart';
-import 'package:ctrim_app/utility/notification_topics.dart';
-import 'package:ctrim_app/utility/placeholder_user_permissions.dart';
-import 'package:ctrim_app/widgets/cell_group_picker.dart';
-import 'package:ctrim_app/widgets/my_avatar_stack.dart';
-import 'package:ctrim_app/widgets/post_tag_picker.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../models/user.dart';
+import '../../pages/personal/select_users_page.dart';
+import '../../src/localization/app_localizations.dart';
+import '../../utility/app_context.dart';
+import '../../utility/broadcast_audience.dart';
+import '../../utility/event_context.dart';
+import '../../utility/notification_topics.dart';
+import '../../utility/placeholder_user_permissions.dart';
+import '../cell_group_picker.dart';
+import '../my_avatar_stack.dart';
+import '../post_tag_picker.dart';
+import '../user_avatar.dart';
 
 class AddEventHeadMeta extends StatefulWidget {
   const AddEventHeadMeta({
@@ -43,7 +45,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final availableSubtitles = widget.eventContext.templateSubtitles;
-    final hasSubtitles = availableSubtitles != null && availableSubtitles.isNotEmpty;
+    final hasSubtitles =
+        availableSubtitles != null && availableSubtitles.isNotEmpty;
     final headMediaPool = widget.eventContext.templateHeadMediaPool;
     final hasHeadMediaPool = headMediaPool != null && headMediaPool.isNotEmpty;
 
@@ -59,9 +62,11 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -69,7 +74,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.title, size: 18, color: colorScheme.onSurfaceVariant),
+                      Icon(Icons.title,
+                          size: 18, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Text(
                         'Post Title',
@@ -101,14 +107,17 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           if (hasSubtitles)
             Card(
               elevation: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+              margin:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -116,7 +125,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.format_quote, size: 18, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.format_quote,
+                            size: 18, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 8),
                         Text(
                           'Template Subtitles',
@@ -140,14 +150,17 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           if (hasHeadMediaPool)
             Card(
               elevation: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+              margin:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -155,7 +168,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.image_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.image_outlined,
+                            size: 18, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 8),
                         Text(
                           'Template Cover Image',
@@ -183,9 +197,11 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12),
@@ -193,7 +209,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.subtitles, size: 18, color: colorScheme.onSurfaceVariant),
+                      Icon(Icons.subtitles,
+                          size: 18, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Text(
                         'Post Subtitle',
@@ -243,7 +260,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: const BorderRadius.only(
@@ -253,7 +271,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             ),
             child: Row(
               children: [
-                Icon(Icons.record_voice_over_outlined, size: 18, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.record_voice_over_outlined,
+                    size: 18, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
                   'Lead speaker',
@@ -305,7 +324,9 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 OutlinedButton.icon(
                   onPressed: _onManageLeadSpeakerTap,
                   icon: const Icon(Icons.person_search, size: 18),
-                  label: Text(speaker == null ? 'Select lead speaker' : 'Change lead speaker'),
+                  label: Text(speaker == null
+                      ? 'Select lead speaker'
+                      : 'Change lead speaker'),
                 ),
                 if (speaker != null) ...[
                   const SizedBox(height: 8),
@@ -328,13 +349,15 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
   }
 
   User? _resolveLeadSpeaker(AppContext appContext) {
-    final uid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
+    final uid = widget.eventContext.metadata.leadSpeakerUID ??
+        widget.eventContext.head.leadSpeakerUID;
     if (uid == null || uid.isEmpty) return null;
     return appContext.userById(uid);
   }
 
   Future<void> _onManageLeadSpeakerTap() async {
-    final currentUid = widget.eventContext.metadata.leadSpeakerUID ?? widget.eventContext.head.leadSpeakerUID;
+    final currentUid = widget.eventContext.metadata.leadSpeakerUID ??
+        widget.eventContext.head.leadSpeakerUID;
     final result = await Navigator.push<List<String>>(
       context,
       MaterialPageRoute(
@@ -360,7 +383,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       } else {
         final user = appContext.userById(result.first);
         if (user == null) return;
-        widget.eventContext.applyLeadSpeaker(uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
+        widget.eventContext.applyLeadSpeaker(
+            uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
       }
     });
     widget.onRequiredFieldChange('');
@@ -395,7 +419,9 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                         height: 96,
                         child: displaySrc != null && displaySrc.isNotEmpty
                             ? Image.network(displaySrc,
-                                fit: BoxFit.cover, errorBuilder: (_, __, ___) => _headMediaFallback(isVideo))
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    _headMediaFallback(isVideo))
                             : _headMediaFallback(isVideo),
                       ),
                     ),
@@ -404,8 +430,12 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
-                            child: const Icon(Icons.check_circle, color: Colors.white, size: 28),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.35),
+                            child: const Icon(Icons.check_circle,
+                                color: Colors.white, size: 28),
                           ),
                         ),
                       ),
@@ -413,7 +443,9 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                       Positioned(
                         bottom: 4,
                         right: 4,
-                        child: Icon(Icons.videocam, size: 16, color: Colors.white.withValues(alpha: 0.85)),
+                        child: Icon(Icons.videocam,
+                            size: 16,
+                            color: Colors.white.withValues(alpha: 0.85)),
                       ),
                   ],
                 ),
@@ -469,7 +501,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 decoration: const InputDecoration(
                   labelText: 'Select a subtitle',
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 isExpanded: true,
                 selectedItemBuilder: (BuildContext context) {
@@ -489,13 +522,17 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   return DropdownMenuItem<String>(
                     value: subtitle,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 4),
                       decoration: BoxDecoration(
                         border: isLast
                             ? null
                             : Border(
                                 bottom: BorderSide(
-                                  color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant
+                                      .withValues(alpha: 0.5),
                                   width: 1,
                                 ),
                               ),
@@ -505,7 +542,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                           Icon(
                             Icons.format_quote,
                             size: 16,
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -537,7 +577,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     final random = Random();
-                    final randomSubtitle = availableSubtitles[random.nextInt(availableSubtitles.length)];
+                    final randomSubtitle = availableSubtitles[
+                        random.nextInt(availableSubtitles.length)];
                     setState(() {
                       _selectedSubtitle = randomSubtitle;
                       widget.tecSubtitle.text = randomSubtitle;
@@ -560,7 +601,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   decoration: const InputDecoration(
                     labelText: 'Select a subtitle',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   isExpanded: true,
                   selectedItemBuilder: (BuildContext context) {
@@ -580,13 +622,17 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                     return DropdownMenuItem<String>(
                       value: subtitle,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 4),
                         decoration: BoxDecoration(
                           border: isLast
                               ? null
                               : Border(
                                   bottom: BorderSide(
-                                    color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant
+                                        .withValues(alpha: 0.5),
                                     width: 1,
                                   ),
                                 ),
@@ -596,7 +642,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                             Icon(
                               Icons.format_quote,
                               size: 16,
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.6),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -604,7 +653,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                                 subtitle,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 14, height: 1.4),
+                                style:
+                                    const TextStyle(fontSize: 14, height: 1.4),
                               ),
                             ),
                           ],
@@ -629,7 +679,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 tooltip: 'Random',
                 onPressed: () {
                   final random = Random();
-                  final randomSubtitle = availableSubtitles[random.nextInt(availableSubtitles.length)];
+                  final randomSubtitle = availableSubtitles[
+                      random.nextInt(availableSubtitles.length)];
                   setState(() {
                     _selectedSubtitle = randomSubtitle;
                     widget.tecSubtitle.text = randomSubtitle;
@@ -656,7 +707,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: const BorderRadius.only(
@@ -666,7 +718,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
             ),
             child: Row(
               children: [
-                Icon(Icons.people_outline, size: 18, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.people_outline,
+                    size: 18, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
                   'Contributors',
@@ -697,7 +750,9 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 else ...[
                   MyAvatarStack(
                     users: appContext.allUsers
-                        .where((e) => widget.eventContext.metadata.contributorUIDs.contains(e.id))
+                        .where((e) => widget
+                            .eventContext.metadata.contributorUIDs
+                            .contains(e.id))
                         .toList(),
                     appDir: appContext.appDir,
                   ),
@@ -712,18 +767,21 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 OutlinedButton.icon(
                   onPressed: _onManageContributorsTap,
                   icon: const Icon(Icons.group, size: 18),
-                  label: Text(AppLocalizations.of(context)!.selectUsersManageContributors),
+                  label: Text(AppLocalizations.of(context)!
+                      .selectUsersManageContributors),
                 ),
                 const Divider(height: 32),
                 PostTagPicker(
                   allTags: appContext.allPostTags,
-                  selectedTagIDs: Set<String>.from(widget.eventContext.head.tagIDs),
+                  selectedTagIDs:
+                      Set<String>.from(widget.eventContext.head.tagIDs),
                   onChanged: (selected) => _onTagsChanged(appContext, selected),
                 ),
                 const SizedBox(height: 12),
                 CellGroupPicker(
                   allGroups: appContext.allCellGroups,
-                  selectedCellGroupIDs: Set<String>.from(widget.eventContext.head.cellGroupIDs),
+                  selectedCellGroupIDs:
+                      Set<String>.from(widget.eventContext.head.cellGroupIDs),
                   onChanged: (selected) {
                     setState(() {
                       widget.eventContext.applyCellGroupIDs(selected.toList());
@@ -796,26 +854,30 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     ColorScheme colorScheme,
   ) {
     final expected = widget.eventContext.expectedAttendeeUserIDs;
-    final users = appContext.allUsers.where((u) => expected.contains(u.id)).toList();
+    final users =
+        appContext.allUsers.where((u) => expected.contains(u.id)).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           'Expected attendees',
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          style:
+              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
         Text(
           'Usual people for this meeting. Pre-fills the People checklist on new posts '
           '(or seeds from linked cell groups if empty).',
-          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         if (expected.isEmpty)
           Text(
             'None set yet',
-            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           )
         else ...[
@@ -845,7 +907,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       context,
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
-          selectedUIDs: List<String>.from(widget.eventContext.expectedAttendeeUserIDs),
+          selectedUIDs:
+              List<String>.from(widget.eventContext.expectedAttendeeUserIDs),
           title: 'Expected attendees',
           includePlaceholders: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -867,7 +930,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
       context,
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
-          selectedUIDs: List<String>.from(widget.eventContext.metadata.contributorUIDs),
+          selectedUIDs:
+              List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
           allowCreatePlaceholder: canCreatePlaceholderUser(
@@ -896,7 +960,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     });
   }
 
-  void _onNotifyLocationUmbrellaChange(final AppContext appContext, final bool include) {
+  void _onNotifyLocationUmbrellaChange(
+      final AppContext appContext, final bool include) {
     setState(() {
       widget.eventContext.syncNotificationTopics(
         includeLocationUmbrella: include,

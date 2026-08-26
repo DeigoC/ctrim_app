@@ -1,9 +1,10 @@
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:avatar_stack/positions.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../models/user.dart';
+import 'user_avatar.dart';
 
 /// Overlapping avatars for a list of [users], mixing profile photos and
 /// initials the same way as [MyUserAvatar].

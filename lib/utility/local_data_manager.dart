@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:ctrim_app/models/info/church_info.dart';
-import 'package:ctrim_app/models/info/church_page.dart';
-import 'package:ctrim_app/models/info/ctrim_info.dart';
-import 'package:ctrim_app/models/info/testimonial_info.dart';
-import 'package:ctrim_app/models/post_template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import '../models/info/church_info.dart';
+import '../models/info/church_page.dart';
+import '../models/info/ctrim_info.dart';
+import '../models/info/testimonial_info.dart';
+import '../models/post_template.dart';
 
 class LocalDataManager {
   static bool _initialized = false;

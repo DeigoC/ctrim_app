@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctrim_app/models/post_template.dart';
+
+import '../../models/post_template.dart';
 
 class PostTemplateDBManager {
-  static final CollectionReference _ref = FirebaseFirestore.instance.collection('post_templates');
+  static final CollectionReference _ref =
+      FirebaseFirestore.instance.collection('post_templates');
 
   /// Creates a new template doc. Returns `(id, lastUpdate)`.
-  Future<({String id, int lastUpdate})> addPostTemplate(final PostTemplate template) async {
+  Future<({String id, int lastUpdate})> addPostTemplate(
+      final PostTemplate template) async {
     final docRef = _ref.doc();
     final now = DateTime.now().millisecondsSinceEpoch;
     await docRef.set(template.toJson(false));
@@ -17,14 +20,16 @@ class PostTemplateDBManager {
     final collection = await _ref.get();
     return collection.docs
         .where((doc) => doc.id.compareTo('ALastUpdate') != 0)
-        .map((e) => PostTemplate.fromMap(false, e.id, e.data() as Map<String, dynamic>))
+        .map((e) =>
+            PostTemplate.fromMap(false, e.id, e.data() as Map<String, dynamic>))
         .toList();
   }
 
   Future<PostTemplate?> fetchTemplate(final String id) async {
     final doc = await _ref.doc(id).get();
     final data = doc.data();
-    if (!doc.exists || data == null || data is! Map<String, dynamic>) return null;
+    if (!doc.exists || data == null || data is! Map<String, dynamic>)
+      return null;
     return PostTemplate.fromMap(false, doc.id, data);
   }
 
@@ -42,6 +47,8 @@ class PostTemplateDBManager {
   }
 
   Future<void> updateLastUpdateTime(final int lastUpdate) async {
-    await _ref.doc('ALastUpdate').set({'lastUpdate': lastUpdate}, SetOptions(merge: true));
+    await _ref
+        .doc('ALastUpdate')
+        .set({'lastUpdate': lastUpdate}, SetOptions(merge: true));
   }
 }

@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
+import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/quill_editor_wrapper.dart';
 
 class EditBodyPage extends StatefulWidget {
   const EditBodyPage({super.key, required this.eventContext});
@@ -24,7 +24,9 @@ class _EditBodyPageState extends State<EditBodyPage> {
 
   @override
   void initState() {
-    _showMultirow = Provider.of<AppContext>(context, listen: false).sharedPref.showMultirowTools;
+    _showMultirow = Provider.of<AppContext>(context, listen: false)
+        .sharedPref
+        .showMultirowTools;
     super.initState();
   }
 
@@ -34,7 +36,8 @@ class _EditBodyPageState extends State<EditBodyPage> {
         onPopInvokedWithResult: (didPop, result) {
           // ! This isn't perfect? Remember that the user can add empty lines
           final currentJson = _editorKey.currentState?.getDocumentJson();
-          if (currentJson != null && !widget.eventContext.isSameJson(currentJson)) {
+          if (currentJson != null &&
+              !widget.eventContext.isSameJson(currentJson)) {
             widget.eventContext.setBodyJson(currentJson);
             widget.eventContext.allowSavingOfTheEdit();
           }
@@ -42,14 +45,18 @@ class _EditBodyPageState extends State<EditBodyPage> {
         child: Scaffold(
             appBar: AppBar(
               title: const Text('Edit Body'),
-              actions: [IconButton(onPressed: _onSettingTap, icon: const Icon(Icons.more_vert))],
+              actions: [
+                IconButton(
+                    onPressed: _onSettingTap, icon: const Icon(Icons.more_vert))
+              ],
             ),
             body: _buildBody()));
   }
 
   Widget _buildBody() {
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 8);
 
     return QuillEditorWidget(
       key: _editorKey,
@@ -59,7 +66,8 @@ class _EditBodyPageState extends State<EditBodyPage> {
       showSuperscript: true,
       showCodeBlock: true,
       multiRowsDisplay: _showMultirow,
-      editorPadding: EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
+      editorPadding:
+          EdgeInsets.symmetric(horizontal: webHorizontalPadding, vertical: 16),
     );
   }
 
@@ -80,27 +88,34 @@ class _EditBodyPageState extends State<EditBodyPage> {
   void _onShowMultirowClick() {
     setState(() {
       _showMultirow = !_showMultirow;
-      Provider.of<AppContext>(context, listen: false).sharedPref.setShowMultirowTools(_showMultirow);
+      Provider.of<AppContext>(context, listen: false)
+          .sharedPref
+          .setShowMultirowTools(_showMultirow);
     });
   }
 
   void _onCopyClick() {
-    final rawJson = _editorKey.currentState?.getDocumentJson() ?? widget.eventContext.body;
+    final rawJson =
+        _editorKey.currentState?.getDocumentJson() ?? widget.eventContext.body;
     final exampleJson = jsonEncode(rawJson);
     Clipboard.setData(ClipboardData(text: exampleJson));
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Copied Json'), behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Copied Json'), behavior: SnackBarBehavior.floating));
   }
 }
 
 class BodyWritingSettingDialog extends StatefulWidget {
   const BodyWritingSettingDialog(
-      {super.key, required this.initialMultirowViewValue, required this.onMultiviewClick, required this.onCopyClick});
+      {super.key,
+      required this.initialMultirowViewValue,
+      required this.onMultiviewClick,
+      required this.onCopyClick});
   final bool initialMultirowViewValue;
   final Function() onMultiviewClick, onCopyClick;
 
   @override
-  State<BodyWritingSettingDialog> createState() => BodyWritingSettingDialogState();
+  State<BodyWritingSettingDialog> createState() =>
+      BodyWritingSettingDialogState();
 }
 
 class BodyWritingSettingDialogState extends State<BodyWritingSettingDialog> {
@@ -120,8 +135,11 @@ class BodyWritingSettingDialogState extends State<BodyWritingSettingDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SwitchListTile(
-              title: const Text('Multi-row Toolbar View'), value: _enableMultirowView, onChanged: _multirowViewClick),
-          ListTile(title: const Text('Copy JSON Data'), onTap: _copyBodyDataClick)
+              title: const Text('Multi-row Toolbar View'),
+              value: _enableMultirowView,
+              onChanged: _multirowViewClick),
+          ListTile(
+              title: const Text('Copy JSON Data'), onTap: _copyBodyDataClick)
         ],
       ),
     );

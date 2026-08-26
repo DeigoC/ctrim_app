@@ -1,24 +1,25 @@
-import 'package:ctrim_app/firebase/db_managers/id_tracker.dart';
-import 'package:ctrim_app/firebase/functions_manager.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/models/user_tag.dart';
-import 'package:ctrim_app/pages/personal/view_user_roles_page.dart';
-import 'package:ctrim_app/src/localization/app_localizations.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/persist_users_local_cache.dart';
-import 'package:ctrim_app/utility/responsive_layout.dart';
-import 'package:ctrim_app/utility/user_activity_messages.dart';
-import 'package:ctrim_app/utility/user_activity_recorder.dart';
-import 'package:ctrim_app/utility/user_tag_helpers.dart';
-import 'package:ctrim_app/utility/volunteer_locations.dart';
-import 'package:ctrim_app/widgets/app_search_bar.dart';
-import 'package:ctrim_app/widgets/app_dialog.dart';
-import 'package:ctrim_app/widgets/user_avatar.dart';
-import 'package:ctrim_app/widgets/user_tag_chip.dart';
-import 'package:ctrim_app/widgets/user_tag_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../firebase/db_managers/id_tracker.dart';
+import '../../firebase/functions_manager.dart';
+import '../../models/user.dart';
+import '../../models/user_tag.dart';
+import '../../src/localization/app_localizations.dart';
+import '../../utility/app_context.dart';
+import '../../utility/dialog_manager.dart';
+import '../../utility/persist_users_local_cache.dart';
+import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
+import '../../utility/user_tag_helpers.dart';
+import '../../utility/volunteer_locations.dart';
+import '../../widgets/app_search_bar.dart';
+import '../../widgets/app_dialog.dart';
+import '../../widgets/user_avatar.dart';
+import '../../widgets/user_tag_chip.dart';
+import '../../widgets/user_tag_filter_bar.dart';
+import 'view_user_roles_page.dart';
 
 /// Full-screen multi-select picker for volunteers and placeholder profiles.
 ///

@@ -1,21 +1,22 @@
-import 'package:ctrim_app/models/info/church_info.dart';
-import 'package:ctrim_app/models/info/church_page.dart';
-import 'package:ctrim_app/models/info/ctrim_info.dart';
-import 'package:ctrim_app/models/info/testimonial_info.dart';
-import 'package:ctrim_app/models/user.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/church_location.dart';
-import 'package:ctrim_app/utility/dialog_manager.dart';
-import 'package:ctrim_app/utility/info_repository.dart';
-import 'package:ctrim_app/utility/network_image_helper.dart';
-import 'package:ctrim_app/utility/responsive_layout.dart';
-import 'package:ctrim_app/utility/user_activity_messages.dart';
-import 'package:ctrim_app/utility/user_activity_recorder.dart';
-import 'package:ctrim_app/utility/volunteer_locations.dart';
-import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+
+import '../../models/info/church_info.dart';
+import '../../models/info/church_page.dart';
+import '../../models/info/ctrim_info.dart';
+import '../../models/info/testimonial_info.dart';
+import '../../models/user.dart';
+import '../../utility/app_context.dart';
+import '../../utility/church_location.dart';
+import '../../utility/dialog_manager.dart';
+import '../../utility/info_repository.dart';
+import '../../utility/network_image_helper.dart';
+import '../../utility/responsive_layout.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
+import '../../utility/volunteer_locations.dart';
+import '../../widgets/quill_editor_wrapper.dart';
 
 enum InfoEditorSection { church, churchPage, testimonial, ctrim }
 

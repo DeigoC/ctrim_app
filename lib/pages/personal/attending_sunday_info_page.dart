@@ -1,9 +1,11 @@
-import 'package:ctrim_app/widgets/quill_editor_wrapper.dart';
-import 'package:flutter/material.dart';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/quill_editor_wrapper.dart';
 
 class AttendingSundayServicePage extends StatelessWidget {
   const AttendingSundayServicePage({super.key});
@@ -16,8 +18,9 @@ class AttendingSundayServicePage extends StatelessWidget {
         .analytics
         .logScreenView(screenName: 'Personal: Attending Sunday Service');
 
-    final double webHorizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 0);
+    final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 0);
 
     return Scaffold(
         body: CustomScrollView(slivers: [

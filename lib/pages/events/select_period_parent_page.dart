@@ -1,11 +1,12 @@
-import 'package:ctrim_app/firebase/db_managers/event_db_manager.dart';
-import 'package:ctrim_app/models/event/event_head.dart';
-import 'package:ctrim_app/utility/app_context.dart';
-import 'package:ctrim_app/utility/responsive_layout.dart';
-import 'package:ctrim_app/widgets/load_progress_body.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../models/event/event_head.dart';
+import '../../utility/app_context.dart';
+import '../../utility/responsive_layout.dart';
+import '../../widgets/load_progress_body.dart';
 
 /// Picks a period/season parent post (`IsPeriodParent == true`).
 ///
@@ -44,12 +45,14 @@ class _SelectPeriodParentPageState extends State<SelectPeriodParentPage> {
 
   Future<List<EventHead>> _loadParents() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    final fromCache = appContext.eventHeads.where((h) => h.isPeriodParent).toList();
+    final fromCache =
+        appContext.eventHeads.where((h) => h.isPeriodParent).toList();
     final fromQuery = await EventHeadDBManager().fetchPeriodParentHeads();
 
     final byId = <String, EventHead>{};
     for (final head in [...fromCache, ...fromQuery]) {
-      if (widget.excludePostID != null && head.id == widget.excludePostID) continue;
+      if (widget.excludePostID != null && head.id == widget.excludePostID)
+        continue;
       byId[head.id] = head;
     }
     final heads = byId.values.toList()
@@ -59,8 +62,9 @@ class _SelectPeriodParentPageState extends State<SelectPeriodParentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double gutter =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 8);
+    final double gutter = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 8);
 
     return Scaffold(
       appBar: AppBar(
@@ -75,7 +79,8 @@ class _SelectPeriodParentPageState extends State<SelectPeriodParentPage> {
       body: FutureBuilder<List<EventHead>>(
         future: _loadFuture,
         builder: (context, snapshot) {
-          if (_loadFuture == null || snapshot.connectionState != ConnectionState.done) {
+          if (_loadFuture == null ||
+              snapshot.connectionState != ConnectionState.done) {
             return const LoadProgressBody(
               message: 'Loading period parents…',
               completedSteps: 0,
@@ -126,7 +131,9 @@ class _SelectPeriodParentPageState extends State<SelectPeriodParentPage> {
               ...heads.map((head) {
                 final selected = _selectedID == head.id;
                 return ListTile(
-                  leading: Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off),
+                  leading: Icon(selected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off),
                   title: Text(head.title),
                   subtitle: Text(
                     [
