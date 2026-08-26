@@ -1118,6 +1118,10 @@
   "@churchHubStatsRetry": {
     "description": "Retry loading church location snapshot"
   },
+  "churchHubAboutTitle": "About",
+  "@churchHubAboutTitle": {
+    "description": "Section title for the church hub Quill overview"
+  },
   "churchHubPagesTitle": "More about this church",
   "@churchHubPagesTitle": {
     "description": "Section title for extra church hub pages"

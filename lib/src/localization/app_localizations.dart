@@ -1630,6 +1630,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get churchHubStatsRetry;
 
+  /// Section title for the church hub Quill overview
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get churchHubAboutTitle;
+
   /// Section title for extra church hub pages
   ///
   /// In en, this message translates to:

@@ -110,6 +110,27 @@ abstract final class InfoParsing {
     ];
   }
 
+  /// True for a blank Quill delta (`[{insert: '\n'}]`, whitespace-only inserts).
+  static bool isEmptyBody(final List<dynamic> body) {
+    if (body.isEmpty) {
+      return true;
+    }
+    for (final op in body) {
+      if (op is! Map) {
+        return false;
+      }
+      final insert = op['insert'];
+      if (insert is String) {
+        if (insert.trim().isNotEmpty) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
   static List<dynamic>? _parseBodyString(final String rawBody) {
     final trimmed = rawBody.trim();
     if (trimmed.isEmpty) {

@@ -13,11 +13,15 @@ class InfoAddContentCard extends StatelessWidget {
     required this.label,
     required this.description,
     required this.onTap,
+    this.compact,
   });
 
   final String label;
   final String description;
   final VoidCallback onTap;
+
+  /// When null, compact vs tall follows available height (`maxHeight < 175`).
+  final bool? compact;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +36,7 @@ class InfoAddContentCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final bool compact = constraints.maxHeight < 175;
+              final bool compact = this.compact ?? constraints.maxHeight < 175;
 
               if (compact) {
                 return Row(

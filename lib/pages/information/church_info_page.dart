@@ -25,7 +25,8 @@ class ChurchInfoPage extends StatefulWidget {
 
   final String documentId;
 
-  static const int _visiblePostLimit = 8;
+  /// Matches cell-group meeting trail length (`fetchMeetingTrail` limit).
+  static const int _visiblePostLimit = 4;
 
   @override
   State<ChurchInfoPage> createState() => _ChurchInfoPageState();
@@ -96,10 +97,28 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       if (!mounted) return;
       setState(() {
         _church = church;
-        _stats = stats;
-        _statsError = statsError;
-        _pages = pages;
-        _pagesError = pagesError;
+        if (church == null) {
+          _stats = null;
+          _statsError = null;
+          _pages = const [];
+          _pagesError = null;
+        } else {
+          if (!church.hasLocation) {
+            _stats = null;
+            _statsError = null;
+          } else if (stats != null) {
+            _stats = stats;
+            _statsError = null;
+          } else {
+            _statsError = statsError;
+          }
+          if (pagesError == null) {
+            _pages = pages;
+            _pagesError = null;
+          } else {
+            _pagesError = pagesError;
+          }
+        }
         _loading = false;
       });
     } catch (e) {
@@ -243,27 +262,25 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
         church: church,
         onOpenMaps: church.hasMapLink ? () => _openMaps(church.mapLink) : null,
       ),
-      aboveBody: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _ChurchHubSnapshot(
-            church: church,
-            stats: _stats,
-            statsError: _statsError,
-            loading: _loading,
-            onRetryStats: () => _load(forceRefresh: false),
-          ),
-          const SizedBox(height: 20),
-          _ChurchHubPages(
-            pages: _pages,
-            pagesError: _pagesError,
-            loading: _loading,
-            canAdd: canManageChurchPages,
-            onRetry: () => _load(forceRefresh: false),
-            onOpenPage: _openChurchPage,
-            onAddPage: () => _openAddPage(church),
-          ),
-        ],
+      aboveBody: _ChurchHubPages(
+        pages: _pages,
+        pagesError: _pagesError,
+        canAdd: canManageChurchPages,
+        onRetry: () => _load(forceRefresh: false),
+        onOpenPage: _openChurchPage,
+        onAddPage: () => _openAddPage(church),
+      ),
+      bodyHeading: Text(
+        l10n.churchHubAboutTitle,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+      belowBody: _ChurchHubSnapshot(
+        church: church,
+        stats: _stats,
+        statsError: _statsError,
+        onRetryStats: () => _load(forceRefresh: false),
       ),
     );
   }
@@ -346,14 +363,12 @@ class _ChurchHubSnapshot extends StatelessWidget {
     required this.church,
     required this.stats,
     required this.statsError,
-    required this.loading,
     required this.onRetryStats,
   });
 
   final ChurchInfo church;
   final ChurchLocationStats? stats;
   final Object? statsError;
-  final bool loading;
   final VoidCallback onRetryStats;
 
   @override
@@ -389,7 +404,7 @@ class _ChurchHubSnapshot extends StatelessWidget {
       );
     }
 
-    if (stats == null || loading) {
+    if (stats == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(
@@ -412,11 +427,11 @@ class _ChurchHubSnapshot extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _SnapshotTiles(stats: stats!),
+        _SnapshotTiles(stats: stats),
         const SizedBox(height: 20),
-        _RecentPostsList(posts: stats!.posts),
+        _RecentPostsList(posts: stats.posts),
         const SizedBox(height: 20),
-        _CellGroupsList(groups: stats!.cellGroups),
+        _CellGroupsList(groups: stats.cellGroups),
       ],
     );
   }
@@ -664,7 +679,6 @@ class _ChurchHubPages extends StatelessWidget {
   const _ChurchHubPages({
     required this.pages,
     required this.pagesError,
-    required this.loading,
     required this.canAdd,
     required this.onRetry,
     required this.onOpenPage,
@@ -673,7 +687,6 @@ class _ChurchHubPages extends StatelessWidget {
 
   final List<ChurchPage> pages;
   final Object? pagesError;
-  final bool loading;
   final bool canAdd;
   final VoidCallback onRetry;
   final ValueChanged<ChurchPage> onOpenPage;
@@ -700,19 +713,6 @@ class _ChurchHubPages extends StatelessWidget {
             child: Text(l10n.churchHubPagesRetry),
           ),
         ],
-      );
-    }
-
-    if (pages.isEmpty && loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
       );
     }
 
@@ -759,6 +759,7 @@ class _ChurchHubPages extends StatelessWidget {
             label: l10n.churchHubAddPage,
             description: l10n.churchHubAddPageDescription,
             onTap: onAddPage,
+            compact: true,
           ),
       ],
     );

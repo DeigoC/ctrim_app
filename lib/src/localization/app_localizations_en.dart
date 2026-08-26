@@ -848,6 +848,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubStatsRetry => 'Retry';
 
   @override
+  String get churchHubAboutTitle => 'About';
+
+  @override
   String get churchHubPagesTitle => 'More about this church';
 
   @override
