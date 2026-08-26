@@ -22,7 +22,7 @@ import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../add_media_file_page.dart';
-import '../add_program_role_page.dart';
+import '../edit_program_role_page.dart';
 import '../edit_body_page.dart';
 import '../edit_gallery_page.dart';
 import 'view_template_logs_page.dart';

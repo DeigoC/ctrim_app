@@ -5,6 +5,7 @@ import '../pages/events/select_catalog_items_page.dart';
 import '../src/localization/app_localizations.dart';
 import '../utility/catalog_picker_helpers.dart';
 import '../utility/post_tag_helpers.dart';
+import 'catalog_picker_card.dart';
 import 'post_tag_chip.dart';
 
 class PostTagPicker extends StatelessWidget {
@@ -29,44 +30,16 @@ class PostTagPicker extends StatelessWidget {
       activeOnly: false,
     );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.postTagsAssignLabel,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            if (activeTags.isEmpty)
-              Text(
-                l10n.postTagsNoneAvailable,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              )
-            else ...[
-              if (selectedTags.isEmpty)
-                Text(
-                  l10n.postTagsNoneSelected,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                )
-              else
-                PostTagChipRow(tags: selectedTags),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => _openPicker(context, l10n),
-                icon: const Icon(Icons.label_outline, size: 18),
-                label: Text(l10n.postTagsManage),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return CatalogPickerCard(
+      title: l10n.postTagsAssignLabel,
+      hasAvailableItems: activeTags.isNotEmpty,
+      noneAvailableMessage: l10n.postTagsNoneAvailable,
+      noneSelectedMessage: l10n.postTagsNoneSelected,
+      selectedPreview:
+          selectedTags.isEmpty ? null : PostTagChipRow(tags: selectedTags),
+      onManage: () => _openPicker(context, l10n),
+      manageLabel: l10n.postTagsManage,
+      manageIcon: Icons.label_outline,
     );
   }
 

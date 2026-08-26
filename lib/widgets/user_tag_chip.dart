@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user_tag.dart';
 import '../utility/user_tag_helpers.dart';
+import 'colored_chip.dart';
 
 class UserTagChip extends StatelessWidget {
   const UserTagChip({
@@ -19,38 +20,12 @@ class UserTagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final tagColor = UserTagHelpers.parseColor(tag.color);
-    final background = selected
-        ? (tagColor ?? colorScheme.primaryContainer)
-        : (tagColor?.withValues(alpha: 0.15) ?? colorScheme.surfaceContainerHighest);
-    final foreground = tagColor != null && !selected
-        ? tagColor
-        : (selected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant);
-
-    final chip = Container(
-      padding: EdgeInsets.symmetric(horizontal: dense ? 8 : 10, vertical: dense ? 2 : 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
-        border: selected ? Border.all(color: tagColor ?? colorScheme.primary, width: 1.5) : null,
-      ),
-      child: Text(
-        tag.name,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: foreground,
-          fontWeight: FontWeight.w600,
-          fontSize: dense ? 11 : 12,
-        ),
-      ),
-    );
-
-    if (onTap == null) return chip;
-    return InkWell(
+    return ColoredChip(
+      label: tag.name,
+      color: UserTagHelpers.parseColor(tag.color),
+      dense: dense,
+      selected: selected,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: chip,
     );
   }
 }
@@ -69,12 +44,11 @@ class UserTagChipRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tags.isEmpty) return const SizedBox.shrink();
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+    return ColoredChipRow(
       alignment: alignment,
-      children: tags.map((tag) => UserTagChip(tag: tag, dense: dense)).toList(),
+      children: [
+        for (final tag in tags) UserTagChip(tag: tag, dense: dense),
+      ],
     );
   }
 }

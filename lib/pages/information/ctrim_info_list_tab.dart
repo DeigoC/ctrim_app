@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/info/ctrim_info.dart';
 import '../../utility/app_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/information/info_section_card.dart';
 import '../../widgets/load_progress_body.dart';
 import 'ctrim_info_page.dart';
 import 'edit_info_body_page.dart';

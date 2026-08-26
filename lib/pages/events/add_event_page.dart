@@ -20,7 +20,7 @@ import '../../widgets/posts/post_save_review_sheet.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
-import 'add_program_role_page.dart';
+import 'edit_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 

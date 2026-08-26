@@ -4,6 +4,7 @@ import '../models/cell_group.dart';
 import '../pages/events/select_catalog_items_page.dart';
 import '../src/localization/app_localizations.dart';
 import '../utility/catalog_picker_helpers.dart';
+import 'catalog_picker_card.dart';
 
 /// Multi-select picker for linking bulletin posts / templates to cell groups.
 class CellGroupPicker extends StatelessWidget {
@@ -24,66 +25,34 @@ class CellGroupPicker extends StatelessWidget {
     final activeGroups = allGroups.where((g) => g.isActive).toList();
     final selectedGroups = _resolveSelectedGroups();
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.cellGroupsAssignLabel,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.cellGroupsAssignHint,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            if (activeGroups.isEmpty)
-              Text(
-                l10n.cellGroupsNoneAvailable,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              )
-            else ...[
-              if (selectedGroups.isEmpty)
-                Text(
-                  l10n.cellGroupsNoneSelected,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return CatalogPickerCard(
+      title: l10n.cellGroupsAssignLabel,
+      hint: l10n.cellGroupsAssignHint,
+      hasAvailableItems: activeGroups.isNotEmpty,
+      noneAvailableMessage: l10n.cellGroupsNoneAvailable,
+      noneSelectedMessage: l10n.cellGroupsNoneSelected,
+      selectedPreview: selectedGroups.isEmpty
+          ? null
+          : Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: selectedGroups
+                  .map(
+                    (group) => Chip(
+                      avatar: Icon(
+                        Icons.groups,
+                        size: 18,
+                        color:
+                            Theme.of(context).colorScheme.onSecondaryContainer,
                       ),
-                )
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: selectedGroups
-                      .map(
-                        (group) => Chip(
-                          avatar: Icon(
-                            Icons.groups,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.onSecondaryContainer,
-                          ),
-                          label: Text(group.name),
-                        ),
-                      )
-                      .toList(),
-                ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => _openPicker(context, l10n),
-                icon: const Icon(Icons.groups_outlined, size: 18),
-                label: Text(l10n.cellGroupsManage),
-              ),
-            ],
-          ],
-        ),
-      ),
+                      label: Text(group.name),
+                    ),
+                  )
+                  .toList(),
+            ),
+      onManage: () => _openPicker(context, l10n),
+      manageLabel: l10n.cellGroupsManage,
+      manageIcon: Icons.groups_outlined,
     );
   }
 

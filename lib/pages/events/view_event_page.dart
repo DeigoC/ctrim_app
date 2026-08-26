@@ -29,7 +29,7 @@ import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
-import 'add_program_role_page.dart';
+import 'edit_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../utility/responsive_layout.dart';
 import '../../widgets/media/cached_image_widget.dart';
-import 'info_tab_widgets.dart';
+import '../../widgets/information/info_section_card.dart';
 
 class InformationAboutTab extends StatelessWidget {
   const InformationAboutTab({super.key});
