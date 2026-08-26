@@ -386,7 +386,9 @@ class _ChurchHubSnapshot extends StatelessWidget {
       );
     }
 
-    if (statsError != null && stats == null) {
+    final ChurchLocationStats? loadedStats = stats;
+
+    if (statsError != null && loadedStats == null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -404,7 +406,7 @@ class _ChurchHubSnapshot extends StatelessWidget {
       );
     }
 
-    if (stats == null) {
+    if (loadedStats == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(
@@ -427,11 +429,11 @@ class _ChurchHubSnapshot extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _SnapshotTiles(stats: stats),
+        _SnapshotTiles(stats: loadedStats),
         const SizedBox(height: 20),
-        _RecentPostsList(posts: stats.posts),
+        _RecentPostsList(posts: loadedStats.posts),
         const SizedBox(height: 20),
-        _CellGroupsList(groups: stats.cellGroups),
+        _CellGroupsList(groups: loadedStats.cellGroups),
       ],
     );
   }
