@@ -10,6 +10,7 @@ import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/paired_row_list.dart';
 import '../../widgets/posts/post_head.dart';
 import '../events/view_event_page.dart';
 
@@ -59,7 +60,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         if (mounted) _loadRoles();
       });
     } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: true));
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: true));
     }
 
     if (widget.allowPostView && widget.selectedUser.posts == null) {
@@ -217,7 +219,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       eventHeads: _appContext.eventHeads,
     );
     if (stalePostIDs.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: false));
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: false));
     }
 
     final upcomingPostIDs = UserScheduleService.upcomingSchedulePostIDs(
@@ -236,9 +239,10 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final contentWidth = constraints.maxWidth;
-        final isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final isWideScreen = ResponsiveLayout.isWideScreenOf(context);
         final horizontalPadding = isWideScreen
-            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) / 2)
+            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) /
+                    2)
                 .clamp(16.0, double.infinity)
             : 8.0;
 
@@ -246,19 +250,19 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           onRefresh: () async {
             await _refreshRoles();
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Refresh Complete!'),
+                behavior: SnackBarBehavior.floating));
           },
           child: ListView(
-            padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 24),
+            padding: EdgeInsets.fromLTRB(
+                horizontalPadding, 12, horizontalPadding, 24),
             children: [
               if (upcomingPostIDs.isNotEmpty) ...[
                 _buildSectionHeader('Upcoming'),
                 const SizedBox(height: 8),
-                for (var i = 0; i < upcomingPostIDs.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 12),
-                  _buildTile(upcomingPostIDs[i], isPast: false),
-                ],
+                _buildPostIdGrid(upcomingPostIDs,
+                    isPast: false, isWide: isWideScreen),
               ],
               if (recentPastPostIDs.isNotEmpty) ...[
                 if (upcomingPostIDs.isNotEmpty) const SizedBox(height: 24),
@@ -271,10 +275,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
                       ),
                 ),
                 const SizedBox(height: 8),
-                for (var i = 0; i < recentPastPostIDs.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 12),
-                  _buildTile(recentPastPostIDs[i], isPast: true),
-                ],
+                _buildPostIdGrid(recentPastPostIDs,
+                    isPast: true, isWide: isWideScreen),
               ],
             ],
           ),
@@ -297,8 +299,9 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           onPressed: () async {
             await _refreshRoles();
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Refresh Complete!'), behavior: SnackBarBehavior.floating));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Refresh Complete!'),
+                behavior: SnackBarBehavior.floating));
           },
           label: const Text('Refresh'),
           icon: const Icon(Icons.refresh),
@@ -357,28 +360,71 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final contentWidth = constraints.maxWidth;
-        final isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final isWideScreen = ResponsiveLayout.isWideScreenOf(context);
         final horizontalPadding = isWideScreen
-            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) / 2)
+            ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) /
+                    2)
                 .clamp(16.0, double.infinity)
             : 8.0;
 
-        return ListView.separated(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-          itemCount: postIDs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, index) {
-            final thisHead = _appContext.headById(postIDs[index]);
-            if (thisHead == null) return const SizedBox.shrink();
-            return PostHead(
-              thisHead: thisHead,
-              updatePost: () {
-                setState(() {});
-              },
-            );
-          },
-        );
+        return isWideScreen
+            ? SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding, vertical: 8),
+                child: PairedRowList(
+                  itemCount: postIDs.length,
+                  runSpacing: 8,
+                  itemBuilder: (_, index) {
+                    final thisHead = _appContext.headById(postIDs[index]);
+                    if (thisHead == null) return const SizedBox.shrink();
+                    return PostHead(
+                      thisHead: thisHead,
+                      updatePost: () {
+                        setState(() {});
+                      },
+                    );
+                  },
+                ),
+              )
+            : ListView.separated(
+                padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding, vertical: 8),
+                itemCount: postIDs.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, index) {
+                  final thisHead = _appContext.headById(postIDs[index]);
+                  if (thisHead == null) return const SizedBox.shrink();
+                  return PostHead(
+                    thisHead: thisHead,
+                    updatePost: () {
+                      setState(() {});
+                    },
+                  );
+                },
+              );
       },
+    );
+  }
+
+  Widget _buildPostIdGrid(
+    List<String> postIDs, {
+    required bool isPast,
+    required bool isWide,
+  }) {
+    if (!isWide) {
+      return Column(
+        children: [
+          for (var i = 0; i < postIDs.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _buildTile(postIDs[i], isPast: isPast),
+          ],
+        ],
+      );
+    }
+    return PairedRowList(
+      itemCount: postIDs.length,
+      runSpacing: 12,
+      itemBuilder: (_, i) => _buildTile(postIDs[i], isPast: isPast),
     );
   }
 
@@ -387,7 +433,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       return _buildScheduleCard(postID, isPast: isPast);
     }
 
-    final future = _headFutures.putIfAbsent(postID, () => _eventHeadDBManager.fetchHead(postID));
+    final future = _headFutures.putIfAbsent(
+        postID, () => _eventHeadDBManager.fetchHead(postID));
     return FutureBuilder<EventHead>(
       future: future,
       builder: (_, snap) {
@@ -427,10 +474,14 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final postHead = _appContext.eventHeads.firstWhere((e) => e.id == postID);
-    final userRoles = widget.selectedUser.roles!.where((e) => e.postID == postID).toList()
+    final userRoles = widget.selectedUser.roles!
+        .where((e) => e.postID == postID)
+        .toList()
       ..sort((a, b) => a.start.compareTo(b.start));
     final roleCount = userRoles.length;
-    final dateLabel = postHead.eventDate != null ? _eventDateFormat.format(postHead.eventDate!) : 'Date TBC';
+    final dateLabel = postHead.eventDate != null
+        ? _eventDateFormat.format(postHead.eventDate!)
+        : 'Date TBC';
 
     return Material(
       color: Colors.transparent,
@@ -441,7 +492,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+            border:
+                Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
             boxShadow: [
               BoxShadow(
                 color: colorScheme.shadow.withValues(alpha: 0.05),
@@ -476,7 +528,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
                               postHead.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -484,7 +537,8 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
                       if (roleCount > 1) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: colorScheme.secondaryContainer,
                             borderRadius: BorderRadius.circular(12),
@@ -499,13 +553,16 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
                         ),
                       ],
                       const SizedBox(width: 4),
-                      Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+                      Icon(Icons.chevron_right_rounded,
+                          color: colorScheme.onSurfaceVariant),
                     ],
                   ),
                   if (userRoles.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.12)),
+                      child: Divider(
+                          height: 1,
+                          color: colorScheme.outline.withValues(alpha: 0.12)),
                     ),
                     for (var i = 0; i < userRoles.length; i++) ...[
                       if (i > 0) const SizedBox(height: 8),
@@ -564,13 +621,15 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     if (!mounted || !removed) return;
     setState(() {});
     if (showSnackBar) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Updated Schedule!'), behavior: SnackBarBehavior.floating));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Updated Schedule!'),
+          behavior: SnackBarBehavior.floating));
     }
   }
 
-  void _onPostTap(final EventHead head) =>
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head))).then((_) {
+  void _onPostTap(final EventHead head) => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head)))
+          .then((_) {
         setState(() {
           // technically a user can edit a post from here! 🥲
         });

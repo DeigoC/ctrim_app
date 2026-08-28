@@ -71,7 +71,7 @@ class _CellGroupsOverviewTabState extends State<CellGroupsOverviewTab> {
         final maxWidth = ResponsiveLayout.maxContentWidth(screenWidth);
         final horizontalPadding =
             screenWidth < ResponsiveLayout.compact ? 16.0 : 32.0;
-        final isWideScreen = screenWidth >= ResponsiveLayout.tablet;
+        final isWideScreen = ResponsiveLayout.isWideScreenOf(context);
 
         return RefreshIndicator(
           onRefresh: _loadStats,

@@ -167,54 +167,54 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
           CellGroupLeaderIndex.fromGroups(_appContext.allCellGroups),
     );
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-          webHorizontalPadding, 16, webHorizontalPadding, 24),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
+    final isWide = ResponsiveLayout.isWideScreenOf(context);
+
+    final profileCard = Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            MyUserAvatar(_user, radius: isWide ? 56 : 48),
+            const SizedBox(height: 16),
+            Text(
+              _user.fullname,
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                MyUserAvatar(_user, radius: 48),
-                const SizedBox(height: 16),
+                Icon(Icons.location_on_outlined,
+                    size: 16, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
                 Text(
-                  _user.fullname,
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                  textAlign: TextAlign.center,
+                  _user.location,
+                  style: theme.textTheme.bodyLarge
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.location_on_outlined,
-                        size: 16, color: colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text(
-                      _user.location,
-                      style: theme.textTheme.bodyLarge
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-                if (volunteerRoles.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  VolunteerRoleBadgeRow(
-                    roles: volunteerRoles,
-                    alignment: WrapAlignment.center,
-                  ),
-                ],
-                if (userTags.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  UserTagChipRow(
-                      tags: userTags, alignment: WrapAlignment.center),
-                ],
               ],
             ),
-          ),
+            if (volunteerRoles.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              VolunteerRoleBadgeRow(
+                roles: volunteerRoles,
+                alignment: WrapAlignment.center,
+              ),
+            ],
+            if (userTags.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              UserTagChipRow(tags: userTags, alignment: WrapAlignment.center),
+            ],
+          ],
         ),
-        const SizedBox(height: 16),
+      ),
+    );
+
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Text(l10n.userProfileUpcomingTasks,
             style: theme.textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
@@ -269,6 +269,27 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             icon: const Icon(Icons.history),
             label: Text(l10n.userProfileViewAllActivity),
           ),
+        ],
+      ],
+    );
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+          webHorizontalPadding, 16, webHorizontalPadding, 24),
+      children: [
+        if (isWide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 2, child: profileCard),
+              const SizedBox(width: 24),
+              Expanded(flex: 3, child: details),
+            ],
+          )
+        else ...[
+          profileCard,
+          const SizedBox(height: 16),
+          details,
         ],
       ],
     );

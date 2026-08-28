@@ -12,7 +12,9 @@ import '../../utility/app_context.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
+import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/paired_row_list.dart';
 import '../../widgets/posts/post_head.dart';
 import '../cell_groups/cell_group_detail_page.dart';
 import 'church_page_info_page.dart';
@@ -587,15 +589,25 @@ class _RecentPostsList extends StatelessWidget {
             ),
           )
         else ...[
-          ...visible.map(
-            (head) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: PostHead(
-                thisHead: head,
+          if (ResponsiveLayout.isWideScreenOf(context))
+            PairedRowList(
+              itemCount: visible.length,
+              runSpacing: 8,
+              itemBuilder: (_, index) => PostHead(
+                thisHead: visible[index],
                 updatePost: () {},
               ),
+            )
+          else
+            ...visible.map(
+              (head) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: PostHead(
+                  thisHead: head,
+                  updatePost: () {},
+                ),
+              ),
             ),
-          ),
           if (overflow > 0)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -640,39 +652,65 @@ class _CellGroupsList extends StatelessWidget {
               color: colorScheme.onSurfaceVariant,
             ),
           )
+        else if (ResponsiveLayout.isWideScreenOf(context))
+          PairedRowList(
+            itemCount: groups.length,
+            runSpacing: 8,
+            itemBuilder: (_, index) => _hubCellGroupCard(
+              context,
+              l10n,
+              theme,
+              colorScheme,
+              groups[index],
+            ),
+          )
         else
-          ...groups.map((group) {
-            final cadence = group.cadenceLabel;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: Icon(
-                  Icons.groups_outlined,
-                  color: colorScheme.primary,
-                ),
-                title: Text(group.name),
-                subtitle: cadence.isEmpty ? null : Text(cadence),
-                trailing: group.isPaused
-                    ? Text(
-                        l10n.cellGroupsStatusPaused,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.tertiary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                    : null,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CellGroupDetailPage(groupId: group.id),
-                    ),
-                  );
-                },
-              ),
-            );
-          }),
+          ...groups.map((group) => _hubCellGroupCard(
+                context,
+                l10n,
+                theme,
+                colorScheme,
+                group,
+              )),
       ],
+    );
+  }
+
+  Widget _hubCellGroupCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    CellGroup group,
+  ) {
+    final cadence = group.cadenceLabel;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(
+          Icons.groups_outlined,
+          color: colorScheme.primary,
+        ),
+        title: Text(group.name),
+        subtitle: cadence.isEmpty ? null : Text(cadence),
+        trailing: group.isPaused
+            ? Text(
+                l10n.cellGroupsStatusPaused,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.tertiary,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            : null,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CellGroupDetailPage(groupId: group.id),
+            ),
+          );
+        },
+      ),
     );
   }
 }

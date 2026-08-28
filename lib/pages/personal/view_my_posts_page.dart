@@ -5,6 +5,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
+import '../../widgets/paired_row_list.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/posts/post_head.dart';
 
@@ -119,50 +120,29 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double contentWidth = constraints.maxWidth;
-        final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final bool isWideScreen = ResponsiveLayout.isWideScreenOf(context);
         final double horizontalPadding = isWideScreen
             ? ((contentWidth - ResponsiveLayout.maxContentWidth(contentWidth)) /
                     2)
                 .clamp(16.0, double.infinity)
             : 8.0;
+        final padding =
+            EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8);
 
         if (!isWideScreen) {
           return ListView.separated(
-            padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding, vertical: 8),
+            padding: padding,
             itemCount: postIDs.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, index) => _buildPostCard(postIDs[index]),
           );
         }
 
-        final left = <String>[];
-        final right = <String>[];
-        for (var i = 0; i < postIDs.length; i++) {
-          (i.isEven ? left : right).add(postIDs[i]);
-        }
-
-        Widget column(List<String> ids) {
-          return Column(
-            children: [
-              for (var i = 0; i < ids.length; i++) ...[
-                if (i > 0) const SizedBox(height: 16),
-                _buildPostCard(ids[i]),
-              ],
-            ],
-          );
-        }
-
         return SingleChildScrollView(
-          padding:
-              EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: column(left)),
-              const SizedBox(width: 16),
-              Expanded(child: column(right)),
-            ],
+          padding: padding,
+          child: PairedRowList(
+            itemCount: postIDs.length,
+            itemBuilder: (_, index) => _buildPostCard(postIDs[index]),
           ),
         );
       },

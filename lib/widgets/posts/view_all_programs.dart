@@ -9,6 +9,8 @@ import '../../pages/events/edit_program_role_page.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
+import '../../utility/responsive_layout.dart';
+import '../paired_row_list.dart';
 import 'program_tile.dart';
 
 class ViewAllPrograms extends StatefulWidget {
@@ -58,44 +60,58 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             ? widget.eventContext.program.roles.where((e) => e['for_guests'])
             : widget.eventContext.program.roles);
 
+    final isWide = ResponsiveLayout.isWideScreenOf(context);
     final List<Widget> children = [
       Expanded(
           child: CustomScrollView(slivers: [
         SliverToBoxAdapter(child: _buildEventDateSelector()),
-        SliverList.separated(
-          itemCount: programRoles.length,
-          itemBuilder: (_, index) {
-            final DateTime roleStart = programRoles[index]['start'];
-            final bool canEdit =
-                (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
-                        widget.eventContext
-                            .isUserContributor(_appContext.currentUser.id)) &&
-                    DateTime.now().isBefore(roleStart);
-            final bool editable = _canEditPostProgram() ? true : canEdit;
-
-            return ProgramTile(
-              programEntry: programRoles[index],
-              onTap: (tapContext) => _programTap(tapContext, index),
-              selected: _selectedIndex == index,
-              assignedUsers: (programRoles[index]["uids"] as List<String>)
-                  .map((e) => _appContext.userById(e))
-                  .whereType<User>()
-                  .toList(),
-              canEdit: editable,
-              onEditClick: () => _openEditProgramPage(programRoles[index]),
-              canMoveUp: editable && index > 0,
-              canMoveDown: editable && index < programRoles.length - 1,
-              onMoveUp: () => _moveRole(programRoles[index]['id'] as int, -1),
-              onMoveDown: () => _moveRole(programRoles[index]['id'] as int, 1),
-            );
-          },
-          separatorBuilder: (BuildContext context, int index) =>
-              const Divider(),
-        )
+        if (isWide)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+            sliver: SliverToBoxAdapter(
+              child: PairedRowList(
+                itemCount: programRoles.length,
+                itemBuilder: (_, index) => _programTileAt(index, programRoles),
+              ),
+            ),
+          )
+        else
+          SliverList.separated(
+            itemCount: programRoles.length,
+            itemBuilder: (_, index) => _programTileAt(index, programRoles),
+            separatorBuilder: (BuildContext context, int index) =>
+                const Divider(),
+          )
       ]))
     ];
 
     return SafeArea(top: false, child: Column(children: children));
+  }
+
+  Widget _programTileAt(int index, List<Map<String, dynamic>> programRoles) {
+    final DateTime roleStart = programRoles[index]['start'];
+    final bool canEdit =
+        (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
+                widget.eventContext
+                    .isUserContributor(_appContext.currentUser.id)) &&
+            DateTime.now().isBefore(roleStart);
+    final bool editable = _canEditPostProgram() ? true : canEdit;
+
+    return ProgramTile(
+      programEntry: programRoles[index],
+      onTap: (tapContext) => _programTap(tapContext, index),
+      selected: _selectedIndex == index,
+      assignedUsers: (programRoles[index]["uids"] as List<String>)
+          .map((e) => _appContext.userById(e))
+          .whereType<User>()
+          .toList(),
+      canEdit: editable,
+      onEditClick: () => _openEditProgramPage(programRoles[index]),
+      canMoveUp: editable && index > 0,
+      canMoveDown: editable && index < programRoles.length - 1,
+      onMoveUp: () => _moveRole(programRoles[index]['id'] as int, -1),
+      onMoveDown: () => _moveRole(programRoles[index]['id'] as int, 1),
+    );
   }
 
   Widget _buildEventDateSelector() {

@@ -43,7 +43,15 @@ class BulkCreatePostsPage extends StatefulWidget {
 }
 
 class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
-  static const _dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  static const _dayNames = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
   final _random = Random();
 
   late PostTemplate _template;
@@ -66,7 +74,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
   String? get _effectiveParentID {
     if (widget.sourcePostId != null) {
-      return _selectedRelation == _BulkPostRelation.child ? widget.sourcePostId : widget.sourcePostParentId;
+      return _selectedRelation == _BulkPostRelation.child
+          ? widget.sourcePostId
+          : widget.sourcePostParentId;
     }
     return widget.parentID;
   }
@@ -88,7 +98,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   Future<void> _refreshTemplateAndPreviews() async {
     setState(() => _isRefreshingTemplate = true);
     try {
-      final fresh = await PostTemplateDBManager().fetchTemplate(widget.template.id);
+      final fresh =
+          await PostTemplateDBManager().fetchTemplate(widget.template.id);
       if (fresh != null && mounted) {
         _template = fresh;
         // Keep local cache in sync so the next select list sees pool items too.
@@ -138,7 +149,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           _PostPreview(
             title: '${_template.title} – ${_formatBulkPostTitleDate(date)}',
             subtitle: _hasSubtitles
-                ? _template.subtitles[_random.nextInt(_template.subtitles.length)]
+                ? _template
+                    .subtitles[_random.nextInt(_template.subtitles.length)]
                 : '',
             date: date,
             headMedia: _pickRandomCover(),
@@ -150,7 +162,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   void _shuffleSubtitle(int index) {
     if (!_hasSubtitles) return;
     setState(() {
-      _previews[index].subtitle = _template.subtitles[_random.nextInt(_template.subtitles.length)];
+      _previews[index].subtitle =
+          _template.subtitles[_random.nextInt(_template.subtitles.length)];
     });
   }
 
@@ -227,7 +240,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           await cloudFunctionManager.syncUserRolesForPost(postId: newID);
         }
 
-        if (parentID != null && parentMetadata != null && parentDbManager != null) {
+        if (parentID != null &&
+            parentMetadata != null &&
+            parentDbManager != null) {
           await _updateParentMetadata(
             newPostID: newID,
             title: preview.title,
@@ -249,7 +264,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       if (mounted) {
         _isSaved = true;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_previews.length} posts created successfully')),
+          SnackBar(
+              content: Text('${_previews.length} posts created successfully')),
         );
         _popRouteAfterAllowing();
       }
@@ -293,9 +309,11 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     }
 
     if (parentHead.recentDate.second == 59) {
-      parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: -58)));
+      parentHead.setRecentDate(
+          parentHead.recentDate.add(const Duration(seconds: -58)));
     } else {
-      parentHead.setRecentDate(parentHead.recentDate.add(const Duration(seconds: 1)));
+      parentHead
+          .setRecentDate(parentHead.recentDate.add(const Duration(seconds: 1)));
     }
     await headDBManager.updateHead(parentHead);
     appContext.addOrUpdatePostHead(parentHead);
@@ -304,7 +322,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final dayName = _selectedDayOfWeek != null ? _dayNames[_selectedDayOfWeek! - 1] : 'Not set';
+    final dayName = _selectedDayOfWeek != null
+        ? _dayNames[_selectedDayOfWeek! - 1]
+        : 'Not set';
 
     late final Widget page;
     if (_isCreating) {
@@ -341,7 +361,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         body: LayoutBuilder(
           builder: (context, constraints) {
             final contentWidth = constraints.maxWidth;
-            final isWide = ResponsiveLayout.isWideScreen(contentWidth);
+            final isWide = ResponsiveLayout.isWideScreenOf(context);
             final maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
             final horizontalPadding = isWide
                 ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
@@ -354,7 +374,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                   child: Column(
                     children: [
                       _buildTemplateHeader(colorScheme, dayName),
-                      if (widget.sourcePostId != null) _buildRelationPicker(colorScheme),
+                      if (widget.sourcePostId != null)
+                        _buildRelationPicker(colorScheme),
                       _buildDayOfWeekSelector(colorScheme),
                       if (_selectedDayOfWeek != null) _buildWeeksSelector(),
                     ],
@@ -363,17 +384,22 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                 const Divider(height: 1),
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: horizontalPadding),
                     child: _selectedDayOfWeek == null
                         ? Center(
                             child: Text(
                               'Choose a day of the week to preview posts.',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           )
-                        : _buildPreviewList(colorScheme, contentWidth: maxWidth.clamp(0, contentWidth)),
+                        : _buildPreviewList(colorScheme,
+                            contentWidth: maxWidth.clamp(0, contentWidth)),
                   ),
                 ),
               ],
@@ -411,18 +437,26 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
               children: [
                 Text(
                   _template.title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (_selectedDayOfWeek != null)
                   Text('Every $dayName',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: colorScheme.primary)),
                 const SizedBox(height: 4),
                 Text(
                   _hasCoverPool
                       ? 'Cover images randomly chosen from media pool (${_coverPool.length})'
                       : 'No cover media pool on this template — add covers under Media → Cover Image Pool',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _hasCoverPool ? colorScheme.onSurfaceVariant : colorScheme.error,
+                        color: _hasCoverPool
+                            ? colorScheme.onSurfaceVariant
+                            : colorScheme.error,
                       ),
                 ),
               ],
@@ -441,14 +475,20 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         children: [
           Text(
             'Day of week',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
             _selectedDayOfWeek == null
                 ? 'Choose which day to create posts for.'
                 : 'Posts will be scheduled every ${_dayNames[_selectedDayOfWeek! - 1]}.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -480,7 +520,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
         children: [
           Text(
             '$_selectedWeeks ${_selectedWeeks == 1 ? 'week' : 'weeks'} • ${_previews.length} ${_previews.length == 1 ? 'post' : 'posts'}',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           Slider(
             value: _selectedWeeks.toDouble(),
@@ -498,7 +541,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 
-  Widget _buildPreviewList(ColorScheme colorScheme, {required double contentWidth}) {
+  Widget _buildPreviewList(ColorScheme colorScheme,
+      {required double contentWidth}) {
     if (_previews.isEmpty) {
       return Center(
         child: Text(
@@ -508,10 +552,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       );
     }
 
-    final isWide = ResponsiveLayout.isWideScreen(contentWidth);
-    final columns = contentWidth >= ResponsiveLayout.desktop
-        ? 3
-        : (isWide ? 2 : 1);
+    final columns = ResponsiveLayout.cardCrossAxisCount(context, contentWidth);
 
     if (columns == 1) {
       return ListView.builder(
@@ -542,7 +583,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 
-  Widget _buildPreviewCard(int index, ColorScheme colorScheme, {required bool wideLayout}) {
+  Widget _buildPreviewCard(int index, ColorScheme colorScheme,
+      {required bool wideLayout}) {
     final preview = _previews[index];
     if (wideLayout) {
       return Card(
@@ -577,7 +619,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       preview.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     if (preview.subtitle.isNotEmpty) ...[
                       const SizedBox(height: 4),
@@ -600,11 +645,13 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                             if (_hasCoverPool)
                               TextButton.icon(
                                 onPressed: () => _shuffleHeadMedia(index),
-                                icon: const Icon(Icons.image_outlined, size: 16),
+                                icon:
+                                    const Icon(Icons.image_outlined, size: 16),
                                 label: const Text('Cover'),
                                 style: TextButton.styleFrom(
                                   visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
                                 ),
                               ),
                             if (_hasSubtitles)
@@ -614,7 +661,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                                 label: const Text('Subtitle'),
                                 style: TextButton.styleFrom(
                                   visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
                                 ),
                               ),
                           ],
@@ -656,10 +704,14 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(preview.title,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600)),
                   if (preview.subtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(preview.subtitle, style: Theme.of(context).textTheme.bodySmall),
+                    Text(preview.subtitle,
+                        style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ],
               ),
@@ -722,8 +774,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     final String? thumbnailSrc = media['thumbnailSrc'] as String?;
     final String src = (media['src'] as String?) ?? '';
     final displaySrc = (isVideo ? thumbnailSrc : src)?.trim();
-    final imageUrl =
-        displaySrc != null && displaySrc.isNotEmpty ? NetworkImageHelper.getImageUrl(displaySrc) : null;
+    final imageUrl = displaySrc != null && displaySrc.isNotEmpty
+        ? NetworkImageHelper.getImageUrl(displaySrc)
+        : null;
 
     return ClipRRect(
       borderRadius: radius,
@@ -734,7 +787,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             Image.network(
               imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _coverFallback(isVideo, colorScheme),
+              errorBuilder: (_, __, ___) =>
+                  _coverFallback(isVideo, colorScheme),
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return ColoredBox(
@@ -755,7 +809,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             const Positioned(
               right: 8,
               bottom: 8,
-              child: Icon(Icons.play_circle_fill, size: 28, color: Colors.white),
+              child:
+                  Icon(Icons.play_circle_fill, size: 28, color: Colors.white),
             ),
         ],
       ),
@@ -782,7 +837,10 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Text(
             'Post relationship',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
         RadioListTile<_BulkPostRelation>(
@@ -800,7 +858,8 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           RadioListTile<_BulkPostRelation>(
             dense: true,
             title: const Text('Siblings of this post'),
-            subtitle: const Text('New posts share the same parent as the current post'),
+            subtitle: const Text(
+                'New posts share the same parent as the current post'),
             value: _BulkPostRelation.sibling,
             groupValue: _selectedRelation,
             onChanged: (value) {

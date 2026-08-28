@@ -469,15 +469,14 @@ class InfoSectionListTab<T> extends StatelessWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final double contentWidth = constraints.maxWidth;
-            final bool isWideScreen =
-                ResponsiveLayout.isWideScreen(contentWidth);
+            final bool isWideScreen = ResponsiveLayout.isWideScreenOf(context);
             final double maxWidth =
                 ResponsiveLayout.maxContentWidth(contentWidth);
             final double horizontalPadding = isWideScreen
                 ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
                 : 16.0;
             final int crossAxisCount =
-                ResponsiveLayout.crossAxisCount(contentWidth);
+                ResponsiveLayout.cardCrossAxisCount(context, contentWidth);
             final int itemCount = items.length + (canManageInfo ? 1 : 0);
 
             if (isWideScreen) {

@@ -6,6 +6,7 @@ import '../../utility/cache/local_data_manager.dart';
 import '../../widgets/media/image_media_slot.dart';
 import '../../widgets/media/video_media_slot.dart';
 import '../../widgets/common/app_dialog.dart';
+import '../../widgets/paired_row_list.dart';
 import 'add_media_file_page.dart';
 import 'select_template_cover_page.dart';
 import '../../utility/responsive_layout.dart';
@@ -142,18 +143,29 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                         ),
                         if (widget.eventContext.head.media.isNotEmpty) ...[
                           const SizedBox(height: 16),
-                          ...widget.eventContext.head.media.asMap().entries.map(
-                                (entry) => Padding(
-                                  padding: EdgeInsets.only(
-                                      bottom: entry.key <
-                                              widget.eventContext.head.media
-                                                      .length -
-                                                  1
-                                          ? 12
-                                          : 0),
-                                  child: _buildMediaBox(entry.value, true),
+                          if (ResponsiveLayout.isWideScreenOf(context))
+                            PairedRowList(
+                              itemCount: widget.eventContext.head.media.length,
+                              runSpacing: 12,
+                              itemBuilder: (_, index) => _buildMediaBox(
+                                  widget.eventContext.head.media[index], true),
+                            )
+                          else
+                            ...widget.eventContext.head.media
+                                .asMap()
+                                .entries
+                                .map(
+                                  (entry) => Padding(
+                                    padding: EdgeInsets.only(
+                                        bottom: entry.key <
+                                                widget.eventContext.head.media
+                                                        .length -
+                                                    1
+                                            ? 12
+                                            : 0),
+                                    child: _buildMediaBox(entry.value, true),
+                                  ),
                                 ),
-                              ),
                         ] else ...[
                           const SizedBox(height: 16),
                           Container(
@@ -344,15 +356,24 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           else
             SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-              sliver: SliverList.separated(
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemCount: widget.eventContext.media.allMedia.length,
-                itemBuilder: (_, index) {
-                  final Map<String, dynamic> thisEntry =
-                      widget.eventContext.media.allMedia[index];
-                  return _buildMediaBox(thisEntry, false);
-                },
-              ),
+              sliver: ResponsiveLayout.isWideScreenOf(context)
+                  ? SliverToBoxAdapter(
+                      child: PairedRowList(
+                        itemCount: widget.eventContext.media.allMedia.length,
+                        runSpacing: 12,
+                        itemBuilder: (_, index) => _buildMediaBox(
+                            widget.eventContext.media.allMedia[index], false),
+                      ),
+                    )
+                  : SliverList.separated(
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemCount: widget.eventContext.media.allMedia.length,
+                      itemBuilder: (_, index) {
+                        final Map<String, dynamic> thisEntry =
+                            widget.eventContext.media.allMedia[index];
+                        return _buildMediaBox(thisEntry, false);
+                      },
+                    ),
             ),
           const SliverToBoxAdapter(
             child: SizedBox(height: 32),

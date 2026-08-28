@@ -34,6 +34,23 @@ abstract final class ResponsiveLayout {
 
   static bool isWideScreen(double width) => width >= tablet;
 
+  /// Use **window** width, not a [LayoutBuilder] leftover after the nav rail
+  /// or content gutters — those often sit under [tablet] on a wide window.
+  static bool isWideScreenOf(BuildContext context) =>
+      isWideScreen(MediaQuery.sizeOf(context).width);
+
+  /// Card-grid columns from available [parentWidth], but at least 2 when the
+  /// window is wide (so lists still pair beside the rail).
+  static int cardCrossAxisCount(
+    BuildContext context,
+    double parentWidth, {
+    int max = 3,
+  }) {
+    final count = crossAxisCount(parentWidth, max: max);
+    if (isWideScreenOf(context) && count < 2) return 2;
+    return count;
+  }
+
   static double horizontalGutter(
     double width, {
     GutterStyle style = GutterStyle.standard,

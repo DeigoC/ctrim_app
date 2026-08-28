@@ -15,6 +15,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../common/load_progress_body.dart';
@@ -134,14 +135,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         widget.eventContext.head.isRecent ? 'Attended' : 'Attending';
     final hasLinkedCellGroups =
         widget.eventContext.head.cellGroupIDs.isNotEmpty;
+    final isWide = ResponsiveLayout.isWideScreenOf(context);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        _buildInterestToggle(theme, colorScheme, isInterested),
-        if (hasInterested) ...[
-          const SizedBox(height: 20),
-          _buildSectionCard(
+    final interestedCard = hasInterested
+        ? _buildSectionCard(
             theme,
             colorScheme,
             icon: Icons.favorite_outline,
@@ -159,11 +156,11 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                   ),
               ],
             ),
-          ),
-        ],
-        if (canManage || hasExpected) ...[
-          const SizedBox(height: 16),
-          _buildSectionCard(
+          )
+        : null;
+
+    final expectedCard = (canManage || hasExpected)
+        ? _buildSectionCard(
             theme,
             colorScheme,
             icon: Icons.checklist,
@@ -221,7 +218,34 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                 ],
               ],
             ),
+          )
+        : null;
+
+    final sideBySide = isWide && interestedCard != null && expectedCard != null;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      children: [
+        _buildInterestToggle(theme, colorScheme, isInterested),
+        if (sideBySide) ...[
+          const SizedBox(height: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: interestedCard),
+              const SizedBox(width: 16),
+              Expanded(child: expectedCard),
+            ],
           ),
+        ] else ...[
+          if (interestedCard != null) ...[
+            const SizedBox(height: 20),
+            interestedCard,
+          ],
+          if (expectedCard != null) ...[
+            const SizedBox(height: 16),
+            expectedCard,
+          ],
         ],
         if (hasAttendees) ...[
           const SizedBox(height: 16),

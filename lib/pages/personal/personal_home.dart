@@ -66,7 +66,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double contentWidth = constraints.maxWidth;
-        final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final bool isWideScreen = ResponsiveLayout.isWideScreenOf(context);
         final double maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
         final double horizontalPadding = isWideScreen
             ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
@@ -126,8 +126,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: maxWidth),
                     child: isWideScreen
-                        ? _buildWideBody(
-                            appContext, theme, colorScheme, contentWidth)
+                        ? _buildWideBody(appContext, theme, colorScheme)
                         : _buildNarrowBody(appContext, theme, colorScheme),
                   ),
                 ),
@@ -190,11 +189,11 @@ class _PersonalHomeState extends State<PersonalHome> {
     AppContext appContext,
     ThemeData theme,
     ColorScheme colorScheme,
-    double contentWidth,
   ) {
     final showAdmin = appContext.currentUser.canManagePostTemplates ||
         appContext.currentUser.canManageVolunteers;
-    final actionColumns = contentWidth >= ResponsiveLayout.desktop ? 3 : 2;
+    final actionColumns =
+        MediaQuery.sizeOf(context).width >= ResponsiveLayout.desktop ? 3 : 2;
     final peopleActions = _peopleActions(appContext, colorScheme);
 
     return Column(

@@ -52,7 +52,7 @@ class InformationAboutTab extends StatelessWidget {
         final maxWidth = ResponsiveLayout.maxContentWidth(screenWidth);
         final horizontalPadding =
             screenWidth < ResponsiveLayout.compact ? 16.0 : 32.0;
-        final isWideScreen = screenWidth >= ResponsiveLayout.tablet;
+        final isWideScreen = ResponsiveLayout.isWideScreenOf(context);
 
         return SingleChildScrollView(
           padding:
