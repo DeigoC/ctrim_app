@@ -868,4 +868,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchHubPagesRetry => 'Retry';
+
+  @override
+  String get notificationViewPost => 'View post';
+
+  @override
+  String get notificationViewPage => 'View page';
+
+  @override
+  String get notificationDismiss => 'Ok';
 }

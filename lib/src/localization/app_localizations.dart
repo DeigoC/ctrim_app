@@ -1671,6 +1671,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get churchHubPagesRetry;
+
+  /// Opens the related post from a push notification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'View post'**
+  String get notificationViewPost;
+
+  /// Opens the related info page from a push notification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'View page'**
+  String get notificationViewPage;
+
+  /// Closes the in-app push notification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Ok'**
+  String get notificationDismiss;
 }
 
 class _AppLocalizationsDelegate

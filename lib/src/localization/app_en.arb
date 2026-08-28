@@ -1145,5 +1145,17 @@
   "churchHubPagesRetry": "Retry",
   "@churchHubPagesRetry": {
     "description": "Retry loading nested church pages"
+  },
+  "notificationViewPost": "View post",
+  "@notificationViewPost": {
+    "description": "Opens the related post from a push notification dialog"
+  },
+  "notificationViewPage": "View page",
+  "@notificationViewPage": {
+    "description": "Opens the related info page from a push notification dialog"
+  },
+  "notificationDismiss": "Ok",
+  "@notificationDismiss": {
+    "description": "Closes the in-app push notification dialog"
   }
 }
