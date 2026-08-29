@@ -12,6 +12,7 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/app_dialog.dart';
 import 'add_media_drive_helpers.dart';
+import 'add_media_drive_help.dart';
 import 'add_media_image_test.dart';
 import 'add_media_source_form.dart';
 import 'add_media_video_test.dart';
@@ -230,6 +231,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
             ),
+          ),
+          const SizedBox(height: 24),
+          AddMediaDriveHelpSection(
+            maxImageSizeKB: _maxImageSizeKB,
+            maxVideoSizeMB: _maxVideoSizeMB,
+            isVideo: _isVideo,
           ),
           const SizedBox(height: 24),
         ],

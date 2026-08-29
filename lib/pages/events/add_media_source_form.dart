@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import 'add_media_drive_helpers.dart';
+import 'add_media_drive_help.dart';
 
 class AddMediaSourceForm extends StatelessWidget {
   const AddMediaSourceForm({
@@ -69,6 +71,28 @@ class AddMediaSourceForm extends StatelessWidget {
                   'Tap the field to paste a link from your clipboard. Google Drive share links are converted automatically.',
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => launchUrlString(
+                      kGoogleDriveUrl,
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    icon: Icon(Icons.open_in_new, size: 16, color: colorScheme.primary),
+                    label: Text(
+                      'Open Google Drive',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
