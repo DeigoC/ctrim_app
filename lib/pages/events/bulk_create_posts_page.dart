@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
@@ -17,6 +16,7 @@ import '../../utility/event_context.dart';
 import '../../utility/cache/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/post_template_mapper.dart';
+import '../../utility/post_title_date.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
 
@@ -147,7 +147,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       _previews = [
         for (final date in dates)
           _PostPreview(
-            title: '${_template.title} – ${_formatBulkPostTitleDate(date)}',
+            title: formatPostTitle(_template.title, date),
             subtitle: _hasSubtitles
                 ? _template
                     .subtitles[_random.nextInt(_template.subtitles.length)]
@@ -608,7 +608,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _formatBulkPostPreviewDate(preview.date),
+                      formatPostTitlePreviewDate(preview.date),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -696,7 +696,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _formatBulkPostPreviewDate(preview.date),
+                    formatPostTitlePreviewDate(preview.date),
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w600,
@@ -757,7 +757,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Text(
-                _formatBulkPostPreviewDate(preview.date),
+                formatPostTitlePreviewDate(preview.date),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: colorScheme.onPrimaryContainer,
@@ -872,26 +872,6 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 }
-
-String _dayWithOrdinal(int day) {
-  if (day >= 11 && day <= 13) return '${day}th';
-  switch (day % 10) {
-    case 1:
-      return '${day}st';
-    case 2:
-      return '${day}nd';
-    case 3:
-      return '${day}rd';
-    default:
-      return '${day}th';
-  }
-}
-
-String _formatBulkPostTitleDate(DateTime date) =>
-    '${_dayWithOrdinal(date.day)} ${DateFormat('MMM').format(date)}';
-
-String _formatBulkPostPreviewDate(DateTime date) =>
-    '${DateFormat('EEE').format(date)} ${_dayWithOrdinal(date.day)} ${DateFormat('MMM').format(date)}';
 
 class _PostPreview {
   String title;
