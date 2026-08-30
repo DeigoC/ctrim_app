@@ -1,0 +1,60 @@
+# Run Flutter and Cloud Functions unit tests on every pull request.
+
+name: Unit tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-tests:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # Pin to match hosting workflows. flutter_quill 11.5.0 breaks on 3.44+;
+          # 11.5.1 requires Flutter >=3.44, so bump both together later.
+          flutter-version: "3.41.9"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # flutter analyze treats info and warning issues as fatal by default, and the
+      # app currently carries pre-existing lint findings. Gate on error-level issues
+      # only so the merge check reflects real breakage, not existing lint debt.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run unit tests
+        run: flutter test test/unit/
+
+  functions-tests:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: functions/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p "test_*.py"
