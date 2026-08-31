@@ -49,13 +49,13 @@ bool canLinkPlaceholderAuth({
 bool canUnlinkUserAuth({required User actor}) => actor.isAreaAdmin;
 
 /// Picker-minted placeholders (have a creator). Used to decide whether a
-/// non-admin should see the Volunteers "Placeholders" filter chip.
+/// non-admin should see the People directory "Placeholders" filter chip.
 bool isTransientVolunteerPlaceholder(User user) {
   if (!user.isPlaceholder) return false;
   return user.createdByUserID.trim().isNotEmpty;
 }
 
-/// Whether [user] should appear in the Volunteers directory for [viewer]
+/// Whether [user] should appear in the People directory for [viewer]
 /// given the placeholders filter.
 ///
 /// Off: hide every `IsPlaceholder` profile (including legacy empty-Auth

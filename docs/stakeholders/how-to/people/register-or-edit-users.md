@@ -2,7 +2,7 @@
 
 > **Status:** In progress  
 > **Who:** Leaders (people they work with), area admins (area scope), later site admins  
-> **Where:** Personal → **Volunteers** / register & edit flows
+> **Where:** Personal → **People** → **Directory** / register & edit flows
 
 ## Before you start
 
@@ -12,7 +12,7 @@
 ## Register someone
 
 1. Open **Personal**.  
-2. Open **Volunteers** (or the register-user entry point available to you).  
+2. Open **Directory** (under **People**). The list starts on people who **serve** at your location — turn **Serving** off to see everyone.  
 3. Choose **Register** / **Add**.  
 4. Enter name and other required details (location, tags, roles as applicable).  
 5. Save.  
@@ -20,7 +20,7 @@
 
 ## Edit someone
 
-1. Find the person in **Volunteers** (search / filters by location or tags).  
+1. Find the person in **Directory** (search / filters by location, Serving, or tags).  
 2. Open their profile.  
 3. **Edit** the fields you need.  
 4. Save.  
@@ -39,7 +39,7 @@
 
 ## Media checklist
 
-- [ ] Screenshot: Volunteers list / filters  
+- [ ] Screenshot: People directory / Serving and location filters  
 - [ ] Screenshot: register form  
 - [ ] Screenshot: placeholder create from picker  
 - [ ] Optional GIF: register → appear in list  

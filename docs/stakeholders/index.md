@@ -7,7 +7,7 @@ This is an open passion project. Source code: [github.com/DeigoC/ctrim_app](http
 ## Start here
 
 - **[Product overview](overview.md)** — pitch, audiences, and what the app is / isn’t  
-- **[Key concepts](key-concepts.md)** — short definitions (post, volunteer, interest, bookmark, …)  
+- **[Key concepts](key-concepts.md)** — short definitions (post, serving, interest, bookmark, …)  
 - **[How-to guides](how-to/index.md)** — step-by-step tasks (posts, information, people)  
 - **[Roadmap & priorities](roadmap.md)** — what’s shipping or planned  
 
@@ -19,7 +19,7 @@ This is an open passion project. Source code: [github.com/DeigoC/ctrim_app](http
 | Personal (profile, schedule) | [Personal](personal.md) |
 | Churches, testimonials, CTRIM info | [Information](information.md) |
 | Cell Groups *(in development)* | [Cell Groups](cell-groups.md) |
-| Members, volunteers, leaders, area / site admins | [People & roles](people-and-roles.md) |
+| Members, serving people, leaders, area / site admins | [People & roles](people-and-roles.md) |
 | Alerts & preferences | [Notifications](notifications.md) |
 | Phone & web | [Platforms](platforms.md) |
 | Glossary | [Key concepts](key-concepts.md) |
@@ -39,7 +39,7 @@ This is an open passion project. Source code: [github.com/DeigoC/ctrim_app](http
 | Audience | Why read this |
 |----------|----------------|
 | Church / community leaders | See capabilities and priorities without opening the codebase |
-| Volunteers & staff | Understand features you’ll use day to day |
+| Organisers & members | Understand features you’ll use day to day |
 | Anyone curious about the project | A clear picture of the product |
 
 !!! tip "Feedback welcome"

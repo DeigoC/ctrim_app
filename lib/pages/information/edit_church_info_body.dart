@@ -28,14 +28,29 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   late final TextEditingController _summaryController;
   late final TextEditingController _mapLinkController;
   late final TextEditingController _addressController;
+  late final TextEditingController _heroImageController;
+  late final TextEditingController _pastorsImageController;
+  late final TextEditingController _galleryImagesController;
   late final String _initialSummary;
   late final String _initialLocation;
   late final String _initialMapLink;
   late final String _initialAddress;
+  late final String _initialHeroImage;
+  late final String _initialPastorsImage;
+  late final String _initialGalleryImages;
   late final List<String> _initialPastorUserIds;
   String? _selectedLocation;
   List<String> _pastorUserIds = const [];
   List<ChurchInfo> _allChurches = const [];
+  bool _heroImageValidated = true;
+  bool _pastorsImageValidated = true;
+  bool _galleryImagesValidated = true;
+  bool _testingHeroImage = false;
+  bool _testingPastorsImage = false;
+  bool _testingGalleryImages = false;
+
+  @override
+  bool get usesDefaultImageUrlField => false;
 
   @override
   bool get isEditing => widget.info != null;
@@ -64,8 +79,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   String get initialPrimaryValue => widget.info?.title ?? '';
 
   @override
-  String get initialImagesValue =>
-      (widget.info?.imageSources ?? const <String>[]).join('\n');
+  String get initialImagesValue => '';
 
   @override
   String get initialDisplayOrderValue =>
@@ -79,18 +93,314 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     _initialAddress = widget.info?.address ?? '';
     _initialPastorUserIds =
         List<String>.from(widget.info?.pastorUserIds ?? const []);
+    _initialHeroImage = widget.info?.heroImageSrc ?? '';
+    _initialPastorsImage = widget.info?.pastorsImageSrc ?? '';
+    _initialGalleryImages =
+        (widget.info?.galleryImageSources ?? const <String>[]).join('\n');
     _selectedLocation = _initialLocation.isEmpty ? null : _initialLocation;
     _pastorUserIds = List<String>.from(_initialPastorUserIds);
     _summaryController = TextEditingController(text: _initialSummary);
     _mapLinkController = TextEditingController(text: _initialMapLink);
     _addressController = TextEditingController(text: _initialAddress);
+    _heroImageController = TextEditingController(text: _initialHeroImage);
+    _pastorsImageController = TextEditingController(text: _initialPastorsImage);
+    _galleryImagesController =
+        TextEditingController(text: _initialGalleryImages);
+    _heroImageController.addListener(_onHeroImageChanged);
+    _pastorsImageController.addListener(_onPastorsImageChanged);
+    _galleryImagesController.addListener(_onGalleryImagesChanged);
+  }
+
+  void _onHeroImageChanged() {
+    if (_heroImageController.text.trim() == _initialHeroImage.trim()) {
+      setState(() => _heroImageValidated = true);
+      return;
+    }
+    setState(() => _heroImageValidated = false);
+  }
+
+  void _onPastorsImageChanged() {
+    if (_pastorsImageController.text.trim() == _initialPastorsImage.trim()) {
+      setState(() => _pastorsImageValidated = true);
+      return;
+    }
+    setState(() => _pastorsImageValidated = false);
+  }
+
+  void _onGalleryImagesChanged() {
+    final current = _readGalleryImageSources();
+    final initial = parseImageSourcesText(_initialGalleryImages);
+    if (listEquals(current, initial)) {
+      setState(() => _galleryImagesValidated = true);
+      return;
+    }
+    setState(() => _galleryImagesValidated = false);
+  }
+
+  List<String> _readGalleryImageSources() {
+    return parseImageSourcesText(_galleryImagesController.text);
+  }
+
+  List<String> _readHeroImageSources() {
+    final hero = parseImageSourcesText(_heroImageController.text);
+    return hero.isEmpty ? const <String>[] : <String>[hero.first];
+  }
+
+  List<String> _readPastorsImageSources() {
+    final pastors = parseImageSourcesText(_pastorsImageController.text);
+    return pastors.isEmpty ? const <String>[] : <String>[pastors.first];
   }
 
   @override
   void disposeSectionControllers() {
+    _heroImageController.removeListener(_onHeroImageChanged);
+    _pastorsImageController.removeListener(_onPastorsImageChanged);
+    _galleryImagesController.removeListener(_onGalleryImagesChanged);
     _summaryController.dispose();
     _mapLinkController.dispose();
     _addressController.dispose();
+    _heroImageController.dispose();
+    _pastorsImageController.dispose();
+    _galleryImagesController.dispose();
+  }
+
+  @override
+  bool customImagesReadyForSave() {
+    final hero = _readHeroImageSources();
+    final pastors = _readPastorsImageSources();
+    final gallery = _readGalleryImageSources();
+    final heroReady = hero.isEmpty || _heroImageValidated;
+    final pastorsReady = pastors.isEmpty || _pastorsImageValidated;
+    final galleryReady = gallery.isEmpty || _galleryImagesValidated;
+    return heroReady && pastorsReady && galleryReady;
+  }
+
+  @override
+  bool hasCustomImageChanges() {
+    if (_heroImageController.text.trim() != _initialHeroImage.trim()) {
+      return true;
+    }
+    if (_pastorsImageController.text.trim() != _initialPastorsImage.trim()) {
+      return true;
+    }
+    if (_galleryImagesController.text.trim() != _initialGalleryImages.trim()) {
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  List<Widget> buildCustomImageFields() {
+    return [
+      Text(
+        'Media',
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+      const SizedBox(height: 12),
+      _buildSingleImageField(
+        controller: _heroImageController,
+        label: 'Hero image URL',
+        helperText:
+            'Shown on the church list and as the wide cover on the church page.',
+        testing: _testingHeroImage,
+        validated: _heroImageValidated,
+        onTest: _testHeroImage,
+      ),
+      const SizedBox(height: 12),
+      _buildSingleImageField(
+        controller: _pastorsImageController,
+        label: 'Pastors image URL',
+        helperText: 'Optional team photo shown in the pastors section.',
+        testing: _testingPastorsImage,
+        validated: _pastorsImageValidated,
+        onTest: _testPastorsImage,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _galleryImagesController,
+        decoration: InputDecoration(
+          labelText: 'Gallery image URLs',
+          helperText:
+              'One URL per line. Gallery photos only — not the hero image.',
+          suffixIcon: IconButton(
+            onPressed: _onImageHelpClick,
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Image URL help',
+          ),
+        ),
+        minLines: 3,
+        maxLines: 6,
+        keyboardType: TextInputType.url,
+      ),
+      const SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: _testingGalleryImages ||
+                  _galleryImagesController.text.trim().isEmpty
+              ? null
+              : _testGalleryImages,
+          icon: _testingGalleryImages
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.visibility_outlined),
+          label: Text(_testingGalleryImages ? 'Testing…' : 'Test gallery'),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildSingleImageField({
+    required TextEditingController controller,
+    required String label,
+    required String helperText,
+    required bool testing,
+    required bool validated,
+    required Future<void> Function() onTest,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            helperText: helperText,
+            suffixIcon: IconButton(
+              onPressed: _onImageHelpClick,
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'Image URL help',
+            ),
+          ),
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed:
+                testing || controller.text.trim().isEmpty ? null : onTest,
+            icon: testing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.visibility_outlined),
+            label: Text(testing ? 'Testing…' : 'Test image'),
+          ),
+        ),
+        if (!validated && controller.text.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Test this image before saving.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _onImageHelpClick() {
+    DialogManager.showAlertDialog(
+      context: context,
+      title: 'Adding images',
+      content: 'Provide web links to the image files you want.\n\n'
+          'When providing specific/personal media files, upload them to Google Drive, '
+          'change access to “Anyone with the link”, and paste that link here. '
+          'Share links are converted to direct links when you tap Test.\n\n'
+          'Supported formats:\n'
+          '• Direct HTTPS URLs to images\n'
+          '• Google Drive public links\n'
+          '• Any publicly accessible image URL',
+    );
+  }
+
+  Future<void> _testHeroImage() => _testSingleImageField(
+        controller: _heroImageController,
+        onTestingChanged: (value) => setState(() => _testingHeroImage = value),
+        onValidatedChanged: (value) =>
+            setState(() => _heroImageValidated = value),
+      );
+
+  Future<void> _testPastorsImage() => _testSingleImageField(
+        controller: _pastorsImageController,
+        onTestingChanged: (value) =>
+            setState(() => _testingPastorsImage = value),
+        onValidatedChanged: (value) =>
+            setState(() => _pastorsImageValidated = value),
+      );
+
+  Future<void> _testGalleryImages() async {
+    final urls = _readGalleryImageSources();
+    if (urls.isEmpty) return;
+
+    setState(() {
+      _testingGalleryImages = true;
+      _galleryImagesValidated = false;
+    });
+
+    final sanitizedText = urls.join('\n');
+    if (_galleryImagesController.text.trim() != sanitizedText) {
+      _galleryImagesController.text = sanitizedText;
+    }
+
+    final ok = await validateImageUrls(urls);
+    if (!mounted) return;
+
+    setState(() {
+      _testingGalleryImages = false;
+      _galleryImagesValidated = ok;
+    });
+
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load one or more gallery images.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _testSingleImageField({
+    required TextEditingController controller,
+    required void Function(bool testing) onTestingChanged,
+    required void Function(bool validated) onValidatedChanged,
+  }) async {
+    final urls = parseImageSourcesText(controller.text);
+    if (urls.isEmpty) return;
+
+    onTestingChanged(true);
+    onValidatedChanged(false);
+
+    final sanitized = urls.first;
+    if (controller.text.trim() != sanitized) {
+      controller.text = sanitized;
+    }
+
+    final ok = await validateImageUrls(<String>[sanitized]);
+    if (!mounted) return;
+
+    onTestingChanged(false);
+    onValidatedChanged(ok);
+
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load this image.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -132,7 +442,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         minLines: 2,
         maxLines: 3,
       ),
-      ..._buildChurchHubFields(      ),
+      ..._buildChurchHubFields(),
       ..._buildPastorFields(),
     ];
   }
@@ -323,13 +633,17 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   }) async {
     final existingChurch = widget.info;
     final location = (_selectedLocation ?? '').trim();
+    final heroUrls = _readHeroImageSources();
+    final pastorsUrls = _readPastorsImageSources();
     final church = ChurchInfo(
       id: existingChurch?.id ??
           generateDocumentId(primaryController.text, 'church'),
       title: primaryController.text.trim(),
       analyticsTitle: primaryController.text.trim(),
       body: body,
-      imageSources: imageSources,
+      heroImageSrc: heroUrls.isNotEmpty ? heroUrls.first : '',
+      pastorsImageSrc: pastorsUrls.isNotEmpty ? pastorsUrls.first : '',
+      galleryImageSources: _readGalleryImageSources(),
       summary: _summaryController.text.trim(),
       location: location,
       mapLink: _mapLinkController.text.trim(),

@@ -24,6 +24,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
     this.editTooltip = 'Edit',
     this.showCarouselWhenEmpty = true,
     this.carouselHeightFraction = 0.36,
+    this.galleryImageUrls,
     this.aboveBody,
     this.bodyHeading,
     this.belowBody,
@@ -39,6 +40,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
   final String editTooltip;
   final bool showCarouselWhenEmpty;
   final double carouselHeightFraction;
+  final List<String>? galleryImageUrls;
   final Widget? aboveBody;
   final Widget? bodyHeading;
   final Widget? belowBody;
@@ -54,8 +56,8 @@ class InfoDetailPageScaffold extends StatelessWidget {
     final double carouselHeight = size.height *
         (isWide ? carouselHeightFraction * 0.9 : carouselHeightFraction);
     final bool showCarousel = imageUrls.isNotEmpty || showCarouselWhenEmpty;
-    final List<String> galleryImages =
-        imageUrls.length > 1 ? imageUrls.skip(1).toList() : const <String>[];
+    final List<String> galleryImages = galleryImageUrls ??
+        (imageUrls.length > 1 ? imageUrls.skip(1).toList() : const <String>[]);
     final bool hasBody = !InfoParsing.isEmptyBody(body);
 
     return Scaffold(

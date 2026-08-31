@@ -180,7 +180,8 @@ void main() {
       );
     });
 
-    test('userServes is true for leaders, admins, tagged people, and CG leaders',
+    test(
+        'userServes is true for leaders, admins, tagged people, and CG leaders',
         () {
       expect(
         VolunteerRoleHelpers.userServes(

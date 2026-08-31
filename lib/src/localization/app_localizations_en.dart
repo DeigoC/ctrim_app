@@ -12,40 +12,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'CTRIM App';
 
   @override
-  String get volunteersTitle => 'Volunteers';
+  String get volunteersTitle => 'People';
 
   @override
   String volunteersTitleLocation(String location) {
-    return '$location Volunteers';
+    return '$location People';
   }
 
   @override
   String get volunteersFilterAll => 'All';
 
   @override
-  String get volunteersSearchHint => 'Search volunteers...';
+  String get volunteersFilterServing => 'Serving';
 
   @override
-  String get volunteersEmpty => 'No volunteers found';
+  String get volunteersSearchHint => 'Search people...';
+
+  @override
+  String get volunteersEmpty => 'No people found';
 
   @override
   String volunteersEmptySearch(String query) {
-    return 'No volunteers match \"$query\"';
+    return 'No people match \"$query\"';
   }
 
   @override
   String volunteersEmptyLocation(String location) {
-    return 'No volunteers in $location';
+    return 'No people in $location';
   }
 
   @override
-  String get registerUser => 'Register User';
+  String get volunteersEmptyServing =>
+      'No serving people here. Turn off Serving to see everyone.';
 
   @override
-  String get volunteersMenuTitle => 'Volunteers';
+  String volunteersEmptyServingLocation(String location) {
+    return 'No serving people in $location. Turn off Serving to see everyone.';
+  }
 
   @override
-  String get volunteersMenuSubtitle => 'View community members';
+  String get registerUser => 'Register person';
+
+  @override
+  String get volunteersMenuTitle => 'Directory';
+
+  @override
+  String get volunteersMenuSubtitle => 'Leaders, teams, and members';
 
   @override
   String get mySchedule => 'My Schedule';
@@ -125,7 +137,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserTagsEmpty =>
-      'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.';
+      'No team tags yet. Create tags for teams like Worship, Technical, or Usher.';
 
   @override
   String get manageUserTagsSeedDefaults => 'Add starter tags';
@@ -170,11 +182,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String manageUserTagsDeleteBlocked(int count) {
-    return 'Cannot delete — $count volunteers still have this tag. Deactivate it instead.';
+    return 'Cannot delete — $count people still have this tag. Deactivate it instead.';
   }
 
   @override
-  String get manageUserTagsMenuTitle => 'Volunteer Tags';
+  String get manageUserTagsMenuTitle => 'Team tags';
 
   @override
   String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
@@ -332,7 +344,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String manageUserLocationsDeleteBlocked(int count) {
-    return 'Cannot delete — $count volunteers still have this location. Deactivate it instead.';
+    return 'Cannot delete — $count people still have this location. Deactivate it instead.';
   }
 
   @override
@@ -341,16 +353,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get manageUserLocationsMenuTitle => 'Volunteer Locations';
+  String get manageUserLocationsMenuTitle => 'Locations';
 
   @override
   String get manageUserLocationsMenuSubtitle => 'Create and edit place labels';
 
   @override
-  String get volunteersEmptyTags => 'No volunteers match the selected tags';
+  String get volunteersEmptyTags => 'No people match the selected tags';
 
   @override
-  String get selectUsersTitle => 'Select members';
+  String get selectUsersTitle => 'Select people';
 
   @override
   String get selectUsersDone => 'Done';
@@ -446,7 +458,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersFilterCellGroupLeaders => 'CG Leaders';
 
   @override
-  String get volunteersEmptyRoles => 'No volunteers match the selected roles';
+  String get volunteersEmptyRoles => 'No people match the selected roles';
 
   @override
   String get volunteersFilterTags => 'Tags';
@@ -464,7 +476,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show people with any of these team tags';
 
   @override
-  String get volunteersSortTooltip => 'Sort volunteers';
+  String get volunteersSortTooltip => 'Sort people';
 
   @override
   String get cellGroupsAssignLabel => 'Cell groups';
@@ -868,6 +880,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchHubPagesRetry => 'Retry';
+
+  @override
+  String get churchHubPastorsTitle => 'Pastors';
+
+  @override
+  String get churchHubUnknownPastor => 'Unknown pastor';
 
   @override
   String get notificationViewPost => 'View post';

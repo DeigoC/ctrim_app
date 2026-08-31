@@ -1163,6 +1163,14 @@
   "@churchHubPagesRetry": {
     "description": "Retry loading nested church pages"
   },
+  "churchHubPastorsTitle": "Pastors",
+  "@churchHubPastorsTitle": {
+    "description": "Heading for the pastors section on a church hub page"
+  },
+  "churchHubUnknownPastor": "Unknown pastor",
+  "@churchHubUnknownPastor": {
+    "description": "Fallback label when a pastor user record cannot be resolved"
+  },
   "notificationViewPost": "View post",
   "@notificationViewPost": {
     "description": "Opens the related post from a push notification dialog"

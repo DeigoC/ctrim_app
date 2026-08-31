@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ChurchInfo', () {
-    test('fromMap reads legacy imgSrc as first image source', () {
+    test('fromMap migrates legacy imgSrc to heroImageSrc', () {
       final info = ChurchInfo.fromMap('belfast', {
         'title': 'Belfast',
         'analyticTitle': 'Belfast',
@@ -21,41 +21,86 @@ void main() {
       expect(info.id, 'belfast');
       expect(info.title, 'Belfast');
       expect(info.analyticsTitle, 'Belfast');
-      expect(info.imageSources, ['https://example.com/hero.png']);
+      expect(info.heroImageSrc, 'https://example.com/hero.png');
       expect(info.imgSrc, 'https://example.com/hero.png');
+      expect(info.galleryImageSources, isEmpty);
       expect(info.summary, 'Welcome');
       expect(info.location, '');
       expect(info.mapLink, '');
       expect(info.address, '');
       expect(info.hasLocation, isFalse);
       expect(info.hasMapLink, isFalse);
+      expect(info.hasHeroImage, isTrue);
       expect(info.pastorUserIds, isEmpty);
       expect(info.hasPastors, isFalse);
       expect(info.updatedBy, 'user-1');
       expect(info.displayOrder, 2);
     });
 
-    test('fromMap reads location, mapLink, address, and pastorUserIds', () {
+    test('fromMap migrates legacy imageSources to hero and gallery', () {
       final info = ChurchInfo.fromMap('belfast', {
         'title': 'Belfast',
         'analyticTitle': 'Belfast',
         'body': [
           {'insert': 'Hello\n'}
         ],
+        'imageSources': [
+          'https://example.com/hero.png',
+          'https://example.com/gallery.png',
+        ],
+      });
+
+      expect(info.heroImageSrc, 'https://example.com/hero.png');
+      expect(info.galleryImageSources, ['https://example.com/gallery.png']);
+    });
+
+    test('fromMap reads hub fields and pastorUserIds', () {
+      final info = ChurchInfo.fromMap('belfast', {
+        'title': 'Belfast',
+        'analyticTitle': 'Belfast',
+        'body': [
+          {'insert': 'Hello\n'}
+        ],
+        'heroImageSrc': 'https://example.com/hero.png',
+        'pastorsImageSrc': 'https://example.com/pastors.png',
+        'galleryImageSources': ['https://example.com/gallery.png'],
         'location': 'Belfast',
         'mapLink': 'https://maps.google.com/?q=belfast',
         'address': '8A Princes Dr',
         'pastorUserIds': ['user-a', 'user-b'],
       });
 
+      expect(info.heroImageSrc, 'https://example.com/hero.png');
+      expect(info.pastorsImageSrc, 'https://example.com/pastors.png');
+      expect(info.galleryImageSources, ['https://example.com/gallery.png']);
       expect(info.location, 'Belfast');
       expect(info.mapLink, 'https://maps.google.com/?q=belfast');
       expect(info.address, '8A Princes Dr');
       expect(info.hasLocation, isTrue);
       expect(info.hasMapLink, isTrue);
       expect(info.hasAddress, isTrue);
+      expect(info.hasPastorsImage, isTrue);
       expect(info.pastorUserIds, ['user-a', 'user-b']);
       expect(info.hasPastors, isTrue);
+      expect(info.hasPastorsSection, isTrue);
+    });
+
+    test('gallery excludes hero image duplicates', () {
+      final info = ChurchInfo(
+        id: 'belfast',
+        title: 'Belfast',
+        analyticsTitle: 'Belfast',
+        body: const [
+          {'insert': 'Body\n'}
+        ],
+        heroImageSrc: 'https://example.com/hero.png',
+        galleryImageSources: const [
+          'https://example.com/hero.png',
+          'https://example.com/gallery.png',
+        ],
+      );
+
+      expect(info.galleryImageSources, ['https://example.com/gallery.png']);
     });
 
     test('toJson writes Firestore friendly shape', () {
@@ -66,10 +111,9 @@ void main() {
         body: const [
           {'insert': 'Body\n'}
         ],
-        imageSources: const [
-          'https://example.com/a.png',
-          'https://example.com/b.png'
-        ],
+        heroImageSrc: 'https://example.com/hero.png',
+        pastorsImageSrc: 'https://example.com/pastors.png',
+        galleryImageSources: const ['https://example.com/gallery.png'],
         summary: 'Summary',
         location: 'Portadown',
         mapLink: 'https://maps.example/p',
@@ -84,8 +128,9 @@ void main() {
 
       expect(json['title'], 'Portadown');
       expect(json['analyticTitle'], 'Portadown');
-      expect(json['imageSources'],
-          ['https://example.com/a.png', 'https://example.com/b.png']);
+      expect(json['heroImageSrc'], 'https://example.com/hero.png');
+      expect(json['pastorsImageSrc'], 'https://example.com/pastors.png');
+      expect(json['galleryImageSources'], ['https://example.com/gallery.png']);
       expect(json['summary'], 'Summary');
       expect(json['location'], 'Portadown');
       expect(json['mapLink'], 'https://maps.example/p');
@@ -94,6 +139,7 @@ void main() {
       expect(json['updatedBy'], 'admin-1');
       expect(json['updatedAt'], isA<Timestamp>());
       expect(json['displayOrder'], 1);
+      expect(json.containsKey('imageSources'), isFalse);
     });
 
     test('toCacheJson includes hub fields', () {
@@ -104,6 +150,9 @@ void main() {
         body: const [
           {'insert': 'Body\n'}
         ],
+        heroImageSrc: 'https://example.com/hero.png',
+        pastorsImageSrc: 'https://example.com/pastors.png',
+        galleryImageSources: const ['https://example.com/gallery.png'],
         location: 'North Coast',
         mapLink: 'https://maps.example/nc',
         pastorUserIds: const ['pastor-1'],
@@ -111,11 +160,29 @@ void main() {
       );
 
       final cache = info.toCacheJson();
+      expect(cache['heroImageSrc'], 'https://example.com/hero.png');
+      expect(cache['pastorsImageSrc'], 'https://example.com/pastors.png');
+      expect(cache['galleryImageSources'], ['https://example.com/gallery.png']);
       expect(cache['location'], 'North Coast');
       expect(cache['mapLink'], 'https://maps.example/nc');
       expect(cache['address'], '');
       expect(cache['pastorUserIds'], ['pastor-1']);
       expect(cache['updatedAt'], 1700000000000);
+    });
+
+    test('galleryImageSources getter is unmodifiable', () {
+      final info = ChurchInfo(
+        id: 'north_coast',
+        title: 'North Coast',
+        analyticsTitle: 'North Coast',
+        body: const [
+          {'insert': 'Body\n'}
+        ],
+        galleryImageSources: const ['https://example.com/a.png'],
+      );
+
+      expect(() => info.galleryImageSources.add('https://example.com/b.png'),
+          throwsUnsupportedError);
     });
 
     test('pastorUserIds getter is unmodifiable', () {
@@ -130,21 +197,6 @@ void main() {
       );
 
       expect(() => info.pastorUserIds.add('pastor-2'), throwsUnsupportedError);
-    });
-
-    test('imageSources getter is unmodifiable', () {
-      final info = ChurchInfo(
-        id: 'north_coast',
-        title: 'North Coast',
-        analyticsTitle: 'North Coast',
-        body: const [
-          {'insert': 'Body\n'}
-        ],
-        imageSources: const ['https://example.com/a.png'],
-      );
-
-      expect(() => info.imageSources.add('https://example.com/b.png'),
-          throwsUnsupportedError);
     });
 
     test('fromMap normalizes empty body payloads to a valid quill delta', () {

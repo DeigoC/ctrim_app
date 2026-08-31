@@ -48,6 +48,15 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
   String get initialImagesValue;
   String get initialDisplayOrderValue;
 
+  /// When false, [buildCustomImageFields] replaces the default multi-line URL field.
+  bool get usesDefaultImageUrlField => true;
+
+  List<Widget> buildCustomImageFields() => const [];
+
+  bool customImagesReadyForSave() => true;
+
+  bool hasCustomImageChanges() => false;
+
   bool canEditSection(final User user) => user.canManageInfo;
 
   String accessDeniedMessage() =>
@@ -189,10 +198,7 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
                 tooltip: 'Delete',
               ),
             TextButton.icon(
-              onPressed:
-                  busy || (!_imagesValidated && readImageSources().isNotEmpty)
-                      ? null
-                      : _save,
+              onPressed: busy || !imagesReadyForSave() ? null : _save,
               icon: _isSaving
                   ? const SizedBox(
                       width: 16,
@@ -247,7 +253,7 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
     if (primaryController.text.trim() != _initialPrimary.trim()) {
       return true;
     }
-    if (_imagesController.text.trim() != _initialImages.trim()) {
+    if (hasImageFieldChanges()) {
       return true;
     }
     if (_displayOrderController.text.trim() != _initialDisplayOrder.trim()) {
@@ -277,22 +283,30 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
     return true;
   }
 
-  List<Widget> _buildMetadataFields() {
+  List<Widget> buildImageFieldsSection() {
+    if (!usesDefaultImageUrlField) {
+      return buildCustomImageFields();
+    }
+    return _buildDefaultImageUrlFields();
+  }
+
+  bool imagesReadyForSave() {
+    if (!usesDefaultImageUrlField) {
+      return customImagesReadyForSave();
+    }
+    final imageSources = readImageSources();
+    return imageSources.isEmpty || _imagesValidated;
+  }
+
+  bool hasImageFieldChanges() {
+    if (!usesDefaultImageUrlField) {
+      return hasCustomImageChanges();
+    }
+    return _imagesController.text.trim() != _initialImages.trim();
+  }
+
+  List<Widget> _buildDefaultImageUrlFields() {
     return [
-      TextFormField(
-        controller: primaryController,
-        decoration: InputDecoration(labelText: primaryLabel),
-        validator: (value) =>
-            (value == null || value.trim().isEmpty) ? 'Required' : null,
-      ),
-      ...buildSectionMetadataFields(),
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _displayOrderController,
-        decoration: const InputDecoration(labelText: 'Display order'),
-        keyboardType: TextInputType.number,
-      ),
-      const SizedBox(height: 12),
       TextFormField(
         controller: _imagesController,
         decoration: InputDecoration(
@@ -341,6 +355,26 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
         const SizedBox(height: 12),
         _buildImagePreviewRow(),
       ],
+    ];
+  }
+
+  List<Widget> _buildMetadataFields() {
+    return [
+      TextFormField(
+        controller: primaryController,
+        decoration: InputDecoration(labelText: primaryLabel),
+        validator: (value) =>
+            (value == null || value.trim().isEmpty) ? 'Required' : null,
+      ),
+      ...buildSectionMetadataFields(),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _displayOrderController,
+        decoration: const InputDecoration(labelText: 'Display order'),
+        keyboardType: TextInputType.number,
+      ),
+      const SizedBox(height: 12),
+      ...buildImageFieldsSection(),
     ];
   }
 
@@ -497,8 +531,7 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
       return;
     }
 
-    final imageSources = readImageSources();
-    if (imageSources.isNotEmpty && !_imagesValidated) {
+    if (!imagesReadyForSave()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Test the image URLs before saving.'),
@@ -641,6 +674,34 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
 
   List<String> readImageSources() {
     return _parseImageSourcesText(_imagesController.text);
+  }
+
+  List<String> parseImageSourcesText(final String text) {
+    return _parseImageSourcesText(text);
+  }
+
+  Future<bool> validateImageUrls(final List<String> urls) async {
+    if (urls.isEmpty) {
+      return true;
+    }
+
+    try {
+      for (final url in urls) {
+        final imageUrl = NetworkImageHelper.getImageUrl(url);
+        final response = await http
+            .get(Uri.parse(imageUrl))
+            .timeout(const Duration(seconds: 30));
+        if (response.statusCode != 200) {
+          throw Exception('HTTP ${response.statusCode} for $url');
+        }
+        if (response.bodyBytes.isEmpty) {
+          throw Exception('Empty response for $url');
+        }
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   List<String> _parseImageSourcesText(final String text) {

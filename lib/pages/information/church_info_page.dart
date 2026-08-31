@@ -14,8 +14,10 @@ import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/information/info_image_carousel.dart';
 import '../../widgets/paired_row_list.dart';
 import '../../widgets/posts/post_head.dart';
+import '../../widgets/user_avatar.dart';
 import '../cell_groups/cell_group_detail_page.dart';
 import 'church_page_info_page.dart';
 import 'edit_info_body_page.dart';
@@ -254,15 +256,23 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
 
     return InfoDetailPageScaffold(
       title: church.title,
-      imageUrls: church.imageSources,
+      imageUrls: church.hasHeroImage ? <String>[church.heroImageSrc] : const [],
+      galleryImageUrls: church.galleryImageSources,
       heroTag: 'info_church_${church.id}',
       body: church.body,
       onRefresh: _onRefresh,
       onEdit: canManageInfo ? () => _openEditor(church) : null,
       editTooltip: l10n.churchInfoEditTooltip,
-      header: _ChurchHubHeader(
-        church: church,
-        onOpenMaps: church.hasMapLink ? () => _openMaps(church.mapLink) : null,
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ChurchHubHeader(
+            church: church,
+            onOpenMaps:
+                church.hasMapLink ? () => _openMaps(church.mapLink) : null,
+          ),
+          _ChurchHubPastors(church: church),
+        ],
       ),
       aboveBody: _ChurchHubPages(
         pages: _pages,
@@ -354,6 +364,65 @@ class _ChurchHubHeader extends StatelessWidget {
               color: colorScheme.onSurfaceVariant,
             ),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ChurchHubPastors extends StatelessWidget {
+  const _ChurchHubPastors({required this.church});
+
+  final ChurchInfo church;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!church.hasPastorsSection) {
+      return const SizedBox.shrink();
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Text(
+          l10n.churchHubPastorsTitle,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (church.hasPastorsImage) ...[
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AdaptiveInfoGalleryImage(
+              imageUrl: church.pastorsImageSrc,
+            ),
+          ),
+        ],
+        if (church.hasPastors) ...[
+          const SizedBox(height: 12),
+          ...church.pastorUserIds.map((userId) {
+            final user = appContext.userById(userId);
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: user != null
+                  ? MyUserAvatar(user, radius: 20)
+                  : CircleAvatar(
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      child: Icon(
+                        Icons.person,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+              title: Text(user?.fullname ?? l10n.churchHubUnknownPastor),
+            );
+          }),
         ],
       ],
     );

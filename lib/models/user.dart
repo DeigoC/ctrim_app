@@ -126,7 +126,7 @@ class User {
   String get location => _location;
   String get authID => _authID;
 
-  /// Permission flags on the volunteer profile (`IsLeader` / `IsAreaAdmin`).
+  /// Permission flags on the community profile (`IsLeader` / `IsAreaAdmin`).
   /// Area admin is a step above Leader: every admin is a leader.
   /// Cell-group leadership is stored on cell group records, not this document.
   bool get isAreaAdmin => _isAreaAdmin;

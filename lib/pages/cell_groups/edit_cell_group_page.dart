@@ -337,7 +337,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           ? MyUserAvatar(user, radius: 20)
           : CircleAvatar(
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
+              child:
+                  Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
             ),
       title: Text(user?.fullname ?? 'Unknown leader'),
       trailing: IconButton(

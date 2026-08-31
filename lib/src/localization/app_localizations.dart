@@ -100,64 +100,82 @@ abstract class AppLocalizations {
   /// **'CTRIM App'**
   String get appTitle;
 
-  /// Title for the volunteers directory when showing all locations
+  /// Title for the people directory when showing all locations
   ///
   /// In en, this message translates to:
-  /// **'Volunteers'**
+  /// **'People'**
   String get volunteersTitle;
 
-  /// Title for the volunteers directory filtered by location
+  /// Title for the people directory filtered by location
   ///
   /// In en, this message translates to:
-  /// **'{location} Volunteers'**
+  /// **'{location} People'**
   String volunteersTitleLocation(String location);
 
-  /// Filter chip label to show volunteers from every location
+  /// Filter chip label to show people from every location
   ///
   /// In en, this message translates to:
   /// **'All'**
   String get volunteersFilterAll;
 
-  /// Hint text for the volunteers search field
+  /// Filter chip for people who serve (leaders, team tags, or cell-group leaders)
   ///
   /// In en, this message translates to:
-  /// **'Search volunteers...'**
+  /// **'Serving'**
+  String get volunteersFilterServing;
+
+  /// Hint text for the people directory search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search people...'**
   String get volunteersSearchHint;
 
-  /// Empty state when the volunteers list has no entries
+  /// Empty state when the people list has no entries
   ///
   /// In en, this message translates to:
-  /// **'No volunteers found'**
+  /// **'No people found'**
   String get volunteersEmpty;
 
-  /// Empty state when search returns no volunteers
+  /// Empty state when search returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers match \"{query}\"'**
+  /// **'No people match \"{query}\"'**
   String volunteersEmptySearch(String query);
 
-  /// Empty state when a location filter returns no volunteers
+  /// Empty state when a location filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers in {location}'**
+  /// **'No people in {location}'**
   String volunteersEmptyLocation(String location);
 
-  /// FAB label for registering a new volunteer
+  /// Empty state when the Serving filter hides attendees
   ///
   /// In en, this message translates to:
-  /// **'Register User'**
+  /// **'No serving people here. Turn off Serving to see everyone.'**
+  String get volunteersEmptyServing;
+
+  /// Empty state when Serving plus a location filter returns no people
+  ///
+  /// In en, this message translates to:
+  /// **'No serving people in {location}. Turn off Serving to see everyone.'**
+  String volunteersEmptyServingLocation(String location);
+
+  /// FAB label for registering a new person
+  ///
+  /// In en, this message translates to:
+  /// **'Register person'**
   String get registerUser;
 
-  /// Personal home menu item for the volunteers directory
+  /// Personal home menu item for the people directory
   ///
   /// In en, this message translates to:
-  /// **'Volunteers'**
+  /// **'Directory'**
   String get volunteersMenuTitle;
 
-  /// Personal home menu subtitle for the volunteers directory
+  /// Personal home menu subtitle for the people directory
   ///
   /// In en, this message translates to:
-  /// **'View community members'**
+  /// **'Leaders, teams, and members'**
   String get volunteersMenuSubtitle;
 
   /// Personal home menu item for the current user's schedule
@@ -307,7 +325,7 @@ abstract class AppLocalizations {
   /// Empty state on the manage tags page
   ///
   /// In en, this message translates to:
-  /// **'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.'**
+  /// **'No team tags yet. Create tags for teams like Worship, Technical, or Usher.'**
   String get manageUserTagsEmpty;
 
   /// Button to seed default volunteer tags
@@ -391,13 +409,13 @@ abstract class AppLocalizations {
   /// Error when trying to delete a tag that is still assigned
   ///
   /// In en, this message translates to:
-  /// **'Cannot delete — {count} volunteers still have this tag. Deactivate it instead.'**
+  /// **'Cannot delete — {count} people still have this tag. Deactivate it instead.'**
   String manageUserTagsDeleteBlocked(int count);
 
   /// Personal home admin menu item for managing tags
   ///
   /// In en, this message translates to:
-  /// **'Volunteer Tags'**
+  /// **'Team tags'**
   String get manageUserTagsMenuTitle;
 
   /// Personal home admin menu subtitle for managing tags
@@ -685,7 +703,7 @@ abstract class AppLocalizations {
   /// Error when trying to delete a location that is still assigned
   ///
   /// In en, this message translates to:
-  /// **'Cannot delete — {count} volunteers still have this location. Deactivate it instead.'**
+  /// **'Cannot delete — {count} people still have this location. Deactivate it instead.'**
   String manageUserLocationsDeleteBlocked(int count);
 
   /// Error when creating or renaming to a duplicate location name
@@ -697,7 +715,7 @@ abstract class AppLocalizations {
   /// Personal home admin menu item for managing locations
   ///
   /// In en, this message translates to:
-  /// **'Volunteer Locations'**
+  /// **'Locations'**
   String get manageUserLocationsMenuTitle;
 
   /// Personal home admin menu subtitle for managing locations
@@ -706,16 +724,16 @@ abstract class AppLocalizations {
   /// **'Create and edit place labels'**
   String get manageUserLocationsMenuSubtitle;
 
-  /// Empty state when tag filter returns no volunteers
+  /// Empty state when tag filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers match the selected tags'**
+  /// **'No people match the selected tags'**
   String get volunteersEmptyTags;
 
-  /// Title for the multi-select volunteer picker page
+  /// Title for the multi-select people picker page
   ///
   /// In en, this message translates to:
-  /// **'Select members'**
+  /// **'Select people'**
   String get selectUsersTitle;
 
   /// Confirm button on the volunteer picker page
@@ -832,13 +850,13 @@ abstract class AppLocalizations {
   /// **'Placeholder · {location}'**
   String selectUsersPlaceholderSubtitle(String location);
 
-  /// Filter chip to show only placeholder profiles in the Volunteers list
+  /// Filter chip to show only placeholder profiles in the people list
   ///
   /// In en, this message translates to:
   /// **'Placeholders'**
   String get volunteersShowPlaceholders;
 
-  /// Empty state when the placeholders filter returns no volunteers
+  /// Empty state when the placeholders filter returns no people
   ///
   /// In en, this message translates to:
   /// **'No placeholder profiles to show'**
@@ -850,46 +868,46 @@ abstract class AppLocalizations {
   /// **'Placeholder'**
   String get volunteersPlaceholderBadge;
 
-  /// Label before sort mode chips on the volunteers list
+  /// Label before sort mode chips on the people list
   ///
   /// In en, this message translates to:
   /// **'Sort'**
   String get volunteersSortLabel;
 
-  /// Sort volunteers by surname
+  /// Sort people by surname
   ///
   /// In en, this message translates to:
   /// **'Surname'**
   String get volunteersSortSurname;
 
-  /// Sort volunteers by primary team tag
+  /// Sort people by primary team tag
   ///
   /// In en, this message translates to:
   /// **'Team'**
   String get volunteersSortTags;
 
-  /// Filter chip to show volunteers with the Leader permission
+  /// Filter chip to show people with the Leader permission
   ///
   /// In en, this message translates to:
   /// **'Leaders'**
   String get volunteersFilterLeaders;
 
-  /// Filter chip to show volunteers who are area admins
+  /// Filter chip to show people who are area admins
   ///
   /// In en, this message translates to:
   /// **'Admins'**
   String get volunteersFilterAdmins;
 
-  /// Filter chip to show volunteers who lead a cell group
+  /// Filter chip to show people who lead a cell group
   ///
   /// In en, this message translates to:
   /// **'CG Leaders'**
   String get volunteersFilterCellGroupLeaders;
 
-  /// Empty state when a role filter returns no volunteers
+  /// Empty state when a role filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers match the selected roles'**
+  /// **'No people match the selected roles'**
   String get volunteersEmptyRoles;
 
   /// Button that opens the volunteer tag filter sheet
@@ -916,10 +934,10 @@ abstract class AppLocalizations {
   /// **'Show people with any of these team tags'**
   String get volunteersFilterTagsSheetSubtitle;
 
-  /// Tooltip for the volunteers sort menu in the app bar
+  /// Tooltip for the people directory sort menu in the app bar
   ///
   /// In en, this message translates to:
-  /// **'Sort volunteers'**
+  /// **'Sort people'**
   String get volunteersSortTooltip;
 
   /// Section label for linking a post or template to cell groups
@@ -1671,6 +1689,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get churchHubPagesRetry;
+
+  /// Heading for the pastors section on a church hub page
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors'**
+  String get churchHubPastorsTitle;
+
+  /// Fallback label when a pastor user record cannot be resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown pastor'**
+  String get churchHubUnknownPastor;
 
   /// Opens the related post from a push notification dialog
   ///

@@ -2,7 +2,7 @@
 
 **Personal** is each person’s home base: account, schedule, notification settings, and shortcuts used by organisers.
 
-Definitions for **guest**, **volunteer**, **My Schedule**, and related terms: [Key concepts](key-concepts.md).
+Definitions for **guest**, **community profile**, **My Schedule**, and related terms: [Key concepts](key-concepts.md).
 
 The page is organised into clear sections so everyday options stay separate from admin tools and app settings.
 
@@ -12,7 +12,7 @@ The page is organised into clear sections so everyday options stay separate from
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **For you** | Schedule, notifications, my posts, profile picture (create account when browsing as a guest) |
-| **People** | Volunteers directory *(signed in)* |
+| **People** | Directory of community profiles *(signed in)* |
 | **Admin / Leader tools** | Templates, tags, locations — only when your role allows |
 | **Settings** | Appearance, startup tab (signed in), share app, **product guide** (everyone, including guests), slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
@@ -32,9 +32,9 @@ For Leaders, area admins, placeholders, and a fuller access grid, see [People & 
 
 ## Creating an account
 
-Signing in or registering unlocks **personal** features: interest on posts, fuller notification preferences, and — once you have a **community / volunteer profile** — My Schedule, My Posts, and the Volunteers directory.
+Signing in or registering unlocks **personal** features: interest, fuller notification preferences, and — once you have a **community profile** — My Schedule, My Posts, and the People directory.
 
-Creating an account does **not** automatically grant Leader or Area admin tools. Those are assigned by organisers when needed. Until then, you use the app as a signed-in member / volunteer.
+Creating an account does **not** automatically grant Leader or Area admin tools, and it does not mark someone as **serving**. Those are assigned by organisers when needed. Until then, you use the app as a signed-in member.
 
 ## Profile
 
@@ -46,7 +46,7 @@ Signed-in people see a profile header (including profile picture where set). Fro
 
 ## My Schedule
 
-**My Schedule** (under **For you**) lists programme roles and expected-attendee meetings on event posts — a practical “what am I down for?” view for volunteers.
+**My Schedule** (under **For you**) lists programme roles and expected-attendee meetings on event posts — a practical “what am I down for?” view.
 
 ## My Posts
 
@@ -56,7 +56,7 @@ Signed-in people see a profile header (including profile picture where set). Fro
 
 Depending on role, Personal may also show:
 
-- **People → Volunteers** — searchable directory of people  
+- **People → Directory** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
 - **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Services** or **Cell Groups**  
 - **Admin tools →** people / tags / locations management *(area admins)*  
 
