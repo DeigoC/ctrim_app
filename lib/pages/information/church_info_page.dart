@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../models/cell_group.dart';
-import '../../models/event/event_head.dart';
 import '../../models/info/church_info.dart';
 import '../../models/info/church_page.dart';
 import '../../src/localization/app_localizations.dart';
@@ -15,14 +13,10 @@ import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/information/info_image_carousel.dart';
-import '../../widgets/paired_row_list.dart';
-import '../../widgets/posts/post_head.dart';
-import '../../widgets/user_avatar.dart';
-import '../cell_groups/cell_group_detail_page.dart';
+import 'church_hub_dashboard.dart';
 import 'church_page_info_page.dart';
+import 'church_pastors_page.dart';
 import 'edit_info_body_page.dart';
-import 'info_detail_scaffold.dart';
-import 'info_tab_widgets.dart';
 
 class ChurchInfoPage extends StatefulWidget {
   const ChurchInfoPage({super.key, required this.documentId});
@@ -30,7 +24,7 @@ class ChurchInfoPage extends StatefulWidget {
   final String documentId;
 
   /// Matches cell-group meeting trail length (`fetchMeetingTrail` limit).
-  static const int _visiblePostLimit = 4;
+  static const int visiblePostLimit = 4;
 
   @override
   State<ChurchInfoPage> createState() => _ChurchInfoPageState();
@@ -190,6 +184,18 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     }
   }
 
+  Future<void> _openPastors(final ChurchInfo church) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChurchPastorsPage(documentId: church.id),
+      ),
+    );
+    if (mounted) {
+      await _load(forceRefresh: false);
+    }
+  }
+
   Future<void> _openAddPage(final ChurchInfo church) async {
     final changed = await Navigator.push<bool>(
           context,
@@ -254,623 +260,78 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       );
     }
 
-    return InfoDetailPageScaffold(
-      title: church.title,
-      imageUrls: church.hasHeroImage ? <String>[church.heroImageSrc] : const [],
-      galleryImageUrls: church.galleryImageSources,
-      heroTag: 'info_church_${church.id}',
-      body: church.body,
-      onRefresh: _onRefresh,
-      onEdit: canManageInfo ? () => _openEditor(church) : null,
-      editTooltip: l10n.churchInfoEditTooltip,
-      header: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ChurchHubHeader(
-            church: church,
-            onOpenMaps:
-                church.hasMapLink ? () => _openMaps(church.mapLink) : null,
-          ),
-          _ChurchHubPastors(church: church),
-        ],
-      ),
-      aboveBody: _ChurchHubPages(
-        pages: _pages,
-        pagesError: _pagesError,
-        canAdd: canManageChurchPages,
-        onRetry: () => _load(forceRefresh: false),
-        onOpenPage: _openChurchPage,
-        onAddPage: () => _openAddPage(church),
-      ),
-      bodyHeading: Text(
-        l10n.churchHubAboutTitle,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-      belowBody: _ChurchHubSnapshot(
-        church: church,
-        stats: _stats,
-        statsError: _statsError,
-        onRetryStats: () => _load(forceRefresh: false),
-      ),
-    );
-  }
-}
-
-class _ChurchHubHeader extends StatelessWidget {
-  const _ChurchHubHeader({
-    required this.church,
-    this.onOpenMaps,
-  });
-
-  final ChurchInfo church;
-  final VoidCallback? onOpenMaps;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final size = MediaQuery.sizeOf(context);
+    final double gutter =
+        ResponsiveLayout.horizontalGutter(size.width, narrowPadding: 0);
+    final bool isWide = ResponsiveLayout.isWideScreen(size.width);
+    final double carouselHeight = size.height * (isWide ? 0.36 * 0.9 : 0.36);
+    final maxWidth = ResponsiveLayout.maxContentWidth(size.width);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          church.title,
-          style: theme.textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        if (church.summary.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            church.summary,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        title: Text(church.title),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        actions: [
+          if (canManageInfo)
+            IconButton(
+              onPressed: () => _openEditor(church),
+              icon: const Icon(Icons.edit),
+              tooltip: l10n.churchInfoEditTooltip,
             ),
-          ),
         ],
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Chip(
-              avatar: Icon(
-                Icons.place_outlined,
-                size: 18,
-                color: colorScheme.primary,
+      ),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            if (church.hasHeroImage)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.fromLTRB(gutter, isWide ? 8 : 0, gutter, 0),
+                  child: InfoImageCarousel(
+                    imageUrls: <String>[church.heroImageSrc],
+                    heroTag: 'info_church_${church.id}',
+                    landscapeHeight: carouselHeight,
+                    borderRadius: isWide ? 16 : 0,
+                  ),
+                ),
               ),
-              label: Text(
-                church.hasLocation
-                    ? church.location
-                    : l10n.churchHubLocationUnset,
-              ),
-            ),
-            if (onOpenMaps != null)
-              OutlinedButton.icon(
-                onPressed: onOpenMaps,
-                icon: const Icon(Icons.map_outlined),
-                label: Text(l10n.churchHubOpenMaps),
-              ),
-          ],
-        ),
-        if (church.hasAddress) ...[
-          const SizedBox(height: 8),
-          Text(
-            church.address,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ChurchHubPastors extends StatelessWidget {
-  const _ChurchHubPastors({required this.church});
-
-  final ChurchInfo church;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!church.hasPastorsSection) {
-      return const SizedBox.shrink();
-    }
-
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final appContext = Provider.of<AppContext>(context, listen: false);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 20),
-        Text(
-          l10n.churchHubPastorsTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        if (church.hasPastorsImage) ...[
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AdaptiveInfoGalleryImage(
-              imageUrl: church.pastorsImageSrc,
-            ),
-          ),
-        ],
-        if (church.hasPastors) ...[
-          const SizedBox(height: 12),
-          ...church.pastorUserIds.map((userId) {
-            final user = appContext.userById(userId);
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: user != null
-                  ? MyUserAvatar(user, radius: 20)
-                  : CircleAvatar(
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.person,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(gutter + 16, 20, gutter + 16, 40),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: ChurchHubDashboard(
+                      church: church,
+                      pages: _pages,
+                      pagesError: _pagesError,
+                      stats: _stats,
+                      statsError: _statsError,
+                      canAddPages: canManageChurchPages,
+                      visiblePostLimit: ChurchInfoPage.visiblePostLimit,
+                      onOpenMaps: church.hasMapLink
+                          ? () => _openMaps(church.mapLink)
+                          : null,
+                      onOpenPastors: () => _openPastors(church),
+                      onOpenPage: _openChurchPage,
+                      onAddPage: () => _openAddPage(church),
+                      onRetryPages: () => _load(forceRefresh: false),
+                      onRetryStats: () => _load(forceRefresh: false),
                     ),
-              title: Text(user?.fullname ?? l10n.churchHubUnknownPastor),
-            );
-          }),
-        ],
-      ],
-    );
-  }
-}
-
-class _ChurchHubSnapshot extends StatelessWidget {
-  const _ChurchHubSnapshot({
-    required this.church,
-    required this.stats,
-    required this.statsError,
-    required this.onRetryStats,
-  });
-
-  final ChurchInfo church;
-  final ChurchLocationStats? stats;
-  final Object? statsError;
-  final VoidCallback onRetryStats;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    if (!church.hasLocation) {
-      return Text(
-        l10n.churchHubSetLocationHint,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-
-    final ChurchLocationStats? loadedStats = stats;
-
-    if (statsError != null && loadedStats == null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.churchHubStatsError,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.error,
+                  ),
+                ),
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: onRetryStats,
-            child: Text(l10n.churchHubStatsRetry),
-          ),
-        ],
-      );
-    }
-
-    if (loadedStats == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.churchHubSnapshotTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _SnapshotTiles(stats: loadedStats),
-        const SizedBox(height: 20),
-        _RecentPostsList(posts: loadedStats.posts),
-        const SizedBox(height: 20),
-        _CellGroupsList(groups: loadedStats.cellGroups),
-      ],
-    );
-  }
-}
-
-class _SnapshotTiles extends StatelessWidget {
-  const _SnapshotTiles({required this.stats});
-
-  final ChurchLocationStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final tiles = [
-      _HubStatTile(
-        icon: Icons.event_note_outlined,
-        value: '${stats.postCount}',
-        label: l10n.churchHubPostsLabel,
-        hint: l10n.churchHubPostsHint,
-      ),
-      _HubStatTile(
-        icon: Icons.groups_outlined,
-        value: '${stats.cellGroupCount}',
-        label: l10n.churchHubCellGroupsLabel,
-        hint: l10n.churchHubCellGroupsHint,
-      ),
-      _HubStatTile(
-        icon: Icons.people_outline,
-        value: '${stats.peopleCount}',
-        label: l10n.churchHubPeopleLabel,
-        hint: l10n.churchHubPeopleHint,
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 520;
-        if (wide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < tiles.length; i++) ...[
-                if (i > 0) const SizedBox(width: 12),
-                Expanded(child: tiles[i]),
-              ],
-            ],
-          );
-        }
-        return Column(
-          children: [
-            for (var i = 0; i < tiles.length; i++) ...[
-              if (i > 0) const SizedBox(height: 12),
-              tiles[i],
-            ],
           ],
-        );
-      },
-    );
-  }
-}
-
-class _HubStatTile extends StatelessWidget {
-  const _HubStatTile({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.hint,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
-  final String hint;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.15),
         ),
       ),
-      child: Column(
-        children: [
-          Icon(icon, color: colorScheme.primary, size: 28),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            hint,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentPostsList extends StatelessWidget {
-  const _RecentPostsList({required this.posts});
-
-  final List<EventHead> posts;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final visible = posts.length > ChurchInfoPage._visiblePostLimit
-        ? posts.take(ChurchInfoPage._visiblePostLimit).toList()
-        : posts;
-    final overflow = posts.length - visible.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.churchHubRecentPosts,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (posts.isEmpty)
-          Text(
-            l10n.churchHubNoRecentPosts,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          )
-        else ...[
-          if (ResponsiveLayout.isWideScreenOf(context))
-            PairedRowList(
-              itemCount: visible.length,
-              runSpacing: 8,
-              itemBuilder: (_, index) => PostHead(
-                thisHead: visible[index],
-                updatePost: () {},
-              ),
-            )
-          else
-            ...visible.map(
-              (head) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: PostHead(
-                  thisHead: head,
-                  updatePost: () {},
-                ),
-              ),
-            ),
-          if (overflow > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                l10n.churchHubMorePosts(overflow),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-        ],
-      ],
-    );
-  }
-}
-
-class _CellGroupsList extends StatelessWidget {
-  const _CellGroupsList({required this.groups});
-
-  final List<CellGroup> groups;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.churchHubCellGroupsHere,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (groups.isEmpty)
-          Text(
-            l10n.churchHubNoCellGroups,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          )
-        else if (ResponsiveLayout.isWideScreenOf(context))
-          PairedRowList(
-            itemCount: groups.length,
-            runSpacing: 8,
-            itemBuilder: (_, index) => _hubCellGroupCard(
-              context,
-              l10n,
-              theme,
-              colorScheme,
-              groups[index],
-            ),
-          )
-        else
-          ...groups.map((group) => _hubCellGroupCard(
-                context,
-                l10n,
-                theme,
-                colorScheme,
-                group,
-              )),
-      ],
-    );
-  }
-
-  Widget _hubCellGroupCard(
-    BuildContext context,
-    AppLocalizations l10n,
-    ThemeData theme,
-    ColorScheme colorScheme,
-    CellGroup group,
-  ) {
-    final cadence = group.cadenceLabel;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(
-          Icons.groups_outlined,
-          color: colorScheme.primary,
-        ),
-        title: Text(group.name),
-        subtitle: cadence.isEmpty ? null : Text(cadence),
-        trailing: group.isPaused
-            ? Text(
-                l10n.cellGroupsStatusPaused,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.tertiary,
-                  fontWeight: FontWeight.w600,
-                ),
-              )
-            : null,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CellGroupDetailPage(groupId: group.id),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ChurchHubPages extends StatelessWidget {
-  const _ChurchHubPages({
-    required this.pages,
-    required this.pagesError,
-    required this.canAdd,
-    required this.onRetry,
-    required this.onOpenPage,
-    required this.onAddPage,
-  });
-
-  final List<ChurchPage> pages;
-  final Object? pagesError;
-  final bool canAdd;
-  final VoidCallback onRetry;
-  final ValueChanged<ChurchPage> onOpenPage;
-  final VoidCallback onAddPage;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    if (pagesError != null && pages.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.churchHubPagesError,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.error,
-            ),
-          ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text(l10n.churchHubPagesRetry),
-          ),
-        ],
-      );
-    }
-
-    if (pages.isEmpty && !canAdd) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.churchHubPagesTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (pages.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              l10n.churchHubNoPages,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          )
-        else
-          ...pages.map(
-            (page) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InfoTopicListCard(
-                title: page.title,
-                description: page.summary,
-                imageUrl: page.imgSrc,
-                heroTag: 'info_church_page_${page.churchId}_${page.id}',
-                fallbackIcon: Icons.article_outlined,
-                onTap: () => onOpenPage(page),
-              ),
-            ),
-          ),
-        if (canAdd)
-          InfoAddContentCard(
-            label: l10n.churchHubAddPage,
-            description: l10n.churchHubAddPageDescription,
-            onTap: onAddPage,
-            compact: true,
-          ),
-      ],
     );
   }
 }

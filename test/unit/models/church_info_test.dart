@@ -82,7 +82,35 @@ void main() {
       expect(info.hasPastorsImage, isTrue);
       expect(info.pastorUserIds, ['user-a', 'user-b']);
       expect(info.hasPastors, isTrue);
+      expect(info.hasPastorsBody, isTrue);
       expect(info.hasPastorsSection, isTrue);
+    });
+
+    test('hasPastorsSection is true when only the pastors body is set', () {
+      final info = ChurchInfo(
+        id: 'belfast',
+        title: 'Belfast',
+        analyticsTitle: 'Belfast',
+        body: const [
+          {'insert': 'Meet our pastors\n'}
+        ],
+      );
+
+      expect(info.hasPastors, isFalse);
+      expect(info.hasPastorsImage, isFalse);
+      expect(info.hasPastorsBody, isTrue);
+      expect(info.hasPastorsSection, isTrue);
+    });
+
+    test('hasPastorsBody is false for a blank quill delta', () {
+      final info = ChurchInfo.fromMap('empty_pastors', {
+        'title': 'Empty',
+        'analyticTitle': 'Empty',
+        'body': const [],
+      });
+
+      expect(info.hasPastorsBody, isFalse);
+      expect(info.hasPastorsSection, isFalse);
     });
 
     test('gallery excludes hero image duplicates', () {

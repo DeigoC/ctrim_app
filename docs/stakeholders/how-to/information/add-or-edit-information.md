@@ -14,7 +14,7 @@
 1. Open the **CTRIM** tab.  
 2. Go to the right subsection (**Churches**, **Testimonials**, or **Information**).  
 3. Choose **Add** (or equivalent). On **Information**, use **Add Principles Topic** or **Add Teachings Topic** so the new page lands in the right group.  
-4. Fill in title and body (rich text). For **Churches**, choose the **location** (each church uses a different one) and optionally an address and maps link. For Information topics, confirm the **Section** field is **Principles** or **Teachings** as intended (defaults to Principles).  
+4. Fill in the cards (church name, where to find it, pastors, and photos). For **Churches**, choose the **location** (each church uses a different one) and optionally an address and maps link. The pastors write-up is the longer text on that card. For Information topics, confirm the **Section** field is **Principles** or **Teachings** as intended (defaults to Principles).  
 5. Save and check how it looks when viewing as a normal reader.  
 
 ## Add a page on a church hub

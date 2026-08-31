@@ -1171,6 +1171,90 @@
   "@churchHubUnknownPastor": {
     "description": "Fallback label when a pastor user record cannot be resolved"
   },
+  "churchHubFindUsTitle": "Find us",
+  "@churchHubFindUsTitle": {
+    "description": "Dashboard card title for church location, address, and maps"
+  },
+  "churchHubFindUsSubtitle": "Location, address, and maps",
+  "@churchHubFindUsSubtitle": {
+    "description": "Dashboard card subtitle for the visit / find-us card"
+  },
+  "churchHubPastorsSubtitle": "Meet the team",
+  "@churchHubPastorsSubtitle": {
+    "description": "Dashboard card subtitle for the pastors card"
+  },
+  "churchHubLearnAboutPastors": "Learn about them",
+  "@churchHubLearnAboutPastors": {
+    "description": "Button on the church hub pastors card that opens the pastors page"
+  },
+  "churchPastorsPageTitle": "Pastors",
+  "@churchPastorsPageTitle": {
+    "description": "App bar title for the church pastors write-up page"
+  },
+  "churchHubGalleryTitle": "Gallery",
+  "@churchHubGalleryTitle": {
+    "description": "Dashboard card title for church gallery photos"
+  },
+  "churchHubGallerySubtitle": "Photos from this church",
+  "@churchHubGallerySubtitle": {
+    "description": "Dashboard card subtitle for the gallery card"
+  },
+  "churchHubSnapshotSubtitle": "Activity at this location",
+  "@churchHubSnapshotSubtitle": {
+    "description": "Dashboard card subtitle for location snapshot counts"
+  },
+  "churchHubPagesSubtitle": "Getting here, Sunday service, and more",
+  "@churchHubPagesSubtitle": {
+    "description": "Dashboard card subtitle for extra church pages"
+  },
+  "churchHubRecentPostsSubtitle": "From the last 3 months",
+  "@churchHubRecentPostsSubtitle": {
+    "description": "Dashboard card subtitle for recent bulletin posts"
+  },
+  "churchHubCellGroupsSubtitle": "Meeting at this location",
+  "@churchHubCellGroupsSubtitle": {
+    "description": "Dashboard card subtitle for cell groups at this church"
+  },
+  "churchEditorChurchCardTitle": "Church",
+  "@churchEditorChurchCardTitle": {
+    "description": "Editor card title for church name and summary"
+  },
+  "churchEditorChurchCardSubtitle": "Name and how it appears in the list",
+  "@churchEditorChurchCardSubtitle": {
+    "description": "Editor card subtitle for church identity fields"
+  },
+  "churchEditorVisitCardTitle": "Find us",
+  "@churchEditorVisitCardTitle": {
+    "description": "Editor card title for location, address, and maps"
+  },
+  "churchEditorVisitCardSubtitle": "Location, address, and maps",
+  "@churchEditorVisitCardSubtitle": {
+    "description": "Editor card subtitle for visit fields"
+  },
+  "churchEditorPastorsCardTitle": "Pastors",
+  "@churchEditorPastorsCardTitle": {
+    "description": "Editor card title for pastors, photo, and write-up"
+  },
+  "churchEditorPastorsCardSubtitle": "People listed as pastors, plus their write-up",
+  "@churchEditorPastorsCardSubtitle": {
+    "description": "Editor card subtitle for pastors fields and Quill body"
+  },
+  "churchEditorMediaCardTitle": "Media",
+  "@churchEditorMediaCardTitle": {
+    "description": "Editor card title for hero and gallery images"
+  },
+  "churchEditorMediaCardSubtitle": "Cover photo and gallery",
+  "@churchEditorMediaCardSubtitle": {
+    "description": "Editor card subtitle for church media URLs"
+  },
+  "churchEditorPastorsBodyLabel": "About the pastors",
+  "@churchEditorPastorsBodyLabel": {
+    "description": "Label above the pastors Quill editor on the church form"
+  },
+  "churchEditorSave": "Save",
+  "@churchEditorSave": {
+    "description": "Primary save button on the church add/edit form"
+  },
   "notificationViewPost": "View post",
   "@notificationViewPost": {
     "description": "Opens the related post from a push notification dialog"

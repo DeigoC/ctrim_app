@@ -888,6 +888,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubUnknownPastor => 'Unknown pastor';
 
   @override
+  String get churchHubFindUsTitle => 'Find us';
+
+  @override
+  String get churchHubFindUsSubtitle => 'Location, address, and maps';
+
+  @override
+  String get churchHubPastorsSubtitle => 'Meet the team';
+
+  @override
+  String get churchHubLearnAboutPastors => 'Learn about them';
+
+  @override
+  String get churchPastorsPageTitle => 'Pastors';
+
+  @override
+  String get churchHubGalleryTitle => 'Gallery';
+
+  @override
+  String get churchHubGallerySubtitle => 'Photos from this church';
+
+  @override
+  String get churchHubSnapshotSubtitle => 'Activity at this location';
+
+  @override
+  String get churchHubPagesSubtitle => 'Getting here, Sunday service, and more';
+
+  @override
+  String get churchHubRecentPostsSubtitle => 'From the last 3 months';
+
+  @override
+  String get churchHubCellGroupsSubtitle => 'Meeting at this location';
+
+  @override
+  String get churchEditorChurchCardTitle => 'Church';
+
+  @override
+  String get churchEditorChurchCardSubtitle =>
+      'Name and how it appears in the list';
+
+  @override
+  String get churchEditorVisitCardTitle => 'Find us';
+
+  @override
+  String get churchEditorVisitCardSubtitle => 'Location, address, and maps';
+
+  @override
+  String get churchEditorPastorsCardTitle => 'Pastors';
+
+  @override
+  String get churchEditorPastorsCardSubtitle =>
+      'People listed as pastors, plus their write-up';
+
+  @override
+  String get churchEditorMediaCardTitle => 'Media';
+
+  @override
+  String get churchEditorMediaCardSubtitle => 'Cover photo and gallery';
+
+  @override
+  String get churchEditorPastorsBodyLabel => 'About the pastors';
+
+  @override
+  String get churchEditorSave => 'Save';
+
+  @override
   String get notificationViewPost => 'View post';
 
   @override

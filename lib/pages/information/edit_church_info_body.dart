@@ -4,15 +4,27 @@ import 'package:provider/provider.dart';
 
 import '../../models/info/church_info.dart';
 import '../../models/user.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/church_location.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/catalog/volunteer_locations.dart';
+import '../../widgets/information/info_section_card.dart';
+import '../../widgets/paired_row_list.dart';
 import '../../widgets/user_avatar.dart';
 import '../personal/select_users_page.dart';
 import 'edit_info_body_shared.dart';
+
+class _ImageUrlTestUiState {
+  bool validated = true;
+  bool testing = false;
+  bool showSuccess = false;
+  String? errorMessage;
+  List<String> previewUrls = const [];
+}
 
 class EditChurchInfoBody extends StatefulWidget {
   const EditChurchInfoBody({super.key, this.info});
@@ -42,15 +54,15 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   String? _selectedLocation;
   List<String> _pastorUserIds = const [];
   List<ChurchInfo> _allChurches = const [];
-  bool _heroImageValidated = true;
-  bool _pastorsImageValidated = true;
-  bool _galleryImagesValidated = true;
-  bool _testingHeroImage = false;
-  bool _testingPastorsImage = false;
-  bool _testingGalleryImages = false;
+  final _heroImageTest = _ImageUrlTestUiState();
+  final _pastorsImageTest = _ImageUrlTestUiState();
+  final _galleryImagesTest = _ImageUrlTestUiState();
 
   @override
   bool get usesDefaultImageUrlField => false;
+
+  @override
+  double get formMaxWidth => ResponsiveLayout.tabletContentMaxWidth;
 
   @override
   bool get isEditing => widget.info != null;
@@ -61,8 +73,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
 
   @override
   String get bodyPlaceholder =>
-      'Tap here to write about this church — history, location, '
-      'meeting times, or anything visitors should know…';
+      'Tap here to write about the pastors — who they are, '
+      'how they serve, or anything visitors should know…';
 
   @override
   String get primaryLabel => 'Church title';
@@ -112,29 +124,63 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   }
 
   void _onHeroImageChanged() {
-    if (_heroImageController.text.trim() == _initialHeroImage.trim()) {
-      setState(() => _heroImageValidated = true);
-      return;
-    }
-    setState(() => _heroImageValidated = false);
+    _resetImageTestIfUrlChanged(
+      controller: _heroImageController,
+      initialValue: _initialHeroImage,
+      testState: _heroImageTest,
+    );
   }
 
   void _onPastorsImageChanged() {
-    if (_pastorsImageController.text.trim() == _initialPastorsImage.trim()) {
-      setState(() => _pastorsImageValidated = true);
-      return;
-    }
-    setState(() => _pastorsImageValidated = false);
+    _resetImageTestIfUrlChanged(
+      controller: _pastorsImageController,
+      initialValue: _initialPastorsImage,
+      testState: _pastorsImageTest,
+    );
   }
 
   void _onGalleryImagesChanged() {
     final current = _readGalleryImageSources();
     final initial = parseImageSourcesText(_initialGalleryImages);
     if (listEquals(current, initial)) {
-      setState(() => _galleryImagesValidated = true);
+      setState(() {
+        _galleryImagesTest.validated = true;
+        _galleryImagesTest.errorMessage = null;
+        _galleryImagesTest.showSuccess = false;
+      });
       return;
     }
-    setState(() => _galleryImagesValidated = false);
+    setState(() {
+      _galleryImagesTest.validated = false;
+      _galleryImagesTest.errorMessage = null;
+      _galleryImagesTest.showSuccess = false;
+      if (current.isEmpty) {
+        _galleryImagesTest.previewUrls = const [];
+      }
+    });
+  }
+
+  void _resetImageTestIfUrlChanged({
+    required final TextEditingController controller,
+    required final String initialValue,
+    required final _ImageUrlTestUiState testState,
+  }) {
+    if (controller.text.trim() == initialValue.trim()) {
+      setState(() {
+        testState.validated = true;
+        testState.errorMessage = null;
+        testState.showSuccess = false;
+      });
+      return;
+    }
+    setState(() {
+      testState.validated = false;
+      testState.errorMessage = null;
+      testState.showSuccess = false;
+      if (controller.text.trim().isEmpty) {
+        testState.previewUrls = const [];
+      }
+    });
   }
 
   List<String> _readGalleryImageSources() {
@@ -169,9 +215,9 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     final hero = _readHeroImageSources();
     final pastors = _readPastorsImageSources();
     final gallery = _readGalleryImageSources();
-    final heroReady = hero.isEmpty || _heroImageValidated;
-    final pastorsReady = pastors.isEmpty || _pastorsImageValidated;
-    final galleryReady = gallery.isEmpty || _galleryImagesValidated;
+    final heroReady = hero.isEmpty || _heroImageTest.validated;
+    final pastorsReady = pastors.isEmpty || _pastorsImageTest.validated;
+    final galleryReady = gallery.isEmpty || _galleryImagesTest.validated;
     return heroReady && pastorsReady && galleryReady;
   }
 
@@ -190,40 +236,181 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   }
 
   @override
-  List<Widget> buildCustomImageFields() {
+  List<Widget> buildFormLayout() {
+    final l10n = AppLocalizations.of(context)!;
+    final churchCard = _editorCard(
+      icon: Icons.church_outlined,
+      title: l10n.churchEditorChurchCardTitle,
+      subtitle: l10n.churchEditorChurchCardSubtitle,
+      children: _buildIdentityFields(),
+    );
+    final visitCard = _editorCard(
+      icon: Icons.place_outlined,
+      title: l10n.churchEditorVisitCardTitle,
+      subtitle: l10n.churchEditorVisitCardSubtitle,
+      children: _buildChurchHubFields(),
+    );
+    final pastorsCard = _editorCard(
+      icon: Icons.groups_outlined,
+      title: l10n.churchEditorPastorsCardTitle,
+      subtitle: l10n.churchEditorPastorsCardSubtitle,
+      children: _buildPastorFields(),
+    );
+    final mediaCard = _editorCard(
+      icon: Icons.photo_library_outlined,
+      title: l10n.churchEditorMediaCardTitle,
+      subtitle: l10n.churchEditorMediaCardSubtitle,
+      children: _buildMediaFields(),
+    );
+
+    final bool wide = ResponsiveLayout.isWideScreenOf(context);
     return [
-      Text(
-        'Media',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+      if (wide)
+        PairedRowList(
+          itemCount: 2,
+          itemBuilder: (_, index) => index == 0 ? churchCard : visitCard,
+        )
+      else ...[
+        churchCard,
+        const SizedBox(height: 16),
+        visitCard,
+      ],
+      const SizedBox(height: 16),
+      pastorsCard,
+      const SizedBox(height: 16),
+      mediaCard,
+      const SizedBox(height: 24),
+      SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: FilledButton(
+          onPressed: isFormBusy || !imagesReadyForSave()
+              ? null
+              : () {
+                  submitSave();
+                },
+          child: isFormSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n.churchEditorSave),
+        ),
+      ),
+    ];
+  }
+
+  Widget _editorCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Widget> children,
+  }) {
+    return InfoSectionCard(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+  }
+
+  InputDecoration _filledDecoration({
+    required String label,
+    String? helperText,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InputDecoration(
+      labelText: label,
+      helperText: helperText,
+      prefixIcon: prefixIcon == null
+          ? null
+          : Icon(prefixIcon, color: colorScheme.onSurfaceVariant),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.error),
+      ),
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+    );
+  }
+
+  @override
+  List<Widget> buildCustomImageFields() => _buildMediaFields();
+
+  @override
+  List<Widget> buildSectionMetadataFields() => const [];
+
+  List<Widget> _buildIdentityFields() {
+    return [
+      TextFormField(
+        controller: primaryController,
+        decoration: _filledDecoration(
+          label: primaryLabel,
+          prefixIcon: Icons.title_outlined,
+        ),
+        validator: (value) =>
+            (value == null || value.trim().isEmpty) ? 'Required' : null,
       ),
       const SizedBox(height: 12),
+      TextFormField(
+        controller: _summaryController,
+        decoration: _filledDecoration(
+          label: 'Summary / subtitle',
+          prefixIcon: Icons.short_text,
+        ),
+        minLines: 2,
+        maxLines: 3,
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: displayOrderController,
+        decoration: _filledDecoration(
+          label: 'Display order',
+          prefixIcon: Icons.format_list_numbered,
+        ),
+        keyboardType: TextInputType.number,
+      ),
+    ];
+  }
+
+  List<Widget> _buildMediaFields() {
+    return [
       _buildSingleImageField(
         controller: _heroImageController,
         label: 'Hero image URL',
         helperText:
             'Shown on the church list and as the wide cover on the church page.',
-        testing: _testingHeroImage,
-        validated: _heroImageValidated,
+        prefixIcon: Icons.image_outlined,
+        testState: _heroImageTest,
         onTest: _testHeroImage,
-      ),
-      const SizedBox(height: 12),
-      _buildSingleImageField(
-        controller: _pastorsImageController,
-        label: 'Pastors image URL',
-        helperText: 'Optional team photo shown in the pastors section.',
-        testing: _testingPastorsImage,
-        validated: _pastorsImageValidated,
-        onTest: _testPastorsImage,
       ),
       const SizedBox(height: 12),
       TextFormField(
         controller: _galleryImagesController,
-        decoration: InputDecoration(
-          labelText: 'Gallery image URLs',
+        decoration: _filledDecoration(
+          label: 'Gallery image URLs',
           helperText:
               'One URL per line. Gallery photos only — not the hero image.',
+          prefixIcon: Icons.collections_outlined,
           suffixIcon: IconButton(
             onPressed: _onImageHelpClick,
             icon: const Icon(Icons.help_outline),
@@ -238,20 +425,46 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       Align(
         alignment: Alignment.centerRight,
         child: TextButton.icon(
-          onPressed: _testingGalleryImages ||
+          onPressed: _galleryImagesTest.testing ||
                   _galleryImagesController.text.trim().isEmpty
               ? null
               : _testGalleryImages,
-          icon: _testingGalleryImages
+          icon: _galleryImagesTest.testing
               ? const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.visibility_outlined),
-          label: Text(_testingGalleryImages ? 'Testing…' : 'Test gallery'),
+          label: Text(_galleryImagesTest.testing ? 'Testing…' : 'Test gallery'),
         ),
       ),
+      if (!_galleryImagesTest.validated &&
+          _galleryImagesController.text.trim().isNotEmpty &&
+          !_galleryImagesTest.testing &&
+          !_galleryImagesTest.showSuccess &&
+          _galleryImagesTest.errorMessage == null)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            'Test these images before saving.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+          ),
+        ),
+      if (_galleryImagesTest.previewUrls.isNotEmpty &&
+          (_galleryImagesTest.testing ||
+              _galleryImagesTest.showSuccess ||
+              _galleryImagesTest.errorMessage != null)) ...[
+        const SizedBox(height: 12),
+        buildImageUrlTestFeedback(
+          previewUrls: _galleryImagesTest.previewUrls,
+          testing: _galleryImagesTest.testing,
+          showSuccess: _galleryImagesTest.showSuccess,
+          errorMessage: _galleryImagesTest.errorMessage,
+        ),
+      ],
     ];
   }
 
@@ -259,18 +472,19 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     required TextEditingController controller,
     required String label,
     required String helperText,
-    required bool testing,
-    required bool validated,
+    required _ImageUrlTestUiState testState,
     required Future<void> Function() onTest,
+    IconData prefixIcon = Icons.link,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextFormField(
           controller: controller,
-          decoration: InputDecoration(
-            labelText: label,
+          decoration: _filledDecoration(
+            label: label,
             helperText: helperText,
+            prefixIcon: prefixIcon,
             suffixIcon: IconButton(
               onPressed: _onImageHelpClick,
               icon: const Icon(Icons.help_outline),
@@ -283,19 +497,24 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
-            onPressed:
-                testing || controller.text.trim().isEmpty ? null : onTest,
-            icon: testing
+            onPressed: testState.testing || controller.text.trim().isEmpty
+                ? null
+                : onTest,
+            icon: testState.testing
                 ? const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.visibility_outlined),
-            label: Text(testing ? 'Testing…' : 'Test image'),
+            label: Text(testState.testing ? 'Testing…' : 'Test image'),
           ),
         ),
-        if (!validated && controller.text.trim().isNotEmpty)
+        if (!testState.validated &&
+            controller.text.trim().isNotEmpty &&
+            !testState.testing &&
+            !testState.showSuccess &&
+            testState.errorMessage == null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
@@ -305,6 +524,18 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
                   ),
             ),
           ),
+        if (testState.previewUrls.isNotEmpty &&
+            (testState.testing ||
+                testState.showSuccess ||
+                testState.errorMessage != null)) ...[
+          const SizedBox(height: 12),
+          buildImageUrlTestFeedback(
+            previewUrls: testState.previewUrls,
+            testing: testState.testing,
+            showSuccess: testState.showSuccess,
+            errorMessage: testState.errorMessage,
+          ),
+        ],
       ],
     );
   }
@@ -326,17 +557,12 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
 
   Future<void> _testHeroImage() => _testSingleImageField(
         controller: _heroImageController,
-        onTestingChanged: (value) => setState(() => _testingHeroImage = value),
-        onValidatedChanged: (value) =>
-            setState(() => _heroImageValidated = value),
+        testState: _heroImageTest,
       );
 
   Future<void> _testPastorsImage() => _testSingleImageField(
         controller: _pastorsImageController,
-        onTestingChanged: (value) =>
-            setState(() => _testingPastorsImage = value),
-        onValidatedChanged: (value) =>
-            setState(() => _pastorsImageValidated = value),
+        testState: _pastorsImageTest,
       );
 
   Future<void> _testGalleryImages() async {
@@ -344,8 +570,11 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     if (urls.isEmpty) return;
 
     setState(() {
-      _testingGalleryImages = true;
-      _galleryImagesValidated = false;
+      _galleryImagesTest.testing = true;
+      _galleryImagesTest.validated = false;
+      _galleryImagesTest.showSuccess = false;
+      _galleryImagesTest.errorMessage = null;
+      _galleryImagesTest.previewUrls = urls;
     });
 
     final sanitizedText = urls.join('\n');
@@ -357,30 +586,29 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     if (!mounted) return;
 
     setState(() {
-      _testingGalleryImages = false;
-      _galleryImagesValidated = ok;
+      _galleryImagesTest.testing = false;
+      _galleryImagesTest.validated = ok;
+      _galleryImagesTest.showSuccess = ok;
+      _galleryImagesTest.errorMessage =
+          ok ? null : imageUrlTestFailureMessage(urls);
+      _galleryImagesTest.previewUrls = urls;
     });
-
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not load one or more gallery images.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   Future<void> _testSingleImageField({
     required TextEditingController controller,
-    required void Function(bool testing) onTestingChanged,
-    required void Function(bool validated) onValidatedChanged,
+    required _ImageUrlTestUiState testState,
   }) async {
     final urls = parseImageSourcesText(controller.text);
     if (urls.isEmpty) return;
 
-    onTestingChanged(true);
-    onValidatedChanged(false);
+    setState(() {
+      testState.testing = true;
+      testState.validated = false;
+      testState.showSuccess = false;
+      testState.errorMessage = null;
+      testState.previewUrls = <String>[urls.first];
+    });
 
     final sanitized = urls.first;
     if (controller.text.trim() != sanitized) {
@@ -390,17 +618,14 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     final ok = await validateImageUrls(<String>[sanitized]);
     if (!mounted) return;
 
-    onTestingChanged(false);
-    onValidatedChanged(ok);
-
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not load this image.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    setState(() {
+      testState.testing = false;
+      testState.validated = ok;
+      testState.showSuccess = ok;
+      testState.errorMessage =
+          ok ? null : imageUrlTestFailureMessage(<String>[sanitized]);
+      testState.previewUrls = <String>[sanitized];
+    });
   }
 
   @override
@@ -430,47 +655,34 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     return false;
   }
 
-  @override
-  List<Widget> buildSectionMetadataFields() {
-    return [
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _summaryController,
-        decoration: const InputDecoration(
-          labelText: 'Summary / subtitle',
-        ),
-        minLines: 2,
-        maxLines: 3,
-      ),
-      ..._buildChurchHubFields(),
-      ..._buildPastorFields(),
-    ];
-  }
-
   List<Widget> _buildPastorFields() {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return [
-      const SizedBox(height: 16),
-      Text(
-        'Pastors',
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        'People listed as pastors for this church.',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      const SizedBox(height: 8),
       OutlinedButton.icon(
         onPressed: _pickPastors,
         icon: const Icon(Icons.person_add_alt),
         label: const Text('Choose pastors'),
       ),
       ..._pastorUserIds.map(_buildPastorTile),
+      const SizedBox(height: 12),
+      _buildSingleImageField(
+        controller: _pastorsImageController,
+        label: 'Pastors image URL',
+        helperText: 'Optional team photo shown in the pastors card.',
+        prefixIcon: Icons.photo_outlined,
+        testState: _pastorsImageTest,
+        onTest: _testPastorsImage,
+      ),
+      const SizedBox(height: 16),
+      Text(
+        l10n.churchEditorPastorsBodyLabel,
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(height: 8),
+      buildBodyEditor(),
     ];
   }
 
@@ -532,14 +744,14 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     }
 
     return [
-      const SizedBox(height: 12),
       DropdownButtonFormField<String>(
         initialValue:
             names.contains(_selectedLocation) ? _selectedLocation : null,
-        decoration: const InputDecoration(
-          labelText: 'Location',
+        decoration: _filledDecoration(
+          label: 'Location',
           helperText:
               'Each church must use a unique location from the catalogue.',
+          prefixIcon: Icons.place_outlined,
         ),
         items: names.map(
           (name) {
@@ -558,9 +770,10 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       const SizedBox(height: 12),
       TextFormField(
         controller: _addressController,
-        decoration: const InputDecoration(
-          labelText: 'Address',
+        decoration: _filledDecoration(
+          label: 'Address',
           helperText: 'Optional street address shown on the church page.',
+          prefixIcon: Icons.home_outlined,
         ),
         minLines: 1,
         maxLines: 2,
@@ -568,9 +781,10 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       const SizedBox(height: 12),
       TextFormField(
         controller: _mapLinkController,
-        decoration: InputDecoration(
-          labelText: 'Maps URL',
+        decoration: _filledDecoration(
+          label: 'Maps URL',
           helperText: 'Optional Google Maps (or similar) link.',
+          prefixIcon: Icons.map_outlined,
           suffixIcon: IconButton(
             onPressed: _onMapLinkHelpClick,
             icon: const Icon(Icons.help_outline),

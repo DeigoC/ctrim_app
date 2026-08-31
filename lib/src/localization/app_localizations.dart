@@ -1702,6 +1702,132 @@ abstract class AppLocalizations {
   /// **'Unknown pastor'**
   String get churchHubUnknownPastor;
 
+  /// Dashboard card title for church location, address, and maps
+  ///
+  /// In en, this message translates to:
+  /// **'Find us'**
+  String get churchHubFindUsTitle;
+
+  /// Dashboard card subtitle for the visit / find-us card
+  ///
+  /// In en, this message translates to:
+  /// **'Location, address, and maps'**
+  String get churchHubFindUsSubtitle;
+
+  /// Dashboard card subtitle for the pastors card
+  ///
+  /// In en, this message translates to:
+  /// **'Meet the team'**
+  String get churchHubPastorsSubtitle;
+
+  /// Button on the church hub pastors card that opens the pastors page
+  ///
+  /// In en, this message translates to:
+  /// **'Learn about them'**
+  String get churchHubLearnAboutPastors;
+
+  /// App bar title for the church pastors write-up page
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors'**
+  String get churchPastorsPageTitle;
+
+  /// Dashboard card title for church gallery photos
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get churchHubGalleryTitle;
+
+  /// Dashboard card subtitle for the gallery card
+  ///
+  /// In en, this message translates to:
+  /// **'Photos from this church'**
+  String get churchHubGallerySubtitle;
+
+  /// Dashboard card subtitle for location snapshot counts
+  ///
+  /// In en, this message translates to:
+  /// **'Activity at this location'**
+  String get churchHubSnapshotSubtitle;
+
+  /// Dashboard card subtitle for extra church pages
+  ///
+  /// In en, this message translates to:
+  /// **'Getting here, Sunday service, and more'**
+  String get churchHubPagesSubtitle;
+
+  /// Dashboard card subtitle for recent bulletin posts
+  ///
+  /// In en, this message translates to:
+  /// **'From the last 3 months'**
+  String get churchHubRecentPostsSubtitle;
+
+  /// Dashboard card subtitle for cell groups at this church
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting at this location'**
+  String get churchHubCellGroupsSubtitle;
+
+  /// Editor card title for church name and summary
+  ///
+  /// In en, this message translates to:
+  /// **'Church'**
+  String get churchEditorChurchCardTitle;
+
+  /// Editor card subtitle for church identity fields
+  ///
+  /// In en, this message translates to:
+  /// **'Name and how it appears in the list'**
+  String get churchEditorChurchCardSubtitle;
+
+  /// Editor card title for location, address, and maps
+  ///
+  /// In en, this message translates to:
+  /// **'Find us'**
+  String get churchEditorVisitCardTitle;
+
+  /// Editor card subtitle for visit fields
+  ///
+  /// In en, this message translates to:
+  /// **'Location, address, and maps'**
+  String get churchEditorVisitCardSubtitle;
+
+  /// Editor card title for pastors, photo, and write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors'**
+  String get churchEditorPastorsCardTitle;
+
+  /// Editor card subtitle for pastors fields and Quill body
+  ///
+  /// In en, this message translates to:
+  /// **'People listed as pastors, plus their write-up'**
+  String get churchEditorPastorsCardSubtitle;
+
+  /// Editor card title for hero and gallery images
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get churchEditorMediaCardTitle;
+
+  /// Editor card subtitle for church media URLs
+  ///
+  /// In en, this message translates to:
+  /// **'Cover photo and gallery'**
+  String get churchEditorMediaCardSubtitle;
+
+  /// Label above the pastors Quill editor on the church form
+  ///
+  /// In en, this message translates to:
+  /// **'About the pastors'**
+  String get churchEditorPastorsBodyLabel;
+
+  /// Primary save button on the church add/edit form
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get churchEditorSave;
+
   /// Opens the related post from a push notification dialog
   ///
   /// In en, this message translates to:

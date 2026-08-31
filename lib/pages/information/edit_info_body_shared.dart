@@ -66,6 +66,44 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
 
   List<Widget> buildSectionMetadataFields();
 
+  /// Display-order field, for custom form layouts that place it in a card.
+  TextEditingController get displayOrderController => _displayOrderController;
+
+  bool get isFormBusy => _isSaving || _isDeleting;
+
+  bool get isFormSaving => _isSaving;
+
+  Future<void> submitSave() => _save();
+
+  Widget buildBodyEditor() {
+    return QuillEditorWidget(
+      key: _editorKey,
+      jsonContent: initialBody,
+      showAlignmentButtons: true,
+      showSubscript: false,
+      showSuperscript: true,
+      showCodeBlock: true,
+      multiRowsDisplay: true,
+      placeholder: bodyPlaceholder,
+      expands: false,
+      minHeight: 180,
+      maxHeight: 420,
+    );
+  }
+
+  /// Default metadata + Body editor. Church overrides this to use cards.
+  List<Widget> buildFormLayout() {
+    return [
+      ..._buildMetadataFields(),
+      const SizedBox(height: 16),
+      Text('Body', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      buildBodyEditor(),
+    ];
+  }
+
+  double get formMaxWidth => ResponsiveLayout.chordMaxWidth;
+
   Future<void> persistSave({
     required final AppContext appContext,
     required final List<dynamic> body,
@@ -216,30 +254,10 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
             padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 40),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                    maxWidth: ResponsiveLayout.chordMaxWidth),
+                constraints: BoxConstraints(maxWidth: formMaxWidth),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ..._buildMetadataFields(),
-                    const SizedBox(height: 16),
-                    Text('Body',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    QuillEditorWidget(
-                      key: _editorKey,
-                      jsonContent: initialBody,
-                      showAlignmentButtons: true,
-                      showSubscript: false,
-                      showSuperscript: true,
-                      showCodeBlock: true,
-                      multiRowsDisplay: true,
-                      placeholder: bodyPlaceholder,
-                      expands: false,
-                      minHeight: 180,
-                      maxHeight: 420,
-                    ),
-                  ],
+                  children: buildFormLayout(),
                 ),
               ),
             ),
@@ -341,19 +359,17 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
           label: Text(_testingImages ? 'Testing…' : 'Test images'),
         ),
       ),
-      if (_imageValidationMessage != null) ...[
-        const SizedBox(height: 4),
-        Text(
-          _imageValidationMessage!,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
-        ),
-      ],
       if (_previewImageUrls.isNotEmpty &&
-          (_testingImages || _showImageTestSuccess)) ...[
+          (_testingImages ||
+              _showImageTestSuccess ||
+              _imageValidationMessage != null)) ...[
         const SizedBox(height: 12),
-        _buildImagePreviewRow(),
+        buildImageUrlTestFeedback(
+          previewUrls: _previewImageUrls,
+          testing: _testingImages,
+          showSuccess: _showImageTestSuccess,
+          errorMessage: _imageValidationMessage,
+        ),
       ],
     ];
   }
@@ -378,70 +394,115 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
     ];
   }
 
-  Widget _buildImagePreviewRow() {
+  /// Preview strip + success/error copy for tested image URLs (default or custom fields).
+  Widget buildImageUrlTestFeedback({
+    required final List<String> previewUrls,
+    required final bool testing,
+    required final bool showSuccess,
+    required final String? errorMessage,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          _imagesValidated ? 'Image preview' : 'Testing images…',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+        if (previewUrls.isNotEmpty) ...[
+          Text(
+            testing ? 'Testing images…' : 'Image preview',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _previewImageUrls.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final url = _previewImageUrls[index];
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: ColoredBox(
-                    color: colorScheme.surfaceContainerHighest,
-                    child: Image.network(
-                      NetworkImageHelper.getImageUrl(url),
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      },
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.broken_image_outlined,
-                        color: colorScheme.error,
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 120,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: previewUrls.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final url = previewUrls[index];
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: ColoredBox(
+                      color: colorScheme.surfaceContainerHighest,
+                      child: Image.network(
+                        NetworkImageHelper.getImageUrl(url),
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.broken_image_outlined,
+                          color: colorScheme.error,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
-        if (_showImageTestSuccess) ...[
-          const SizedBox(height: 8),
-          Text(
-            _previewImageUrls.length == 1
-                ? 'Image loaded successfully.'
-                : 'All ${_previewImageUrls.length} images loaded successfully.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary,
+                );
+              },
             ),
+          ),
+        ],
+        if (showSuccess) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.check_circle_outline,
+                  size: 16, color: colorScheme.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  previewUrls.length == 1
+                      ? 'Image loaded successfully.'
+                      : 'All ${previewUrls.length} images loaded successfully.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (errorMessage != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.error_outline, size: 16, color: colorScheme.error),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  errorMessage,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ],
     );
+  }
+
+  String imageUrlTestFailureMessage(final List<String> urls) {
+    final isDrive = urls.any((url) => url.contains('drive.google.com'));
+    if (isDrive) {
+      return 'Could not load one or more images. For Google Drive, share as '
+          '“Anyone with the link” (Viewer), then test again.';
+    }
+    return 'Could not load one or more images. Check each URL is a public '
+        'HTTPS image link and try again.';
   }
 
   Future<void> _testImagesClick() async {
@@ -489,16 +550,11 @@ mixin EditInfoBodyEditorMixin<T extends StatefulWidget> on State<T> {
       });
     } catch (error) {
       if (!mounted) return;
-      final isDrive = sanitized.any((url) => url.contains('drive.google.com'));
       setState(() {
         _testingImages = false;
         _imagesValidated = false;
         _showImageTestSuccess = false;
-        _imageValidationMessage = isDrive
-            ? 'Could not load one or more images. For Google Drive, share as '
-                '“Anyone with the link” (Viewer), then test again.'
-            : 'Could not load one or more images. Check each URL is a public '
-                'HTTPS image link and try again.';
+        _imageValidationMessage = imageUrlTestFailureMessage(sanitized);
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

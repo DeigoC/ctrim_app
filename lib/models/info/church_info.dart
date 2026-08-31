@@ -119,7 +119,8 @@ class ChurchInfo {
   String get pastorsImageSrc => _pastorsImageSrc;
   List<String> get galleryImageSources =>
       UnmodifiableListView<String>(_galleryImageSources);
-  List<String> get pastorUserIds => UnmodifiableListView<String>(_pastorUserIds);
+  List<String> get pastorUserIds =>
+      UnmodifiableListView<String>(_pastorUserIds);
   String get imgSrc => _heroImageSrc;
   String get summary => _summary;
   String get title => _title;
@@ -136,7 +137,8 @@ class ChurchInfo {
   bool get hasPastorsImage => _pastorsImageSrc.isNotEmpty;
   bool get hasGalleryImages => _galleryImageSources.isNotEmpty;
   bool get hasPastors => _pastorUserIds.isNotEmpty;
-  bool get hasPastorsSection => hasPastorsImage || hasPastors;
+  bool get hasPastorsBody => !InfoParsing.isEmptyBody(_body);
+  bool get hasPastorsSection => hasPastorsImage || hasPastors || hasPastorsBody;
 
   void setAnalyticsTitle(final String value) => _analyticsTitle = value;
   void setBody(final List<dynamic> value) => _body = List<dynamic>.from(value);
