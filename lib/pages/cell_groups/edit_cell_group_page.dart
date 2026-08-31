@@ -464,6 +464,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           selectedUIDs: List<String>.from(_leaderUserIds),
           includeCurrentUser: true,
           title: AppLocalizations.of(context)!.cellGroupsLeadersLabel,
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
           ),

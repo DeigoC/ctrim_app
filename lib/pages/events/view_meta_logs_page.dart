@@ -571,6 +571,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
               List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,

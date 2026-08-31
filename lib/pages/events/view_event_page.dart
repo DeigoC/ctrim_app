@@ -763,6 +763,7 @@ class _ViewEventPageState extends State<ViewEventPage>
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
             postAuthorUid: _eventContext.metadata.authorUID,

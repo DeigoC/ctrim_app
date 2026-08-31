@@ -490,6 +490,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
           selectedUIDs: List<String>.from(_selectedUsers),
           includeCurrentUser: true,
           allowTaskCheck: true,
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,

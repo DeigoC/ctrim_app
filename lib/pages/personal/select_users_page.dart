@@ -14,6 +14,7 @@ import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
+import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/common/app_dialog.dart';
 import '../../widgets/user_avatar.dart';
@@ -21,7 +22,7 @@ import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/catalog/user_tag_filter_bar.dart';
 import 'view_user_roles_page.dart';
 
-/// Full-screen multi-select picker for volunteers and placeholder profiles.
+/// Full-screen multi-select picker for people and placeholder profiles.
 ///
 /// Returns the selected user IDs via [Navigator.pop] when the page is closed
 /// (back gesture, app bar back, or system back). Intended as the shared entry
@@ -37,6 +38,7 @@ class SelectUsersPage extends StatefulWidget {
     this.maxSelection,
     this.allowCreatePlaceholder = false,
     this.includePlaceholders = true,
+    this.preferServing = false,
     this.postIdForPlaceholderCreate,
     this.cellGroupIdForPlaceholderCreate,
   });
@@ -60,6 +62,10 @@ class SelectUsersPage extends StatefulWidget {
   /// temporary profiles.
   final bool includePlaceholders;
 
+  /// When true, the list defaults to people who serve (leaders, team tags, or
+  /// cell-group leaders). Turn Serving off to pick attendees too.
+  final bool preferServing;
+
   /// Optional post id passed to `create_placeholder_user` for author-gate checks.
   final String? postIdForPlaceholderCreate;
 
@@ -76,6 +82,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   late final Set<String> _selectedUIDs;
   late String _locationFilter;
   bool _placeholdersOnly = false;
+  late bool _servingOnly;
 
   bool _isSearching = false;
   String _searchQuery = '';
@@ -92,6 +99,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       appContext.currentUser.location,
       assignable,
     );
+    _servingOnly = widget.preferServing;
   }
 
   @override
@@ -190,6 +198,16 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                         ),
                       );
                     }),
+                    if (widget.preferServing)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(l10n.volunteersFilterServing),
+                          selected: _servingOnly,
+                          onSelected: (selected) =>
+                              setState(() => _servingOnly = selected),
+                        ),
+                      ),
                     if (widget.includePlaceholders)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -397,6 +415,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
   List<User> _filteredUsers(AppContext appContext) {
     Iterable<User> users = appContext.allUsers;
+    final cellGroupLeaders =
+        CellGroupLeaderIndex.fromGroups(appContext.allCellGroups);
 
     if (!widget.includeCurrentUser) {
       users = users.where((user) => user.id != appContext.currentUser.id);
@@ -413,6 +433,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     } else if (_placeholdersOnly) {
       users = users.where(
           (user) => user.isPlaceholder || _selectedUIDs.contains(user.id));
+    }
+
+    if (_servingOnly && !_placeholdersOnly) {
+      users = users.where((user) =>
+          _selectedUIDs.contains(user.id) ||
+          VolunteerRoleHelpers.userServes(
+            user: user,
+            cellGroupLeaders: cellGroupLeaders,
+          ));
     }
 
     if (_locationFilter != VolunteerLocations.all) {
@@ -453,6 +482,12 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
     if (_selectedTagIDs.isNotEmpty) {
       return l10n.volunteersEmptyTags;
+    }
+    if (_servingOnly && _locationFilter != VolunteerLocations.all) {
+      return l10n.volunteersEmptyServingLocation(_locationFilter);
+    }
+    if (_servingOnly) {
+      return l10n.volunteersEmptyServing;
     }
     if (_locationFilter != VolunteerLocations.all) {
       return l10n.volunteersEmptyLocation(_locationFilter);

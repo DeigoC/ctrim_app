@@ -41,6 +41,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Set<VolunteerRoleKind> _selectedRoles = {};
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
   bool _placeholdersOnly = false;
+  bool _servingOnly = true;
   bool _refreshing = false;
   String? _refreshError;
 
@@ -109,7 +110,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         source: 'firestore-refresh',
       );
     } catch (e, st) {
-      debugPrint('[VolunteersDirectory] refresh failed: $e\n$st');
+      debugPrint('[PeopleDirectory] refresh failed: $e\n$st');
       if (mounted) {
         setState(() => _refreshError = e.toString());
       }
@@ -159,15 +160,15 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         .join(' | ');
 
     debugPrint(
-      '[VolunteersDirectory] source=$source '
+      '[PeopleDirectory] source=$source '
       'all=${allUsers.length} filtered=${filtered.length} '
       'linked=$linked placeholder=$placeholder emptyAuthNotPh=$emptyAuthNotPlaceholder '
-      'showPh=$_placeholdersOnly locationFilter=$_locationFilter '
+      'showPh=$_placeholdersOnly servingOnly=$_servingOnly locationFilter=$_locationFilter '
       'tags=${_selectedTagIDs.length} roles=${_selectedRoles.length} '
       'allByLoc=$locationCounts filteredByLoc=$filteredLocations',
     );
     if (sample.isNotEmpty) {
-      debugPrint('[VolunteersDirectory] sample: $sample');
+      debugPrint('[PeopleDirectory] sample: $sample');
     }
   }
 
@@ -220,7 +221,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.refresh),
-                  tooltip: 'Refresh volunteers',
+                  tooltip: 'Refresh people',
                   onPressed:
                       _refreshing ? null : () => _refreshUsersFromServer(),
                 ),
@@ -279,7 +280,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Could not refresh volunteers. Tap retry to download again.',
+                            'Could not refresh people. Tap retry to download again.',
                             style: TextStyle(
                                 color: Theme.of(context)
                                     .colorScheme
@@ -331,6 +332,25 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ),
                       );
                     }),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(l10n.volunteersFilterServing),
+                        selected: _servingOnly,
+                        onSelected: (selected) {
+                          setState(() => _servingOnly = selected);
+                          _logDirectorySnapshot(
+                            allUsers: appContext.allUsers,
+                            filtered: _filteredUsers(
+                              appContext.allUsers,
+                              appContext.allTags,
+                              cellGroupLeaders,
+                            ),
+                            source: 'serving-$selected',
+                          );
+                        },
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
@@ -712,6 +732,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           placeholdersOnly: _placeholdersOnly,
         ));
 
+    if (!_placeholdersOnly && _servingOnly) {
+      users = users.where((user) => VolunteerRoleHelpers.userServes(
+            user: user,
+            cellGroupLeaders: cellGroupLeaders,
+          ));
+    }
+
     if (_locationFilter != VolunteerLocations.all) {
       users = users.where((user) => user.location == _locationFilter);
     }
@@ -768,6 +795,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     }
     if (_selectedTagIDs.isNotEmpty) {
       return l10n.volunteersEmptyTags;
+    }
+    if (_servingOnly && _locationFilter != VolunteerLocations.all) {
+      return l10n.volunteersEmptyServingLocation(_locationFilter);
+    }
+    if (_servingOnly) {
+      return l10n.volunteersEmptyServing;
     }
     if (_locationFilter != VolunteerLocations.all) {
       return l10n.volunteersEmptyLocation(_locationFilter);

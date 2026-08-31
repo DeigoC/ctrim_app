@@ -8,6 +8,7 @@ User _user({
   bool isLeader = false,
   bool isAreaAdmin = false,
   String authID = '',
+  List<String> tagIDs = const [],
 }) {
   return User(
     id: id,
@@ -16,6 +17,7 @@ User _user({
     isLeader: isLeader,
     isAreaAdmin: isAreaAdmin,
     authID: authID,
+    tagIDs: tagIDs,
   );
 }
 
@@ -165,6 +167,48 @@ void main() {
           cellGroupLeaders: index,
         ),
         isFalse,
+      );
+    });
+
+    test('userServes is false for an untagged attendee', () {
+      expect(
+        VolunteerRoleHelpers.userServes(
+          user: _user(id: 'plain'),
+          cellGroupLeaders: index,
+        ),
+        isFalse,
+      );
+    });
+
+    test('userServes is true for leaders, admins, tagged people, and CG leaders',
+        () {
+      expect(
+        VolunteerRoleHelpers.userServes(
+          user: _user(id: 'l1', isLeader: true),
+          cellGroupLeaders: index,
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerRoleHelpers.userServes(
+          user: _user(id: 'a1', isAreaAdmin: true),
+          cellGroupLeaders: index,
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerRoleHelpers.userServes(
+          user: _user(id: 't1', tagIDs: ['welcome']),
+          cellGroupLeaders: index,
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerRoleHelpers.userServes(
+          user: _user(id: 'cg1'),
+          cellGroupLeaders: index,
+        ),
+        isTrue,
       );
     });
 

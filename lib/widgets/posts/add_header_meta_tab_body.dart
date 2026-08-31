@@ -366,6 +366,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,
@@ -934,6 +935,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,

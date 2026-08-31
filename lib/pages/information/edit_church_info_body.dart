@@ -194,6 +194,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           selectedUIDs: List<String>.from(_pastorUserIds),
           includeCurrentUser: true,
           title: 'Pastors',
+          preferServing: true,
         ),
       ),
     );

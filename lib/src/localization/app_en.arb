@@ -3,13 +3,13 @@
   "@appTitle": {
     "description": "The work in progress app for the CTRIM Church"
   },
-  "volunteersTitle": "Volunteers",
+  "volunteersTitle": "People",
   "@volunteersTitle": {
-    "description": "Title for the volunteers directory when showing all locations"
+    "description": "Title for the people directory when showing all locations"
   },
-  "volunteersTitleLocation": "{location} Volunteers",
+  "volunteersTitleLocation": "{location} People",
   "@volunteersTitleLocation": {
-    "description": "Title for the volunteers directory filtered by location",
+    "description": "Title for the people directory filtered by location",
     "placeholders": {
       "location": {
         "type": "String"
@@ -18,45 +18,62 @@
   },
   "volunteersFilterAll": "All",
   "@volunteersFilterAll": {
-    "description": "Filter chip label to show volunteers from every location"
+    "description": "Filter chip label to show people from every location"
   },
-  "volunteersSearchHint": "Search volunteers...",
+  "volunteersFilterServing": "Serving",
+  "@volunteersFilterServing": {
+    "description": "Filter chip for people who serve (leaders, team tags, or cell-group leaders)"
+  },
+  "volunteersSearchHint": "Search people...",
   "@volunteersSearchHint": {
-    "description": "Hint text for the volunteers search field"
+    "description": "Hint text for the people directory search field"
   },
-  "volunteersEmpty": "No volunteers found",
+  "volunteersEmpty": "No people found",
   "@volunteersEmpty": {
-    "description": "Empty state when the volunteers list has no entries"
+    "description": "Empty state when the people list has no entries"
   },
-  "volunteersEmptySearch": "No volunteers match \"{query}\"",
+  "volunteersEmptySearch": "No people match \"{query}\"",
   "@volunteersEmptySearch": {
-    "description": "Empty state when search returns no volunteers",
+    "description": "Empty state when search returns no people",
     "placeholders": {
       "query": {
         "type": "String"
       }
     }
   },
-  "volunteersEmptyLocation": "No volunteers in {location}",
+  "volunteersEmptyLocation": "No people in {location}",
   "@volunteersEmptyLocation": {
-    "description": "Empty state when a location filter returns no volunteers",
+    "description": "Empty state when a location filter returns no people",
     "placeholders": {
       "location": {
         "type": "String"
       }
     }
   },
-  "registerUser": "Register User",
+  "volunteersEmptyServing": "No serving people here. Turn off Serving to see everyone.",
+  "@volunteersEmptyServing": {
+    "description": "Empty state when the Serving filter hides attendees"
+  },
+  "volunteersEmptyServingLocation": "No serving people in {location}. Turn off Serving to see everyone.",
+  "@volunteersEmptyServingLocation": {
+    "description": "Empty state when Serving plus a location filter returns no people",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "registerUser": "Register person",
   "@registerUser": {
-    "description": "FAB label for registering a new volunteer"
+    "description": "FAB label for registering a new person"
   },
-  "volunteersMenuTitle": "Volunteers",
+  "volunteersMenuTitle": "Directory",
   "@volunteersMenuTitle": {
-    "description": "Personal home menu item for the volunteers directory"
+    "description": "Personal home menu item for the people directory"
   },
-  "volunteersMenuSubtitle": "View community members",
+  "volunteersMenuSubtitle": "Leaders, teams, and members",
   "@volunteersMenuSubtitle": {
-    "description": "Personal home menu subtitle for the volunteers directory"
+    "description": "Personal home menu subtitle for the people directory"
   },
   "mySchedule": "My Schedule",
   "@mySchedule": {
@@ -159,7 +176,7 @@
   "@manageUserTagsAdd": {
     "description": "Action to create a new volunteer tag"
   },
-  "manageUserTagsEmpty": "No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.",
+  "manageUserTagsEmpty": "No team tags yet. Create tags for teams like Worship, Technical, or Usher.",
   "@manageUserTagsEmpty": {
     "description": "Empty state on the manage tags page"
   },
@@ -220,7 +237,7 @@
       }
     }
   },
-  "manageUserTagsDeleteBlocked": "Cannot delete — {count} volunteers still have this tag. Deactivate it instead.",
+  "manageUserTagsDeleteBlocked": "Cannot delete — {count} people still have this tag. Deactivate it instead.",
   "@manageUserTagsDeleteBlocked": {
     "description": "Error when trying to delete a tag that is still assigned",
     "placeholders": {
@@ -229,7 +246,7 @@
       }
     }
   },
-  "manageUserTagsMenuTitle": "Volunteer Tags",
+  "manageUserTagsMenuTitle": "Team tags",
   "@manageUserTagsMenuTitle": {
     "description": "Personal home admin menu item for managing tags"
   },
@@ -441,7 +458,7 @@
       }
     }
   },
-  "manageUserLocationsDeleteBlocked": "Cannot delete — {count} volunteers still have this location. Deactivate it instead.",
+  "manageUserLocationsDeleteBlocked": "Cannot delete — {count} people still have this location. Deactivate it instead.",
   "@manageUserLocationsDeleteBlocked": {
     "description": "Error when trying to delete a location that is still assigned",
     "placeholders": {
@@ -459,7 +476,7 @@
       }
     }
   },
-  "manageUserLocationsMenuTitle": "Volunteer Locations",
+  "manageUserLocationsMenuTitle": "Locations",
   "@manageUserLocationsMenuTitle": {
     "description": "Personal home admin menu item for managing locations"
   },
@@ -467,13 +484,13 @@
   "@manageUserLocationsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing locations"
   },
-  "volunteersEmptyTags": "No volunteers match the selected tags",
+  "volunteersEmptyTags": "No people match the selected tags",
   "@volunteersEmptyTags": {
-    "description": "Empty state when tag filter returns no volunteers"
+    "description": "Empty state when tag filter returns no people"
   },
-  "selectUsersTitle": "Select members",
+  "selectUsersTitle": "Select people",
   "@selectUsersTitle": {
-    "description": "Title for the multi-select volunteer picker page"
+    "description": "Title for the multi-select people picker page"
   },
   "selectUsersDone": "Done",
   "@selectUsersDone": {
@@ -568,11 +585,11 @@
   },
   "volunteersShowPlaceholders": "Placeholders",
   "@volunteersShowPlaceholders": {
-    "description": "Filter chip to show only placeholder profiles in the Volunteers list"
+    "description": "Filter chip to show only placeholder profiles in the people list"
   },
   "volunteersEmptyPlaceholders": "No placeholder profiles to show",
   "@volunteersEmptyPlaceholders": {
-    "description": "Empty state when the placeholders filter returns no volunteers"
+    "description": "Empty state when the placeholders filter returns no people"
   },
   "volunteersPlaceholderBadge": "Placeholder",
   "@volunteersPlaceholderBadge": {
@@ -580,31 +597,31 @@
   },
   "volunteersSortLabel": "Sort",
   "@volunteersSortLabel": {
-    "description": "Label before sort mode chips on the volunteers list"
+    "description": "Label before sort mode chips on the people list"
   },
   "volunteersSortSurname": "Surname",
   "@volunteersSortSurname": {
-    "description": "Sort volunteers by surname"
+    "description": "Sort people by surname"
   },
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
-    "description": "Sort volunteers by primary team tag"
+    "description": "Sort people by primary team tag"
   },
   "volunteersFilterLeaders": "Leaders",
   "@volunteersFilterLeaders": {
-    "description": "Filter chip to show volunteers with the Leader permission"
+    "description": "Filter chip to show people with the Leader permission"
   },
   "volunteersFilterAdmins": "Admins",
   "@volunteersFilterAdmins": {
-    "description": "Filter chip to show volunteers who are area admins"
+    "description": "Filter chip to show people who are area admins"
   },
   "volunteersFilterCellGroupLeaders": "CG Leaders",
   "@volunteersFilterCellGroupLeaders": {
-    "description": "Filter chip to show volunteers who lead a cell group"
+    "description": "Filter chip to show people who lead a cell group"
   },
-  "volunteersEmptyRoles": "No volunteers match the selected roles",
+  "volunteersEmptyRoles": "No people match the selected roles",
   "@volunteersEmptyRoles": {
-    "description": "Empty state when a role filter returns no volunteers"
+    "description": "Empty state when a role filter returns no people"
   },
   "volunteersFilterTags": "Tags",
   "@volunteersFilterTags": {
@@ -627,9 +644,9 @@
   "@volunteersFilterTagsSheetSubtitle": {
     "description": "Subtitle for the volunteer tag filter bottom sheet"
   },
-  "volunteersSortTooltip": "Sort volunteers",
+  "volunteersSortTooltip": "Sort people",
   "@volunteersSortTooltip": {
-    "description": "Tooltip for the volunteers sort menu in the app bar"
+    "description": "Tooltip for the people directory sort menu in the app bar"
   },
   "cellGroupsAssignLabel": "Cell groups",
   "@cellGroupsAssignLabel": {
