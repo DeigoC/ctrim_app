@@ -46,7 +46,7 @@ Signed-in people see a profile header (including profile picture where set). Fro
 
 ## My Schedule
 
-**My Schedule** (under **For you**) lists roles and tasks the person has been assigned on event posts — a practical “what am I down for?” view for volunteers.
+**My Schedule** (under **For you**) lists programme roles and expected-attendee meetings on event posts — a practical “what am I down for?” view for volunteers.
 
 ## My Posts
 

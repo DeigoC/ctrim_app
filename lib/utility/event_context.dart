@@ -48,6 +48,9 @@ class EventContext {
   /// Draft expected attendees for create / template edit (written to attendance on publish).
   final List<String> _expectedAttendeeUserIDs = <String>[];
 
+  /// Expected attendees as loaded from the server — used to sync schedule removals on save.
+  List<String> _baselineExpectedUserIds = <String>[];
+
   // for viewing and editing
   EventContext.viewing(
       {required final EventHead eventHead,
@@ -158,6 +161,8 @@ class EventContext {
       if (forceReplace) {
         _attendanceDirty = false;
       }
+      _baselineExpectedUserIds =
+          List<String>.from(_attendance!.expectedUserIds);
     }
     _head.setInterestedCount(_attendance!.interestedCount);
     _head.setAttendeeCount(_attendance!.attendeeCount);
@@ -296,11 +301,17 @@ class EventContext {
     );
   }
 
-  /// User IDs removed from program roles during the current edit (for CF role sync).
+  /// User IDs removed from program roles or expected attendees (for schedule sync).
   List<String> collectRoleRemovalUserIds() {
     final uids = <String>{};
     for (final removed in _roleRemovals.values) {
       uids.addAll(removed);
+    }
+    final currentExpected = _attendance?.expectedUserIds ?? const <String>[];
+    for (final id in _baselineExpectedUserIds) {
+      if (!currentExpected.contains(id)) {
+        uids.add(id);
+      }
     }
     return uids.toList();
   }
@@ -330,6 +341,10 @@ class EventContext {
     _notifyBroadcast = true;
     _notifyScheduledMembers = true;
     _attendanceDirty = false;
+    if (_attendance != null) {
+      _baselineExpectedUserIds =
+          List<String>.from(_attendance!.expectedUserIds);
+    }
     _canSaveTheEditing = false;
   }
 

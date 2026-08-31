@@ -1,15 +1,18 @@
 import 'package:ctrim_app/models/event/event_attendance.dart';
 import 'package:ctrim_app/models/event/event_head.dart';
+import 'package:ctrim_app/models/event/event_metadata.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('EventContext attendance dirty merge', () {
     EventContext viewingContext() {
-      return EventContext.viewing(
+      final context = EventContext.viewing(
         eventHead: EventHead(id: 'post-1'),
         currentUID: 'author-1',
       );
+      context.setFetchedMetadata(EventMetadata(authorUID: 'author-1'));
+      return context;
     }
 
     EventAttendance serverSnapshot({
@@ -89,6 +92,26 @@ void main() {
       expect(context.attendance!.expectedUserIds, ['u-1', 'u-2']);
       expect(context.attendance!.interestedCount, 1);
       expect(context.canSaveTheEditing, isTrue);
+    });
+
+    test('collectRoleRemovalUserIds includes removed expected attendees', () {
+      final context = viewingContext();
+      context.setFetchedAttendance(
+        serverSnapshot(
+          attendees: const [],
+          expectedUserIds: const ['u-1', 'u-2'],
+        ),
+        forceReplace: true,
+      );
+
+      context.applyStaffAttendanceEdit(
+        serverSnapshot(
+          attendees: const [],
+          expectedUserIds: const ['u-2'],
+        ),
+      );
+
+      expect(context.collectRoleRemovalUserIds(), ['u-1']);
     });
 
     test('forceReplace true wipes dirty staff lists', () {

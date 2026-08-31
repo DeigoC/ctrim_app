@@ -185,14 +185,6 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     );
   }
 
-  /// True when the program has at least one role with assigned user IDs.
-  bool _programHasRoleAssignees(EventContext eventContext) {
-    return eventContext.program.roles.any((role) {
-      final uids = role['uids'];
-      return uids is List && uids.isNotEmpty;
-    });
-  }
-
   Future<void> _createAllPosts() async {
     setState(() {
       _isCreating = true;
@@ -234,11 +226,9 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           eventDate: preview.date,
         );
 
-        // Denormalize program role assignees onto users/{uid}/supplemental/roles
-        // so My Schedule picks them up. No push — bulk create never notifies.
-        if (_programHasRoleAssignees(eventContext)) {
-          await cloudFunctionManager.syncUserRolesForPost(postId: newID);
-        }
+        // Denormalize schedule onto users/{uid}/supplemental/roles
+        // (programme roles + expected attendees). No push — bulk create never notifies.
+        await cloudFunctionManager.syncUserRolesForPost(postId: newID);
 
         if (parentID != null &&
             parentMetadata != null &&

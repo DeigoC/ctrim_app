@@ -1,13 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/info/church_info.dart';
+import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/church_location.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/catalog/volunteer_locations.dart';
+import '../../widgets/user_avatar.dart';
+import '../personal/select_users_page.dart';
 import 'edit_info_body_shared.dart';
 
 class EditChurchInfoBody extends StatefulWidget {
@@ -28,7 +32,9 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   late final String _initialLocation;
   late final String _initialMapLink;
   late final String _initialAddress;
+  late final List<String> _initialPastorUserIds;
   String? _selectedLocation;
+  List<String> _pastorUserIds = const [];
   List<ChurchInfo> _allChurches = const [];
 
   @override
@@ -71,7 +77,10 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     _initialLocation = widget.info?.location.trim() ?? '';
     _initialMapLink = widget.info?.mapLink ?? '';
     _initialAddress = widget.info?.address ?? '';
+    _initialPastorUserIds =
+        List<String>.from(widget.info?.pastorUserIds ?? const []);
     _selectedLocation = _initialLocation.isEmpty ? null : _initialLocation;
+    _pastorUserIds = List<String>.from(_initialPastorUserIds);
     _summaryController = TextEditingController(text: _initialSummary);
     _mapLinkController = TextEditingController(text: _initialMapLink);
     _addressController = TextEditingController(text: _initialAddress);
@@ -105,6 +114,9 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     if (_addressController.text.trim() != _initialAddress.trim()) {
       return true;
     }
+    if (!listEquals(_pastorUserIds, _initialPastorUserIds)) {
+      return true;
+    }
     return false;
   }
 
@@ -120,8 +132,78 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         minLines: 2,
         maxLines: 3,
       ),
-      ..._buildChurchHubFields(),
+      ..._buildChurchHubFields(      ),
+      ..._buildPastorFields(),
     ];
+  }
+
+  List<Widget> _buildPastorFields() {
+    final theme = Theme.of(context);
+    return [
+      const SizedBox(height: 16),
+      Text(
+        'Pastors',
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        'People listed as pastors for this church.',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(
+        onPressed: _pickPastors,
+        icon: const Icon(Icons.person_add_alt),
+        label: const Text('Choose pastors'),
+      ),
+      ..._pastorUserIds.map(_buildPastorTile),
+    ];
+  }
+
+  Widget _buildPastorTile(final String userId) {
+    final user = _userById(userId);
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: user != null
+          ? MyUserAvatar(user, radius: 20)
+          : CircleAvatar(
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              child: Icon(
+                Icons.person,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+      title: Text(user?.fullname ?? 'Unknown user'),
+      trailing: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: () => setState(() => _pastorUserIds.remove(userId)),
+      ),
+    );
+  }
+
+  Future<void> _pickPastors() async {
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: List<String>.from(_pastorUserIds),
+          includeCurrentUser: true,
+          title: 'Pastors',
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _pastorUserIds = result);
+  }
+
+  User? _userById(final String id) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    return appContext.userById(id);
   }
 
   List<Widget> _buildChurchHubFields() {
@@ -251,6 +333,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       location: location,
       mapLink: _mapLinkController.text.trim(),
       address: _addressController.text.trim(),
+      pastorUserIds: List<String>.from(_pastorUserIds),
       updatedBy: appContext.currentUser.id,
       updatedAt: now,
       displayOrder: displayOrder,

@@ -44,7 +44,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Post tag** | A label on posts for **browsing and filtering** the bulletin (for example Sunday Worship or Midweek). Not used for push notification opt-in. |
 | **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Some lines can be hidden from **guests**. |
-| **My Schedule** | Personal list of programme roles assigned to **you**. |
+| **My Schedule** | Personal list of programme roles assigned to **you**, plus posts where you are an **expected attendee**. |
 | **My Posts** | Shortcut to posts **you** authored — not the full bulletin. |
 | **Related posts** | Parent, sibling, or child links between posts (a series, term, or meeting group). Shown on the post’s **Related** tab when present. |
 | **Period parent** | A post marked as a container for a term or season; other meeting posts can attach underneath it. |

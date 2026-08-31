@@ -29,11 +29,13 @@ void main() {
       expect(info.address, '');
       expect(info.hasLocation, isFalse);
       expect(info.hasMapLink, isFalse);
+      expect(info.pastorUserIds, isEmpty);
+      expect(info.hasPastors, isFalse);
       expect(info.updatedBy, 'user-1');
       expect(info.displayOrder, 2);
     });
 
-    test('fromMap reads location, mapLink, and address', () {
+    test('fromMap reads location, mapLink, address, and pastorUserIds', () {
       final info = ChurchInfo.fromMap('belfast', {
         'title': 'Belfast',
         'analyticTitle': 'Belfast',
@@ -43,6 +45,7 @@ void main() {
         'location': 'Belfast',
         'mapLink': 'https://maps.google.com/?q=belfast',
         'address': '8A Princes Dr',
+        'pastorUserIds': ['user-a', 'user-b'],
       });
 
       expect(info.location, 'Belfast');
@@ -51,6 +54,8 @@ void main() {
       expect(info.hasLocation, isTrue);
       expect(info.hasMapLink, isTrue);
       expect(info.hasAddress, isTrue);
+      expect(info.pastorUserIds, ['user-a', 'user-b']);
+      expect(info.hasPastors, isTrue);
     });
 
     test('toJson writes Firestore friendly shape', () {
@@ -69,6 +74,7 @@ void main() {
         location: 'Portadown',
         mapLink: 'https://maps.example/p',
         address: 'High St',
+        pastorUserIds: const ['pastor-1', 'pastor-2'],
         updatedBy: 'admin-1',
         updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
         displayOrder: 1,
@@ -84,6 +90,7 @@ void main() {
       expect(json['location'], 'Portadown');
       expect(json['mapLink'], 'https://maps.example/p');
       expect(json['address'], 'High St');
+      expect(json['pastorUserIds'], ['pastor-1', 'pastor-2']);
       expect(json['updatedBy'], 'admin-1');
       expect(json['updatedAt'], isA<Timestamp>());
       expect(json['displayOrder'], 1);
@@ -99,6 +106,7 @@ void main() {
         ],
         location: 'North Coast',
         mapLink: 'https://maps.example/nc',
+        pastorUserIds: const ['pastor-1'],
         updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
       );
 
@@ -106,7 +114,22 @@ void main() {
       expect(cache['location'], 'North Coast');
       expect(cache['mapLink'], 'https://maps.example/nc');
       expect(cache['address'], '');
+      expect(cache['pastorUserIds'], ['pastor-1']);
       expect(cache['updatedAt'], 1700000000000);
+    });
+
+    test('pastorUserIds getter is unmodifiable', () {
+      final info = ChurchInfo(
+        id: 'belfast',
+        title: 'Belfast',
+        analyticsTitle: 'Belfast',
+        body: const [
+          {'insert': 'Body\n'}
+        ],
+        pastorUserIds: const ['pastor-1'],
+      );
+
+      expect(() => info.pastorUserIds.add('pastor-2'), throwsUnsupportedError);
     });
 
     test('imageSources getter is unmodifiable', () {

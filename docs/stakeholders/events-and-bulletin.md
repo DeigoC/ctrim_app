@@ -53,7 +53,7 @@ Opening a post shows tabs when that content exists:
 |------|-------------------|
 | **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
 | **Bookmark** | Keep the post on your shortlist and (when organisers save with an update log) get notified about changes. Separate from interest — you can bookmark without marking interest. |
-| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). On the day, organisers can check them off into attendance quickly. |
+| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). They see the meeting on **My Schedule**; on the day, organisers can check them off into attendance quickly. |
 | **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. |
 
 ## Guest-visible schedule

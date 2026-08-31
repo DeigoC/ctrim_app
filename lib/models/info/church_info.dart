@@ -8,7 +8,7 @@ class ChurchInfo {
   late String _id, _title, _analyticsTitle, _summary, _updatedBy;
   late String _location, _mapLink, _address;
   late List<dynamic> _body;
-  late List<String> _imageSources;
+  late List<String> _imageSources, _pastorUserIds;
   late DateTime _updatedAt;
   int _displayOrder = 0;
 
@@ -18,6 +18,7 @@ class ChurchInfo {
     required String analyticsTitle,
     required List<dynamic> body,
     List<String>? imageSources,
+    List<String>? pastorUserIds,
     String summary = '',
     String location = '',
     String mapLink = '',
@@ -31,6 +32,7 @@ class ChurchInfo {
     _analyticsTitle = analyticsTitle;
     _body = List<dynamic>.from(body);
     _imageSources = List<String>.from(imageSources ?? const <String>[]);
+    _pastorUserIds = List<String>.from(pastorUserIds ?? const <String>[]);
     _summary = summary;
     _location = location;
     _mapLink = mapLink;
@@ -50,6 +52,7 @@ class ChurchInfo {
               .toString(),
       body: InfoParsing.parseBody(data['body']),
       imageSources: InfoParsing.parseImageSources(data),
+      pastorUserIds: _parseStringList(data['pastorUserIds']),
       summary: (data['summary'] ?? '').toString(),
       location: (data['location'] ?? '').toString(),
       mapLink: (data['mapLink'] ?? '').toString(),
@@ -66,6 +69,7 @@ class ChurchInfo {
       'analyticTitle': _analyticsTitle,
       'body': _body,
       'imageSources': _imageSources,
+      'pastorUserIds': _pastorUserIds,
       'summary': _summary,
       'location': _location,
       'mapLink': _mapLink,
@@ -83,6 +87,7 @@ class ChurchInfo {
       'analyticTitle': _analyticsTitle,
       'body': _body,
       'imageSources': _imageSources,
+      'pastorUserIds': _pastorUserIds,
       'summary': _summary,
       'location': _location,
       'mapLink': _mapLink,
@@ -98,6 +103,7 @@ class ChurchInfo {
   int get displayOrder => _displayOrder;
   String get id => _id;
   List<String> get imageSources => UnmodifiableListView<String>(_imageSources);
+  List<String> get pastorUserIds => UnmodifiableListView<String>(_pastorUserIds);
   String get imgSrc => _imageSources.isNotEmpty ? _imageSources.first : '';
   String get summary => _summary;
   String get title => _title;
@@ -110,12 +116,20 @@ class ChurchInfo {
   bool get hasLocation => _location.trim().isNotEmpty;
   bool get hasMapLink => _mapLink.trim().isNotEmpty;
   bool get hasAddress => _address.trim().isNotEmpty;
+  bool get hasPastors => _pastorUserIds.isNotEmpty;
+
+  static List<String> _parseStringList(final dynamic raw) {
+    if (raw is! List) return <String>[];
+    return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
+  }
 
   void setAnalyticsTitle(final String value) => _analyticsTitle = value;
   void setBody(final List<dynamic> value) => _body = List<dynamic>.from(value);
   void setDisplayOrder(final int value) => _displayOrder = value;
   void setImageSources(final List<String> value) =>
       _imageSources = List<String>.from(value);
+  void setPastorUserIds(final List<String> value) =>
+      _pastorUserIds = List<String>.from(value);
   void setSummary(final String value) => _summary = value;
   void setTitle(final String value) => _title = value;
   void setLocation(final String value) => _location = value;
