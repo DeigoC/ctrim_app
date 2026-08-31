@@ -19,6 +19,7 @@ import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../common/load_progress_body.dart';
+import '../two_column_masonry.dart';
 import '../user_avatar.dart';
 
 /// People tab: interested (self-serve) + expected checklist + attendees (author/contributor).
@@ -221,35 +222,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           )
         : null;
 
-    final sideBySide = isWide && interestedCard != null && expectedCard != null;
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        _buildInterestToggle(theme, colorScheme, isInterested),
-        if (sideBySide) ...[
-          const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: interestedCard),
-              const SizedBox(width: 16),
-              Expanded(child: expectedCard),
-            ],
-          ),
-        ] else ...[
-          if (interestedCard != null) ...[
-            const SizedBox(height: 20),
-            interestedCard,
-          ],
-          if (expectedCard != null) ...[
-            const SizedBox(height: 16),
-            expectedCard,
-          ],
-        ],
-        if (hasAttendees) ...[
-          const SizedBox(height: 16),
-          _buildSectionCard(
+    final attendeesCard = hasAttendees
+        ? _buildSectionCard(
             theme,
             colorScheme,
             icon: Icons.groups_outlined,
@@ -268,8 +242,31 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                       canManage: canManage),
               ],
             ),
-          ),
-        ] else if (canManage) ...[
+          )
+        : null;
+
+    final peopleCards = <Widget>[
+      if (interestedCard != null) interestedCard,
+      if (expectedCard != null) expectedCard,
+      if (attendeesCard != null) attendeesCard,
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      children: [
+        _buildInterestToggle(theme, colorScheme, isInterested),
+        if (peopleCards.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          if (isWide && peopleCards.length > 1)
+            TwoColumnMasonry(children: peopleCards)
+          else ...[
+            for (var i = 0; i < peopleCards.length; i++) ...[
+              if (i > 0) const SizedBox(height: 16),
+              peopleCards[i],
+            ],
+          ],
+        ],
+        if (!hasAttendees && canManage) ...[
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: _busy ? null : _manageAttendees,

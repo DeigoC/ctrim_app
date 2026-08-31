@@ -13,7 +13,7 @@ import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/information/info_section_card.dart';
-import '../../widgets/paired_row_list.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../../widgets/user_avatar.dart';
 import '../personal/select_users_page.dart';
 import 'edit_info_body_shared.dart';
@@ -263,22 +263,17 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       children: _buildMediaFields(),
     );
 
+    final cards = <Widget>[churchCard, visitCard, pastorsCard, mediaCard];
     final bool wide = ResponsiveLayout.isWideScreenOf(context);
     return [
       if (wide)
-        PairedRowList(
-          itemCount: 2,
-          itemBuilder: (_, index) => index == 0 ? churchCard : visitCard,
-        )
+        TwoColumnMasonry(children: cards)
       else ...[
-        churchCard,
-        const SizedBox(height: 16),
-        visitCard,
+        for (var i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(height: 16),
+          cards[i],
+        ],
       ],
-      const SizedBox(height: 16),
-      pastorsCard,
-      const SizedBox(height: 16),
-      mediaCard,
       const SizedBox(height: 24),
       SizedBox(
         width: double.infinity,
