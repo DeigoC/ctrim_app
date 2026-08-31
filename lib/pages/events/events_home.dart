@@ -7,7 +7,7 @@ import '../../utility/bulletin_listing.dart';
 import '../../utility/event_heads_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
-import '../../widgets/paired_row_list.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../../widgets/bulletin/bulletin_first_time_dialog.dart';
 import '../../widgets/bulletin/bulletin_setting_sheet.dart';
 import '../../widgets/posts/post_head.dart';
@@ -257,12 +257,13 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     );
   }
 
-  /// Paired rows so left-to-right, top-to-bottom stays chronological.
+  /// Masonry so a text-only PostHead does not leave a gap beside an image post.
   Widget _buildWidePostRows(ColorScheme colorScheme, List<EventHead> heads) {
-    return PairedRowList(
-      itemCount: heads.length,
-      itemBuilder: (_, index) =>
-          _buildPostCard(colorScheme, heads[index], verticalMargin: 0),
+    return TwoColumnMasonry(
+      children: [
+        for (final head in heads)
+          _buildPostCard(colorScheme, head, verticalMargin: 0),
+      ],
     );
   }
 

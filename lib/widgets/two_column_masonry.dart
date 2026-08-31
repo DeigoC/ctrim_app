@@ -5,9 +5,9 @@ import 'package:flutter/widgets.dart';
 
 /// Two-column masonry: each child is placed in the currently shorter column.
 ///
-/// Use on wide dashboards where cards have uneven heights. [PairedRowList]
-/// keeps reading-order rows (next row waits for both cards); this fills the
-/// gap under the shorter card instead.
+/// Use on wide layouts where cards have uneven heights (dashboards, PostHead
+/// feeds). [PairedRowList] keeps reading-order rows (next row waits for both
+/// cards); this fills the gap under the shorter card instead.
 class TwoColumnMasonry extends MultiChildRenderObjectWidget {
   const TwoColumnMasonry({
     super.key,

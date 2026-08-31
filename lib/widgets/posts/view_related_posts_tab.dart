@@ -7,7 +7,7 @@ import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../common/load_progress_body.dart';
-import '../paired_row_list.dart';
+import '../two_column_masonry.dart';
 import 'post_head.dart';
 
 class ViewRelatedPostsTab extends StatefulWidget {
@@ -246,10 +246,7 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     return ResponsiveLayout.isWideScreenOf(context)
         ? SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-            child: PairedRowList(
-              itemCount: relatedPosts.length,
-              itemBuilder: (_, index) => relatedPosts[index],
-            ),
+            child: TwoColumnMasonry(children: relatedPosts),
           )
         : ListView.separated(
             padding: const EdgeInsets.only(bottom: 16),

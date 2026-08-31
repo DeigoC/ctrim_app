@@ -13,6 +13,7 @@ import '../../utility/user_schedule_service.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/paired_row_list.dart';
 import '../../widgets/posts/post_head.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../events/view_event_page.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
@@ -369,23 +370,25 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
                 .clamp(16.0, double.infinity)
             : 8.0;
 
+        final postCards = <Widget>[];
+        for (final id in postIDs) {
+          final thisHead = _appContext.headById(id);
+          if (thisHead == null) continue;
+          postCards.add(PostHead(
+            thisHead: thisHead,
+            updatePost: () {
+              setState(() {});
+            },
+          ));
+        }
+
         return isWideScreen
             ? SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                     horizontal: horizontalPadding, vertical: 8),
-                child: PairedRowList(
-                  itemCount: postIDs.length,
+                child: TwoColumnMasonry(
                   runSpacing: 8,
-                  itemBuilder: (_, index) {
-                    final thisHead = _appContext.headById(postIDs[index]);
-                    if (thisHead == null) return const SizedBox.shrink();
-                    return PostHead(
-                      thisHead: thisHead,
-                      updatePost: () {
-                        setState(() {});
-                      },
-                    );
-                  },
+                  children: postCards,
                 ),
               )
             : ListView.separated(

@@ -5,7 +5,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
-import '../../widgets/paired_row_list.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/posts/post_head.dart';
 
@@ -140,9 +140,10 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
 
         return SingleChildScrollView(
           padding: padding,
-          child: PairedRowList(
-            itemCount: postIDs.length,
-            itemBuilder: (_, index) => _buildPostCard(postIDs[index]),
+          child: TwoColumnMasonry(
+            children: [
+              for (final id in postIDs) _buildPostCard(id),
+            ],
           ),
         );
       },
