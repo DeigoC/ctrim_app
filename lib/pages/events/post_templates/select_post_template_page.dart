@@ -8,6 +8,7 @@ import '../../../utility/event_context.dart';
 import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/post_template_mapper.dart';
+import '../../../utility/post_title_date.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/common/load_progress_body.dart';
@@ -26,7 +27,6 @@ class SelectPostTemplatePage extends StatefulWidget {
     this.sourcePostParentId,
     this.sourcePostEventDate,
   });
-  static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
   final bool bulkMode;
   final String? sourcePostId;
@@ -791,7 +791,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       if (selectedDate == null || !mounted) return;
       PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
       eventContext.head.setTitle(
-          '${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
+          formatPostTitle(postTemplate.title, selectedDate));
       if (!mounted) return;
       Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => AddEventPage(eventContext: eventContext)));
