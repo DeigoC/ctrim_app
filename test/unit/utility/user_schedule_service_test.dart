@@ -32,11 +32,22 @@ void main() {
         );
       });
 
-      test('includes roles for posts missing from event heads', () {
+      test('does not prune roles when the post head is not in bulletin cache', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+        final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: []),
+          UserScheduleService.staleRolePostIDs(user: user, eventHeads: [], now: now),
+          isEmpty,
+        );
+      });
+
+      test('prunes roles beyond retention using role start when head is missing', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+        final now = DateTime(2024, 7, 20);
+
+        expect(
+          UserScheduleService.staleRolePostIDs(user: user, eventHeads: [], now: now),
           ['post-1'],
         );
       });
@@ -86,9 +97,10 @@ void main() {
               title: 'Teardown',
             ),
           ]);
+        final now = DateTime(2024, 7, 20);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: []),
+          UserScheduleService.staleRolePostIDs(user: user, eventHeads: [], now: now),
           ['post-1'],
         );
       });
@@ -270,7 +282,7 @@ void main() {
 
         expect(
           UserScheduleService.upcomingPostCount(user: user, eventHeads: heads, now: now),
-          1,
+          2,
         );
       });
     });

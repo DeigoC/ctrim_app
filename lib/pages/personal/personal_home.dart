@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/user_schedule_service.dart';
@@ -42,12 +43,15 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  final UserScheduleService _scheduleService = UserScheduleService();
+  bool _loadingScheduleRoles = false;
 
   @override
   void initState() {
     super.initState();
-    // Web-only: suggest adding the PWA to the home screen once.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _ensureCurrentUserScheduleRolesLoaded();
       if (!kIsWeb) return;
       if (PwaInstallService.instance.isInstalled) return;
       if (widget.appContext.sharedPref.hasSeenPwaHomeScreenPrompt) return;
@@ -284,7 +288,7 @@ class _PersonalHomeState extends State<PersonalHome> {
       PersonalAction(
         icon: Icons.checklist_rounded,
         title: l10n.mySchedule,
-        subtitle: l10n.myScheduleSubtitle,
+        subtitle: _myScheduleSubtitle(appContext, l10n),
         trailing: _buildScheduleBadge(appContext, theme, colorScheme),
         onTap: _onViewTasksClick,
         iconColor: colorScheme.tertiary,
@@ -348,15 +352,26 @@ class _PersonalHomeState extends State<PersonalHome> {
     ];
   }
 
-  Widget? _buildScheduleBadge(
-      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
-    if (appContext.currentUser.roles == null) return null;
+  String _myScheduleSubtitle(AppContext appContext, AppLocalizations l10n) {
+    final count = _upcomingScheduleCount(appContext);
+    if (count == null) return l10n.myScheduleSubtitle;
+    if (count == 0) return l10n.myScheduleSubtitle;
+    if (count == 1) return '1 upcoming item';
+    return '$count upcoming items';
+  }
 
-    final upcomingCount = UserScheduleService.upcomingPostCount(
+  int? _upcomingScheduleCount(AppContext appContext) {
+    if (appContext.currentUser.roles == null) return null;
+    return UserScheduleService.upcomingPostCount(
       user: appContext.currentUser,
       eventHeads: appContext.eventHeads,
     );
-    if (upcomingCount == 0) return null;
+  }
+
+  Widget? _buildScheduleBadge(
+      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+    final upcomingCount = _upcomingScheduleCount(appContext);
+    if (upcomingCount == null || upcomingCount == 0) return null;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -450,7 +465,34 @@ class _PersonalHomeState extends State<PersonalHome> {
         MaterialPageRoute(
             builder: (_) => ViewUserRolesPage(
                   selectedUser: widget.appContext.currentUser,
-                )));
+                ))).then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _ensureCurrentUserScheduleRolesLoaded() async {
+    if (widget.appContext.isCurrentUserGuest) return;
+    if (widget.appContext.currentUser.roles != null) return;
+    if (_loadingScheduleRoles) return;
+
+    setState(() => _loadingScheduleRoles = true);
+    try {
+      final user = widget.appContext.currentUser;
+      final roles = await _scheduleService.fetchRoles(user.id);
+      user.setRoles(roles);
+      await _scheduleService.pruneStaleRoles(
+        user: user,
+        eventHeads: widget.appContext.eventHeads,
+      );
+      if (!mounted) return;
+      widget.appContext.setCurrentUserRoles(List<UserRoleAssignment>.from(user.roles!));
+    } catch (e, st) {
+      debugPrint('Could not preload schedule roles: $e\n$st');
+    } finally {
+      if (mounted) {
+        setState(() => _loadingScheduleRoles = false);
+      }
+    }
   }
 
   void _onNotificationManagerClick() {

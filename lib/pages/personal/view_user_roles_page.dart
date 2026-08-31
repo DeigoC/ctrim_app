@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/user.dart';
+import '../../models/user_role_assignment.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
@@ -95,6 +96,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         user: widget.selectedUser,
         eventHeads: _appContext.eventHeads,
       );
+      _syncCurrentUserRolesIfNeeded();
       if (!mounted) return;
 
       setState(() {
@@ -594,6 +596,13 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     );
   }
 
+  void _syncCurrentUserRolesIfNeeded() {
+    if (widget.selectedUser.id != _appContext.currentUser.id) return;
+    final roles = widget.selectedUser.roles;
+    if (roles == null) return;
+    _appContext.setCurrentUserRoles(List<UserRoleAssignment>.from(roles));
+  }
+
   Future<void> _refreshRoles() async {
     if (_appContext.sharedPref.canRefreshRoles) {
       debugPrint('Real Refreshing!');
@@ -603,6 +612,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         user: widget.selectedUser,
         eventHeads: _appContext.eventHeads,
       );
+      _syncCurrentUserRolesIfNeeded();
       if (!mounted) return;
       setState(() {
         _appContext.sharedPref.setRoleRefreshTime();
@@ -618,6 +628,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       user: widget.selectedUser,
       eventHeads: _appContext.eventHeads,
     );
+    _syncCurrentUserRolesIfNeeded();
     if (!mounted || !removed) return;
     setState(() {});
     if (showSnackBar) {
