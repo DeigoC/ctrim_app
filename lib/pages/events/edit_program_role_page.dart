@@ -293,6 +293,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
                             '${_selectedUsers.length} member${_selectedUsers.length == 1 ? '' : 's'} assigned',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedUsers.clear();
+                              });
+                              _onFieldsChanged();
+                            },
+                            child: const Text('Clear'),
+                          ),
                         ],
                         const SizedBox(height: 12),
                         FilledButton.icon(
