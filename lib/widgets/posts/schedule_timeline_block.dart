@@ -52,21 +52,23 @@ class ScheduleTimelineBlock extends StatelessWidget {
         ? colorScheme.onPrimary.withValues(alpha: 0.85)
         : colorScheme.onSurfaceVariant;
 
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(
+        color: selected
+            ? colorScheme.primary
+            : colorScheme.outlineVariant.withValues(alpha: 0.7),
+      ),
+    );
+
     return Material(
       color: background,
       elevation: dragging ? 6 : 0,
-      borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected
-              ? colorScheme.primary
-              : colorScheme.outlineVariant.withValues(alpha: 0.7),
-        ),
-      ),
+      shape: shape,
       child: InkWell(
         onTap: onTap,
+        customBorder: shape,
         child: SizedBox(
           height: height,
           child: Padding(

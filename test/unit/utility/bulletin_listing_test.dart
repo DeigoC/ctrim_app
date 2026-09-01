@@ -115,8 +115,7 @@ void main() {
   });
 
   group('BulletinListing.apply sort', () {
-    test('relevancy is today, then near upcoming, then the rest by recentDate',
-        () {
+    test('relevancy is today, head upcoming, recent past, then the rest', () {
       final visible = apply([
         head(
           id: 'old-update',
@@ -153,12 +152,12 @@ void main() {
         'today-late',
         'tomorrow',
         'next-week',
-        'fresh-undated',
         'old-update',
+        'fresh-undated',
       ]);
     });
 
-    test('relevancy keeps far-future bulk posts in the rest bucket', () {
+    test('relevancy keeps far-future bulk posts after recent past', () {
       final visible = apply([
         head(
           id: 'tomorrow',
@@ -175,16 +174,30 @@ void main() {
           recentDate: DateTime(2026, 8, 21),
         ),
       ]);
-      expect(visible.map((e) => e.id), ['tomorrow', 'far-future', 'old-update']);
+      expect(visible.map((e) => e.id), ['tomorrow', 'old-update', 'far-future']);
     });
 
-    test('relevancy does not cap near upcoming events within four weeks', () {
+    test('relevancy caps upcoming before recent past, then shows more future',
+        () {
       final heads = [
-        for (var i = 1; i <= 6; i++)
+        for (var i = 1; i <= 10; i++)
           head(id: 'u$i', eventDate: DateTime(2026, 8, 22 + i, 10)),
+        head(id: 'yesterday', eventDate: DateTime(2026, 8, 21, 10)),
+        head(id: 'last-week', eventDate: DateTime(2026, 8, 15, 10)),
       ];
-      expect(
-          apply(heads).map((e) => e.id), ['u1', 'u2', 'u3', 'u4', 'u5', 'u6']);
+      final ids = apply(heads).map((e) => e.id).toList();
+      expect(ids.take(8), [
+        'u1',
+        'u2',
+        'u3',
+        'u4',
+        'u5',
+        'u6',
+        'yesterday',
+        'last-week',
+      ]);
+      expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u7')));
+      expect(ids.indexOf('last-week'), lessThan(ids.indexOf('u7')));
     });
 
     test('soonest puts upcoming before past and undated last', () {

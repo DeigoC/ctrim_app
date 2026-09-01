@@ -201,44 +201,6 @@ class EventProgram {
     shiftRolesStartingAtOrAfter(start, end.difference(start));
   }
 
-  /// Moves a role one place earlier (-1) or later (+1) in start-time order.
-  /// Swaps time slots with the neighbor while preserving each duration and the gap.
-  /// Returns false if the move is not possible.
-  bool moveRoleInOrder(int roleId, int direction) {
-    if (direction != -1 && direction != 1) return false;
-    orderProgramsByStartTime();
-    final int index = _roles.indexWhere((entry) => entry['id'] == roleId);
-    final int newIndex = index + direction;
-    if (index < 0 || newIndex < 0 || newIndex >= _roles.length) return false;
-
-    final int earlierIndex = index < newIndex ? index : newIndex;
-    final int laterIndex = index < newIndex ? newIndex : index;
-    final Map<String, dynamic> earlier = _roles[earlierIndex];
-    final Map<String, dynamic> later = _roles[laterIndex];
-
-    final DateTime earlierStart = earlier['start'] as DateTime;
-    final DateTime earlierEnd = earlier['end'] as DateTime;
-    final DateTime laterStart = later['start'] as DateTime;
-    final DateTime laterEnd = later['end'] as DateTime;
-    final Duration earlierDuration = earlierEnd.difference(earlierStart);
-    final Duration laterDuration = laterEnd.difference(laterStart);
-    final Duration gap = laterStart.difference(earlierEnd);
-
-    // Neighbor takes the earlier slot; original earlier item follows with the same gap.
-    final DateTime swappedEarlierStart = earlierStart;
-    final DateTime swappedEarlierEnd = swappedEarlierStart.add(laterDuration);
-    final DateTime swappedLaterStart = swappedEarlierEnd.add(gap);
-    final DateTime swappedLaterEnd = swappedLaterStart.add(earlierDuration);
-
-    earlier['start'] = swappedLaterStart;
-    earlier['end'] = swappedLaterEnd;
-    later['start'] = swappedEarlierStart;
-    later['end'] = swappedEarlierEnd;
-
-    orderProgramsByStartTime();
-    return true;
-  }
-
   /// Drops a role onto [newStart], keeping its duration.
   ///
   /// [ProgramShiftMode.parallel] moves only this role, so it may overlap

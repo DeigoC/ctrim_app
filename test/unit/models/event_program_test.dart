@@ -295,26 +295,6 @@ void main() {
         expect(program.roles[2]['start'], DateTime(2024, 6, 15, 11, 0));
       });
 
-      test('moveRoleInOrder swaps adjacent items and preserves durations', () {
-        final program = buildSequentialProgram();
-        final moved = program.moveRoleInOrder(2, -1);
-
-        expect(moved, true);
-        expect(program.roles[0]['title'], 'Worship');
-        expect(program.roles[0]['start'], DateTime(2024, 6, 15, 10, 0));
-        expect(program.roles[0]['end'], DateTime(2024, 6, 15, 10, 30));
-        expect(program.roles[1]['title'], 'Welcome');
-        expect(program.roles[1]['start'], DateTime(2024, 6, 15, 10, 30));
-        expect(program.roles[1]['end'], DateTime(2024, 6, 15, 10, 45));
-        expect(program.roles[2]['start'], DateTime(2024, 6, 15, 10, 45));
-      });
-
-      test('moveRoleInOrder returns false at list edges', () {
-        final program = buildSequentialProgram();
-        expect(program.moveRoleInOrder(1, -1), false);
-        expect(program.moveRoleInOrder(3, 1), false);
-      });
-
       test('rebaseRolesToCalendarDate keeps clock times on the new day', () {
         final program = buildSequentialProgram();
         program.rebaseRolesToCalendarDate(

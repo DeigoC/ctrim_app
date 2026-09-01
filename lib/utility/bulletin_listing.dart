@@ -69,8 +69,14 @@ class BulletinListing {
   /// An event stays in Upcoming until this long after its start.
   static const Duration upcomingGrace = Duration(hours: 12);
 
-  /// In relevancy sort, upcoming events within this window stay above older posts.
-  static const Duration relevancyNearWindow = Duration(days: 28);
+  /// In relevancy sort, how many future events stay above recent past.
+  static const int relevancyHeadUpcomingMax = 6;
+
+  /// Recent past events surfaced right after the short upcoming head.
+  static const Duration relevancyRecentPastWindow = Duration(days: 14);
+
+  /// Only events within this window can appear in the relevancy upcoming head.
+  static const Duration relevancyHeadUpcomingWindow = Duration(days: 14);
 
   static List<EventHead> apply({
     required Iterable<EventHead> heads,
@@ -164,31 +170,64 @@ class BulletinListing {
     }
   }
 
-  /// Today (by calendar), then near-term upcoming, then everything else by last update.
+  /// Today, a short upcoming head, recent past, then everything else.
   static List<EventHead> _sortRelevancy(
     final List<EventHead> heads,
     final DateTime now,
   ) {
     final today = <EventHead>[];
-    final nearUpcoming = <EventHead>[];
-    final rest = <EventHead>[];
-    final nearCutoff = now.add(relevancyNearWindow);
+    final future = <EventHead>[];
+    final recentPast = <EventHead>[];
+    final otherPast = <EventHead>[];
+    final undated = <EventHead>[];
+    final recentPastCutoff = now.subtract(relevancyRecentPastWindow);
+
     for (final head in heads) {
       final eventDate = head.eventDate;
-      if (eventDate != null && isSameCalendarDay(eventDate, now)) {
+      if (eventDate == null) {
+        undated.add(head);
+      } else if (isSameCalendarDay(eventDate, now)) {
         today.add(head);
-      } else if (eventDate != null &&
-          eventDate.isAfter(now) &&
-          !eventDate.isAfter(nearCutoff)) {
-        nearUpcoming.add(head);
+      } else if (eventDate.isAfter(now)) {
+        future.add(head);
+      } else if (!eventDate.isBefore(recentPastCutoff)) {
+        recentPast.add(head);
       } else {
-        rest.add(head);
+        otherPast.add(head);
       }
     }
+
     today.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-    nearUpcoming.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-    rest.sort((a, b) => b.recentDate.compareTo(a.recentDate));
-    return [...today, ...nearUpcoming, ...rest];
+    future.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+    recentPast.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
+    otherPast.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+    undated.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+
+    final headUpcomingCutoff = now.add(relevancyHeadUpcomingWindow);
+    final nearFuture = <EventHead>[];
+    final farFuture = <EventHead>[];
+    for (final head in future) {
+      if (head.eventDate!.isAfter(headUpcomingCutoff)) {
+        farFuture.add(head);
+      } else {
+        nearFuture.add(head);
+      }
+    }
+
+    final headFuture = nearFuture.take(relevancyHeadUpcomingMax);
+    final tailFuture = [
+      ...nearFuture.skip(relevancyHeadUpcomingMax),
+      ...farFuture,
+    ];
+
+    return [
+      ...today,
+      ...headFuture,
+      ...recentPast,
+      ...tailFuture,
+      ...otherPast,
+      ...undated,
+    ];
   }
 
   /// Next events first (today and future), then recent past, then undated.
