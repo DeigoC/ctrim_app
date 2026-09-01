@@ -62,6 +62,12 @@ class ChurchHubDashboard extends StatelessWidget {
       _VisitCard(church: church, onOpenMaps: onOpenMaps),
       if (church.hasPastorsSection)
         _PastorsCard(church: church, onLearnAbout: onOpenPastors),
+      _SnapshotCard(
+        church: church,
+        stats: stats,
+        statsError: statsError,
+        onRetryStats: onRetryStats,
+      ),
       if (pagesError != null || pages.isNotEmpty || canAddPages)
         _PagesCard(
           pages: pages,
@@ -71,12 +77,6 @@ class ChurchHubDashboard extends StatelessWidget {
           onOpenPage: onOpenPage,
           onAddPage: onAddPage,
         ),
-      _SnapshotCard(
-        church: church,
-        stats: stats,
-        statsError: statsError,
-        onRetryStats: onRetryStats,
-      ),
       if (church.hasGalleryImages) _GalleryCard(church: church),
       if (church.hasLocation)
         _RecentPostsCard(

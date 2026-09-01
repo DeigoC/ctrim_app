@@ -66,6 +66,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myScheduleSubtitle => 'View your tasks and roles';
 
   @override
+  String get personalScheduleEmpty => 'No upcoming tasks assigned for now.';
+
+  @override
+  String get personalScheduleViewFull => 'View full schedule';
+
+  @override
+  String personalScheduleViewAll(int count) {
+    return 'View all $count upcoming';
+  }
+
+  @override
+  String get personalCellGroupsTitle => 'Cell groups';
+
+  @override
+  String get personalCellGroupsSubtitle => 'Your groups and upcoming meetings';
+
+  @override
+  String get personalCellGroupsEmpty =>
+      'You are not in a cell group yet. Browse groups to find one that fits you.';
+
+  @override
+  String get personalCellGroupsBrowse => 'Browse cell groups';
+
+  @override
+  String get personalCellGroupsNoUpcoming =>
+      'No upcoming meetings in the next 8 weeks.';
+
+  @override
+  String personalCellGroupLedBy(String leader) {
+    return 'Led by $leader';
+  }
+
+  @override
+  String get personalCellGroupLeaderTbc => 'Leader TBC';
+
+  @override
+  String personalCellGroupsMoreMeetings(int count) {
+    return 'And $count more upcoming meetings';
+  }
+
+  @override
+  String get personalScheduleDateTbc => 'Date TBC';
+
+  @override
+  String personalScheduleRolesCount(int count) {
+    return '$count roles';
+  }
+
+  @override
+  String get personalScheduleUntitledEvent => 'Untitled event';
+
+  @override
   String get userProfileLeaderBadge => 'Leader';
 
   @override
@@ -619,6 +671,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsActivityTrendMetricMeetings => 'Meetings';
 
   @override
+  String get cellGroupsDetailActivityTitle => 'Activity';
+
+  @override
+  String get cellGroupsDetailActivityTrendTitle => 'Meetings over time';
+
+  @override
+  String get cellGroupsDetailActivityTrendSubtitle =>
+      'Bulletin posts linked to this group';
+
+  @override
   String get cellGroupsEmpty => 'No cell groups yet.';
 
   @override
@@ -1001,4 +1063,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationDismiss => 'Ok';
+
+  @override
+  String get scheduleEmptyTitle => 'Nothing scheduled yet';
+
+  @override
+  String get scheduleEmptyBodyEditor =>
+      'Add schedule items from the edit menu and they will appear here on the timeline.';
+
+  @override
+  String get scheduleEmptyBodyViewer =>
+      'The running order for this post has not been shared yet.';
+
+  @override
+  String get scheduleUntimedSectionTitle => 'Without a time';
+
+  @override
+  String get scheduleNoTimeSet => 'No time set';
+
+  @override
+  String get scheduleStaffOnly => 'Not shown to guests';
+
+  @override
+  String get scheduleEditTask => 'Edit Task';
+
+  @override
+  String scheduleParallelCount(int count) {
+    return '+$count parallel';
+  }
+
+  @override
+  String get scheduleParallelSheetTitle => 'Running in parallel';
+
+  @override
+  String get scheduleParallelSheetSubtitle =>
+      'These items overlap others already on the timeline';
+
+  @override
+  String get scheduleArrangeTitle => 'Arrange schedule';
+
+  @override
+  String get scheduleArrangeSubtitle =>
+      'Drag items to reorder the running time';
+
+  @override
+  String get scheduleArrangeDone => 'Done';
+
+  @override
+  String get scheduleArrangeEmpty =>
+      'Add timed schedule items before arranging them.';
+
+  @override
+  String get scheduleArrangeModeCascade => 'Cascade';
+
+  @override
+  String get scheduleArrangeModeParallel => 'Parallel';
+
+  @override
+  String get scheduleArrangeCascadeHint =>
+      'Long press an item and drag it. Anything it lands on moves later to keep the running order.';
+
+  @override
+  String get scheduleArrangeParallelHint =>
+      'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.';
+
+  @override
+  String scheduleArrangeDragHint(String title) {
+    return 'Long press \"$title\" to drag it';
+  }
 }

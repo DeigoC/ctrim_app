@@ -170,6 +170,29 @@ void main() {
         expect(program.roles[0]['title'], 'First');
         expect(program.roles[1]['title'], 'Second');
       });
+
+      test('keeps roles without a start time at the end', () {
+        final program = EventProgram();
+        program.addRole(
+          uids: [],
+          title: 'Untimed',
+          start: null,
+          end: null,
+          id: 2,
+        );
+        program.addRole(
+          uids: [],
+          title: 'Timed',
+          start: DateTime(2024, 6, 15, 10, 0),
+          end: DateTime(2024, 6, 15, 11, 0),
+          id: 1,
+        );
+
+        program.orderProgramsByStartTime();
+
+        expect(program.roles[0]['title'], 'Timed');
+        expect(program.roles[1]['title'], 'Untimed');
+      });
     });
 
     group('cascade timing', () {
@@ -314,6 +337,158 @@ void main() {
 
         expect(program.roles[0]['start'], DateTime(2024, 6, 15, 10, 0));
         expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 30));
+      });
+
+      group('moveRoleToStart', () {
+        test('parallel keeps the duration and leaves other roles alone', () {
+          final program = buildSequentialProgram();
+          final moved = program.moveRoleToStart(
+            roleId: 3,
+            newStart: DateTime(2024, 6, 15, 10, 0),
+            mode: ProgramShiftMode.parallel,
+          );
+
+          expect(moved, true);
+          final message =
+              program.roles.firstWhere((role) => role['id'] == 3);
+          expect(message['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(message['end'], DateTime(2024, 6, 15, 10, 45));
+
+          final welcome = program.roles.firstWhere((role) => role['id'] == 1);
+          final worship = program.roles.firstWhere((role) => role['id'] == 2);
+          expect(welcome['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(worship['start'], DateTime(2024, 6, 15, 10, 15));
+        });
+
+        test('cascade pushes the roles it lands on down the chain', () {
+          final program = buildSequentialProgram();
+          program.moveRoleToStart(
+            roleId: 3,
+            newStart: DateTime(2024, 6, 15, 10, 0),
+            mode: ProgramShiftMode.cascade,
+          );
+
+          final message =
+              program.roles.firstWhere((role) => role['id'] == 3);
+          final welcome = program.roles.firstWhere((role) => role['id'] == 1);
+          final worship = program.roles.firstWhere((role) => role['id'] == 2);
+
+          expect(message['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(message['end'], DateTime(2024, 6, 15, 10, 45));
+          // Welcome starts when the message finishes, worship follows it.
+          expect(welcome['start'], DateTime(2024, 6, 15, 10, 45));
+          expect(welcome['end'], DateTime(2024, 6, 15, 11, 0));
+          expect(worship['start'], DateTime(2024, 6, 15, 11, 0));
+          expect(worship['end'], DateTime(2024, 6, 15, 11, 30));
+        });
+
+        test('cascade stops pushing once an item already fits', () {
+          final program = buildSequentialProgram();
+          program.addRole(
+            uids: [],
+            title: 'Fellowship',
+            start: DateTime(2024, 6, 15, 13, 0),
+            end: DateTime(2024, 6, 15, 14, 0),
+            id: 4,
+          );
+
+          program.moveRoleToStart(
+            roleId: 1,
+            newStart: DateTime(2024, 6, 15, 10, 30),
+            mode: ProgramShiftMode.cascade,
+          );
+
+          final fellowship =
+              program.roles.firstWhere((role) => role['id'] == 4);
+          expect(fellowship['start'], DateTime(2024, 6, 15, 13, 0));
+          expect(fellowship['end'], DateTime(2024, 6, 15, 14, 0));
+        });
+
+        test('cascade leaves a long role that started earlier in place', () {
+          final program = buildSequentialProgram();
+          program.addRole(
+            uids: [],
+            title: 'Technical Sound',
+            start: DateTime(2024, 6, 15, 9, 0),
+            end: DateTime(2024, 6, 15, 12, 0),
+            id: 4,
+          );
+
+          program.moveRoleToStart(
+            roleId: 1,
+            newStart: DateTime(2024, 6, 15, 10, 30),
+            mode: ProgramShiftMode.cascade,
+          );
+
+          final sound = program.roles.firstWhere((role) => role['id'] == 4);
+          expect(sound['start'], DateTime(2024, 6, 15, 9, 0));
+          expect(sound['end'], DateTime(2024, 6, 15, 12, 0));
+        });
+
+        test('moving earlier does not drag later roles backwards', () {
+          final program = buildSequentialProgram();
+          program.moveRoleToStart(
+            roleId: 1,
+            newStart: DateTime(2024, 6, 15, 9, 0),
+            mode: ProgramShiftMode.cascade,
+          );
+
+          final worship = program.roles.firstWhere((role) => role['id'] == 2);
+          expect(worship['start'], DateTime(2024, 6, 15, 10, 15));
+        });
+
+        test('roles stay sorted by start after a move', () {
+          final program = buildSequentialProgram();
+          program.moveRoleToStart(
+            roleId: 3,
+            newStart: DateTime(2024, 6, 15, 9, 0),
+            mode: ProgramShiftMode.parallel,
+          );
+
+          expect(program.roles.first['id'], 3);
+          expect(program.roles.last['id'], 2);
+        });
+
+        test('returns false for an unknown or unmoved role', () {
+          final program = buildSequentialProgram();
+
+          expect(
+            program.moveRoleToStart(
+              roleId: 99,
+              newStart: DateTime(2024, 6, 15, 10, 0),
+              mode: ProgramShiftMode.cascade,
+            ),
+            false,
+          );
+          expect(
+            program.moveRoleToStart(
+              roleId: 1,
+              newStart: DateTime(2024, 6, 15, 10, 0),
+              mode: ProgramShiftMode.cascade,
+            ),
+            false,
+          );
+        });
+
+        test('returns false when the role has no timing', () {
+          final program = EventProgram();
+          program.addRole(
+            uids: [],
+            title: 'Untimed',
+            start: null,
+            end: null,
+            id: 1,
+          );
+
+          expect(
+            program.moveRoleToStart(
+              roleId: 1,
+              newStart: DateTime(2024, 6, 15, 10, 0),
+              mode: ProgramShiftMode.parallel,
+            ),
+            false,
+          );
+        });
       });
     });
 

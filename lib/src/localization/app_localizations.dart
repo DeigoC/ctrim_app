@@ -190,6 +190,90 @@ abstract class AppLocalizations {
   /// **'View your tasks and roles'**
   String get myScheduleSubtitle;
 
+  /// Empty state on Personal home schedule dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming tasks assigned for now.'**
+  String get personalScheduleEmpty;
+
+  /// Opens the full schedule page from Personal home
+  ///
+  /// In en, this message translates to:
+  /// **'View full schedule'**
+  String get personalScheduleViewFull;
+
+  /// Opens full schedule when more than three upcoming posts
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count} upcoming'**
+  String personalScheduleViewAll(int count);
+
+  /// Title for Personal home cell groups dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups'**
+  String get personalCellGroupsTitle;
+
+  /// Subtitle for Personal home cell groups dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups and upcoming meetings'**
+  String get personalCellGroupsSubtitle;
+
+  /// Encouraging empty state when user belongs to no cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'You are not in a cell group yet. Browse groups to find one that fits you.'**
+  String get personalCellGroupsEmpty;
+
+  /// CTA on Personal home to open the Cell Groups section
+  ///
+  /// In en, this message translates to:
+  /// **'Browse cell groups'**
+  String get personalCellGroupsBrowse;
+
+  /// Message when member has groups but no upcoming CG meetings
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming meetings in the next 8 weeks.'**
+  String get personalCellGroupsNoUpcoming;
+
+  /// Leader line on Personal home cell group rows
+  ///
+  /// In en, this message translates to:
+  /// **'Led by {leader}'**
+  String personalCellGroupLedBy(String leader);
+
+  /// Fallback when a cell group leader cannot be resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Leader TBC'**
+  String get personalCellGroupLeaderTbc;
+
+  /// Overflow hint when more than three CG meetings exist
+  ///
+  /// In en, this message translates to:
+  /// **'And {count} more upcoming meetings'**
+  String personalCellGroupsMoreMeetings(int count);
+
+  /// Fallback when a schedule post has no event date
+  ///
+  /// In en, this message translates to:
+  /// **'Date TBC'**
+  String get personalScheduleDateTbc;
+
+  /// Chip on schedule preview when user has multiple roles on one post
+  ///
+  /// In en, this message translates to:
+  /// **'{count} roles'**
+  String personalScheduleRolesCount(int count);
+
+  /// Fallback title when event head is missing on schedule preview
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled event'**
+  String get personalScheduleUntitledEvent;
+
   /// Badge shown when a volunteer can create events
   ///
   /// In en, this message translates to:
@@ -1204,6 +1288,24 @@ abstract class AppLocalizations {
   /// **'Meetings'**
   String get cellGroupsActivityTrendMetricMeetings;
 
+  /// Section title for per-group activity on cell group detail
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get cellGroupsDetailActivityTitle;
+
+  /// Chart title on cell group detail activity card
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings over time'**
+  String get cellGroupsDetailActivityTrendTitle;
+
+  /// Chart subtitle on cell group detail activity card
+  ///
+  /// In en, this message translates to:
+  /// **'Bulletin posts linked to this group'**
+  String get cellGroupsDetailActivityTrendSubtitle;
+
   /// Empty state on the Cell Groups list
   ///
   /// In en, this message translates to:
@@ -1923,6 +2025,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ok'**
   String get notificationDismiss;
+
+  /// Empty state title on the post schedule timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing scheduled yet'**
+  String get scheduleEmptyTitle;
+
+  /// Empty schedule message for authors and contributors
+  ///
+  /// In en, this message translates to:
+  /// **'Add schedule items from the edit menu and they will appear here on the timeline.'**
+  String get scheduleEmptyBodyEditor;
+
+  /// Empty schedule message for people who cannot edit the post
+  ///
+  /// In en, this message translates to:
+  /// **'The running order for this post has not been shared yet.'**
+  String get scheduleEmptyBodyViewer;
+
+  /// Heading for schedule items that have no start or end time
+  ///
+  /// In en, this message translates to:
+  /// **'Without a time'**
+  String get scheduleUntimedSectionTitle;
+
+  /// Shown instead of a time range when a schedule item is untimed
+  ///
+  /// In en, this message translates to:
+  /// **'No time set'**
+  String get scheduleNoTimeSet;
+
+  /// Marks a schedule item that guests cannot see
+  ///
+  /// In en, this message translates to:
+  /// **'Not shown to guests'**
+  String get scheduleStaffOnly;
+
+  /// Opens the editor for one schedule item
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get scheduleEditTask;
+
+  /// Marker for schedule items that did not fit in the visible lanes
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} parallel'**
+  String scheduleParallelCount(int count);
+
+  /// Title of the sheet listing overlapping schedule items
+  ///
+  /// In en, this message translates to:
+  /// **'Running in parallel'**
+  String get scheduleParallelSheetTitle;
+
+  /// Subtitle of the sheet listing overlapping schedule items
+  ///
+  /// In en, this message translates to:
+  /// **'These items overlap others already on the timeline'**
+  String get scheduleParallelSheetSubtitle;
+
+  /// Title and button label for the drag-to-rearrange schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'Arrange schedule'**
+  String get scheduleArrangeTitle;
+
+  /// Edit sheet subtitle for the arrange schedule action
+  ///
+  /// In en, this message translates to:
+  /// **'Drag items to reorder the running time'**
+  String get scheduleArrangeSubtitle;
+
+  /// Keeps the new arrangement and closes the arrange schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get scheduleArrangeDone;
+
+  /// Shown when the arrange schedule page has nothing to lay out
+  ///
+  /// In en, this message translates to:
+  /// **'Add timed schedule items before arranging them.'**
+  String get scheduleArrangeEmpty;
+
+  /// Drag mode where later schedule items move out of the way
+  ///
+  /// In en, this message translates to:
+  /// **'Cascade'**
+  String get scheduleArrangeModeCascade;
+
+  /// Drag mode where other schedule items keep their times
+  ///
+  /// In en, this message translates to:
+  /// **'Parallel'**
+  String get scheduleArrangeModeParallel;
+
+  /// Helper text for cascade drag mode
+  ///
+  /// In en, this message translates to:
+  /// **'Long press an item and drag it. Anything it lands on moves later to keep the running order.'**
+  String get scheduleArrangeCascadeHint;
+
+  /// Helper text for parallel drag mode
+  ///
+  /// In en, this message translates to:
+  /// **'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.'**
+  String get scheduleArrangeParallelHint;
+
+  /// Snackbar telling the user how to move a schedule item
+  ///
+  /// In en, this message translates to:
+  /// **'Long press \"{title}\" to drag it'**
+  String scheduleArrangeDragHint(String title);
 }
 
 class _AppLocalizationsDelegate

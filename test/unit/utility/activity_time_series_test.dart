@@ -104,6 +104,25 @@ void main() {
       expect(total, 1);
     });
 
+    test('fromCellGroupMeetings filters to one cell group when id is set', () {
+      final cg1 = EventHead(id: 'm1', title: 'A', cellGroupIDs: ['cg1']);
+      cg1.setEventDate(DateTime(2026, 8, 10));
+
+      final cg2 = EventHead(id: 'm2', title: 'B', cellGroupIDs: ['cg2']);
+      cg2.setEventDate(DateTime(2026, 8, 12));
+
+      final points = ActivityTimeSeries.fromCellGroupMeetings(
+        meetings: [cg1, cg2],
+        metric: ActivityTimeSeriesMetric.count,
+        startInclusive: DateTime(2026, 8, 1),
+        endExclusive: DateTime(2026, 8, 31),
+        cellGroupId: 'cg1',
+      );
+
+      final total = points.fold<double>(0, (sum, p) => sum + p.value);
+      expect(total, 1);
+    });
+
     test('hasNonZeroValues is false when all buckets are zero', () {
       final points = ActivityTimeSeries.bucketWeeklyCount(
         eventDates: const [],

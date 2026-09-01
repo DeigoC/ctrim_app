@@ -56,9 +56,28 @@ Opening a post shows tabs when that content exists:
 | **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). They see the meeting on **My Schedule**; on the day, organisers can check them off into attendance quickly. |
 | **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. |
 
+## Reading the schedule
+
+The Schedule tab shows the running order as a **timeline of the day** rather than a plain list. Each item sits at its actual clock time and its height reflects how long it lasts, so a quick five-minute slot looks different from an hour-long session.
+
+Anything happening **at the same time** appears side by side. A job that runs quietly in the background — sound, media, Sunday school — sits alongside the main running order instead of being buried between two unrelated lines. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
+
+Tap any item to see its full details: exact times, notes, and who is assigned. On a wide screen those details open in a panel beside the timeline.
+
 ## Guest-visible schedule
 
 Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme.
+
+## Rearranging the running order
+
+Organisers who can edit a post get an **Arrange schedule** screen (from the Schedule tab or the edit menu). Press and hold an item, then drag it to a new time. Two modes decide what happens to everything else:
+
+| Mode | What it does |
+|------|--------------|
+| **Cascade** | Whatever the item lands on moves later to make room, and that push passes down the rest of the running order. Use this when the day should stay sequential. |
+| **Parallel** | Only the item you dragged moves. Everything else keeps its time, so things can deliberately run at once. |
+
+Items that started before the point you drop into are left alone, so a long background job is never dragged along. Times snap to five-minute steps. Changes are saved with the rest of the post, and leaving without keeping them puts the original times back.
 
 ## What organisers can do
 

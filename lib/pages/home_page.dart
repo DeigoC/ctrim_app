@@ -253,7 +253,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         scrollController: _cellGroupsScrollController,
       );
     }
-    return PersonalHome(appContext: _appContext);
+    return PersonalHome(
+      appContext: _appContext,
+      onBrowseCellGroups: () => setState(() => _selectedIndex = 2),
+    );
   }
 
   // * Logic

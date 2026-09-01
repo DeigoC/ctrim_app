@@ -76,15 +76,24 @@ class ActivityTimeSeries {
   }
 
   /// Weekly meeting counts or attendee sums for CG-linked bulletin heads.
+  ///
+  /// When [cellGroupId] is set, only meetings linked to that group count.
   static List<TimeSeriesPoint> fromCellGroupMeetings({
     required List<EventHead> meetings,
     required ActivityTimeSeriesMetric metric,
     required DateTime startInclusive,
     required DateTime endExclusive,
+    String? cellGroupId,
   }) {
+    final groupId = cellGroupId?.trim();
     final linked = <EventHead>[];
     for (final head in meetings) {
       if (head.cellGroupIDs.isEmpty) continue;
+      if (groupId != null &&
+          groupId.isNotEmpty &&
+          !head.cellGroupIDs.contains(groupId)) {
+        continue;
+      }
       final date = head.eventDate;
       if (date == null) continue;
       if (date.isBefore(startInclusive) || !date.isBefore(endExclusive)) {

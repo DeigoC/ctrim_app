@@ -204,6 +204,33 @@ class UserScheduleService {
     return upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now).length;
   }
 
+  /// First [limit] distinct upcoming post IDs (soonest first).
+  static List<String> upcomingSchedulePostIDsLimited({
+    required User user,
+    required List<EventHead> eventHeads,
+    DateTime? now,
+    int limit = 3,
+  }) {
+    final ids = upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now);
+    if (ids.length <= limit) return ids;
+    return ids.sublist(0, limit);
+  }
+
+  /// Role count for [postID] on [user]'s upcoming schedule.
+  static int roleCountForPost({
+    required User user,
+    required String postID,
+    required List<EventHead> eventHeads,
+    DateTime? now,
+  }) {
+    final upcomingPostIDs =
+        upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now).toSet();
+    if (!upcomingPostIDs.contains(postID)) return 0;
+    final roles = user.roles;
+    if (roles == null) return 0;
+    return roles.where((role) => role.postID == postID).length;
+  }
+
   static EventHead? eventHeadForRole({
     required String postID,
     required List<EventHead> eventHeads,

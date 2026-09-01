@@ -19,6 +19,7 @@ import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/cell_group_roster_cache.dart';
+import '../../widgets/cell_groups/cell_group_activity_panel.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
@@ -44,6 +45,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   CellGroup? _group;
   CellGroupRoster? _roster;
   List<EventHead> _trail = const [];
+  List<EventHead> _activityMeetings = const [];
 
   /// Resolved profiles for leaders + roster (avoids showing raw numeric user ids).
   Map<String, User> _usersById = const {};
@@ -78,6 +80,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
       final trail =
           await _db.fetchMeetingTrail(cellGroupId: widget.groupId, limit: 4);
+      final activityMeetings =
+          await _db.fetchLinkedMeetingsInActivityWindow();
 
       CellGroupRoster? roster;
       if (!appContext.isCurrentUserGuest) {
@@ -102,6 +106,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         _group = group;
         _roster = roster;
         _trail = trail;
+        _activityMeetings = activityMeetings;
         _usersById = usersById;
         _loading = false;
       });
@@ -531,6 +536,13 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             ),
           )
         : null;
+    final activityCard = _CgSectionCard(
+      title: l10n.cellGroupsDetailActivityTitle,
+      child: CellGroupActivityPanel(
+        cellGroupId: group.id,
+        meetings: _activityMeetings,
+      ),
+    );
     final meetingsBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -578,6 +590,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             const SizedBox(height: 12),
             photosCard,
           ],
+          const SizedBox(height: 12),
+          activityCard,
           if (leadersCard != null) ...[
             const SizedBox(height: 12),
             leadersCard,
@@ -608,6 +622,8 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                     const SizedBox(height: 12),
                     photosCard,
                   ],
+                  const SizedBox(height: 12),
+                  activityCard,
                   const SizedBox(height: 20),
                   meetingsBlock,
                 ],

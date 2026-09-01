@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../src/localization/app_localizations.dart';
 import '../common/action_sheet.dart';
 
 /// Admin/editor actions for a post, styled like BulletinSettingSheet.
@@ -11,6 +12,7 @@ class PostEditSheet extends StatelessWidget {
     required this.onEditAbout,
     required this.onEditTitle,
     required this.onAddSchedule,
+    required this.onArrangeSchedule,
     required this.onEditMedia,
     required this.onChangeCover,
     required this.onManageContributors,
@@ -28,6 +30,7 @@ class PostEditSheet extends StatelessWidget {
   final VoidCallback onEditAbout;
   final VoidCallback onEditTitle;
   final VoidCallback onAddSchedule;
+  final VoidCallback onArrangeSchedule;
   final VoidCallback onEditMedia;
   final VoidCallback onChangeCover;
   final VoidCallback onManageContributors;
@@ -69,6 +72,13 @@ class PostEditSheet extends StatelessWidget {
               title: 'Add Schedule',
               subtitle: 'Add a program role or time slot',
               onTap: onAddSchedule,
+            ),
+            ActionSheetOption(
+              icon: Icons.swap_vert,
+              color: Colors.orange,
+              title: AppLocalizations.of(context)!.scheduleArrangeTitle,
+              subtitle: AppLocalizations.of(context)!.scheduleArrangeSubtitle,
+              onTap: onArrangeSchedule,
             ),
             ActionSheetOption(
               icon: Icons.image_outlined,

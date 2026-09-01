@@ -252,6 +252,57 @@ void main() {
         );
       });
 
+      test('upcomingSchedulePostIDsLimited respects limit and sort order', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([
+            UserRoleAssignment(
+              postID: 'later-post',
+              roleID: 1,
+              start: DateTime(2024, 6, 25, 10),
+              end: DateTime(2024, 6, 25, 11),
+              title: 'Later',
+            ),
+            UserRoleAssignment(
+              postID: 'soon-post',
+              roleID: 2,
+              start: DateTime(2024, 6, 18, 10),
+              end: DateTime(2024, 6, 18, 11),
+              title: 'Soon',
+            ),
+            UserRoleAssignment(
+              postID: 'mid-post',
+              roleID: 3,
+              start: DateTime(2024, 6, 22, 10),
+              end: DateTime(2024, 6, 22, 11),
+              title: 'Mid',
+            ),
+            UserRoleAssignment(
+              postID: 'fourth-post',
+              roleID: 4,
+              start: DateTime(2024, 6, 28, 10),
+              end: DateTime(2024, 6, 28, 11),
+              title: 'Fourth',
+            ),
+          ]);
+        final heads = [
+          headWithDate('soon-post', DateTime(2024, 6, 18)),
+          headWithDate('mid-post', DateTime(2024, 6, 22)),
+          headWithDate('later-post', DateTime(2024, 6, 25)),
+          headWithDate('fourth-post', DateTime(2024, 6, 28)),
+        ];
+        final now = DateTime(2024, 6, 15);
+
+        expect(
+          UserScheduleService.upcomingSchedulePostIDsLimited(
+            user: user,
+            eventHeads: heads,
+            now: now,
+            limit: 3,
+          ),
+          ['soon-post', 'mid-post', 'later-post'],
+        );
+      });
+
       test('upcomingPostCount counts distinct upcoming posts only', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith')
           ..setRoles([

@@ -18,7 +18,10 @@ import '../../widgets/personal/personal_action_section.dart';
 import '../../widgets/personal/personal_admin_section.dart';
 import '../../widgets/personal/personal_logout_section.dart';
 import '../../widgets/personal/personal_profile_card.dart';
+import '../../widgets/personal/personal_cell_groups_preview_card.dart';
+import '../../widgets/personal/personal_schedule_preview_card.dart';
 import '../../widgets/personal/personal_settings_section.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../events/post_templates/view_templates_page.dart';
 import 'guest_registration_page.dart';
 import 'edit_profile_picture_page.dart';
@@ -27,15 +30,19 @@ import 'notification_management_page.dart';
 import 'share_web_app_page.dart';
 import 'view_all_users_page.dart';
 import 'view_my_posts_page.dart';
-import 'view_user_roles_page.dart';
 import 'manage_user_locations_page.dart';
 import 'manage_user_tags_page.dart';
 import 'manage_post_tags_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
-  const PersonalHome({super.key, required this.appContext});
+  const PersonalHome({
+    super.key,
+    required this.appContext,
+    this.onBrowseCellGroups,
+  });
   final AppContext appContext;
+  final VoidCallback? onBrowseCellGroups;
 
   @override
   State<PersonalHome> createState() => _PersonalHomeState();
@@ -152,6 +159,10 @@ class _PersonalHomeState extends State<PersonalHome> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PersonalProfileCard(appContext: appContext, wide: false),
+        if (!appContext.isCurrentUserGuest) ...[
+          const SizedBox(height: 24),
+          _buildDashboardCards(appContext, wide: false),
+        ],
         const SizedBox(height: 24),
         PersonalActionSection(
           title: 'For you',
@@ -204,6 +215,10 @@ class _PersonalHomeState extends State<PersonalHome> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PersonalProfileCard(appContext: appContext, wide: true),
+        if (!appContext.isCurrentUserGuest) ...[
+          const SizedBox(height: 28),
+          _buildDashboardCards(appContext, wide: true),
+        ],
         const SizedBox(height: 28),
         PersonalActionSection(
           title: 'For you',
@@ -266,9 +281,32 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
   }
 
+  Widget _buildDashboardCards(AppContext appContext, {required bool wide}) {
+    final scheduleCard =
+        PersonalSchedulePreviewCard(appContext: appContext);
+    final cellGroupsCard = PersonalCellGroupsPreviewCard(
+      appContext: appContext,
+      onBrowseCellGroups: widget.onBrowseCellGroups,
+    );
+
+    if (wide) {
+      return TwoColumnMasonry(
+        children: [scheduleCard, cellGroupsCard],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        scheduleCard,
+        const SizedBox(height: 16),
+        cellGroupsCard,
+      ],
+    );
+  }
+
   List<PersonalAction> _forYouActions(
       AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
-    final l10n = AppLocalizations.of(context)!;
     final actions = <PersonalAction>[];
 
     if (appContext.isCurrentUserGuest) {
@@ -284,16 +322,6 @@ class _PersonalHomeState extends State<PersonalHome> {
       return actions;
     }
 
-    actions.add(
-      PersonalAction(
-        icon: Icons.checklist_rounded,
-        title: l10n.mySchedule,
-        subtitle: _myScheduleSubtitle(appContext, l10n),
-        trailing: _buildScheduleBadge(appContext, theme, colorScheme),
-        onTap: _onViewTasksClick,
-        iconColor: colorScheme.tertiary,
-      ),
-    );
     actions.add(
       PersonalAction(
         icon: Icons.notifications_active_rounded,
@@ -350,43 +378,6 @@ class _PersonalHomeState extends State<PersonalHome> {
         iconColor: colorScheme.secondary,
       ),
     ];
-  }
-
-  String _myScheduleSubtitle(AppContext appContext, AppLocalizations l10n) {
-    final count = _upcomingScheduleCount(appContext);
-    if (count == null) return l10n.myScheduleSubtitle;
-    if (count == 0) return l10n.myScheduleSubtitle;
-    if (count == 1) return '1 upcoming item';
-    return '$count upcoming items';
-  }
-
-  int? _upcomingScheduleCount(AppContext appContext) {
-    if (appContext.currentUser.roles == null) return null;
-    return UserScheduleService.upcomingPostCount(
-      user: appContext.currentUser,
-      eventHeads: appContext.eventHeads,
-    );
-  }
-
-  Widget? _buildScheduleBadge(
-      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
-    final upcomingCount = _upcomingScheduleCount(appContext);
-    if (upcomingCount == null || upcomingCount == 0) return null;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        '$upcomingCount',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colorScheme.onErrorContainer,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 
   // * Logic
@@ -457,17 +448,6 @@ class _PersonalHomeState extends State<PersonalHome> {
 
     onProgress(completed: 2, total: total, message: 'Signing out…');
     await authManager.signOut();
-  }
-
-  void _onViewTasksClick() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ViewUserRolesPage(
-                  selectedUser: widget.appContext.currentUser,
-                ))).then((_) {
-      if (mounted) setState(() {});
-    });
   }
 
   Future<void> _ensureCurrentUserScheduleRolesLoaded() async {

@@ -83,6 +83,82 @@
   "@myScheduleSubtitle": {
     "description": "Personal home menu subtitle for the schedule page"
   },
+  "personalScheduleEmpty": "No upcoming tasks assigned for now.",
+  "@personalScheduleEmpty": {
+    "description": "Empty state on Personal home schedule dashboard card"
+  },
+  "personalScheduleViewFull": "View full schedule",
+  "@personalScheduleViewFull": {
+    "description": "Opens the full schedule page from Personal home"
+  },
+  "personalScheduleViewAll": "View all {count} upcoming",
+  "@personalScheduleViewAll": {
+    "description": "Opens full schedule when more than three upcoming posts",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalCellGroupsTitle": "Cell groups",
+  "@personalCellGroupsTitle": {
+    "description": "Title for Personal home cell groups dashboard card"
+  },
+  "personalCellGroupsSubtitle": "Your groups and upcoming meetings",
+  "@personalCellGroupsSubtitle": {
+    "description": "Subtitle for Personal home cell groups dashboard card"
+  },
+  "personalCellGroupsEmpty": "You are not in a cell group yet. Browse groups to find one that fits you.",
+  "@personalCellGroupsEmpty": {
+    "description": "Encouraging empty state when user belongs to no cell groups"
+  },
+  "personalCellGroupsBrowse": "Browse cell groups",
+  "@personalCellGroupsBrowse": {
+    "description": "CTA on Personal home to open the Cell Groups section"
+  },
+  "personalCellGroupsNoUpcoming": "No upcoming meetings in the next 8 weeks.",
+  "@personalCellGroupsNoUpcoming": {
+    "description": "Message when member has groups but no upcoming CG meetings"
+  },
+  "personalCellGroupLedBy": "Led by {leader}",
+  "@personalCellGroupLedBy": {
+    "description": "Leader line on Personal home cell group rows",
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      }
+    }
+  },
+  "personalCellGroupLeaderTbc": "Leader TBC",
+  "@personalCellGroupLeaderTbc": {
+    "description": "Fallback when a cell group leader cannot be resolved"
+  },
+  "personalCellGroupsMoreMeetings": "And {count} more upcoming meetings",
+  "@personalCellGroupsMoreMeetings": {
+    "description": "Overflow hint when more than three CG meetings exist",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalScheduleDateTbc": "Date TBC",
+  "@personalScheduleDateTbc": {
+    "description": "Fallback when a schedule post has no event date"
+  },
+  "personalScheduleRolesCount": "{count} roles",
+  "@personalScheduleRolesCount": {
+    "description": "Chip on schedule preview when user has multiple roles on one post",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalScheduleUntitledEvent": "Untitled event",
+  "@personalScheduleUntitledEvent": {
+    "description": "Fallback title when event head is missing on schedule preview"
+  },
   "userProfileLeaderBadge": "Leader",
   "@userProfileLeaderBadge": {
     "description": "Badge shown when a volunteer can create events"
@@ -824,6 +900,18 @@
   "@cellGroupsActivityTrendMetricMeetings": {
     "description": "Count metric chip on cell groups activity chart"
   },
+  "cellGroupsDetailActivityTitle": "Activity",
+  "@cellGroupsDetailActivityTitle": {
+    "description": "Section title for per-group activity on cell group detail"
+  },
+  "cellGroupsDetailActivityTrendTitle": "Meetings over time",
+  "@cellGroupsDetailActivityTrendTitle": {
+    "description": "Chart title on cell group detail activity card"
+  },
+  "cellGroupsDetailActivityTrendSubtitle": "Bulletin posts linked to this group",
+  "@cellGroupsDetailActivityTrendSubtitle": {
+    "description": "Chart subtitle on cell group detail activity card"
+  },
   "cellGroupsEmpty": "No cell groups yet.",
   "@cellGroupsEmpty": {
     "description": "Empty state on the Cell Groups list"
@@ -1318,5 +1406,91 @@
   "notificationDismiss": "Ok",
   "@notificationDismiss": {
     "description": "Closes the in-app push notification dialog"
+  },
+  "scheduleEmptyTitle": "Nothing scheduled yet",
+  "@scheduleEmptyTitle": {
+    "description": "Empty state title on the post schedule timeline"
+  },
+  "scheduleEmptyBodyEditor": "Add schedule items from the edit menu and they will appear here on the timeline.",
+  "@scheduleEmptyBodyEditor": {
+    "description": "Empty schedule message for authors and contributors"
+  },
+  "scheduleEmptyBodyViewer": "The running order for this post has not been shared yet.",
+  "@scheduleEmptyBodyViewer": {
+    "description": "Empty schedule message for people who cannot edit the post"
+  },
+  "scheduleUntimedSectionTitle": "Without a time",
+  "@scheduleUntimedSectionTitle": {
+    "description": "Heading for schedule items that have no start or end time"
+  },
+  "scheduleNoTimeSet": "No time set",
+  "@scheduleNoTimeSet": {
+    "description": "Shown instead of a time range when a schedule item is untimed"
+  },
+  "scheduleStaffOnly": "Not shown to guests",
+  "@scheduleStaffOnly": {
+    "description": "Marks a schedule item that guests cannot see"
+  },
+  "scheduleEditTask": "Edit Task",
+  "@scheduleEditTask": {
+    "description": "Opens the editor for one schedule item"
+  },
+  "scheduleParallelCount": "+{count} parallel",
+  "@scheduleParallelCount": {
+    "description": "Marker for schedule items that did not fit in the visible lanes",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scheduleParallelSheetTitle": "Running in parallel",
+  "@scheduleParallelSheetTitle": {
+    "description": "Title of the sheet listing overlapping schedule items"
+  },
+  "scheduleParallelSheetSubtitle": "These items overlap others already on the timeline",
+  "@scheduleParallelSheetSubtitle": {
+    "description": "Subtitle of the sheet listing overlapping schedule items"
+  },
+  "scheduleArrangeTitle": "Arrange schedule",
+  "@scheduleArrangeTitle": {
+    "description": "Title and button label for the drag-to-rearrange schedule page"
+  },
+  "scheduleArrangeSubtitle": "Drag items to reorder the running time",
+  "@scheduleArrangeSubtitle": {
+    "description": "Edit sheet subtitle for the arrange schedule action"
+  },
+  "scheduleArrangeDone": "Done",
+  "@scheduleArrangeDone": {
+    "description": "Keeps the new arrangement and closes the arrange schedule page"
+  },
+  "scheduleArrangeEmpty": "Add timed schedule items before arranging them.",
+  "@scheduleArrangeEmpty": {
+    "description": "Shown when the arrange schedule page has nothing to lay out"
+  },
+  "scheduleArrangeModeCascade": "Cascade",
+  "@scheduleArrangeModeCascade": {
+    "description": "Drag mode where later schedule items move out of the way"
+  },
+  "scheduleArrangeModeParallel": "Parallel",
+  "@scheduleArrangeModeParallel": {
+    "description": "Drag mode where other schedule items keep their times"
+  },
+  "scheduleArrangeCascadeHint": "Long press an item and drag it. Anything it lands on moves later to keep the running order.",
+  "@scheduleArrangeCascadeHint": {
+    "description": "Helper text for cascade drag mode"
+  },
+  "scheduleArrangeParallelHint": "Long press an item and drag it. Everything else keeps its time, so items can run at the same time.",
+  "@scheduleArrangeParallelHint": {
+    "description": "Helper text for parallel drag mode"
+  },
+  "scheduleArrangeDragHint": "Long press \"{title}\" to drag it",
+  "@scheduleArrangeDragHint": {
+    "description": "Snackbar telling the user how to move a schedule item",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
   }
 }
