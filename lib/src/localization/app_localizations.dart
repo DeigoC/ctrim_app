@@ -748,6 +748,18 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String selectUsersSelected(int count);
 
+  /// Button on the people picker to merge roster members from cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'Add from cell group'**
+  String get selectUsersAddFromCellGroup;
+
+  /// Progress title while merging cell group roster members into selection
+  ///
+  /// In en, this message translates to:
+  /// **'Adding from cell group…'**
+  String get selectUsersAddingFromCellGroup;
+
   /// Selected count on a catalog tag/group picker page
   ///
   /// In en, this message translates to:
@@ -1125,6 +1137,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get cellGroupsActivityRetry;
+
+  /// Filter chip label for attendance sum on activity trend charts
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get activityTrendMetricAttendance;
+
+  /// Hint under metric chips on weekly activity line charts
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly · last 3 months'**
+  String get activityTrendWeeklyHint;
+
+  /// Empty state when weekly activity chart has no data
+  ///
+  /// In en, this message translates to:
+  /// **'No activity in this period.'**
+  String get activityTrendEmpty;
+
+  /// Title for church hub weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity over time'**
+  String get churchHubActivityTrendTitle;
+
+  /// Subtitle for church hub weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Bulletin posts at this location'**
+  String get churchHubActivityTrendSubtitle;
+
+  /// Count metric chip on church hub activity chart
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get churchHubActivityTrendMetricPosts;
+
+  /// Title for cell groups weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings over time'**
+  String get cellGroupsActivityTrendTitle;
+
+  /// Subtitle for cell groups weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Cell group meetings linked on the bulletin'**
+  String get cellGroupsActivityTrendSubtitle;
+
+  /// Count metric chip on cell groups activity chart
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings'**
+  String get cellGroupsActivityTrendMetricMeetings;
 
   /// Empty state on the Cell Groups list
   ///

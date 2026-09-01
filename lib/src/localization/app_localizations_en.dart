@@ -373,6 +373,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get selectUsersAddFromCellGroup => 'Add from cell group';
+
+  @override
+  String get selectUsersAddingFromCellGroup => 'Adding from cell group…';
+
+  @override
   String selectCatalogSelected(int count) {
     return '$count selected';
   }
@@ -576,6 +582,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cellGroupsActivityRetry => 'Retry';
+
+  @override
+  String get activityTrendMetricAttendance => 'Attendance';
+
+  @override
+  String get activityTrendWeeklyHint => 'Weekly · last 3 months';
+
+  @override
+  String get activityTrendEmpty => 'No activity in this period.';
+
+  @override
+  String get churchHubActivityTrendTitle => 'Activity over time';
+
+  @override
+  String get churchHubActivityTrendSubtitle =>
+      'Bulletin posts at this location';
+
+  @override
+  String get churchHubActivityTrendMetricPosts => 'Posts';
+
+  @override
+  String get cellGroupsActivityTrendTitle => 'Meetings over time';
+
+  @override
+  String get cellGroupsActivityTrendSubtitle =>
+      'Cell group meetings linked on the bulletin';
+
+  @override
+  String get cellGroupsActivityTrendMetricMeetings => 'Meetings';
 
   @override
   String get cellGroupsEmpty => 'No cell groups yet.';

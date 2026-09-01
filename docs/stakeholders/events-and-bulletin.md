@@ -99,7 +99,7 @@ Organisers create or attach related posts from the post’s edit actions.
 
 ## Posts and cell groups
 
-A post can link to one or more **cell groups**. On the People tab, organisers can **Fill from cell group** to seed expected attendees from that group’s members. More: [Cell Groups](cell-groups.md).
+A post can link to one or more **cell groups**. Organisers can **Fill from cell group** (on the post or template) or **Add from cell group** while managing expected attendees to seed from that group’s members. More: [Cell Groups](cell-groups.md).
 
 ## Related pages
 

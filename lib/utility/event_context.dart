@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import '../firebase/db_managers/cell_group_db_manager.dart';
+import 'cell_group_roster_helpers.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_attendance.dart';
@@ -385,22 +385,8 @@ class EventContext {
     if (_expectedAttendeeUserIDs.isNotEmpty) {
       return List<String>.from(_expectedAttendeeUserIDs);
     }
-    final cgIds = _head.cellGroupIDs;
-    if (cgIds.isEmpty) return <String>[];
-
-    final ids = <String>{};
-    for (final cgId in cgIds) {
-      try {
-        final roster = await CellGroupSupplementalDBManager(cgId).fetchRoster();
-        for (final member in roster.members) {
-          if (member.isLinkedUser && member.isActive) {
-            ids.add(member.userId);
-          }
-        }
-      } catch (_) {
-        // Roster may be unavailable; skip that group.
-      }
-    }
+    final ids =
+        await CellGroupRosterHelpers.fetchActiveLinkedUserIds(_head.cellGroupIDs);
     return ids.toList();
   }
 

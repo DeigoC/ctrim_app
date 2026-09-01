@@ -106,7 +106,7 @@ class CellGroupDBManager {
   }
 
   /// CG-linked bulletin heads with [EventHead.eventDate] in the rolling
-  /// past + upcoming activity windows (see [CellGroupActivityStats]).
+  /// chart-past + upcoming activity windows (see [CellGroupActivityStats]).
   ///
   /// Single-field `EventDate` range query — no composite index. Client filters
   /// to posts that actually link a cell group.

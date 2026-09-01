@@ -9,6 +9,9 @@ class CellGroupActivityWindows {
   /// Inclusive lookahead from local midnight today (today + next 6 days).
   static const int upcomingDays = 7;
 
+  /// Lookback for weekly activity charts (matches church-hub window).
+  static const int chartPastDays = 90;
+
   const CellGroupActivityWindows._();
 }
 
@@ -76,12 +79,22 @@ class CellGroupActivityStats {
   static DateTime upcomingWindowEndExclusive(final DateTime now) =>
       dayStart(now).add(const Duration(days: CellGroupActivityWindows.upcomingDays));
 
-  /// Inclusive Firestore range start for a single query covering past + upcoming.
-  static DateTime queryRangeStart(final DateTime now) => pastWindowStart(now);
+  /// Start of the chart lookback (local midnight).
+  static DateTime chartPastWindowStart(final DateTime now) => dayStart(now)
+      .subtract(const Duration(days: CellGroupActivityWindows.chartPastDays));
+
+  /// Inclusive Firestore range start for a single query covering chart past +
+  /// upcoming snapshot windows.
+  static DateTime queryRangeStart(final DateTime now) =>
+      chartPastWindowStart(now);
 
   /// Exclusive Firestore range end covering past + upcoming.
   static DateTime queryRangeEndExclusive(final DateTime now) =>
       upcomingWindowEndExclusive(now);
+
+  /// Past-only window for weekly charts: [chartPastWindowStart, today).
+  static DateTime chartWindowEndExclusive(final DateTime now) =>
+      upcomingWindowStart(now);
 
   /// Builds stats from catalogue [groups] and CG-linked [meetings].
   ///

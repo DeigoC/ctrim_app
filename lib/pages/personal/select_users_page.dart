@@ -5,8 +5,11 @@ import '../../firebase/db_managers/id_tracker.dart';
 import '../../firebase/functions_manager.dart';
 import '../../models/user.dart';
 import '../../models/user_tag.dart';
+import '../../pages/events/select_catalog_items_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/catalog/catalog_picker_helpers.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/persist_users_local_cache.dart';
 import '../../utility/responsive_layout.dart';
@@ -41,6 +44,7 @@ class SelectUsersPage extends StatefulWidget {
     this.preferServing = false,
     this.postIdForPlaceholderCreate,
     this.cellGroupIdForPlaceholderCreate,
+    this.allowCellGroupBulkSelect = false,
   });
 
   final List<String> selectedUIDs;
@@ -71,6 +75,10 @@ class SelectUsersPage extends StatefulWidget {
 
   /// Optional cell group id passed to `create_placeholder_user` for leader-gate checks.
   final String? cellGroupIdForPlaceholderCreate;
+
+  /// When true, offers "Add from cell group" to merge active roster members into
+  /// the current selection (expected-attendee flows).
+  final bool allowCellGroupBulkSelect;
 
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
@@ -170,9 +178,25 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: filterHorizontalPadding, vertical: 8),
-                  child: Text(
-                    l10n.selectUsersSelected(_selectedUIDs.length),
-                    style: Theme.of(context).textTheme.titleSmall,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.selectUsersSelected(_selectedUIDs.length),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      if (widget.allowCellGroupBulkSelect) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilledButton.tonalIcon(
+                            onPressed: () => _onAddFromCellGroup(appContext),
+                            icon: const Icon(Icons.groups_outlined, size: 18),
+                            label: Text(l10n.selectUsersAddFromCellGroup),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
@@ -507,6 +531,79 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       }
       _selectedUIDs.add(uid);
     });
+  }
+
+  Future<void> _onAddFromCellGroup(AppContext appContext) async {
+    final l10n = AppLocalizations.of(context)!;
+    final activeGroups =
+        appContext.allCellGroups.where((group) => group.isActive).toList();
+    if (activeGroups.isEmpty) {
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.cellGroupsSectionTitle,
+        content: l10n.cellGroupsNoneAvailable,
+      );
+      return;
+    }
+
+    final picked = await SelectCatalogItemsPage.open(
+      context: context,
+      page: SelectCatalogItemsPage(
+        title: l10n.cellGroupsSelectTitle,
+        searchHint: l10n.cellGroupsSearchHint,
+        emptyMessage: l10n.cellGroupsNoneAvailable,
+        noResultsMessage: l10n.selectCatalogNoResults,
+        allEntries: CatalogPickerHelpers.fromCellGroups(appContext.allCellGroups),
+        selectedIds: const {},
+        showLocationFilter: true,
+      ),
+    );
+    if (picked == null || picked.isEmpty || !mounted) return;
+
+    Set<String>? fetchedIds;
+    final ok = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: l10n.selectUsersAddingFromCellGroup,
+      action: () async {
+        fetchedIds =
+            await CellGroupRosterHelpers.fetchActiveLinkedUserIds(picked);
+      },
+    );
+    if (!ok || fetchedIds == null || !mounted) return;
+
+    setState(() => _mergeUserIdsIntoSelection(fetchedIds!, appContext));
+  }
+
+  void _mergeUserIdsIntoSelection(Set<String> userIds, AppContext appContext) {
+    var ids = userIds;
+    if (!widget.includeCurrentUser) {
+      ids = ids.where((id) => id != appContext.currentUser.id).toSet();
+    }
+    if (widget.excludedUIDs.isNotEmpty) {
+      final excluded = widget.excludedUIDs.toSet();
+      ids = ids.where((id) => !excluded.contains(id)).toSet();
+    }
+    if (!widget.includePlaceholders) {
+      final userMap = {for (final user in appContext.allUsers) user.id: user};
+      ids = ids
+          .where((id) {
+            final user = userMap[id];
+            return user != null &&
+                (!user.isPlaceholder || _selectedUIDs.contains(id));
+          })
+          .toSet();
+    }
+
+    final max = widget.maxSelection;
+    if (max != null) {
+      for (final id in ids) {
+        if (_selectedUIDs.length >= max) break;
+        _selectedUIDs.add(id);
+      }
+      return;
+    }
+
+    _selectedUIDs.addAll(ids);
   }
 
   Future<void> _onCreatePlaceholder(

@@ -7,8 +7,10 @@ import '../../models/info/church_info.dart';
 import '../../models/info/church_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/activity_time_series.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/common/activity_trend_section.dart';
 import '../../widgets/information/info_image_carousel.dart';
 import '../../widgets/information/info_section_card.dart';
 import '../../widgets/paired_row_list.dart';
@@ -412,23 +414,55 @@ class _SnapshotTiles extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 520;
-        if (wide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < tiles.length; i++) ...[
-                if (i > 0) const SizedBox(width: 12),
-                Expanded(child: tiles[i]),
-              ],
-            ],
-          );
-        }
+        final tilesSection = wide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < tiles.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 12),
+                    Expanded(child: tiles[i]),
+                  ],
+                ],
+              )
+            : Column(
+                children: [
+                  for (var i = 0; i < tiles.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 12),
+                    tiles[i],
+                  ],
+                ],
+              );
+
+        final now = DateTime.now();
+        final chartStart = ChurchLocationStats.queryRangeStart(now);
+        final chartEnd = ChurchLocationStats.queryRangeEndExclusive(now);
+        final countPoints = ActivityTimeSeries.fromPosts(
+          posts: stats.posts,
+          metric: ActivityTimeSeriesMetric.count,
+          startInclusive: chartStart,
+          endExclusive: chartEnd,
+        );
+        final attendancePoints = ActivityTimeSeries.fromPosts(
+          posts: stats.posts,
+          metric: ActivityTimeSeriesMetric.attendance,
+          startInclusive: chartStart,
+          endExclusive: chartEnd,
+        );
+
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (var i = 0; i < tiles.length; i++) ...[
-              if (i > 0) const SizedBox(height: 12),
-              tiles[i],
-            ],
+            tilesSection,
+            const SizedBox(height: 20),
+            ActivityTrendSection(
+              title: l10n.churchHubActivityTrendTitle,
+              subtitle: l10n.churchHubActivityTrendSubtitle,
+              countLabel: l10n.churchHubActivityTrendMetricPosts,
+              countPoints: countPoints,
+              attendancePoints: attendancePoints,
+              emptyMessage: l10n.activityTrendEmpty,
+              weeklyHint: l10n.activityTrendWeeklyHint,
+            ),
           ],
         );
       },

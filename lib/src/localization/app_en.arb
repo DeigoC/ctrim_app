@@ -505,6 +505,14 @@
       }
     }
   },
+  "selectUsersAddFromCellGroup": "Add from cell group",
+  "@selectUsersAddFromCellGroup": {
+    "description": "Button on the people picker to merge roster members from cell groups"
+  },
+  "selectUsersAddingFromCellGroup": "Adding from cell group…",
+  "@selectUsersAddingFromCellGroup": {
+    "description": "Progress title while merging cell group roster members into selection"
+  },
   "selectCatalogSelected": "{count} selected",
   "@selectCatalogSelected": {
     "description": "Selected count on a catalog tag/group picker page",
@@ -771,6 +779,42 @@
   "cellGroupsActivityRetry": "Retry",
   "@cellGroupsActivityRetry": {
     "description": "Retry button for activity stats load failure"
+  },
+  "activityTrendMetricAttendance": "Attendance",
+  "@activityTrendMetricAttendance": {
+    "description": "Filter chip label for attendance sum on activity trend charts"
+  },
+  "activityTrendWeeklyHint": "Weekly · last 3 months",
+  "@activityTrendWeeklyHint": {
+    "description": "Hint under metric chips on weekly activity line charts"
+  },
+  "activityTrendEmpty": "No activity in this period.",
+  "@activityTrendEmpty": {
+    "description": "Empty state when weekly activity chart has no data"
+  },
+  "churchHubActivityTrendTitle": "Activity over time",
+  "@churchHubActivityTrendTitle": {
+    "description": "Title for church hub weekly activity line chart"
+  },
+  "churchHubActivityTrendSubtitle": "Bulletin posts at this location",
+  "@churchHubActivityTrendSubtitle": {
+    "description": "Subtitle for church hub weekly activity line chart"
+  },
+  "churchHubActivityTrendMetricPosts": "Posts",
+  "@churchHubActivityTrendMetricPosts": {
+    "description": "Count metric chip on church hub activity chart"
+  },
+  "cellGroupsActivityTrendTitle": "Meetings over time",
+  "@cellGroupsActivityTrendTitle": {
+    "description": "Title for cell groups weekly activity line chart"
+  },
+  "cellGroupsActivityTrendSubtitle": "Cell group meetings linked on the bulletin",
+  "@cellGroupsActivityTrendSubtitle": {
+    "description": "Subtitle for cell groups weekly activity line chart"
+  },
+  "cellGroupsActivityTrendMetricMeetings": "Meetings",
+  "@cellGroupsActivityTrendMetricMeetings": {
+    "description": "Count metric chip on cell groups activity chart"
   },
   "cellGroupsEmpty": "No cell groups yet.",
   "@cellGroupsEmpty": {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
-import '../../firebase/db_managers/cell_group_db_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_attendance.dart';
@@ -11,6 +10,7 @@ import '../../models/user.dart';
 import '../../pages/personal/guest_registration_page.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
@@ -726,6 +726,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           selectedUIDs: List<String>.from(attendance.expectedUserIds),
           title: 'Expected attendees',
           includePlaceholders: true,
+          allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
             postAuthorUid: authorUid,
@@ -756,15 +757,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         final ids = <String>{
           ...?(widget.eventContext.attendance?.expectedUserIds),
         };
-        for (final cgId in cgIds) {
-          final roster =
-              await CellGroupSupplementalDBManager(cgId).fetchRoster();
-          for (final member in roster.members) {
-            if (member.isLinkedUser && member.isActive) {
-              ids.add(member.userId);
-            }
-          }
-        }
+        ids.addAll(
+          await CellGroupRosterHelpers.fetchActiveLinkedUserIds(cgIds),
+        );
         seededIds = ids.toList();
       },
     );
