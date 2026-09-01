@@ -82,6 +82,17 @@ class EventProgram {
   }
 
   List<Map<String, dynamic>> get roles => UnmodifiableListView(_roles);
+
+  /// Changes when any role timing changes — use to bust schedule tab caches.
+  String get scheduleLayoutSignature => roles
+      .map((final role) {
+        final start = role['start'] as DateTime?;
+        final end = role['end'] as DateTime?;
+        return '${role['id']}:${start?.millisecondsSinceEpoch}:'
+            '${end?.millisecondsSinceEpoch}';
+      })
+      .join('|');
+
   bool get allDay => _allDay;
   bool get online => _online;
   String get address => _address;

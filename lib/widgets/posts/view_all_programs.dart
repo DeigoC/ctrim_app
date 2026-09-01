@@ -103,6 +103,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     final timeline = Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       child: ScheduleTimeline(
+        key: ValueKey(widget.eventContext.program.scheduleLayoutSignature),
         layout: layout,
         selectedRoleId: isWide ? _selectedRoleId : null,
         usersForRole: _usersForRole,
@@ -269,9 +270,15 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   Map<String, dynamic>? _roleById(final int? roleId) {
     if (roleId == null) return null;
     for (final role in _visibleRoles()) {
-      if (role['id'] == roleId) return role;
+      if (role['id'] == roleId) return _roleForEdit(role);
     }
     return null;
+  }
+
+  Map<String, dynamic> _roleForEdit(final Map<String, dynamic> role) {
+    final roleId = role['id'] as int;
+    return widget.eventContext.program.roles
+        .firstWhere((entry) => entry['id'] == roleId);
   }
 
   bool _canEditRole(final Map<String, dynamic> role) {
@@ -466,19 +473,17 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   }
 
   void _openEditProgramPage(final Map<String, dynamic> programEntry) {
+    final role = _roleForEdit(programEntry);
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (_) => EditEventProgramPage(
                   eventContext: widget.eventContext,
-                  programEntry: programEntry,
+                  programEntry: role,
                 ))).then((_) {
-      setState(() {
-        // rebuild in case of update
-      });
-      if (widget.eventContext.canSaveTheEditing) {
-        widget.onProgramChanged();
-      }
+      if (!mounted) return;
+      setState(() {});
+      widget.onProgramChanged();
     });
   }
 
@@ -516,10 +521,9 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       ),
     ).then((_) {
       widget.eventContext.program.orderProgramsByStartTime();
+      if (!mounted) return;
       setState(() {});
-      if (widget.eventContext.canSaveTheEditing) {
-        widget.onProgramChanged();
-      }
+      widget.onProgramChanged();
     });
   }
 }

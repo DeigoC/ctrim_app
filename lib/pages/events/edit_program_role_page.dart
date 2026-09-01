@@ -54,6 +54,15 @@ class _EventProgramPageState extends State<EventProgramPage> {
 
   bool get _isEditing => widget.isEditing;
 
+  /// Always write schedule edits onto the live program role, not a stale map
+  /// captured when the detail sheet or timeline block was first built.
+  Map<String, dynamic> _canonicalRole() {
+    final entry = widget.programEntry!;
+    final roleId = entry['id'] as int;
+    return widget.eventContext.program.roles
+        .firstWhere((role) => role['id'] == roleId);
+  }
+
   void _popRouteAfterAllowing() {
     setState(() => _allowPop = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -550,16 +559,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   void _updateCanSaveForEdit() {
-    final entry = widget.programEntry!;
+    final role = _canonicalRole();
     if (_canSave &&
         (_areTimesTheSame() &&
-            _tecDetail.text.trim().compareTo(entry['detail']) == 0 &&
-            (_tecTitle.text.trim().compareTo(entry['title']) == 0 ||
+            _tecDetail.text.trim().compareTo(role['detail'] as String) == 0 &&
+            (_tecTitle.text.trim().compareTo(role['title'] as String) == 0 ||
                 _tecTitle.text.trim().isEmpty)) &&
-        _forGuests == entry['for_guests'] &&
+        _forGuests == role['for_guests'] &&
         _selectedUsers
                 .toString()
-                .compareTo((entry['uids'] as List<String>).toString()) ==
+                .compareTo((role['uids'] as List<String>).toString()) ==
             0) {
       setState(() {
         _canSave = false;
@@ -572,9 +581,9 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   bool _areTimesTheSame() {
-    final entry = widget.programEntry!;
-    final originalStart = entry['start'] as DateTime;
-    final originalEnd = entry['end'] as DateTime;
+    final role = _canonicalRole();
+    final originalStart = role['start'] as DateTime;
+    final originalEnd = role['end'] as DateTime;
     return _start != null &&
         _end != null &&
         _start!.hour.compareTo(originalStart.hour) == 0 &&
@@ -686,13 +695,13 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Future<void> _saveEdit() async {
-    final entry = widget.programEntry!;
+    final role = _canonicalRole();
     bool shiftFollowing = false;
     if (!_areTimesTheSame()) {
-      final DateTime oldEnd = entry['end'] as DateTime;
+      final DateTime oldEnd = role['end'] as DateTime;
       final int affectedCount = widget.eventContext.program
           .countRolesStartingAtOrAfter(oldEnd,
-              excludeRoleId: entry['id'] as int);
+              excludeRoleId: role['id'] as int);
       if (affectedCount > 0) {
         final bool? choice = await DialogManager.askShiftFollowingScheduleItems(
           context: context,
@@ -726,37 +735,50 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   void _saveAllChanges({required bool shiftFollowing}) {
-    final entry = widget.programEntry!;
-    _sortNotifications();
-    entry['uids'] = _selectedUsers;
-    entry['detail'] = _tecDetail.text.trim();
-    entry['title'] = _tecTitle.text.trim();
-    entry['for_guests'] = _forGuests;
-    entry['priority'] = 1;
-    widget.eventContext.program.updateRoleTiming(
-      roleId: entry['id'] as int,
-      newStart: _start!,
-      newEnd: _end!,
-      shiftFollowing: shiftFollowing,
-    );
+    final role = _canonicalRole();
+    final roleId = role['id'] as int;
+    _sortNotifications(role);
+    role['uids'] = List<String>.from(_selectedUsers);
+    role['detail'] = _tecDetail.text.trim();
+    role['title'] = _tecTitle.text.trim();
+    role['for_guests'] = _forGuests;
+    role['priority'] = 1;
+
+    if (_start != null && _end != null) {
+      final oldEnd = role['end'] as DateTime?;
+      if (oldEnd != null) {
+        widget.eventContext.program.updateRoleTiming(
+          roleId: roleId,
+          newStart: _start!,
+          newEnd: _end!,
+          shiftFollowing: shiftFollowing,
+        );
+        return;
+      }
+    }
+
+    role['start'] = _start;
+    role['end'] = _end;
+    widget.eventContext.program.orderProgramsByStartTime();
   }
 
-  void _sortNotifications() {
-    final entry = widget.programEntry!;
-    final List<String> originalList = List<String>.from(entry['uids']);
+  void _sortNotifications(final Map<String, dynamic> role) {
+    final List<String> originalList =
+        List<String>.from(role['uids'] as List<String>);
 
     final removedMembers =
         originalList.where((e) => !_selectedUsers.contains(e));
     debugPrint('Sending role removal to the following: $removedMembers');
     if (removedMembers.isNotEmpty) {
       widget.eventContext
-          .addRoleRemovalNotification(removedMembers, entry['id']);
+          .addRoleRemovalNotification(removedMembers, role['id'] as int);
     }
 
     final newMembers = _selectedUsers.where((e) => !originalList.contains(e));
     debugPrint('Sending role addition to the following: $newMembers');
     if (newMembers.isNotEmpty) {
-      widget.eventContext.addRoleAdditionNotification(newMembers, entry['id']);
+      widget.eventContext
+          .addRoleAdditionNotification(newMembers, role['id'] as int);
     }
     debugPrint(
         '--------role addition now looks like: ${widget.eventContext.roleAdditions}');

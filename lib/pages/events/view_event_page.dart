@@ -480,6 +480,7 @@ class _ViewEventPageState extends State<ViewEventPage>
     ];
     if (_showScheduleTab) {
       tabs.add(ViewAllPrograms(
+        key: ValueKey(_eventContext.program.scheduleLayoutSignature),
         eventContext: _eventContext,
         onProgramChanged: _updateWholePostBody,
       ));

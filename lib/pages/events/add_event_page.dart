@@ -180,6 +180,7 @@ class _AddEventPageState extends State<AddEventPage>
           updateBody: () => _updateBody(),
           currentUID: _appContext.currentUser.id),
       ViewAllPrograms(
+          key: ValueKey(widget.eventContext.program.scheduleLayoutSignature),
           eventContext: widget.eventContext,
           onProgramChanged: () => _updateBody(),
           isAddingPost: true),

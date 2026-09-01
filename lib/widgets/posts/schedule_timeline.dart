@@ -164,6 +164,10 @@ class ScheduleTimeline extends StatelessWidget {
           );
 
     return Positioned(
+      key: ValueKey(
+        '${placement.roleId}-${placement.start.millisecondsSinceEpoch}-'
+        '${placement.laneIndex}',
+      ),
       top: placement.minutesFromStart * pixelsPerMinute,
       left: _railWidth + placement.laneIndex * laneWidth + _laneGap,
       width: laneWidth - _laneGap * 2,

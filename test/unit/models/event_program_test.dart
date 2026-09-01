@@ -260,6 +260,20 @@ void main() {
         expect(program.roles[2]['start'], DateTime(2024, 6, 15, 10, 45));
       });
 
+      test('scheduleLayoutSignature changes when role timing changes', () {
+        final program = buildSequentialProgram();
+        final before = program.scheduleLayoutSignature;
+
+        program.updateRoleTiming(
+          roleId: 1,
+          newStart: DateTime(2024, 6, 15, 10, 0),
+          newEnd: DateTime(2024, 6, 15, 10, 25),
+          shiftFollowing: false,
+        );
+
+        expect(program.scheduleLayoutSignature, isNot(before));
+      });
+
       test('updateRoleTiming does not shift overlapping parallel roles', () {
         final program = buildSequentialProgram();
         program.addRole(
