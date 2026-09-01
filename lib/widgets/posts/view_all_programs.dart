@@ -14,6 +14,7 @@ import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import '../common/action_sheet.dart';
+import 'schedule_coverage_band.dart';
 import 'schedule_role_detail_sheet.dart';
 import 'schedule_timeline.dart';
 
@@ -93,7 +94,9 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
 
   Widget _buildScheduleBody(
       final ScheduleTimelineLayout layout, final bool isWide) {
-    if (layout.isEmpty && layout.untimedRoles.isEmpty) {
+    if (layout.isEmpty &&
+        layout.coverageRoles.isEmpty &&
+        layout.untimedRoles.isEmpty) {
       return _buildEmptySchedule();
     }
 
@@ -135,6 +138,16 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
                 icon: const Icon(Icons.swap_vert, size: 18),
                 label: Text(AppLocalizations.of(context)!.scheduleArrangeTitle),
               ),
+            ),
+          ),
+        if (layout.coverageRoles.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: ScheduleCoverageBand(
+              coverageRoles: layout.coverageRoles,
+              usersForRole: _usersForRole,
+              onRoleTap: (role) => _onRoleTap(role, isWide),
+              selectedRoleId: isWide ? _selectedRoleId : null,
             ),
           ),
         body,
@@ -266,7 +279,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     final start = role['start'] as DateTime?;
     if (start == null) return false;
     return (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
-            widget.eventContext.isUserContributor(_appContext.currentUser.id)) &&
+            widget.eventContext
+                .isUserContributor(_appContext.currentUser.id)) &&
         DateTime.now().isBefore(start);
   }
 

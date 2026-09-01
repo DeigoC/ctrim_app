@@ -60,7 +60,9 @@ Opening a post shows tabs when that content exists:
 
 The Schedule tab shows the running order as a **timeline of the day** rather than a plain list. Each item sits at its actual clock time and its height reflects how long it lasts, so a quick five-minute slot looks different from an hour-long session.
 
-Anything happening **at the same time** appears side by side. A job that runs quietly in the background — sound, media, Sunday school — sits alongside the main running order instead of being buried between two unrelated lines. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
+Anything happening **at the same time** appears side by side. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
+
+Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
 
 Tap any item to see its full details: exact times, notes, and who is assigned. On a wide screen those details open in a panel beside the timeline.
 

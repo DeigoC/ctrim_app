@@ -1419,6 +1419,19 @@
   "@scheduleEmptyBodyViewer": {
     "description": "Empty schedule message for people who cannot edit the post"
   },
+  "scheduleAllEventSectionTitle": "All event",
+  "@scheduleAllEventSectionTitle": {
+    "description": "Heading for roles that run for most of the event rather than a slot in the running order"
+  },
+  "scheduleAllEventArrangeHint": "\"{title}\" runs for most of the event, so it stays out of the running order",
+  "@scheduleAllEventArrangeHint": {
+    "description": "Shown when tapping an all-event role on the arrange schedule page",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "scheduleUntimedSectionTitle": "Without a time",
   "@scheduleUntimedSectionTitle": {
     "description": "Heading for schedule items that have no start or end time"

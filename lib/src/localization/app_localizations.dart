@@ -2044,6 +2044,18 @@ abstract class AppLocalizations {
   /// **'The running order for this post has not been shared yet.'**
   String get scheduleEmptyBodyViewer;
 
+  /// Heading for roles that run for most of the event rather than a slot in the running order
+  ///
+  /// In en, this message translates to:
+  /// **'All event'**
+  String get scheduleAllEventSectionTitle;
+
+  /// Shown when tapping an all-event role on the arrange schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" runs for most of the event, so it stays out of the running order'**
+  String scheduleAllEventArrangeHint(String title);
+
   /// Heading for schedule items that have no start or end time
   ///
   /// In en, this message translates to:

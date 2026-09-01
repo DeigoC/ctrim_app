@@ -40,6 +40,25 @@ class ScheduleTimelinePlacement {
       end.difference(start).inSeconds / Duration.secondsPerMinute;
 }
 
+/// A role that runs for most of the event rather than occupying a slot in the
+/// running order — sound, media, stewarding and the like.
+///
+/// These are lifted off the canvas so a single long role cannot push the whole
+/// running order into overflow lanes.
+class ScheduleCoverageRole {
+  const ScheduleCoverageRole({
+    required this.role,
+    required this.start,
+    required this.end,
+  });
+
+  final Map<String, dynamic> role;
+  final DateTime start;
+  final DateTime end;
+
+  int get roleId => role['id'] as int;
+}
+
 /// Roles in a cluster that did not fit within the lane cap.
 class ScheduleTimelineOverflow {
   const ScheduleTimelineOverflow({
@@ -66,6 +85,7 @@ class ScheduleTimelineLayout {
   const ScheduleTimelineLayout({
     required this.placements,
     required this.overflows,
+    required this.coverageRoles,
     required this.untimedRoles,
     required this.dayStart,
     required this.dayEnd,
@@ -75,8 +95,22 @@ class ScheduleTimelineLayout {
   static const int phoneLaneCap = 2;
   static const int wideLaneCap = 4;
 
+  /// Share of the scheduled span a role must fill to count as covering the
+  /// event instead of taking a turn in the running order.
+  static const double coverageSpanRatio = 0.5;
+
+  /// A covering role has to actually run alongside other items; a long role in
+  /// a back-to-back running order is still part of the sequence.
+  static const int minCoverageOverlaps = 2;
+
+  /// Guards short posts, where a handful of minutes can still be half the span.
+  static const Duration minCoverageDuration = Duration(minutes: 30);
+
   final List<ScheduleTimelinePlacement> placements;
   final List<ScheduleTimelineOverflow> overflows;
+
+  /// Long-running roles shown in a band above the canvas, earliest first.
+  final List<ScheduleCoverageRole> coverageRoles;
 
   /// Roles missing a start or end; they cannot be drawn on the time axis.
   final List<Map<String, dynamic>> untimedRoles;
@@ -105,6 +139,10 @@ class ScheduleTimelineLayout {
 
   /// Packs [roles] into lanes, hiding anything past [laneCap] behind an
   /// overflow marker. [finishTime] extends the axis to the event's end.
+  ///
+  /// Roles covering most of the schedule are pulled out into [coverageRoles]
+  /// first, so the canvas shows the running order rather than a wall of
+  /// all-morning duty blocks.
   static ScheduleTimelineLayout build({
     required List<Map<String, dynamic>> roles,
     int laneCap = phoneLaneCap,
@@ -130,11 +168,14 @@ class ScheduleTimelineLayout {
       return ScheduleTimelineLayout(
         placements: const [],
         overflows: const [],
+        coverageRoles: const [],
         untimedRoles: untimed,
         dayStart: null,
         dayEnd: null,
       );
     }
+
+    final coverage = _extractCoverageRoles(timed);
 
     timed.sort((final a, final b) {
       final byStart = a.start.compareTo(b.start);
@@ -177,10 +218,85 @@ class ScheduleTimelineLayout {
     return ScheduleTimelineLayout(
       placements: placements,
       overflows: overflows,
+      coverageRoles: coverage,
       untimedRoles: untimed,
       dayStart: dayStart,
       dayEnd: dayEnd,
     );
+  }
+
+  /// Removes roles that span most of the schedule from [timed] and returns
+  /// them, earliest first.
+  ///
+  /// Nothing is removed when every role qualifies, since an empty canvas is
+  /// worse than a crowded one.
+  static List<ScheduleCoverageRole> _extractCoverageRoles(
+    final List<({Map<String, dynamic> role, DateTime start, DateTime end})>
+        timed,
+  ) {
+    if (timed.length < 3) return const [];
+
+    var spanStart = timed.first.start;
+    var spanEnd = timed.first.end;
+    for (final entry in timed) {
+      if (entry.start.isBefore(spanStart)) spanStart = entry.start;
+      if (entry.end.isAfter(spanEnd)) spanEnd = entry.end;
+    }
+
+    final spanSeconds = spanEnd.difference(spanStart).inSeconds;
+    if (spanSeconds <= 0) return const [];
+
+    final candidates = <int>{};
+    for (var i = 0; i < timed.length; i++) {
+      final entry = timed[i];
+      final durationSeconds = entry.end.difference(entry.start).inSeconds;
+      if (durationSeconds < minCoverageDuration.inSeconds) continue;
+      if (durationSeconds / spanSeconds < coverageSpanRatio) continue;
+      if (_overlapCount(timed, i) < minCoverageOverlaps) continue;
+      candidates.add(i);
+    }
+
+    if (candidates.isEmpty || candidates.length == timed.length) {
+      return const [];
+    }
+
+    final coverage = <ScheduleCoverageRole>[];
+    for (final index in candidates.toList()..sort()) {
+      final entry = timed[index];
+      coverage.add(ScheduleCoverageRole(
+        role: entry.role,
+        start: entry.start,
+        end: entry.end,
+      ));
+    }
+    for (final index in candidates.toList()..sort((a, b) => b.compareTo(a))) {
+      timed.removeAt(index);
+    }
+
+    coverage.sort((final a, final b) {
+      final byStart = a.start.compareTo(b.start);
+      if (byStart != 0) return byStart;
+      return b.end.compareTo(a.end);
+    });
+    return coverage;
+  }
+
+  /// How many other roles run at the same time as the one at [index].
+  static int _overlapCount(
+    final List<({Map<String, dynamic> role, DateTime start, DateTime end})>
+        timed,
+    final int index,
+  ) {
+    final entry = timed[index];
+    var count = 0;
+    for (var i = 0; i < timed.length; i++) {
+      if (i == index) continue;
+      final other = timed[i];
+      if (entry.start.isBefore(other.end) && other.start.isBefore(entry.end)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /// Last index of the run of roles that transitively overlap [firstIndex].

@@ -156,7 +156,7 @@ void main() {
       expect(prayer.laneCount, 2);
     });
 
-    test('a long role keeps later short roles in the same cluster', () {
+    test('an all-morning role moves to the band and frees the canvas', () {
       final layout = ScheduleTimelineLayout.build(roles: [
         role(
           id: 1,
@@ -178,17 +178,173 @@ void main() {
         ),
       ]);
 
-      final sound = placementFor(layout, 1);
-      final worship = placementFor(layout, 2);
-      final word = placementFor(layout, 3);
+      expect(layout.coverageRoles.map((final c) => c.roleId), [1]);
+      expect(layout.coverageRoles.single.start, DateTime(2026, 6, 14, 9, 0));
+      expect(layout.coverageRoles.single.end, DateTime(2026, 6, 14, 12, 0));
 
-      expect(worship.clusterIndex, sound.clusterIndex);
-      expect(word.clusterIndex, sound.clusterIndex);
-      expect(sound.laneIndex, 0);
-      expect(worship.laneIndex, 1);
-      // The second lane is free again once worship ends.
-      expect(word.laneIndex, 1);
-      expect(layout.placements.every((final p) => p.laneCount == 2), isTrue);
+      // The running order is left to itself: one lane, no overflow.
+      expect(layout.placements.map((final p) => p.roleId), [2, 3]);
+      expect(layout.hasOverlaps, isFalse);
+      expect(layout.overflows, isEmpty);
+      // The axis no longer reserves the hour before the first item.
+      expect(layout.dayStart, DateTime(2026, 6, 14, 10, 0));
+    });
+
+    test('two duty roles free a crowded running order on a phone', () {
+      final layout = ScheduleTimelineLayout.build(
+        roles: [
+          role(
+            id: 1,
+            title: 'Technical Sound',
+            start: DateTime(2026, 6, 14, 9, 0),
+            end: DateTime(2026, 6, 14, 12, 0),
+          ),
+          role(
+            id: 2,
+            title: 'Technical Media',
+            start: DateTime(2026, 6, 14, 9, 0),
+            end: DateTime(2026, 6, 14, 12, 0),
+          ),
+          role(
+            id: 3,
+            title: 'Welcome',
+            start: DateTime(2026, 6, 14, 10, 0),
+            end: DateTime(2026, 6, 14, 10, 10),
+          ),
+          role(
+            id: 4,
+            title: 'Worship',
+            start: DateTime(2026, 6, 14, 10, 10),
+            end: DateTime(2026, 6, 14, 10, 50),
+          ),
+          role(
+            id: 5,
+            title: 'Word',
+            start: DateTime(2026, 6, 14, 10, 50),
+            end: DateTime(2026, 6, 14, 11, 50),
+          ),
+        ],
+        laneCap: ScheduleTimelineLayout.phoneLaneCap,
+      );
+
+      expect(layout.coverageRoles.map((final c) => c.roleId), [1, 2]);
+      expect(layout.placements.map((final p) => p.roleId), [3, 4, 5]);
+      // Previously these three were hidden behind a "+N parallel" marker.
+      expect(layout.overflows, isEmpty);
+      expect(layout.placements.every((final p) => p.laneIndex == 0), isTrue);
+    });
+
+    test('a long role overlapping only one other stays on the canvas', () {
+      final layout = ScheduleTimelineLayout.build(roles: [
+        role(
+          id: 1,
+          title: 'Technical Sound',
+          start: DateTime(2026, 6, 14, 9, 0),
+          end: DateTime(2026, 6, 14, 12, 0),
+        ),
+        role(
+          id: 2,
+          title: 'Praise and Worship',
+          start: DateTime(2026, 6, 14, 10, 10),
+          end: DateTime(2026, 6, 14, 10, 35),
+        ),
+        role(
+          id: 3,
+          title: 'Clean up',
+          start: DateTime(2026, 6, 14, 12, 0),
+          end: DateTime(2026, 6, 14, 12, 30),
+        ),
+      ]);
+
+      expect(layout.coverageRoles, isEmpty);
+      expect(placementFor(layout, 1).laneIndex, 0);
+      expect(placementFor(layout, 2).laneIndex, 1);
+    });
+
+    test('back-to-back roles are never treated as covering the event', () {
+      final layout = ScheduleTimelineLayout.build(roles: [
+        role(
+          id: 1,
+          title: 'First half',
+          start: DateTime(2026, 6, 14, 10, 0),
+          end: DateTime(2026, 6, 14, 11, 0),
+        ),
+        role(
+          id: 2,
+          title: 'Second half',
+          start: DateTime(2026, 6, 14, 11, 0),
+          end: DateTime(2026, 6, 14, 12, 0),
+        ),
+        role(
+          id: 3,
+          title: 'Notices',
+          start: DateTime(2026, 6, 14, 12, 0),
+          end: DateTime(2026, 6, 14, 12, 10),
+        ),
+      ]);
+
+      expect(layout.coverageRoles, isEmpty);
+      expect(layout.placements.length, 3);
+    });
+
+    test('roles too short to matter are not banded on a brief post', () {
+      final layout = ScheduleTimelineLayout.build(
+        roles: [
+          role(
+            id: 1,
+            title: 'Sound check',
+            start: DateTime(2026, 6, 14, 10, 0),
+            end: DateTime(2026, 6, 14, 10, 20),
+          ),
+          role(
+            id: 2,
+            title: 'Warm up',
+            start: DateTime(2026, 6, 14, 10, 0),
+            end: DateTime(2026, 6, 14, 10, 8),
+          ),
+          role(
+            id: 3,
+            title: 'Briefing',
+            start: DateTime(2026, 6, 14, 10, 5),
+            end: DateTime(2026, 6, 14, 10, 15),
+          ),
+        ],
+        laneCap: ScheduleTimelineLayout.wideLaneCap,
+      );
+
+      // 20 minutes is over half a 20-minute span, but far too short to be duty
+      // cover — the minimum duration keeps these in the running order.
+      expect(layout.coverageRoles, isEmpty);
+      expect(layout.placements.length, 3);
+    });
+
+    test('nothing is banded when every role covers the event', () {
+      final layout = ScheduleTimelineLayout.build(
+        roles: [
+          role(
+            id: 1,
+            title: 'Sound',
+            start: DateTime(2026, 6, 14, 9, 0),
+            end: DateTime(2026, 6, 14, 12, 0),
+          ),
+          role(
+            id: 2,
+            title: 'Media',
+            start: DateTime(2026, 6, 14, 9, 0),
+            end: DateTime(2026, 6, 14, 12, 0),
+          ),
+          role(
+            id: 3,
+            title: 'Stewarding',
+            start: DateTime(2026, 6, 14, 9, 0),
+            end: DateTime(2026, 6, 14, 12, 0),
+          ),
+        ],
+        laneCap: ScheduleTimelineLayout.wideLaneCap,
+      );
+
+      expect(layout.coverageRoles, isEmpty);
+      expect(layout.placements.length, 3);
     });
 
     test('a gap between roles starts a new cluster', () {

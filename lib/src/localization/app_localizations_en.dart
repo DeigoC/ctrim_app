@@ -1077,6 +1077,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'The running order for this post has not been shared yet.';
 
   @override
+  String get scheduleAllEventSectionTitle => 'All event';
+
+  @override
+  String scheduleAllEventArrangeHint(String title) {
+    return '\"$title\" runs for most of the event, so it stays out of the running order';
+  }
+
+  @override
   String get scheduleUntimedSectionTitle => 'Without a time';
 
   @override

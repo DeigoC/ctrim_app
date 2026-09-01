@@ -9,6 +9,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/schedule_timeline_layout.dart';
+import '../../widgets/posts/schedule_coverage_band.dart';
 import '../../widgets/posts/schedule_timeline.dart';
 
 /// Rearranges a post's running order by dragging blocks on the timeline.
@@ -120,11 +121,24 @@ class _ArrangeSchedulePageState extends State<ArrangeSchedulePage> {
                 horizontalPadding,
                 32,
               ),
-              child: ScheduleTimeline(
-                layout: layout,
-                usersForRole: _usersForRole,
-                onRoleTap: _showRoleTimingHint,
-                onRoleMoved: _onRoleMoved,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (layout.coverageRoles.isNotEmpty) ...[
+                    ScheduleCoverageBand(
+                      coverageRoles: layout.coverageRoles,
+                      usersForRole: _usersForRole,
+                      onRoleTap: _showCoverageRoleHint,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  ScheduleTimeline(
+                    layout: layout,
+                    usersForRole: _usersForRole,
+                    onRoleTap: _showRoleTimingHint,
+                    onRoleMoved: _onRoleMoved,
+                  ),
+                ],
               ),
             ),
           ),
@@ -188,6 +202,20 @@ class _ArrangeSchedulePageState extends State<ArrangeSchedulePage> {
     );
     if (!moved) return;
     setState(() => _dirty = true);
+  }
+
+  void _showCoverageRoleHint(final Map<String, dynamic> role) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!
+                .scheduleAllEventArrangeHint(role['title'] as String),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
   }
 
   void _showRoleTimingHint(final Map<String, dynamic> role) {
