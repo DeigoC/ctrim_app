@@ -101,6 +101,8 @@ When organisers pick people for **programme roles**, lead speaker, contributors,
 
 Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
 
+When you are signed in, the profile also lists **cell groups** that person belongs to (from the group roster or as a listed leader). Tap a group to open its detail page.
+
 ## Placeholders
 
 Sometimes organisers need to assign or list someone **before** that person has signed in. The app supports **placeholder** people for that — useful for attendance, cell groups, and programmes.

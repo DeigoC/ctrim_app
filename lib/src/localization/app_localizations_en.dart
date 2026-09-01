@@ -75,6 +75,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userProfileCellGroupLeaderBadge => 'CG Leader';
 
   @override
+  String get userProfileCellGroups => 'Cell groups';
+
+  @override
+  String get userProfileNoCellGroups => 'Not in a cell group.';
+
+  @override
   String get userProfileUpcomingTasks => 'Upcoming tasks';
 
   @override

@@ -95,6 +95,14 @@
   "@userProfileCellGroupLeaderBadge": {
     "description": "Badge shown when a volunteer leads an active or paused cell group"
   },
+  "userProfileCellGroups": "Cell groups",
+  "@userProfileCellGroups": {
+    "description": "Section title on a profile for cell group membership"
+  },
+  "userProfileNoCellGroups": "Not in a cell group.",
+  "@userProfileNoCellGroups": {
+    "description": "Message when a person is not listed on any cell group roster or as a leader"
+  },
   "userProfileUpcomingTasks": "Upcoming tasks",
   "@userProfileUpcomingTasks": {
     "description": "Section title on a volunteer profile for schedule preview"

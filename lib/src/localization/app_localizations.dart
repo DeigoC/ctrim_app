@@ -208,6 +208,18 @@ abstract class AppLocalizations {
   /// **'CG Leader'**
   String get userProfileCellGroupLeaderBadge;
 
+  /// Section title on a profile for cell group membership
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups'**
+  String get userProfileCellGroups;
+
+  /// Message when a person is not listed on any cell group roster or as a leader
+  ///
+  /// In en, this message translates to:
+  /// **'Not in a cell group.'**
+  String get userProfileNoCellGroups;
+
   /// Section title on a volunteer profile for schedule preview
   ///
   /// In en, this message translates to:

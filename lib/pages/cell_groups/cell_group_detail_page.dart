@@ -18,6 +18,7 @@ import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
+import '../../utility/cell_group_roster_cache.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
@@ -83,6 +84,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         try {
           roster = await CellGroupSupplementalDBManager(widget.groupId)
               .fetchRoster();
+          CellGroupRosterCache.put(widget.groupId, roster);
         } catch (_) {
           roster = null;
         }
@@ -258,6 +260,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     try {
       final roster =
           await CellGroupSupplementalDBManager(widget.groupId).fetchRoster();
+      CellGroupRosterCache.put(widget.groupId, roster);
       if (mounted) setState(() => _roster = roster);
       return roster;
     } catch (_) {
@@ -276,6 +279,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
       title: 'Saving members…',
       action: () async {
         await CellGroupSupplementalDBManager(group.id).setRoster(roster);
+        CellGroupRosterCache.put(group.id, roster);
         final count = roster.activeCount;
         await CellGroupDBManager()
             .updateMemberCount(id: group.id, memberCount: count);

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/user_db_manager.dart';
+import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../models/user_activity_record.dart';
 import '../../models/user_role_assignment.dart';
@@ -12,6 +13,7 @@ import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
+import '../../utility/cell_group_roster_cache.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/user_avatar.dart';
@@ -20,6 +22,7 @@ import '../../widgets/volunteer_role_badge.dart';
 import 'edit_user_page.dart';
 import 'view_user_activity_page.dart';
 import 'view_user_roles_page.dart';
+import '../cell_groups/cell_group_detail_page.dart';
 
 class ViewUserProfilePage extends StatefulWidget {
   const ViewUserProfilePage({
@@ -49,6 +52,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   String _statusMessage = 'Loading profile…';
   int _completedSteps = 0;
   int _totalSteps = 2;
+  List<CellGroup> _cellGroups = const [];
 
   @override
   void initState() {
@@ -68,7 +72,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       _loadError = null;
       _statusMessage = 'Fetching schedule…';
       _completedSteps = 0;
-      _totalSteps = 3;
+      _totalSteps = 4;
     });
 
     try {
@@ -95,10 +99,19 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
       _user.setActivity(await _userDBManager.fetchActivity(_user.id));
       if (!mounted) return;
+
+      setState(() {
+        _completedSteps = 3;
+        _statusMessage = 'Fetching cell groups…';
+      });
+
+      final cellGroups = await _loadCellGroups();
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _completedSteps = 3;
+        _completedSteps = 4;
         _statusMessage = 'Done';
+        _cellGroups = cellGroups;
       });
     } catch (e, st) {
       debugPrint('Error loading profile: $e\n$st');
@@ -108,6 +121,19 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
         _loadError = e;
       });
     }
+  }
+
+  Future<List<CellGroup>> _loadCellGroups() async {
+    if (!_appContext.isCurrentUserGuest) {
+      final activeIds = _appContext.allCellGroups
+          .where((g) => !g.isArchived)
+          .map((g) => g.id);
+      await CellGroupRosterCache.ensureLoaded(activeIds);
+    }
+    return CellGroupRosterCache.groupsForUser(
+      user: _user,
+      catalogue: _appContext.allCellGroups,
+    );
   }
 
   @override
@@ -215,6 +241,12 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     final details = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(l10n.userProfileCellGroups,
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        _buildCellGroupsCard(l10n, theme, colorScheme),
+        const SizedBox(height: 16),
         Text(l10n.userProfileUpcomingTasks,
             style: theme.textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
@@ -292,6 +324,58 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
           details,
         ],
       ],
+    );
+  }
+
+  Widget _buildCellGroupsCard(
+    AppLocalizations l10n,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    if (_cellGroups.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            l10n.userProfileNoCellGroups,
+            style: theme.textTheme.bodyLarge
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Column(
+        children: [
+          for (var i = 0; i < _cellGroups.length; i++) ...[
+            if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+            _buildCellGroupTile(_cellGroups[i], theme, colorScheme),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCellGroupTile(
+    CellGroup group,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final cadence = group.cadenceLabel;
+    return ListTile(
+      leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
+      title: Text(group.name),
+      subtitle: cadence.isEmpty ? null : Text(cadence),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CellGroupDetailPage(groupId: group.id),
+          ),
+        );
+      },
     );
   }
 
