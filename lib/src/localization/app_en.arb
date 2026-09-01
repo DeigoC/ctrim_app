@@ -1001,23 +1001,23 @@
   "@bulletinSortRelevancy": {
     "description": "Default bulletin sort: today, then upcoming, then the rest"
   },
-  "bulletinSortRelevancySubtitle": "Today first, then what’s coming up",
+  "bulletinSortRelevancySubtitle": "Today, then the next four weeks",
   "@bulletinSortRelevancySubtitle": {
     "description": "Explains relevancy sort on the bulletin"
   },
   "bulletinSortSoonest": "Soonest first",
   "@bulletinSortSoonest": {
-    "description": "Bulletin sort by earliest event date"
+    "description": "Bulletin sort: upcoming events by date, then recent past"
   },
-  "bulletinSortSoonestSubtitle": "Earliest event date at the top",
+  "bulletinSortSoonestSubtitle": "Upcoming events first, then recent past",
   "@bulletinSortSoonestSubtitle": {
     "description": "Explains soonest-first sort"
   },
   "bulletinSortLatest": "Latest first",
   "@bulletinSortLatest": {
-    "description": "Bulletin sort by latest event date"
+    "description": "Bulletin sort: recent past first, then upcoming"
   },
-  "bulletinSortLatestSubtitle": "Most recent event date at the top",
+  "bulletinSortLatestSubtitle": "Recent past first, then upcoming",
   "@bulletinSortLatestSubtitle": {
     "description": "Explains latest-first sort"
   },

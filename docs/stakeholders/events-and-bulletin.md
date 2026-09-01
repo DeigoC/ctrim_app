@@ -20,9 +20,9 @@ Use the bulletin’s **sort / filter** control. Sort and filters are separate, s
 
 | Option | What it does |
 |--------|----------------|
-| **Relevancy** *(default)* | Today’s events first, then everything still coming up by date, then older posts |
-| **Soonest first** | Earliest event date at the top |
-| **Latest first** | Most recent event date at the top |
+| **Relevancy** *(default)* | Today’s events first, then the next four weeks by date, then everything else (older posts, far-future bulk dates, undated) |
+| **Soonest first** | Today and upcoming events by date, then recent past |
+| **Latest first** | Recent past first, then upcoming by date |
 
 **Show** (what appears):
 

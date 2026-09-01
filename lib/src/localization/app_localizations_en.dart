@@ -761,20 +761,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bulletinSortRelevancy => 'Relevancy';
 
   @override
-  String get bulletinSortRelevancySubtitle =>
-      'Today first, then what’s coming up';
+  String get bulletinSortRelevancySubtitle => 'Today, then the next four weeks';
 
   @override
   String get bulletinSortSoonest => 'Soonest first';
 
   @override
-  String get bulletinSortSoonestSubtitle => 'Earliest event date at the top';
+  String get bulletinSortSoonestSubtitle =>
+      'Upcoming events first, then recent past';
 
   @override
   String get bulletinSortLatest => 'Latest first';
 
   @override
-  String get bulletinSortLatestSubtitle => 'Most recent event date at the top';
+  String get bulletinSortLatestSubtitle => 'Recent past first, then upcoming';
 
   @override
   String get bulletinShowSection => 'Show';

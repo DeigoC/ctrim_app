@@ -1465,10 +1465,10 @@ abstract class AppLocalizations {
   /// Explains relevancy sort on the bulletin
   ///
   /// In en, this message translates to:
-  /// **'Today first, then what’s coming up'**
+  /// **'Today, then the next four weeks'**
   String get bulletinSortRelevancySubtitle;
 
-  /// Bulletin sort by earliest event date
+  /// Bulletin sort: upcoming events by date, then recent past
   ///
   /// In en, this message translates to:
   /// **'Soonest first'**
@@ -1477,10 +1477,10 @@ abstract class AppLocalizations {
   /// Explains soonest-first sort
   ///
   /// In en, this message translates to:
-  /// **'Earliest event date at the top'**
+  /// **'Upcoming events first, then recent past'**
   String get bulletinSortSoonestSubtitle;
 
-  /// Bulletin sort by latest event date
+  /// Bulletin sort: recent past first, then upcoming
   ///
   /// In en, this message translates to:
   /// **'Latest first'**
@@ -1489,7 +1489,7 @@ abstract class AppLocalizations {
   /// Explains latest-first sort
   ///
   /// In en, this message translates to:
-  /// **'Most recent event date at the top'**
+  /// **'Recent past first, then upcoming'**
   String get bulletinSortLatestSubtitle;
 
   /// Section label for bulletin time and bookmark filters
