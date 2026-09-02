@@ -543,6 +543,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersSortTooltip => 'Sort people';
 
   @override
+  String get volunteersFilterTooltip => 'Refine list';
+
+  @override
+  String get volunteersFilterSheetTitle => 'Refine list';
+
+  @override
+  String get volunteersFilterSheetSubtitle =>
+      'Narrow by role, team, or who is shown';
+
+  @override
+  String get volunteersFilterShowSection => 'Show';
+
+  @override
+  String get volunteersFilterServingSubtitle =>
+      'People who serve on teams or lead groups';
+
+  @override
+  String get volunteersFilterRolesSection => 'Roles';
+
+  @override
+  String get volunteersFilterTeamsSection => 'Teams';
+
+  @override
+  String volunteersShowingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get volunteersDirectoryIntro =>
+      'Browse leaders and team members in the church family.';
+
+  @override
+  String get volunteersClearFilters => 'Clear filters';
+
+  @override
+  String volunteersShowing(String parts) {
+    return 'Showing: $parts';
+  }
+
+  @override
   String get cellGroupsAssignLabel => 'Cell groups';
 
   @override

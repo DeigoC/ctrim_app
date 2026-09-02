@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
@@ -8,6 +9,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cache/refresh_cooldown.dart';
+import '../../utility/people_directory_sections.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/users_repository.dart';
@@ -226,6 +228,21 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                       _refreshing ? null : () => _refreshUsersFromServer(),
                 ),
               if (!_isSearching)
+                IconButton(
+                  tooltip: l10n.volunteersFilterTooltip,
+                  onPressed: () => _showFilterSheet(
+                    activeTags: activeTags,
+                    canEdit: canEdit,
+                    appContext: appContext,
+                    cellGroupLeaders: cellGroupLeaders,
+                  ),
+                  icon: Badge(
+                    isLabelVisible: _activeFilterCount > 0,
+                    label: Text('${_activeFilterCount}'),
+                    child: const Icon(Icons.tune),
+                  ),
+                ),
+              if (!_isSearching)
                 PopupMenuButton<_VolunteerSortMode>(
                   icon: const Icon(Icons.sort),
                   tooltip: l10n.volunteersSortTooltip,
@@ -300,139 +317,36 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+              _buildLocationChips(
+                appContext: appContext,
+                cellGroupLeaders: cellGroupLeaders,
+                horizontalPadding: filterHorizontalPadding,
+                l10n: l10n,
+              ),
+              Padding(
                 padding: EdgeInsets.fromLTRB(
-                    filterHorizontalPadding, 8, filterHorizontalPadding, 8),
-                child: Row(
-                  children: [
-                    ...VolunteerLocations.filterOptionsFrom(
-                            appContext.allLocations)
-                        .map((location) {
-                      final label = location == VolunteerLocations.all
-                          ? l10n.volunteersFilterAll
-                          : location;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(label),
-                          selected: _locationFilter == location,
-                          onSelected: (_) {
-                            setState(() => _locationFilter = location);
-                            _logDirectorySnapshot(
-                              allUsers: appContext.allUsers,
-                              filtered: _filteredUsers(
-                                appContext.allUsers,
-                                appContext.allTags,
-                                cellGroupLeaders,
-                              ),
-                              source: 'location-$location',
-                            );
-                          },
-                        ),
-                      );
-                    }),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(l10n.volunteersFilterServing),
-                        selected: _servingOnly,
-                        onSelected: (selected) {
-                          setState(() => _servingOnly = selected);
-                          _logDirectorySnapshot(
-                            allUsers: appContext.allUsers,
-                            filtered: _filteredUsers(
-                              appContext.allUsers,
-                              appContext.allTags,
-                              cellGroupLeaders,
-                            ),
-                            source: 'serving-$selected',
-                          );
-                        },
+                  filterHorizontalPadding,
+                  0,
+                  filterHorizontalPadding,
+                  4,
+                ),
+                child: Text(
+                  l10n.volunteersDirectoryIntro,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(l10n.volunteersFilterLeaders),
-                        selected:
-                            _selectedRoles.contains(VolunteerRoleKind.leader),
-                        onSelected: (selected) =>
-                            _toggleRoleFilter(VolunteerRoleKind.leader),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(l10n.volunteersFilterAdmins),
-                        selected: _selectedRoles
-                            .contains(VolunteerRoleKind.areaAdmin),
-                        onSelected: (selected) =>
-                            _toggleRoleFilter(VolunteerRoleKind.areaAdmin),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(l10n.volunteersFilterCellGroupLeaders),
-                        selected: _selectedRoles
-                            .contains(VolunteerRoleKind.cellGroupLeader),
-                        onSelected: (selected) => _toggleRoleFilter(
-                            VolunteerRoleKind.cellGroupLeader),
-                      ),
-                    ),
-                    if (activeTags.isNotEmpty) ...[
-                      const SizedBox(width: 4),
-                      FilterChip(
-                        avatar: Icon(
-                          Icons.label_outline,
-                          size: 18,
-                          color: _selectedTagIDs.isNotEmpty
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .onSecondaryContainer
-                              : null,
-                        ),
-                        label: Text(
-                          _selectedTagIDs.isEmpty
-                              ? l10n.volunteersFilterTags
-                              : l10n.volunteersFilterTagsCount(
-                                  _selectedTagIDs.length),
-                        ),
-                        selected: _selectedTagIDs.isNotEmpty,
-                        onSelected: (_) => _showTagFilterSheet(activeTags),
-                      ),
-                    ],
-                    if (canEdit ||
-                        appContext.allUsers.any((u) =>
-                            isTransientVolunteerPlaceholder(u) &&
-                            u.createdByUserID ==
-                                appContext.currentUser.id)) ...[
-                      const SizedBox(width: 4),
-                      FilterChip(
-                        avatar: const Icon(Icons.person_outline, size: 18),
-                        label: Text(l10n.volunteersShowPlaceholders),
-                        selected: _placeholdersOnly,
-                        onSelected: (selected) {
-                          setState(() => _placeholdersOnly = selected);
-                          _logDirectorySnapshot(
-                            allUsers: appContext.allUsers,
-                            filtered: _filteredUsers(
-                              appContext.allUsers,
-                              appContext.allTags,
-                              cellGroupLeaders,
-                            ),
-                            source: 'placeholders-$selected',
-                          );
-                        },
-                      ),
-                    ],
-                  ],
                 ),
               ),
-              if (_selectedTagIDs.isNotEmpty)
-                _buildSelectedTagsSummary(
-                    activeTags, filterHorizontalPadding, l10n),
+              _buildListHeader(
+                l10n: l10n,
+                count: filteredUsers.length,
+                horizontalPadding: filterHorizontalPadding,
+              ),
+              if (_filterSummaryParts(l10n).isNotEmpty)
+                _buildActiveFiltersBanner(
+                  l10n: l10n,
+                  horizontalPadding: filterHorizontalPadding,
+                ),
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
@@ -446,131 +360,423 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                           ),
                         ),
                       )
-                    : isWide
-                        ? _buildWideUserGrid(
-                            users: filteredUsers,
-                            allTags: appContext.allTags,
-                            cellGroupLeaders: cellGroupLeaders,
-                            appContext: appContext,
-                            horizontalPadding: horizontalPadding,
-                            l10n: l10n,
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            itemCount: filteredUsers.length,
-                            itemBuilder: (_, index) {
-                              final user = filteredUsers[index];
-                              final userTags = UserTagHelpers.tagsForUser(
-                                  user: user, allTags: appContext.allTags);
-                              final roles = VolunteerRoleHelpers.rolesFor(
-                                user: user,
-                                cellGroupLeaders: cellGroupLeaders,
-                              );
-                              final canEditUser = canEditPlaceholderProfile(
-                                actor: appContext.currentUser,
-                                target: user,
-                              );
-                              final hasChips =
-                                  roles.isNotEmpty || userTags.isNotEmpty;
-                              return ListTile(
-                                title: Text(user.fullname),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(user.isPlaceholder
-                                        ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
-                                        : user.location),
-                                    if (hasChips)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: _chipRow(
-                                            roles: roles, tags: userTags),
-                                      ),
-                                  ],
-                                ),
-                                isThreeLine: hasChips,
-                                leading: MyUserAvatar(user),
-                                onTap: () => _onUserTap(user),
-                                onLongPress: canEditUser
-                                    ? () => _navigateToEditUser(user)
-                                    : null,
-                              );
-                            },
-                          ),
+                    : _buildSectionedUserList(
+                        users: filteredUsers,
+                        allTags: appContext.allTags,
+                        cellGroupLeaders: cellGroupLeaders,
+                        appContext: appContext,
+                        horizontalPadding: horizontalPadding,
+                        isWide: isWide,
+                        l10n: l10n,
+                      ),
               ),
             ],
           ));
     });
   }
 
-  Widget _chipRow({
-    required Set<VolunteerRoleKind> roles,
-    required List<UserTag> tags,
-  }) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        ...VolunteerRoleBadgeRow.ordered(roles).map(
-          (role) => VolunteerRoleBadge(role: role, dense: true),
-        ),
-        ...tags.map((tag) => UserTagChip(tag: tag, dense: true)),
-      ],
-    );
+  int get _activeFilterCount {
+    var count = 0;
+    if (!_servingOnly) count++;
+    if (_placeholdersOnly) count++;
+    count += _selectedRoles.length;
+    count += _selectedTagIDs.length;
+    return count;
   }
 
-  void _toggleRoleFilter(VolunteerRoleKind role) {
+  bool get _hasNonDefaultFilters => _activeFilterCount > 0;
+
+  List<String> _filterSummaryParts(AppLocalizations l10n) {
+    final parts = <String>[];
+    if (_servingOnly) parts.add(l10n.volunteersFilterServing);
+    if (_placeholdersOnly) parts.add(l10n.volunteersShowPlaceholders);
+    if (_selectedRoles.contains(VolunteerRoleKind.leader)) {
+      parts.add(l10n.volunteersFilterLeaders);
+    }
+    if (_selectedRoles.contains(VolunteerRoleKind.areaAdmin)) {
+      parts.add(l10n.volunteersFilterAdmins);
+    }
+    if (_selectedRoles.contains(VolunteerRoleKind.cellGroupLeader)) {
+      parts.add(l10n.volunteersFilterCellGroupLeaders);
+    }
+    if (_selectedTagIDs.isNotEmpty) {
+      parts.add(l10n.volunteersFilterTagsCount(_selectedTagIDs.length));
+    }
+    return parts;
+  }
+
+  void _clearFilters() {
+    HapticFeedback.selectionClick();
     setState(() {
-      _selectedRoles = VolunteerRoleHelpers.toggleRole(
-        current: _selectedRoles,
-        role: role,
-      );
+      _servingOnly = true;
+      _placeholdersOnly = false;
+      _selectedRoles = {};
+      _selectedTagIDs = {};
     });
   }
 
-  Widget _buildSelectedTagsSummary(
-    List<UserTag> activeTags,
-    double horizontalPadding,
-    AppLocalizations l10n,
-  ) {
-    final selected =
-        activeTags.where((tag) => _selectedTagIDs.contains(tag.id)).toList();
-    if (selected.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          ...selected.map(
-            (tag) => UserTagChip(
-              tag: tag,
-              selected: true,
-              onTap: () {
-                setState(() {
-                  _selectedTagIDs = Set<String>.from(_selectedTagIDs)
-                    ..remove(tag.id);
-                });
+  Widget _buildLocationChips({
+    required AppContext appContext,
+    required CellGroupLeaderIndex cellGroupLeaders,
+    required double horizontalPadding,
+    required AppLocalizations l10n,
+  }) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
+      child: Row(
+        children: VolunteerLocations.filterOptionsFrom(appContext.allLocations)
+            .map((location) {
+          final label = location == VolunteerLocations.all
+              ? l10n.volunteersFilterAll
+              : location;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(label),
+              selected: _locationFilter == location,
+              onSelected: (_) {
+                setState(() => _locationFilter = location);
+                _logDirectorySnapshot(
+                  allUsers: appContext.allUsers,
+                  filtered: _filteredUsers(
+                    appContext.allUsers,
+                    appContext.allTags,
+                    cellGroupLeaders,
+                  ),
+                  source: 'location-$location',
+                );
               },
             ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildListHeader({
+    required AppLocalizations l10n,
+    required int count,
+    required double horizontalPadding,
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+      child: Row(
+        children: [
+          Text(
+            l10n.volunteersShowingCount(count),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
           ),
-          ActionChip(
-            label: Text(l10n.userTagsFilterClear),
-            onPressed: () => setState(() => _selectedTagIDs = {}),
-          ),
+          const Spacer(),
+          if (_hasNonDefaultFilters)
+            TextButton(
+              onPressed: _clearFilters,
+              child: Text(l10n.volunteersClearFilters),
+            ),
         ],
       ),
     );
   }
 
-  void _showTagFilterSheet(List<UserTag> activeTags) {
-    final l10n = AppLocalizations.of(context)!;
-    var draft = Set<String>.from(_selectedTagIDs);
+  Widget _buildActiveFiltersBanner({
+    required AppLocalizations l10n,
+    required double horizontalPadding,
+  }) {
+    final parts = _filterSummaryParts(l10n);
+    if (parts.isEmpty) return const SizedBox.shrink();
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final accent = colorScheme.primary;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+      child: Material(
+        color: accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: _clearFilters,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: accent.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.tune, size: 16, color: accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.volunteersShowing(parts.join(' · ')),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                Icon(Icons.close, size: 16, color: accent),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool get _useLetterSections =>
+      _sortMode == _VolunteerSortMode.surname && _searchQuery.isEmpty;
+
+  Widget _buildSectionedUserList({
+    required List<User> users,
+    required List<UserTag> allTags,
+    required CellGroupLeaderIndex cellGroupLeaders,
+    required AppContext appContext,
+    required double horizontalPadding,
+    required bool isWide,
+    required AppLocalizations l10n,
+  }) {
+    final sections = _useLetterSections
+        ? PeopleDirectorySections.bySurnameLetter(users)
+        : [
+            PeopleDirectorySection(letter: '', users: users),
+          ];
+
+    return CustomScrollView(
+      slivers: [
+        for (final section in sections) ...[
+          if (_useLetterSections)
+            SliverToBoxAdapter(
+              child: _buildLetterHeader(
+                section.letter,
+                horizontalPadding: horizontalPadding,
+              ),
+            ),
+          if (isWide)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                0,
+                horizontalPadding,
+                0,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 420,
+                  mainAxisExtent: 92,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 8,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildUserGridCard(
+                    user: section.users[index],
+                    allTags: allTags,
+                    cellGroupLeaders: cellGroupLeaders,
+                    appContext: appContext,
+                    l10n: l10n,
+                  ),
+                  childCount: section.users.length,
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildUserListTile(
+                  user: section.users[index],
+                  allTags: allTags,
+                  cellGroupLeaders: cellGroupLeaders,
+                  appContext: appContext,
+                  l10n: l10n,
+                ),
+                childCount: section.users.length,
+              ),
+            ),
+        ],
+        const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
+      ],
+    );
+  }
+
+  Widget _buildLetterHeader(
+    String letter, {
+    required double horizontalPadding,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding + 4, 12, horizontalPadding, 4),
+      child: Text(
+        letter,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserListTile({
+    required User user,
+    required List<UserTag> allTags,
+    required CellGroupLeaderIndex cellGroupLeaders,
+    required AppContext appContext,
+    required AppLocalizations l10n,
+  }) {
+    final userTags =
+        UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final roles = VolunteerRoleHelpers.rolesFor(
+      user: user,
+      cellGroupLeaders: cellGroupLeaders,
+    );
+    final canEditUser = canEditPlaceholderProfile(
+      actor: appContext.currentUser,
+      target: user,
+    );
+    final meta = _compactPersonMeta(roles: roles, tags: userTags);
+
+    return ListTile(
+      title: Text(user.fullname),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            user.isPlaceholder
+                ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
+                : user.location,
+          ),
+          if (meta != null) meta,
+        ],
+      ),
+      isThreeLine: meta != null,
+      leading: MyUserAvatar(user),
+      onTap: () => _onUserTap(user),
+      onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
+    );
+  }
+
+  Widget _buildUserGridCard({
+    required User user,
+    required List<UserTag> allTags,
+    required CellGroupLeaderIndex cellGroupLeaders,
+    required AppContext appContext,
+    required AppLocalizations l10n,
+  }) {
+    final userTags =
+        UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final roles = VolunteerRoleHelpers.rolesFor(
+      user: user,
+      cellGroupLeaders: cellGroupLeaders,
+    );
+    final canEditUser = canEditPlaceholderProfile(
+      actor: appContext.currentUser,
+      target: user,
+    );
+    final theme = Theme.of(context);
+    final meta = _compactPersonMeta(roles: roles, tags: userTags);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _onUserTap(user),
+        onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              MyUserAvatar(user, radius: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      user.fullname,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.isPlaceholder
+                          ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
+                          : user.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (meta != null) meta,
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// At most two chips: leadership roles first, then one team tag.
+  Widget? _compactPersonMeta({
+    required Set<VolunteerRoleKind> roles,
+    required List<UserTag> tags,
+  }) {
+    final chips = <Widget>[];
+    final roleBadges = VolunteerRoleBadgeRow.ordered(roles);
+    for (final role in roleBadges.take(1)) {
+      chips.add(VolunteerRoleBadge(role: role, dense: true));
+    }
+    if (chips.length < 2 && tags.isNotEmpty) {
+      chips.add(UserTagChip(tag: tags.first, dense: true));
+    }
+    if (chips.isEmpty) return null;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: chips,
+      ),
+    );
+  }
+
+  Widget _filterSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+
+  void _showFilterSheet({
+    required List<UserTag> activeTags,
+    required bool canEdit,
+    required AppContext appContext,
+    required CellGroupLeaderIndex cellGroupLeaders,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final showPlaceholdersOption = canEdit ||
+        appContext.allUsers.any((u) =>
+            isTransientVolunteerPlaceholder(u) &&
+            u.createdByUserID == appContext.currentUser.id);
+
+    HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -578,140 +784,135 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            void refreshSheet(VoidCallback update) {
+              setSheetState(update);
+              setState(update);
+              _logDirectorySnapshot(
+                allUsers: appContext.allUsers,
+                filtered: _filteredUsers(
+                  appContext.allUsers,
+                  appContext.allTags,
+                  cellGroupLeaders,
+                ),
+                source: 'filter-sheet',
+              );
+            }
+
             return ActionSheetShell(
-              icon: Icons.label_outline,
-              title: l10n.volunteersFilterTagsSheetTitle,
-              subtitle: l10n.volunteersFilterTagsSheetSubtitle,
+              icon: Icons.tune,
+              title: l10n.volunteersFilterSheetTitle,
+              subtitle: l10n.volunteersFilterSheetSubtitle,
               children: [
+                _filterSectionLabel(l10n.volunteersFilterShowSection),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  title: Text(l10n.volunteersFilterServing),
+                  subtitle: Text(l10n.volunteersFilterServingSubtitle),
+                  value: _servingOnly,
+                  onChanged: (value) => refreshSheet(() => _servingOnly = value),
+                ),
+                if (showPlaceholdersOption)
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    title: Text(l10n.volunteersShowPlaceholders),
+                    value: _placeholdersOnly,
+                    onChanged: (value) =>
+                        refreshSheet(() => _placeholdersOnly = value),
+                  ),
+                _filterSectionLabel(l10n.volunteersFilterRolesSection),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: activeTags.map((tag) {
-                      final selected = draft.contains(tag.id);
-                      return UserTagChip(
-                        tag: tag,
-                        selected: selected,
-                        onTap: () {
-                          setSheetState(() {
-                            draft = Set<String>.from(draft);
-                            if (selected) {
-                              draft.remove(tag.id);
-                            } else {
-                              draft.add(tag.id);
-                            }
-                          });
-                          setState(
-                              () => _selectedTagIDs = Set<String>.from(draft));
-                        },
-                      );
-                    }).toList(),
+                    children: [
+                      FilterChip(
+                        label: Text(l10n.volunteersFilterLeaders),
+                        selected:
+                            _selectedRoles.contains(VolunteerRoleKind.leader),
+                        onSelected: (_) => refreshSheet(() {
+                          _selectedRoles = VolunteerRoleHelpers.toggleRole(
+                            current: _selectedRoles,
+                            role: VolunteerRoleKind.leader,
+                          );
+                        }),
+                      ),
+                      FilterChip(
+                        label: Text(l10n.volunteersFilterAdmins),
+                        selected: _selectedRoles
+                            .contains(VolunteerRoleKind.areaAdmin),
+                        onSelected: (_) => refreshSheet(() {
+                          _selectedRoles = VolunteerRoleHelpers.toggleRole(
+                            current: _selectedRoles,
+                            role: VolunteerRoleKind.areaAdmin,
+                          );
+                        }),
+                      ),
+                      FilterChip(
+                        label: Text(l10n.volunteersFilterCellGroupLeaders),
+                        selected: _selectedRoles
+                            .contains(VolunteerRoleKind.cellGroupLeader),
+                        onSelected: (_) => refreshSheet(() {
+                          _selectedRoles = VolunteerRoleHelpers.toggleRole(
+                            current: _selectedRoles,
+                            role: VolunteerRoleKind.cellGroupLeader,
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                 ),
-                if (draft.isNotEmpty)
+                if (activeTags.isNotEmpty) ...[
+                  _filterSectionLabel(l10n.volunteersFilterTeamsSection),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: activeTags.map((tag) {
+                        final selected = _selectedTagIDs.contains(tag.id);
+                        return UserTagChip(
+                          tag: tag,
+                          selected: selected,
+                          onTap: () => refreshSheet(() {
+                            _selectedTagIDs = Set<String>.from(_selectedTagIDs);
+                            if (selected) {
+                              _selectedTagIDs.remove(tag.id);
+                            } else {
+                              _selectedTagIDs.add(tag.id);
+                            }
+                          }),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+                if (_hasNonDefaultFilters)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton(
-                        onPressed: () {
-                          setSheetState(() => draft = {});
-                          setState(() => _selectedTagIDs = {});
-                        },
-                        child: Text(l10n.userTagsFilterClear),
+                        onPressed: () => refreshSheet(() {
+                          _servingOnly = true;
+                          _placeholdersOnly = false;
+                          _selectedRoles = {};
+                          _selectedTagIDs = {};
+                        }),
+                        child: Text(l10n.volunteersClearFilters),
                       ),
                     ),
                   ),
               ],
             );
           },
-        );
-      },
-    );
-  }
-
-  Widget _buildWideUserGrid({
-    required List<User> users,
-    required List<UserTag> allTags,
-    required CellGroupLeaderIndex cellGroupLeaders,
-    required AppContext appContext,
-    required double horizontalPadding,
-    required AppLocalizations l10n,
-  }) {
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 88),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 420,
-        mainAxisExtent: 124,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: users.length,
-      itemBuilder: (_, index) {
-        final user = users[index];
-        final userTags =
-            UserTagHelpers.tagsForUser(user: user, allTags: allTags);
-        final roles = VolunteerRoleHelpers.rolesFor(
-          user: user,
-          cellGroupLeaders: cellGroupLeaders,
-        );
-        final canEditUser = canEditPlaceholderProfile(
-          actor: appContext.currentUser,
-          target: user,
-        );
-        final theme = Theme.of(context);
-        return Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _onUserTap(user),
-            onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  MyUserAvatar(user, radius: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          user.fullname,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user.isPlaceholder
-                              ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
-                              : user.location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (roles.isNotEmpty || userTags.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          _chipRow(roles: roles, tags: userTags),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         );
       },
     );

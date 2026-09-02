@@ -81,15 +81,17 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 **Directory** (from Personal → People) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**.
 
+Use the **location** chips at the top to switch site. Tap **Refine list** (tune icon in the app bar) for **Serving**, role filters, team tags, and **Placeholders**. When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one team tag — open a profile for the full picture.
+
 **Serving** means any of:
 
 - Leader or Area admin  
 - A **team tag** (Worship, Welcome, and similar)  
 - Listed as a leader on a cell group (including paused groups, not archived ones)
 
-Turn **Serving** off to see everyone at that location — including people who only registered to follow updates. Registering still creates a profile; it does not put them in the serving list until an organiser tags them or they become a Leader / cell-group leader.
+Turn **Serving** off in **Refine list** to see everyone at that location — including people who only registered to follow updates. Registering still creates a profile; it does not put them in the serving list until an organiser tags them or they become a Leader / cell-group leader.
 
-Role filters (on top of Serving or All):
+Role filters (in **Refine list**, on top of Serving or All):
 
 - **Leaders** — everyone with Leader access, including area admins  
 - **Admins** — area admins only (a tighter view; you do not also select Leaders)  
@@ -107,7 +109,7 @@ When you are signed in, the profile also lists **cell groups** that person belon
 
 Sometimes organisers need to assign or list someone **before** that person has signed in. The app supports **placeholder** people for that — useful for attendance, cell groups, and programmes.
 
-When you pick people (programmes, attendance, cell members, and similar), **placeholder** profiles are listed so they can be assigned like anyone else. Use the **Placeholders** chip on that picker to show only those profiles. Leaders and area admins can **create placeholder** from the picker when a search finds no match — search first so you do not duplicate someone already in the directory. The People directory still hides placeholders by default; turn on **Placeholders** there to review them. Later, when that person creates an account, organisers can connect it to the existing profile so history is not lost.
+When you pick people (programmes, attendance, cell members, and similar), **placeholder** profiles are listed so they can be assigned like anyone else. Use the **Placeholders** chip on that picker to show only those profiles. Leaders and area admins can **create placeholder** from the picker when a search finds no match — search first so you do not duplicate someone already in the directory. The People directory still hides placeholders by default; turn on **Placeholders** in **Refine list** to review them. Later, when that person creates an account, organisers can connect it to the existing profile so history is not lost.
 
 ## Related pages
 
