@@ -54,7 +54,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerUser => 'Register person';
 
   @override
-  String get volunteersMenuTitle => 'Directory';
+  String get volunteersMenuTitle => 'Who\'s who';
 
   @override
   String get volunteersMenuSubtitle => 'Leaders, teams, and members';

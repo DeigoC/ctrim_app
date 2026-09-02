@@ -67,7 +67,7 @@
   "@registerUser": {
     "description": "FAB label for registering a new person"
   },
-  "volunteersMenuTitle": "Directory",
+  "volunteersMenuTitle": "Who's who",
   "@volunteersMenuTitle": {
     "description": "Personal home menu item for the people directory"
   },

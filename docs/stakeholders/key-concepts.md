@@ -46,7 +46,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Some lines can be hidden from **guests**. |
 | **My Schedule** | Personal list of programme roles assigned to **you**, plus posts where you are an **expected attendee**. |
-| **My Posts** | Shortcut to posts **you** authored — not the full bulletin. |
+| **My Posts** | Shortcut to posts where you are **author** or **contributor** — matched against the bulletin posts loaded in the session, not the full archive. |
 | **Related posts** | Parent, sibling, or child links between posts (a series, term, or meeting group). Shown on the post’s **Related** tab when present. |
 | **Period parent** | A post marked as a container for a term or season; other meeting posts can attach underneath it. |
 | **Update log** | Short note organisers write when saving important edits; can notify people who **bookmarked** the post. **Change history** lets anyone open past logs from “Updated … by …”. |

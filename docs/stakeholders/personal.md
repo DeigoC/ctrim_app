@@ -13,7 +13,7 @@ The page is organised into clear sections so everyday options stay separate from
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
 | **For you** | Notifications, my posts, profile picture (create account when browsing as a guest) |
-| **People** | Directory of community profiles *(signed in)* |
+| **People** | Who's who — community profiles *(signed in)* |
 | **Admin / Leader tools** | Templates, tags, locations — only when your role allows |
 | **Settings** | Appearance, startup tab (signed in), share app, **product guide** (everyone, including guests), slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
@@ -57,13 +57,15 @@ The **Cell groups** dashboard card lists groups you belong to (as a member or le
 
 ## My Posts
 
-**My Posts** (under **For you**) is a shortcut to posts **you authored** — handy for leaders and contributors who edit often. It is not the full bulletin; use the bulletin tab to browse everything.
+**My Posts** (under **For you**) is a shortcut to posts where you are the **author** or a **contributor** — handy for finding posts you can edit. It is not the full bulletin; use the bulletin tab to browse everything.
+
+The app keeps a personal list of those posts on your profile. When you open My Posts, it is matched against the posts already loaded for the bulletin in this session. If a post has aged off the bulletin feed, it may no longer appear here even though you were involved with it.
 
 ## Organiser shortcuts (when you have access)
 
 Depending on role, Personal may also show:
 
-- **People → Directory** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
+- **People → Who's who** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
 - **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services**  
 - **Admin tools →** people / tags / locations management *(area admins)*  
 
