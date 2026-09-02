@@ -41,7 +41,7 @@ These are not five separate “apps” — they stack:
 | Mark interest (“follow updates”) and see who is interested | — | Yes | Yes | Yes | Yes |
 | Richer people / member details on posts and groups | — | Yes | Yes | Yes | Yes |
 | My Schedule / My Posts | — | When they have a profile & assignments | Yes | Yes | Yes |
-| People directory (Personal → People → Directory) | — | Yes* | Yes | Yes | Yes |
+| People → Who's who (Personal → People) | — | Yes* | Yes | Yes | Yes |
 | Recent activity on a profile (last few lines) | — | Yes* | Yes | Yes | Yes |
 | Full activity list for a person | — | — | — | — | Yes |
 | Create posts / use post templates | — | — | — | Yes | Yes |
@@ -79,7 +79,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## People directory
 
-**Directory** (from Personal → People) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**.
+**Who's who** (from Personal → People) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**.
 
 Use the **location** chips at the top to switch site. Tap **Refine list** (tune icon in the app bar) for **Serving**, role filters, team tags, and **Placeholders**. When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one team tag — open a profile for the full picture.
 

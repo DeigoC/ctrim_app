@@ -169,7 +169,7 @@ abstract class AppLocalizations {
   /// Personal home menu item for the people directory
   ///
   /// In en, this message translates to:
-  /// **'Directory'**
+  /// **'Who\'s who'**
   String get volunteersMenuTitle;
 
   /// Personal home menu subtitle for the people directory
