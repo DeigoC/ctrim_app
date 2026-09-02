@@ -129,6 +129,7 @@ User copyUser(
   bool? isLeader,
   List<String>? tagIDs,
   String? createdByUserID,
+  String? status,
 }) {
   final copy = User(
     id: user.id,
@@ -142,6 +143,7 @@ User copyUser(
     tagIDs: tagIDs ?? user.tagIDs.toList(),
     createdByUserID: createdByUserID ?? user.createdByUserID,
     isPlaceholder: isPlaceholder ?? user.isPlaceholder,
+    status: status ?? user.status,
   );
   if (user.roles != null) copy.setRoles(user.roles!.toList());
   if (user.posts != null) copy.setPosts(user.posts!.toList());

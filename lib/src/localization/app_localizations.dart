@@ -1006,6 +1006,78 @@ abstract class AppLocalizations {
   /// **'Placeholders'**
   String get volunteersShowPlaceholders;
 
+  /// Filter toggle to include hidden and archived profiles in the people list (area admin)
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden & archived'**
+  String get volunteersShowInactive;
+
+  /// Volunteer profile status: visible in directory and pickers
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get volunteersStatusActive;
+
+  /// Volunteer profile status: hidden from directory and new assignments
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get volunteersStatusHidden;
+
+  /// Volunteer profile status: retired profile, hidden like hidden
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get volunteersStatusArchived;
+
+  /// Label for volunteer profile status dropdown on edit user
+  ///
+  /// In en, this message translates to:
+  /// **'Profile status'**
+  String get volunteersStatusLabel;
+
+  /// Helper text under profile status on edit user
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.'**
+  String get volunteersStatusHelper;
+
+  /// Title when an admin sets a volunteer to hidden or archived
+  ///
+  /// In en, this message translates to:
+  /// **'Change profile status?'**
+  String get volunteersStatusConfirmTitle;
+
+  /// Body when an admin sets a volunteer to hidden or archived
+  ///
+  /// In en, this message translates to:
+  /// **'They will be removed from People and pickers, cannot sign in, and leader/admin permissions will be cleared. Past events and attendance still show their name.'**
+  String get volunteersStatusConfirmMessage;
+
+  /// Banner on profile when status is hidden
+  ///
+  /// In en, this message translates to:
+  /// **'This profile is hidden from the directory'**
+  String get volunteersInactiveProfileBanner;
+
+  /// Banner on profile when status is archived
+  ///
+  /// In en, this message translates to:
+  /// **'This profile is archived'**
+  String get volunteersArchivedProfileBanner;
+
+  /// Error when signing in with a hidden or archived volunteer profile
+  ///
+  /// In en, this message translates to:
+  /// **'Your volunteer profile is no longer active. Please contact an admin if you think this is a mistake.'**
+  String get volunteersLoginInactive;
+
+  /// Empty state when show-inactive filter is on but none match
+  ///
+  /// In en, this message translates to:
+  /// **'No hidden or archived profiles to show'**
+  String get volunteersEmptyInactive;
+
   /// Empty state when the placeholders filter returns no people
   ///
   /// In en, this message translates to:

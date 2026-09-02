@@ -23,6 +23,7 @@ import 'utility/event_heads_repository.dart';
 import 'utility/cache/local_data_manager.dart';
 import 'utility/user_schedule_service.dart';
 import 'utility/users_repository.dart';
+import 'utility/placeholder_user_permissions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -193,7 +194,7 @@ Future<void> _fetchEssentialDataInBackground(
       final UserDBManager userDBManager = UserDBManager();
       final currentUser = await userDBManager.fetchUserByAuthID(authID);
 
-      if (currentUser != null) {
+      if (currentUser != null && canSignInWithVolunteerProfile(currentUser)) {
         var loadedHeads = List<EventHead>.from(heads);
         if (loadedHeads.isEmpty) {
           loadedHeads = await eventHeadsRepository.fetchEventHeads();

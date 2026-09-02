@@ -100,6 +100,13 @@ void main() {
             isPlaceholder: true,
           ),
           User(id: '3', forname: 'C', surname: 'D', location: 'Portadown'),
+          User(
+            id: '4',
+            forname: 'Hidden',
+            surname: 'User',
+            location: 'Belfast',
+            status: UserStatus.hidden,
+          ),
         ],
         now: now,
       );

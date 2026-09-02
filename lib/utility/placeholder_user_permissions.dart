@@ -1,5 +1,11 @@
 import '../models/user.dart';
 
+/// Whether [user] may sign in with a linked Auth account.
+bool canSignInWithVolunteerProfile(User user) => user.isProfileActive;
+
+/// Whether [user] should appear in pickers for new assignments.
+bool isSelectableVolunteerProfile(User user) => user.isProfileActive;
+
 /// Whether [actor] may mint a placeholder `users` profile (CF create).
 ///
 /// Medium gate: area admin, author of the post that opened the picker, or a
@@ -65,8 +71,15 @@ bool isVisibleInVolunteerDirectory({
   required User user,
   required User viewer,
   required bool placeholdersOnly,
+  bool showInactive = false,
 }) {
-  if (!placeholdersOnly) return !user.isPlaceholder;
+  if (!placeholdersOnly) {
+    if (!user.isProfileActive) {
+      return showInactive && viewer.isAreaAdmin;
+    }
+    return !user.isPlaceholder;
+  }
+
   if (!user.isPlaceholder) return false;
   if (viewer.isAreaAdmin) return true;
   return user.createdByUserID == viewer.id;

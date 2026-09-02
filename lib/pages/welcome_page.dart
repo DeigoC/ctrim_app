@@ -12,6 +12,8 @@ import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../utility/app_context.dart';
 import '../utility/dialog_manager.dart';
+import '../utility/placeholder_user_permissions.dart';
+import '../src/localization/app_localizations.dart';
 import '../utility/event_heads_repository.dart';
 import '../utility/responsive_layout.dart';
 import '../utility/users_repository.dart';
@@ -376,6 +378,18 @@ class _WelcomePageState extends State<WelcomePage>
   Future<void> _attemptToFetchAndSetUser() async {
     final u =
         await _userDBManager.fetchUserByAuthID(_authManager.currentAuthUID);
+    if (u == null) {
+      await _authManager.signOut();
+      throw Exception(
+        'No user profile found for this account. Please contact an admin.',
+      );
+    }
+    if (!canSignInWithVolunteerProfile(u)) {
+      await _authManager.signOut();
+      throw Exception(
+        AppLocalizations.of(context)!.volunteersLoginInactive,
+      );
+    }
     _appContext.setCurrentUser(u);
   }
 

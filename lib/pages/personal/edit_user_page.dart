@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/user.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/local_data_manager.dart';
@@ -47,6 +48,7 @@ class _EditUserPageState extends State<EditUserPage> {
   late bool _isAreaAdmin;
   late bool _isLeader;
   late bool _isPlaceholder;
+  late String _status;
   late String _src;
   late String _authID;
   late String _currentLocation;
@@ -70,6 +72,7 @@ class _EditUserPageState extends State<EditUserPage> {
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _isPlaceholder = widget.user.isPlaceholder;
+    _status = widget.user.status;
     _src = widget.user.imgSrc;
     _authID = widget.user.authID;
     _currentLocation = widget.user.location;
@@ -98,6 +101,7 @@ class _EditUserPageState extends State<EditUserPage> {
     final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin ||
         _isLeader != widget.user.isLeader;
+    final hasStatusChange = _status != widget.user.status;
     final hasTagChanges =
         !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
     final requiredFieldsFilled = _tecForename.text.trim().isNotEmpty &&
@@ -113,6 +117,7 @@ class _EditUserPageState extends State<EditUserPage> {
     setState(() {
       _hasChanges = hasTextChanges ||
           hasFlagChanges ||
+          hasStatusChange ||
           hasTagChanges ||
           hasImgFieldChange;
       _canSave = _hasChanges && _imageValidated && requiredFieldsFilled;
@@ -418,6 +423,55 @@ class _EditUserPageState extends State<EditUserPage> {
           ),
           const SizedBox(height: 16),
 
+          if (_canManagePermissions) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.volunteersStatusLabel,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _status,
+                      decoration: InputDecoration(
+                        labelText:
+                            AppLocalizations.of(context)!.volunteersStatusLabel,
+                        helperText: AppLocalizations.of(context)!
+                            .volunteersStatusHelper,
+                        helperMaxLines: 3,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: UserStatus.active,
+                          child: Text(AppLocalizations.of(context)!
+                              .volunteersStatusActive),
+                        ),
+                        DropdownMenuItem(
+                          value: UserStatus.hidden,
+                          child: Text(AppLocalizations.of(context)!
+                              .volunteersStatusHidden),
+                        ),
+                        DropdownMenuItem(
+                          value: UserStatus.archived,
+                          child: Text(AppLocalizations.of(context)!
+                              .volunteersStatusArchived),
+                        ),
+                      ],
+                      onChanged: _onStatusChanged,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
           // Permissions Section (area admins only — creators cannot escalate roles)
           if (_canManagePermissions) ...[
             Card(
@@ -437,26 +491,30 @@ class _EditUserPageState extends State<EditUserPage> {
                       subtitle: const Text(
                           'Create posts, register people, and edit Information'),
                       value: _isLeader || _isAreaAdmin,
-                      onChanged: (value) {
-                        setState(() {
-                          _isLeader = value;
-                          if (!value) _isAreaAdmin = false;
-                        });
-                        _updateChangeState();
-                      },
+                      onChanged: _status == UserStatus.active
+                          ? (value) {
+                              setState(() {
+                                _isLeader = value;
+                                if (!value) _isAreaAdmin = false;
+                              });
+                              _updateChangeState();
+                            }
+                          : null,
                     ),
                     SwitchListTile(
                       title: const Text('Area Admin'),
                       subtitle: const Text(
                           'Leader plus people, tags, locations, and cell groups'),
                       value: _isAreaAdmin,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAreaAdmin = value;
-                          if (value) _isLeader = true;
-                        });
-                        _updateChangeState();
-                      },
+                      onChanged: _status == UserStatus.active
+                          ? (value) {
+                              setState(() {
+                                _isAreaAdmin = value;
+                                if (value) _isLeader = true;
+                              });
+                              _updateChangeState();
+                            }
+                          : null,
                     ),
                   ],
                 ),
@@ -510,6 +568,31 @@ class _EditUserPageState extends State<EditUserPage> {
 
   // * Logic
 
+  Future<void> _onStatusChanged(String? value) async {
+    if (value == null || value == _status) return;
+
+    if (value != UserStatus.active && widget.user.status == UserStatus.active) {
+      final l10n = AppLocalizations.of(context)!;
+      final confirm = await DialogManager.showConfirmationDialog(
+        context: context,
+        title: l10n.volunteersStatusConfirmTitle,
+        content: l10n.volunteersStatusConfirmMessage,
+        icon: Icons.visibility_off_outlined,
+        confirmText: 'Continue',
+      );
+      if (!confirm || !mounted) return;
+    }
+
+    setState(() {
+      _status = value;
+      if (_status != UserStatus.active) {
+        _isLeader = false;
+        _isAreaAdmin = false;
+      }
+    });
+    _updateChangeState();
+  }
+
   User _userSnapshot({String? authID}) {
     final resolvedAuthID = authID ?? _authID;
     return User(
@@ -533,6 +616,7 @@ class _EditUserPageState extends State<EditUserPage> {
         authID: resolvedAuthID,
         fallbackIsPlaceholder: _isPlaceholder,
       ),
+      status: _status,
     );
   }
 
@@ -759,6 +843,7 @@ class _EditUserPageState extends State<EditUserPage> {
       tagIDs: _selectedTagIDs.toList(),
       createdByUserID: widget.user.createdByUserID,
       isPlaceholder: placeholder,
+      status: _status,
     );
 
     try {
@@ -782,6 +867,7 @@ class _EditUserPageState extends State<EditUserPage> {
         tagIDs: tagIDsToSave,
         createdByUserID: updatedUser.createdByUserID,
         isPlaceholder: updatedUser.isPlaceholder,
+        status: updatedUser.status,
       );
 
       if (_isCreatorOnlyEdit) {

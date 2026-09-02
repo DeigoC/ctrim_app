@@ -731,6 +731,54 @@
   "@volunteersShowPlaceholders": {
     "description": "Filter chip to show only placeholder profiles in the people list"
   },
+  "volunteersShowInactive": "Hidden & archived",
+  "@volunteersShowInactive": {
+    "description": "Filter toggle to include hidden and archived profiles in the people list (area admin)"
+  },
+  "volunteersStatusActive": "Active",
+  "@volunteersStatusActive": {
+    "description": "Volunteer profile status: visible in directory and pickers"
+  },
+  "volunteersStatusHidden": "Hidden",
+  "@volunteersStatusHidden": {
+    "description": "Volunteer profile status: hidden from directory and new assignments"
+  },
+  "volunteersStatusArchived": "Archived",
+  "@volunteersStatusArchived": {
+    "description": "Volunteer profile status: retired profile, hidden like hidden"
+  },
+  "volunteersStatusLabel": "Profile status",
+  "@volunteersStatusLabel": {
+    "description": "Label for volunteer profile status dropdown on edit user"
+  },
+  "volunteersStatusHelper": "Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.",
+  "@volunteersStatusHelper": {
+    "description": "Helper text under profile status on edit user"
+  },
+  "volunteersStatusConfirmTitle": "Change profile status?",
+  "@volunteersStatusConfirmTitle": {
+    "description": "Title when an admin sets a volunteer to hidden or archived"
+  },
+  "volunteersStatusConfirmMessage": "They will be removed from People and pickers, cannot sign in, and leader/admin permissions will be cleared. Past events and attendance still show their name.",
+  "@volunteersStatusConfirmMessage": {
+    "description": "Body when an admin sets a volunteer to hidden or archived"
+  },
+  "volunteersInactiveProfileBanner": "This profile is hidden from the directory",
+  "@volunteersInactiveProfileBanner": {
+    "description": "Banner on profile when status is hidden"
+  },
+  "volunteersArchivedProfileBanner": "This profile is archived",
+  "@volunteersArchivedProfileBanner": {
+    "description": "Banner on profile when status is archived"
+  },
+  "volunteersLoginInactive": "Your volunteer profile is no longer active. Please contact an admin if you think this is a mistake.",
+  "@volunteersLoginInactive": {
+    "description": "Error when signing in with a hidden or archived volunteer profile"
+  },
+  "volunteersEmptyInactive": "No hidden or archived profiles to show",
+  "@volunteersEmptyInactive": {
+    "description": "Empty state when show-inactive filter is on but none match"
+  },
   "volunteersEmptyPlaceholders": "No placeholder profiles to show",
   "@volunteersEmptyPlaceholders": {
     "description": "Empty state when the placeholders filter returns no people"

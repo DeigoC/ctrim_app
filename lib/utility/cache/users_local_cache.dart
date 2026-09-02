@@ -6,12 +6,14 @@ import '../../models/user.dart';
 /// - v1 (8): id, forename, surname, imgSrc, isLeader, isAreaAdmin, location, authID
 /// - v2 (9): v1 + tagIDs (comma-separated)
 /// - v3 (11): v2 + isPlaceholder + createdByUserID
+/// - v4 (12): v3 + status
 ///
-/// Older caches omit placeholder / creator fields; decode defaults those safely.
+/// Older caches omit placeholder / creator / status fields; decode defaults those safely.
 class UsersLocalCache {
   static const int chunkSizeV1 = 8;
   static const int chunkSizeV2 = 9;
   static const int chunkSizeV3 = 11;
+  static const int chunkSizeV4 = 12;
 
   /// Builds the string written to [LocalDataManager.writeUsersList].
   static String encode({
@@ -32,6 +34,7 @@ class UsersLocalCache {
       buffer.write('\n${_field(user.tagIDs.join(','))}');
       buffer.write('\n${user.isPlaceholder ? '1' : '0'}');
       buffer.write('\n${_field(user.createdByUserID)}');
+      buffer.write('\n${_field(user.status)}');
     }
     return buffer.toString();
   }
@@ -56,6 +59,7 @@ class UsersLocalCache {
   static List<User>? decodeBody(List<String> bodyLines) {
     if (bodyLines.isEmpty) return <User>[];
     final candidates = <int>[
+      if (bodyLines.length % chunkSizeV4 == 0) chunkSizeV4,
       if (bodyLines.length % chunkSizeV3 == 0) chunkSizeV3,
       if (bodyLines.length % chunkSizeV2 == 0) chunkSizeV2,
       if (bodyLines.length % chunkSizeV1 == 0) chunkSizeV1,
@@ -115,6 +119,7 @@ class UsersLocalCache {
           : entry[7].trim().isEmpty,
     );
     final createdByUserID = chunkSize >= chunkSizeV3 ? entry[10] : '';
+    final status = chunkSize >= chunkSizeV4 ? entry[11] : UserStatus.active;
 
     return User(
       id: entry[0],
@@ -128,6 +133,7 @@ class UsersLocalCache {
       tagIDs: tagIDs,
       isPlaceholder: isPlaceholder,
       createdByUserID: createdByUserID,
+      status: status,
     );
   }
 }

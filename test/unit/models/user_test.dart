@@ -27,6 +27,7 @@ void main() {
         expect(user.authID, '');
         expect(user.isPlaceholder, false);
         expect(user.createdByUserID, '');
+        expect(user.status, UserStatus.active);
       });
 
       test('creates user with all parameters', () {
@@ -164,6 +165,32 @@ void main() {
         expect(user.createdByUserID, '');
       });
 
+      test('fromMap parses Status', () {
+        final hidden = User.fromMap('1', {
+          'Forename': 'A',
+          'Surname': 'B',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+          'Status': UserStatus.hidden,
+        });
+        expect(hidden.isProfileHidden, isTrue);
+        expect(hidden.isProfileActive, isFalse);
+
+        final legacy = User.fromMap('2', {
+          'Forename': 'C',
+          'Surname': 'D',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+        });
+        expect(legacy.status, UserStatus.active);
+      });
+
       test('fromMap treats area admin as a leader even if IsLeader is false',
           () {
         final user = User.fromMap('1', {
@@ -208,6 +235,7 @@ void main() {
         expect(json['Tags'], isEmpty);
         expect(json['CreatedByUserID'], '9');
         expect(json['IsPlaceholder'], true);
+        expect(json['Status'], UserStatus.active);
       });
 
       test('serialises tag IDs', () {
@@ -231,6 +259,17 @@ void main() {
         final json = user.toJson() as Map<String, dynamic>;
         expect(json['IsAreaAdmin'], true);
         expect(json['IsLeader'], true);
+      });
+
+      test('serialises Status', () {
+        final user = User(
+          id: '1',
+          forname: 'A',
+          surname: 'B',
+          status: UserStatus.archived,
+        );
+        final json = user.toJson() as Map<String, dynamic>;
+        expect(json['Status'], UserStatus.archived);
       });
     });
 
