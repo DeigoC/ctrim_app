@@ -740,6 +740,60 @@
   "@volunteersSortTooltip": {
     "description": "Tooltip for the people directory sort menu in the app bar"
   },
+  "volunteersFilterTooltip": "Refine list",
+  "@volunteersFilterTooltip": {
+    "description": "App bar tooltip for the people directory filter button"
+  },
+  "volunteersFilterSheetTitle": "Refine list",
+  "@volunteersFilterSheetTitle": {
+    "description": "Title for the people directory filter bottom sheet"
+  },
+  "volunteersFilterSheetSubtitle": "Narrow by role, team, or who is shown",
+  "@volunteersFilterSheetSubtitle": {
+    "description": "Subtitle for the people directory filter bottom sheet"
+  },
+  "volunteersFilterShowSection": "Show",
+  "@volunteersFilterShowSection": {
+    "description": "Section label for serving / placeholder toggles in people filters"
+  },
+  "volunteersFilterServingSubtitle": "People who serve on teams or lead groups",
+  "@volunteersFilterServingSubtitle": {
+    "description": "Helper under the Serving toggle in people filters"
+  },
+  "volunteersFilterRolesSection": "Roles",
+  "@volunteersFilterRolesSection": {
+    "description": "Section label for role filters in the people directory"
+  },
+  "volunteersFilterTeamsSection": "Teams",
+  "@volunteersFilterTeamsSection": {
+    "description": "Section label for team tag filters in the people directory"
+  },
+  "volunteersShowingCount": "{count, plural, =1{1 person} other{{count} people}}",
+  "@volunteersShowingCount": {
+    "description": "Count label above the people directory list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "volunteersDirectoryIntro": "Browse leaders and team members in the church family.",
+  "@volunteersDirectoryIntro": {
+    "description": "Short intro under location chips on the people directory"
+  },
+  "volunteersClearFilters": "Clear filters",
+  "@volunteersClearFilters": {
+    "description": "Resets people directory filters to defaults"
+  },
+  "volunteersShowing": "Showing: {parts}",
+  "@volunteersShowing": {
+    "description": "Banner listing active people directory filters",
+    "placeholders": {
+      "parts": {
+        "type": "String"
+      }
+    }
+  },
   "cellGroupsAssignLabel": "Cell groups",
   "@cellGroupsAssignLabel": {
     "description": "Section label for linking a post or template to cell groups"

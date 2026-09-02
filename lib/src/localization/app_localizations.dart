@@ -1048,6 +1048,72 @@ abstract class AppLocalizations {
   /// **'Sort people'**
   String get volunteersSortTooltip;
 
+  /// App bar tooltip for the people directory filter button
+  ///
+  /// In en, this message translates to:
+  /// **'Refine list'**
+  String get volunteersFilterTooltip;
+
+  /// Title for the people directory filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Refine list'**
+  String get volunteersFilterSheetTitle;
+
+  /// Subtitle for the people directory filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow by role, team, or who is shown'**
+  String get volunteersFilterSheetSubtitle;
+
+  /// Section label for serving / placeholder toggles in people filters
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get volunteersFilterShowSection;
+
+  /// Helper under the Serving toggle in people filters
+  ///
+  /// In en, this message translates to:
+  /// **'People who serve on teams or lead groups'**
+  String get volunteersFilterServingSubtitle;
+
+  /// Section label for role filters in the people directory
+  ///
+  /// In en, this message translates to:
+  /// **'Roles'**
+  String get volunteersFilterRolesSection;
+
+  /// Section label for team tag filters in the people directory
+  ///
+  /// In en, this message translates to:
+  /// **'Teams'**
+  String get volunteersFilterTeamsSection;
+
+  /// Count label above the people directory list
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}}'**
+  String volunteersShowingCount(int count);
+
+  /// Short intro under location chips on the people directory
+  ///
+  /// In en, this message translates to:
+  /// **'Browse leaders and team members in the church family.'**
+  String get volunteersDirectoryIntro;
+
+  /// Resets people directory filters to defaults
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get volunteersClearFilters;
+
+  /// Banner listing active people directory filters
+  ///
+  /// In en, this message translates to:
+  /// **'Showing: {parts}'**
+  String volunteersShowing(String parts);
+
   /// Section label for linking a post or template to cell groups
   ///
   /// In en, this message translates to:
