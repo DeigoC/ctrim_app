@@ -101,9 +101,9 @@ When saving important edits, organisers can write a short **update log**. That n
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Services** and **Cell Groups** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
 
-When **choosing a template** to create a post, browse by **Services** / **Cell Groups**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
+When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 

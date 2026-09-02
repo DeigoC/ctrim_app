@@ -11,7 +11,8 @@ The page is organised into clear sections so everyday options stay separate from
 | Section | What it holds |
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
-| **For you** | Schedule, notifications, my posts, profile picture (create account when browsing as a guest) |
+| **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
+| **For you** | Notifications, my posts, profile picture (create account when browsing as a guest) |
 | **People** | Directory of community profiles *(signed in)* |
 | **Admin / Leader tools** | Templates, tags, locations — only when your role allows |
 | **Settings** | Appearance, startup tab (signed in), share app, **product guide** (everyone, including guests), slide deck utils, privacy/terms, account deletion |
@@ -46,18 +47,24 @@ Signed-in people see a profile header (including profile picture where set). Fro
 
 ## My Schedule
 
-**My Schedule** (under **For you**) lists programme roles and expected-attendee meetings on event posts — a practical “what am I down for?” view.
+Signed-in people see a **My Schedule** card at the top of Personal — a quick preview of up to three upcoming posts where you have programme roles or are listed as an **expected attendee**. Tap **View full schedule** (or **View all … upcoming**) to open the full list.
+
+That full schedule is the practical “what am I down for?” view across all your assignments on event posts.
+
+## Cell groups on Personal
+
+The **Cell groups** dashboard card lists groups you belong to (as a member or leader) and upcoming linked meetings in the next eight weeks. Tap a meeting to open the post, or **Browse cell groups** if you are not in a group yet.
 
 ## My Posts
 
-**My Posts** is a shortcut to posts **you authored** — handy for leaders and contributors who edit often. It is not the full bulletin; use the bulletin tab to browse everything.
+**My Posts** (under **For you**) is a shortcut to posts **you authored** — handy for leaders and contributors who edit often. It is not the full bulletin; use the bulletin tab to browse everything.
 
 ## Organiser shortcuts (when you have access)
 
 Depending on role, Personal may also show:
 
 - **People → Directory** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
-- **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Services** or **Cell Groups**  
+- **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services**  
 - **Admin tools →** people / tags / locations management *(area admins)*  
 
 See [People & roles](people-and-roles.md).
@@ -89,5 +96,6 @@ Step-by-step notes: [Platforms](platforms.md).
 
 - [Key concepts](key-concepts.md)  
 - [Events & bulletin](events-and-bulletin.md)  
+- [Cell Groups](cell-groups.md)  
 - [Notifications](notifications.md)  
 - [Platforms](platforms.md)
