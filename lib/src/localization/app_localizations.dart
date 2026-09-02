@@ -304,6 +304,48 @@ abstract class AppLocalizations {
   /// **'Not in a cell group.'**
   String get userProfileNoCellGroups;
 
+  /// Profile note when the person checked in at a cell group meeting in the past 3 weeks
+  ///
+  /// In en, this message translates to:
+  /// **'Attended in the past 3 weeks'**
+  String get userProfileCellGroupAttendedRecent;
+
+  /// Profile attendance summary with meeting count in the past 3 weeks
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Attended 1 cell group meeting in the past 3 weeks} other{Attended {count} cell group meetings in the past 3 weeks}}'**
+  String userProfileCellGroupMeetingsAttendedCount(int count);
+
+  /// Suffix when attendance spans multiple cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'across {count, plural, =1{1 group} other{{count} groups}}'**
+  String userProfileCellGroupGroupsAttendedSuffix(int count);
+
+  /// Link label to open the person's latest attended cell group meeting post
+  ///
+  /// In en, this message translates to:
+  /// **'View most recent meeting'**
+  String get userProfileCellGroupViewRecentMeeting;
+
+  /// Link label to open a named cell group meeting post
+  ///
+  /// In en, this message translates to:
+  /// **'View {title}'**
+  String userProfileCellGroupViewRecentMeetingNamed(String title);
+
+  /// Profile note when the person did not check in at a cell group meeting in the past 3 weeks
+  ///
+  /// In en, this message translates to:
+  /// **'No cell group attendance in the past 3 weeks'**
+  String get userProfileCellGroupNoAttendanceRecent;
+
+  /// Profile detail for the most recent cell group check-in
+  ///
+  /// In en, this message translates to:
+  /// **'Last attended {date}'**
+  String userProfileCellGroupLastAttended(String date);
+
   /// Section title on a volunteer profile for schedule preview
   ///
   /// In en, this message translates to:

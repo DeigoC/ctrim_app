@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/cell_group.dart';
+import '../../models/event/event_head.dart';
 import '../../models/user.dart';
 import '../../models/user_activity_record.dart';
 import '../../models/user_role_assignment.dart';
@@ -14,8 +15,10 @@ import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/user_cell_group_attendance.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/volunteer_role_badge.dart';
@@ -23,6 +26,7 @@ import 'edit_user_page.dart';
 import 'view_user_activity_page.dart';
 import 'view_user_roles_page.dart';
 import '../cell_groups/cell_group_detail_page.dart';
+import '../events/view_event_page.dart';
 
 class ViewUserProfilePage extends StatefulWidget {
   const ViewUserProfilePage({
@@ -46,6 +50,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
   static final DateFormat _activityDateFormat = DateFormat('d MMM yyyy. HH:mm');
+  static final DateFormat _cellGroupAttendanceDateFormat = DateFormat('d MMM');
 
   bool _loading = true;
   Object? _loadError;
@@ -53,6 +58,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   int _completedSteps = 0;
   int _totalSteps = 2;
   List<CellGroup> _cellGroups = const [];
+  UserCellGroupAttendanceSummary? _cellGroupAttendance;
 
   @override
   void initState() {
@@ -107,11 +113,25 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
       final cellGroups = await _loadCellGroups();
       if (!mounted) return;
+
+      UserCellGroupAttendanceSummary? attendance;
+      if (!_appContext.isCurrentUserGuest && cellGroups.isNotEmpty) {
+        setState(() {
+          _completedSteps = 4;
+          _statusMessage = 'Checking cell group attendance…';
+        });
+        attendance = await UserCellGroupAttendance.load(
+          user: _user,
+          memberGroups: cellGroups,
+        );
+      }
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _completedSteps = 4;
+        _completedSteps = _totalSteps;
         _statusMessage = 'Done';
         _cellGroups = cellGroups;
+        _cellGroupAttendance = attendance;
       });
     } catch (e, st) {
       debugPrint('Error loading profile: $e\n$st');
@@ -245,6 +265,15 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             style: theme.textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
+        if (_cellGroupAttendance != null) ...[
+          _buildCellGroupAttendanceBanner(
+            l10n,
+            theme,
+            colorScheme,
+            _cellGroupAttendance!,
+          ),
+          const SizedBox(height: 8),
+        ],
         _buildCellGroupsCard(l10n, theme, colorScheme),
         const SizedBox(height: 16),
         Text(l10n.userProfileUpcomingTasks,
@@ -327,6 +356,113 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     );
   }
 
+  Widget _buildCellGroupAttendanceBanner(
+    AppLocalizations l10n,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    UserCellGroupAttendanceSummary summary,
+  ) {
+    final attended = summary.attendedInPastWindow;
+    final icon = attended
+        ? Icons.check_circle_outline
+        : Icons.event_busy_outlined;
+    final iconColor =
+        attended ? colorScheme.primary : colorScheme.onSurfaceVariant;
+    final lastMeeting = summary.lastAttendedMeeting;
+    final lastDate = summary.lastAttendedDate;
+
+    String title;
+    if (attended) {
+      title = l10n.userProfileCellGroupMeetingsAttendedCount(
+        summary.meetingsAttended,
+      );
+      if (summary.distinctGroupsAttended > 1) {
+        title =
+            '$title ${l10n.userProfileCellGroupGroupsAttendedSuffix(summary.distinctGroupsAttended)}';
+      }
+    } else {
+      title = l10n.userProfileCellGroupNoAttendanceRecent;
+    }
+
+    String? meetingLinkLabel;
+    if (lastMeeting != null) {
+      final meetingTitle = lastMeeting.title.trim();
+      meetingLinkLabel = meetingTitle.isEmpty
+          ? l10n.userProfileCellGroupViewRecentMeeting
+          : l10n.userProfileCellGroupViewRecentMeetingNamed(meetingTitle);
+    }
+
+    return Card(
+      color: attended
+          ? colorScheme.primaryContainer.withValues(alpha: 0.35)
+          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: iconColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: attended
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (lastDate != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.userProfileCellGroupLastAttended(
+                        _cellGroupAttendanceDateFormat.format(lastDate),
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  if (lastMeeting != null && meetingLinkLabel != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => _openCellGroupMeeting(lastMeeting),
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: Text(meetingLinkLabel),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openCellGroupMeeting(EventHead head) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head)),
+    );
+  }
+
+  List<User> _leadersForGroup(CellGroup group) {
+    final leaders = <User>[];
+    for (final uid in group.leaderUserIds) {
+      final user = _appContext.userById(uid);
+      if (user != null) leaders.add(user);
+    }
+    return leaders;
+  }
+
   Widget _buildCellGroupsCard(
     AppLocalizations l10n,
     ThemeData theme,
@@ -363,8 +499,20 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     ColorScheme colorScheme,
   ) {
     final cadence = group.cadenceLabel;
+    final leaders = _leadersForGroup(group);
     return ListTile(
-      leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
+      leading: leaders.isEmpty
+          ? Icon(Icons.groups_outlined, color: colorScheme.primary)
+          : SizedBox(
+              width: 48,
+              height: 40,
+              child: MyAvatarStack(
+                users: leaders,
+                appDir: _appContext.appDir,
+                height: 40,
+                width: 48,
+              ),
+            ),
       title: Text(group.name),
       subtitle: cadence.isEmpty ? null : Text(cadence),
       trailing: const Icon(Icons.chevron_right),
