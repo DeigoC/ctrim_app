@@ -12,6 +12,12 @@ enum PostTemplateCategory {
   final String firestoreValue;
   final String label;
 
+  /// Section order on template picker screens (Cell Groups before Services).
+  static const List<PostTemplateCategory> displayOrder = [
+    cellGroup,
+    service,
+  ];
+
   static PostTemplateCategory fromFirestore(final dynamic rawValue) {
     final value = (rawValue ?? '').toString().trim().toLowerCase();
     if (value == cellGroup.firestoreValue.toLowerCase()) {

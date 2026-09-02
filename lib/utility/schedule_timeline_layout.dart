@@ -191,8 +191,8 @@ class ScheduleTimelineLayout {
       latestEnd = finishTime;
     }
 
-    final dayStart = _floorToHour(timed.first.start);
-    final dayEnd = _ceilToHour(latestEnd);
+    final dayStart = _floorToTick(timed.first.start);
+    final dayEnd = _ceilToTick(latestEnd);
 
     final placements = <ScheduleTimelinePlacement>[];
     final overflows = <ScheduleTimelineOverflow>[];
@@ -390,12 +390,18 @@ class ScheduleTimelineLayout {
   static double _minutesBetween(final DateTime from, final DateTime to) =>
       to.difference(from).inSeconds / Duration.secondsPerMinute;
 
-  static DateTime _floorToHour(final DateTime time) =>
-      DateTime(time.year, time.month, time.day, time.hour);
+  /// Bounds land on the half hour, matching the ticks the canvas draws, so a
+  /// schedule starting at five to ten does not open on a blank hour.
+  static const int _boundaryMinutes = 30;
 
-  static DateTime _ceilToHour(final DateTime time) {
-    final floored = _floorToHour(time);
+  static DateTime _floorToTick(final DateTime time) {
+    final minute = time.minute - time.minute % _boundaryMinutes;
+    return DateTime(time.year, time.month, time.day, time.hour, minute);
+  }
+
+  static DateTime _ceilToTick(final DateTime time) {
+    final floored = _floorToTick(time);
     if (floored.isAtSameMomentAs(time)) return floored;
-    return floored.add(const Duration(hours: 1));
+    return floored.add(const Duration(minutes: _boundaryMinutes));
   }
 }

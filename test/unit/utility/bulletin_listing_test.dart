@@ -115,7 +115,7 @@ void main() {
   });
 
   group('BulletinListing.apply sort', () {
-    test('relevancy is today, head upcoming, recent past, then the rest', () {
+    test('relevancy is recent head, upcoming week, then the rest', () {
       final visible = apply([
         head(
           id: 'old-update',
@@ -148,11 +148,11 @@ void main() {
         ),
       ]);
       expect(visible.map((e) => e.id), [
+        'old-update',
         'today-early',
         'today-late',
         'tomorrow',
         'next-week',
-        'old-update',
         'fresh-undated',
       ]);
     });
@@ -174,10 +174,10 @@ void main() {
           recentDate: DateTime(2026, 8, 21),
         ),
       ]);
-      expect(visible.map((e) => e.id), ['tomorrow', 'old-update', 'far-future']);
+      expect(visible.map((e) => e.id), ['old-update', 'tomorrow', 'far-future']);
     });
 
-    test('relevancy caps upcoming before recent past, then shows more future',
+    test('relevancy shows recent head before upcoming week, then more future',
         () {
       final heads = [
         for (var i = 1; i <= 10; i++)
@@ -186,18 +186,20 @@ void main() {
         head(id: 'last-week', eventDate: DateTime(2026, 8, 15, 10)),
       ];
       final ids = apply(heads).map((e) => e.id).toList();
-      expect(ids.take(8), [
+      expect(ids.take(10), [
+        'yesterday',
+        'last-week',
         'u1',
         'u2',
         'u3',
         'u4',
         'u5',
         'u6',
-        'yesterday',
-        'last-week',
+        'u7',
+        'u8',
       ]);
-      expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u7')));
-      expect(ids.indexOf('last-week'), lessThan(ids.indexOf('u7')));
+      expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u1')));
+      expect(ids.indexOf('u9'), greaterThan(ids.indexOf('u8')));
     });
 
     test('soonest puts upcoming before past and undated last', () {

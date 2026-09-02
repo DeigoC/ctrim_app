@@ -1579,7 +1579,7 @@ abstract class AppLocalizations {
   /// Explains relevancy sort on the bulletin
   ///
   /// In en, this message translates to:
-  /// **'Today, next few events, then recent past'**
+  /// **'Recent events, then the next week'**
   String get bulletinSortRelevancySubtitle;
 
   /// Bulletin sort: upcoming events by date, then recent past

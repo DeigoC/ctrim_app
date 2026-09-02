@@ -830,7 +830,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bulletinSortRelevancySubtitle =>
-      'Today, next few events, then recent past';
+      'Recent events, then the next week';
 
   @override
   String get bulletinSortSoonest => 'Soonest first';

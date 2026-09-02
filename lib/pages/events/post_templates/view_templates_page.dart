@@ -172,12 +172,15 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           padding:
               EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
           children: [
-            for (var i = 0; i < PostTemplateCategory.values.length; i++) ...[
+            for (var i = 0;
+                i < PostTemplateCategory.displayOrder.length;
+                i++) ...[
               if (i > 0) const SizedBox(height: 20),
               _buildCategorySection(
-                category: PostTemplateCategory.values[i],
+                category: PostTemplateCategory.displayOrder[i],
                 templates: templates
-                    .where((t) => t.category == PostTemplateCategory.values[i])
+                    .where((t) =>
+                        t.category == PostTemplateCategory.displayOrder[i])
                     .toList(),
                 isWide: isWide,
               ),

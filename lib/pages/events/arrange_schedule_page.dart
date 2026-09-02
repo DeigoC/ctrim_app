@@ -130,7 +130,7 @@ class _ArrangeSchedulePageState extends State<ArrangeSchedulePage> {
                       usersForRole: _usersForRole,
                       onRoleTap: _showCoverageRoleHint,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                   ],
                   ScheduleTimeline(
                     layout: layout,

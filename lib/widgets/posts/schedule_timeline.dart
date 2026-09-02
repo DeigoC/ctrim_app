@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/schedule_block_layout.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import 'schedule_timeline_block.dart';
 
@@ -24,14 +25,18 @@ class ScheduleTimeline extends StatelessWidget {
     this.snapMinutes = defaultSnapMinutes,
   });
 
-  /// Keeps a five-minute slot tall enough to read and tap.
-  static const double defaultPixelsPerMinute = 3.5;
+  /// Sized so the smallest slot the picker offers — five minutes — is still a
+  /// readable, tappable line rather than a sliver.
+  static const double defaultPixelsPerMinute = 5;
 
   /// Drop times land on a five-minute grid, like the duration presets.
   static const int defaultSnapMinutes = 5;
   static const double _railWidth = 52;
   static const double _laneGap = 4;
-  static const double _minBlockHeight = 18;
+
+  /// Never shorter than the block's own content needs, or it overflows.
+  static const double _minBlockHeight =
+      ScheduleBlockLayout.compactHeight + ScheduleBlockLayout.slack;
   static const Duration _tickInterval = Duration(minutes: 30);
 
   final ScheduleTimelineLayout layout;

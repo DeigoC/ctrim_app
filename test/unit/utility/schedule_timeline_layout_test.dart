@@ -112,7 +112,7 @@ void main() {
         finishTime: DateTime(2026, 6, 14, 10, 0),
       );
 
-      expect(layout.dayEnd, DateTime(2026, 6, 14, 13, 0));
+      expect(layout.dayEnd, DateTime(2026, 6, 14, 12, 30));
     });
 
     test('minutesFromStart is measured from the first tick', () {
@@ -120,15 +120,30 @@ void main() {
         role(
           id: 1,
           title: 'Sound',
-          start: DateTime(2026, 6, 14, 9, 30),
-          end: DateTime(2026, 6, 14, 10, 0),
+          start: DateTime(2026, 6, 14, 9, 20),
+          end: DateTime(2026, 6, 14, 9, 50),
         ),
       ]);
 
       final placement = placementFor(layout, 1);
       expect(layout.dayStart, DateTime(2026, 6, 14, 9, 0));
-      expect(placement.minutesFromStart, 30);
+      expect(placement.minutesFromStart, 20);
       expect(placement.durationMinutes, 30);
+    });
+
+    test('bounds snap to the half hour, not the whole hour', () {
+      final layout = ScheduleTimelineLayout.build(roles: [
+        role(
+          id: 1,
+          title: 'Orientation',
+          start: DateTime(2026, 6, 14, 9, 55),
+          end: DateTime(2026, 6, 14, 10, 5),
+        ),
+      ]);
+
+      // Flooring to 09:00 would open the canvas on a blank hour.
+      expect(layout.dayStart, DateTime(2026, 6, 14, 9, 30));
+      expect(layout.dayEnd, DateTime(2026, 6, 14, 10, 30));
     });
 
     test('two overlapping roles share a cluster in separate lanes', () {

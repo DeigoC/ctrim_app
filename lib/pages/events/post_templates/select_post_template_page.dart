@@ -359,7 +359,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }) {
     final sections =
         <({PostTemplateCategory category, List<PostTemplate> templates})>[];
-    for (final category in PostTemplateCategory.values) {
+    for (final category in PostTemplateCategory.displayOrder) {
       final items = realTemplates.where((t) => t.category == category).toList();
       if (items.isEmpty && hideEmptySections) continue;
       sections.add((category: category, templates: items));

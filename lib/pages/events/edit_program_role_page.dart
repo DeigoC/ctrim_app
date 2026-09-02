@@ -10,6 +10,7 @@ import '../../utility/event_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/schedule_duration_picker.dart';
+import '../../widgets/schedule_start_picker.dart';
 import '../../utility/responsive_layout.dart';
 
 /// Add or edit a program role. Pass [programEntry] when editing an existing item.
@@ -592,36 +593,30 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _end!.minute.compareTo(originalEnd.minute) == 0;
   }
 
-  void _onStartTimeTap() {
-    showTimePicker(
-            context: context,
-            initialTime: _start != null
-                ? TimeOfDay.fromDateTime(_start!)
-                : widget.eventContext.head.startTimeOfEvent,
-            helpText: 'When does the role start?')
-        .then((selectedStartTime) async {
-      if (selectedStartTime != null) {
-        final DateTime newStart = DateTime(
-            widget.eventContext.head.eventDate!.year,
-            widget.eventContext.head.eventDate!.month,
-            widget.eventContext.head.eventDate!.day,
-            selectedStartTime.hour,
-            selectedStartTime.minute);
-        if (_end != null && _start != null) {
-          final Duration duration = _end!.difference(_start!);
-          setState(() {
-            _start = newStart;
-            _end = _start!.add(duration);
-          });
-          _onFieldsChanged();
-        } else {
-          setState(() {
-            _start = newStart;
-          });
-          _onEndTimeTap();
-        }
-      }
-    });
+  Future<void> _onStartTimeTap() async {
+    final eventStart = widget.eventContext.head.eventDate;
+    if (eventStart == null) return;
+
+    final newStart = await showScheduleStartTimePicker(
+      context: context,
+      eventStart: eventStart,
+      initialStart: _start,
+    );
+    if (newStart == null || !mounted) return;
+
+    if (_end != null && _start != null) {
+      final Duration duration = _end!.difference(_start!);
+      setState(() {
+        _start = newStart;
+        _end = _start!.add(duration);
+      });
+      _onFieldsChanged();
+    } else {
+      setState(() {
+        _start = newStart;
+      });
+      _onEndTimeTap();
+    }
   }
 
   Future<void> _onEndTimeTap() async {

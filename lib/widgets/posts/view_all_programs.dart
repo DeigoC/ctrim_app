@@ -143,7 +143,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           ),
         if (layout.coverageRoles.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
             child: ScheduleCoverageBand(
               coverageRoles: layout.coverageRoles,
               usersForRole: _usersForRole,

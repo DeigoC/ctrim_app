@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/user.dart';
+import '../../utility/schedule_block_layout.dart';
 import '../my_avatar_stack.dart';
 
 /// A single schedule role drawn on the timeline canvas.
 ///
-/// Content thins out as the block gets shorter so a five-minute slot still
-/// shows something readable.
+/// A short slot has no height to spare but plenty of width, so it lays its
+/// time, title and avatars out on one line instead of stacking them. Taller
+/// blocks stack, and only the tallest push avatars to the bottom.
 class ScheduleTimelineBlock extends StatelessWidget {
   const ScheduleTimelineBlock({
     super.key,
@@ -40,6 +42,10 @@ class ScheduleTimelineBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final fit = ScheduleBlockLayout.forHeight(
+      height,
+      hasUsers: assignedUsers.isNotEmpty,
+    );
 
     final Color background = selected
         ? colorScheme.primary
@@ -71,15 +77,21 @@ class ScheduleTimelineBlock extends StatelessWidget {
         customBorder: shape,
         child: SizedBox(
           height: height,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: height >= 34 ? 6 : 1,
-            ),
-            child: _buildContent(
-              theme: theme,
-              foreground: foreground,
-              mutedForeground: mutedForeground,
+          child: MediaQuery.withClampedTextScaling(
+            maxScaleFactor: ScheduleBlockLayout.maxTextScale,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: fit.stacked
+                    ? ScheduleBlockLayout.stackedPadding
+                    : ScheduleBlockLayout.tightPadding,
+              ),
+              child: _buildContent(
+                theme: theme,
+                fit: fit,
+                foreground: foreground,
+                mutedForeground: mutedForeground,
+              ),
             ),
           ),
         ),
@@ -89,12 +101,13 @@ class ScheduleTimelineBlock extends StatelessWidget {
 
   Widget _buildContent({
     required ThemeData theme,
+    required ScheduleBlockLayout fit,
     required Color foreground,
     required Color mutedForeground,
   }) {
     final titleText = Text(
       title,
-      maxLines: height >= 58 ? 2 : 1,
+      maxLines: fit.twoLineTitle ? 2 : 1,
       overflow: TextOverflow.ellipsis,
       style: theme.textTheme.labelLarge?.copyWith(
         color: foreground,
@@ -102,35 +115,74 @@ class ScheduleTimelineBlock extends StatelessWidget {
       ),
     );
 
-    final titleRow = Row(
-      children: [
-        if (staffOnly) ...[
-          Icon(Icons.visibility_off_outlined, size: 12, color: mutedForeground),
-          const SizedBox(width: 4),
+    if (!fit.stacked) {
+      return Row(
+        children: [
+          if (staffOnly) ...[
+            Icon(
+              Icons.visibility_off_outlined,
+              size: 12,
+              color: mutedForeground,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            _timeFormat.format(start),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: mutedForeground,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(child: titleText),
+          if (fit.avatars == ScheduleBlockAvatars.inline) ...[
+            const SizedBox(width: 6),
+            MyAvatarStack(
+              users: assignedUsers,
+              height: ScheduleBlockLayout.compactAvatar,
+              width: 44,
+              borderWidth: 1.2,
+            ),
+          ],
         ],
-        Expanded(child: titleText),
-      ],
-    );
-
-    if (height < 34) return titleRow;
-
-    final showAvatars = height >= 84 && assignedUsers.isNotEmpty;
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        titleRow,
+        Row(
+          children: [
+            if (staffOnly) ...[
+              Icon(
+                Icons.visibility_off_outlined,
+                size: 12,
+                color: mutedForeground,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Expanded(child: titleText),
+            if (fit.avatars == ScheduleBlockAvatars.inline) ...[
+              const SizedBox(width: 6),
+              MyAvatarStack(
+                users: assignedUsers,
+                height: ScheduleBlockLayout.inlineAvatar,
+                width: 52,
+                borderWidth: 1.5,
+              ),
+            ],
+          ],
+        ),
         Text(
           '${_timeFormat.format(start)} - ${_timeFormat.format(end)}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.labelSmall?.copyWith(color: mutedForeground),
         ),
-        if (showAvatars) ...[
+        if (fit.avatars == ScheduleBlockAvatars.bottom) ...[
           const Spacer(),
           MyAvatarStack(
             users: assignedUsers,
-            height: 28,
+            height: ScheduleBlockLayout.bottomAvatar,
             width: 68,
             borderWidth: 1.5,
           ),
