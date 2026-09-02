@@ -9,13 +9,13 @@ The **CTRIM** tab holds longer-lived information for visitors — not the day-to
 | Section | Purpose |
 |---------|---------|
 | **About** | Orientation to CTRIM / the community — typically mission, vision, and core values, often with imagery |
-| **Churches** | A **hub per church** (for example Belfast): cover and gallery, maps link, extra pages (getting here, Sunday service, and similar), and a snapshot of that location — recent posts, cell groups, and how many people are listed there — plus the longer written overview |
+| **Churches** | A **hub per church** (for example Belfast): cover photo, then cards for finding the church, pastors, extra pages, activity at that location, gallery, recent posts, and cell groups |
 | **Testimonials** | Stories and testimonies (same kind of rich layout) |
 | **Information** | Longer CTRIM info pages, grouped into **Principles** (“Our core ideologies”) and **Teachings** (“Simple lessons to get started!”) |
 
 Content is meant to be readable on phone and web, with richer formatting than a short bulletin post. Guests and signed-in people can browse; only elevated roles can edit.
 
-Each church is linked to **one location** (the same places used on posts, people, and cell groups). Opening a church shows counts only — not names — for posts in the last three months, cell groups at that place, and people with a profile there. **Open in Maps** appears when a maps link has been added.
+Each church is linked to **one location** (the same places used on posts, people, and cell groups). The Churches list shows that location under the church name (or **Location not set** until one is chosen). Opening a church shows an overview dashboard: **Find us** (location, address, maps), **Pastors** (photos and names, with **Learn about them** for a longer write-up), extra pages, counts for posts in the last three months, cell groups at that place, and people with a profile there — plus a **weekly activity chart** (posts or attendance over the last three months). Up to four recent posts are shown. **Open in Maps** appears when a maps link has been added. On a wide screen the cards sit side by side.
 
 A church hub can also have extra **pages** for details that belong to that church (for example getting here or Sunday service). Anyone can read them; only **area admins** can add or change those extra pages. Leaders can still edit the church overview, location, and maps.
 

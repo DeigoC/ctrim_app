@@ -8,9 +8,11 @@ import '../../../utility/event_context.dart';
 import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/post_template_mapper.dart';
+import '../../../utility/post_title_date.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/common/load_progress_body.dart';
+import '../../../widgets/paired_row_list.dart';
 import '../../../widgets/responsive_content.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../add_event_page.dart';
@@ -25,7 +27,6 @@ class SelectPostTemplatePage extends StatefulWidget {
     this.sourcePostParentId,
     this.sourcePostEventDate,
   });
-  static final DateFormat _eventDateFormat = DateFormat('d MMM');
   final EventContext eventContext;
   final bool bulkMode;
   final String? sourcePostId;
@@ -324,7 +325,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isWide = ResponsiveLayout.isWideScreen(width);
+        final isWide = ResponsiveLayout.isWideScreenOf(context);
         final horizontalPadding = isWide
             ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2)
                 .clamp(16.0, double.infinity)
@@ -358,7 +359,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }) {
     final sections =
         <({PostTemplateCategory category, List<PostTemplate> templates})>[];
-    for (final category in PostTemplateCategory.values) {
+    for (final category in PostTemplateCategory.displayOrder) {
       final items = realTemplates.where((t) => t.category == category).toList();
       if (items.isEmpty && hideEmptySections) continue;
       sections.add((category: category, templates: items));
@@ -466,30 +467,10 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       );
     }
 
-    final left = <PostTemplate>[];
-    final right = <PostTemplate>[];
-    for (var i = 0; i < templates.length; i++) {
-      (i.isEven ? left : right).add(templates[i]);
-    }
-
-    Widget column(List<PostTemplate> items) {
-      return Column(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            _buildTemplateTile(items[i]),
-          ],
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: column(left)),
-        const SizedBox(width: 16),
-        Expanded(child: column(right)),
-      ],
+    return PairedRowList(
+      itemCount: templates.length,
+      runSpacing: 12,
+      itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
     );
   }
 
@@ -810,7 +791,7 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       if (selectedDate == null || !mounted) return;
       PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
       eventContext.head.setTitle(
-          '${postTemplate.title} (${SelectPostTemplatePage._eventDateFormat.format(selectedDate)})');
+          formatPostTitle(postTemplate.title, selectedDate));
       if (!mounted) return;
       Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => AddEventPage(eventContext: eventContext)));

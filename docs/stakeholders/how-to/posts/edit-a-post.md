@@ -31,9 +31,11 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 
 ### Schedule & roles
 
-1. Open the **schedule** editor.  
-2. Add or change roles / assignments.  
+1. Open the **Schedule** tab on the post (day timeline with overlapping items side by side).  
+2. Add or change roles / assignments, or open **Arrange schedule** to drag items to new times (cascade or parallel mode).  
 3. Save.  
+
+See [Reading the schedule](../../events-and-bulletin.md#reading-the-schedule) and [Rearranging the running order](../../events-and-bulletin.md#rearranging-the-running-order) for how the timeline works.
 
 ### Media
 
@@ -51,7 +53,7 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 
 1. Open the **People** tab on the post.  
 2. Manage **expected** people and **attendance** (author and **contributors** can edit).  
-3. If the post is linked to a **cell group**, use **Fill from cell group** to seed expected attendees when helpful.  
+3. If the post is linked to a **cell group**, use **Fill from cell group** or **Add from cell group** (in the picker) to seed expected attendees when helpful.  
 4. See who marked **interest** (“follow updates”) if needed.  
 5. Tap **Save** on the post (same as other edits) and add a short **update log** (bookmarkers can be notified).  
 

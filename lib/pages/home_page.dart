@@ -19,6 +19,7 @@ import '../utility/user_schedule_service.dart';
 import '../utility/notifications/web_notification_lifecycle.dart';
 import '../utility/notifications/notification_subscription_service.dart';
 import '../utility/notifications/web_notification_deep_link.dart';
+import '../src/localization/app_localizations.dart';
 import '../widgets/common/app_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/view_event_page.dart';
@@ -252,7 +253,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         scrollController: _cellGroupsScrollController,
       );
     }
-    return PersonalHome(appContext: _appContext);
+    return PersonalHome(
+      appContext: _appContext,
+      onBrowseCellGroups: () => setState(() => _selectedIndex = 2),
+    );
   }
 
   // * Logic
@@ -386,10 +390,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       final payload = data['data'];
       if (payload is! Map) return;
 
-      final mapped = <String, dynamic>{
-        for (final entry in payload.entries) entry.key.toString(): entry.value,
-      };
-      _openFromNotificationData(mapped);
+      _openFromNotificationData(
+          WebNotificationDeepLink.extractAppData(payload));
     });
   }
 
@@ -402,15 +404,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _openFromNotificationData(Map<String, dynamic> data) async {
     if (_appContext.sharedPref.loggedOut) return;
 
-    if (data.containsKey('PostID')) {
-      final postID = data['PostID']?.toString() ?? '';
+    final appData = WebNotificationDeepLink.extractAppData(data);
+    if (appData.containsKey('PostID')) {
+      final postID = appData['PostID']?.toString() ?? '';
       if (postID.isEmpty) return;
       final head = await _reloadEventHead(postID);
       if (!mounted) return;
       _openPost(head);
       _updateUserRoles();
-    } else if (data.containsKey('InfoPage')) {
-      final infoPage = data['InfoPage']?.toString() ?? '';
+    } else if (appData.containsKey('InfoPage')) {
+      final infoPage = appData['InfoPage']?.toString() ?? '';
       if (infoPage.isEmpty) return;
       if (!mounted) return;
       _openInformationTeachingPage(infoPage);
@@ -422,37 +425,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _handleOnMessage(final RemoteMessage message) async {
-    // ! this one makes sense to have an opening dialog
+    final appData = WebNotificationDeepLink.extractAppData(message.data);
     final bool openPage = _appContext.sharedPref.loggedOut
         ? false
-        : await _showFCMMessage(message, true);
+        : await _showFCMMessage(message, appData);
 
-    if (message.data.containsKey('PostID')) {
-      final String postID = message.data['PostID'];
+    if (appData.containsKey('PostID')) {
+      final String postID = appData['PostID'].toString();
       final head = await _reloadEventHead(postID);
       if (openPage) {
         _openPost(head);
       }
       _updateUserRoles();
-    } else if (message.data.containsKey('InfoPage') && openPage) {
-      _openInformationTeachingPage(message.data['InfoPage']);
+    } else if (appData.containsKey('InfoPage') && openPage) {
+      _openInformationTeachingPage(appData['InfoPage'].toString());
     }
   }
 
   Future<void> _handleOnMessageOpenedBackground(
       final RemoteMessage message) async {
-    // ! no need for a dialog, just open the page no matter where the user may be
-    final bool hasLoggedOut = _appContext.sharedPref.loggedOut;
-    if (message.data.containsKey('PostID')) {
-      final String postID = message.data['PostID'];
-      final head = await _reloadEventHead(postID);
-      if (!hasLoggedOut) {
-        _updateUserRoles();
-        _openPost(head);
-      }
-    } else if (!hasLoggedOut && message.data.containsKey('InfoPage')) {
-      _openInformationTeachingPage(message.data['InfoPage']);
-    }
+    await _openFromNotificationData(message.data);
   }
 
   Future<EventHead> _reloadEventHead(final String postID) async {
@@ -491,18 +483,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // all notifications potentially will be asking to open a page
   // well... maybe not, let's make it an optional thing
   Future<bool> _showFCMMessage(
-      final RemoteMessage message, bool openingPage) async {
-    final RemoteNotification notification = message.notification!;
-    final String? closeText = message.data['CloseText'];
-    final String? superImageUrl = message.data['SuperImageUrl'];
+      final RemoteMessage message, Map<String, dynamic> appData) async {
+    final RemoteNotification? notification = message.notification;
+    if (notification == null) return false;
 
-    // Handle image URL for different platforms
+    final String? closeText = appData['CloseText']?.toString();
+    final String? superImageUrl = appData['SuperImageUrl']?.toString();
+    final l10n = AppLocalizations.of(context)!;
+    final kind = WebNotificationDeepLink.openActionKind(appData);
+    final String? openLabel = switch (kind) {
+      WebNotificationDeepLink.openKindPost => l10n.notificationViewPost,
+      WebNotificationDeepLink.openKindInfo => l10n.notificationViewPage,
+      _ => null,
+    };
+
     String? imageUrl;
     if (kIsWeb) {
-      // On web, notification images are in notification.web or data
       imageUrl = superImageUrl ?? notification.web?.image;
     } else {
-      // On native platforms, get platform-specific image
       imageUrl = superImageUrl ??
           (Platform.isAndroid
               ? notification.android?.imageUrl
@@ -510,6 +508,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     bool result = false;
+    final dismissLabel = closeText ?? l10n.notificationDismiss;
 
     await showDialog(
       context: context,
@@ -528,19 +527,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   fit: BoxFit.cover,
                 ),
               ),
-        actions: openingPage
+        actions: openLabel != null
             ? AppDialogActions(
                 onCancel: () => Navigator.of(context).pop(),
-                cancelLabel: closeText ?? 'Ok',
+                cancelLabel: dismissLabel,
                 onConfirm: () {
                   result = true;
                   Navigator.of(context).pop();
                 },
-                confirmLabel: 'Show More',
+                confirmLabel: openLabel,
               )
             : AppDialogActions(
                 onConfirm: () => Navigator.of(context).pop(),
-                confirmLabel: closeText ?? 'Ok',
+                confirmLabel: dismissLabel,
               ),
       ),
     );

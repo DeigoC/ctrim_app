@@ -3,8 +3,12 @@
 from firebase_functions import firestore_fn, https_fn, options
 from firebase_admin import firestore, initialize_app, messaging
 
-from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error
-from user_role_sync import sync_post_program_roles, sync_program_roles_from_change
+from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error, web_click_link
+from user_role_sync import (
+    sync_attendance_roles_from_change,
+    sync_post_program_roles,
+    sync_program_roles_from_change,
+)
 from notification_auth import require_notification_sender
 from token_pruning import is_invalid_token_error, prune_invalid_tokens
 from placeholder_users import (
@@ -85,6 +89,11 @@ def _build_multicast_message(req_data, tokens: list[str]) -> messaging.Multicast
         notification=_notification_payload(req_data),
         apns=apns,
         android=android,
+        webpush=messaging.WebpushConfig(
+            fcm_options=messaging.WebpushFCMOptions(
+                link=web_click_link(data_dict),
+            ),
+        ),
     )
 
 
@@ -164,6 +173,11 @@ def _build_topic_message(req_data, *, include_images: bool) -> messaging.Message
         notification=_notification_payload(req_data),
         apns=apns,
         android=android,
+        webpush=messaging.WebpushConfig(
+            fcm_options=messaging.WebpushFCMOptions(
+                link=web_click_link(data_dict),
+            ),
+        ),
     )
 
 
@@ -240,6 +254,29 @@ def sync_user_roles_on_program_write(event: firestore_fn.Event[firestore_fn.Chan
 
     result = sync_program_roles_from_change(db, post_id, before_program, after_program)
     print(f'sync_user_roles_on_program_write post={post_id} result={result}')
+
+
+@firestore_fn.on_document_written(
+    document='events/{postId}/supplemental/attendance',
+    region='europe-west1',
+)
+def sync_user_roles_on_attendance_write(event: firestore_fn.Event[firestore_fn.Change | None]) -> None:
+    """Keep users/{uid}/supplemental/roles in sync when expected attendees change."""
+    if event.data is None:
+        return
+
+    post_id = event.params['postId']
+    db = firestore.client()
+
+    before_attendance = None
+    after_attendance = None
+    if event.data.before is not None and event.data.before.exists:
+        before_attendance = event.data.before.to_dict()
+    if event.data.after is not None and event.data.after.exists:
+        after_attendance = event.data.after.to_dict()
+
+    result = sync_attendance_roles_from_change(db, post_id, before_attendance, after_attendance)
+    print(f'sync_user_roles_on_attendance_write post={post_id} result={result}')
 
 
 @https_fn.on_call(region='europe-west1')

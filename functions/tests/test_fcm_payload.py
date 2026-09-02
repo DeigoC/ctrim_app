@@ -1,6 +1,11 @@
 import unittest
 
-from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error
+from fcm_payload import (
+    fcm_image_url,
+    is_valid_fcm_topic,
+    looks_like_image_error,
+    web_click_link,
+)
 
 
 class FcmPayloadTests(unittest.TestCase):
@@ -37,6 +42,18 @@ class FcmPayloadTests(unittest.TestCase):
             )
         )
         self.assertFalse(looks_like_image_error(Exception('invalid topic')))
+
+    def test_web_click_link(self):
+        self.assertEqual(
+            web_click_link({'PostID': 'post-42'}),
+            'https://ctrim.app/?postId=post-42',
+        )
+        self.assertEqual(
+            web_click_link({'InfoPage': 'core values'}),
+            'https://ctrim.app/?infoPage=core%20values',
+        )
+        self.assertEqual(web_click_link({}), 'https://ctrim.app/')
+        self.assertEqual(web_click_link(None), 'https://ctrim.app/')
 
 
 if __name__ == '__main__':

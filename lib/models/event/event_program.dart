@@ -2,6 +2,15 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// How the rest of the schedule reacts when one role is moved.
+enum ProgramShiftMode {
+  /// Later items follow the move, keeping the run sheet sequential.
+  cascade,
+
+  /// Only the moved item changes; overlaps are allowed.
+  parallel,
+}
+
 class EventProgram {
   // * a role is made of 7 fields
   // uids - list of users assigned by their IDs
@@ -73,6 +82,17 @@ class EventProgram {
   }
 
   List<Map<String, dynamic>> get roles => UnmodifiableListView(_roles);
+
+  /// Changes when any role timing changes — use to bust schedule tab caches.
+  String get scheduleLayoutSignature => roles
+      .map((final role) {
+        final start = role['start'] as DateTime?;
+        final end = role['end'] as DateTime?;
+        return '${role['id']}:${start?.millisecondsSinceEpoch}:'
+            '${end?.millisecondsSinceEpoch}';
+      })
+      .join('|');
+
   bool get allDay => _allDay;
   bool get online => _online;
   String get address => _address;
@@ -89,8 +109,16 @@ class EventProgram {
   void setOnline(final bool state) => _online = state;
   void setAddress(final String address) => _address = address;
   void setMapLink(final String newMapLink) => _mapLink = newMapLink;
-  void orderProgramsByStartTime() =>
-      _roles.sort(((a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime)));
+  /// Sorts by start time, keeping roles that have no start at the end.
+  void orderProgramsByStartTime() {
+    _roles.sort((a, b) {
+      final aStart = a['start'] as DateTime?;
+      final bStart = b['start'] as DateTime?;
+      if (aStart == null) return bStart == null ? 0 : 1;
+      if (bStart == null) return -1;
+      return aStart.compareTo(bStart);
+    });
+  }
   void clearRoles() => _roles.clear();
 
   void addRole(
@@ -184,42 +212,69 @@ class EventProgram {
     shiftRolesStartingAtOrAfter(start, end.difference(start));
   }
 
-  /// Moves a role one place earlier (-1) or later (+1) in start-time order.
-  /// Swaps time slots with the neighbor while preserving each duration and the gap.
-  /// Returns false if the move is not possible.
-  bool moveRoleInOrder(int roleId, int direction) {
-    if (direction != -1 && direction != 1) return false;
-    orderProgramsByStartTime();
+  /// Drops a role onto [newStart], keeping its duration.
+  ///
+  /// [ProgramShiftMode.parallel] moves only this role, so it may overlap
+  /// whatever else is running. [ProgramShiftMode.cascade] pushes the items it
+  /// lands on later, passing the push down the chain until there is room; items
+  /// that already started before the drop are left where they are.
+  ///
+  /// Returns false when the role is missing, untimed, or has not moved.
+  bool moveRoleToStart({
+    required int roleId,
+    required DateTime newStart,
+    required ProgramShiftMode mode,
+  }) {
     final int index = _roles.indexWhere((entry) => entry['id'] == roleId);
-    final int newIndex = index + direction;
-    if (index < 0 || newIndex < 0 || newIndex >= _roles.length) return false;
+    if (index < 0) return false;
 
-    final int earlierIndex = index < newIndex ? index : newIndex;
-    final int laterIndex = index < newIndex ? newIndex : index;
-    final Map<String, dynamic> earlier = _roles[earlierIndex];
-    final Map<String, dynamic> later = _roles[laterIndex];
+    final role = _roles[index];
+    final DateTime? oldStart = role['start'] as DateTime?;
+    final DateTime? oldEnd = role['end'] as DateTime?;
+    if (oldStart == null || oldEnd == null) return false;
+    if (newStart.isAtSameMomentAs(oldStart)) return false;
 
-    final DateTime earlierStart = earlier['start'] as DateTime;
-    final DateTime earlierEnd = earlier['end'] as DateTime;
-    final DateTime laterStart = later['start'] as DateTime;
-    final DateTime laterEnd = later['end'] as DateTime;
-    final Duration earlierDuration = earlierEnd.difference(earlierStart);
-    final Duration laterDuration = laterEnd.difference(laterStart);
-    final Duration gap = laterStart.difference(earlierEnd);
-
-    // Neighbor takes the earlier slot; original earlier item follows with the same gap.
-    final DateTime swappedEarlierStart = earlierStart;
-    final DateTime swappedEarlierEnd = swappedEarlierStart.add(laterDuration);
-    final DateTime swappedLaterStart = swappedEarlierEnd.add(gap);
-    final DateTime swappedLaterEnd = swappedLaterStart.add(earlierDuration);
-
-    earlier['start'] = swappedLaterStart;
-    earlier['end'] = swappedLaterEnd;
-    later['start'] = swappedEarlierStart;
-    later['end'] = swappedEarlierEnd;
-
+    role['start'] = newStart;
+    role['end'] = newStart.add(oldEnd.difference(oldStart));
+    if (mode == ProgramShiftMode.cascade) {
+      _pushCollidingRolesLater(roleId);
+    }
     orderProgramsByStartTime();
     return true;
+  }
+
+  /// Walks forward from [roleId] pushing each overlapping role just far enough
+  /// to clear the one before it. Stops at the first role that already fits.
+  ///
+  /// Roles that began before the drop point keep their times, so a long
+  /// parallel item running underneath the schedule is never dragged along.
+  void _pushCollidingRolesLater(final int roleId) {
+    final int index = _roles.indexWhere((entry) => entry['id'] == roleId);
+    if (index < 0) return;
+
+    final DateTime movedStart = _roles[index]['start'] as DateTime;
+    DateTime cursor = _roles[index]['end'] as DateTime;
+
+    final following = _roles.where((entry) {
+      if (entry['id'] == roleId) return false;
+      final start = entry['start'] as DateTime?;
+      return start != null &&
+          entry['end'] != null &&
+          !start.isBefore(movedStart);
+    }).toList()
+      ..sort((a, b) =>
+          (a['start'] as DateTime).compareTo(b['start'] as DateTime));
+
+    for (final entry in following) {
+      final DateTime start = entry['start'] as DateTime;
+      final DateTime end = entry['end'] as DateTime;
+      if (!start.isBefore(cursor)) break;
+
+      final Duration delta = cursor.difference(start);
+      entry['start'] = start.add(delta);
+      entry['end'] = end.add(delta);
+      cursor = end.add(delta);
+    }
   }
 
   /// Sorted index of [roleId], or -1 if missing / missing start.

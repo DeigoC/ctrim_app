@@ -7,6 +7,7 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
+import '../../utility/cell_group_roster_cache.dart';
 import '../../utility/responsive_layout.dart';
 import 'cell_groups_list_tab.dart';
 import 'cell_groups_overview_tab.dart';
@@ -85,7 +86,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     }
   }
 
-  /// Parallel roster reads for non-archived groups when signed in.
+  /// Linked roster members per group id (signed-in only; empty for guests).
   Future<Map<String, List<User>>> _fetchRosterUsers({
     required AppContext appContext,
     required List<CellGroup> groups,
@@ -95,24 +96,25 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     final active = groups.where((g) => !g.isArchived).toList();
     if (active.isEmpty) return const {};
 
-    final entries = await Future.wait(active.map((group) async {
-      try {
-        final roster =
-            await CellGroupSupplementalDBManager(group.id).fetchRoster();
-        final users = <User>[];
-        for (final member in roster.activeMembers) {
-          if (!member.isLinkedUser) continue;
-          final match = appContext.allUsers.where((u) => u.id == member.userId);
-          if (match.isNotEmpty) users.add(match.first);
-          if (users.length >= 8) break;
-        }
-        return MapEntry(group.id, users);
-      } catch (_) {
-        return MapEntry(group.id, <User>[]);
-      }
-    }));
+    await CellGroupRosterCache.ensureLoaded(active.map((g) => g.id));
 
-    return Map<String, List<User>>.fromEntries(entries);
+    final result = <String, List<User>>{};
+    for (final group in active) {
+      final roster = CellGroupRosterCache.rosterFor(group.id);
+      if (roster == null) {
+        result[group.id] = const [];
+        continue;
+      }
+      final users = <User>[];
+      for (final member in roster.activeMembers) {
+        if (!member.isLinkedUser) continue;
+        final match = appContext.allUsers.where((u) => u.id == member.userId);
+        if (match.isNotEmpty) users.add(match.first);
+        if (users.length >= 8) break;
+      }
+      result[group.id] = users;
+    }
+    return result;
   }
 
   List<({String label, IconData icon})> _sections(AppLocalizations l10n) => [

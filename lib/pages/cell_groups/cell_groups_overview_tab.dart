@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/cell_group_db_manager.dart';
+import '../../models/event/event_head.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/activity_time_series.dart';
 import '../../utility/cell_group_activity_stats.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/common/activity_trend_section.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/information/info_section_card.dart';
 
@@ -25,6 +28,7 @@ class CellGroupsOverviewTab extends StatefulWidget {
 class _CellGroupsOverviewTabState extends State<CellGroupsOverviewTab> {
   final CellGroupDBManager _db = CellGroupDBManager();
   CellGroupActivityStats? _stats;
+  List<EventHead> _meetings = const [];
   bool _loadingStats = true;
   Object? _statsError;
 
@@ -42,12 +46,16 @@ class _CellGroupsOverviewTabState extends State<CellGroupsOverviewTab> {
     try {
       final appContext = Provider.of<AppContext>(context, listen: false);
       final cached = appContext.allCellGroups;
-      final stats = await _db.fetchActivityStats(
-        groups: cached.isEmpty ? null : cached,
+      final groups = cached.isEmpty ? await _db.fetchAllGroups() : cached;
+      final meetings = await _db.fetchLinkedMeetingsInActivityWindow();
+      final stats = CellGroupActivityStats.compute(
+        groups: groups,
+        meetings: meetings,
       );
       if (!mounted) return;
       setState(() {
         _stats = stats;
+        _meetings = meetings;
         _loadingStats = false;
       });
     } catch (e) {
@@ -71,7 +79,7 @@ class _CellGroupsOverviewTabState extends State<CellGroupsOverviewTab> {
         final maxWidth = ResponsiveLayout.maxContentWidth(screenWidth);
         final horizontalPadding =
             screenWidth < ResponsiveLayout.compact ? 16.0 : 32.0;
-        final isWideScreen = screenWidth >= ResponsiveLayout.tablet;
+        final isWideScreen = ResponsiveLayout.isWideScreenOf(context);
 
         return RefreshIndicator(
           onRefresh: _loadStats,
@@ -325,7 +333,40 @@ class _CellGroupsOverviewTabState extends State<CellGroupsOverviewTab> {
             return Column(children: rows);
           },
         ),
+        const SizedBox(height: 20),
+        _buildActivityTrendChart(context, l10n),
       ],
+    );
+  }
+
+  Widget _buildActivityTrendChart(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final now = DateTime.now();
+    final chartStart = CellGroupActivityStats.chartPastWindowStart(now);
+    final chartEnd = CellGroupActivityStats.chartWindowEndExclusive(now);
+    final countPoints = ActivityTimeSeries.fromCellGroupMeetings(
+      meetings: _meetings,
+      metric: ActivityTimeSeriesMetric.count,
+      startInclusive: chartStart,
+      endExclusive: chartEnd,
+    );
+    final attendancePoints = ActivityTimeSeries.fromCellGroupMeetings(
+      meetings: _meetings,
+      metric: ActivityTimeSeriesMetric.attendance,
+      startInclusive: chartStart,
+      endExclusive: chartEnd,
+    );
+
+    return ActivityTrendSection(
+      title: l10n.cellGroupsActivityTrendTitle,
+      subtitle: l10n.cellGroupsActivityTrendSubtitle,
+      countLabel: l10n.cellGroupsActivityTrendMetricMeetings,
+      countPoints: countPoints,
+      attendancePoints: attendancePoints,
+      emptyMessage: l10n.activityTrendEmpty,
+      weeklyHint: l10n.activityTrendWeeklyHint,
     );
   }
 }

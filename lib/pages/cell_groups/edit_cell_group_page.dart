@@ -337,7 +337,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           ? MyUserAvatar(user, radius: 20)
           : CircleAvatar(
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
+              child:
+                  Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
             ),
       title: Text(user?.fullname ?? 'Unknown leader'),
       trailing: IconButton(
@@ -464,6 +465,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           selectedUIDs: List<String>.from(_leaderUserIds),
           includeCurrentUser: true,
           title: AppLocalizations.of(context)!.cellGroupsLeadersLabel,
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
           ),

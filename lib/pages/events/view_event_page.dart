@@ -24,6 +24,7 @@ import '../../widgets/posts/view_event_media_tab.dart';
 import '../../widgets/posts/view_post_body.dart';
 import '../../widgets/posts/view_all_programs.dart';
 import '../../widgets/posts/view_related_posts_tab.dart';
+import 'arrange_schedule_page.dart';
 import 'edit_program_role_page.dart';
 import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
@@ -79,6 +80,7 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   int _aboutTabIndex = 0;
   int _peopleTabIndex = 1;
+  int? _scheduleTabIndex;
   int? _mediaTabIndex;
 
   static const int _remoteFetchStepCount = 5;
@@ -478,6 +480,7 @@ class _ViewEventPageState extends State<ViewEventPage>
     ];
     if (_showScheduleTab) {
       tabs.add(ViewAllPrograms(
+        key: ValueKey(_eventContext.program.scheduleLayoutSignature),
         eventContext: _eventContext,
         onProgramChanged: _updateWholePostBody,
       ));
@@ -645,7 +648,9 @@ class _ViewEventPageState extends State<ViewEventPage>
         .add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
     length++;
 
+    _scheduleTabIndex = null;
     if (_showScheduleTab) {
+      _scheduleTabIndex = length;
       _appBarTabs
           .add(const Tab(icon: Icon(Icons.calendar_today), text: 'Schedule'));
       length++;
@@ -722,6 +727,7 @@ class _ViewEventPageState extends State<ViewEventPage>
         onEditAbout: _onEditBodyClick,
         onEditTitle: _onEditTitleFromSheet,
         onAddSchedule: _onAddScheduleItem,
+        onArrangeSchedule: _onArrangeSchedule,
         onEditMedia: _onEditMediaClick,
         onChangeCover: _onChangeCoverFromSheet,
         onManageContributors: _onManageContributorsFromSheet,
@@ -763,6 +769,7 @@ class _ViewEventPageState extends State<ViewEventPage>
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
             postAuthorUid: _eventContext.metadata.authorUID,
@@ -812,6 +819,21 @@ class _ViewEventPageState extends State<ViewEventPage>
                 AddEventProgramPage(eventContext: _eventContext))).then((_) {
       setState(() {});
       _eventContext.program.orderProgramsByStartTime();
+    });
+  }
+
+  void _onArrangeSchedule() {
+    Navigator.of(context).pop();
+    Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ArrangeSchedulePage(eventContext: _eventContext),
+      ),
+    ).then((changed) {
+      if (!mounted) return;
+      setState(() {});
+      final scheduleIndex = _scheduleTabIndex;
+      if (scheduleIndex != null) _tabController.animateTo(scheduleIndex);
     });
   }
 

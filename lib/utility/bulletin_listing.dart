@@ -69,6 +69,12 @@ class BulletinListing {
   /// An event stays in Upcoming until this long after its start.
   static const Duration upcomingGrace = Duration(hours: 12);
 
+  /// How many upcoming events lead the relevancy feed.
+  static const int relevancyUpcomingHeadMax = 3;
+
+  /// Recent past events shown right after the upcoming head.
+  static const Duration relevancyRecentPastWindow = Duration(days: 14);
+
   static List<EventHead> apply({
     required Iterable<EventHead> heads,
     required BulletinListingQuery query,
@@ -133,6 +139,19 @@ class BulletinListing {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  /// Calendar today or a later start time (matches relevancy “today” bucket).
+  static bool isTodayOrFuture(final EventHead head, final DateTime now) {
+    final eventDate = head.eventDate;
+    if (eventDate == null) return false;
+    return isSameCalendarDay(eventDate, now) || eventDate.isAfter(now);
+  }
+
+  static bool isStrictPast(final EventHead head, final DateTime now) {
+    final eventDate = head.eventDate;
+    if (eventDate == null) return false;
+    return !isSameCalendarDay(eventDate, now) && eventDate.isBefore(now);
+  }
+
   static List<EventHead> sortHeads(
     final List<EventHead> heads,
     final BulletinSort sort,
@@ -142,47 +161,96 @@ class BulletinListing {
       case BulletinSort.relevancy:
         return _sortRelevancy(heads, now);
       case BulletinSort.eventDateSoonest:
-        return List<EventHead>.from(heads)
-          ..sort((a, b) => _compareEventDate(a, b, descending: false));
+        return _sortEventDateSoonest(heads, now);
       case BulletinSort.eventDateLatest:
-        return List<EventHead>.from(heads)
-          ..sort((a, b) => _compareEventDate(a, b, descending: true));
+        return _sortEventDateLatest(heads, now);
     }
   }
 
-  static int _compareEventDate(
-    final EventHead a,
-    final EventHead b, {
-    required bool descending,
-  }) {
-    if (a.eventDate == null && b.eventDate == null) return 0;
-    if (a.eventDate == null) return 1;
-    if (b.eventDate == null) return -1;
-    final cmp = a.eventDate!.compareTo(b.eventDate!);
-    return descending ? -cmp : cmp;
-  }
-
-  /// Today (by calendar), then all later events by date, then the rest by last update.
+  /// Next few upcoming events, then recent past, then everything else.
   static List<EventHead> _sortRelevancy(
     final List<EventHead> heads,
     final DateTime now,
   ) {
-    final today = <EventHead>[];
     final upcoming = <EventHead>[];
-    final rest = <EventHead>[];
+    final recentPast = <EventHead>[];
+    final otherPast = <EventHead>[];
+    final undated = <EventHead>[];
+    final recentPastCutoff = now.subtract(relevancyRecentPastWindow);
+
     for (final head in heads) {
       final eventDate = head.eventDate;
-      if (eventDate != null && isSameCalendarDay(eventDate, now)) {
-        today.add(head);
-      } else if (eventDate != null && eventDate.isAfter(now)) {
+      if (eventDate == null) {
+        undated.add(head);
+      } else if (isTodayOrFuture(head, now)) {
         upcoming.add(head);
+      } else if (!eventDate.isBefore(recentPastCutoff)) {
+        recentPast.add(head);
       } else {
-        rest.add(head);
+        otherPast.add(head);
       }
     }
-    today.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+
     upcoming.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-    rest.sort((a, b) => b.recentDate.compareTo(a.recentDate));
-    return [...today, ...upcoming, ...rest];
+    recentPast.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
+    otherPast.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+    undated.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+
+    final upcomingHead = upcoming.take(relevancyUpcomingHeadMax);
+    final upcomingTail = upcoming.skip(relevancyUpcomingHeadMax);
+
+    return [
+      ...upcomingHead,
+      ...recentPast,
+      ...upcomingTail,
+      ...otherPast,
+      ...undated,
+    ];
+  }
+
+  /// Next events first (today and future), then recent past, then undated.
+  static List<EventHead> _sortEventDateSoonest(
+    final List<EventHead> heads,
+    final DateTime now,
+  ) {
+    final upcoming = <EventHead>[];
+    final past = <EventHead>[];
+    final undated = <EventHead>[];
+    for (final head in heads) {
+      if (head.eventDate == null) {
+        undated.add(head);
+      } else if (isTodayOrFuture(head, now)) {
+        upcoming.add(head);
+      } else {
+        past.add(head);
+      }
+    }
+    upcoming.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+    past.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
+    undated.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+    return [...upcoming, ...past, ...undated];
+  }
+
+  /// Recent past first, then upcoming by date, then undated.
+  static List<EventHead> _sortEventDateLatest(
+    final List<EventHead> heads,
+    final DateTime now,
+  ) {
+    final past = <EventHead>[];
+    final upcoming = <EventHead>[];
+    final undated = <EventHead>[];
+    for (final head in heads) {
+      if (head.eventDate == null) {
+        undated.add(head);
+      } else if (isStrictPast(head, now)) {
+        past.add(head);
+      } else {
+        upcoming.add(head);
+      }
+    }
+    past.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
+    upcoming.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+    undated.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+    return [...past, ...upcoming, ...undated];
   }
 }

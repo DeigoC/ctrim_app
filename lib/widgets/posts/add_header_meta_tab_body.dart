@@ -7,6 +7,8 @@ import '../../models/user.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cell_group_roster_helpers.dart';
+import '../../utility/dialog_manager.dart';
 import '../../utility/notifications/broadcast_audience.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
@@ -366,6 +368,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,
@@ -856,6 +859,8 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     final expected = widget.eventContext.expectedAttendeeUserIDs;
     final users =
         appContext.allUsers.where((u) => expected.contains(u.id)).toList();
+    final hasLinkedCellGroups =
+        widget.eventContext.head.cellGroupIDs.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -890,16 +895,52 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
           ),
         ],
         const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: _onManageExpectedAttendeesTap,
-          icon: const Icon(Icons.checklist, size: 18),
-          label: const Text('Manage expected attendees'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _onManageExpectedAttendeesTap,
+              icon: const Icon(Icons.checklist, size: 18),
+              label: const Text('Manage expected attendees'),
+            ),
+            if (hasLinkedCellGroups)
+              OutlinedButton.icon(
+                onPressed: _seedExpectedFromLinkedCellGroups,
+                icon: const Icon(Icons.groups_outlined, size: 18),
+                label: const Text('Fill from cell group'),
+              ),
+          ],
         ),
       ],
     );
   }
 
   // ? Logic
+
+  Future<void> _seedExpectedFromLinkedCellGroups() async {
+    final cgIds = widget.eventContext.head.cellGroupIDs;
+    if (cgIds.isEmpty) return;
+
+    List<String>? seededIds;
+    final ok = await DialogManager.runWithProgressDialog(
+      context: context,
+      title: 'Filling from cell group…',
+      action: () async {
+        final ids = <String>{
+          ...widget.eventContext.expectedAttendeeUserIDs,
+        };
+        ids.addAll(
+          await CellGroupRosterHelpers.fetchActiveLinkedUserIds(cgIds),
+        );
+        seededIds = ids.toList();
+      },
+    );
+    if (!ok || seededIds == null || !mounted) return;
+    setState(() {
+      widget.eventContext.applyExpectedAttendeeUserIDs(seededIds!);
+    });
+  }
 
   Future<void> _onManageExpectedAttendeesTap() async {
     final appContext = Provider.of<AppContext>(context, listen: false);
@@ -911,6 +952,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               List<String>.from(widget.eventContext.expectedAttendeeUserIDs),
           title: 'Expected attendees',
           includePlaceholders: true,
+          allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,
@@ -934,6 +976,7 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               List<String>.from(widget.eventContext.metadata.contributorUIDs),
           excludedUIDs: [widget.eventContext.metadata.authorUID],
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,

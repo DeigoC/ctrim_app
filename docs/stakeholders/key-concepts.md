@@ -18,7 +18,8 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 |------|---------|
 | **Guest** | Anyone using the app **without** signing in. Can browse public content; richer actions need an account. |
 | **Signed-in person** | Someone with an account. Unlocks interest, fuller personal options, and (when they have a profile) schedule and directory features. |
-| **Volunteer** / **community profile** | A person listed in the **Volunteers** directory — the community record organisers assign to programmes, attendance, and cell groups. |
+| **Community profile** | A person listed in the **People** directory — the record organisers assign to programmes, attendance, and cell groups. Registering creates this; it does not mean they serve. |
+| **Serving** | People the directory shows by default: Leader or Admin, a **team tag**, or cell-group leadership. Turn **Serving** off to see everyone. |
 | **Placeholder** | A temporary directory entry created by organisers **before** someone has signed in — so they can still be listed on posts or in a cell group. |
 | **Leader** | Elevated access to create posts/templates, register people, and edit Information content. Covers hats such as department and cell group leaders. |
 | **Area admin** | A **Leader** plus admin for assigned **area(s)** — people, tags, locations, and cell groups. Every area admin is a Leader. |
@@ -39,17 +40,17 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 
 | Term | Meaning |
 |------|---------|
-| **Template** | A reusable blueprint for a kind of event (title pattern, location, tags, roles, expected people, and similar). Leaders manage these under Personal → **Post Templates**, grouped as **Services** or **Cell Groups**. |
+| **Template** | A reusable blueprint for a kind of event (title pattern, location, tags, roles, expected people, and similar). Leaders manage these under Personal → **Post Templates**, grouped as **Cell Groups** or **Services**. |
 | **Bulk create** | Create many dated posts from one template (e.g. a weekly series) without a push blast for every date. |
 | **Post tag** | A label on posts for **browsing and filtering** the bulletin (for example Sunday Worship or Midweek). Not used for push notification opt-in. |
 | **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Some lines can be hidden from **guests**. |
-| **My Schedule** | Personal list of programme roles assigned to **you**. |
+| **My Schedule** | Personal list of programme roles assigned to **you**, plus posts where you are an **expected attendee**. |
 | **My Posts** | Shortcut to posts **you** authored — not the full bulletin. |
 | **Related posts** | Parent, sibling, or child links between posts (a series, term, or meeting group). Shown on the post’s **Related** tab when present. |
 | **Period parent** | A post marked as a container for a term or season; other meeting posts can attach underneath it. |
 | **Update log** | Short note organisers write when saving important edits; can notify people who **bookmarked** the post. **Change history** lets anyone open past logs from “Updated … by …”. |
-| **Recent activity** | Short list on a volunteer profile of the last few things that person saved in the app. Anyone who can open the profile sees the last few lines; **area admins** can open the full list. |
+| **Recent activity** | Short list on a profile of the last few things that person saved in the app. Anyone who can open the profile sees the last few lines; **area admins** can open the full list. |
 | **Broadcast** | A push organisers send about a post to people who opted into **All {location} updates** for that post’s location (and optionally people already on programme roles). |
 
 ## Related pages

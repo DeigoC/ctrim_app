@@ -7,6 +7,7 @@ import '../../utility/bulletin_listing.dart';
 import '../../utility/event_heads_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../../widgets/bulletin/bulletin_first_time_dialog.dart';
 import '../../widgets/bulletin/bulletin_setting_sheet.dart';
 import '../../widgets/posts/post_head.dart';
@@ -130,7 +131,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final double contentWidth = constraints.maxWidth;
-          final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+          final bool isWideScreen = ResponsiveLayout.isWideScreenOf(context);
           final double maxWidth =
               ResponsiveLayout.maxContentWidth(contentWidth);
           final double horizontalPadding = isWideScreen
@@ -256,28 +257,14 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     );
   }
 
-  /// Paired rows so left-to-right, top-to-bottom stays chronological.
+  /// Masonry so a text-only PostHead does not leave a gap beside an image post.
   Widget _buildWidePostRows(ColorScheme colorScheme, List<EventHead> heads) {
-    final rows = <Widget>[];
-    for (var i = 0; i < heads.length; i += 2) {
-      if (i > 0) rows.add(const SizedBox(height: 16));
-      final right = i + 1 < heads.length ? heads[i + 1] : null;
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: _buildPostCard(colorScheme, heads[i], verticalMargin: 0),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: right == null
-                ? const SizedBox.shrink()
-                : _buildPostCard(colorScheme, right, verticalMargin: 0),
-          ),
-        ],
-      ));
-    }
-    return Column(children: rows);
+    return TwoColumnMasonry(
+      children: [
+        for (final head in heads)
+          _buildPostCard(colorScheme, head, verticalMargin: 0),
+      ],
+    );
   }
 
   Widget _buildPostCard(

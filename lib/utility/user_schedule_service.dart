@@ -18,7 +18,7 @@ class UserScheduleService {
   /// How long past assignments stay on the user schedule for organisers before prune.
   static const Duration roleRetention = Duration(days: 28);
 
-  /// Post IDs whose role assignments should be removed (beyond retention or unknown post).
+  /// Post IDs whose role assignments should be removed (beyond retention only).
   static List<String> staleRolePostIDs({
     required User user,
     required List<EventHead> eventHeads,
@@ -30,15 +30,35 @@ class UserScheduleService {
     final clock = now ?? DateTime.now();
     final Set<String> postIDs = {};
 
-    for (final roleEntry in roles) {
-      final postID = roleEntry.postID;
-      final head = _headForPost(eventHeads, postID);
-      if (head == null || isBeyondRetention(head, now: clock)) {
+    for (final postID in _distinctPostIDs(roles)) {
+      if (isBeyondRetentionForPost(
+        user: user,
+        postID: postID,
+        eventHeads: eventHeads,
+        now: clock,
+      )) {
         postIDs.add(postID);
       }
     }
 
     return postIDs.toList();
+  }
+
+  /// True when the assignment anchor date is past the grace window.
+  static bool isPastSchedulePost({
+    required User user,
+    required String postID,
+    required List<EventHead> eventHeads,
+    DateTime? now,
+  }) {
+    final anchor = _scheduleAnchorDate(
+      user: user,
+      postID: postID,
+      eventHeads: eventHeads,
+    );
+    if (anchor == null) return false;
+    final clock = now ?? DateTime.now();
+    return anchor.add(rolePastGrace).isBefore(clock);
   }
 
   /// True when the event is past the grace window (still retained until [roleRetention]).
@@ -47,6 +67,23 @@ class UserScheduleService {
     final eventDate = head.eventDate;
     if (eventDate == null) return false;
     return eventDate.add(rolePastGrace).isBefore(clock);
+  }
+
+  /// True when the post is old enough that roles should be pruned.
+  static bool isBeyondRetentionForPost({
+    required User user,
+    required String postID,
+    required List<EventHead> eventHeads,
+    DateTime? now,
+  }) {
+    final anchor = _scheduleAnchorDate(
+      user: user,
+      postID: postID,
+      eventHeads: eventHeads,
+    );
+    if (anchor == null) return false;
+    final clock = now ?? DateTime.now();
+    return anchor.add(roleRetention).isBefore(clock);
   }
 
   /// True when the event is old enough that roles should be pruned.
@@ -98,14 +135,15 @@ class UserScheduleService {
     final stale = staleRolePostIDs(user: user, eventHeads: eventHeads, now: clock).toSet();
     final Set<String> postIDs = {};
 
-    for (final role in roles) {
-      final postID = role.postID;
-      if (stale.contains(postID) || postIDs.contains(postID)) continue;
+    for (final postID in _distinctPostIDs(roles)) {
+      if (stale.contains(postID)) continue;
 
-      final head = _headForPost(eventHeads, postID);
-      if (head == null) continue;
-
-      final isPast = isPastScheduleHead(head, now: clock);
+      final isPast = isPastSchedulePost(
+        user: user,
+        postID: postID,
+        eventHeads: eventHeads,
+        now: clock,
+      );
       if (isPast == past) {
         postIDs.add(postID);
       }
@@ -113,8 +151,8 @@ class UserScheduleService {
 
     final sorted = postIDs.toList()
       ..sort((a, b) {
-        final aDate = _headForPost(eventHeads, a)?.eventDate;
-        final bDate = _headForPost(eventHeads, b)?.eventDate;
+        final aDate = _scheduleAnchorDate(user: user, postID: a, eventHeads: eventHeads);
+        final bDate = _scheduleAnchorDate(user: user, postID: b, eventHeads: eventHeads);
         if (aDate == null && bDate == null) return 0;
         if (aDate == null) return 1;
         if (bDate == null) return -1;
@@ -166,6 +204,33 @@ class UserScheduleService {
     return upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now).length;
   }
 
+  /// First [limit] distinct upcoming post IDs (soonest first).
+  static List<String> upcomingSchedulePostIDsLimited({
+    required User user,
+    required List<EventHead> eventHeads,
+    DateTime? now,
+    int limit = 3,
+  }) {
+    final ids = upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now);
+    if (ids.length <= limit) return ids;
+    return ids.sublist(0, limit);
+  }
+
+  /// Role count for [postID] on [user]'s upcoming schedule.
+  static int roleCountForPost({
+    required User user,
+    required String postID,
+    required List<EventHead> eventHeads,
+    DateTime? now,
+  }) {
+    final upcomingPostIDs =
+        upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now).toSet();
+    if (!upcomingPostIDs.contains(postID)) return 0;
+    final roles = user.roles;
+    if (roles == null) return 0;
+    return roles.where((role) => role.postID == postID).length;
+  }
+
   static EventHead? eventHeadForRole({
     required String postID,
     required List<EventHead> eventHeads,
@@ -177,6 +242,31 @@ class UserScheduleService {
       if (head.id == postID) return head;
     }
     return null;
+  }
+
+  static List<String> _distinctPostIDs(final List<UserRoleAssignment> roles) {
+    return roles.map((role) => role.postID).toSet().toList();
+  }
+
+  static DateTime? _scheduleAnchorDate({
+    required User user,
+    required String postID,
+    required List<EventHead> eventHeads,
+  }) {
+    final head = _headForPost(eventHeads, postID);
+    if (head?.eventDate != null) return head!.eventDate;
+
+    final roles = user.roles;
+    if (roles == null || roles.isEmpty) return null;
+
+    DateTime? earliest;
+    for (final role in roles) {
+      if (role.postID != postID) continue;
+      if (earliest == null || role.start.isBefore(earliest)) {
+        earliest = role.start;
+      }
+    }
+    return earliest;
   }
 
   Future<List<UserRoleAssignment>> fetchRoles(final String uid) => _userDBManager.fetchUserRoles(uid);

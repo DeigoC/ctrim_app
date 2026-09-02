@@ -14,7 +14,7 @@ import '../models/user_role_assignment.dart';
 import '../models/user_tag.dart';
 import 'app_shared_preferences.dart';
 
-/// Session cache for the signed-in user, volunteer directory, bulletin heads,
+/// Session cache for the signed-in user, people directory, bulletin heads,
 /// and admin catalogs. Mutate only through the methods on this class.
 class AppContext extends ChangeNotifier {
   static final User _guest =

@@ -10,7 +10,7 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 |----------|----------------|
 | Visitors & guests | Browse the bulletin and information without signing in |
 | Community members | Profile, schedule, follow updates on posts, notification choices |
-| Volunteers & organisers | Posts, roles, attendance, volunteer directory |
+| Organisers | Posts, roles, attendance, people directory |
 | Leaders | Create posts/templates; register people; edit Information content |
 | Area admins | Leaders plus area-scoped admin (people, tags, locations, cell groups) |
 | Site admins *(planned)* | Admin without area location restriction |
@@ -24,9 +24,9 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | **Bulletin** | Shared event posts — browse, follow updates, organise | [Events & bulletin](events-and-bulletin.md) |
 | **CTRIM** (Information) | About, church location hubs, testimonials, longer info pages | [Information](information.md) |
 | **Cell Groups** | Small groups — in development and testing | [Cell Groups](cell-groups.md) |
-| **Personal** | Sign-in, profile, schedule, notifications, volunteers | [Personal](personal.md) |
+| **Personal** | Sign-in, profile, schedule, notifications, people directory | [Personal](personal.md) |
 
-**Glossary:** [Key concepts](key-concepts.md) — post, volunteer, interest, bookmark, and other terms.
+**Glossary:** [Key concepts](key-concepts.md) — post, serving, interest, bookmark, and other terms.
 
 Supporting topics: [People & roles](people-and-roles.md) · [Notifications](notifications.md) · [Platforms](platforms.md) · [Roadmap](roadmap.md)
 

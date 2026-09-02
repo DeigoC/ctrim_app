@@ -18,7 +18,7 @@ What stakeholders should know is **shipping, finishing, or planned** — not a f
 
 - **Interest** on posts (“follow updates”) and attendance lists for organisers  
 - **Post tags** for bulletin browsing; **location-based** push opt-in (for example All Belfast updates)  
-- **Volunteers** directory (filters, tags, placeholders)  
+- **People** directory (Serving default, tags, placeholders)  
 - **Cell Groups** foundation in the app (catalogue, leaders, roster, meeting trail) — expanding through testing  
 - **Stakeholder documentation** (this site)
 

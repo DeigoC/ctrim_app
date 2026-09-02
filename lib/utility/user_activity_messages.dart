@@ -4,11 +4,11 @@ class UserActivityMessages {
   static const editedBulletinPost = 'Edited a bulletin post';
   static const updatedPostInterest = 'Updated post interest';
 
-  static const registeredVolunteer = 'Registered a volunteer';
-  static const editedVolunteerProfile = 'Edited a volunteer profile';
+  static const registeredVolunteer = 'Registered a person';
+  static const editedVolunteerProfile = 'Edited a profile';
   static const updatedProfilePhoto = 'Updated profile photo';
-  static const linkedVolunteerAccount = 'Linked a volunteer account';
-  static const unlinkedVolunteerAccount = 'Unlinked a volunteer account';
+  static const linkedVolunteerAccount = 'Linked an account';
+  static const unlinkedVolunteerAccount = 'Unlinked an account';
 
   static const createdChurchRecord = 'Created a church record';
   static const editedChurchRecord = 'Edited a church record';

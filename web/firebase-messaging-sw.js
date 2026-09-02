@@ -12,11 +12,79 @@ firebase.initializeApp({
   measurementId: 'G-12R3WV90ZL',
 });
 
+function hasNavigableTarget(data) {
+  return !!(data && (data.PostID || data.InfoPage));
+}
+
+// FCM auto-displayed (notification+data) clicks wrap custom keys under FCM_MSG.
+function extractAppData(notificationData) {
+  if (!notificationData || typeof notificationData !== 'object') {
+    return {};
+  }
+  if (hasNavigableTarget(notificationData)) {
+    return notificationData;
+  }
+  const fcm = notificationData.FCM_MSG;
+  if (fcm && typeof fcm === 'object') {
+    if (fcm.data && typeof fcm.data === 'object' && hasNavigableTarget(fcm.data)) {
+      return fcm.data;
+    }
+    if (hasNavigableTarget(fcm)) {
+      return fcm;
+    }
+  }
+  return notificationData;
+}
+
+function targetUrlFromData(data) {
+  const origin = self.location.origin;
+  if (data.PostID) {
+    return `${origin}/?postId=${encodeURIComponent(data.PostID)}`;
+  }
+  if (data.InfoPage) {
+    return `${origin}/?infoPage=${encodeURIComponent(data.InfoPage)}`;
+  }
+  return `${origin}/`;
+}
+
+// Must be registered BEFORE firebase.messaging(). FCM's own click handler
+// stopImmediatePropagation()s and, with no fcmOptions.link, does nothing.
+self.addEventListener('notificationclick', (event) => {
+  console.log('[NOTIF] SW notificationclick', event);
+
+  event.stopImmediatePropagation();
+  event.notification.close();
+
+  if (event.action === 'close') {
+    return;
+  }
+
+  const data = extractAppData(event.notification.data);
+  const urlToOpen = targetUrlFromData(data);
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.postMessage({
+            type: 'NOTIFICATION_CLICKED',
+            data: data,
+          });
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    }),
+  );
+});
+
 const messaging = firebase.messaging();
 
 function buildNotificationOptions(payload) {
   const appData = payload.data || {};
-  return {
+  const options = {
     body: payload.notification?.body || appData.body || 'You have a new notification',
     icon: '/icons/Icon-192.png',
     badge: '/icons/Icon-192.png',
@@ -25,6 +93,20 @@ function buildNotificationOptions(payload) {
     requireInteraction: false,
     vibrate: [200, 100, 200],
   };
+
+  if (appData.PostID) {
+    options.actions = [
+      { action: 'open', title: 'View post' },
+      { action: 'close', title: 'Dismiss' },
+    ];
+  } else if (appData.InfoPage) {
+    options.actions = [
+      { action: 'open', title: 'View page' },
+      { action: 'close', title: 'Dismiss' },
+    ];
+  }
+
+  return options;
 }
 
 messaging.onBackgroundMessage((payload) => {
@@ -43,36 +125,4 @@ messaging.onBackgroundMessage((payload) => {
   return self.registration.showNotification(notificationTitle, notificationOptions)
     .then(() => console.log('[NOTIF] SW showNotification OK:', notificationTitle))
     .catch((err) => console.error('[NOTIF] SW showNotification FAILED:', err, notificationOptions));
-});
-
-self.addEventListener('notificationclick', (event) => {
-  console.log('[NOTIF] SW notificationclick', event);
-
-  event.notification.close();
-
-  const data = event.notification.data;
-  let urlToOpen = '/';
-
-  if (data?.PostID) {
-    urlToOpen = `/?postId=${data.PostID}`;
-  } else if (data?.InfoPage) {
-    urlToOpen = `/?infoPage=${data.InfoPage}`;
-  }
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes(self.registration.scope) && 'focus' in client) {
-          client.postMessage({
-            type: 'NOTIFICATION_CLICKED',
-            data: data,
-          });
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    }),
-  );
 });

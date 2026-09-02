@@ -5,13 +5,19 @@ from notification_auth import can_send_notifications
 
 
 class NotificationAuthTests(unittest.TestCase):
-    def test_can_send_notifications_from_custom_claims(self):
+    @patch('notification_auth.firestore')
+    def test_can_send_notifications_from_custom_claims(self, firestore_mock):
+        doc = MagicMock()
+        doc.exists = False
+        firestore_mock.client.return_value.collection.return_value.document.return_value.get.return_value = doc
+
         self.assertTrue(
             can_send_notifications('uid-1', {'isLeader': True}),
         )
         self.assertTrue(
             can_send_notifications('uid-1', {'isAreaAdmin': True}),
         )
+        # Empty claims are falsy, so Firestore is consulted before denying access.
         self.assertFalse(
             can_send_notifications('uid-1', {}),
         )

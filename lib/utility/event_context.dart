@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import '../firebase/db_managers/cell_group_db_manager.dart';
+import 'cell_group_roster_helpers.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_attendance.dart';
@@ -47,6 +47,9 @@ class EventContext {
 
   /// Draft expected attendees for create / template edit (written to attendance on publish).
   final List<String> _expectedAttendeeUserIDs = <String>[];
+
+  /// Expected attendees as loaded from the server — used to sync schedule removals on save.
+  List<String> _baselineExpectedUserIds = <String>[];
 
   // for viewing and editing
   EventContext.viewing(
@@ -158,6 +161,8 @@ class EventContext {
       if (forceReplace) {
         _attendanceDirty = false;
       }
+      _baselineExpectedUserIds =
+          List<String>.from(_attendance!.expectedUserIds);
     }
     _head.setInterestedCount(_attendance!.interestedCount);
     _head.setAttendeeCount(_attendance!.attendeeCount);
@@ -296,11 +301,17 @@ class EventContext {
     );
   }
 
-  /// User IDs removed from program roles during the current edit (for CF role sync).
+  /// User IDs removed from program roles or expected attendees (for schedule sync).
   List<String> collectRoleRemovalUserIds() {
     final uids = <String>{};
     for (final removed in _roleRemovals.values) {
       uids.addAll(removed);
+    }
+    final currentExpected = _attendance?.expectedUserIds ?? const <String>[];
+    for (final id in _baselineExpectedUserIds) {
+      if (!currentExpected.contains(id)) {
+        uids.add(id);
+      }
     }
     return uids.toList();
   }
@@ -330,6 +341,10 @@ class EventContext {
     _notifyBroadcast = true;
     _notifyScheduledMembers = true;
     _attendanceDirty = false;
+    if (_attendance != null) {
+      _baselineExpectedUserIds =
+          List<String>.from(_attendance!.expectedUserIds);
+    }
     _canSaveTheEditing = false;
   }
 
@@ -370,22 +385,8 @@ class EventContext {
     if (_expectedAttendeeUserIDs.isNotEmpty) {
       return List<String>.from(_expectedAttendeeUserIDs);
     }
-    final cgIds = _head.cellGroupIDs;
-    if (cgIds.isEmpty) return <String>[];
-
-    final ids = <String>{};
-    for (final cgId in cgIds) {
-      try {
-        final roster = await CellGroupSupplementalDBManager(cgId).fetchRoster();
-        for (final member in roster.members) {
-          if (member.isLinkedUser && member.isActive) {
-            ids.add(member.userId);
-          }
-        }
-      } catch (_) {
-        // Roster may be unavailable; skip that group.
-      }
-    }
+    final ids =
+        await CellGroupRosterHelpers.fetchActiveLinkedUserIds(_head.cellGroupIDs);
     return ids.toList();
   }
 

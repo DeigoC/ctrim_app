@@ -8,7 +8,7 @@
 
 The Cell Groups section has two areas (like CTRIM’s About / Churches tabs):
 
-- **Overview** — short introduction plus an **activity** snapshot derived from linked bulletin posts (meetings in the past 3 weeks, attendance totals, meetings coming up this week, and catalogue counts such as active groups and members)  
+- **Overview** — short introduction plus an **activity** snapshot derived from linked bulletin posts (meetings in the past 3 weeks, attendance totals, meetings coming up this week, and catalogue counts such as active groups and members), and a **weekly chart** over the last three months (meetings or attendance)  
 - **Groups** — the catalogue list of cell groups members and guests can browse (larger cards with leader photo, location on the title line, description, and — when signed in — member avatar stacks)  
 
 Also in the app and being tested:
@@ -24,7 +24,7 @@ Also in the app and being tested:
 
 ## Posts linked to a cell group
 
-When a bulletin **post** is linked to a cell group, organisers on that post can use **Fill from cell group** on the People tab to seed **expected attendees** from the group’s members. That keeps meeting attendance close to who’s actually in the group.
+When a bulletin **post** or **template** is linked to a cell group, organisers can **Fill from cell group** or **Add from cell group** (in the expected-attendees picker) to seed **expected attendees** from the group’s members. That keeps meeting attendance close to who’s actually in the group.
 
 More on posts: [Events & bulletin](events-and-bulletin.md).
 

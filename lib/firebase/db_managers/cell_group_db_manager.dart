@@ -105,8 +105,31 @@ class CellGroupDBManager {
     return heads.sublist(0, limit);
   }
 
+  /// CG-linked bulletin heads with [EventHead.eventDate] from local today
+  /// through [lookaheadDays] (default 56 = 8 weeks), exclusive end.
+  Future<List<EventHead>> fetchUpcomingLinkedMeetings({
+    DateTime? now,
+    int lookaheadDays = 56,
+  }) async {
+    final DateTime clock = now ?? DateTime.now();
+    final DateTime start = CellGroupActivityStats.upcomingWindowStart(clock);
+    final DateTime end =
+        start.add(Duration(days: lookaheadDays < 1 ? 1 : lookaheadDays));
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .where('EventDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('EventDate', isLessThan: Timestamp.fromDate(end))
+        .get();
+
+    return snapshot.docs
+        .map((doc) => EventHead.fromMap(doc.id, doc.data()))
+        .where((head) => head.cellGroupIDs.isNotEmpty && head.eventDate != null)
+        .toList();
+  }
+
   /// CG-linked bulletin heads with [EventHead.eventDate] in the rolling
-  /// past + upcoming activity windows (see [CellGroupActivityStats]).
+  /// chart-past + upcoming activity windows (see [CellGroupActivityStats]).
   ///
   /// Single-field `EventDate` range query — no composite index. Client filters
   /// to posts that actually link a cell group.

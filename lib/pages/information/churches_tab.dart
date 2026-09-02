@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/info/church_info.dart';
+import '../../src/localization/app_localizations.dart';
 import 'church_info_page.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
@@ -32,6 +33,7 @@ class ChurchesTab extends StatelessWidget {
       gridAspectRatio: (_) => 16 / 9,
       mobileItemHeight: MediaQuery.sizeOf(context).height * 0.36,
       itemBuilder: (context, church, {required bool wide}) {
+        final l10n = AppLocalizations.of(context)!;
         return InfoHeroOverlayCard(
           imageUrl: church.imgSrc,
           heroTag: 'info_church_${church.id}',
@@ -40,13 +42,30 @@ class ChurchesTab extends StatelessWidget {
             page: ChurchInfoPage(documentId: church.id),
             onRefresh: onRefresh,
           ),
-          overlay: Text(
-            church.title,
-            style: TextStyle(
-              fontSize: wide ? 26 : 32,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+          overlay: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                church.title,
+                style: TextStyle(
+                  fontSize: wide ? 26 : 32,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                church.hasLocation
+                    ? church.location
+                    : l10n.churchHubLocationUnset,
+                style: TextStyle(
+                  fontSize: wide ? 14 : 16,
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         );
       },

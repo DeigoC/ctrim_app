@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/user_schedule_service.dart';
@@ -17,7 +18,10 @@ import '../../widgets/personal/personal_action_section.dart';
 import '../../widgets/personal/personal_admin_section.dart';
 import '../../widgets/personal/personal_logout_section.dart';
 import '../../widgets/personal/personal_profile_card.dart';
+import '../../widgets/personal/personal_cell_groups_preview_card.dart';
+import '../../widgets/personal/personal_schedule_preview_card.dart';
 import '../../widgets/personal/personal_settings_section.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../events/post_templates/view_templates_page.dart';
 import 'guest_registration_page.dart';
 import 'edit_profile_picture_page.dart';
@@ -26,15 +30,19 @@ import 'notification_management_page.dart';
 import 'share_web_app_page.dart';
 import 'view_all_users_page.dart';
 import 'view_my_posts_page.dart';
-import 'view_user_roles_page.dart';
 import 'manage_user_locations_page.dart';
 import 'manage_user_tags_page.dart';
 import 'manage_post_tags_page.dart';
 import '../../utility/responsive_layout.dart';
 
 class PersonalHome extends StatefulWidget {
-  const PersonalHome({super.key, required this.appContext});
+  const PersonalHome({
+    super.key,
+    required this.appContext,
+    this.onBrowseCellGroups,
+  });
   final AppContext appContext;
+  final VoidCallback? onBrowseCellGroups;
 
   @override
   State<PersonalHome> createState() => _PersonalHomeState();
@@ -42,12 +50,15 @@ class PersonalHome extends StatefulWidget {
 
 class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
+  final UserScheduleService _scheduleService = UserScheduleService();
+  bool _loadingScheduleRoles = false;
 
   @override
   void initState() {
     super.initState();
-    // Web-only: suggest adding the PWA to the home screen once.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _ensureCurrentUserScheduleRolesLoaded();
       if (!kIsWeb) return;
       if (PwaInstallService.instance.isInstalled) return;
       if (widget.appContext.sharedPref.hasSeenPwaHomeScreenPrompt) return;
@@ -66,7 +77,7 @@ class _PersonalHomeState extends State<PersonalHome> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double contentWidth = constraints.maxWidth;
-        final bool isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final bool isWideScreen = ResponsiveLayout.isWideScreenOf(context);
         final double maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
         final double horizontalPadding = isWideScreen
             ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
@@ -126,8 +137,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: maxWidth),
                     child: isWideScreen
-                        ? _buildWideBody(
-                            appContext, theme, colorScheme, contentWidth)
+                        ? _buildWideBody(appContext, theme, colorScheme)
                         : _buildNarrowBody(appContext, theme, colorScheme),
                   ),
                 ),
@@ -149,6 +159,10 @@ class _PersonalHomeState extends State<PersonalHome> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PersonalProfileCard(appContext: appContext, wide: false),
+        if (!appContext.isCurrentUserGuest) ...[
+          const SizedBox(height: 24),
+          _buildDashboardCards(appContext, wide: false),
+        ],
         const SizedBox(height: 24),
         PersonalActionSection(
           title: 'For you',
@@ -190,17 +204,21 @@ class _PersonalHomeState extends State<PersonalHome> {
     AppContext appContext,
     ThemeData theme,
     ColorScheme colorScheme,
-    double contentWidth,
   ) {
     final showAdmin = appContext.currentUser.canManagePostTemplates ||
         appContext.currentUser.canManageVolunteers;
-    final actionColumns = contentWidth >= ResponsiveLayout.desktop ? 3 : 2;
+    final actionColumns =
+        MediaQuery.sizeOf(context).width >= ResponsiveLayout.desktop ? 3 : 2;
     final peopleActions = _peopleActions(appContext, colorScheme);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PersonalProfileCard(appContext: appContext, wide: true),
+        if (!appContext.isCurrentUserGuest) ...[
+          const SizedBox(height: 28),
+          _buildDashboardCards(appContext, wide: true),
+        ],
         const SizedBox(height: 28),
         PersonalActionSection(
           title: 'For you',
@@ -263,9 +281,32 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
   }
 
+  Widget _buildDashboardCards(AppContext appContext, {required bool wide}) {
+    final scheduleCard =
+        PersonalSchedulePreviewCard(appContext: appContext);
+    final cellGroupsCard = PersonalCellGroupsPreviewCard(
+      appContext: appContext,
+      onBrowseCellGroups: widget.onBrowseCellGroups,
+    );
+
+    if (wide) {
+      return TwoColumnMasonry(
+        children: [scheduleCard, cellGroupsCard],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        scheduleCard,
+        const SizedBox(height: 16),
+        cellGroupsCard,
+      ],
+    );
+  }
+
   List<PersonalAction> _forYouActions(
       AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
-    final l10n = AppLocalizations.of(context)!;
     final actions = <PersonalAction>[];
 
     if (appContext.isCurrentUserGuest) {
@@ -281,16 +322,6 @@ class _PersonalHomeState extends State<PersonalHome> {
       return actions;
     }
 
-    actions.add(
-      PersonalAction(
-        icon: Icons.checklist_rounded,
-        title: l10n.mySchedule,
-        subtitle: l10n.myScheduleSubtitle,
-        trailing: _buildScheduleBadge(appContext, theme, colorScheme),
-        onTap: _onViewTasksClick,
-        iconColor: colorScheme.tertiary,
-      ),
-    );
     actions.add(
       PersonalAction(
         icon: Icons.notifications_active_rounded,
@@ -347,32 +378,6 @@ class _PersonalHomeState extends State<PersonalHome> {
         iconColor: colorScheme.secondary,
       ),
     ];
-  }
-
-  Widget? _buildScheduleBadge(
-      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
-    if (appContext.currentUser.roles == null) return null;
-
-    final upcomingCount = UserScheduleService.upcomingPostCount(
-      user: appContext.currentUser,
-      eventHeads: appContext.eventHeads,
-    );
-    if (upcomingCount == 0) return null;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        '$upcomingCount',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colorScheme.onErrorContainer,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 
   // * Logic
@@ -445,13 +450,29 @@ class _PersonalHomeState extends State<PersonalHome> {
     await authManager.signOut();
   }
 
-  void _onViewTasksClick() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ViewUserRolesPage(
-                  selectedUser: widget.appContext.currentUser,
-                )));
+  Future<void> _ensureCurrentUserScheduleRolesLoaded() async {
+    if (widget.appContext.isCurrentUserGuest) return;
+    if (widget.appContext.currentUser.roles != null) return;
+    if (_loadingScheduleRoles) return;
+
+    setState(() => _loadingScheduleRoles = true);
+    try {
+      final user = widget.appContext.currentUser;
+      final roles = await _scheduleService.fetchRoles(user.id);
+      user.setRoles(roles);
+      await _scheduleService.pruneStaleRoles(
+        user: user,
+        eventHeads: widget.appContext.eventHeads,
+      );
+      if (!mounted) return;
+      widget.appContext.setCurrentUserRoles(List<UserRoleAssignment>.from(user.roles!));
+    } catch (e, st) {
+      debugPrint('Could not preload schedule roles: $e\n$st');
+    } finally {
+      if (mounted) {
+        setState(() => _loadingScheduleRoles = false);
+      }
+    }
   }
 
   void _onNotificationManagerClick() {

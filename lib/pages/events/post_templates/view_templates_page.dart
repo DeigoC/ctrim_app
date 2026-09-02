@@ -13,6 +13,7 @@ import '../../../utility/responsive_layout.dart';
 import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/common/load_progress_body.dart';
+import '../../../widgets/paired_row_list.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../../../widgets/common/app_dialog.dart';
 import 'edit_template_page.dart';
@@ -161,7 +162,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isWide = ResponsiveLayout.isWideScreen(width);
+        final isWide = ResponsiveLayout.isWideScreenOf(context);
         final horizontalPadding = isWide
             ? ((width - ResponsiveLayout.maxContentWidth(width)) / 2)
                 .clamp(16.0, double.infinity)
@@ -171,12 +172,15 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           padding:
               EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 96),
           children: [
-            for (var i = 0; i < PostTemplateCategory.values.length; i++) ...[
+            for (var i = 0;
+                i < PostTemplateCategory.displayOrder.length;
+                i++) ...[
               if (i > 0) const SizedBox(height: 20),
               _buildCategorySection(
-                category: PostTemplateCategory.values[i],
+                category: PostTemplateCategory.displayOrder[i],
                 templates: templates
-                    .where((t) => t.category == PostTemplateCategory.values[i])
+                    .where((t) =>
+                        t.category == PostTemplateCategory.displayOrder[i])
                     .toList(),
                 isWide: isWide,
               ),
@@ -283,30 +287,10 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       );
     }
 
-    final left = <PostTemplate>[];
-    final right = <PostTemplate>[];
-    for (var i = 0; i < templates.length; i++) {
-      (i.isEven ? left : right).add(templates[i]);
-    }
-
-    Widget column(List<PostTemplate> items) {
-      return Column(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            _buildTemplateTile(items[i]),
-          ],
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: column(left)),
-        const SizedBox(width: 16),
-        Expanded(child: column(right)),
-      ],
+    return PairedRowList(
+      itemCount: templates.length,
+      runSpacing: 12,
+      itemBuilder: (_, index) => _buildTemplateTile(templates[index]),
     );
   }
 

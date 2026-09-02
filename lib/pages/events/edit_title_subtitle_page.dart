@@ -411,6 +411,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
           includeCurrentUser: true,
           maxSelection: 1,
           title: 'Select lead speaker',
+          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,

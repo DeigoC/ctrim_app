@@ -115,8 +115,7 @@ void main() {
   });
 
   group('BulletinListing.apply sort', () {
-    test('relevancy is today, then all upcoming, then the rest by recentDate',
-        () {
+    test('relevancy is next upcoming, recent past, then the rest', () {
       final visible = apply([
         head(
           id: 'old-update',
@@ -152,42 +151,76 @@ void main() {
         'today-early',
         'today-late',
         'tomorrow',
+        'old-update',
         'next-week',
         'fresh-undated',
-        'old-update',
       ]);
     });
 
-    test('relevancy does not cap upcoming events', () {
-      final heads = [
-        for (var i = 1; i <= 6; i++)
-          head(id: 'u$i', eventDate: DateTime(2026, 8, 22 + i, 10)),
-      ];
-      expect(
-          apply(heads).map((e) => e.id), ['u1', 'u2', 'u3', 'u4', 'u5', 'u6']);
+    test('relevancy keeps far-future bulk posts after recent past', () {
+      final visible = apply([
+        head(
+          id: 'tomorrow',
+          eventDate: DateTime(2026, 8, 23, 10),
+        ),
+        head(
+          id: 'far-future',
+          eventDate: DateTime(2026, 10, 1, 10),
+          recentDate: DateTime(2026, 8, 22, 12),
+        ),
+        head(
+          id: 'old-update',
+          eventDate: DateTime(2026, 8, 21, 10),
+          recentDate: DateTime(2026, 8, 21),
+        ),
+      ]);
+      expect(visible.map((e) => e.id), ['tomorrow', 'far-future', 'old-update']);
     });
 
-    test('soonest puts undated last', () {
+    test('relevancy caps upcoming head at three before recent past', () {
+      final heads = [
+        for (var i = 1; i <= 10; i++)
+          head(id: 'u$i', eventDate: DateTime(2026, 8, 22 + i, 10)),
+        head(id: 'yesterday', eventDate: DateTime(2026, 8, 21, 10)),
+        head(id: 'last-week', eventDate: DateTime(2026, 8, 15, 10)),
+      ];
+      final ids = apply(heads).map((e) => e.id).toList();
+      expect(ids.take(8), [
+        'u1',
+        'u2',
+        'u3',
+        'yesterday',
+        'last-week',
+        'u4',
+        'u5',
+        'u6',
+      ]);
+      expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u4')));
+    });
+
+    test('soonest puts upcoming before past and undated last', () {
       final visible = apply(
         [
+          head(id: 'ancient', eventDate: DateTime(2020, 1, 1)),
           head(id: 'later', eventDate: DateTime(2026, 8, 25)),
           head(id: 'sooner', eventDate: DateTime(2026, 8, 23)),
           head(id: 'undated'),
         ],
         sort: BulletinSort.eventDateSoonest,
       );
-      expect(visible.map((e) => e.id), ['sooner', 'later', 'undated']);
+      expect(visible.map((e) => e.id), ['sooner', 'later', 'ancient', 'undated']);
     });
 
-    test('latest puts most recent event date first', () {
+    test('latest puts recent past before upcoming, not far future first', () {
       final visible = apply(
         [
+          head(id: 'far-future', eventDate: DateTime(2026, 12, 1)),
           head(id: 'older', eventDate: DateTime(2026, 8, 10)),
           head(id: 'newer', eventDate: DateTime(2026, 8, 20)),
         ],
         sort: BulletinSort.eventDateLatest,
       );
-      expect(visible.map((e) => e.id), ['newer', 'older']);
+      expect(visible.map((e) => e.id), ['newer', 'older', 'far-future']);
     });
 
     test('does not mutate the source list', () {

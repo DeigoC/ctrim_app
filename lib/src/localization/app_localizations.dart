@@ -100,64 +100,82 @@ abstract class AppLocalizations {
   /// **'CTRIM App'**
   String get appTitle;
 
-  /// Title for the volunteers directory when showing all locations
+  /// Title for the people directory when showing all locations
   ///
   /// In en, this message translates to:
-  /// **'Volunteers'**
+  /// **'People'**
   String get volunteersTitle;
 
-  /// Title for the volunteers directory filtered by location
+  /// Title for the people directory filtered by location
   ///
   /// In en, this message translates to:
-  /// **'{location} Volunteers'**
+  /// **'{location} People'**
   String volunteersTitleLocation(String location);
 
-  /// Filter chip label to show volunteers from every location
+  /// Filter chip label to show people from every location
   ///
   /// In en, this message translates to:
   /// **'All'**
   String get volunteersFilterAll;
 
-  /// Hint text for the volunteers search field
+  /// Filter chip for people who serve (leaders, team tags, or cell-group leaders)
   ///
   /// In en, this message translates to:
-  /// **'Search volunteers...'**
+  /// **'Serving'**
+  String get volunteersFilterServing;
+
+  /// Hint text for the people directory search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search people...'**
   String get volunteersSearchHint;
 
-  /// Empty state when the volunteers list has no entries
+  /// Empty state when the people list has no entries
   ///
   /// In en, this message translates to:
-  /// **'No volunteers found'**
+  /// **'No people found'**
   String get volunteersEmpty;
 
-  /// Empty state when search returns no volunteers
+  /// Empty state when search returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers match \"{query}\"'**
+  /// **'No people match \"{query}\"'**
   String volunteersEmptySearch(String query);
 
-  /// Empty state when a location filter returns no volunteers
+  /// Empty state when a location filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers in {location}'**
+  /// **'No people in {location}'**
   String volunteersEmptyLocation(String location);
 
-  /// FAB label for registering a new volunteer
+  /// Empty state when the Serving filter hides attendees
   ///
   /// In en, this message translates to:
-  /// **'Register User'**
+  /// **'No serving people here. Turn off Serving to see everyone.'**
+  String get volunteersEmptyServing;
+
+  /// Empty state when Serving plus a location filter returns no people
+  ///
+  /// In en, this message translates to:
+  /// **'No serving people in {location}. Turn off Serving to see everyone.'**
+  String volunteersEmptyServingLocation(String location);
+
+  /// FAB label for registering a new person
+  ///
+  /// In en, this message translates to:
+  /// **'Register person'**
   String get registerUser;
 
-  /// Personal home menu item for the volunteers directory
+  /// Personal home menu item for the people directory
   ///
   /// In en, this message translates to:
-  /// **'Volunteers'**
+  /// **'Directory'**
   String get volunteersMenuTitle;
 
-  /// Personal home menu subtitle for the volunteers directory
+  /// Personal home menu subtitle for the people directory
   ///
   /// In en, this message translates to:
-  /// **'View community members'**
+  /// **'Leaders, teams, and members'**
   String get volunteersMenuSubtitle;
 
   /// Personal home menu item for the current user's schedule
@@ -171,6 +189,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View your tasks and roles'**
   String get myScheduleSubtitle;
+
+  /// Empty state on Personal home schedule dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming tasks assigned for now.'**
+  String get personalScheduleEmpty;
+
+  /// Opens the full schedule page from Personal home
+  ///
+  /// In en, this message translates to:
+  /// **'View full schedule'**
+  String get personalScheduleViewFull;
+
+  /// Opens full schedule when more than three upcoming posts
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count} upcoming'**
+  String personalScheduleViewAll(int count);
+
+  /// Title for Personal home cell groups dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups'**
+  String get personalCellGroupsTitle;
+
+  /// Subtitle for Personal home cell groups dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups and upcoming meetings'**
+  String get personalCellGroupsSubtitle;
+
+  /// Encouraging empty state when user belongs to no cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'You are not in a cell group yet. Browse groups to find one that fits you.'**
+  String get personalCellGroupsEmpty;
+
+  /// CTA on Personal home to open the Cell Groups section
+  ///
+  /// In en, this message translates to:
+  /// **'Browse cell groups'**
+  String get personalCellGroupsBrowse;
+
+  /// Message when member has groups but no upcoming CG meetings
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming meetings in the next 8 weeks.'**
+  String get personalCellGroupsNoUpcoming;
+
+  /// Leader line on Personal home cell group rows
+  ///
+  /// In en, this message translates to:
+  /// **'Led by {leader}'**
+  String personalCellGroupLedBy(String leader);
+
+  /// Fallback when a cell group leader cannot be resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Leader TBC'**
+  String get personalCellGroupLeaderTbc;
+
+  /// Overflow hint when more than three CG meetings exist
+  ///
+  /// In en, this message translates to:
+  /// **'And {count} more upcoming meetings'**
+  String personalCellGroupsMoreMeetings(int count);
+
+  /// Fallback when a schedule post has no event date
+  ///
+  /// In en, this message translates to:
+  /// **'Date TBC'**
+  String get personalScheduleDateTbc;
+
+  /// Chip on schedule preview when user has multiple roles on one post
+  ///
+  /// In en, this message translates to:
+  /// **'{count} roles'**
+  String personalScheduleRolesCount(int count);
+
+  /// Fallback title when event head is missing on schedule preview
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled event'**
+  String get personalScheduleUntitledEvent;
 
   /// Badge shown when a volunteer can create events
   ///
@@ -189,6 +291,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CG Leader'**
   String get userProfileCellGroupLeaderBadge;
+
+  /// Section title on a profile for cell group membership
+  ///
+  /// In en, this message translates to:
+  /// **'Cell groups'**
+  String get userProfileCellGroups;
+
+  /// Message when a person is not listed on any cell group roster or as a leader
+  ///
+  /// In en, this message translates to:
+  /// **'Not in a cell group.'**
+  String get userProfileNoCellGroups;
 
   /// Section title on a volunteer profile for schedule preview
   ///
@@ -307,7 +421,7 @@ abstract class AppLocalizations {
   /// Empty state on the manage tags page
   ///
   /// In en, this message translates to:
-  /// **'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.'**
+  /// **'No team tags yet. Create tags for teams like Worship, Technical, or Usher.'**
   String get manageUserTagsEmpty;
 
   /// Button to seed default volunteer tags
@@ -391,13 +505,13 @@ abstract class AppLocalizations {
   /// Error when trying to delete a tag that is still assigned
   ///
   /// In en, this message translates to:
-  /// **'Cannot delete — {count} volunteers still have this tag. Deactivate it instead.'**
+  /// **'Cannot delete — {count} people still have this tag. Deactivate it instead.'**
   String manageUserTagsDeleteBlocked(int count);
 
   /// Personal home admin menu item for managing tags
   ///
   /// In en, this message translates to:
-  /// **'Volunteer Tags'**
+  /// **'Team tags'**
   String get manageUserTagsMenuTitle;
 
   /// Personal home admin menu subtitle for managing tags
@@ -685,7 +799,7 @@ abstract class AppLocalizations {
   /// Error when trying to delete a location that is still assigned
   ///
   /// In en, this message translates to:
-  /// **'Cannot delete — {count} volunteers still have this location. Deactivate it instead.'**
+  /// **'Cannot delete — {count} people still have this location. Deactivate it instead.'**
   String manageUserLocationsDeleteBlocked(int count);
 
   /// Error when creating or renaming to a duplicate location name
@@ -697,7 +811,7 @@ abstract class AppLocalizations {
   /// Personal home admin menu item for managing locations
   ///
   /// In en, this message translates to:
-  /// **'Volunteer Locations'**
+  /// **'Locations'**
   String get manageUserLocationsMenuTitle;
 
   /// Personal home admin menu subtitle for managing locations
@@ -706,16 +820,16 @@ abstract class AppLocalizations {
   /// **'Create and edit place labels'**
   String get manageUserLocationsMenuSubtitle;
 
-  /// Empty state when tag filter returns no volunteers
+  /// Empty state when tag filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers match the selected tags'**
+  /// **'No people match the selected tags'**
   String get volunteersEmptyTags;
 
-  /// Title for the multi-select volunteer picker page
+  /// Title for the multi-select people picker page
   ///
   /// In en, this message translates to:
-  /// **'Select members'**
+  /// **'Select people'**
   String get selectUsersTitle;
 
   /// Confirm button on the volunteer picker page
@@ -729,6 +843,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} selected'**
   String selectUsersSelected(int count);
+
+  /// Button on the people picker to merge roster members from cell groups
+  ///
+  /// In en, this message translates to:
+  /// **'Add from cell group'**
+  String get selectUsersAddFromCellGroup;
+
+  /// Progress title while merging cell group roster members into selection
+  ///
+  /// In en, this message translates to:
+  /// **'Adding from cell group…'**
+  String get selectUsersAddingFromCellGroup;
 
   /// Selected count on a catalog tag/group picker page
   ///
@@ -832,13 +958,13 @@ abstract class AppLocalizations {
   /// **'Placeholder · {location}'**
   String selectUsersPlaceholderSubtitle(String location);
 
-  /// Filter chip to show only placeholder profiles in the Volunteers list
+  /// Filter chip to show only placeholder profiles in the people list
   ///
   /// In en, this message translates to:
   /// **'Placeholders'**
   String get volunteersShowPlaceholders;
 
-  /// Empty state when the placeholders filter returns no volunteers
+  /// Empty state when the placeholders filter returns no people
   ///
   /// In en, this message translates to:
   /// **'No placeholder profiles to show'**
@@ -850,46 +976,46 @@ abstract class AppLocalizations {
   /// **'Placeholder'**
   String get volunteersPlaceholderBadge;
 
-  /// Label before sort mode chips on the volunteers list
+  /// Label before sort mode chips on the people list
   ///
   /// In en, this message translates to:
   /// **'Sort'**
   String get volunteersSortLabel;
 
-  /// Sort volunteers by surname
+  /// Sort people by surname
   ///
   /// In en, this message translates to:
   /// **'Surname'**
   String get volunteersSortSurname;
 
-  /// Sort volunteers by primary team tag
+  /// Sort people by primary team tag
   ///
   /// In en, this message translates to:
   /// **'Team'**
   String get volunteersSortTags;
 
-  /// Filter chip to show volunteers with the Leader permission
+  /// Filter chip to show people with the Leader permission
   ///
   /// In en, this message translates to:
   /// **'Leaders'**
   String get volunteersFilterLeaders;
 
-  /// Filter chip to show volunteers who are area admins
+  /// Filter chip to show people who are area admins
   ///
   /// In en, this message translates to:
   /// **'Admins'**
   String get volunteersFilterAdmins;
 
-  /// Filter chip to show volunteers who lead a cell group
+  /// Filter chip to show people who lead a cell group
   ///
   /// In en, this message translates to:
   /// **'CG Leaders'**
   String get volunteersFilterCellGroupLeaders;
 
-  /// Empty state when a role filter returns no volunteers
+  /// Empty state when a role filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No volunteers match the selected roles'**
+  /// **'No people match the selected roles'**
   String get volunteersEmptyRoles;
 
   /// Button that opens the volunteer tag filter sheet
@@ -916,10 +1042,10 @@ abstract class AppLocalizations {
   /// **'Show people with any of these team tags'**
   String get volunteersFilterTagsSheetSubtitle;
 
-  /// Tooltip for the volunteers sort menu in the app bar
+  /// Tooltip for the people directory sort menu in the app bar
   ///
   /// In en, this message translates to:
-  /// **'Sort volunteers'**
+  /// **'Sort people'**
   String get volunteersSortTooltip;
 
   /// Section label for linking a post or template to cell groups
@@ -1107,6 +1233,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get cellGroupsActivityRetry;
+
+  /// Filter chip label for attendance sum on activity trend charts
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get activityTrendMetricAttendance;
+
+  /// Hint under metric chips on weekly activity line charts
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly · last 3 months'**
+  String get activityTrendWeeklyHint;
+
+  /// Empty state when weekly activity chart has no data
+  ///
+  /// In en, this message translates to:
+  /// **'No activity in this period.'**
+  String get activityTrendEmpty;
+
+  /// Title for church hub weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Activity over time'**
+  String get churchHubActivityTrendTitle;
+
+  /// Subtitle for church hub weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Bulletin posts at this location'**
+  String get churchHubActivityTrendSubtitle;
+
+  /// Count metric chip on church hub activity chart
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get churchHubActivityTrendMetricPosts;
+
+  /// Title for cell groups weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings over time'**
+  String get cellGroupsActivityTrendTitle;
+
+  /// Subtitle for cell groups weekly activity line chart
+  ///
+  /// In en, this message translates to:
+  /// **'Cell group meetings linked on the bulletin'**
+  String get cellGroupsActivityTrendSubtitle;
+
+  /// Count metric chip on cell groups activity chart
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings'**
+  String get cellGroupsActivityTrendMetricMeetings;
+
+  /// Section title for per-group activity on cell group detail
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get cellGroupsDetailActivityTitle;
+
+  /// Chart title on cell group detail activity card
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings over time'**
+  String get cellGroupsDetailActivityTrendTitle;
+
+  /// Chart subtitle on cell group detail activity card
+  ///
+  /// In en, this message translates to:
+  /// **'Bulletin posts linked to this group'**
+  String get cellGroupsDetailActivityTrendSubtitle;
 
   /// Empty state on the Cell Groups list
   ///
@@ -1381,10 +1579,10 @@ abstract class AppLocalizations {
   /// Explains relevancy sort on the bulletin
   ///
   /// In en, this message translates to:
-  /// **'Today first, then what’s coming up'**
+  /// **'Next few events, then recent past'**
   String get bulletinSortRelevancySubtitle;
 
-  /// Bulletin sort by earliest event date
+  /// Bulletin sort: upcoming events by date, then recent past
   ///
   /// In en, this message translates to:
   /// **'Soonest first'**
@@ -1393,10 +1591,10 @@ abstract class AppLocalizations {
   /// Explains soonest-first sort
   ///
   /// In en, this message translates to:
-  /// **'Earliest event date at the top'**
+  /// **'Upcoming events first, then recent past'**
   String get bulletinSortSoonestSubtitle;
 
-  /// Bulletin sort by latest event date
+  /// Bulletin sort: recent past first, then upcoming
   ///
   /// In en, this message translates to:
   /// **'Latest first'**
@@ -1405,7 +1603,7 @@ abstract class AppLocalizations {
   /// Explains latest-first sort
   ///
   /// In en, this message translates to:
-  /// **'Most recent event date at the top'**
+  /// **'Recent past first, then upcoming'**
   String get bulletinSortLatestSubtitle;
 
   /// Section label for bulletin time and bookmark filters
@@ -1630,6 +1828,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get churchHubStatsRetry;
 
+  /// Section title for the church hub Quill overview
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get churchHubAboutTitle;
+
   /// Section title for extra church hub pages
   ///
   /// In en, this message translates to:
@@ -1665,6 +1869,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get churchHubPagesRetry;
+
+  /// Heading for the pastors section on a church hub page
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors'**
+  String get churchHubPastorsTitle;
+
+  /// Fallback label when a pastor user record cannot be resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown pastor'**
+  String get churchHubUnknownPastor;
+
+  /// Dashboard card title for church location, address, and maps
+  ///
+  /// In en, this message translates to:
+  /// **'Find us'**
+  String get churchHubFindUsTitle;
+
+  /// Dashboard card subtitle for the visit / find-us card
+  ///
+  /// In en, this message translates to:
+  /// **'Location, address, and maps'**
+  String get churchHubFindUsSubtitle;
+
+  /// Dashboard card subtitle for the pastors card
+  ///
+  /// In en, this message translates to:
+  /// **'Meet the team'**
+  String get churchHubPastorsSubtitle;
+
+  /// Button on the church hub pastors card that opens the pastors page
+  ///
+  /// In en, this message translates to:
+  /// **'Learn about them'**
+  String get churchHubLearnAboutPastors;
+
+  /// App bar title for the church pastors write-up page
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors'**
+  String get churchPastorsPageTitle;
+
+  /// Dashboard card title for church gallery photos
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get churchHubGalleryTitle;
+
+  /// Dashboard card subtitle for the gallery card
+  ///
+  /// In en, this message translates to:
+  /// **'Photos from this church'**
+  String get churchHubGallerySubtitle;
+
+  /// Dashboard card subtitle for location snapshot counts
+  ///
+  /// In en, this message translates to:
+  /// **'Activity at this location'**
+  String get churchHubSnapshotSubtitle;
+
+  /// Dashboard card subtitle for extra church pages
+  ///
+  /// In en, this message translates to:
+  /// **'Getting here, Sunday service, and more'**
+  String get churchHubPagesSubtitle;
+
+  /// Dashboard card subtitle for recent bulletin posts
+  ///
+  /// In en, this message translates to:
+  /// **'From the last 3 months'**
+  String get churchHubRecentPostsSubtitle;
+
+  /// Dashboard card subtitle for cell groups at this church
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting at this location'**
+  String get churchHubCellGroupsSubtitle;
+
+  /// Editor card title for church name and summary
+  ///
+  /// In en, this message translates to:
+  /// **'Church'**
+  String get churchEditorChurchCardTitle;
+
+  /// Editor card subtitle for church identity fields
+  ///
+  /// In en, this message translates to:
+  /// **'Name and how it appears in the list'**
+  String get churchEditorChurchCardSubtitle;
+
+  /// Editor card title for location, address, and maps
+  ///
+  /// In en, this message translates to:
+  /// **'Find us'**
+  String get churchEditorVisitCardTitle;
+
+  /// Editor card subtitle for visit fields
+  ///
+  /// In en, this message translates to:
+  /// **'Location, address, and maps'**
+  String get churchEditorVisitCardSubtitle;
+
+  /// Editor card title for pastors, photo, and write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors'**
+  String get churchEditorPastorsCardTitle;
+
+  /// Editor card subtitle for pastors fields and Quill body
+  ///
+  /// In en, this message translates to:
+  /// **'People listed as pastors, plus their write-up'**
+  String get churchEditorPastorsCardSubtitle;
+
+  /// Editor card title for hero and gallery images
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get churchEditorMediaCardTitle;
+
+  /// Editor card subtitle for church media URLs
+  ///
+  /// In en, this message translates to:
+  /// **'Cover photo and gallery'**
+  String get churchEditorMediaCardSubtitle;
+
+  /// Label above the pastors Quill editor on the church form
+  ///
+  /// In en, this message translates to:
+  /// **'About the pastors'**
+  String get churchEditorPastorsBodyLabel;
+
+  /// Primary save button on the church add/edit form
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get churchEditorSave;
+
+  /// Opens the related post from a push notification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'View post'**
+  String get notificationViewPost;
+
+  /// Opens the related info page from a push notification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'View page'**
+  String get notificationViewPage;
+
+  /// Closes the in-app push notification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Ok'**
+  String get notificationDismiss;
+
+  /// Empty state title on the post schedule timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing scheduled yet'**
+  String get scheduleEmptyTitle;
+
+  /// Empty schedule message for authors and contributors
+  ///
+  /// In en, this message translates to:
+  /// **'Add schedule items from the edit menu and they will appear here on the timeline.'**
+  String get scheduleEmptyBodyEditor;
+
+  /// Empty schedule message for people who cannot edit the post
+  ///
+  /// In en, this message translates to:
+  /// **'The running order for this post has not been shared yet.'**
+  String get scheduleEmptyBodyViewer;
+
+  /// Heading for roles that run for most of the event rather than a slot in the running order
+  ///
+  /// In en, this message translates to:
+  /// **'All event'**
+  String get scheduleAllEventSectionTitle;
+
+  /// Shown when tapping an all-event role on the arrange schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" runs for most of the event, so it stays out of the running order'**
+  String scheduleAllEventArrangeHint(String title);
+
+  /// Heading for schedule items that have no start or end time
+  ///
+  /// In en, this message translates to:
+  /// **'Without a time'**
+  String get scheduleUntimedSectionTitle;
+
+  /// Shown instead of a time range when a schedule item is untimed
+  ///
+  /// In en, this message translates to:
+  /// **'No time set'**
+  String get scheduleNoTimeSet;
+
+  /// Marks a schedule item that guests cannot see
+  ///
+  /// In en, this message translates to:
+  /// **'Not shown to guests'**
+  String get scheduleStaffOnly;
+
+  /// Opens the editor for one schedule item
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get scheduleEditTask;
+
+  /// Marker for schedule items that did not fit in the visible lanes
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} parallel'**
+  String scheduleParallelCount(int count);
+
+  /// Title of the sheet listing overlapping schedule items
+  ///
+  /// In en, this message translates to:
+  /// **'Running in parallel'**
+  String get scheduleParallelSheetTitle;
+
+  /// Subtitle of the sheet listing overlapping schedule items
+  ///
+  /// In en, this message translates to:
+  /// **'These items overlap others already on the timeline'**
+  String get scheduleParallelSheetSubtitle;
+
+  /// Title and button label for the drag-to-rearrange schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'Arrange schedule'**
+  String get scheduleArrangeTitle;
+
+  /// Edit sheet subtitle for the arrange schedule action
+  ///
+  /// In en, this message translates to:
+  /// **'Drag items to reorder the running time'**
+  String get scheduleArrangeSubtitle;
+
+  /// Keeps the new arrangement and closes the arrange schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get scheduleArrangeDone;
+
+  /// Shown when the arrange schedule page has nothing to lay out
+  ///
+  /// In en, this message translates to:
+  /// **'Add timed schedule items before arranging them.'**
+  String get scheduleArrangeEmpty;
+
+  /// Drag mode where later schedule items move out of the way
+  ///
+  /// In en, this message translates to:
+  /// **'Cascade'**
+  String get scheduleArrangeModeCascade;
+
+  /// Drag mode where other schedule items keep their times
+  ///
+  /// In en, this message translates to:
+  /// **'Parallel'**
+  String get scheduleArrangeModeParallel;
+
+  /// Helper text for cascade drag mode
+  ///
+  /// In en, this message translates to:
+  /// **'Long press an item and drag it. Anything it lands on moves later to keep the running order.'**
+  String get scheduleArrangeCascadeHint;
+
+  /// Helper text for parallel drag mode
+  ///
+  /// In en, this message translates to:
+  /// **'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.'**
+  String get scheduleArrangeParallelHint;
+
+  /// Snackbar telling the user how to move a schedule item
+  ///
+  /// In en, this message translates to:
+  /// **'Long press \"{title}\" to drag it'**
+  String scheduleArrangeDragHint(String title);
 }
 
 class _AppLocalizationsDelegate

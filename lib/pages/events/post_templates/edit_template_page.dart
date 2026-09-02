@@ -22,6 +22,7 @@ import '../../../widgets/posts/view_event_media_tab.dart';
 import '../../../widgets/posts/view_post_body.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../add_media_file_page.dart';
+import '../arrange_schedule_page.dart';
 import '../edit_program_role_page.dart';
 import '../edit_body_page.dart';
 import '../edit_gallery_page.dart';
@@ -229,6 +230,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           updateBody: () => _updateBody(),
           currentUID: _appContext.currentUser.id),
       ViewAllPrograms(
+        key: ValueKey(widget.eventContext.program.scheduleLayoutSignature),
         eventContext: widget.eventContext,
         onProgramChanged: () {
           setState(() {});
@@ -882,6 +884,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       builder: (_) => TemplateEditSheet(
         onEditAbout: _onEditBodyClick,
         onAddSchedule: _onAddScheduleItem,
+        onArrangeSchedule: _onArrangeSchedule,
         onEditMedia: _onEditMediaTap,
         onSave: () => _onSavePostTemplateClick(fromSheet: true),
       ),
@@ -909,6 +912,20 @@ class _EditTemplatePageState extends State<EditTemplatePage>
                     AddEventProgramPage(eventContext: widget.eventContext)))
         .then((_) async {
       widget.eventContext.program.orderProgramsByStartTime();
+      setState(() {});
+      _tabController.animateTo(_scheduleTabIndex);
+    });
+  }
+
+  void _onArrangeSchedule() {
+    Navigator.of(context).pop();
+    Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ArrangeSchedulePage(eventContext: widget.eventContext),
+      ),
+    ).then((_) {
+      if (!mounted) return;
       setState(() {});
       _tabController.animateTo(_scheduleTabIndex);
     });

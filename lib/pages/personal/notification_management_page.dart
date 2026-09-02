@@ -91,7 +91,7 @@ class _NotificationManagementPageState
         maxContentWidthOverride: 1000,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = ResponsiveLayout.isWideScreen(constraints.maxWidth);
+            final isWide = ResponsiveLayout.isWideScreenOf(context);
 
             return ListView(
               padding: const EdgeInsets.only(top: 8, bottom: 32),
@@ -317,9 +317,8 @@ class _NotificationManagementPageState
                         label: Text(_repairing ? 'Repairing…' : 'Re-register'),
                       ),
                       FilledButton.tonalIcon(
-                        onPressed: !_hasToken || _testing
-                            ? null
-                            : _onSendTestPressed,
+                        onPressed:
+                            !_hasToken || _testing ? null : _onSendTestPressed,
                         icon: _testing
                             ? const SizedBox(
                                 width: 16,
@@ -612,8 +611,7 @@ class _NotificationManagementPageState
     DialogManager.showAlertDialog(
       context: context,
       title: 'Notifications',
-      content:
-          'Use This device to check permission and token registration. '
+      content: 'Use This device to check permission and token registration. '
           'Send test to me only notifies this browser/app — not a broadcast.\n\n'
           'On iPhone/iPad web, open CTRIM from the Home Screen icon.\n\n'
           'You can still receive notifications for posts you bookmarked, '

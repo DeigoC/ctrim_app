@@ -3,13 +3,13 @@
   "@appTitle": {
     "description": "The work in progress app for the CTRIM Church"
   },
-  "volunteersTitle": "Volunteers",
+  "volunteersTitle": "People",
   "@volunteersTitle": {
-    "description": "Title for the volunteers directory when showing all locations"
+    "description": "Title for the people directory when showing all locations"
   },
-  "volunteersTitleLocation": "{location} Volunteers",
+  "volunteersTitleLocation": "{location} People",
   "@volunteersTitleLocation": {
-    "description": "Title for the volunteers directory filtered by location",
+    "description": "Title for the people directory filtered by location",
     "placeholders": {
       "location": {
         "type": "String"
@@ -18,45 +18,62 @@
   },
   "volunteersFilterAll": "All",
   "@volunteersFilterAll": {
-    "description": "Filter chip label to show volunteers from every location"
+    "description": "Filter chip label to show people from every location"
   },
-  "volunteersSearchHint": "Search volunteers...",
+  "volunteersFilterServing": "Serving",
+  "@volunteersFilterServing": {
+    "description": "Filter chip for people who serve (leaders, team tags, or cell-group leaders)"
+  },
+  "volunteersSearchHint": "Search people...",
   "@volunteersSearchHint": {
-    "description": "Hint text for the volunteers search field"
+    "description": "Hint text for the people directory search field"
   },
-  "volunteersEmpty": "No volunteers found",
+  "volunteersEmpty": "No people found",
   "@volunteersEmpty": {
-    "description": "Empty state when the volunteers list has no entries"
+    "description": "Empty state when the people list has no entries"
   },
-  "volunteersEmptySearch": "No volunteers match \"{query}\"",
+  "volunteersEmptySearch": "No people match \"{query}\"",
   "@volunteersEmptySearch": {
-    "description": "Empty state when search returns no volunteers",
+    "description": "Empty state when search returns no people",
     "placeholders": {
       "query": {
         "type": "String"
       }
     }
   },
-  "volunteersEmptyLocation": "No volunteers in {location}",
+  "volunteersEmptyLocation": "No people in {location}",
   "@volunteersEmptyLocation": {
-    "description": "Empty state when a location filter returns no volunteers",
+    "description": "Empty state when a location filter returns no people",
     "placeholders": {
       "location": {
         "type": "String"
       }
     }
   },
-  "registerUser": "Register User",
+  "volunteersEmptyServing": "No serving people here. Turn off Serving to see everyone.",
+  "@volunteersEmptyServing": {
+    "description": "Empty state when the Serving filter hides attendees"
+  },
+  "volunteersEmptyServingLocation": "No serving people in {location}. Turn off Serving to see everyone.",
+  "@volunteersEmptyServingLocation": {
+    "description": "Empty state when Serving plus a location filter returns no people",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "registerUser": "Register person",
   "@registerUser": {
-    "description": "FAB label for registering a new volunteer"
+    "description": "FAB label for registering a new person"
   },
-  "volunteersMenuTitle": "Volunteers",
+  "volunteersMenuTitle": "Directory",
   "@volunteersMenuTitle": {
-    "description": "Personal home menu item for the volunteers directory"
+    "description": "Personal home menu item for the people directory"
   },
-  "volunteersMenuSubtitle": "View community members",
+  "volunteersMenuSubtitle": "Leaders, teams, and members",
   "@volunteersMenuSubtitle": {
-    "description": "Personal home menu subtitle for the volunteers directory"
+    "description": "Personal home menu subtitle for the people directory"
   },
   "mySchedule": "My Schedule",
   "@mySchedule": {
@@ -65,6 +82,82 @@
   "myScheduleSubtitle": "View your tasks and roles",
   "@myScheduleSubtitle": {
     "description": "Personal home menu subtitle for the schedule page"
+  },
+  "personalScheduleEmpty": "No upcoming tasks assigned for now.",
+  "@personalScheduleEmpty": {
+    "description": "Empty state on Personal home schedule dashboard card"
+  },
+  "personalScheduleViewFull": "View full schedule",
+  "@personalScheduleViewFull": {
+    "description": "Opens the full schedule page from Personal home"
+  },
+  "personalScheduleViewAll": "View all {count} upcoming",
+  "@personalScheduleViewAll": {
+    "description": "Opens full schedule when more than three upcoming posts",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalCellGroupsTitle": "Cell groups",
+  "@personalCellGroupsTitle": {
+    "description": "Title for Personal home cell groups dashboard card"
+  },
+  "personalCellGroupsSubtitle": "Your groups and upcoming meetings",
+  "@personalCellGroupsSubtitle": {
+    "description": "Subtitle for Personal home cell groups dashboard card"
+  },
+  "personalCellGroupsEmpty": "You are not in a cell group yet. Browse groups to find one that fits you.",
+  "@personalCellGroupsEmpty": {
+    "description": "Encouraging empty state when user belongs to no cell groups"
+  },
+  "personalCellGroupsBrowse": "Browse cell groups",
+  "@personalCellGroupsBrowse": {
+    "description": "CTA on Personal home to open the Cell Groups section"
+  },
+  "personalCellGroupsNoUpcoming": "No upcoming meetings in the next 8 weeks.",
+  "@personalCellGroupsNoUpcoming": {
+    "description": "Message when member has groups but no upcoming CG meetings"
+  },
+  "personalCellGroupLedBy": "Led by {leader}",
+  "@personalCellGroupLedBy": {
+    "description": "Leader line on Personal home cell group rows",
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      }
+    }
+  },
+  "personalCellGroupLeaderTbc": "Leader TBC",
+  "@personalCellGroupLeaderTbc": {
+    "description": "Fallback when a cell group leader cannot be resolved"
+  },
+  "personalCellGroupsMoreMeetings": "And {count} more upcoming meetings",
+  "@personalCellGroupsMoreMeetings": {
+    "description": "Overflow hint when more than three CG meetings exist",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalScheduleDateTbc": "Date TBC",
+  "@personalScheduleDateTbc": {
+    "description": "Fallback when a schedule post has no event date"
+  },
+  "personalScheduleRolesCount": "{count} roles",
+  "@personalScheduleRolesCount": {
+    "description": "Chip on schedule preview when user has multiple roles on one post",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalScheduleUntitledEvent": "Untitled event",
+  "@personalScheduleUntitledEvent": {
+    "description": "Fallback title when event head is missing on schedule preview"
   },
   "userProfileLeaderBadge": "Leader",
   "@userProfileLeaderBadge": {
@@ -77,6 +170,14 @@
   "userProfileCellGroupLeaderBadge": "CG Leader",
   "@userProfileCellGroupLeaderBadge": {
     "description": "Badge shown when a volunteer leads an active or paused cell group"
+  },
+  "userProfileCellGroups": "Cell groups",
+  "@userProfileCellGroups": {
+    "description": "Section title on a profile for cell group membership"
+  },
+  "userProfileNoCellGroups": "Not in a cell group.",
+  "@userProfileNoCellGroups": {
+    "description": "Message when a person is not listed on any cell group roster or as a leader"
   },
   "userProfileUpcomingTasks": "Upcoming tasks",
   "@userProfileUpcomingTasks": {
@@ -159,7 +260,7 @@
   "@manageUserTagsAdd": {
     "description": "Action to create a new volunteer tag"
   },
-  "manageUserTagsEmpty": "No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.",
+  "manageUserTagsEmpty": "No team tags yet. Create tags for teams like Worship, Technical, or Usher.",
   "@manageUserTagsEmpty": {
     "description": "Empty state on the manage tags page"
   },
@@ -220,7 +321,7 @@
       }
     }
   },
-  "manageUserTagsDeleteBlocked": "Cannot delete — {count} volunteers still have this tag. Deactivate it instead.",
+  "manageUserTagsDeleteBlocked": "Cannot delete — {count} people still have this tag. Deactivate it instead.",
   "@manageUserTagsDeleteBlocked": {
     "description": "Error when trying to delete a tag that is still assigned",
     "placeholders": {
@@ -229,7 +330,7 @@
       }
     }
   },
-  "manageUserTagsMenuTitle": "Volunteer Tags",
+  "manageUserTagsMenuTitle": "Team tags",
   "@manageUserTagsMenuTitle": {
     "description": "Personal home admin menu item for managing tags"
   },
@@ -441,7 +542,7 @@
       }
     }
   },
-  "manageUserLocationsDeleteBlocked": "Cannot delete — {count} volunteers still have this location. Deactivate it instead.",
+  "manageUserLocationsDeleteBlocked": "Cannot delete — {count} people still have this location. Deactivate it instead.",
   "@manageUserLocationsDeleteBlocked": {
     "description": "Error when trying to delete a location that is still assigned",
     "placeholders": {
@@ -459,7 +560,7 @@
       }
     }
   },
-  "manageUserLocationsMenuTitle": "Volunteer Locations",
+  "manageUserLocationsMenuTitle": "Locations",
   "@manageUserLocationsMenuTitle": {
     "description": "Personal home admin menu item for managing locations"
   },
@@ -467,13 +568,13 @@
   "@manageUserLocationsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing locations"
   },
-  "volunteersEmptyTags": "No volunteers match the selected tags",
+  "volunteersEmptyTags": "No people match the selected tags",
   "@volunteersEmptyTags": {
-    "description": "Empty state when tag filter returns no volunteers"
+    "description": "Empty state when tag filter returns no people"
   },
-  "selectUsersTitle": "Select members",
+  "selectUsersTitle": "Select people",
   "@selectUsersTitle": {
-    "description": "Title for the multi-select volunteer picker page"
+    "description": "Title for the multi-select people picker page"
   },
   "selectUsersDone": "Done",
   "@selectUsersDone": {
@@ -487,6 +588,14 @@
         "type": "int"
       }
     }
+  },
+  "selectUsersAddFromCellGroup": "Add from cell group",
+  "@selectUsersAddFromCellGroup": {
+    "description": "Button on the people picker to merge roster members from cell groups"
+  },
+  "selectUsersAddingFromCellGroup": "Adding from cell group…",
+  "@selectUsersAddingFromCellGroup": {
+    "description": "Progress title while merging cell group roster members into selection"
   },
   "selectCatalogSelected": "{count} selected",
   "@selectCatalogSelected": {
@@ -568,11 +677,11 @@
   },
   "volunteersShowPlaceholders": "Placeholders",
   "@volunteersShowPlaceholders": {
-    "description": "Filter chip to show only placeholder profiles in the Volunteers list"
+    "description": "Filter chip to show only placeholder profiles in the people list"
   },
   "volunteersEmptyPlaceholders": "No placeholder profiles to show",
   "@volunteersEmptyPlaceholders": {
-    "description": "Empty state when the placeholders filter returns no volunteers"
+    "description": "Empty state when the placeholders filter returns no people"
   },
   "volunteersPlaceholderBadge": "Placeholder",
   "@volunteersPlaceholderBadge": {
@@ -580,31 +689,31 @@
   },
   "volunteersSortLabel": "Sort",
   "@volunteersSortLabel": {
-    "description": "Label before sort mode chips on the volunteers list"
+    "description": "Label before sort mode chips on the people list"
   },
   "volunteersSortSurname": "Surname",
   "@volunteersSortSurname": {
-    "description": "Sort volunteers by surname"
+    "description": "Sort people by surname"
   },
   "volunteersSortTags": "Team",
   "@volunteersSortTags": {
-    "description": "Sort volunteers by primary team tag"
+    "description": "Sort people by primary team tag"
   },
   "volunteersFilterLeaders": "Leaders",
   "@volunteersFilterLeaders": {
-    "description": "Filter chip to show volunteers with the Leader permission"
+    "description": "Filter chip to show people with the Leader permission"
   },
   "volunteersFilterAdmins": "Admins",
   "@volunteersFilterAdmins": {
-    "description": "Filter chip to show volunteers who are area admins"
+    "description": "Filter chip to show people who are area admins"
   },
   "volunteersFilterCellGroupLeaders": "CG Leaders",
   "@volunteersFilterCellGroupLeaders": {
-    "description": "Filter chip to show volunteers who lead a cell group"
+    "description": "Filter chip to show people who lead a cell group"
   },
-  "volunteersEmptyRoles": "No volunteers match the selected roles",
+  "volunteersEmptyRoles": "No people match the selected roles",
   "@volunteersEmptyRoles": {
-    "description": "Empty state when a role filter returns no volunteers"
+    "description": "Empty state when a role filter returns no people"
   },
   "volunteersFilterTags": "Tags",
   "@volunteersFilterTags": {
@@ -627,9 +736,9 @@
   "@volunteersFilterTagsSheetSubtitle": {
     "description": "Subtitle for the volunteer tag filter bottom sheet"
   },
-  "volunteersSortTooltip": "Sort volunteers",
+  "volunteersSortTooltip": "Sort people",
   "@volunteersSortTooltip": {
-    "description": "Tooltip for the volunteers sort menu in the app bar"
+    "description": "Tooltip for the people directory sort menu in the app bar"
   },
   "cellGroupsAssignLabel": "Cell groups",
   "@cellGroupsAssignLabel": {
@@ -754,6 +863,54 @@
   "cellGroupsActivityRetry": "Retry",
   "@cellGroupsActivityRetry": {
     "description": "Retry button for activity stats load failure"
+  },
+  "activityTrendMetricAttendance": "Attendance",
+  "@activityTrendMetricAttendance": {
+    "description": "Filter chip label for attendance sum on activity trend charts"
+  },
+  "activityTrendWeeklyHint": "Weekly · last 3 months",
+  "@activityTrendWeeklyHint": {
+    "description": "Hint under metric chips on weekly activity line charts"
+  },
+  "activityTrendEmpty": "No activity in this period.",
+  "@activityTrendEmpty": {
+    "description": "Empty state when weekly activity chart has no data"
+  },
+  "churchHubActivityTrendTitle": "Activity over time",
+  "@churchHubActivityTrendTitle": {
+    "description": "Title for church hub weekly activity line chart"
+  },
+  "churchHubActivityTrendSubtitle": "Bulletin posts at this location",
+  "@churchHubActivityTrendSubtitle": {
+    "description": "Subtitle for church hub weekly activity line chart"
+  },
+  "churchHubActivityTrendMetricPosts": "Posts",
+  "@churchHubActivityTrendMetricPosts": {
+    "description": "Count metric chip on church hub activity chart"
+  },
+  "cellGroupsActivityTrendTitle": "Meetings over time",
+  "@cellGroupsActivityTrendTitle": {
+    "description": "Title for cell groups weekly activity line chart"
+  },
+  "cellGroupsActivityTrendSubtitle": "Cell group meetings linked on the bulletin",
+  "@cellGroupsActivityTrendSubtitle": {
+    "description": "Subtitle for cell groups weekly activity line chart"
+  },
+  "cellGroupsActivityTrendMetricMeetings": "Meetings",
+  "@cellGroupsActivityTrendMetricMeetings": {
+    "description": "Count metric chip on cell groups activity chart"
+  },
+  "cellGroupsDetailActivityTitle": "Activity",
+  "@cellGroupsDetailActivityTitle": {
+    "description": "Section title for per-group activity on cell group detail"
+  },
+  "cellGroupsDetailActivityTrendTitle": "Meetings over time",
+  "@cellGroupsDetailActivityTrendTitle": {
+    "description": "Chart title on cell group detail activity card"
+  },
+  "cellGroupsDetailActivityTrendSubtitle": "Bulletin posts linked to this group",
+  "@cellGroupsDetailActivityTrendSubtitle": {
+    "description": "Chart subtitle on cell group detail activity card"
   },
   "cellGroupsEmpty": "No cell groups yet.",
   "@cellGroupsEmpty": {
@@ -940,23 +1097,23 @@
   "@bulletinSortRelevancy": {
     "description": "Default bulletin sort: today, then upcoming, then the rest"
   },
-  "bulletinSortRelevancySubtitle": "Today first, then what’s coming up",
+  "bulletinSortRelevancySubtitle": "Next few events, then recent past",
   "@bulletinSortRelevancySubtitle": {
     "description": "Explains relevancy sort on the bulletin"
   },
   "bulletinSortSoonest": "Soonest first",
   "@bulletinSortSoonest": {
-    "description": "Bulletin sort by earliest event date"
+    "description": "Bulletin sort: upcoming events by date, then recent past"
   },
-  "bulletinSortSoonestSubtitle": "Earliest event date at the top",
+  "bulletinSortSoonestSubtitle": "Upcoming events first, then recent past",
   "@bulletinSortSoonestSubtitle": {
     "description": "Explains soonest-first sort"
   },
   "bulletinSortLatest": "Latest first",
   "@bulletinSortLatest": {
-    "description": "Bulletin sort by latest event date"
+    "description": "Bulletin sort: recent past first, then upcoming"
   },
-  "bulletinSortLatestSubtitle": "Most recent event date at the top",
+  "bulletinSortLatestSubtitle": "Recent past first, then upcoming",
   "@bulletinSortLatestSubtitle": {
     "description": "Explains latest-first sort"
   },
@@ -1118,6 +1275,10 @@
   "@churchHubStatsRetry": {
     "description": "Retry loading church location snapshot"
   },
+  "churchHubAboutTitle": "About",
+  "@churchHubAboutTitle": {
+    "description": "Section title for the church hub Quill overview"
+  },
   "churchHubPagesTitle": "More about this church",
   "@churchHubPagesTitle": {
     "description": "Section title for extra church hub pages"
@@ -1141,5 +1302,208 @@
   "churchHubPagesRetry": "Retry",
   "@churchHubPagesRetry": {
     "description": "Retry loading nested church pages"
+  },
+  "churchHubPastorsTitle": "Pastors",
+  "@churchHubPastorsTitle": {
+    "description": "Heading for the pastors section on a church hub page"
+  },
+  "churchHubUnknownPastor": "Unknown pastor",
+  "@churchHubUnknownPastor": {
+    "description": "Fallback label when a pastor user record cannot be resolved"
+  },
+  "churchHubFindUsTitle": "Find us",
+  "@churchHubFindUsTitle": {
+    "description": "Dashboard card title for church location, address, and maps"
+  },
+  "churchHubFindUsSubtitle": "Location, address, and maps",
+  "@churchHubFindUsSubtitle": {
+    "description": "Dashboard card subtitle for the visit / find-us card"
+  },
+  "churchHubPastorsSubtitle": "Meet the team",
+  "@churchHubPastorsSubtitle": {
+    "description": "Dashboard card subtitle for the pastors card"
+  },
+  "churchHubLearnAboutPastors": "Learn about them",
+  "@churchHubLearnAboutPastors": {
+    "description": "Button on the church hub pastors card that opens the pastors page"
+  },
+  "churchPastorsPageTitle": "Pastors",
+  "@churchPastorsPageTitle": {
+    "description": "App bar title for the church pastors write-up page"
+  },
+  "churchHubGalleryTitle": "Gallery",
+  "@churchHubGalleryTitle": {
+    "description": "Dashboard card title for church gallery photos"
+  },
+  "churchHubGallerySubtitle": "Photos from this church",
+  "@churchHubGallerySubtitle": {
+    "description": "Dashboard card subtitle for the gallery card"
+  },
+  "churchHubSnapshotSubtitle": "Activity at this location",
+  "@churchHubSnapshotSubtitle": {
+    "description": "Dashboard card subtitle for location snapshot counts"
+  },
+  "churchHubPagesSubtitle": "Getting here, Sunday service, and more",
+  "@churchHubPagesSubtitle": {
+    "description": "Dashboard card subtitle for extra church pages"
+  },
+  "churchHubRecentPostsSubtitle": "From the last 3 months",
+  "@churchHubRecentPostsSubtitle": {
+    "description": "Dashboard card subtitle for recent bulletin posts"
+  },
+  "churchHubCellGroupsSubtitle": "Meeting at this location",
+  "@churchHubCellGroupsSubtitle": {
+    "description": "Dashboard card subtitle for cell groups at this church"
+  },
+  "churchEditorChurchCardTitle": "Church",
+  "@churchEditorChurchCardTitle": {
+    "description": "Editor card title for church name and summary"
+  },
+  "churchEditorChurchCardSubtitle": "Name and how it appears in the list",
+  "@churchEditorChurchCardSubtitle": {
+    "description": "Editor card subtitle for church identity fields"
+  },
+  "churchEditorVisitCardTitle": "Find us",
+  "@churchEditorVisitCardTitle": {
+    "description": "Editor card title for location, address, and maps"
+  },
+  "churchEditorVisitCardSubtitle": "Location, address, and maps",
+  "@churchEditorVisitCardSubtitle": {
+    "description": "Editor card subtitle for visit fields"
+  },
+  "churchEditorPastorsCardTitle": "Pastors",
+  "@churchEditorPastorsCardTitle": {
+    "description": "Editor card title for pastors, photo, and write-up"
+  },
+  "churchEditorPastorsCardSubtitle": "People listed as pastors, plus their write-up",
+  "@churchEditorPastorsCardSubtitle": {
+    "description": "Editor card subtitle for pastors fields and Quill body"
+  },
+  "churchEditorMediaCardTitle": "Media",
+  "@churchEditorMediaCardTitle": {
+    "description": "Editor card title for hero and gallery images"
+  },
+  "churchEditorMediaCardSubtitle": "Cover photo and gallery",
+  "@churchEditorMediaCardSubtitle": {
+    "description": "Editor card subtitle for church media URLs"
+  },
+  "churchEditorPastorsBodyLabel": "About the pastors",
+  "@churchEditorPastorsBodyLabel": {
+    "description": "Label above the pastors Quill editor on the church form"
+  },
+  "churchEditorSave": "Save",
+  "@churchEditorSave": {
+    "description": "Primary save button on the church add/edit form"
+  },
+  "notificationViewPost": "View post",
+  "@notificationViewPost": {
+    "description": "Opens the related post from a push notification dialog"
+  },
+  "notificationViewPage": "View page",
+  "@notificationViewPage": {
+    "description": "Opens the related info page from a push notification dialog"
+  },
+  "notificationDismiss": "Ok",
+  "@notificationDismiss": {
+    "description": "Closes the in-app push notification dialog"
+  },
+  "scheduleEmptyTitle": "Nothing scheduled yet",
+  "@scheduleEmptyTitle": {
+    "description": "Empty state title on the post schedule timeline"
+  },
+  "scheduleEmptyBodyEditor": "Add schedule items from the edit menu and they will appear here on the timeline.",
+  "@scheduleEmptyBodyEditor": {
+    "description": "Empty schedule message for authors and contributors"
+  },
+  "scheduleEmptyBodyViewer": "The running order for this post has not been shared yet.",
+  "@scheduleEmptyBodyViewer": {
+    "description": "Empty schedule message for people who cannot edit the post"
+  },
+  "scheduleAllEventSectionTitle": "All event",
+  "@scheduleAllEventSectionTitle": {
+    "description": "Heading for roles that run for most of the event rather than a slot in the running order"
+  },
+  "scheduleAllEventArrangeHint": "\"{title}\" runs for most of the event, so it stays out of the running order",
+  "@scheduleAllEventArrangeHint": {
+    "description": "Shown when tapping an all-event role on the arrange schedule page",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleUntimedSectionTitle": "Without a time",
+  "@scheduleUntimedSectionTitle": {
+    "description": "Heading for schedule items that have no start or end time"
+  },
+  "scheduleNoTimeSet": "No time set",
+  "@scheduleNoTimeSet": {
+    "description": "Shown instead of a time range when a schedule item is untimed"
+  },
+  "scheduleStaffOnly": "Not shown to guests",
+  "@scheduleStaffOnly": {
+    "description": "Marks a schedule item that guests cannot see"
+  },
+  "scheduleEditTask": "Edit Task",
+  "@scheduleEditTask": {
+    "description": "Opens the editor for one schedule item"
+  },
+  "scheduleParallelCount": "+{count} parallel",
+  "@scheduleParallelCount": {
+    "description": "Marker for schedule items that did not fit in the visible lanes",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scheduleParallelSheetTitle": "Running in parallel",
+  "@scheduleParallelSheetTitle": {
+    "description": "Title of the sheet listing overlapping schedule items"
+  },
+  "scheduleParallelSheetSubtitle": "These items overlap others already on the timeline",
+  "@scheduleParallelSheetSubtitle": {
+    "description": "Subtitle of the sheet listing overlapping schedule items"
+  },
+  "scheduleArrangeTitle": "Arrange schedule",
+  "@scheduleArrangeTitle": {
+    "description": "Title and button label for the drag-to-rearrange schedule page"
+  },
+  "scheduleArrangeSubtitle": "Drag items to reorder the running time",
+  "@scheduleArrangeSubtitle": {
+    "description": "Edit sheet subtitle for the arrange schedule action"
+  },
+  "scheduleArrangeDone": "Done",
+  "@scheduleArrangeDone": {
+    "description": "Keeps the new arrangement and closes the arrange schedule page"
+  },
+  "scheduleArrangeEmpty": "Add timed schedule items before arranging them.",
+  "@scheduleArrangeEmpty": {
+    "description": "Shown when the arrange schedule page has nothing to lay out"
+  },
+  "scheduleArrangeModeCascade": "Cascade",
+  "@scheduleArrangeModeCascade": {
+    "description": "Drag mode where later schedule items move out of the way"
+  },
+  "scheduleArrangeModeParallel": "Parallel",
+  "@scheduleArrangeModeParallel": {
+    "description": "Drag mode where other schedule items keep their times"
+  },
+  "scheduleArrangeCascadeHint": "Long press an item and drag it. Anything it lands on moves later to keep the running order.",
+  "@scheduleArrangeCascadeHint": {
+    "description": "Helper text for cascade drag mode"
+  },
+  "scheduleArrangeParallelHint": "Long press an item and drag it. Everything else keeps its time, so items can run at the same time.",
+  "@scheduleArrangeParallelHint": {
+    "description": "Helper text for parallel drag mode"
+  },
+  "scheduleArrangeDragHint": "Long press \"{title}\" to drag it",
+  "@scheduleArrangeDragHint": {
+    "description": "Snackbar telling the user how to move a schedule item",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -12,46 +12,110 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'CTRIM App';
 
   @override
-  String get volunteersTitle => 'Volunteers';
+  String get volunteersTitle => 'People';
 
   @override
   String volunteersTitleLocation(String location) {
-    return '$location Volunteers';
+    return '$location People';
   }
 
   @override
   String get volunteersFilterAll => 'All';
 
   @override
-  String get volunteersSearchHint => 'Search volunteers...';
+  String get volunteersFilterServing => 'Serving';
 
   @override
-  String get volunteersEmpty => 'No volunteers found';
+  String get volunteersSearchHint => 'Search people...';
+
+  @override
+  String get volunteersEmpty => 'No people found';
 
   @override
   String volunteersEmptySearch(String query) {
-    return 'No volunteers match \"$query\"';
+    return 'No people match \"$query\"';
   }
 
   @override
   String volunteersEmptyLocation(String location) {
-    return 'No volunteers in $location';
+    return 'No people in $location';
   }
 
   @override
-  String get registerUser => 'Register User';
+  String get volunteersEmptyServing =>
+      'No serving people here. Turn off Serving to see everyone.';
 
   @override
-  String get volunteersMenuTitle => 'Volunteers';
+  String volunteersEmptyServingLocation(String location) {
+    return 'No serving people in $location. Turn off Serving to see everyone.';
+  }
 
   @override
-  String get volunteersMenuSubtitle => 'View community members';
+  String get registerUser => 'Register person';
+
+  @override
+  String get volunteersMenuTitle => 'Directory';
+
+  @override
+  String get volunteersMenuSubtitle => 'Leaders, teams, and members';
 
   @override
   String get mySchedule => 'My Schedule';
 
   @override
   String get myScheduleSubtitle => 'View your tasks and roles';
+
+  @override
+  String get personalScheduleEmpty => 'No upcoming tasks assigned for now.';
+
+  @override
+  String get personalScheduleViewFull => 'View full schedule';
+
+  @override
+  String personalScheduleViewAll(int count) {
+    return 'View all $count upcoming';
+  }
+
+  @override
+  String get personalCellGroupsTitle => 'Cell groups';
+
+  @override
+  String get personalCellGroupsSubtitle => 'Your groups and upcoming meetings';
+
+  @override
+  String get personalCellGroupsEmpty =>
+      'You are not in a cell group yet. Browse groups to find one that fits you.';
+
+  @override
+  String get personalCellGroupsBrowse => 'Browse cell groups';
+
+  @override
+  String get personalCellGroupsNoUpcoming =>
+      'No upcoming meetings in the next 8 weeks.';
+
+  @override
+  String personalCellGroupLedBy(String leader) {
+    return 'Led by $leader';
+  }
+
+  @override
+  String get personalCellGroupLeaderTbc => 'Leader TBC';
+
+  @override
+  String personalCellGroupsMoreMeetings(int count) {
+    return 'And $count more upcoming meetings';
+  }
+
+  @override
+  String get personalScheduleDateTbc => 'Date TBC';
+
+  @override
+  String personalScheduleRolesCount(int count) {
+    return '$count roles';
+  }
+
+  @override
+  String get personalScheduleUntitledEvent => 'Untitled event';
 
   @override
   String get userProfileLeaderBadge => 'Leader';
@@ -61,6 +125,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userProfileCellGroupLeaderBadge => 'CG Leader';
+
+  @override
+  String get userProfileCellGroups => 'Cell groups';
+
+  @override
+  String get userProfileNoCellGroups => 'Not in a cell group.';
 
   @override
   String get userProfileUpcomingTasks => 'Upcoming tasks';
@@ -125,7 +195,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserTagsEmpty =>
-      'No volunteer tags yet. Create tags for teams like Worship, Technical, or Usher.';
+      'No team tags yet. Create tags for teams like Worship, Technical, or Usher.';
 
   @override
   String get manageUserTagsSeedDefaults => 'Add starter tags';
@@ -170,11 +240,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String manageUserTagsDeleteBlocked(int count) {
-    return 'Cannot delete — $count volunteers still have this tag. Deactivate it instead.';
+    return 'Cannot delete — $count people still have this tag. Deactivate it instead.';
   }
 
   @override
-  String get manageUserTagsMenuTitle => 'Volunteer Tags';
+  String get manageUserTagsMenuTitle => 'Team tags';
 
   @override
   String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
@@ -332,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String manageUserLocationsDeleteBlocked(int count) {
-    return 'Cannot delete — $count volunteers still have this location. Deactivate it instead.';
+    return 'Cannot delete — $count people still have this location. Deactivate it instead.';
   }
 
   @override
@@ -341,16 +411,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get manageUserLocationsMenuTitle => 'Volunteer Locations';
+  String get manageUserLocationsMenuTitle => 'Locations';
 
   @override
   String get manageUserLocationsMenuSubtitle => 'Create and edit place labels';
 
   @override
-  String get volunteersEmptyTags => 'No volunteers match the selected tags';
+  String get volunteersEmptyTags => 'No people match the selected tags';
 
   @override
-  String get selectUsersTitle => 'Select members';
+  String get selectUsersTitle => 'Select people';
 
   @override
   String get selectUsersDone => 'Done';
@@ -359,6 +429,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String selectUsersSelected(int count) {
     return '$count selected';
   }
+
+  @override
+  String get selectUsersAddFromCellGroup => 'Add from cell group';
+
+  @override
+  String get selectUsersAddingFromCellGroup => 'Adding from cell group…';
 
   @override
   String selectCatalogSelected(int count) {
@@ -446,7 +522,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersFilterCellGroupLeaders => 'CG Leaders';
 
   @override
-  String get volunteersEmptyRoles => 'No volunteers match the selected roles';
+  String get volunteersEmptyRoles => 'No people match the selected roles';
 
   @override
   String get volunteersFilterTags => 'Tags';
@@ -464,7 +540,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show people with any of these team tags';
 
   @override
-  String get volunteersSortTooltip => 'Sort volunteers';
+  String get volunteersSortTooltip => 'Sort people';
 
   @override
   String get cellGroupsAssignLabel => 'Cell groups';
@@ -564,6 +640,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cellGroupsActivityRetry => 'Retry';
+
+  @override
+  String get activityTrendMetricAttendance => 'Attendance';
+
+  @override
+  String get activityTrendWeeklyHint => 'Weekly · last 3 months';
+
+  @override
+  String get activityTrendEmpty => 'No activity in this period.';
+
+  @override
+  String get churchHubActivityTrendTitle => 'Activity over time';
+
+  @override
+  String get churchHubActivityTrendSubtitle =>
+      'Bulletin posts at this location';
+
+  @override
+  String get churchHubActivityTrendMetricPosts => 'Posts';
+
+  @override
+  String get cellGroupsActivityTrendTitle => 'Meetings over time';
+
+  @override
+  String get cellGroupsActivityTrendSubtitle =>
+      'Cell group meetings linked on the bulletin';
+
+  @override
+  String get cellGroupsActivityTrendMetricMeetings => 'Meetings';
+
+  @override
+  String get cellGroupsDetailActivityTitle => 'Activity';
+
+  @override
+  String get cellGroupsDetailActivityTrendTitle => 'Meetings over time';
+
+  @override
+  String get cellGroupsDetailActivityTrendSubtitle =>
+      'Bulletin posts linked to this group';
 
   @override
   String get cellGroupsEmpty => 'No cell groups yet.';
@@ -715,19 +830,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bulletinSortRelevancySubtitle =>
-      'Today first, then what’s coming up';
+      'Next few events, then recent past';
 
   @override
   String get bulletinSortSoonest => 'Soonest first';
 
   @override
-  String get bulletinSortSoonestSubtitle => 'Earliest event date at the top';
+  String get bulletinSortSoonestSubtitle =>
+      'Upcoming events first, then recent past';
 
   @override
   String get bulletinSortLatest => 'Latest first';
 
   @override
-  String get bulletinSortLatestSubtitle => 'Most recent event date at the top';
+  String get bulletinSortLatestSubtitle => 'Recent past first, then upcoming';
 
   @override
   String get bulletinShowSection => 'Show';
@@ -848,6 +964,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubStatsRetry => 'Retry';
 
   @override
+  String get churchHubAboutTitle => 'About';
+
+  @override
   String get churchHubPagesTitle => 'More about this church';
 
   @override
@@ -865,4 +984,160 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchHubPagesRetry => 'Retry';
+
+  @override
+  String get churchHubPastorsTitle => 'Pastors';
+
+  @override
+  String get churchHubUnknownPastor => 'Unknown pastor';
+
+  @override
+  String get churchHubFindUsTitle => 'Find us';
+
+  @override
+  String get churchHubFindUsSubtitle => 'Location, address, and maps';
+
+  @override
+  String get churchHubPastorsSubtitle => 'Meet the team';
+
+  @override
+  String get churchHubLearnAboutPastors => 'Learn about them';
+
+  @override
+  String get churchPastorsPageTitle => 'Pastors';
+
+  @override
+  String get churchHubGalleryTitle => 'Gallery';
+
+  @override
+  String get churchHubGallerySubtitle => 'Photos from this church';
+
+  @override
+  String get churchHubSnapshotSubtitle => 'Activity at this location';
+
+  @override
+  String get churchHubPagesSubtitle => 'Getting here, Sunday service, and more';
+
+  @override
+  String get churchHubRecentPostsSubtitle => 'From the last 3 months';
+
+  @override
+  String get churchHubCellGroupsSubtitle => 'Meeting at this location';
+
+  @override
+  String get churchEditorChurchCardTitle => 'Church';
+
+  @override
+  String get churchEditorChurchCardSubtitle =>
+      'Name and how it appears in the list';
+
+  @override
+  String get churchEditorVisitCardTitle => 'Find us';
+
+  @override
+  String get churchEditorVisitCardSubtitle => 'Location, address, and maps';
+
+  @override
+  String get churchEditorPastorsCardTitle => 'Pastors';
+
+  @override
+  String get churchEditorPastorsCardSubtitle =>
+      'People listed as pastors, plus their write-up';
+
+  @override
+  String get churchEditorMediaCardTitle => 'Media';
+
+  @override
+  String get churchEditorMediaCardSubtitle => 'Cover photo and gallery';
+
+  @override
+  String get churchEditorPastorsBodyLabel => 'About the pastors';
+
+  @override
+  String get churchEditorSave => 'Save';
+
+  @override
+  String get notificationViewPost => 'View post';
+
+  @override
+  String get notificationViewPage => 'View page';
+
+  @override
+  String get notificationDismiss => 'Ok';
+
+  @override
+  String get scheduleEmptyTitle => 'Nothing scheduled yet';
+
+  @override
+  String get scheduleEmptyBodyEditor =>
+      'Add schedule items from the edit menu and they will appear here on the timeline.';
+
+  @override
+  String get scheduleEmptyBodyViewer =>
+      'The running order for this post has not been shared yet.';
+
+  @override
+  String get scheduleAllEventSectionTitle => 'All event';
+
+  @override
+  String scheduleAllEventArrangeHint(String title) {
+    return '\"$title\" runs for most of the event, so it stays out of the running order';
+  }
+
+  @override
+  String get scheduleUntimedSectionTitle => 'Without a time';
+
+  @override
+  String get scheduleNoTimeSet => 'No time set';
+
+  @override
+  String get scheduleStaffOnly => 'Not shown to guests';
+
+  @override
+  String get scheduleEditTask => 'Edit Task';
+
+  @override
+  String scheduleParallelCount(int count) {
+    return '+$count parallel';
+  }
+
+  @override
+  String get scheduleParallelSheetTitle => 'Running in parallel';
+
+  @override
+  String get scheduleParallelSheetSubtitle =>
+      'These items overlap others already on the timeline';
+
+  @override
+  String get scheduleArrangeTitle => 'Arrange schedule';
+
+  @override
+  String get scheduleArrangeSubtitle =>
+      'Drag items to reorder the running time';
+
+  @override
+  String get scheduleArrangeDone => 'Done';
+
+  @override
+  String get scheduleArrangeEmpty =>
+      'Add timed schedule items before arranging them.';
+
+  @override
+  String get scheduleArrangeModeCascade => 'Cascade';
+
+  @override
+  String get scheduleArrangeModeParallel => 'Parallel';
+
+  @override
+  String get scheduleArrangeCascadeHint =>
+      'Long press an item and drag it. Anything it lands on moves later to keep the running order.';
+
+  @override
+  String get scheduleArrangeParallelHint =>
+      'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.';
+
+  @override
+  String scheduleArrangeDragHint(String title) {
+    return 'Long press \"$title\" to drag it';
+  }
 }

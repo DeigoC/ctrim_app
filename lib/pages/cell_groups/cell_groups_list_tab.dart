@@ -9,6 +9,7 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/my_avatar_stack.dart';
+import '../../widgets/paired_row_list.dart';
 import 'cell_group_detail_page.dart';
 
 /// Catalogue list of cell groups (second tab).
@@ -39,7 +40,7 @@ class CellGroupsListTab extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final contentWidth = constraints.maxWidth;
-        final isWideScreen = ResponsiveLayout.isWideScreen(contentWidth);
+        final isWideScreen = ResponsiveLayout.isWideScreenOf(context);
         final maxWidth = ResponsiveLayout.maxContentWidth(contentWidth);
         final horizontalPadding = isWideScreen
             ? ((contentWidth - maxWidth) / 2).clamp(16.0, double.infinity)
@@ -128,10 +129,14 @@ class CellGroupsListTab extends StatelessWidget {
         SliverPadding(
           padding: padding,
           sliver: SliverToBoxAdapter(
-            child: _buildWideColumns(
-              appContext: appContext,
-              groups: groups,
-              isGuest: isGuest,
+            child: PairedRowList(
+              itemCount: groups.length,
+              runSpacing: 12,
+              itemBuilder: (context, index) => _buildCard(
+                appContext: appContext,
+                group: groups[index],
+                isGuest: isGuest,
+              ),
             ),
           ),
         ),
@@ -152,42 +157,6 @@ class CellGroupsListTab extends StatelessWidget {
         ),
       ),
     ];
-  }
-
-  Widget _buildWideColumns({
-    required AppContext appContext,
-    required List<CellGroup> groups,
-    required bool isGuest,
-  }) {
-    final left = <CellGroup>[];
-    final right = <CellGroup>[];
-    for (var i = 0; i < groups.length; i++) {
-      (i.isEven ? left : right).add(groups[i]);
-    }
-
-    Widget column(List<CellGroup> columnGroups) {
-      return Column(
-        children: [
-          for (var i = 0; i < columnGroups.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            _buildCard(
-              appContext: appContext,
-              group: columnGroups[i],
-              isGuest: isGuest,
-            ),
-          ],
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: column(left)),
-        const SizedBox(width: 16),
-        Expanded(child: column(right)),
-      ],
-    );
   }
 
   Widget _buildCard({

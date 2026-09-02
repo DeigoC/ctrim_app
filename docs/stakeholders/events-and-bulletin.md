@@ -20,9 +20,9 @@ Use the bulletin’s **sort / filter** control. Sort and filters are separate, s
 
 | Option | What it does |
 |--------|----------------|
-| **Relevancy** *(default)* | Today’s events first, then everything still coming up by date, then older posts |
-| **Soonest first** | Earliest event date at the top |
-| **Latest first** | Most recent event date at the top |
+| **Relevancy** *(default)* | The next three upcoming events, then recent past (about two weeks), then the rest |
+| **Soonest first** | Today and upcoming events by date, then recent past |
+| **Latest first** | Recent past first, then upcoming by date |
 
 **Show** (what appears):
 
@@ -53,12 +53,33 @@ Opening a post shows tabs when that content exists:
 |------|-------------------|
 | **Interest** | “I want to **follow updates** about this post.” Not a formal RSVP. Signed-in people can opt in; guests see counts only. |
 | **Bookmark** | Keep the post on your shortlist and (when organisers save with an update log) get notified about changes. Separate from interest — you can bookmark without marking interest. |
-| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). On the day, organisers can check them off into attendance quickly. |
+| **Expected attendees** | The **usual people** for a meeting (often set on a **template**, or filled from a linked cell group). They see the meeting on **My Schedule**; on the day, organisers can check them off into attendance quickly. |
 | **Attendance** | Who is (or was) attending — registered people or **placeholders**. Interested people can be promoted to attending; expected people can be checked off. **Post contributors** (and the author) manage the lists; they stay editable after the event. |
+
+## Reading the schedule
+
+The Schedule tab shows the running order as a **timeline of the day** rather than a plain list. Each item sits at its actual clock time and its height reflects how long it lasts, so a quick five-minute slot looks different from an hour-long session.
+
+Anything happening **at the same time** appears side by side. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
+
+Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
+
+Tap any item to see its full details: exact times, notes, and who is assigned. On a wide screen those details open in a panel beside the timeline.
 
 ## Guest-visible schedule
 
 Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme.
+
+## Rearranging the running order
+
+Organisers who can edit a post get an **Arrange schedule** screen (from the Schedule tab or the edit menu). Press and hold an item, then drag it to a new time. Two modes decide what happens to everything else:
+
+| Mode | What it does |
+|------|--------------|
+| **Cascade** | Whatever the item lands on moves later to make room, and that push passes down the rest of the running order. Use this when the day should stay sequential. |
+| **Parallel** | Only the item you dragged moves. Everything else keeps its time, so things can deliberately run at once. |
+
+Items that started before the point you drop into are left alone, so a long background job is never dragged along. Times snap to five-minute steps. Changes are saved with the rest of the post, and leaving without keeping them puts the original times back.
 
 ## What organisers can do
 
@@ -80,9 +101,9 @@ When saving important edits, organisers can write a short **update log**. That n
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Services** and **Cell Groups** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
 
-When **choosing a template** to create a post, browse by **Services** / **Cell Groups**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
+When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
@@ -99,7 +120,7 @@ Organisers create or attach related posts from the post’s edit actions.
 
 ## Posts and cell groups
 
-A post can link to one or more **cell groups**. On the People tab, organisers can **Fill from cell group** to seed expected attendees from that group’s members. More: [Cell Groups](cell-groups.md).
+A post can link to one or more **cell groups**. Organisers can **Fill from cell group** (on the post or template) or **Add from cell group** while managing expected attendees to seed from that group’s members. More: [Cell Groups](cell-groups.md).
 
 ## Related pages
 

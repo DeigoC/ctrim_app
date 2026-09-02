@@ -560,7 +560,7 @@ class _EditUserPageState extends State<EditUserPage> {
           title: _authID.isEmpty ? 'Link account' : 'Reassign account',
           message: _authID.isEmpty
               ? 'Enter the email they used when registering in the app. '
-                  'Their Auth ID will be linked to this volunteer profile.'
+                  'Their Auth ID will be linked to this profile.'
               : 'Enter the new account email. The previous Auth link will be cleared '
                   '(temp accounts are not deleted automatically).',
           child: TextField(
@@ -637,7 +637,7 @@ class _EditUserPageState extends State<EditUserPage> {
       title: 'Unlink account',
       content:
           'Remove the login link from this profile? They will not be able to sign in as this '
-          'volunteer until you link an account again. Schedule and profile data are kept.',
+          'person until you link an account again. Schedule and profile data are kept.',
       confirmText: 'Unlink',
       icon: Icons.link_off,
       isDestructive: true,

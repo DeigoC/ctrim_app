@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
-import '../../firebase/db_managers/cell_group_db_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_attendance.dart';
@@ -11,13 +10,16 @@ import '../../models/user.dart';
 import '../../pages/personal/guest_registration_page.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../common/load_progress_body.dart';
+import '../two_column_masonry.dart';
 import '../user_avatar.dart';
 
 /// People tab: interested (self-serve) + expected checklist + attendees (author/contributor).
@@ -134,14 +136,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         widget.eventContext.head.isRecent ? 'Attended' : 'Attending';
     final hasLinkedCellGroups =
         widget.eventContext.head.cellGroupIDs.isNotEmpty;
+    final isWide = ResponsiveLayout.isWideScreenOf(context);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        _buildInterestToggle(theme, colorScheme, isInterested),
-        if (hasInterested) ...[
-          const SizedBox(height: 20),
-          _buildSectionCard(
+    final interestedCard = hasInterested
+        ? _buildSectionCard(
             theme,
             colorScheme,
             icon: Icons.favorite_outline,
@@ -159,11 +157,11 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                   ),
               ],
             ),
-          ),
-        ],
-        if (canManage || hasExpected) ...[
-          const SizedBox(height: 16),
-          _buildSectionCard(
+          )
+        : null;
+
+    final expectedCard = (canManage || hasExpected)
+        ? _buildSectionCard(
             theme,
             colorScheme,
             icon: Icons.checklist,
@@ -221,11 +219,11 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                 ],
               ],
             ),
-          ),
-        ],
-        if (hasAttendees) ...[
-          const SizedBox(height: 16),
-          _buildSectionCard(
+          )
+        : null;
+
+    final attendeesCard = hasAttendees
+        ? _buildSectionCard(
             theme,
             colorScheme,
             icon: Icons.groups_outlined,
@@ -244,8 +242,31 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                       canManage: canManage),
               ],
             ),
-          ),
-        ] else if (canManage) ...[
+          )
+        : null;
+
+    final peopleCards = <Widget>[
+      if (interestedCard != null) interestedCard,
+      if (expectedCard != null) expectedCard,
+      if (attendeesCard != null) attendeesCard,
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      children: [
+        _buildInterestToggle(theme, colorScheme, isInterested),
+        if (peopleCards.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          if (isWide && peopleCards.length > 1)
+            TwoColumnMasonry(children: peopleCards)
+          else ...[
+            for (var i = 0; i < peopleCards.length; i++) ...[
+              if (i > 0) const SizedBox(height: 16),
+              peopleCards[i],
+            ],
+          ],
+        ],
+        if (!hasAttendees && canManage) ...[
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: _busy ? null : _manageAttendees,
@@ -705,6 +726,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           selectedUIDs: List<String>.from(attendance.expectedUserIds),
           title: 'Expected attendees',
           includePlaceholders: true,
+          allowCellGroupBulkSelect: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,
             postAuthorUid: authorUid,
@@ -735,15 +757,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         final ids = <String>{
           ...?(widget.eventContext.attendance?.expectedUserIds),
         };
-        for (final cgId in cgIds) {
-          final roster =
-              await CellGroupSupplementalDBManager(cgId).fetchRoster();
-          for (final member in roster.members) {
-            if (member.isLinkedUser && member.isActive) {
-              ids.add(member.userId);
-            }
-          }
-        }
+        ids.addAll(
+          await CellGroupRosterHelpers.fetchActiveLinkedUserIds(cgIds),
+        );
         seededIds = ids.toList();
       },
     );

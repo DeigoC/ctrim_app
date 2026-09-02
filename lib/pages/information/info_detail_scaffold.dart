@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/info/info_parsing.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
@@ -23,7 +24,10 @@ class InfoDetailPageScaffold extends StatelessWidget {
     this.editTooltip = 'Edit',
     this.showCarouselWhenEmpty = true,
     this.carouselHeightFraction = 0.36,
+    this.galleryImageUrls,
     this.aboveBody,
+    this.bodyHeading,
+    this.belowBody,
   });
 
   final String title;
@@ -36,7 +40,10 @@ class InfoDetailPageScaffold extends StatelessWidget {
   final String editTooltip;
   final bool showCarouselWhenEmpty;
   final double carouselHeightFraction;
+  final List<String>? galleryImageUrls;
   final Widget? aboveBody;
+  final Widget? bodyHeading;
+  final Widget? belowBody;
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +56,9 @@ class InfoDetailPageScaffold extends StatelessWidget {
     final double carouselHeight = size.height *
         (isWide ? carouselHeightFraction * 0.9 : carouselHeightFraction);
     final bool showCarousel = imageUrls.isNotEmpty || showCarouselWhenEmpty;
-    final List<String> galleryImages =
-        imageUrls.length > 1 ? imageUrls.skip(1).toList() : const <String>[];
+    final List<String> galleryImages = galleryImageUrls ??
+        (imageUrls.length > 1 ? imageUrls.skip(1).toList() : const <String>[]);
+    final bool hasBody = !InfoParsing.isEmptyBody(body);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -103,14 +111,20 @@ class InfoDetailPageScaffold extends StatelessWidget {
                           const SizedBox(height: 16),
                           aboveBody!,
                         ],
-                        const SizedBox(height: 12),
-                        const Divider(),
-                        const SizedBox(height: 8),
-                        QuillViewerWidget(
-                          jsonContent: body,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
-                        ),
+                        if (hasBody) ...[
+                          const SizedBox(height: 12),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          if (bodyHeading != null) ...[
+                            bodyHeading!,
+                            const SizedBox(height: 8),
+                          ],
+                          QuillViewerWidget(
+                            jsonContent: body,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 8),
+                          ),
+                        ],
                         if (galleryImages.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Text(
@@ -126,6 +140,10 @@ class InfoDetailPageScaffold extends StatelessWidget {
                                   AdaptiveInfoGalleryImage(imageUrl: imageUrl),
                             ),
                           ),
+                        ],
+                        if (belowBody != null) ...[
+                          const SizedBox(height: 20),
+                          belowBody!,
                         ],
                       ],
                     ),

@@ -148,10 +148,18 @@ void main() {
       expect(stats.totalActiveMembers, 4);
     });
 
-    test('query range covers past and upcoming windows', () {
+    test('query range covers chart past and upcoming windows', () {
       expect(
         CellGroupActivityStats.pastWindowStart(now),
         DateTime(2026, 7, 31),
+      );
+      expect(
+        CellGroupActivityStats.chartPastWindowStart(now),
+        DateTime(2026, 5, 23),
+      );
+      expect(
+        CellGroupActivityStats.chartWindowEndExclusive(now),
+        DateTime(2026, 8, 21),
       );
       expect(
         CellGroupActivityStats.upcomingWindowEndExclusive(now),
@@ -159,7 +167,7 @@ void main() {
       );
       expect(
         CellGroupActivityStats.queryRangeStart(now),
-        DateTime(2026, 7, 31),
+        DateTime(2026, 5, 23),
       );
       expect(
         CellGroupActivityStats.queryRangeEndExclusive(now),

@@ -71,6 +71,18 @@ class VolunteerRoleHelpers {
     return next;
   }
 
+  /// Whether [user] should appear in the default People directory / serving
+  /// pickers. Derived from Leader/Admin, team tags, or cell-group leadership
+  /// — not a separate stored flag.
+  static bool userServes({
+    required User user,
+    required CellGroupLeaderIndex cellGroupLeaders,
+  }) {
+    if (user.isLeader) return true;
+    if (user.tagIDs.isNotEmpty) return true;
+    return cellGroupLeaders.contains(user);
+  }
+
   /// Empty [selected] matches everyone. Otherwise the user must have any of
   /// the selected roles (OR within this filter). The Leaders filter includes
   /// area admins.

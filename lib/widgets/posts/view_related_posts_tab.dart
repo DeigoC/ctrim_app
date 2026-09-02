@@ -5,7 +5,9 @@ import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_metadata.dart';
 import '../../utility/app_context.dart';
 import '../../utility/event_context.dart';
+import '../../utility/responsive_layout.dart';
 import '../common/load_progress_body.dart';
+import '../two_column_masonry.dart';
 import 'post_head.dart';
 
 class ViewRelatedPostsTab extends StatefulWidget {
@@ -34,7 +36,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
     super.initState();
-    if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) {
+    if (widget.eventContext.metadata.hasParent ||
+        widget.eventContext.metadata.hasChildren) {
       _loading = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _loadRelatedPosts();
@@ -79,8 +82,11 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
       removeTop: true,
       child: SafeArea(
         top: false,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren) _buildFilterSection(),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (widget.eventContext.metadata.hasParent ||
+              widget.eventContext.metadata.hasChildren)
+            _buildFilterSection(),
           Expanded(child: _buildBody())
         ]),
       ),
@@ -88,7 +94,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   }
 
   Widget _buildBody() {
-    if (!(widget.eventContext.metadata.hasParent || widget.eventContext.metadata.hasChildren)) {
+    if (!(widget.eventContext.metadata.hasParent ||
+        widget.eventContext.metadata.hasChildren)) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -96,7 +103,10 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
             Icon(
               Icons.library_books_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurfaceVariant
+                  .withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -216,7 +226,10 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
             Icon(
               Icons.filter_list_off,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurfaceVariant
+                  .withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -230,10 +243,16 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
       );
     }
 
-    return ListView.separated(
-        separatorBuilder: (context, index) => const Divider(),
-        itemCount: relatedPosts.length,
-        itemBuilder: (_, index) => relatedPosts[index]);
+    return ResponsiveLayout.isWideScreenOf(context)
+        ? SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+            child: TwoColumnMasonry(children: relatedPosts),
+          )
+        : ListView.separated(
+            padding: const EdgeInsets.only(bottom: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            itemCount: relatedPosts.length,
+            itemBuilder: (_, index) => relatedPosts[index]);
   }
 
   List<PostHead> _getFilteredPosts() {
@@ -241,7 +260,9 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
       case RelatedPostFilter.all:
         return _getAllPosts();
       case RelatedPostFilter.parent:
-        return widget.eventContext.metadata.hasParent ? [_getParentPostHead()] : [];
+        return widget.eventContext.metadata.hasParent
+            ? [_getParentPostHead()]
+            : [];
       case RelatedPostFilter.siblings:
         return _getSiblingPosts();
       case RelatedPostFilter.children:
@@ -264,8 +285,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
 
   PostHead _getParentPostHead() {
     // remember that this parent may not exist so we have to fetch and add via FB
-    final thisParent =
-        _appContext.eventHeads.firstWhere((e) => e.id.compareTo(widget.eventContext.metadata.parentID!) == 0);
+    final thisParent = _appContext.eventHeads.firstWhere(
+        (e) => e.id.compareTo(widget.eventContext.metadata.parentID!) == 0);
     return PostHead(
         thisHead: thisParent,
         relationTag: PostRelationTag.parent,
@@ -275,9 +296,11 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   }
 
   List<PostHead> _getSiblingPosts() {
-    final siblingPostsID = _appContext.getMetadata(widget.eventContext.metadata.parentID!)!.childrenPostIDs;
-    final sublingPosts =
-        _appContext.eventHeads.where((head) => head.id != widget.eventContext.id && siblingPostsID.contains(head.id));
+    final siblingPostsID = _appContext
+        .getMetadata(widget.eventContext.metadata.parentID!)!
+        .childrenPostIDs;
+    final sublingPosts = _appContext.eventHeads.where((head) =>
+        head.id != widget.eventContext.id && siblingPostsID.contains(head.id));
     return sublingPosts
         .map((e) => PostHead(
             thisHead: e,
@@ -289,8 +312,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   }
 
   List<PostHead> _buildChildrenPosts() {
-    final childrenHeads =
-        _appContext.eventHeads.where((head) => widget.eventContext.metadata.childrenPostIDs.contains(head.id));
+    final childrenHeads = _appContext.eventHeads.where((head) =>
+        widget.eventContext.metadata.childrenPostIDs.contains(head.id));
     return childrenHeads
         .map((e) => PostHead(
             thisHead: e,
@@ -312,11 +335,13 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     if (parentID != null) {
       // fetch parent head
       if (!_appContext.eventHeads.any((e) => e.id == parentID)) {
-        _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
+        _appContext
+            .addOrUpdatePostHead(await _headDbManager.fetchHead(parentID));
       }
 
       // Always refresh parent metadata so siblings stay in sync after bulk creation.
-      final EventSupplementalDBManager dbManager = EventSupplementalDBManager(parentID);
+      final EventSupplementalDBManager dbManager =
+          EventSupplementalDBManager(parentID);
       _appContext.setMetadata(parentID, await dbManager.fetchMetadata());
 
       // fetch siblings - we know for sure that we have the parent meta
@@ -326,7 +351,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
     // fetch children
     for (final childrenID in widget.eventContext.metadata.childrenPostIDs) {
       if (!_appContext.eventHeads.any((e) => e.id == childrenID)) {
-        _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(childrenID));
+        _appContext
+            .addOrUpdatePostHead(await _headDbManager.fetchHead(childrenID));
       }
     }
 
@@ -336,7 +362,8 @@ class _ViewRelatedPostsTabState extends State<ViewRelatedPostsTab> {
   Future<void> _getSiblingPostID(final EventMetadata parentMeta) async {
     for (final siblingID in parentMeta.childrenPostIDs) {
       if (!_appContext.eventHeads.any((e) => e.id == siblingID)) {
-        _appContext.addOrUpdatePostHead(await _headDbManager.fetchHead(siblingID));
+        _appContext
+            .addOrUpdatePostHead(await _headDbManager.fetchHead(siblingID));
       }
     }
   }

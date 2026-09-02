@@ -42,6 +42,8 @@ Saving edits with an **update log** can notify people who **bookmarked** that po
 
 The **web app** is the current focus, so getting notifications working reliably in the browser (“This device”) matters most right now. See [Platforms](platforms.md).
 
+When a notification arrives on this device, tapping it (or **View post** / **View page** in the in-app banner) opens the related post or teaching page if you are signed in.
+
 After sign-in or creating an account on the web, the app shows a short in-app explanation (**Stay in the loop**) before the browser’s Allow prompt, and points people to **Personal → Push Notifications** to fine-tune later. Choosing **Not now** skips the browser prompt for that session pattern until they enable from Personal.
 
 ## Related pages
