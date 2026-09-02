@@ -115,7 +115,7 @@ void main() {
   });
 
   group('BulletinListing.apply sort', () {
-    test('relevancy is recent head, upcoming week, then the rest', () {
+    test('relevancy is next upcoming, recent past, then the rest', () {
       final visible = apply([
         head(
           id: 'old-update',
@@ -148,10 +148,10 @@ void main() {
         ),
       ]);
       expect(visible.map((e) => e.id), [
-        'old-update',
         'today-early',
         'today-late',
         'tomorrow',
+        'old-update',
         'next-week',
         'fresh-undated',
       ]);
@@ -170,15 +170,14 @@ void main() {
         ),
         head(
           id: 'old-update',
-          eventDate: DateTime(2026, 8, 10),
+          eventDate: DateTime(2026, 8, 21, 10),
           recentDate: DateTime(2026, 8, 21),
         ),
       ]);
-      expect(visible.map((e) => e.id), ['old-update', 'tomorrow', 'far-future']);
+      expect(visible.map((e) => e.id), ['tomorrow', 'far-future', 'old-update']);
     });
 
-    test('relevancy shows recent head before upcoming week, then more future',
-        () {
+    test('relevancy caps upcoming head at three before recent past', () {
       final heads = [
         for (var i = 1; i <= 10; i++)
           head(id: 'u$i', eventDate: DateTime(2026, 8, 22 + i, 10)),
@@ -186,20 +185,17 @@ void main() {
         head(id: 'last-week', eventDate: DateTime(2026, 8, 15, 10)),
       ];
       final ids = apply(heads).map((e) => e.id).toList();
-      expect(ids.take(10), [
-        'yesterday',
-        'last-week',
+      expect(ids.take(8), [
         'u1',
         'u2',
         'u3',
+        'yesterday',
+        'last-week',
         'u4',
         'u5',
         'u6',
-        'u7',
-        'u8',
       ]);
-      expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u1')));
-      expect(ids.indexOf('u9'), greaterThan(ids.indexOf('u8')));
+      expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u4')));
     });
 
     test('soonest puts upcoming before past and undated last', () {

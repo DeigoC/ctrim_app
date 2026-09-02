@@ -69,14 +69,11 @@ class BulletinListing {
   /// An event stays in Upcoming until this long after its start.
   static const Duration upcomingGrace = Duration(hours: 12);
 
-  /// How many recent past events lead the relevancy feed.
-  static const int relevancyRecentHeadMax = 4;
+  /// How many upcoming events lead the relevancy feed.
+  static const int relevancyUpcomingHeadMax = 3;
 
-  /// Pool for the recent-events head (most recent first).
+  /// Recent past events shown right after the upcoming head.
   static const Duration relevancyRecentPastWindow = Duration(days: 14);
-
-  /// Upcoming block: today through this many days ahead.
-  static const Duration relevancyUpcomingWeekWindow = Duration(days: 7);
 
   static List<EventHead> apply({
     required Iterable<EventHead> heads,
@@ -170,57 +167,42 @@ class BulletinListing {
     }
   }
 
-  /// A few recent events, then upcoming within a week, then everything else.
+  /// Next few upcoming events, then recent past, then everything else.
   static List<EventHead> _sortRelevancy(
     final List<EventHead> heads,
     final DateTime now,
   ) {
-    final recentPastPool = <EventHead>[];
-    final upcomingWeek = <EventHead>[];
-    final farFuture = <EventHead>[];
-    final otherRecentPast = <EventHead>[];
+    final upcoming = <EventHead>[];
+    final recentPast = <EventHead>[];
     final otherPast = <EventHead>[];
     final undated = <EventHead>[];
     final recentPastCutoff = now.subtract(relevancyRecentPastWindow);
-    final upcomingWeekCutoff = now.add(relevancyUpcomingWeekWindow);
 
     for (final head in heads) {
       final eventDate = head.eventDate;
       if (eventDate == null) {
         undated.add(head);
-      } else if (isTodayOrFuture(head, now) &&
-          !eventDate.isAfter(upcomingWeekCutoff)) {
-        upcomingWeek.add(head);
-      } else if (eventDate.isAfter(upcomingWeekCutoff)) {
-        farFuture.add(head);
+      } else if (isTodayOrFuture(head, now)) {
+        upcoming.add(head);
       } else if (!eventDate.isBefore(recentPastCutoff)) {
-        recentPastPool.add(head);
+        recentPast.add(head);
       } else {
         otherPast.add(head);
       }
     }
 
-    recentPastPool.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
-    upcomingWeek.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
-    farFuture.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+    upcoming.sort((a, b) => a.eventDate!.compareTo(b.eventDate!));
+    recentPast.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
     otherPast.sort((a, b) => b.recentDate.compareTo(a.recentDate));
     undated.sort((a, b) => b.recentDate.compareTo(a.recentDate));
 
-    final recentHead = recentPastPool.take(relevancyRecentHeadMax);
-    final recentHeadIds = recentHead.map((head) => head.id).toSet();
-    for (final head in recentPastPool.skip(relevancyRecentHeadMax)) {
-      otherRecentPast.add(head);
-    }
-    otherRecentPast.sort((a, b) => b.eventDate!.compareTo(a.eventDate!));
-
-    final upcomingBlock =
-        upcomingWeek.where((head) => !recentHeadIds.contains(head.id));
+    final upcomingHead = upcoming.take(relevancyUpcomingHeadMax);
+    final upcomingTail = upcoming.skip(relevancyUpcomingHeadMax);
 
     return [
-      ...recentHead,
-      ...upcomingBlock,
-      ...farFuture,
-      ...otherRecentPast,
+      ...upcomingHead,
+      ...recentPast,
+      ...upcomingTail,
       ...otherPast,
       ...undated,
     ];

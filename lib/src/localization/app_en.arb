@@ -1097,7 +1097,7 @@
   "@bulletinSortRelevancy": {
     "description": "Default bulletin sort: today, then upcoming, then the rest"
   },
-  "bulletinSortRelevancySubtitle": "Recent events, then the next week",
+  "bulletinSortRelevancySubtitle": "Next few events, then recent past",
   "@bulletinSortRelevancySubtitle": {
     "description": "Explains relevancy sort on the bulletin"
   },
