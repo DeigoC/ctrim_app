@@ -232,5 +232,64 @@ void main() {
         );
       });
     });
+
+    group('inactive profile visibility', () {
+      final admin =
+          User(id: '1', forname: 'Ada', surname: 'Admin', isAreaAdmin: true);
+      final active =
+          User(id: '2', forname: 'Pat', surname: 'Active', status: UserStatus.active);
+      final hidden = User(
+        id: '3',
+        forname: 'Hid',
+        surname: 'Den',
+        status: UserStatus.hidden,
+      );
+
+      test('hides inactive profiles unless showInactive for area admin', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: hidden,
+            viewer: admin,
+            placeholdersOnly: false,
+            showInactive: false,
+          ),
+          isFalse,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: hidden,
+            viewer: admin,
+            placeholdersOnly: false,
+            showInactive: true,
+          ),
+          isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: hidden,
+            viewer: active,
+            placeholdersOnly: false,
+            showInactive: true,
+          ),
+          isFalse,
+        );
+      });
+
+      test('canSignInWithVolunteerProfile requires active status', () {
+        expect(canSignInWithVolunteerProfile(active), isTrue);
+        expect(canSignInWithVolunteerProfile(hidden), isFalse);
+        expect(
+          canSignInWithVolunteerProfile(
+            User(id: '4', forname: 'A', surname: 'B', status: UserStatus.archived),
+          ),
+          isFalse,
+        );
+      });
+
+      test('isSelectableVolunteerProfile matches sign-in rule', () {
+        expect(isSelectableVolunteerProfile(active), isTrue);
+        expect(isSelectableVolunteerProfile(hidden), isFalse);
+      });
+    });
   });
 }

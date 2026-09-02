@@ -542,6 +542,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersShowPlaceholders => 'Placeholders';
 
   @override
+  String get volunteersShowInactive => 'Hidden & archived';
+
+  @override
+  String get volunteersStatusActive => 'Active';
+
+  @override
+  String get volunteersStatusHidden => 'Hidden';
+
+  @override
+  String get volunteersStatusArchived => 'Archived';
+
+  @override
+  String get volunteersStatusLabel => 'Profile status';
+
+  @override
+  String get volunteersStatusHelper =>
+      'Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.';
+
+  @override
+  String get volunteersStatusConfirmTitle => 'Change profile status?';
+
+  @override
+  String get volunteersStatusConfirmMessage =>
+      'They will be removed from People and pickers, cannot sign in, and leader/admin permissions will be cleared. Past events and attendance still show their name.';
+
+  @override
+  String get volunteersInactiveProfileBanner =>
+      'This profile is hidden from the directory';
+
+  @override
+  String get volunteersArchivedProfileBanner => 'This profile is archived';
+
+  @override
+  String get volunteersLoginInactive =>
+      'Your volunteer profile is no longer active. Please contact an admin if you think this is a mistake.';
+
+  @override
+  String get volunteersEmptyInactive =>
+      'No hidden or archived profiles to show';
+
+  @override
   String get volunteersEmptyPlaceholders => 'No placeholder profiles to show';
 
   @override

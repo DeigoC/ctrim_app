@@ -43,6 +43,24 @@ void main() {
       createdByUserID: '1',
     );
 
+    test('round-trips v4 encode/decode including profile status', () {
+      final hidden = User(
+        id: '8',
+        forname: 'Hidden',
+        surname: 'User',
+        status: UserStatus.hidden,
+      );
+      final encoded = UsersLocalCache.encode(
+        lastUpdate: 100,
+        appVersion: '1.2.4',
+        users: [hidden],
+      );
+      final decoded =
+          UsersLocalCache.decodeBody(encoded.split('\n').sublist(1));
+      expect(decoded, isNotNull);
+      expect(decoded!.single.status, UserStatus.hidden);
+    });
+
     test('round-trips v3 encode/decode including admin and placeholder', () {
       final encoded = UsersLocalCache.encode(
         lastUpdate: 99,

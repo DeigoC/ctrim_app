@@ -103,6 +103,7 @@ class ChurchLocationStats {
     var people = 0;
     for (final user in users) {
       if (user.isPlaceholder) continue;
+      if (user.isProfileInactive) continue;
       if (!VolunteerLocations.postLocationMatchesFilter(
         postLocation: user.location,
         locationFilter: name,

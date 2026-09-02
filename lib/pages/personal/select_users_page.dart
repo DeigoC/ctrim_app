@@ -12,6 +12,7 @@ import '../../utility/catalog/catalog_picker_helpers.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/persist_users_local_cache.dart';
+import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -451,6 +452,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       users = users.where((user) => !excluded.contains(user.id));
     }
 
+    users = users.where((user) =>
+        isSelectableVolunteerProfile(user) || _selectedUIDs.contains(user.id));
+
     if (!widget.includePlaceholders) {
       users = users.where(
           (user) => !user.isPlaceholder || _selectedUIDs.contains(user.id));
@@ -589,9 +593,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           .where((id) {
             final user = userMap[id];
             return user != null &&
+                isSelectableVolunteerProfile(user) &&
                 (!user.isPlaceholder || _selectedUIDs.contains(id));
           })
           .toSet();
+    } else {
+      ids = ids.where((id) {
+        final user = appContext.userById(id);
+        return user == null || isSelectableVolunteerProfile(user);
+      }).toSet();
     }
 
     final max = widget.maxSelection;

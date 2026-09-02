@@ -338,6 +338,25 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       padding: EdgeInsets.fromLTRB(
           webHorizontalPadding, 16, webHorizontalPadding, 24),
       children: [
+        if (_user.isProfileInactive &&
+            _appContext.currentUser.canManageVolunteers)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: MaterialBanner(
+              leading: Icon(
+                Icons.visibility_off_outlined,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              content: Text(
+                _user.isProfileArchived
+                    ? l10n.volunteersArchivedProfileBanner
+                    : l10n.volunteersInactiveProfileBanner,
+              ),
+              backgroundColor:
+                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              actions: const [SizedBox.shrink()],
+            ),
+          ),
         if (isWide)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

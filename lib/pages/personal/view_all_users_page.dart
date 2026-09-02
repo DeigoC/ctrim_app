@@ -43,6 +43,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Set<VolunteerRoleKind> _selectedRoles = {};
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
   bool _placeholdersOnly = false;
+  bool _showInactive = false;
   bool _servingOnly = true;
   bool _refreshing = false;
   String? _refreshError;
@@ -379,6 +380,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     var count = 0;
     if (!_servingOnly) count++;
     if (_placeholdersOnly) count++;
+    if (_showInactive) count++;
     count += _selectedRoles.length;
     count += _selectedTagIDs.length;
     return count;
@@ -390,6 +392,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final parts = <String>[];
     if (_servingOnly) parts.add(l10n.volunteersFilterServing);
     if (_placeholdersOnly) parts.add(l10n.volunteersShowPlaceholders);
+    if (_showInactive) parts.add(l10n.volunteersShowInactive);
     if (_selectedRoles.contains(VolunteerRoleKind.leader)) {
       parts.add(l10n.volunteersFilterLeaders);
     }
@@ -410,6 +413,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     setState(() {
       _servingOnly = true;
       _placeholdersOnly = false;
+      _showInactive = false;
       _selectedRoles = {};
       _selectedTagIDs = {};
     });
@@ -647,9 +651,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            user.isPlaceholder
-                ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
-                : user.location,
+            _personLocationLine(user, l10n),
           ),
           if (meta != null) meta,
         ],
@@ -707,9 +709,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      user.isPlaceholder
-                          ? '${l10n.volunteersPlaceholderBadge} · ${user.location}'
-                          : user.location,
+                      _personLocationLine(user, l10n),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -826,6 +826,15 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     onChanged: (value) =>
                         refreshSheet(() => _placeholdersOnly = value),
                   ),
+                if (canEdit)
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    title: Text(l10n.volunteersShowInactive),
+                    subtitle: Text(l10n.volunteersStatusHelper),
+                    value: _showInactive,
+                    onChanged: (value) =>
+                        refreshSheet(() => _showInactive = value),
+                  ),
                 _filterSectionLabel(l10n.volunteersFilterRolesSection),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -903,6 +912,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         onPressed: () => refreshSheet(() {
                           _servingOnly = true;
                           _placeholdersOnly = false;
+                          _showInactive = false;
                           _selectedRoles = {};
                           _selectedTagIDs = {};
                         }),
@@ -931,6 +941,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           user: user,
           viewer: currentUser,
           placeholdersOnly: _placeholdersOnly,
+          showInactive: _showInactive,
         ));
 
     if (!_placeholdersOnly && _servingOnly) {
@@ -975,6 +986,19 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         };
       });
     return result;
+  }
+
+  String _personLocationLine(User user, AppLocalizations l10n) {
+    if (user.isProfileArchived) {
+      return '${l10n.volunteersStatusArchived} · ${user.location}';
+    }
+    if (user.isProfileHidden) {
+      return '${l10n.volunteersStatusHidden} · ${user.location}';
+    }
+    if (user.isPlaceholder) {
+      return '${l10n.volunteersPlaceholderBadge} · ${user.location}';
+    }
+    return user.location;
   }
 
   String _pageTitle(AppLocalizations l10n) {
