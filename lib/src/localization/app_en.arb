@@ -179,6 +179,58 @@
   "@userProfileNoCellGroups": {
     "description": "Message when a person is not listed on any cell group roster or as a leader"
   },
+  "userProfileCellGroupAttendedRecent": "Attended in the past 3 weeks",
+  "@userProfileCellGroupAttendedRecent": {
+    "description": "Profile note when the person checked in at a cell group meeting in the past 3 weeks"
+  },
+  "userProfileCellGroupMeetingsAttendedCount": "{count, plural, =1{Attended 1 cell group meeting in the past 3 weeks} other{Attended {count} cell group meetings in the past 3 weeks}}",
+  "@userProfileCellGroupMeetingsAttendedCount": {
+    "description": "Profile attendance summary with meeting count in the past 3 weeks",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "userProfileCellGroupGroupsAttendedSuffix": "across {count, plural, =1{1 group} other{{count} groups}}",
+  "@userProfileCellGroupGroupsAttendedSuffix": {
+    "description": "Suffix when attendance spans multiple cell groups",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "userProfileCellGroupViewRecentMeeting": "View most recent meeting",
+  "@userProfileCellGroupViewRecentMeeting": {
+    "description": "Link label to open the person's latest attended cell group meeting post"
+  },
+  "userProfileCellGroupViewRecentMeetingNamed": "View {title}",
+  "@userProfileCellGroupViewRecentMeetingNamed": {
+    "description": "Link label to open a named cell group meeting post",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Alpha CG · 12 Aug"
+      }
+    }
+  },
+  "userProfileCellGroupNoAttendanceRecent": "No cell group attendance in the past 3 weeks",
+  "@userProfileCellGroupNoAttendanceRecent": {
+    "description": "Profile note when the person did not check in at a cell group meeting in the past 3 weeks"
+  },
+  "userProfileCellGroupLastAttended": "Last attended {date}",
+  "@userProfileCellGroupLastAttended": {
+    "description": "Profile detail for the most recent cell group check-in",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "12 Aug"
+      }
+    }
+  },
   "userProfileUpcomingTasks": "Upcoming tasks",
   "@userProfileUpcomingTasks": {
     "description": "Section title on a volunteer profile for schedule preview"

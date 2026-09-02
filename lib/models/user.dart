@@ -4,6 +4,15 @@ import 'user_activity_log.dart';
 import 'user_post_involvement.dart';
 import 'user_role_assignment.dart';
 
+/// Profile visibility for the volunteers directory and new assignments.
+class UserStatus {
+  static const String active = 'active';
+  static const String hidden = 'hidden';
+  static const String archived = 'archived';
+
+  static const List<String> all = [active, hidden, archived];
+}
+
 class User {
   late String _forename,
       _surname,
@@ -13,6 +22,7 @@ class User {
       _location,
       _createdByUserID;
   late bool _isAreaAdmin, _isLeader, _isPlaceholder;
+  late String _status;
   late List<String> _tagIDs;
   List<UserRoleAssignment>? _roles;
   List<UserPostInvolvement>? _posts;
@@ -29,7 +39,8 @@ class User {
       String authID = '',
       List<String> tagIDs = const [],
       String createdByUserID = '',
-      bool isPlaceholder = false}) {
+      bool isPlaceholder = false,
+      String status = UserStatus.active}) {
     _id = id;
     _forename = forname;
     _surname = surname;
@@ -41,6 +52,7 @@ class User {
     _tagIDs = List<String>.from(tagIDs);
     _createdByUserID = createdByUserID;
     _isPlaceholder = isPlaceholder;
+    _status = UserStatus.all.contains(status) ? status : UserStatus.active;
   }
 
   User.fromMap(final String id, final Map<String, dynamic> data)
@@ -56,7 +68,13 @@ class User {
         _createdByUserID = (data['CreatedByUserID'] as String?) ?? '',
         // Linked accounts are never placeholders, even if a stale flag remains.
         _isPlaceholder = ((data['AuthID'] as String?) ?? '').trim().isEmpty &&
-            ((data['IsPlaceholder'] as bool?) ?? false);
+            ((data['IsPlaceholder'] as bool?) ?? false),
+        _status = _parseStatus(data['Status']);
+
+  static String _parseStatus(final dynamic raw) {
+    final value = (raw as String?)?.trim() ?? '';
+    return UserStatus.all.contains(value) ? value : UserStatus.active;
+  }
 
   static List<String> _parseTagIDs(final dynamic raw) {
     if (raw is! List) return [];
@@ -75,6 +93,7 @@ class User {
       'Tags': _tagIDs,
       'CreatedByUserID': _createdByUserID,
       'IsPlaceholder': _isPlaceholder,
+      'Status': _status,
     };
   }
 
@@ -85,6 +104,9 @@ class User {
   void setIsPlaceholder(final bool value) => _isPlaceholder = value;
   void setForename(final String value) => _forename = value;
   void setSurname(final String value) => _surname = value;
+  void setStatus(final String value) {
+    _status = UserStatus.all.contains(value) ? value : UserStatus.active;
+  }
 
   void setRoles(final List<UserRoleAssignment> newRoles) => _roles = newRoles;
   void removeRoles(final List<String> postIDs) =>
@@ -133,6 +155,11 @@ class User {
   bool get isLeader => _isLeader || _isAreaAdmin;
   String get createdByUserID => _createdByUserID;
   bool get isPlaceholder => _isPlaceholder;
+  String get status => _status;
+  bool get isProfileActive => _status == UserStatus.active;
+  bool get isProfileHidden => _status == UserStatus.hidden;
+  bool get isProfileArchived => _status == UserStatus.archived;
+  bool get isProfileInactive => !isProfileActive;
 
   /// Churches, testimonials, and CTRIM info add/edit/delete.
   bool get canManageInfo => isLeader;

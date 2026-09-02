@@ -133,6 +133,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userProfileNoCellGroups => 'Not in a cell group.';
 
   @override
+  String get userProfileCellGroupAttendedRecent =>
+      'Attended in the past 3 weeks';
+
+  @override
+  String userProfileCellGroupMeetingsAttendedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Attended $count cell group meetings in the past 3 weeks',
+      one: 'Attended 1 cell group meeting in the past 3 weeks',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String userProfileCellGroupGroupsAttendedSuffix(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+    );
+    return 'across $_temp0';
+  }
+
+  @override
+  String get userProfileCellGroupViewRecentMeeting =>
+      'View most recent meeting';
+
+  @override
+  String userProfileCellGroupViewRecentMeetingNamed(String title) {
+    return 'View $title';
+  }
+
+  @override
+  String get userProfileCellGroupNoAttendanceRecent =>
+      'No cell group attendance in the past 3 weeks';
+
+  @override
+  String userProfileCellGroupLastAttended(String date) {
+    return 'Last attended $date';
+  }
+
+  @override
   String get userProfileUpcomingTasks => 'Upcoming tasks';
 
   @override
