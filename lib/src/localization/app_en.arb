@@ -24,6 +24,10 @@
   "@volunteersFilterServing": {
     "description": "Filter chip for people who serve (leaders, team tags, or cell-group leaders)"
   },
+  "volunteersFilterEveryone": "Everyone",
+  "@volunteersFilterEveryone": {
+    "description": "Active filter summary when the serving-only toggle is off"
+  },
   "volunteersSearchHint": "Search people...",
   "@volunteersSearchHint": {
     "description": "Hint text for the people directory search field"
@@ -840,21 +844,25 @@
   "@volunteersSortTooltip": {
     "description": "Tooltip for the people directory sort menu in the app bar"
   },
-  "volunteersFilterTooltip": "Refine list",
+  "volunteersFilterTooltip": "Refine & sort",
   "@volunteersFilterTooltip": {
     "description": "App bar tooltip for the people directory filter button"
   },
-  "volunteersFilterSheetTitle": "Refine list",
+  "volunteersFilterSheetTitle": "Refine & sort",
   "@volunteersFilterSheetTitle": {
     "description": "Title for the people directory filter bottom sheet"
   },
-  "volunteersFilterSheetSubtitle": "Narrow by role, team, or who is shown",
+  "volunteersFilterSheetSubtitle": "Location, sort, role, team, or who is shown",
   "@volunteersFilterSheetSubtitle": {
     "description": "Subtitle for the people directory filter bottom sheet"
   },
   "volunteersFilterShowSection": "Show",
   "@volunteersFilterShowSection": {
     "description": "Section label for serving / placeholder toggles in people filters"
+  },
+  "volunteersFilterLocationSection": "Location",
+  "@volunteersFilterLocationSection": {
+    "description": "Section label for location chips in the people directory filter sheet"
   },
   "volunteersFilterServingSubtitle": "People who serve on teams or lead groups",
   "@volunteersFilterServingSubtitle": {
@@ -879,7 +887,7 @@
   },
   "volunteersDirectoryIntro": "Browse leaders and team members in the church family.",
   "@volunteersDirectoryIntro": {
-    "description": "Short intro under location chips on the people directory"
+    "description": "Short intro on the people directory"
   },
   "volunteersClearFilters": "Clear filters",
   "@volunteersClearFilters": {

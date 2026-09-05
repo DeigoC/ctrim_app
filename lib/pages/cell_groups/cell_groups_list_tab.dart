@@ -225,7 +225,7 @@ class _CellGroupCard extends StatelessWidget {
         },
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final stripWidth = (constraints.maxWidth * 0.2).clamp(72.0, 112.0);
+            final stripWidth = (constraints.maxWidth * 0.28).clamp(96.0, 148.0);
             return ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 132),
               child: Stack(
@@ -322,7 +322,7 @@ class _CellGroupCard extends StatelessWidget {
   }
 }
 
-/// Tall leading panel (~1/5 of card) with leader photo or groups placeholder.
+/// Tall leading panel (~28% of card) with leader photo or groups placeholder.
 class _LeaderPhotoStrip extends StatelessWidget {
   const _LeaderPhotoStrip({required this.leader});
 

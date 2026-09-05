@@ -390,82 +390,65 @@ class _SnapshotTiles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final tiles = [
-      _HubStatTile(
-        icon: Icons.event_note_outlined,
-        value: '${stats.postCount}',
-        label: l10n.churchHubPostsLabel,
-        hint: l10n.churchHubPostsHint,
-      ),
-      _HubStatTile(
-        icon: Icons.groups_outlined,
-        value: '${stats.cellGroupCount}',
-        label: l10n.churchHubCellGroupsLabel,
-        hint: l10n.churchHubCellGroupsHint,
-      ),
-      _HubStatTile(
-        icon: Icons.people_outline,
-        value: '${stats.peopleCount}',
-        label: l10n.churchHubPeopleLabel,
-        hint: l10n.churchHubPeopleHint,
-      ),
-    ];
+    final cellGroupsTile = _HubStatTile(
+      icon: Icons.groups_outlined,
+      value: '${stats.cellGroupCount}',
+      label: l10n.churchHubCellGroupsLabel,
+      hint: l10n.churchHubCellGroupsHint,
+    );
+    final postsTile = _HubStatTile(
+      icon: Icons.event_note_outlined,
+      value: '${stats.postCount}',
+      label: l10n.churchHubPostsLabel,
+      hint: l10n.churchHubPostsHint,
+    );
+    final peopleTile = _HubStatTile(
+      icon: Icons.people_outline,
+      value: '${stats.peopleCount}',
+      label: l10n.churchHubPeopleLabel,
+      hint: l10n.churchHubPeopleHint,
+    );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 520;
-        final tilesSection = wide
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (var i = 0; i < tiles.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 12),
-                    Expanded(child: tiles[i]),
-                  ],
-                ],
-              )
-            : Column(
-                children: [
-                  for (var i = 0; i < tiles.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 12),
-                    tiles[i],
-                  ],
-                ],
-              );
+    final now = DateTime.now();
+    final chartStart = ChurchLocationStats.queryRangeStart(now);
+    final chartEnd = ChurchLocationStats.queryRangeEndExclusive(now);
+    final countPoints = ActivityTimeSeries.fromPosts(
+      posts: stats.posts,
+      metric: ActivityTimeSeriesMetric.count,
+      startInclusive: chartStart,
+      endExclusive: chartEnd,
+    );
+    final attendancePoints = ActivityTimeSeries.fromPosts(
+      posts: stats.posts,
+      metric: ActivityTimeSeriesMetric.attendance,
+      startInclusive: chartStart,
+      endExclusive: chartEnd,
+    );
 
-        final now = DateTime.now();
-        final chartStart = ChurchLocationStats.queryRangeStart(now);
-        final chartEnd = ChurchLocationStats.queryRangeEndExclusive(now);
-        final countPoints = ActivityTimeSeries.fromPosts(
-          posts: stats.posts,
-          metric: ActivityTimeSeriesMetric.count,
-          startInclusive: chartStart,
-          endExclusive: chartEnd,
-        );
-        final attendancePoints = ActivityTimeSeries.fromPosts(
-          posts: stats.posts,
-          metric: ActivityTimeSeriesMetric.attendance,
-          startInclusive: chartStart,
-          endExclusive: chartEnd,
-        );
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        cellGroupsTile,
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            tilesSection,
-            const SizedBox(height: 20),
-            ActivityTrendSection(
-              title: l10n.churchHubActivityTrendTitle,
-              subtitle: l10n.churchHubActivityTrendSubtitle,
-              countLabel: l10n.churchHubActivityTrendMetricPosts,
-              countPoints: countPoints,
-              attendancePoints: attendancePoints,
-              emptyMessage: l10n.activityTrendEmpty,
-              weeklyHint: l10n.activityTrendWeeklyHint,
-            ),
+            Expanded(child: postsTile),
+            const SizedBox(width: 12),
+            Expanded(child: peopleTile),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 20),
+        ActivityTrendSection(
+          title: l10n.churchHubActivityTrendTitle,
+          subtitle: l10n.churchHubActivityTrendSubtitle,
+          countLabel: l10n.churchHubActivityTrendMetricPosts,
+          countPoints: countPoints,
+          attendancePoints: attendancePoints,
+          emptyMessage: l10n.activityTrendEmpty,
+          weeklyHint: l10n.activityTrendWeeklyHint,
+        ),
+      ],
     );
   }
 }
@@ -490,7 +473,7 @@ class _HubStatTile extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(12),
@@ -500,15 +483,15 @@ class _HubStatTile extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: colorScheme.primary, size: 28),
-          const SizedBox(height: 10),
+          Icon(icon, color: colorScheme.primary, size: 24),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: theme.textTheme.headlineMedium?.copyWith(
+            style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
@@ -516,7 +499,7 @@ class _HubStatTile extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             hint,
             textAlign: TextAlign.center,

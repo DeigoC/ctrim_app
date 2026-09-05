@@ -56,6 +56,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
   @override
   Widget build(BuildContext context) {
     widget.eventContext.program.orderProgramsByStartTime();
+    widget.eventContext.program.ensureUniqueRoleIds();
     if (widget.eventContext.head.eventDate != null) {
       return _buildBodyWithEventDate();
     }

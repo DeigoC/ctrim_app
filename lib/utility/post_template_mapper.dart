@@ -92,8 +92,8 @@ class PostTemplateMapper {
 
       if (roleUids.isNotEmpty) {
         eventContext.addRoleAdditionNotification(roleUids, roleId);
-        roleId++;
       }
+      roleId++;
     }
     eventContext.program.setAddress(template.address);
     eventContext.program.setAllDay(template.allDay);

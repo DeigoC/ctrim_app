@@ -12,7 +12,7 @@
 ## Register someone
 
 1. Open **Personal**.  
-2. Open **Who's who** (under **People**). The list starts on people who **serve** at your location — turn **Serving** off in **Refine list** to see everyone.  
+2. Open **Who's who** (under **People**). The list starts on people who **serve** at your location — turn **Serving** off in **Refine & sort** to see everyone.  
 3. Choose **Register** / **Add**.  
 4. Enter name and other required details (location, tags, roles as applicable).  
 5. Save.  
