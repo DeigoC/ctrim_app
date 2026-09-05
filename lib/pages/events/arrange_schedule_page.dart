@@ -82,6 +82,7 @@ class _ArrangeSchedulePageState extends State<ArrangeSchedulePage> {
   }
 
   Widget _buildBody() {
+    widget.eventContext.program.ensureUniqueRoleIds();
     final isWide = ResponsiveLayout.isWideScreenOf(context);
     final layout = ScheduleTimelineLayout.build(
       roles: widget.eventContext.program.roles,

@@ -124,6 +124,12 @@ abstract class AppLocalizations {
   /// **'Serving'**
   String get volunteersFilterServing;
 
+  /// Active filter summary when the serving-only toggle is off
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get volunteersFilterEveryone;
+
   /// Hint text for the people directory search field
   ///
   /// In en, this message translates to:
@@ -1165,19 +1171,19 @@ abstract class AppLocalizations {
   /// App bar tooltip for the people directory filter button
   ///
   /// In en, this message translates to:
-  /// **'Refine list'**
+  /// **'Refine & sort'**
   String get volunteersFilterTooltip;
 
   /// Title for the people directory filter bottom sheet
   ///
   /// In en, this message translates to:
-  /// **'Refine list'**
+  /// **'Refine & sort'**
   String get volunteersFilterSheetTitle;
 
   /// Subtitle for the people directory filter bottom sheet
   ///
   /// In en, this message translates to:
-  /// **'Narrow by role, team, or who is shown'**
+  /// **'Location, sort, role, team, or who is shown'**
   String get volunteersFilterSheetSubtitle;
 
   /// Section label for serving / placeholder toggles in people filters
@@ -1185,6 +1191,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show'**
   String get volunteersFilterShowSection;
+
+  /// Section label for location chips in the people directory filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get volunteersFilterLocationSection;
 
   /// Helper under the Serving toggle in people filters
   ///
@@ -1210,7 +1222,7 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 person} other{{count} people}}'**
   String volunteersShowingCount(int count);
 
-  /// Short intro under location chips on the people directory
+  /// Short intro on the people directory
   ///
   /// In en, this message translates to:
   /// **'Browse leaders and team members in the church family.'**

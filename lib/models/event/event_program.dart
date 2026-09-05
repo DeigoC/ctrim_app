@@ -51,6 +51,7 @@ class EventProgram {
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch
       });
     }
+    ensureUniqueRoleIds();
   }
 
   Map<String, Object?> toJson() {
@@ -139,6 +140,40 @@ class EventProgram {
       'for_guests': forGuests,
       'id': id
     });
+  }
+
+  /// Makes every role id unique, keeping the first occurrence of a duplicate.
+  ///
+  /// Posts created from templates used to reuse an id for every unassigned
+  /// slot in a batch, so tapping one schedule block highlighted several.
+  /// Returns true when any id was rewritten.
+  bool ensureUniqueRoleIds() {
+    final used = <int>{};
+    var maxId = 0;
+    for (final role in _roles) {
+      final id = _intId(role['id']);
+      if (id > maxId) maxId = id;
+    }
+    var nextId = maxId + 1;
+    var changed = false;
+    for (final role in _roles) {
+      final id = _intId(role['id']);
+      if (used.contains(id)) {
+        role['id'] = nextId++;
+        changed = true;
+        used.add(role['id'] as int);
+      } else {
+        role['id'] = id;
+        used.add(id);
+      }
+    }
+    return changed;
+  }
+
+  static int _intId(final Object? raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return 0;
   }
 
   void removeRole(final int id) => _roles.removeWhere((entry) => entry['id'] == id);

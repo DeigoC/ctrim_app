@@ -134,6 +134,26 @@ void main() {
         expect(() => program.roles.add({}), throwsUnsupportedError);
       });
 
+      test('ensureUniqueRoleIds reassigns later duplicates and keeps the first',
+          () {
+        final program = EventProgram();
+        program.addRole(uids: [], title: 'Tithes', start: null, end: null, id: 10);
+        program.addRole(uids: [], title: 'Song', start: null, end: null, id: 10);
+        program.addRole(uids: [], title: 'Prayer', start: null, end: null, id: 10);
+        program.addRole(uids: [], title: 'Eating', start: null, end: null, id: 11);
+
+        expect(program.ensureUniqueRoleIds(), isTrue);
+        expect(program.roles[0]['id'], 10);
+        expect(program.roles[3]['id'], 11);
+        expect(
+          program.roles.map((role) => role['id']).toSet().length,
+          program.roles.length,
+        );
+        expect(program.roles[1]['id'], isNot(10));
+        expect(program.roles[1]['id'], isNot(11));
+        expect(program.ensureUniqueRoleIds(), isFalse);
+      });
+
       test('toJson omits timestamps for roles without start/end', () {
         final program = EventProgram();
         program.addRole(uids: ['user-1'], title: 'Open slot', start: null, end: null, id: 3000);

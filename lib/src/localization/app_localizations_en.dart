@@ -26,6 +26,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersFilterServing => 'Serving';
 
   @override
+  String get volunteersFilterEveryone => 'Everyone';
+
+  @override
   String get volunteersSearchHint => 'Search people...';
 
   @override
@@ -628,17 +631,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersSortTooltip => 'Sort people';
 
   @override
-  String get volunteersFilterTooltip => 'Refine list';
+  String get volunteersFilterTooltip => 'Refine & sort';
 
   @override
-  String get volunteersFilterSheetTitle => 'Refine list';
+  String get volunteersFilterSheetTitle => 'Refine & sort';
 
   @override
   String get volunteersFilterSheetSubtitle =>
-      'Narrow by role, team, or who is shown';
+      'Location, sort, role, team, or who is shown';
 
   @override
   String get volunteersFilterShowSection => 'Show';
+
+  @override
+  String get volunteersFilterLocationSection => 'Location';
 
   @override
   String get volunteersFilterServingSubtitle =>

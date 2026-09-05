@@ -238,29 +238,10 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     cellGroupLeaders: cellGroupLeaders,
                   ),
                   icon: Badge(
-                    isLabelVisible: _activeFilterCount > 0,
-                    label: Text('${_activeFilterCount}'),
+                    isLabelVisible: _activeFilterCount(appContext) > 0,
+                    label: Text('${_activeFilterCount(appContext)}'),
                     child: const Icon(Icons.tune),
                   ),
-                ),
-              if (!_isSearching)
-                PopupMenuButton<_VolunteerSortMode>(
-                  icon: const Icon(Icons.sort),
-                  tooltip: l10n.volunteersSortTooltip,
-                  initialValue: _sortMode,
-                  onSelected: (mode) => setState(() => _sortMode = mode),
-                  itemBuilder: (context) => [
-                    CheckedPopupMenuItem(
-                      value: _VolunteerSortMode.surname,
-                      checked: _sortMode == _VolunteerSortMode.surname,
-                      child: Text(l10n.volunteersSortSurname),
-                    ),
-                    CheckedPopupMenuItem(
-                      value: _VolunteerSortMode.tags,
-                      checked: _sortMode == _VolunteerSortMode.tags,
-                      child: Text(l10n.volunteersSortTags),
-                    ),
-                  ],
                 ),
               IconButton(
                 icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -318,12 +299,6 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ),
-              _buildLocationChips(
-                appContext: appContext,
-                cellGroupLeaders: cellGroupLeaders,
-                horizontalPadding: filterHorizontalPadding,
-                l10n: l10n,
-              ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   filterHorizontalPadding,
@@ -342,11 +317,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 l10n: l10n,
                 count: filteredUsers.length,
                 horizontalPadding: filterHorizontalPadding,
+                appContext: appContext,
               ),
-              if (_filterSummaryParts(l10n).isNotEmpty)
+              if (_hasNonDefaultFilters(appContext))
                 _buildActiveFiltersBanner(
                   l10n: l10n,
                   horizontalPadding: filterHorizontalPadding,
+                  appContext: appContext,
                 ),
               Expanded(
                 child: filteredUsers.isEmpty
@@ -376,23 +353,47 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     });
   }
 
-  int get _activeFilterCount {
+  String _defaultLocationFilter(AppContext appContext) {
+    return VolunteerLocations.defaultFilterForUser(
+      appContext.currentUser.location,
+      VolunteerLocations.assignableFrom(appContext.allLocations),
+    );
+  }
+
+  bool _locationFilterIsNonDefault(AppContext appContext) =>
+      _locationFilter != _defaultLocationFilter(appContext);
+
+  int _activeFilterCount(AppContext appContext) {
     var count = 0;
+    if (_locationFilterIsNonDefault(appContext)) count++;
     if (!_servingOnly) count++;
     if (_placeholdersOnly) count++;
     if (_showInactive) count++;
+    if (_sortMode != _VolunteerSortMode.surname) count++;
     count += _selectedRoles.length;
     count += _selectedTagIDs.length;
     return count;
   }
 
-  bool get _hasNonDefaultFilters => _activeFilterCount > 0;
+  bool _hasNonDefaultFilters(AppContext appContext) =>
+      _activeFilterCount(appContext) > 0;
 
-  List<String> _filterSummaryParts(AppLocalizations l10n) {
+  List<String> _filterSummaryParts(
+    AppLocalizations l10n,
+    AppContext appContext,
+  ) {
     final parts = <String>[];
-    if (_servingOnly) parts.add(l10n.volunteersFilterServing);
+    if (_locationFilterIsNonDefault(appContext)) {
+      parts.add(_locationFilter == VolunteerLocations.all
+          ? l10n.volunteersFilterAll
+          : _locationFilter);
+    }
+    if (!_servingOnly) parts.add(l10n.volunteersFilterEveryone);
     if (_placeholdersOnly) parts.add(l10n.volunteersShowPlaceholders);
     if (_showInactive) parts.add(l10n.volunteersShowInactive);
+    if (_sortMode == _VolunteerSortMode.tags) {
+      parts.add(l10n.volunteersSortTags);
+    }
     if (_selectedRoles.contains(VolunteerRoleKind.leader)) {
       parts.add(l10n.volunteersFilterLeaders);
     }
@@ -410,58 +411,23 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
 
   void _clearFilters() {
     HapticFeedback.selectionClick();
+    final appContext = Provider.of<AppContext>(context, listen: false);
     setState(() {
+      _locationFilter = _defaultLocationFilter(appContext);
       _servingOnly = true;
       _placeholdersOnly = false;
       _showInactive = false;
+      _sortMode = _VolunteerSortMode.surname;
       _selectedRoles = {};
       _selectedTagIDs = {};
     });
-  }
-
-  Widget _buildLocationChips({
-    required AppContext appContext,
-    required CellGroupLeaderIndex cellGroupLeaders,
-    required double horizontalPadding,
-    required AppLocalizations l10n,
-  }) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 8),
-      child: Row(
-        children: VolunteerLocations.filterOptionsFrom(appContext.allLocations)
-            .map((location) {
-          final label = location == VolunteerLocations.all
-              ? l10n.volunteersFilterAll
-              : location;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(label),
-              selected: _locationFilter == location,
-              onSelected: (_) {
-                setState(() => _locationFilter = location);
-                _logDirectorySnapshot(
-                  allUsers: appContext.allUsers,
-                  filtered: _filteredUsers(
-                    appContext.allUsers,
-                    appContext.allTags,
-                    cellGroupLeaders,
-                  ),
-                  source: 'location-$location',
-                );
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
   }
 
   Widget _buildListHeader({
     required AppLocalizations l10n,
     required int count,
     required double horizontalPadding,
+    required AppContext appContext,
   }) {
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
@@ -474,7 +440,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 ),
           ),
           const Spacer(),
-          if (_hasNonDefaultFilters)
+          if (_hasNonDefaultFilters(appContext))
             TextButton(
               onPressed: _clearFilters,
               child: Text(l10n.volunteersClearFilters),
@@ -487,8 +453,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   Widget _buildActiveFiltersBanner({
     required AppLocalizations l10n,
     required double horizontalPadding,
+    required AppContext appContext,
   }) {
-    final parts = _filterSummaryParts(l10n);
+    final parts = _filterSummaryParts(l10n, appContext);
     if (parts.isEmpty) return const SizedBox.shrink();
 
     final colorScheme = Theme.of(context).colorScheme;
@@ -810,6 +777,29 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               title: l10n.volunteersFilterSheetTitle,
               subtitle: l10n.volunteersFilterSheetSubtitle,
               children: [
+                _filterSectionLabel(l10n.volunteersFilterLocationSection),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: VolunteerLocations.filterOptionsFrom(
+                            appContext.allLocations)
+                        .map((location) {
+                      final label = location == VolunteerLocations.all
+                          ? l10n.volunteersFilterAll
+                          : location;
+                      return FilterChip(
+                        label: Text(label),
+                        selected: _locationFilter == location,
+                        onSelected: (selected) {
+                          if (!selected) return;
+                          refreshSheet(() => _locationFilter = location);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
                 _filterSectionLabel(l10n.volunteersFilterShowSection),
                 SwitchListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -823,8 +813,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                     title: Text(l10n.volunteersShowPlaceholders),
                     value: _placeholdersOnly,
-                    onChanged: (value) =>
-                        refreshSheet(() => _placeholdersOnly = value),
+                    onChanged: (value) => refreshSheet(() {
+                      _placeholdersOnly = value;
+                      if (value) {
+                        _selectedRoles = {};
+                        _selectedTagIDs = {};
+                      }
+                    }),
                   ),
                 if (canEdit)
                   SwitchListTile(
@@ -835,7 +830,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     onChanged: (value) =>
                         refreshSheet(() => _showInactive = value),
                   ),
-                _filterSectionLabel(l10n.volunteersFilterRolesSection),
+                _filterSectionLabel(l10n.volunteersSortLabel),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                   child: Wrap(
@@ -843,42 +838,82 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     runSpacing: 8,
                     children: [
                       FilterChip(
-                        label: Text(l10n.volunteersFilterLeaders),
-                        selected:
-                            _selectedRoles.contains(VolunteerRoleKind.leader),
-                        onSelected: (_) => refreshSheet(() {
-                          _selectedRoles = VolunteerRoleHelpers.toggleRole(
-                            current: _selectedRoles,
-                            role: VolunteerRoleKind.leader,
-                          );
-                        }),
+                        label: Text(l10n.volunteersSortSurname),
+                        selected: _sortMode == _VolunteerSortMode.surname,
+                        onSelected: (selected) {
+                          if (!selected) return;
+                          refreshSheet(
+                              () => _sortMode = _VolunteerSortMode.surname);
+                        },
                       ),
                       FilterChip(
-                        label: Text(l10n.volunteersFilterAdmins),
-                        selected: _selectedRoles
-                            .contains(VolunteerRoleKind.areaAdmin),
-                        onSelected: (_) => refreshSheet(() {
-                          _selectedRoles = VolunteerRoleHelpers.toggleRole(
-                            current: _selectedRoles,
-                            role: VolunteerRoleKind.areaAdmin,
-                          );
-                        }),
-                      ),
-                      FilterChip(
-                        label: Text(l10n.volunteersFilterCellGroupLeaders),
-                        selected: _selectedRoles
-                            .contains(VolunteerRoleKind.cellGroupLeader),
-                        onSelected: (_) => refreshSheet(() {
-                          _selectedRoles = VolunteerRoleHelpers.toggleRole(
-                            current: _selectedRoles,
-                            role: VolunteerRoleKind.cellGroupLeader,
-                          );
-                        }),
+                        label: Text(l10n.volunteersSortTags),
+                        selected: _sortMode == _VolunteerSortMode.tags,
+                        onSelected: (selected) {
+                          if (!selected) return;
+                          refreshSheet(
+                              () => _sortMode = _VolunteerSortMode.tags);
+                        },
                       ),
                     ],
                   ),
                 ),
-                if (activeTags.isNotEmpty) ...[
+                if (!_placeholdersOnly) ...[
+                  _filterSectionLabel(l10n.volunteersFilterRolesSection),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilterChip(
+                          label: Text(l10n.volunteersFilterLeaders),
+                          selected: _selectedRoles
+                              .contains(VolunteerRoleKind.leader),
+                          onSelected: (selected) => refreshSheet(() {
+                            _selectedRoles = selected
+                                ? VolunteerRoleHelpers.toggleRole(
+                                    current: _selectedRoles,
+                                    role: VolunteerRoleKind.leader,
+                                  )
+                                : (Set<VolunteerRoleKind>.from(_selectedRoles)
+                                  ..remove(VolunteerRoleKind.leader));
+                          }),
+                        ),
+                        FilterChip(
+                          label: Text(l10n.volunteersFilterAdmins),
+                          selected: _selectedRoles
+                              .contains(VolunteerRoleKind.areaAdmin),
+                          onSelected: (selected) => refreshSheet(() {
+                            _selectedRoles = selected
+                                ? VolunteerRoleHelpers.toggleRole(
+                                    current: _selectedRoles,
+                                    role: VolunteerRoleKind.areaAdmin,
+                                  )
+                                : (Set<VolunteerRoleKind>.from(_selectedRoles)
+                                  ..remove(VolunteerRoleKind.areaAdmin));
+                          }),
+                        ),
+                        FilterChip(
+                          label: Text(l10n.volunteersFilterCellGroupLeaders),
+                          selected: _selectedRoles
+                              .contains(VolunteerRoleKind.cellGroupLeader),
+                          onSelected: (selected) => refreshSheet(() {
+                            _selectedRoles = selected
+                                ? VolunteerRoleHelpers.toggleRole(
+                                    current: _selectedRoles,
+                                    role: VolunteerRoleKind.cellGroupLeader,
+                                  )
+                                : (Set<VolunteerRoleKind>.from(_selectedRoles)
+                                  ..remove(
+                                      VolunteerRoleKind.cellGroupLeader));
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (activeTags.isNotEmpty && !_placeholdersOnly) ...[
                   _filterSectionLabel(l10n.volunteersFilterTeamsSection),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -903,16 +938,18 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ],
-                if (_hasNonDefaultFilters)
+                if (_hasNonDefaultFilters(appContext))
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton(
                         onPressed: () => refreshSheet(() {
+                          _locationFilter = _defaultLocationFilter(appContext);
                           _servingOnly = true;
                           _placeholdersOnly = false;
                           _showInactive = false;
+                          _sortMode = _VolunteerSortMode.surname;
                           _selectedRoles = {};
                           _selectedTagIDs = {};
                         }),
@@ -955,14 +992,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       users = users.where((user) => user.location == _locationFilter);
     }
 
-    if (_selectedTagIDs.isNotEmpty) {
+    if (_selectedTagIDs.isNotEmpty && !_placeholdersOnly) {
       users = users.where((user) => UserTagHelpers.userMatchesTagFilter(
             user: user,
             selectedTagIDs: _selectedTagIDs,
           ));
     }
 
-    if (_selectedRoles.isNotEmpty) {
+    if (_selectedRoles.isNotEmpty && !_placeholdersOnly) {
       users = users.where((user) => VolunteerRoleHelpers.userMatchesRoleFilter(
             user: user,
             selected: _selectedRoles,

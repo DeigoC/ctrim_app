@@ -10,6 +10,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/personal_cell_group_meetings.dart';
 import '../information/info_section_card.dart';
+import '../user_avatar.dart';
 
 /// Personal home dashboard card for cell group membership and upcoming meetings.
 class PersonalCellGroupsPreviewCard extends StatefulWidget {
@@ -136,7 +137,7 @@ class _PersonalCellGroupsPreviewCardState
         ),
       );
       children.add(const SizedBox(height: 12));
-      children.add(_buildGroupReminderCard(context, l10n, data.memberGroups, users));
+      children.add(_buildGroupReminderCard(context, data.memberGroups, users));
     } else {
       children.add(
         Card(
@@ -184,7 +185,6 @@ class _PersonalCellGroupsPreviewCardState
 
   Widget _buildGroupReminderCard(
     BuildContext context,
-    AppLocalizations l10n,
     List<CellGroup> groups,
     List<User> users,
   ) {
@@ -202,7 +202,6 @@ class _PersonalCellGroupsPreviewCardState
           for (var i = 0; i < groups.length; i++)
             _buildGroupReminderTile(
               context,
-              l10n,
               groups[i],
               users,
               showDivider: i > 0,
@@ -223,65 +222,95 @@ class _PersonalCellGroupsPreviewCardState
     final colorScheme = theme.colorScheme;
     final head = preview.head;
     final group = preview.group;
-    final leaderName = PersonalCellGroupMeetings.leaderDisplayName(
+    final leader = PersonalCellGroupMeetings.primaryLeaderForGroup(
       group: group,
       users: users,
-      fallbackLabel: l10n.personalCellGroupLeaderTbc,
     );
     final dateLabel = head.eventDate != null
         ? _eventDateFormat.format(head.eventDate!)
         : l10n.personalScheduleDateTbc;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ViewEventPage(eventHead: head),
-                ),
-              );
-            },
-            child: ListTile(
-              leading: Icon(Icons.event, color: colorScheme.primary),
-              title: Text(group.name),
-              subtitle: Text(
-                '${l10n.personalCellGroupLedBy(leaderName)}\n$dateLabel · ${head.title}',
-              ),
-              isThreeLine: true,
-              trailing: const Icon(Icons.chevron_right),
-            ),
+    return _PreviewRow(
+      showDivider: showDivider,
+      leading: _groupLeading(colorScheme, leader),
+      title: group.name,
+      subtitle: '$dateLabel · ${head.title}',
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ViewEventPage(eventHead: head),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
   Widget _buildGroupReminderTile(
     BuildContext context,
-    AppLocalizations l10n,
     CellGroup group,
     List<User> users, {
     required bool showDivider,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final cadence = group.cadenceLabel;
-    final leaderName = PersonalCellGroupMeetings.leaderDisplayName(
+    final leader = PersonalCellGroupMeetings.primaryLeaderForGroup(
       group: group,
       users: users,
-      fallbackLabel: l10n.personalCellGroupLeaderTbc,
     );
-    final subtitleParts = <String>[
-      if (cadence.isNotEmpty) cadence,
-      l10n.personalCellGroupLedBy(leaderName),
-    ];
+
+    return _PreviewRow(
+      showDivider: showDivider,
+      leading: _groupLeading(colorScheme, leader),
+      title: group.name,
+      subtitle: cadence.isNotEmpty ? cadence : null,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CellGroupDetailPage(groupId: group.id),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _groupLeading(ColorScheme colorScheme, User? leader) {
+    if (leader != null) {
+      return MyUserAvatar(leader, radius: 20);
+    }
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: colorScheme.primaryContainer,
+      child: Icon(
+        Icons.groups_outlined,
+        size: 22,
+        color: colorScheme.onPrimaryContainer,
+      ),
+    );
+  }
+}
+
+/// Dense preview row matching Personal schedule tile padding.
+class _PreviewRow extends StatelessWidget {
+  const _PreviewRow({
+    required this.showDivider,
+    required this.leading,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  final bool showDivider;
+  final Widget leading;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -291,19 +320,45 @@ class _PersonalCellGroupsPreviewCardState
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CellGroupDetailPage(groupId: group.id),
-                ),
-              );
-            },
-            child: ListTile(
-              leading: Icon(Icons.groups_outlined, color: colorScheme.primary),
-              title: Text(group.name),
-              subtitle: Text(subtitleParts.join(' · ')),
-              trailing: const Icon(Icons.chevron_right),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+              child: Row(
+                children: [
+                  leading,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (subtitle != null && subtitle!.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
