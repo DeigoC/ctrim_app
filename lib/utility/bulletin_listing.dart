@@ -6,7 +6,8 @@ import 'catalog/volunteer_locations.dart';
 enum BulletinSort {
   relevancy,
   eventDateSoonest,
-  eventDateLatest;
+  eventDateLatest,
+  recentDate;
 
   static BulletinSort fromStorage(final String? raw) {
     for (final value in values) {
@@ -20,7 +21,8 @@ enum BulletinSort {
 enum BulletinTimeFilter {
   all,
   upcoming,
-  past;
+  past,
+  undated;
 
   static BulletinTimeFilter fromStorage(final String? raw) {
     for (final value in values) {
@@ -120,6 +122,8 @@ class BulletinListing {
         return isUpcoming(head, query.now);
       case BulletinTimeFilter.past:
         return isPast(head, query.now);
+      case BulletinTimeFilter.undated:
+        return isUndated(head);
     }
   }
 
@@ -134,6 +138,8 @@ class BulletinListing {
     if (eventDate == null) return false;
     return eventDate.isBefore(now);
   }
+
+  static bool isUndated(final EventHead head) => head.eventDate == null;
 
   static bool isSameCalendarDay(final DateTime a, final DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -164,7 +170,16 @@ class BulletinListing {
         return _sortEventDateSoonest(heads, now);
       case BulletinSort.eventDateLatest:
         return _sortEventDateLatest(heads, now);
+      case BulletinSort.recentDate:
+        return _sortRecentDate(heads);
     }
+  }
+
+  /// Newest [EventHead.recentDate] first (create/edit activity).
+  static List<EventHead> _sortRecentDate(final List<EventHead> heads) {
+    final sorted = List<EventHead>.from(heads);
+    sorted.sort((a, b) => b.recentDate.compareTo(a.recentDate));
+    return sorted;
   }
 
   /// Next few upcoming events, then recent past, then everything else.

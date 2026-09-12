@@ -117,6 +117,12 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
                     _onTimeFilterChanged(BulletinTimeFilter.past),
               ),
               FilterChip(
+                label: Text(l10n.bulletinShowUndated),
+                selected: _timeFilter == BulletinTimeFilter.undated,
+                onSelected: (_) =>
+                    _onTimeFilterChanged(BulletinTimeFilter.undated),
+              ),
+              FilterChip(
                 label: Text(l10n.bulletinShowBookmarks),
                 selected: _bookmarksOnly,
                 onSelected: (_) => _onBookmarksOnlyChanged(!_bookmarksOnly),
@@ -251,6 +257,13 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
         l10n.bulletinSortLatestSubtitle,
         Icons.history,
         Colors.orange,
+      ),
+      (
+        BulletinSort.recentDate,
+        l10n.bulletinSortRecent,
+        l10n.bulletinSortRecentSubtitle,
+        Icons.update,
+        Colors.blueGrey,
       ),
     ];
 

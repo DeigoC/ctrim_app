@@ -307,6 +307,8 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
         parts.add(l10n.bulletinSortSoonest);
       case BulletinSort.eventDateLatest:
         parts.add(l10n.bulletinSortLatest);
+      case BulletinSort.recentDate:
+        parts.add(l10n.bulletinSortRecent);
       case BulletinSort.relevancy:
         break;
     }
@@ -315,6 +317,8 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
         parts.add(l10n.bulletinShowUpcoming);
       case BulletinTimeFilter.past:
         parts.add(l10n.bulletinShowPast);
+      case BulletinTimeFilter.undated:
+        parts.add(l10n.bulletinShowUndated);
       case BulletinTimeFilter.all:
         break;
     }
@@ -329,6 +333,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     final Color accent = switch (query.timeFilter) {
       BulletinTimeFilter.upcoming => Colors.green,
       BulletinTimeFilter.past => Colors.orange,
+      BulletinTimeFilter.undated => Colors.blueGrey,
       BulletinTimeFilter.all when query.bookmarksOnly => Colors.purple,
       BulletinTimeFilter.all => colorScheme.primary,
     };
@@ -356,11 +361,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                 Icon(
                   query.bookmarksOnly
                       ? Icons.bookmark
-                      : query.timeFilter == BulletinTimeFilter.upcoming
-                          ? Icons.upcoming
-                          : query.timeFilter == BulletinTimeFilter.past
-                              ? Icons.history
-                              : Icons.filter_alt,
+                      : switch (query.timeFilter) {
+                          BulletinTimeFilter.upcoming => Icons.upcoming,
+                          BulletinTimeFilter.past => Icons.history,
+                          BulletinTimeFilter.undated => Icons.event_busy,
+                          BulletinTimeFilter.all => Icons.filter_alt,
+                        },
                   size: 16,
                   color: accent,
                 ),

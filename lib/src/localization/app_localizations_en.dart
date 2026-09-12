@@ -1072,6 +1072,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bulletinSortLatestSubtitle => 'Recent past first, then upcoming';
 
   @override
+  String get bulletinSortRecent => 'Recently updated';
+
+  @override
+  String get bulletinSortRecentSubtitle => 'Newest creates and edits first';
+
+  @override
   String get bulletinShowSection => 'Show';
 
   @override
@@ -1082,6 +1088,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bulletinShowPast => 'Past';
+
+  @override
+  String get bulletinShowUndated => 'No date';
 
   @override
   String get bulletinShowBookmarks => 'Bookmarks';

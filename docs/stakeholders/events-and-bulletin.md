@@ -25,6 +25,7 @@ Use the bulletin’s **sort / filter** control. Sort and filters are separate, s
 | **Relevancy** *(default)* | The next three upcoming events, then recent past (about two weeks), then the rest |
 | **Soonest first** | Today and upcoming events by date, then recent past |
 | **Latest first** | Recent past first, then upcoming by date |
+| **Recently updated** | Newest creates and edits first — useful for finding a post you just published |
 
 **Show** (what appears):
 
@@ -33,7 +34,8 @@ Use the bulletin’s **sort / filter** control. Sort and filters are separate, s
 | **All posts** | No date cut-off |
 | **Upcoming** | Events still happening or coming up |
 | **Past** | Events that have already started |
-| **Bookmarks** | Only posts you bookmarked — can sit alongside Upcoming or Past |
+| **No date** | Posts without an event date (they do not appear under Upcoming or Past) |
+| **Bookmarks** | Only posts you bookmarked — can sit alongside Upcoming, Past, or No date |
 
 You can also filter by **location** and **post tags** (for example Sunday Worship or Midweek). The list usually starts on your own location; tap **All** to see every site. Active sort and filters appear as a “Showing: …” banner — tap the banner to clear them. Your last sort, date filter, and bookmark toggle are remembered next time.
 
