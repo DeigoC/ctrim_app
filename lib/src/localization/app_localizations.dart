@@ -2368,6 +2368,36 @@ abstract class AppLocalizations {
   /// **'Share'**
   String get sharePostTooltip;
 
+  /// App bar title while resolving a person permalink
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get openPersonPageTitle;
+
+  /// Progress message while fetching a profile from a link
+  ///
+  /// In en, this message translates to:
+  /// **'Loading profile…'**
+  String get openPersonLoading;
+
+  /// Title when a person permalink cannot be shown
+  ///
+  /// In en, this message translates to:
+  /// **'Profile not found'**
+  String get openPersonNotFoundTitle;
+
+  /// Explanation when a person permalink cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'This profile may be hidden, or the link may be incorrect.'**
+  String get openPersonNotFoundBody;
+
+  /// Title when fetching a person permalink fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load profile'**
+  String get openPersonLoadErrorTitle;
+
   /// Opens the related post from a push notification dialog
   ///
   /// In en, this message translates to:

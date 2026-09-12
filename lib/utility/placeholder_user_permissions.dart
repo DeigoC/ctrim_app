@@ -85,6 +85,21 @@ bool isVisibleInVolunteerDirectory({
   return user.createdByUserID == viewer.id;
 }
 
+/// Whether a permalink (`/people/:id`) may show [user] to [viewer].
+///
+/// In-app directory taps pass the [User] as router extra and skip this check.
+/// Cold links use the unfiltered directory rule: active profiles, plus
+/// viewer-visible placeholders and (for area admins) inactive profiles.
+bool canOpenPersonPermalink({
+  required User user,
+  required User viewer,
+}) {
+  if (viewer.id == user.id && viewer.id.compareTo('0') != 0) {
+    return true;
+  }
+  return isIncludedInUnfilteredPeopleSearch(user: user, viewer: viewer);
+}
+
 /// Whether [user] should appear in a name search that ignores refine filters
 /// (location, serving, roles, tags, placeholders-only).
 ///

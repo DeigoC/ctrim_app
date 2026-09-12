@@ -25,7 +25,6 @@ import '../widgets/common/app_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
 import 'events/events_home.dart';
 import 'cell_groups/cell_groups_home.dart';
-import 'information/ctrim_info_page.dart';
 import 'information/information_home.dart';
 import 'personal/personal_home.dart';
 
@@ -413,13 +412,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return;
     }
 
-    if (_appContext.sharedPref.loggedOut) return;
-
     if (appData.containsKey('InfoPage')) {
       final infoPage = appData['InfoPage']?.toString() ?? '';
       if (infoPage.isEmpty) return;
       if (!mounted) return;
-      _openInformationTeachingPage(infoPage);
+      AppLinks.openInfo(context, id: infoPage);
     }
   }
 
@@ -441,7 +438,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
       if (head != null) _updateUserRoles();
     } else if (appData.containsKey('InfoPage') && openPage) {
-      _openInformationTeachingPage(appData['InfoPage'].toString());
+      AppLinks.openInfo(context, id: appData['InfoPage'].toString());
     }
   }
 
@@ -460,27 +457,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } catch (e) {
       debugPrint('Failed to reload post head $postID: $e');
       return null;
-    }
-  }
-
-  void _openInformationTeachingPage(final String jsonPath) {
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) =>
-            CTRIMInfoPage(documentId: _resolveInfoDocumentId(jsonPath))));
-  }
-
-  String _resolveInfoDocumentId(final String rawValue) {
-    switch (rawValue) {
-      case 'assets/info/ctrim_info/core_values.json':
-        return 'core_values';
-      case 'assets/info/ctrim_info/4xd.json':
-        return '4xd';
-      case 'assets/info/ctrim_info/cell_group.json':
-        return 'cell_group';
-      case 'assets/info/ctrim_info/devotionals.json':
-        return 'devotionals';
-      default:
-        return rawValue;
     }
   }
 

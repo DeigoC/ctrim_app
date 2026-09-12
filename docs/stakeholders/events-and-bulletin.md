@@ -8,6 +8,7 @@ Definitions for **post**, **interest**, **bookmark**, **template**, and related 
 
 - Scroll and open posts (title, details, media, schedule, related posts)
 - Share a post from its content to send a **link** (`ctrim.app/post/…`). Guests and members who open the link land on that post — they can bookmark the address and come back later
+- Other browseable records work the same way: cell groups, churches, information topics, testimonials, and people profiles each have an address you can share or bookmark
 - On many posts, see **interest** and **attendance** counts
 - When signed in: mark **interest** (“follow updates” for that post) and see who else is interested
 - Guests can browse and see counts; signing in unlocks interest and richer people details

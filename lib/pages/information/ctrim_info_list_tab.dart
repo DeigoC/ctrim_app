@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../models/info/ctrim_info.dart';
 import '../../utility/app_context.dart';
+import '../../utility/app_links.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/information/info_section_card.dart';
 import '../../widgets/common/load_progress_body.dart';
-import 'ctrim_info_page.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
 
@@ -188,7 +188,7 @@ class CtrimInfoListTab extends StatelessWidget {
   ) {
     void openDetail() => openInfoDetailAndRefresh(
           context: context,
-          page: CTRIMInfoPage(documentId: info.id),
+          open: () => AppLinks.openInfo(context, id: info.id),
           onRefresh: onRefresh,
         );
 

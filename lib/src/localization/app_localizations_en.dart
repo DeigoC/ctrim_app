@@ -1302,6 +1302,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharePostTooltip => 'Share';
 
   @override
+  String get openPersonPageTitle => 'Profile';
+
+  @override
+  String get openPersonLoading => 'Loading profile…';
+
+  @override
+  String get openPersonNotFoundTitle => 'Profile not found';
+
+  @override
+  String get openPersonNotFoundBody =>
+      'This profile may be hidden, or the link may be incorrect.';
+
+  @override
+  String get openPersonLoadErrorTitle => 'Could not load profile';
+
+  @override
   String get notificationViewPost => 'View post';
 
   @override

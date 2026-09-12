@@ -16,6 +16,7 @@ import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/users_repository.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/volunteer_role_helpers.dart';
+import '../../utility/app_links.dart';
 import '../../widgets/common/action_sheet.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/user_avatar.dart';
@@ -23,7 +24,6 @@ import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/volunteer_role_badge.dart';
 import 'edit_user_page.dart';
 import 'register_user_page.dart';
-import 'view_user_profile_page.dart';
 
 enum _VolunteerSortMode { surname, tags }
 
@@ -205,8 +205,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
             );
       final showingUnfilteredSearchFallback =
           filteredUsers.isEmpty && unfilteredSearchMatches.isNotEmpty;
-      final listUsers =
-          showingUnfilteredSearchFallback ? unfilteredSearchMatches : filteredUsers;
+      final listUsers = showingUnfilteredSearchFallback
+          ? unfilteredSearchMatches
+          : filteredUsers;
       final canEdit = appContext.currentUser.canManageVolunteers;
       final activeTags =
           appContext.allTags.where((tag) => tag.isActive).toList();
@@ -664,7 +665,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding + 4, 12, horizontalPadding, 4),
+      padding:
+          EdgeInsets.fromLTRB(horizontalPadding + 4, 12, horizontalPadding, 4),
       child: Text(
         letter,
         style: theme.textTheme.titleMedium?.copyWith(
@@ -682,8 +684,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
-    final userTags =
-        UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
     final roles = VolunteerRoleHelpers.rolesFor(
       user: user,
       cellGroupLeaders: cellGroupLeaders,
@@ -720,8 +721,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
-    final userTags =
-        UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
     final roles = VolunteerRoleHelpers.rolesFor(
       user: user,
       cellGroupLeaders: cellGroupLeaders,
@@ -889,7 +889,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   title: Text(l10n.volunteersFilterServing),
                   subtitle: Text(l10n.volunteersFilterServingSubtitle),
                   value: _servingOnly,
-                  onChanged: (value) => refreshSheet(() => _servingOnly = value),
+                  onChanged: (value) =>
+                      refreshSheet(() => _servingOnly = value),
                 ),
                 if (showPlaceholdersOption)
                   SwitchListTile(
@@ -951,8 +952,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                       children: [
                         FilterChip(
                           label: Text(l10n.volunteersFilterLeaders),
-                          selected: _selectedRoles
-                              .contains(VolunteerRoleKind.leader),
+                          selected:
+                              _selectedRoles.contains(VolunteerRoleKind.leader),
                           onSelected: (selected) => refreshSheet(() {
                             _selectedRoles = selected
                                 ? VolunteerRoleHelpers.toggleRole(
@@ -988,8 +989,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                                     role: VolunteerRoleKind.cellGroupLeader,
                                   )
                                 : (Set<VolunteerRoleKind>.from(_selectedRoles)
-                                  ..remove(
-                                      VolunteerRoleKind.cellGroupLeader));
+                                  ..remove(VolunteerRoleKind.cellGroupLeader));
                           }),
                         ),
                       ],
@@ -1161,14 +1161,10 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   }
 
   void _onUserTap(final User selectedUser) {
-    Navigator.push(
+    AppLinks.openPerson(
       context,
-      MaterialPageRoute(
-        builder: (_) => ViewUserProfilePage(
-          selectedUser: selectedUser,
-          showPostsLink: true,
-        ),
-      ),
+      id: selectedUser.id,
+      extra: selectedUser,
     );
   }
 

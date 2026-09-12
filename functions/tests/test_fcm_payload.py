@@ -50,7 +50,13 @@ class FcmPayloadTests(unittest.TestCase):
         )
         self.assertEqual(
             web_click_link({'InfoPage': 'core values'}),
-            'https://ctrim.app/?infoPage=core%20values',
+            'https://ctrim.app/info/core%20values',
+        )
+        self.assertEqual(
+            web_click_link(
+                {'InfoPage': 'assets/info/ctrim_info/core_values.json'}
+            ),
+            'https://ctrim.app/info/core_values',
         )
         self.assertEqual(web_click_link({}), 'https://ctrim.app/')
         self.assertEqual(web_click_link(None), 'https://ctrim.app/')

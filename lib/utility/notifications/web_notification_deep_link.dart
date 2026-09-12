@@ -1,6 +1,3 @@
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
-
 import '../app_links.dart';
 
 /// Reads and clears notification deep-link query params from the browser URL,
@@ -79,30 +76,11 @@ class WebNotificationDeepLink {
     }
     final infoPage = appData['InfoPage']?.toString() ?? '';
     if (infoPage.isNotEmpty) {
-      return '/?infoPage=${Uri.encodeComponent(infoPage)}';
+      return AppLinks.infoPath(AppLinks.infoDocumentIdFromPayload(infoPage));
     }
     return '/';
   }
 
-  /// Reads and strips leftover `infoPage` query params. `postId` is owned by
-  /// the router redirect and must not be cleared here.
-  static Map<String, String> consumeLaunchParams() {
-    if (!kIsWeb) return const {};
-
-    try {
-      final uri = Uri.parse(html.window.location.href);
-      final infoPage = uri.queryParameters['infoPage'];
-      if (infoPage == null || infoPage.isEmpty) return const {};
-
-      final remaining = Map<String, String>.from(uri.queryParameters)
-        ..remove('infoPage');
-      final cleaned = remaining.isEmpty
-          ? uri.replace(queryParameters: {})
-          : uri.replace(queryParameters: remaining);
-      html.window.history.replaceState(null, '', cleaned.toString());
-      return {'InfoPage': infoPage};
-    } catch (_) {
-      return const {};
-    }
-  }
+  /// Launch query params are owned by [AppLinks.redirectFromUri].
+  static Map<String, String> consumeLaunchParams() => const {};
 }

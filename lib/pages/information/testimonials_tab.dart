@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../models/info/testimonial_info.dart';
+import '../../utility/app_links.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
-import 'testimonial_info_page.dart';
 
 class TestimonialsTab extends StatelessWidget {
   const TestimonialsTab({
@@ -38,7 +38,7 @@ class TestimonialsTab extends StatelessWidget {
           imageAlignment: Alignment.topCenter,
           onTap: () => openInfoDetailAndRefresh(
             context: context,
-            page: TestimonialInfoPage(documentId: testimonial.id),
+            open: () => AppLinks.openTestimonial(context, id: testimonial.id),
             onRefresh: onRefresh,
           ),
           overlay: Column(
