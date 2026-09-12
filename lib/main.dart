@@ -30,7 +30,9 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  usePathUrlStrategy();
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   // Shared preferences + theme settings before first frame so the preferred
   // ThemeMode is ready (system / light / dark) without a flash.

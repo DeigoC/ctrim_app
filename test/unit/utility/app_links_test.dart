@@ -42,5 +42,12 @@ void main() {
         isNull,
       );
     });
+
+    test('encodes ids in the redirected path', () {
+      expect(
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/?postId=a b')),
+        '/post/a%20b',
+      );
+    });
   });
 }
