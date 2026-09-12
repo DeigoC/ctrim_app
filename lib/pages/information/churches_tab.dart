@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/info/church_info.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_links.dart';
+import '../../utility/church_hierarchy.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
 
@@ -19,7 +20,7 @@ class ChurchesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InfoSectionListTab<ChurchInfo>(
-      future: churchesFuture,
+      future: churchesFuture.then(ChurchHierarchy.fullChurches),
       onRefresh: onRefresh,
       storageKey: 'information_churches_tab',
       emptyMessage: 'No church information available yet.',

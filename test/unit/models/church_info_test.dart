@@ -33,8 +33,59 @@ void main() {
       expect(info.hasHeroImage, isTrue);
       expect(info.pastorUserIds, isEmpty);
       expect(info.hasPastors, isFalse);
+      expect(info.kind, ChurchKind.church);
+      expect(info.isFullChurch, isTrue);
+      expect(info.isOutreach, isFalse);
+      expect(info.parentChurchId, '');
       expect(info.updatedBy, 'user-1');
       expect(info.displayOrder, 2);
+    });
+
+    test('fromMap defaults missing kind to full church', () {
+      final info = ChurchInfo.fromMap('belfast', {
+        'title': 'Belfast',
+        'analyticTitle': 'Belfast',
+        'body': [
+          {'insert': 'Hello\n'}
+        ],
+      });
+
+      expect(info.kind, ChurchKind.church);
+      expect(info.parentChurchId, '');
+    });
+
+    test('fromMap reads outreach kind and parentChurchId', () {
+      final info = ChurchInfo.fromMap('lisburn', {
+        'title': 'Lisburn',
+        'analyticTitle': 'Lisburn',
+        'kind': 'outreach',
+        'parentChurchId': 'belfast',
+        'body': [
+          {'insert': 'Hello\n'}
+        ],
+        'pastorUserIds': ['planter-1'],
+      });
+
+      expect(info.kind, ChurchKind.outreach);
+      expect(info.isOutreach, isTrue);
+      expect(info.parentChurchId, 'belfast');
+      expect(info.hasParentChurch, isTrue);
+      expect(info.pastorUserIds, ['planter-1']);
+    });
+
+    test('fromMap clears parentChurchId when kind is church', () {
+      final info = ChurchInfo.fromMap('belfast', {
+        'title': 'Belfast',
+        'analyticTitle': 'Belfast',
+        'kind': 'church',
+        'parentChurchId': 'stale-parent',
+        'body': [
+          {'insert': 'Hello\n'}
+        ],
+      });
+
+      expect(info.kind, ChurchKind.church);
+      expect(info.parentChurchId, '');
     });
 
     test('fromMap migrates legacy imageSources to hero and gallery', () {
@@ -164,10 +215,30 @@ void main() {
       expect(json['mapLink'], 'https://maps.example/p');
       expect(json['address'], 'High St');
       expect(json['pastorUserIds'], ['pastor-1', 'pastor-2']);
+      expect(json['kind'], 'church');
+      expect(json['parentChurchId'], '');
       expect(json['updatedBy'], 'admin-1');
       expect(json['updatedAt'], isA<Timestamp>());
       expect(json['displayOrder'], 1);
       expect(json.containsKey('imageSources'), isFalse);
+    });
+
+    test('toJson writes outreach kind and parent', () {
+      final info = ChurchInfo(
+        id: 'lisburn',
+        title: 'Lisburn',
+        analyticsTitle: 'Lisburn',
+        kind: ChurchKind.outreach,
+        parentChurchId: 'belfast',
+        body: const [
+          {'insert': 'Body\n'}
+        ],
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
+      );
+
+      final json = info.toJson();
+      expect(json['kind'], 'outreach');
+      expect(json['parentChurchId'], 'belfast');
     });
 
     test('toCacheJson includes hub fields', () {
@@ -195,7 +266,26 @@ void main() {
       expect(cache['mapLink'], 'https://maps.example/nc');
       expect(cache['address'], '');
       expect(cache['pastorUserIds'], ['pastor-1']);
+      expect(cache['kind'], 'church');
+      expect(cache['parentChurchId'], '');
       expect(cache['updatedAt'], 1700000000000);
+    });
+
+    test('setKind to church clears parentChurchId', () {
+      final info = ChurchInfo(
+        id: 'lisburn',
+        title: 'Lisburn',
+        analyticsTitle: 'Lisburn',
+        kind: ChurchKind.outreach,
+        parentChurchId: 'belfast',
+        body: const [
+          {'insert': '\n'}
+        ],
+      );
+
+      info.setKind(ChurchKind.church);
+      expect(info.kind, ChurchKind.church);
+      expect(info.parentChurchId, '');
     });
 
     test('galleryImageSources getter is unmodifiable', () {

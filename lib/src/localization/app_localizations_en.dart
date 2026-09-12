@@ -1215,7 +1215,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubPastorsTitle => 'Pastors';
 
   @override
+  String get churchHubPlantersTitle => 'Church planters';
+
+  @override
   String get churchHubUnknownPastor => 'Unknown pastor';
+
+  @override
+  String get churchHubUnknownPlanter => 'Unknown planter';
 
   @override
   String get churchHubFindUsTitle => 'Find us';
@@ -1227,10 +1233,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubPastorsSubtitle => 'Meet the team';
 
   @override
+  String get churchHubPlantersSubtitle => 'Leading this outreach';
+
+  @override
   String get churchHubLearnAboutPastors => 'Learn about them';
 
   @override
+  String get churchHubLearnAboutPlanters => 'Learn about them';
+
+  @override
   String get churchPastorsPageTitle => 'Pastors';
+
+  @override
+  String get churchPlantersPageTitle => 'Church planters';
+
+  @override
+  String get churchHubOutreachBadge => 'Outreach';
+
+  @override
+  String get churchHubParentChurchTitle => 'Parent church';
+
+  @override
+  String get churchHubParentChurchSubtitle => 'This outreach belongs to';
+
+  @override
+  String get churchHubOutreachesTitle => 'Outreaches';
+
+  @override
+  String get churchHubOutreachesSubtitle => 'Growing toward a full church';
+
+  @override
+  String get churchHubNoOutreaches => 'No outreaches yet.';
+
+  @override
+  String get churchHubAddOutreach => 'Add outreach';
+
+  @override
+  String get churchHubAddOutreachDescription =>
+      'Add a baby church with church planters.';
+
+  @override
+  String get churchHubOutreachFindUsEmpty => 'No address or maps link yet.';
 
   @override
   String get churchHubGalleryTitle => 'Gallery';
@@ -1258,6 +1301,120 @@ class AppLocalizationsEn extends AppLocalizations {
       'Name and how it appears in the list';
 
   @override
+  String get churchEditorOutreachCardTitle => 'Outreach';
+
+  @override
+  String get churchEditorOutreachCardSubtitle =>
+      'Name and how it appears under the parent church';
+
+  @override
+  String get churchEditorStatusCardTitle => 'Status';
+
+  @override
+  String get churchEditorStatusCardSubtitle =>
+      'Full church or outreach under a parent';
+
+  @override
+  String get churchEditorKindChurch => 'Full church';
+
+  @override
+  String get churchEditorKindChurchHint =>
+      'Appears in the Churches list and uses its own location.';
+
+  @override
+  String get churchEditorKindOutreach => 'Outreach';
+
+  @override
+  String get churchEditorKindOutreachHint =>
+      'Listed on the parent church hub until promoted.';
+
+  @override
+  String get churchEditorParentChurchLabel => 'Parent church';
+
+  @override
+  String get churchEditorParentChurchHelper =>
+      'The full church this outreach belongs to.';
+
+  @override
+  String get churchEditorPromoteToChurch => 'Promote to full church';
+
+  @override
+  String get churchEditorDemoteToOutreach => 'Demote to outreach';
+
+  @override
+  String get churchEditorCancel => 'Cancel';
+
+  @override
+  String get churchEditorPromoteConfirmTitle => 'Promote to full church?';
+
+  @override
+  String get churchEditorPromoteConfirmBody =>
+      'This outreach will leave its parent and need its own location before you save.';
+
+  @override
+  String get churchEditorPromoteBlockedTitle => 'Cannot promote';
+
+  @override
+  String get churchEditorDemoteConfirmTitle => 'Demote to outreach?';
+
+  @override
+  String get churchEditorDemoteConfirmBody =>
+      'This church will sit under a parent and lose its location assignment. Choose the parent church.';
+
+  @override
+  String get churchEditorDemoteBlockedTitle => 'Cannot demote';
+
+  @override
+  String get churchEditorDemoteNoParent =>
+      'Add another full church first to use as the parent.';
+
+  @override
+  String get churchEditorValidationTitle => 'Check church details';
+
+  @override
+  String get churchEditorLocationConflictTitle => 'Location already used';
+
+  @override
+  String churchEditorLocationConflictBody(String location, String churchTitle) {
+    return 'Location “$location” is already used by $churchTitle. Each church must have its own location.';
+  }
+
+  @override
+  String get churchEditorDeleteBlockedTitle => 'Cannot delete';
+
+  @override
+  String get churchEditorDeleteBlockedBody =>
+      'Promote or delete this church’s outreaches first.';
+
+  @override
+  String get churchEditorLocationLabel => 'Location';
+
+  @override
+  String get churchEditorLocationHelper =>
+      'Each church must use a unique location from the catalogue.';
+
+  @override
+  String get churchEditorOutreachLocationHint =>
+      'Outreaches do not use a catalogue location until they are promoted to a full church. You can still add an address and maps link.';
+
+  @override
+  String get churchEditorAddressLabel => 'Address';
+
+  @override
+  String get churchEditorAddressHelper =>
+      'Optional street address shown on the church page.';
+
+  @override
+  String get churchEditorMapsLabel => 'Maps URL';
+
+  @override
+  String get churchEditorMapsHelper =>
+      'Optional Google Maps (or similar) link.';
+
+  @override
+  String get churchEditorMapsHelpTooltip => 'Maps URL help';
+
+  @override
   String get churchEditorVisitCardTitle => 'Find us';
 
   @override
@@ -1271,6 +1428,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'People listed as pastors, plus their write-up';
 
   @override
+  String get churchEditorPlantersCardTitle => 'Church planters';
+
+  @override
+  String get churchEditorPlantersCardSubtitle =>
+      'People leading this outreach, plus their write-up';
+
+  @override
+  String get churchEditorChoosePastors => 'Choose pastors';
+
+  @override
+  String get churchEditorChoosePlanters => 'Choose church planters';
+
+  @override
+  String get churchEditorPastorsImageLabel => 'Pastors image URL';
+
+  @override
+  String get churchEditorPastorsImageHelper =>
+      'Optional team photo shown in the pastors card.';
+
+  @override
+  String get churchEditorPlantersImageLabel => 'Planters image URL';
+
+  @override
+  String get churchEditorPlantersImageHelper =>
+      'Optional team photo shown in the planters card.';
+
+  @override
   String get churchEditorMediaCardTitle => 'Media';
 
   @override
@@ -1278,6 +1462,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchEditorPastorsBodyLabel => 'About the pastors';
+
+  @override
+  String get churchEditorPlantersBodyLabel => 'About the church planters';
 
   @override
   String get churchEditorSave => 'Save';

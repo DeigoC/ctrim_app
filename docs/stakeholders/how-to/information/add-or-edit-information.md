@@ -17,6 +17,18 @@
 4. Fill in the cards (church name, where to find it, pastors, and photos). For **Churches**, choose the **location** (each church uses a different one) and optionally an address and maps link. The pastors write-up is the longer text on that card. For Information topics, confirm the **Section** field is **Principles** or **Teachings** as intended (defaults to Principles).  
 5. Save and check how it looks when viewing as a normal reader.  
 
+## Add an outreach under a church
+
+1. Open the **parent church** from **Churches**.  
+2. Under **Outreaches**, choose **Add outreach**.  
+3. Fill in the outreach name, parent (pre-filled), optional address/maps, **church planters**, and photos. Outreaches do not pick a catalogue location until they become a full church.  
+4. Save and open it from the parent hub to check how it looks.  
+
+## Promote or demote
+
+- On an **outreach** edit screen, use **Promote to full church**, then choose a unique **location** and save.  
+- On a **full church** edit screen, use **Demote to outreach** and pick a parent (not allowed if that church still has outreaches). Demotion clears its location.  
+
 ## Add a page on a church hub
 
 Only **area admins** see this control.
@@ -28,15 +40,15 @@ Only **area admins** see this control.
 
 ## Edit an existing record
 
-1. Open the item from the list.  
+1. Open the item from the list (or open an outreach from its parent hub).  
 2. Choose **Edit**.  
-3. Update the content. For Churches, location is required and cannot match another church. For Information topics, you can move a page between **Principles** and **Teachings** with the **Section** field. Extra church pages are edited from the page itself (area admins).  
+3. Update the content. For full churches, location is required and cannot match another church. For Information topics, you can move a page between **Principles** and **Teachings** with the **Section** field. Extra church pages are edited from the page itself (area admins).  
 4. Save.  
 
 ## Delete *(if available)*
 
 1. Open the item.  
-2. Use **Delete** only when you are sure — confirm any prompt. Deleting a church also removes its extra pages.  
+2. Use **Delete** only when you are sure — confirm any prompt. Deleting a church also removes its extra pages. You must promote or delete its outreaches first.  
 
 ## Related
 

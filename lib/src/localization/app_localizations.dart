@@ -2200,11 +2200,23 @@ abstract class AppLocalizations {
   /// **'Pastors'**
   String get churchHubPastorsTitle;
 
+  /// Heading for church planters on an outreach hub
+  ///
+  /// In en, this message translates to:
+  /// **'Church planters'**
+  String get churchHubPlantersTitle;
+
   /// Fallback label when a pastor user record cannot be resolved
   ///
   /// In en, this message translates to:
   /// **'Unknown pastor'**
   String get churchHubUnknownPastor;
+
+  /// Fallback label when a church planter user cannot be resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown planter'**
+  String get churchHubUnknownPlanter;
 
   /// Dashboard card title for church location, address, and maps
   ///
@@ -2224,17 +2236,89 @@ abstract class AppLocalizations {
   /// **'Meet the team'**
   String get churchHubPastorsSubtitle;
 
+  /// Dashboard card subtitle for church planters on an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'Leading this outreach'**
+  String get churchHubPlantersSubtitle;
+
   /// Button on the church hub pastors card that opens the pastors page
   ///
   /// In en, this message translates to:
   /// **'Learn about them'**
   String get churchHubLearnAboutPastors;
 
+  /// Button on the outreach hub that opens the planters write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Learn about them'**
+  String get churchHubLearnAboutPlanters;
+
   /// App bar title for the church pastors write-up page
   ///
   /// In en, this message translates to:
   /// **'Pastors'**
   String get churchPastorsPageTitle;
+
+  /// App bar title for the outreach planters write-up page
+  ///
+  /// In en, this message translates to:
+  /// **'Church planters'**
+  String get churchPlantersPageTitle;
+
+  /// Label under the title when viewing an outreach hub
+  ///
+  /// In en, this message translates to:
+  /// **'Outreach'**
+  String get churchHubOutreachBadge;
+
+  /// Card title linking an outreach back to its parent church
+  ///
+  /// In en, this message translates to:
+  /// **'Parent church'**
+  String get churchHubParentChurchTitle;
+
+  /// Card subtitle for the parent church link
+  ///
+  /// In en, this message translates to:
+  /// **'This outreach belongs to'**
+  String get churchHubParentChurchSubtitle;
+
+  /// Card title listing baby churches under a full church
+  ///
+  /// In en, this message translates to:
+  /// **'Outreaches'**
+  String get churchHubOutreachesTitle;
+
+  /// Card subtitle for outreaches on a church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Growing toward a full church'**
+  String get churchHubOutreachesSubtitle;
+
+  /// Empty state when a church has no outreaches
+  ///
+  /// In en, this message translates to:
+  /// **'No outreaches yet.'**
+  String get churchHubNoOutreaches;
+
+  /// CTA to create an outreach under a church
+  ///
+  /// In en, this message translates to:
+  /// **'Add outreach'**
+  String get churchHubAddOutreach;
+
+  /// Description under Add outreach on the church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Add a baby church with church planters.'**
+  String get churchHubAddOutreachDescription;
+
+  /// Empty Find us card when an outreach has no visit details
+  ///
+  /// In en, this message translates to:
+  /// **'No address or maps link yet.'**
+  String get churchHubOutreachFindUsEmpty;
 
   /// Dashboard card title for church gallery photos
   ///
@@ -2284,6 +2368,204 @@ abstract class AppLocalizations {
   /// **'Name and how it appears in the list'**
   String get churchEditorChurchCardSubtitle;
 
+  /// Editor card title for outreach name and summary
+  ///
+  /// In en, this message translates to:
+  /// **'Outreach'**
+  String get churchEditorOutreachCardTitle;
+
+  /// Editor card subtitle for outreach identity fields
+  ///
+  /// In en, this message translates to:
+  /// **'Name and how it appears under the parent church'**
+  String get churchEditorOutreachCardSubtitle;
+
+  /// Editor card for church vs outreach and parent
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get churchEditorStatusCardTitle;
+
+  /// Editor card subtitle for kind and parent
+  ///
+  /// In en, this message translates to:
+  /// **'Full church or outreach under a parent'**
+  String get churchEditorStatusCardSubtitle;
+
+  /// Label when editing a full church hub
+  ///
+  /// In en, this message translates to:
+  /// **'Full church'**
+  String get churchEditorKindChurch;
+
+  /// Hint for full church status
+  ///
+  /// In en, this message translates to:
+  /// **'Appears in the Churches list and uses its own location.'**
+  String get churchEditorKindChurchHint;
+
+  /// Label when editing an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'Outreach'**
+  String get churchEditorKindOutreach;
+
+  /// Hint for outreach status
+  ///
+  /// In en, this message translates to:
+  /// **'Listed on the parent church hub until promoted.'**
+  String get churchEditorKindOutreachHint;
+
+  /// Dropdown label for outreach parent
+  ///
+  /// In en, this message translates to:
+  /// **'Parent church'**
+  String get churchEditorParentChurchLabel;
+
+  /// Helper under parent church dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'The full church this outreach belongs to.'**
+  String get churchEditorParentChurchHelper;
+
+  /// Button to turn an outreach into a full church
+  ///
+  /// In en, this message translates to:
+  /// **'Promote to full church'**
+  String get churchEditorPromoteToChurch;
+
+  /// Button to turn a full church into an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'Demote to outreach'**
+  String get churchEditorDemoteToOutreach;
+
+  /// Cancel button on church promote/demote dialogs
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get churchEditorCancel;
+
+  /// Confirm dialog title when promoting an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'Promote to full church?'**
+  String get churchEditorPromoteConfirmTitle;
+
+  /// Confirm dialog body when promoting an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'This outreach will leave its parent and need its own location before you save.'**
+  String get churchEditorPromoteConfirmBody;
+
+  /// Alert title when promote is blocked
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot promote'**
+  String get churchEditorPromoteBlockedTitle;
+
+  /// Confirm dialog title when demoting a church
+  ///
+  /// In en, this message translates to:
+  /// **'Demote to outreach?'**
+  String get churchEditorDemoteConfirmTitle;
+
+  /// Confirm dialog body when demoting a church
+  ///
+  /// In en, this message translates to:
+  /// **'This church will sit under a parent and lose its location assignment. Choose the parent church.'**
+  String get churchEditorDemoteConfirmBody;
+
+  /// Alert title when demote is blocked
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot demote'**
+  String get churchEditorDemoteBlockedTitle;
+
+  /// Alert when demote has no eligible parent
+  ///
+  /// In en, this message translates to:
+  /// **'Add another full church first to use as the parent.'**
+  String get churchEditorDemoteNoParent;
+
+  /// Alert title when church hierarchy validation fails
+  ///
+  /// In en, this message translates to:
+  /// **'Check church details'**
+  String get churchEditorValidationTitle;
+
+  /// Alert title when two churches share a location
+  ///
+  /// In en, this message translates to:
+  /// **'Location already used'**
+  String get churchEditorLocationConflictTitle;
+
+  /// Alert body when location is already taken
+  ///
+  /// In en, this message translates to:
+  /// **'Location “{location}” is already used by {churchTitle}. Each church must have its own location.'**
+  String churchEditorLocationConflictBody(String location, String churchTitle);
+
+  /// Alert title when deleting a church with outreaches
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete'**
+  String get churchEditorDeleteBlockedTitle;
+
+  /// Alert body when deleting a church that still has outreaches
+  ///
+  /// In en, this message translates to:
+  /// **'Promote or delete this church’s outreaches first.'**
+  String get churchEditorDeleteBlockedBody;
+
+  /// Location dropdown label on church editor
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get churchEditorLocationLabel;
+
+  /// Helper under location dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Each church must use a unique location from the catalogue.'**
+  String get churchEditorLocationHelper;
+
+  /// Shown instead of location dropdown on outreach editor
+  ///
+  /// In en, this message translates to:
+  /// **'Outreaches do not use a catalogue location until they are promoted to a full church. You can still add an address and maps link.'**
+  String get churchEditorOutreachLocationHint;
+
+  /// Address field label on church editor
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get churchEditorAddressLabel;
+
+  /// Helper under address field
+  ///
+  /// In en, this message translates to:
+  /// **'Optional street address shown on the church page.'**
+  String get churchEditorAddressHelper;
+
+  /// Maps URL field label on church editor
+  ///
+  /// In en, this message translates to:
+  /// **'Maps URL'**
+  String get churchEditorMapsLabel;
+
+  /// Helper under maps URL field
+  ///
+  /// In en, this message translates to:
+  /// **'Optional Google Maps (or similar) link.'**
+  String get churchEditorMapsHelper;
+
+  /// Tooltip for maps URL help button
+  ///
+  /// In en, this message translates to:
+  /// **'Maps URL help'**
+  String get churchEditorMapsHelpTooltip;
+
   /// Editor card title for location, address, and maps
   ///
   /// In en, this message translates to:
@@ -2308,6 +2590,54 @@ abstract class AppLocalizations {
   /// **'People listed as pastors, plus their write-up'**
   String get churchEditorPastorsCardSubtitle;
 
+  /// Editor card title for planters on an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'Church planters'**
+  String get churchEditorPlantersCardTitle;
+
+  /// Editor card subtitle for planters fields
+  ///
+  /// In en, this message translates to:
+  /// **'People leading this outreach, plus their write-up'**
+  String get churchEditorPlantersCardSubtitle;
+
+  /// Button to pick pastor users
+  ///
+  /// In en, this message translates to:
+  /// **'Choose pastors'**
+  String get churchEditorChoosePastors;
+
+  /// Button to pick church planter users
+  ///
+  /// In en, this message translates to:
+  /// **'Choose church planters'**
+  String get churchEditorChoosePlanters;
+
+  /// Label for pastors team photo URL
+  ///
+  /// In en, this message translates to:
+  /// **'Pastors image URL'**
+  String get churchEditorPastorsImageLabel;
+
+  /// Helper for pastors image URL
+  ///
+  /// In en, this message translates to:
+  /// **'Optional team photo shown in the pastors card.'**
+  String get churchEditorPastorsImageHelper;
+
+  /// Label for planters team photo URL
+  ///
+  /// In en, this message translates to:
+  /// **'Planters image URL'**
+  String get churchEditorPlantersImageLabel;
+
+  /// Helper for planters image URL
+  ///
+  /// In en, this message translates to:
+  /// **'Optional team photo shown in the planters card.'**
+  String get churchEditorPlantersImageHelper;
+
   /// Editor card title for hero and gallery images
   ///
   /// In en, this message translates to:
@@ -2325,6 +2655,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About the pastors'**
   String get churchEditorPastorsBodyLabel;
+
+  /// Label above the planters Quill editor on the outreach form
+  ///
+  /// In en, this message translates to:
+  /// **'About the church planters'**
+  String get churchEditorPlantersBodyLabel;
 
   /// Primary save button on the church add/edit form
   ///

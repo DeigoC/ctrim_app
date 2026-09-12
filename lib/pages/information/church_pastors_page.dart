@@ -44,8 +44,11 @@ class ChurchPastorsPage extends StatelessWidget {
         required onEdit,
       }) {
         final theme = Theme.of(context);
+        final isOutreach = info.isOutreach;
         return InfoDetailPageScaffold(
-          title: l10n.churchPastorsPageTitle,
+          title: isOutreach
+              ? l10n.churchPlantersPageTitle
+              : l10n.churchPastorsPageTitle,
           imageUrls:
               info.hasPastorsImage ? <String>[info.pastorsImageSrc] : const [],
           heroTag: 'info_church_pastors_${info.id}',
@@ -58,13 +61,20 @@ class ChurchPastorsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                l10n.churchHubPastorsTitle,
+                isOutreach
+                    ? l10n.churchHubPlantersTitle
+                    : l10n.churchHubPastorsTitle,
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               if (info.hasPastors) ...[
                 const SizedBox(height: 16),
-                ChurchPastorUserList(pastorUserIds: info.pastorUserIds),
+                ChurchPastorUserList(
+                  pastorUserIds: info.pastorUserIds,
+                  unknownLabel: isOutreach
+                      ? l10n.churchHubUnknownPlanter
+                      : l10n.churchHubUnknownPastor,
+                ),
               ],
             ],
           ),
@@ -78,9 +88,11 @@ class ChurchPastorUserList extends StatelessWidget {
   const ChurchPastorUserList({
     super.key,
     required this.pastorUserIds,
+    this.unknownLabel,
   });
 
   final List<String> pastorUserIds;
+  final String? unknownLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +100,7 @@ class ChurchPastorUserList extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final appContext = Provider.of<AppContext>(context, listen: false);
+    final fallback = unknownLabel ?? l10n.churchHubUnknownPastor;
 
     return Column(
       children: pastorUserIds.map((userId) {
@@ -103,7 +116,7 @@ class ChurchPastorUserList extends StatelessWidget {
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-          title: Text(user?.fullname ?? l10n.churchHubUnknownPastor),
+          title: Text(user?.fullname ?? fallback),
         );
       }).toList(),
     );

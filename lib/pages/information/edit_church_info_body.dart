@@ -6,6 +6,7 @@ import '../../models/info/church_info.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/church_hierarchy.dart';
 import '../../utility/church_location.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
@@ -27,9 +28,12 @@ class _ImageUrlTestUiState {
 }
 
 class EditChurchInfoBody extends StatefulWidget {
-  const EditChurchInfoBody({super.key, this.info});
+  const EditChurchInfoBody({super.key, this.info, this.parentChurchId});
 
   final ChurchInfo? info;
+
+  /// When creating under a parent hub, starts as an outreach of this church.
+  final String? parentChurchId;
 
   @override
   State<EditChurchInfoBody> createState() => _EditChurchInfoBodyState();
@@ -51,12 +55,18 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   late final String _initialPastorsImage;
   late final String _initialGalleryImages;
   late final List<String> _initialPastorUserIds;
+  late final ChurchKind _initialKind;
+  late final String _initialParentChurchId;
   String? _selectedLocation;
   List<String> _pastorUserIds = const [];
   List<ChurchInfo> _allChurches = const [];
+  late ChurchKind _kind;
+  String? _parentChurchId;
   final _heroImageTest = _ImageUrlTestUiState();
   final _pastorsImageTest = _ImageUrlTestUiState();
   final _galleryImagesTest = _ImageUrlTestUiState();
+
+  bool get _isOutreach => _kind == ChurchKind.outreach;
 
   @override
   bool get usesDefaultImageUrlField => false;
@@ -68,16 +78,22 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   bool get isEditing => widget.info != null;
 
   @override
-  String get pageTitle =>
-      widget.info == null ? 'Add Church Info' : 'Edit Church Info';
+  String get pageTitle {
+    if (widget.info == null) {
+      return _isOutreach ? 'Add Outreach' : 'Add Church Info';
+    }
+    return _isOutreach ? 'Edit Outreach' : 'Edit Church Info';
+  }
 
   @override
-  String get bodyPlaceholder =>
-      'Tap here to write about the pastors — who they are, '
-      'how they serve, or anything visitors should know…';
+  String get bodyPlaceholder => _isOutreach
+      ? 'Tap here to write about the church planters — who they are, '
+          'how they serve, or anything visitors should know…'
+      : 'Tap here to write about the pastors — who they are, '
+          'how they serve, or anything visitors should know…';
 
   @override
-  String get primaryLabel => 'Church title';
+  String get primaryLabel => _isOutreach ? 'Outreach title' : 'Church title';
 
   @override
   String get deleteConfirmContent =>
@@ -99,6 +115,15 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
 
   @override
   void initSectionControllers() {
+    final creatingOutreach = widget.info == null &&
+        (widget.parentChurchId ?? '').trim().isNotEmpty;
+    _initialKind = widget.info?.kind ??
+        (creatingOutreach ? ChurchKind.outreach : ChurchKind.church);
+    _initialParentChurchId = widget.info?.parentChurchId.trim() ??
+        (creatingOutreach ? widget.parentChurchId!.trim() : '');
+    _kind = _initialKind;
+    _parentChurchId =
+        _initialParentChurchId.isEmpty ? null : _initialParentChurchId;
     _initialSummary = widget.info?.summary ?? '';
     _initialLocation = widget.info?.location.trim() ?? '';
     _initialMapLink = widget.info?.mapLink ?? '';
@@ -240,9 +265,19 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     final l10n = AppLocalizations.of(context)!;
     final churchCard = _editorCard(
       icon: Icons.church_outlined,
-      title: l10n.churchEditorChurchCardTitle,
-      subtitle: l10n.churchEditorChurchCardSubtitle,
+      title: _isOutreach
+          ? l10n.churchEditorOutreachCardTitle
+          : l10n.churchEditorChurchCardTitle,
+      subtitle: _isOutreach
+          ? l10n.churchEditorOutreachCardSubtitle
+          : l10n.churchEditorChurchCardSubtitle,
       children: _buildIdentityFields(),
+    );
+    final statusCard = _editorCard(
+      icon: Icons.account_tree_outlined,
+      title: l10n.churchEditorStatusCardTitle,
+      subtitle: l10n.churchEditorStatusCardSubtitle,
+      children: _buildStatusFields(),
     );
     final visitCard = _editorCard(
       icon: Icons.place_outlined,
@@ -252,8 +287,12 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     );
     final pastorsCard = _editorCard(
       icon: Icons.groups_outlined,
-      title: l10n.churchEditorPastorsCardTitle,
-      subtitle: l10n.churchEditorPastorsCardSubtitle,
+      title: _isOutreach
+          ? l10n.churchEditorPlantersCardTitle
+          : l10n.churchEditorPastorsCardTitle,
+      subtitle: _isOutreach
+          ? l10n.churchEditorPlantersCardSubtitle
+          : l10n.churchEditorPastorsCardSubtitle,
       children: _buildPastorFields(),
     );
     final mediaCard = _editorCard(
@@ -263,7 +302,13 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       children: _buildMediaFields(),
     );
 
-    final cards = <Widget>[churchCard, visitCard, pastorsCard, mediaCard];
+    final cards = <Widget>[
+      churchCard,
+      statusCard,
+      visitCard,
+      pastorsCard,
+      mediaCard,
+    ];
     final bool wide = ResponsiveLayout.isWideScreenOf(context);
     return [
       if (wide)
@@ -632,6 +677,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
 
   @override
   bool hasUnsavedChangesExtras() {
+    if (_kind != _initialKind) return true;
+    if ((_parentChurchId ?? '') != _initialParentChurchId) return true;
     if (_summaryController.text.trim() != _initialSummary.trim()) {
       return true;
     }
@@ -650,6 +697,186 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     return false;
   }
 
+  List<Widget> _buildStatusFields() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final parents = ChurchHierarchy.eligibleParents(
+      churches: _allChurches,
+      excludingId: widget.info?.id,
+    );
+
+    return [
+      Text(
+        _isOutreach
+            ? l10n.churchEditorKindOutreach
+            : l10n.churchEditorKindChurch,
+        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        _isOutreach
+            ? l10n.churchEditorKindOutreachHint
+            : l10n.churchEditorKindChurchHint,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      if (_isOutreach) ...[
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          initialValue: parents.any((p) => p.id == _parentChurchId)
+              ? _parentChurchId
+              : null,
+          decoration: _filledDecoration(
+            label: l10n.churchEditorParentChurchLabel,
+            helperText: l10n.churchEditorParentChurchHelper,
+            prefixIcon: Icons.church_outlined,
+          ),
+          items: parents
+              .map(
+                (parent) => DropdownMenuItem<String>(
+                  value: parent.id,
+                  child: Text(parent.title),
+                ),
+              )
+              .toList(),
+          onChanged: (value) => setState(() => _parentChurchId = value),
+          validator: (value) =>
+              (value == null || value.trim().isEmpty) ? 'Required' : null,
+        ),
+        if (isEditing) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _promoteToChurch,
+            icon: const Icon(Icons.upgrade_outlined),
+            label: Text(l10n.churchEditorPromoteToChurch),
+          ),
+        ],
+      ] else if (isEditing) ...[
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _demoteToOutreach,
+          icon: const Icon(Icons.subdirectory_arrow_right),
+          label: Text(l10n.churchEditorDemoteToOutreach),
+        ),
+      ],
+    ];
+  }
+
+  Future<void> _promoteToChurch() async {
+    final l10n = AppLocalizations.of(context)!;
+    final draft = widget.info;
+    if (draft == null) return;
+    final block = ChurchHierarchy.promoteBlockReason(draft);
+    if (block != null) {
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.churchEditorPromoteBlockedTitle,
+        content: block,
+        isError: true,
+      );
+      return;
+    }
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: l10n.churchEditorPromoteConfirmTitle,
+      content: l10n.churchEditorPromoteConfirmBody,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() {
+      _kind = ChurchKind.church;
+      _parentChurchId = null;
+    });
+  }
+
+  Future<void> _demoteToOutreach() async {
+    final l10n = AppLocalizations.of(context)!;
+    final draft = widget.info;
+    if (draft == null) return;
+    final block = ChurchHierarchy.demoteBlockReason(
+      church: draft,
+      churches: _allChurches,
+    );
+    if (block != null) {
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.churchEditorDemoteBlockedTitle,
+        content: block,
+        isError: true,
+      );
+      return;
+    }
+    final parents = ChurchHierarchy.eligibleParents(
+      churches: _allChurches,
+      excludingId: draft.id,
+    );
+    if (parents.isEmpty) {
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.churchEditorDemoteBlockedTitle,
+        content: l10n.churchEditorDemoteNoParent,
+        isError: true,
+      );
+      return;
+    }
+    String? selectedParentId = parents.first.id;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(l10n.churchEditorDemoteConfirmTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l10n.churchEditorDemoteConfirmBody),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedParentId,
+                    decoration: InputDecoration(
+                      labelText: l10n.churchEditorParentChurchLabel,
+                    ),
+                    items: parents
+                        .map(
+                          (parent) => DropdownMenuItem<String>(
+                            value: parent.id,
+                            child: Text(parent.title),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setDialogState(() => selectedParentId = value);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: Text(l10n.churchEditorCancel),
+                ),
+                FilledButton(
+                  onPressed: selectedParentId == null
+                      ? null
+                      : () => Navigator.pop(dialogContext, true),
+                  child: Text(l10n.churchEditorDemoteToOutreach),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (confirmed != true || selectedParentId == null || !mounted) return;
+    setState(() {
+      _kind = ChurchKind.outreach;
+      _parentChurchId = selectedParentId;
+      _selectedLocation = null;
+    });
+  }
+
   List<Widget> _buildPastorFields() {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -657,21 +884,31 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       OutlinedButton.icon(
         onPressed: _pickPastors,
         icon: const Icon(Icons.person_add_alt),
-        label: const Text('Choose pastors'),
+        label: Text(
+          _isOutreach
+              ? l10n.churchEditorChoosePlanters
+              : l10n.churchEditorChoosePastors,
+        ),
       ),
       ..._pastorUserIds.map(_buildPastorTile),
       const SizedBox(height: 12),
       _buildSingleImageField(
         controller: _pastorsImageController,
-        label: 'Pastors image URL',
-        helperText: 'Optional team photo shown in the pastors card.',
+        label: _isOutreach
+            ? l10n.churchEditorPlantersImageLabel
+            : l10n.churchEditorPastorsImageLabel,
+        helperText: _isOutreach
+            ? l10n.churchEditorPlantersImageHelper
+            : l10n.churchEditorPastorsImageHelper,
         prefixIcon: Icons.photo_outlined,
         testState: _pastorsImageTest,
         onTest: _testPastorsImage,
       ),
       const SizedBox(height: 16),
       Text(
-        l10n.churchEditorPastorsBodyLabel,
+        _isOutreach
+            ? l10n.churchEditorPlantersBodyLabel
+            : l10n.churchEditorPastorsBodyLabel,
         style: theme.textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w600,
         ),
@@ -704,13 +941,16 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   }
 
   Future<void> _pickPastors() async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await Navigator.push<List<String>>(
       context,
       MaterialPageRoute(
         builder: (_) => SelectUsersPage(
           selectedUIDs: List<String>.from(_pastorUserIds),
           includeCurrentUser: true,
-          title: 'Pastors',
+          title: _isOutreach
+              ? l10n.churchHubPlantersTitle
+              : l10n.churchHubPastorsTitle,
           preferServing: true,
         ),
       ),
@@ -725,6 +965,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   }
 
   List<Widget> _buildChurchHubFields() {
+    final l10n = AppLocalizations.of(context)!;
     final appContext = Provider.of<AppContext>(context);
     final assignable = VolunteerLocations.assignableFrom(
       appContext.activeLocations,
@@ -739,35 +980,42 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     }
 
     return [
-      DropdownButtonFormField<String>(
-        initialValue:
-            names.contains(_selectedLocation) ? _selectedLocation : null,
-        decoration: _filledDecoration(
-          label: 'Location',
-          helperText:
-              'Each church must use a unique location from the catalogue.',
-          prefixIcon: Icons.place_outlined,
+      if (!_isOutreach)
+        DropdownButtonFormField<String>(
+          initialValue:
+              names.contains(_selectedLocation) ? _selectedLocation : null,
+          decoration: _filledDecoration(
+            label: l10n.churchEditorLocationLabel,
+            helperText: l10n.churchEditorLocationHelper,
+            prefixIcon: Icons.place_outlined,
+          ),
+          items: names.map(
+            (name) {
+              final taken = occupied.contains(name);
+              return DropdownMenuItem<String>(
+                value: name,
+                enabled: !taken,
+                child: Text(taken ? '$name (in use)' : name),
+              );
+            },
+          ).toList(),
+          onChanged: (value) => setState(() => _selectedLocation = value),
+          validator: (value) =>
+              (value == null || value.trim().isEmpty) ? 'Required' : null,
+        )
+      else
+        Text(
+          l10n.churchEditorOutreachLocationHint,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
         ),
-        items: names.map(
-          (name) {
-            final taken = occupied.contains(name);
-            return DropdownMenuItem<String>(
-              value: name,
-              enabled: !taken,
-              child: Text(taken ? '$name (in use)' : name),
-            );
-          },
-        ).toList(),
-        onChanged: (value) => setState(() => _selectedLocation = value),
-        validator: (value) =>
-            (value == null || value.trim().isEmpty) ? 'Required' : null,
-      ),
       const SizedBox(height: 12),
       TextFormField(
         controller: _addressController,
         decoration: _filledDecoration(
-          label: 'Address',
-          helperText: 'Optional street address shown on the church page.',
+          label: l10n.churchEditorAddressLabel,
+          helperText: l10n.churchEditorAddressHelper,
           prefixIcon: Icons.home_outlined,
         ),
         minLines: 1,
@@ -777,13 +1025,13 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       TextFormField(
         controller: _mapLinkController,
         decoration: _filledDecoration(
-          label: 'Maps URL',
-          helperText: 'Optional Google Maps (or similar) link.',
+          label: l10n.churchEditorMapsLabel,
+          helperText: l10n.churchEditorMapsHelper,
           prefixIcon: Icons.map_outlined,
           suffixIcon: IconButton(
             onPressed: _onMapLinkHelpClick,
             icon: const Icon(Icons.help_outline),
-            tooltip: 'Maps URL help',
+            tooltip: l10n.churchEditorMapsHelpTooltip,
           ),
         ),
         keyboardType: TextInputType.url,
@@ -807,27 +1055,58 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
 
   @override
   Future<bool> prepareSave() async {
-    final location = (_selectedLocation ?? '').trim();
+    final l10n = AppLocalizations.of(context)!;
+    final location = _isOutreach ? '' : (_selectedLocation ?? '').trim();
     var churches = _allChurches;
     if (churches.isEmpty) {
       churches = await infoRepository.fetchChurches();
       if (mounted) setState(() => _allChurches = churches);
     }
     if (!mounted) return false;
-    final conflict = ChurchLocation.otherChurchUsingLocation(
-      churches: churches,
+
+    final draft = ChurchInfo(
+      id: widget.info?.id ?? 'draft',
+      title: primaryController.text.trim(),
+      analyticsTitle: primaryController.text.trim(),
+      body: const [
+        {'insert': '\n'}
+      ],
+      kind: _kind,
+      parentChurchId: _isOutreach ? (_parentChurchId ?? '') : '',
       location: location,
-      excludingId: widget.info?.id,
     );
-    if (conflict != null) {
+    final hierarchyError = ChurchHierarchy.validateForSave(
+      draft: draft,
+      churches: churches,
+    );
+    if (hierarchyError != null) {
       await DialogManager.showAlertDialog(
         context: context,
-        title: 'Location already used',
-        content: 'Location “$location” is already used by ${conflict.title}. '
-            'Each church must have its own location.',
+        title: l10n.churchEditorValidationTitle,
+        content: hierarchyError,
         isError: true,
       );
       return false;
+    }
+
+    if (!_isOutreach) {
+      final conflict = ChurchLocation.otherChurchUsingLocation(
+        churches: churches,
+        location: location,
+        excludingId: widget.info?.id,
+      );
+      if (conflict != null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: l10n.churchEditorLocationConflictTitle,
+          content: l10n.churchEditorLocationConflictBody(
+            location,
+            conflict.title,
+          ),
+          isError: true,
+        );
+        return false;
+      }
     }
     return true;
   }
@@ -841,7 +1120,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     required final DateTime now,
   }) async {
     final existingChurch = widget.info;
-    final location = (_selectedLocation ?? '').trim();
+    final location = _isOutreach ? '' : (_selectedLocation ?? '').trim();
     final heroUrls = _readHeroImageSources();
     final pastorsUrls = _readPastorsImageSources();
     final church = ChurchInfo(
@@ -850,6 +1129,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       title: primaryController.text.trim(),
       analyticsTitle: primaryController.text.trim(),
       body: body,
+      kind: _kind,
+      parentChurchId: _isOutreach ? (_parentChurchId ?? '') : '',
       heroImageSrc: heroUrls.isNotEmpty ? heroUrls.first : '',
       pastorsImageSrc: pastorsUrls.isNotEmpty ? pastorsUrls.first : '',
       galleryImageSources: _readGalleryImageSources(),
@@ -863,22 +1144,36 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       displayOrder: displayOrder,
     );
     await infoRepository.saveChurchInfo(church);
+
+    String log = existingChurch == null
+        ? (_isOutreach
+            ? UserActivityMessages.createdOutreachRecord
+            : UserActivityMessages.createdChurchRecord)
+        : UserActivityMessages.editedChurchRecord;
+    if (existingChurch != null && _kind != _initialKind) {
+      log = _isOutreach
+          ? UserActivityMessages.demotedChurchToOutreach
+          : UserActivityMessages.promotedOutreachToChurch;
+    }
     await UserActivityRecorder().record(
       actorUserId: appContext.currentUser.id,
-      log: existingChurch == null
-          ? UserActivityMessages.createdChurchRecord
-          : UserActivityMessages.editedChurchRecord,
+      log: log,
       documentId: church.id,
     );
   }
 
   @override
   Future<void> persistDelete(final AppContext appContext) async {
-    await infoRepository.deleteChurchInfo(widget.info!.id);
+    final l10n = AppLocalizations.of(context)!;
+    final id = widget.info!.id;
+    if (ChurchHierarchy.hasOutreaches(_allChurches, id)) {
+      throw Exception(l10n.churchEditorDeleteBlockedBody);
+    }
+    await infoRepository.deleteChurchInfo(id);
     await UserActivityRecorder().record(
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.deletedChurchRecord,
-      documentId: widget.info!.id,
+      documentId: id,
     );
   }
 }

@@ -11,8 +11,11 @@ class UserActivityMessages {
   static const unlinkedVolunteerAccount = 'Unlinked an account';
 
   static const createdChurchRecord = 'Created a church record';
+  static const createdOutreachRecord = 'Created an outreach record';
   static const editedChurchRecord = 'Edited a church record';
   static const deletedChurchRecord = 'Deleted a church record';
+  static const promotedOutreachToChurch = 'Promoted an outreach to a church';
+  static const demotedChurchToOutreach = 'Demoted a church to an outreach';
 
   static const createdChurchPage = 'Created a church page';
   static const editedChurchPage = 'Edited a church page';

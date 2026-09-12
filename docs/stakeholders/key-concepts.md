@@ -8,7 +8,8 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 |------|---------|
 | **Bulletin** | The main feed of community **posts** (events and meetings). Browse, sort, filter, and open a post for details. |
 | **Post** (bulletin post) | One item on the bulletin — usually a dated event or meeting, with title, details, schedule, people, and media. |
-| **CTRIM** (Information tab) | Longer-lived pages: About, church location hubs, testimonials, and rich information articles — not day-to-day event listings. |
+| **CTRIM** (Information tab) | Longer-lived pages: About, church location hubs (including **outreaches** under a parent church), testimonials, and rich information articles — not day-to-day event listings. |
+| **Outreach** | A baby church that still belongs to a **parent** full church. It lists **church planters** rather than pastors. Leaders can **promote** it to a full church (with its own location) or **demote** a church back to an outreach if needed. |
 | **Cell Group** | A small group in the community. The product always uses this name (not “small group” or “home group”). |
 | **Personal** | Your home base: profile, schedule, notifications, organiser shortcuts, and settings. |
 

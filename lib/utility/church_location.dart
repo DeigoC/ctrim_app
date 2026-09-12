@@ -1,10 +1,12 @@
 import '../models/info/church_info.dart';
 
 /// 1:1 church ↔ location-catalogue name helpers.
+///
+/// Only **full churches** occupy a location. Outreaches do not.
 class ChurchLocation {
   ChurchLocation._();
 
-  /// Another church already using [location], or null if the name is free.
+  /// Another full church already using [location], or null if the name is free.
   static ChurchInfo? otherChurchUsingLocation({
     required Iterable<ChurchInfo> churches,
     required String location,
@@ -13,19 +15,21 @@ class ChurchLocation {
     final name = location.trim();
     if (name.isEmpty) return null;
     for (final church in churches) {
+      if (!church.isFullChurch) continue;
       if (excludingId != null && church.id == excludingId) continue;
       if (church.location.trim() == name) return church;
     }
     return null;
   }
 
-  /// Location names already assigned to a church, excluding [excludingId].
+  /// Location names already assigned to a full church, excluding [excludingId].
   static Set<String> occupiedLocationNames({
     required Iterable<ChurchInfo> churches,
     String? excludingId,
   }) {
     final occupied = <String>{};
     for (final church in churches) {
+      if (!church.isFullChurch) continue;
       if (excludingId != null && church.id == excludingId) continue;
       final name = church.location.trim();
       if (name.isNotEmpty) occupied.add(name);
