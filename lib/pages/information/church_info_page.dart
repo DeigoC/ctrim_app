@@ -12,7 +12,7 @@ import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
-import '../../widgets/information/info_image_carousel.dart';
+import '../../widgets/media/cached_image_widget.dart';
 import 'church_hub_dashboard.dart';
 import 'church_page_info_page.dart';
 import 'church_pastors_page.dart';
@@ -265,43 +265,44 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     final size = MediaQuery.sizeOf(context);
     final double gutter =
         ResponsiveLayout.horizontalGutter(size.width, narrowPadding: 0);
-    final bool isWide = ResponsiveLayout.isWideScreen(size.width);
-    final double carouselHeight = size.height * (isWide ? 0.36 * 0.9 : 0.36);
     final maxWidth = ResponsiveLayout.maxContentWidth(size.width);
+    final hasHero = church.hasHeroImage;
+    // Match post / cell-group key-graphic AppBars: edge-to-edge cover.
+    final double? heroHeight = hasHero ? size.height * 0.33 : null;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(church.title),
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint,
-        actions: [
-          if (canManageInfo)
-            IconButton(
-              onPressed: () => _openEditor(church),
-              icon: const Icon(Icons.edit),
-              tooltip: l10n.churchInfoEditTooltip,
-            ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            if (church.hasHeroImage)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      EdgeInsets.fromLTRB(gutter, isWide ? 8 : 0, gutter, 0),
-                  child: InfoImageCarousel(
-                    imageUrls: <String>[church.heroImageSrc],
-                    heroTag: 'info_church_${church.id}',
-                    landscapeHeight: carouselHeight,
-                    borderRadius: isWide ? 16 : 0,
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: heroHeight,
+              title: Text(church.title),
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surfaceTint,
+              flexibleSpace: hasHero
+                  ? FlexibleSpaceBar(
+                      background: CachedImageWidget(
+                        imageUrl: church.heroImageSrc,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        heroTag: 'info_church_${church.id}',
+                      ),
+                    )
+                  : null,
+              actions: [
+                if (canManageInfo)
+                  IconButton(
+                    onPressed: () => _openEditor(church),
+                    icon: const Icon(Icons.edit),
+                    tooltip: l10n.churchInfoEditTooltip,
                   ),
-                ),
-              ),
+              ],
+            ),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(gutter + 16, 20, gutter + 16, 40),
               sliver: SliverToBoxAdapter(

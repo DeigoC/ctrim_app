@@ -112,5 +112,51 @@ void main() {
       expect(seenStacked, isTrue);
       expect(seenTwoLine, isTrue);
     });
+
+    test('avatar stack grows with people when the lane is wide', () {
+      const size = ScheduleBlockLayout.bottomAvatar;
+      final forTwo = ScheduleBlockLayout.avatarStackWidth(
+        userCount: 2,
+        avatarSize: size,
+        maxWidth: 300,
+      );
+      final forSix = ScheduleBlockLayout.avatarStackWidth(
+        userCount: 6,
+        avatarSize: size,
+        maxWidth: 300,
+      );
+
+      expect(forSix, greaterThan(forTwo));
+      // Six faces at 30% max overlap need more than the old hard-coded 68px.
+      expect(forSix, greaterThan(68));
+      expect(forSix, lessThanOrEqualTo(300));
+    });
+
+    test('avatar stack width respects the available max', () {
+      expect(
+        ScheduleBlockLayout.avatarStackWidth(
+          userCount: 8,
+          avatarSize: ScheduleBlockLayout.bottomAvatar,
+          maxWidth: 60,
+        ),
+        60,
+      );
+      expect(
+        ScheduleBlockLayout.avatarStackWidth(
+          userCount: 1,
+          avatarSize: ScheduleBlockLayout.bottomAvatar,
+          maxWidth: 200,
+        ),
+        ScheduleBlockLayout.bottomAvatar,
+      );
+      expect(
+        ScheduleBlockLayout.avatarStackWidth(
+          userCount: 0,
+          avatarSize: ScheduleBlockLayout.bottomAvatar,
+          maxWidth: 200,
+        ),
+        0,
+      );
+    });
   });
 }

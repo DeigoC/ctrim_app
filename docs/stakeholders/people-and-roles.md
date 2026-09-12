@@ -83,6 +83,8 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 Use **Refine & sort** (tune icon in the app bar) to change **location**, **Serving**, role filters, team tags, sort order, and **Placeholders**. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one team tag — open a profile for the full picture.
 
+If a **search** finds no one under the current filters, the directory still shows people whose names match **without** those filters (other locations, everyone not only Serving, and placeholders you are allowed to see), with a short note and a **Widen search** action — so organisers do not invent a second profile for someone who already exists.
+
 **Serving** means any of:
 
 - Leader or Area admin  
@@ -103,13 +105,13 @@ When organisers pick people for **programme roles**, lead speaker, contributors,
 
 Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
 
-When you are signed in, the profile also lists **cell groups** that person belongs to (from the group roster or as a listed leader). If they are in at least one group, a banner shows whether they **checked in** at a linked meeting in the **past 3 weeks** (the same window as the Cell Groups activity snapshot), including the date of their most recent check-in when applicable. Guests do not see check-in details. Tap a group to open its detail page.
+When you are signed in, the profile also lists **cell groups** that person belongs to (from the group roster or as a listed leader). If they are in at least one group, a banner summarises check-ins at linked meetings in the **past 3 weeks** (the same window as the Cell Groups activity snapshot). Expand **Recent meetings** to see up to four of those posts (attended or not) and open them. Guests do not see check-in details. Tap a group to open its detail page.
 
 ## Placeholders
 
 Sometimes organisers need to assign or list someone **before** that person has signed in. The app supports **placeholder** people for that — useful for attendance, cell groups, and programmes.
 
-When you pick people (programmes, attendance, cell members, and similar), **placeholder** profiles are listed so they can be assigned like anyone else. Use the **Placeholders** chip on that picker to show only those profiles. Leaders and area admins can **create placeholder** from the picker when a search finds no match — search first so you do not duplicate someone already in the directory. The People directory still hides placeholders by default; turn on **Placeholders** in **Refine & sort** to review them. Later, when that person creates an account, organisers can connect it to the existing profile so history is not lost.
+When you pick people (programmes, attendance, cell members, and similar), **placeholder** profiles are listed so they can be assigned like anyone else. Use the **Placeholders** chip on that picker to show only those profiles. Leaders and area admins can **create placeholder** from the picker when a search finds no match — search first so you do not duplicate someone already in the directory. If filters hide a name match, the picker shows those matches (and only offers create when nothing matches even without filters). The People directory still hides placeholders by default; turn on **Placeholders** in **Refine & sort** to review them. Later, when that person creates an account, organisers can connect it to the existing profile so history is not lost.
 
 ## Related pages
 

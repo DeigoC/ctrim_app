@@ -115,79 +115,104 @@ class ScheduleTimelineBlock extends StatelessWidget {
       ),
     );
 
-    if (!fit.stacked) {
-      return Row(
-        children: [
-          if (staffOnly) ...[
-            Icon(
-              Icons.visibility_off_outlined,
-              size: 12,
-              color: mutedForeground,
-            ),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            _timeFormat.format(start),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: mutedForeground,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(child: titleText),
-          if (fit.avatars == ScheduleBlockAvatars.inline) ...[
-            const SizedBox(width: 6),
-            MyAvatarStack(
-              users: assignedUsers,
-              height: ScheduleBlockLayout.compactAvatar,
-              width: 44,
-              borderWidth: 1.2,
-            ),
-          ],
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            if (staffOnly) ...[
-              Icon(
-                Icons.visibility_off_outlined,
-                size: 12,
-                color: mutedForeground,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        if (!fit.stacked) {
+          return Row(
+            children: [
+              if (staffOnly) ...[
+                Icon(
+                  Icons.visibility_off_outlined,
+                  size: 12,
+                  color: mutedForeground,
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                _timeFormat.format(start),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: mutedForeground,
+                ),
               ),
-              const SizedBox(width: 4),
-            ],
-            Expanded(child: titleText),
-            if (fit.avatars == ScheduleBlockAvatars.inline) ...[
               const SizedBox(width: 6),
+              Expanded(child: titleText),
+              if (fit.avatars == ScheduleBlockAvatars.inline) ...[
+                const SizedBox(width: 6),
+                MyAvatarStack(
+                  users: assignedUsers,
+                  height: ScheduleBlockLayout.compactAvatar,
+                  width: ScheduleBlockLayout.avatarStackWidth(
+                    userCount: assignedUsers.length,
+                    avatarSize: ScheduleBlockLayout.compactAvatar,
+                    // Leave room for time + a readable title fragment.
+                    maxWidth: (maxWidth * 0.45).clamp(
+                      ScheduleBlockLayout.compactAvatar,
+                      maxWidth,
+                    ),
+                  ),
+                  borderWidth: 1.2,
+                ),
+              ],
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (staffOnly) ...[
+                  Icon(
+                    Icons.visibility_off_outlined,
+                    size: 12,
+                    color: mutedForeground,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Expanded(child: titleText),
+                if (fit.avatars == ScheduleBlockAvatars.inline) ...[
+                  const SizedBox(width: 6),
+                  MyAvatarStack(
+                    users: assignedUsers,
+                    height: ScheduleBlockLayout.inlineAvatar,
+                    width: ScheduleBlockLayout.avatarStackWidth(
+                      userCount: assignedUsers.length,
+                      avatarSize: ScheduleBlockLayout.inlineAvatar,
+                      maxWidth: (maxWidth * 0.45).clamp(
+                        ScheduleBlockLayout.inlineAvatar,
+                        maxWidth,
+                      ),
+                    ),
+                    borderWidth: 1.5,
+                  ),
+                ],
+              ],
+            ),
+            Text(
+              '${_timeFormat.format(start)} - ${_timeFormat.format(end)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  theme.textTheme.labelSmall?.copyWith(color: mutedForeground),
+            ),
+            if (fit.avatars == ScheduleBlockAvatars.bottom) ...[
+              const Spacer(),
               MyAvatarStack(
                 users: assignedUsers,
-                height: ScheduleBlockLayout.inlineAvatar,
-                width: 52,
+                height: ScheduleBlockLayout.bottomAvatar,
+                width: ScheduleBlockLayout.avatarStackWidth(
+                  userCount: assignedUsers.length,
+                  avatarSize: ScheduleBlockLayout.bottomAvatar,
+                  maxWidth: maxWidth,
+                ),
                 borderWidth: 1.5,
               ),
             ],
           ],
-        ),
-        Text(
-          '${_timeFormat.format(start)} - ${_timeFormat.format(end)}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.labelSmall?.copyWith(color: mutedForeground),
-        ),
-        if (fit.avatars == ScheduleBlockAvatars.bottom) ...[
-          const Spacer(),
-          MyAvatarStack(
-            users: assignedUsers,
-            height: ScheduleBlockLayout.bottomAvatar,
-            width: 68,
-            borderWidth: 1.5,
-          ),
-        ],
-      ],
+        );
+      },
     );
   }
 }

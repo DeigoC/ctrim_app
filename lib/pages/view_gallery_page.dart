@@ -12,10 +12,15 @@ class ViewGalleryPage extends StatefulWidget {
       {super.key,
       required this.media,
       required this.initialIndex,
-      required this.postId});
+      required this.postId,
+      this.useHero = true});
   final List<Map<String, dynamic>> media;
   final int initialIndex;
   final String postId;
+
+  /// Post media thumbnails share a [Hero] tag; profile / other opens should
+  /// pass false so the image does not try to fly without a matching source.
+  final bool useHero;
 
   @override
   State<ViewGalleryPage> createState() => _ViewGalleryPageState();
@@ -181,7 +186,10 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
           videoPlayerController: _videoControllers[thisMediaSrc]!);
     } else if (type.compareTo('img') == 0) {
       return MyPhotoViewer(
-          src: thisMediaSrc, postID: widget.postId, onLockTap: _onLockTap);
+          src: thisMediaSrc,
+          postID: widget.postId,
+          onLockTap: _onLockTap,
+          useHero: widget.useHero);
     }
 
     return const Center(child: Text('Something went wrong'));

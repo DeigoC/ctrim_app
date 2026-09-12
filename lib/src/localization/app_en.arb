@@ -45,6 +45,19 @@
       }
     }
   },
+  "volunteersSearchWithoutFiltersBanner": "No matches with current filters. Showing {count, plural, =1{1 person} other{{count} people}} who match without filters (other locations, everyone, and placeholders you can see).",
+  "@volunteersSearchWithoutFiltersBanner": {
+    "description": "Banner when a refined people search is empty but name matches exist without filters",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "volunteersWidenSearch": "Widen search",
+  "@volunteersWidenSearch": {
+    "description": "Clears location/serving/role filters so search matches are easier to find"
+  },
   "volunteersEmptyLocation": "No people in {location}",
   "@volunteersEmptyLocation": {
     "description": "Empty state when a location filter returns no people",
@@ -207,33 +220,35 @@
       }
     }
   },
-  "userProfileCellGroupViewRecentMeeting": "View most recent meeting",
-  "@userProfileCellGroupViewRecentMeeting": {
-    "description": "Link label to open the person's latest attended cell group meeting post"
-  },
-  "userProfileCellGroupViewRecentMeetingNamed": "View {title}",
-  "@userProfileCellGroupViewRecentMeetingNamed": {
-    "description": "Link label to open a named cell group meeting post",
-    "placeholders": {
-      "title": {
-        "type": "String",
-        "example": "Alpha CG · 12 Aug"
-      }
-    }
-  },
   "userProfileCellGroupNoAttendanceRecent": "No cell group attendance in the past 3 weeks",
   "@userProfileCellGroupNoAttendanceRecent": {
     "description": "Profile note when the person did not check in at a cell group meeting in the past 3 weeks"
   },
-  "userProfileCellGroupLastAttended": "Last attended {date}",
-  "@userProfileCellGroupLastAttended": {
-    "description": "Profile detail for the most recent cell group check-in",
+  "userProfileCellGroupRecentMeetings": "Recent meetings",
+  "@userProfileCellGroupRecentMeetings": {
+    "description": "Heading above the past few cell group meeting rows on a profile"
+  },
+  "userProfileCellGroupRecentMeetingsCount": "{count, plural, =1{1 meeting} other{{count} meetings}}",
+  "@userProfileCellGroupRecentMeetingsCount": {
+    "description": "Collapsed subtitle showing how many recent cell group meetings are listed",
     "placeholders": {
-      "date": {
-        "type": "String",
-        "example": "12 Aug"
+      "count": {
+        "type": "int",
+        "example": "3"
       }
     }
+  },
+  "userProfileCellGroupMeetingAttended": "Attended",
+  "@userProfileCellGroupMeetingAttended": {
+    "description": "Subtitle when the person checked in at that cell group meeting"
+  },
+  "userProfileCellGroupMeetingMissed": "Not checked in",
+  "@userProfileCellGroupMeetingMissed": {
+    "description": "Subtitle when the person did not check in at that cell group meeting"
+  },
+  "userProfileCellGroupNoRecentMeetings": "No linked cell group meetings in the past 3 weeks",
+  "@userProfileCellGroupNoRecentMeetings": {
+    "description": "Empty state when membership exists but no past-window CG posts were found"
   },
   "userProfileUpcomingTasks": "Upcoming tasks",
   "@userProfileUpcomingTasks": {
@@ -1198,6 +1213,83 @@
   "cellGroupsSummaryHelper": "Short description on the catalogue card and in About.",
   "@cellGroupsSummaryHelper": {
     "description": "Helper under cell group summary field"
+  },
+  "cellGroupsLocationLabel": "Location",
+  "@cellGroupsLocationLabel": {
+    "description": "Label for church-area location on create/edit cell group"
+  },
+  "cellGroupsLocationHelper": "Church area this group belongs to (Belfast, Portadown, or North Coast).",
+  "@cellGroupsLocationHelper": {
+    "description": "Helper under cell group location dropdown"
+  },
+  "cellGroupsPostcodeLabel": "Postcode",
+  "@cellGroupsPostcodeLabel": {
+    "description": "Label for optional UK postcode on create/edit cell group"
+  },
+  "cellGroupsPostcodeHint": "e.g. BT37 or BT37 0AB",
+  "@cellGroupsPostcodeHint": {
+    "description": "Placeholder example for cell group postcode or outcode"
+  },
+  "cellGroupsPostcodeHelper": "Optional. A full postcode or just the first half (BT37) is public and used to find the nearest group. Leave blank to stay off the map.",
+  "@cellGroupsPostcodeHelper": {
+    "description": "Helper under optional cell group postcode field"
+  },
+  "cellGroupsPostcodeInvalid": "Enter a UK postcode or area code (e.g. BT37), or leave this blank.",
+  "@cellGroupsPostcodeInvalid": {
+    "description": "Validation when cell group postcode is not a full postcode or outcode"
+  },
+  "cellGroupsPostcodeLookupFailed": "Could not check that postcode. Check it and try again.",
+  "@cellGroupsPostcodeLookupFailed": {
+    "description": "Error when postcodes.io lookup fails on save"
+  },
+  "cellGroupsListSearchHint": "Search by name or postcode",
+  "@cellGroupsListSearchHint": {
+    "description": "Hint on the Groups tab search field"
+  },
+  "cellGroupsSearchInvalidPostcodeTitle": "Not a valid postcode",
+  "@cellGroupsSearchInvalidPostcodeTitle": {
+    "description": "Empty-state title when nearest search postcode is invalid"
+  },
+  "cellGroupsSearchInvalidPostcodeBody": "Try a full UK postcode such as BT9 6AB, or an area code such as BT9.",
+  "@cellGroupsSearchInvalidPostcodeBody": {
+    "description": "Empty-state body when nearest search postcode is invalid"
+  },
+  "cellGroupsSearchNoNearbyTitle": "No groups near that postcode",
+  "@cellGroupsSearchNoNearbyTitle": {
+    "description": "Empty-state title when no groups have a postcode pin"
+  },
+  "cellGroupsSearchNoNearbyBody": "Only groups that have added a postcode can appear in nearest results. Search by name, or browse the full list.",
+  "@cellGroupsSearchNoNearbyBody": {
+    "description": "Empty-state body when nearest search has no opted-in groups"
+  },
+  "cellGroupsSearchNoNameMatchesTitle": "No matching groups",
+  "@cellGroupsSearchNoNameMatchesTitle": {
+    "description": "Empty-state title when name search has no matches"
+  },
+  "cellGroupsSearchNoNameMatchesBody": "Try another name, or enter a postcode to see the nearest groups.",
+  "@cellGroupsSearchNoNameMatchesBody": {
+    "description": "Empty-state body when name search has no matches"
+  },
+  "cellGroupsSearchLookupFailedTitle": "Could not look up that postcode",
+  "@cellGroupsSearchLookupFailedTitle": {
+    "description": "Empty-state title when postcodes.io fails on Groups search"
+  },
+  "cellGroupsSearchLookupFailedBody": "Check your connection and try again.",
+  "@cellGroupsSearchLookupFailedBody": {
+    "description": "Empty-state body when postcodes.io fails on Groups search"
+  },
+  "cellGroupsDistanceMiles": "{miles} miles",
+  "@cellGroupsDistanceMiles": {
+    "description": "Distance from the seeker's postcode to a cell group",
+    "placeholders": {
+      "miles": {
+        "type": "String"
+      }
+    }
+  },
+  "cellGroupsDistanceUnderPointOne": "< 0.1 miles",
+  "@cellGroupsDistanceUnderPointOne": {
+    "description": "Distance label when a cell group is under 0.1 miles away"
   },
   "cellGroupsWeekdayLabel": "Meeting weekday",
   "@cellGroupsWeekdayLabel": {

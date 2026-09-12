@@ -11,10 +11,15 @@ class MyPhotoViewer extends StatelessWidget {
       {super.key,
       required this.src,
       required this.postID,
-      required this.onLockTap});
+      required this.onLockTap,
+      this.useHero = true});
   final String src;
   final String postID;
   final Function onLockTap;
+
+  /// When true, pairs with thumbnail [Hero] tags (`postID + src`) on post media.
+  /// Keep false when opening from places without a matching source Hero (e.g. profiles).
+  final bool useHero;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +42,9 @@ class MyPhotoViewer extends StatelessWidget {
           },
           child: PhotoView(
             imageProvider: image,
-            heroAttributes: PhotoViewHeroAttributes(tag: postID + src),
+            heroAttributes: useHero
+                ? PhotoViewHeroAttributes(tag: postID + src)
+                : null,
             loadingBuilder: (context, event) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());

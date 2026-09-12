@@ -6,10 +6,12 @@ import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/event_context.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/uk_postcode_lookup.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../widgets/responsive_content.dart';
@@ -33,8 +35,11 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _summaryController;
   late final TextEditingController _timeController;
+  late final TextEditingController _postcodeController;
   late String _status;
+  late String _location;
   int? _weekday;
+  String? _postcodeLookupError;
   late List<String> _leaderUserIds;
   late List<Map<String, dynamic>> _media;
   String? _keyGraphicSrc;
@@ -46,6 +51,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   late final String _initialSummary;
   late final String _initialTime;
   late final String _initialStatus;
+  late final String _initialLocation;
+  late final String _initialPostcode;
   late final int? _initialWeekday;
   late final List<String> _initialLeaderUserIds;
   late final List<String> _initialMediaSrcs;
@@ -64,10 +71,19 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   void initState() {
     super.initState();
     final existing = widget.existing;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final locationOptions =
+        VolunteerLocations.assignableFrom(appContext.allLocations);
     _initialName = existing?.name ?? '';
     _initialSummary = existing?.summary ?? '';
     _initialTime = existing?.meetingTime ?? '';
     _initialStatus = existing?.status ?? CellGroupStatus.active;
+    _initialLocation = existing?.location ??
+        VolunteerLocations.defaultFilterForUser(
+          appContext.currentUser.location,
+          locationOptions,
+        );
+    _initialPostcode = existing?.postcode ?? '';
     _initialWeekday = existing?.meetingWeekday;
     _initialLeaderUserIds =
         List<String>.from(existing?.leaderUserIds ?? const []);
@@ -81,7 +97,9 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     _nameController = TextEditingController(text: _initialName);
     _summaryController = TextEditingController(text: _initialSummary);
     _timeController = TextEditingController(text: _initialTime);
+    _postcodeController = TextEditingController(text: _initialPostcode);
     _status = _initialStatus;
+    _location = _initialLocation;
     _weekday = _initialWeekday;
     _leaderUserIds = List<String>.from(_initialLeaderUserIds);
     _media =
@@ -93,6 +111,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     if (_nameController.text.trim() != _initialName.trim()) return true;
     if (_summaryController.text.trim() != _initialSummary.trim()) return true;
     if (_timeController.text.trim() != _initialTime.trim()) return true;
+    if (_location != _initialLocation) return true;
+    if (_postcodeController.text.trim() != _initialPostcode.trim()) return true;
     if (_status != _initialStatus) return true;
     if (_weekday != _initialWeekday) return true;
     if (!_sameIdLists(_leaderUserIds, _initialLeaderUserIds)) return true;
@@ -118,6 +138,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     _nameController.dispose();
     _summaryController.dispose();
     _timeController.dispose();
+    _postcodeController.dispose();
     super.dispose();
   }
 
@@ -188,6 +209,58 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
                       alignLabelWithHint: true,
                       border: const OutlineInputBorder(),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsLocationLabel,
+                      helperText: l10n.cellGroupsLocationHelper,
+                      helperMaxLines: 2,
+                      border: const OutlineInputBorder(),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _locationDropdownValue(),
+                        items: _locationOptions()
+                            .map((location) => DropdownMenuItem<String>(
+                                  value: location,
+                                  child: Text(location),
+                                ))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() => _location = v);
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _postcodeController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      labelText: l10n.cellGroupsPostcodeLabel,
+                      hintText: l10n.cellGroupsPostcodeHint,
+                      helperText: l10n.cellGroupsPostcodeHelper,
+                      helperMaxLines: 3,
+                      errorText: _postcodeLookupError,
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (_) {
+                      if (_postcodeLookupError != null) {
+                        setState(() => _postcodeLookupError = null);
+                      }
+                    },
+                    validator: (v) {
+                      final raw = v?.trim() ?? '';
+                      if (raw.isEmpty) return null;
+                      if (UkPostcodeLookup.classify(raw) ==
+                          UkPostcodeKind.none) {
+                        return l10n.cellGroupsPostcodeInvalid;
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   InputDecorator(
@@ -480,9 +553,11 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final appContext = Provider.of<AppContext>(context, listen: false);
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
     final summary = _summaryController.text.trim();
     final time = _timeController.text.trim();
+    final location = _location;
     final authIds = _leaderUserIds
         .map((id) => _userById(id)?.authID ?? '')
         .where((id) => id.isNotEmpty)
@@ -492,6 +567,45 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             mediaCopy.any((e) => e['src'] == _keyGraphicSrc))
         ? _keyGraphicSrc
         : null;
+
+    String? postcode;
+    double? latitude;
+    double? longitude;
+    final rawPostcode = _postcodeController.text.trim();
+    if (rawPostcode.isNotEmpty) {
+      final existing = widget.existing;
+      final normalised = UkPostcodeLookup.normalize(rawPostcode);
+      if (normalised == null) {
+        setState(() => _postcodeLookupError = l10n.cellGroupsPostcodeInvalid);
+        return;
+      }
+      if (existing != null &&
+          existing.postcode == normalised &&
+          existing.hasCoordinates) {
+        postcode = existing.postcode;
+        latitude = existing.latitude;
+        longitude = existing.longitude;
+      } else {
+        setState(() => _saving = true);
+        try {
+          final geo = await UkPostcodeLookup().lookup(rawPostcode);
+          postcode = geo.label;
+          latitude = geo.latitude;
+          longitude = geo.longitude;
+        } on UkPostcodeLookupException catch (e) {
+          if (!mounted) return;
+          setState(() {
+            _saving = false;
+            _postcodeLookupError = e.isInvalid
+                ? l10n.cellGroupsPostcodeInvalid
+                : l10n.cellGroupsPostcodeLookupFailed;
+          });
+          return;
+        }
+        if (!mounted) return;
+        setState(() => _saving = false);
+      }
+    }
 
     setState(() => _saving = true);
     final ok = await DialogManager.runWithProgressDialog(
@@ -503,12 +617,22 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           final group = widget.existing!;
           group.setName(name);
           group.setSummary(summary);
+          group.setLocation(location);
           group.setMeetingWeekday(_weekday);
           group.setMeetingTime(time);
           group.setStatus(_status);
           group.setLeaders(userIds: _leaderUserIds, authIds: authIds);
           group.setMedia(mediaCopy);
           group.setKeyGraphicSrc(keySrc);
+          if (postcode == null) {
+            group.clearPostcodeGeo();
+          } else {
+            group.setPostcodeGeo(
+              postcode: postcode,
+              latitude: latitude!,
+              longitude: longitude!,
+            );
+          }
           await db.updateGroup(group);
           appContext.addOrUpdateCellGroup(group);
           await UserActivityRecorder().record(
@@ -520,7 +644,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           final created = await db.createGroup(
             name: name,
             summary: summary,
-            location: 'Belfast',
+            location: location,
             leaderUserIds: _leaderUserIds,
             leaderAuthIds: authIds,
             media: mediaCopy,
@@ -528,6 +652,9 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             status: _status,
             meetingWeekday: _weekday,
             meetingTime: time,
+            postcode: postcode,
+            latitude: latitude,
+            longitude: longitude,
             createdByUserID: appContext.currentUser.id,
           );
           appContext.addOrUpdateCellGroup(created);
@@ -553,5 +680,22 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
       if (u.id == id) return u;
     }
     return null;
+  }
+
+  List<String> _locationOptions() {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final options = List<String>.from(
+      VolunteerLocations.assignableFrom(appContext.allLocations),
+    );
+    if (_location.isNotEmpty && !options.contains(_location)) {
+      options.insert(0, _location);
+    }
+    return options;
+  }
+
+  String _locationDropdownValue() {
+    final options = _locationOptions();
+    if (options.contains(_location)) return _location;
+    return options.isNotEmpty ? options.first : _location;
   }
 }

@@ -6,6 +6,8 @@
 /// swept in a test, which is how a two-pixel overflow got shipped once.
 library;
 
+import 'dart:math' as math;
+
 /// Where a block has room to show who is assigned.
 enum ScheduleBlockAvatars {
   /// No users, or no room at all.
@@ -49,8 +51,30 @@ class ScheduleBlockLayout {
   static const double inlineAvatar = 22;
   static const double bottomAvatar = 28;
 
+  /// Matches `RestrictedPositions` defaults used by `MyAvatarStack`.
+  static const double avatarMaxCoverage = 0.3;
+
   /// Breathing room so rounding never tips a block into an overflow.
   static const double slack = 2;
+
+  /// Width needed to show [userCount] faces at [avatarSize], capped by
+  /// [maxWidth]. Without this, schedule blocks hard-coded ~44–68px and only
+  /// ever showed two faces plus a "+N" even when the lane was wide open.
+  static double avatarStackWidth({
+    required final int userCount,
+    required final double avatarSize,
+    required final double maxWidth,
+  }) {
+    if (userCount <= 0 || maxWidth <= 0 || avatarSize <= 0) {
+      return 0;
+    }
+    if (userCount == 1) {
+      return math.min(avatarSize, maxWidth);
+    }
+    final step = avatarSize * (1 - avatarMaxCoverage);
+    final needed = avatarSize + (userCount - 1) * step;
+    return math.min(needed, maxWidth);
+  }
 
   static const double _titleRowWithAvatar =
       titleLine > inlineAvatar ? titleLine : inlineAvatar;

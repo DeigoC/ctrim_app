@@ -5,6 +5,17 @@ import '../models/event/event_attendance.dart';
 import '../models/event/event_head.dart';
 import '../models/user.dart';
 
+/// One past cell-group meeting and whether [user] checked in.
+class UserCellGroupMeetingAttendance {
+  const UserCellGroupMeetingAttendance({
+    required this.head,
+    required this.attended,
+  });
+
+  final EventHead head;
+  final bool attended;
+}
+
 /// Attendance snapshot for a user across their cell groups' past meetings.
 class UserCellGroupAttendanceSummary {
   const UserCellGroupAttendanceSummary({
@@ -14,6 +25,7 @@ class UserCellGroupAttendanceSummary {
     this.meetingsInWindow = 0,
     this.meetingsAttended = 0,
     this.distinctGroupsAttended = 0,
+    this.recentMeetings = const [],
   });
 
   final bool attendedInPastWindow;
@@ -24,6 +36,9 @@ class UserCellGroupAttendanceSummary {
 
   /// Distinct cell group IDs the user checked in at during the window.
   final int distinctGroupsAttended;
+
+  /// Past-window meetings for this member, newest first.
+  final List<UserCellGroupMeetingAttendance> recentMeetings;
 }
 
 /// Profile helper: did [user] check in at a linked CG meeting in the past 3 weeks?
@@ -68,12 +83,17 @@ abstract final class UserCellGroupAttendance {
     DateTime? lastAttended;
     EventHead? lastMeeting;
     final groupsAttended = <String>{};
+    final recent = <UserCellGroupMeetingAttendance>[];
 
     for (final head in memberMeetings) {
       final attendance = attendanceByPostId[head.id];
-      if (attendance == null || !attendance.hasUserAttendee(userId)) {
-        continue;
-      }
+      final attended =
+          attendance != null && attendance.hasUserAttendee(userId);
+      recent.add(
+        UserCellGroupMeetingAttendance(head: head, attended: attended),
+      );
+      if (!attended) continue;
+
       meetingsAttended++;
       for (final groupId in head.cellGroupIDs) {
         if (memberGroupIds.isEmpty || memberGroupIds.contains(groupId)) {
@@ -88,6 +108,16 @@ abstract final class UserCellGroupAttendance {
       }
     }
 
+    // Newest first for profile history.
+    recent.sort((a, b) {
+      final aDate = a.head.eventDate;
+      final bDate = b.head.eventDate;
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1;
+      if (bDate == null) return -1;
+      return bDate.compareTo(aDate);
+    });
+
     return UserCellGroupAttendanceSummary(
       attendedInPastWindow: meetingsAttended > 0,
       lastAttendedDate: lastAttended,
@@ -95,6 +125,7 @@ abstract final class UserCellGroupAttendance {
       meetingsInWindow: memberMeetings.length,
       meetingsAttended: meetingsAttended,
       distinctGroupsAttended: groupsAttended.length,
+      recentMeetings: recent,
     );
   }
 

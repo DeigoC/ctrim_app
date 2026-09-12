@@ -9,6 +9,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cache/refresh_cooldown.dart';
+import '../../utility/people_directory_query.dart';
 import '../../utility/people_directory_sections.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
@@ -195,6 +196,17 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         appContext.allTags,
         cellGroupLeaders,
       );
+      final unfilteredSearchMatches = _searchQuery.trim().isEmpty
+          ? const <User>[]
+          : PeopleDirectoryQuery.searchWithoutRefineFilters(
+              allUsers: appContext.allUsers,
+              viewer: appContext.currentUser,
+              searchQuery: _searchQuery,
+            );
+      final showingUnfilteredSearchFallback =
+          filteredUsers.isEmpty && unfilteredSearchMatches.isNotEmpty;
+      final listUsers =
+          showingUnfilteredSearchFallback ? unfilteredSearchMatches : filteredUsers;
       final canEdit = appContext.currentUser.canManageVolunteers;
       final activeTags =
           appContext.allTags.where((tag) => tag.isActive).toList();
@@ -315,7 +327,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               ),
               _buildListHeader(
                 l10n: l10n,
-                count: filteredUsers.length,
+                count: listUsers.length,
                 horizontalPadding: filterHorizontalPadding,
                 appContext: appContext,
               ),
@@ -325,8 +337,14 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   horizontalPadding: filterHorizontalPadding,
                   appContext: appContext,
                 ),
+              if (showingUnfilteredSearchFallback)
+                _buildUnfilteredSearchBanner(
+                  l10n: l10n,
+                  count: unfilteredSearchMatches.length,
+                  horizontalPadding: filterHorizontalPadding,
+                ),
               Expanded(
-                child: filteredUsers.isEmpty
+                child: listUsers.isEmpty
                     ? Center(
                         child: Padding(
                           padding: EdgeInsets.symmetric(
@@ -339,7 +357,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ),
                       )
                     : _buildSectionedUserList(
-                        users: filteredUsers,
+                        users: listUsers,
                         allTags: appContext.allTags,
                         cellGroupLeaders: cellGroupLeaders,
                         appContext: appContext,
@@ -423,6 +441,18 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     });
   }
 
+  /// Widens search so name matches are not hidden by location / Serving / roles.
+  void _widenSearchFilters() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _locationFilter = VolunteerLocations.all;
+      _servingOnly = false;
+      _placeholdersOnly = false;
+      _selectedRoles = {};
+      _selectedTagIDs = {};
+    });
+  }
+
   Widget _buildListHeader({
     required AppLocalizations l10n,
     required int count,
@@ -493,6 +523,59 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                 Icon(Icons.close, size: 16, color: accent),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnfilteredSearchBanner({
+    required AppLocalizations l10n,
+    required int count,
+    required double horizontalPadding,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final accent = colorScheme.tertiary;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+      child: Material(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.filter_alt_off_outlined, size: 20, color: accent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.volunteersSearchWithoutFiltersBanner(count),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: _widenSearchFilters,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 32),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(l10n.volunteersWidenSearch),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

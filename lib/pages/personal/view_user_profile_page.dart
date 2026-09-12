@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -22,11 +23,12 @@ import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/volunteer_role_badge.dart';
+import '../cell_groups/cell_group_detail_page.dart';
+import '../events/view_event_page.dart';
+import '../view_gallery_page.dart';
 import 'edit_user_page.dart';
 import 'view_user_activity_page.dart';
 import 'view_user_roles_page.dart';
-import '../cell_groups/cell_group_detail_page.dart';
-import '../events/view_event_page.dart';
 
 class ViewUserProfilePage extends StatefulWidget {
   const ViewUserProfilePage({
@@ -51,6 +53,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   static final DateFormat _timeFormat = DateFormat('HH:mm');
   static final DateFormat _activityDateFormat = DateFormat('d MMM yyyy. HH:mm');
   static final DateFormat _cellGroupAttendanceDateFormat = DateFormat('d MMM');
+  static const int _recentMeetingsPreviewLimit = 4;
 
   bool _loading = true;
   Object? _loadError;
@@ -215,12 +218,19 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
     final isWide = ResponsiveLayout.isWideScreenOf(context);
 
+    final avatar = MyUserAvatar(_user, radius: isWide ? 56 : 48);
     final profileCard = Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            MyUserAvatar(_user, radius: isWide ? 56 : 48),
+            if (_user.imgSrc.isNotEmpty)
+              GestureDetector(
+                onTap: _onAvatarTap,
+                child: avatar,
+              )
+            else
+              avatar,
             const SizedBox(height: 16),
             Text(
               _user.fullname,
@@ -387,11 +397,12 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
         : Icons.event_busy_outlined;
     final iconColor =
         attended ? colorScheme.primary : colorScheme.onSurfaceVariant;
-    final lastMeeting = summary.lastAttendedMeeting;
-    final lastDate = summary.lastAttendedDate;
+    final recentMeetings = summary.recentMeetings;
 
     String title;
-    if (attended) {
+    if (recentMeetings.isEmpty) {
+      title = l10n.userProfileCellGroupNoRecentMeetings;
+    } else if (attended) {
       title = l10n.userProfileCellGroupMeetingsAttendedCount(
         summary.meetingsAttended,
       );
@@ -403,30 +414,22 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       title = l10n.userProfileCellGroupNoAttendanceRecent;
     }
 
-    String? meetingLinkLabel;
-    if (lastMeeting != null) {
-      final meetingTitle = lastMeeting.title.trim();
-      meetingLinkLabel = meetingTitle.isEmpty
-          ? l10n.userProfileCellGroupViewRecentMeeting
-          : l10n.userProfileCellGroupViewRecentMeetingNamed(meetingTitle);
-    }
-
     return Card(
       color: attended
           ? colorScheme.primaryContainer.withValues(alpha: 0.35)
           : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: iconColor),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: iconColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
                     title,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
@@ -435,35 +438,115 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
                           : colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  if (lastDate != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.userProfileCellGroupLastAttended(
-                        _cellGroupAttendanceDateFormat.format(lastDate),
-                      ),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  if (lastMeeting != null && meetingLinkLabel != null) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => _openCellGroupMeeting(lastMeeting),
-                        icon: const Icon(Icons.open_in_new, size: 18),
-                        label: Text(meetingLinkLabel),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ),
+            if (recentMeetings.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Theme(
+                data: theme.copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  initiallyExpanded: false,
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: EdgeInsets.zero,
+                  title: Text(
+                    l10n.userProfileCellGroupRecentMeetings,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    l10n.userProfileCellGroupRecentMeetingsCount(
+                      recentMeetings.length > _recentMeetingsPreviewLimit
+                          ? _recentMeetingsPreviewLimit
+                          : recentMeetings.length,
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  children: [
+                    for (var i = 0;
+                        i < recentMeetings.length &&
+                            i < _recentMeetingsPreviewLimit;
+                        i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          color: colorScheme.outlineVariant
+                              .withValues(alpha: 0.5),
+                        ),
+                      _buildRecentMeetingTile(
+                        recentMeetings[i],
+                        l10n,
+                        theme,
+                        colorScheme,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildRecentMeetingTile(
+    UserCellGroupMeetingAttendance row,
+    AppLocalizations l10n,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final head = row.head;
+    final date = head.eventDate;
+    final title = head.title.trim().isEmpty
+        ? l10n.userProfileUntitledEvent
+        : head.title.trim();
+    final groupLabel = _groupLabelForMeeting(head);
+    final dateLabel =
+        date == null ? null : _cellGroupAttendanceDateFormat.format(date);
+    final subtitleParts = <String>[
+      if (dateLabel != null) dateLabel,
+      if (groupLabel != null) groupLabel,
+      row.attended
+          ? l10n.userProfileCellGroupMeetingAttended
+          : l10n.userProfileCellGroupMeetingMissed,
+    ];
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      leading: Icon(
+        row.attended ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: row.attended
+            ? colorScheme.primary
+            : colorScheme.onSurfaceVariant,
+      ),
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        subtitleParts.join(' · '),
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: colorScheme.onSurfaceVariant,
+      ),
+      onTap: () => _openCellGroupMeeting(head),
+    );
+  }
+
+  String? _groupLabelForMeeting(EventHead head) {
+    for (final group in _cellGroups) {
+      if (head.cellGroupIDs.contains(group.id)) {
+        final name = group.name.trim();
+        if (name.isNotEmpty) return name;
+      }
+    }
+    return null;
   }
 
   void _openCellGroupMeeting(EventHead head) {
@@ -605,6 +688,28 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
           ? timeLabel
           : '$eventTitle · $dateLabel · $timeLabel'),
       isThreeLine: dateLabel != null,
+    );
+  }
+
+  void _onAvatarTap() {
+    if (_user.imgSrc.isEmpty) return;
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewGalleryPage(
+          media: [
+            {
+              'type': 'img',
+              'src': _user.imgSrc,
+              'title': _user.fullname,
+            },
+          ],
+          initialIndex: 0,
+          postId: _user.id,
+          useHero: false,
+        ),
+      ),
     );
   }
 

@@ -23,6 +23,10 @@ void main() {
       expect(group.media, isEmpty);
       expect(group.keyGraphicSrc, isNull);
       expect(group.hasKeyGraphic, false);
+      expect(group.postcode, isNull);
+      expect(group.latitude, isNull);
+      expect(group.longitude, isNull);
+      expect(group.hasCoordinates, false);
     });
 
     test('fromMap parses Firestore fields', () {
@@ -42,6 +46,9 @@ void main() {
         'Status': CellGroupStatus.paused,
         'MeetingWeekday': DateTime.tuesday,
         'MeetingTime': '19:30',
+        'Postcode': 'BT9 6AB',
+        'Latitude': 54.58,
+        'Longitude': -5.93,
         'CreatedByUserID': '1',
         'CreatedAt': Timestamp.fromDate(created),
         'UpdatedAt': Timestamp.fromDate(created),
@@ -63,6 +70,29 @@ void main() {
       expect(group.media, hasLength(2));
       expect(group.keyGraphicSrc, 'drive/photo1');
       expect(group.hasKeyGraphic, true);
+      expect(group.postcode, 'BT9 6AB');
+      expect(group.latitude, 54.58);
+      expect(group.longitude, -5.93);
+      expect(group.hasCoordinates, true);
+    });
+
+    test('fromMap treats missing postcode fields as unset', () {
+      final group = CellGroup.fromMap('cg1', {
+        'Name': 'CG',
+      });
+      expect(group.postcode, isNull);
+      expect(group.hasCoordinates, false);
+    });
+
+    test('fromMap blank postcode clears coordinates', () {
+      final group = CellGroup.fromMap('cg1', {
+        'Name': 'CG',
+        'Postcode': '  ',
+        'Latitude': 54.58,
+        'Longitude': -5.93,
+      });
+      expect(group.postcode, isNull);
+      expect(group.hasCoordinates, false);
     });
 
     test('fromMap clears orphan KeyGraphicSrc', () {
@@ -102,6 +132,41 @@ void main() {
       expect(json['CreatedAt'], isA<Timestamp>());
       expect(json['Media'], hasLength(1));
       expect(json['KeyGraphicSrc'], 'drive/cover');
+      expect(json.containsKey('Postcode'), isFalse);
+      expect(json.containsKey('Latitude'), isFalse);
+      expect(json.containsKey('Longitude'), isFalse);
+    });
+
+    test('toJson writes postcode geo when set', () {
+      final group = CellGroup(
+        id: '1',
+        name: 'CG',
+        postcode: 'bt9 6ab',
+        latitude: 54.58,
+        longitude: -5.93,
+      );
+      final json = group.toJson();
+      expect(json['Postcode'], 'bt9 6ab');
+      expect(json['Latitude'], 54.58);
+      expect(json['Longitude'], -5.93);
+    });
+
+    test('setPostcodeGeo and clearPostcodeGeo keep fields in sync', () {
+      final group = CellGroup(id: '1', name: 'CG');
+      group.setPostcodeGeo(
+        postcode: 'BT9 6AB',
+        latitude: 54.58,
+        longitude: -5.93,
+      );
+      expect(group.postcode, 'BT9 6AB');
+      expect(group.hasCoordinates, true);
+
+      group.clearPostcodeGeo();
+      expect(group.postcode, isNull);
+      expect(group.latitude, isNull);
+      expect(group.longitude, isNull);
+      expect(group.hasCoordinates, false);
+      expect(group.toJson().containsKey('Postcode'), isFalse);
     });
 
     test('media helpers enforce capacity and key graphic sync', () {
@@ -135,7 +200,8 @@ void main() {
     });
 
     test('cadenceLabel handles partial fields', () {
-      final weekdayOnly = CellGroup(id: '1', name: 'A', meetingWeekday: DateTime.monday);
+      final weekdayOnly =
+          CellGroup(id: '1', name: 'A', meetingWeekday: DateTime.monday);
       expect(weekdayOnly.cadenceLabel, 'Monday');
 
       final timeOnly = CellGroup(id: '2', name: 'B', meetingTime: '18:00');

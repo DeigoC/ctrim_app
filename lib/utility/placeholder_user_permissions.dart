@@ -84,3 +84,23 @@ bool isVisibleInVolunteerDirectory({
   if (viewer.isAreaAdmin) return true;
   return user.createdByUserID == viewer.id;
 }
+
+/// Whether [user] should appear in a name search that ignores refine filters
+/// (location, serving, roles, tags, placeholders-only).
+///
+/// Includes active profiles at any location, viewer-visible placeholders, and
+/// (for area admins) hidden/archived profiles — so organisers do not mint a
+/// duplicate when someone is filtered out of the directory.
+bool isIncludedInUnfilteredPeopleSearch({
+  required User user,
+  required User viewer,
+}) {
+  if (user.isPlaceholder) {
+    if (viewer.isAreaAdmin) return true;
+    return user.createdByUserID == viewer.id;
+  }
+  if (!user.isProfileActive) {
+    return viewer.isAreaAdmin;
+  }
+  return true;
+}

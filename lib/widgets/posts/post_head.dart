@@ -138,7 +138,8 @@ class _PostHeadState extends State<PostHead>
                             _buildAttendanceCounts(theme, colorScheme),
                             const SizedBox(height: 12),
                           ],
-                          _buildActionRow(theme, colorScheme),
+                          if (widget.thisHead.hasEventDate)
+                            _buildWhenLine(theme, colorScheme),
                         ],
                       ),
                     ),
@@ -464,80 +465,23 @@ class _PostHeadState extends State<PostHead>
     );
   }
 
-  Widget _buildActionRow(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildWhenLine(ThemeData theme, ColorScheme colorScheme) {
     return Row(
       children: [
-        // Event Date/Time
-        if (widget.thisHead.hasEventDate) ...[
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.schedule,
-                    size: 16,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      _eventDateFormat.format(widget.thisHead.eventDate!),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+        Icon(
+          Icons.schedule,
+          size: 16,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            _eventDateFormat.format(widget.thisHead.eventDate!),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
-          ),
-          const SizedBox(width: 8),
-        ],
-
-        // Media Count (if any)
-        if (widget.thisHead.hasMedia)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  widget.thisHead.imageCount > 0
-                      ? Icons.image
-                      : Icons.play_circle,
-                  size: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${widget.thisHead.mediaCount}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-        const Spacer(),
-
-        // Last Updated
-        Text(
-          'Updated ${_timeAgo(widget.thisHead.recentDate)}',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -638,6 +582,12 @@ class _PostHeadState extends State<PostHead>
             const SizedBox(height: 8),
             _buildInfoRow(
                 'Media Count', '${widget.thisHead.mediaCount}', context),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              'Last Updated',
+              _timeAgo(widget.thisHead.recentDate),
+              context,
+            ),
             if (widget.thisHead.hasEventDate) ...[
               const SizedBox(height: 8),
               _buildInfoRow(
