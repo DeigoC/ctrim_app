@@ -4,9 +4,20 @@ import '../models/info/church_info.dart';
 class ChurchHierarchy {
   ChurchHierarchy._();
 
-  /// Top-level hubs only (Churches list).
+  /// Top-level hubs only (Churches list historically).
   static List<ChurchInfo> fullChurches(final Iterable<ChurchInfo> churches) {
     return churches.where((c) => c.isFullChurch).toList();
+  }
+
+  /// Full churches and outreaches for the Churches tab, display order then title.
+  static List<ChurchInfo> forChurchesTab(final Iterable<ChurchInfo> churches) {
+    final list = List<ChurchInfo>.from(churches);
+    list.sort((a, b) {
+      final order = a.displayOrder.compareTo(b.displayOrder);
+      if (order != 0) return order;
+      return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    });
+    return list;
   }
 
   /// Outreaches whose [ChurchInfo.parentChurchId] is [parentId], display order.

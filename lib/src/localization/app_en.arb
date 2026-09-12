@@ -1609,6 +1609,15 @@
   "@churchHubOutreachBadge": {
     "description": "Label under the title when viewing an outreach hub"
   },
+  "churchesTabOutreachOf": "Outreach of {parentTitle}",
+  "@churchesTabOutreachOf": {
+    "description": "Subtitle on Churches tab cards for an outreach",
+    "placeholders": {
+      "parentTitle": {
+        "type": "String"
+      }
+    }
+  },
   "churchHubParentChurchTitle": "Parent church",
   "@churchHubParentChurchTitle": {
     "description": "Card title linking an outreach back to its parent church"

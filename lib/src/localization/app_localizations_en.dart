@@ -1251,6 +1251,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubOutreachBadge => 'Outreach';
 
   @override
+  String churchesTabOutreachOf(String parentTitle) {
+    return 'Outreach of $parentTitle';
+  }
+
+  @override
   String get churchHubParentChurchTitle => 'Parent church';
 
   @override

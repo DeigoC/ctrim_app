@@ -7,6 +7,13 @@ import '../../utility/church_hierarchy.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
 
+class _ChurchListEntry {
+  const _ChurchListEntry({required this.church, this.parentTitle});
+
+  final ChurchInfo church;
+  final String? parentTitle;
+}
+
 class ChurchesTab extends StatelessWidget {
   const ChurchesTab({
     super.key,
@@ -17,10 +24,22 @@ class ChurchesTab extends StatelessWidget {
   final Future<List<ChurchInfo>> churchesFuture;
   final VoidCallback onRefresh;
 
+  Future<List<_ChurchListEntry>> get _entriesFuture async {
+    final all = await churchesFuture;
+    return ChurchHierarchy.forChurchesTab(all)
+        .map(
+          (church) => _ChurchListEntry(
+            church: church,
+            parentTitle: ChurchHierarchy.parentOf(all, church)?.title,
+          ),
+        )
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return InfoSectionListTab<ChurchInfo>(
-      future: churchesFuture.then(ChurchHierarchy.fullChurches),
+    return InfoSectionListTab<_ChurchListEntry>(
+      future: _entriesFuture,
       onRefresh: onRefresh,
       storageKey: 'information_churches_tab',
       emptyMessage: 'No church information available yet.',
@@ -33,8 +52,17 @@ class ChurchesTab extends StatelessWidget {
       ),
       gridAspectRatio: (_) => 16 / 9,
       mobileItemHeight: MediaQuery.sizeOf(context).height * 0.36,
-      itemBuilder: (context, church, {required bool wide}) {
+      itemBuilder: (context, entry, {required bool wide}) {
         final l10n = AppLocalizations.of(context)!;
+        final church = entry.church;
+        final subtitle = church.isOutreach
+            ? (entry.parentTitle != null
+                ? l10n.churchesTabOutreachOf(entry.parentTitle!)
+                : l10n.churchHubOutreachBadge)
+            : (church.hasLocation
+                ? church.location
+                : l10n.churchHubLocationUnset);
+
         return InfoHeroOverlayCard(
           imageUrl: church.imgSrc,
           heroTag: 'info_church_${church.id}',
@@ -47,6 +75,10 @@ class ChurchesTab extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (church.isOutreach) ...[
+                _OutreachListTag(label: l10n.churchHubOutreachBadge),
+                const SizedBox(height: 6),
+              ],
               Text(
                 church.title,
                 style: TextStyle(
@@ -57,9 +89,7 @@ class ChurchesTab extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                church.hasLocation
-                    ? church.location
-                    : l10n.churchHubLocationUnset,
+                subtitle,
                 style: TextStyle(
                   fontSize: wide ? 14 : 16,
                   color: Colors.white.withValues(alpha: 0.85),
@@ -70,6 +100,33 @@ class ChurchesTab extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _OutreachListTag extends StatelessWidget {
+  const _OutreachListTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
+      ),
     );
   }
 }
