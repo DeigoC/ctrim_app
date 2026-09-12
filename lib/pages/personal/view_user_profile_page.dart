@@ -16,6 +16,7 @@ import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/app_links.dart';
 import '../../utility/user_cell_group_attendance.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
@@ -24,7 +25,6 @@ import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/volunteer_role_badge.dart';
 import '../cell_groups/cell_group_detail_page.dart';
-import '../events/view_event_page.dart';
 import '../view_gallery_page.dart';
 import 'edit_user_page.dart';
 import 'view_user_activity_page.dart';
@@ -392,9 +392,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     UserCellGroupAttendanceSummary summary,
   ) {
     final attended = summary.attendedInPastWindow;
-    final icon = attended
-        ? Icons.check_circle_outline
-        : Icons.event_busy_outlined;
+    final icon =
+        attended ? Icons.check_circle_outline : Icons.event_busy_outlined;
     final iconColor =
         attended ? colorScheme.primary : colorScheme.onSurfaceVariant;
     final recentMeetings = summary.recentMeetings;
@@ -473,8 +472,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
                       if (i > 0)
                         Divider(
                           height: 1,
-                          color: colorScheme.outlineVariant
-                              .withValues(alpha: 0.5),
+                          color:
+                              colorScheme.outlineVariant.withValues(alpha: 0.5),
                         ),
                       _buildRecentMeetingTile(
                         recentMeetings[i],
@@ -520,9 +519,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       dense: true,
       leading: Icon(
         row.attended ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: row.attended
-            ? colorScheme.primary
-            : colorScheme.onSurfaceVariant,
+        color:
+            row.attended ? colorScheme.primary : colorScheme.onSurfaceVariant,
       ),
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
@@ -550,10 +548,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   }
 
   void _openCellGroupMeeting(EventHead head) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head)),
-    );
+    AppLinks.openPost(context, id: head.id, extra: head);
   }
 
   List<User> _leadersForGroup(CellGroup group) {

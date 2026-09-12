@@ -46,7 +46,7 @@ class FcmPayloadTests(unittest.TestCase):
     def test_web_click_link(self):
         self.assertEqual(
             web_click_link({'PostID': 'post-42'}),
-            'https://ctrim.app/?postId=post-42',
+            'https://ctrim.app/post/post-42',
         )
         self.assertEqual(
             web_click_link({'InfoPage': 'core values'}),

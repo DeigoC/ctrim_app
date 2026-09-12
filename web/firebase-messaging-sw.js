@@ -39,7 +39,7 @@ function extractAppData(notificationData) {
 function targetUrlFromData(data) {
   const origin = self.location.origin;
   if (data.PostID) {
-    return `${origin}/?postId=${encodeURIComponent(data.PostID)}`;
+    return `${origin}/post/${encodeURIComponent(data.PostID)}`;
   }
   if (data.InfoPage) {
     return `${origin}/?infoPage=${encodeURIComponent(data.InfoPage)}`;

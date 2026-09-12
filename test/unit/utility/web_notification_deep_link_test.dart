@@ -82,10 +82,10 @@ void main() {
   });
 
   group('WebNotificationDeepLink.pathFromData', () {
-    test('builds post and info query paths', () {
+    test('builds post path and info query paths', () {
       expect(
         WebNotificationDeepLink.pathFromData({'PostID': 'post-42'}),
-        '/?postId=post-42',
+        '/post/post-42',
       );
       expect(
         WebNotificationDeepLink.pathFromData({'InfoPage': 'core values'}),
@@ -100,7 +100,7 @@ void main() {
             'data': {'PostID': 'post-42'},
           },
         }),
-        '/?postId=post-42',
+        '/post/post-42',
       );
     });
 

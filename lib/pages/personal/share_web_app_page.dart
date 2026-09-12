@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../utility/app_links.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/pwa_install_service.dart';
 import '../../widgets/responsive_content.dart';
@@ -11,9 +12,10 @@ import '../../widgets/responsive_content.dart';
 class ShareWebAppPage extends StatefulWidget {
   const ShareWebAppPage({super.key});
 
-  static const String webAppLink = 'https://ctrim.app';
+  static String get webAppLink => AppLinks.webOrigin;
 
-  static const String shareMessage = 'Join CTRIM at https://ctrim.app — open in your browser. '
+  static String get shareMessage =>
+      'Join CTRIM at ${AppLinks.webOrigin} — open in your browser. '
       'On mobile, you can add it to your home screen for an app-like experience.';
 
   @override
@@ -83,7 +85,8 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
                 Text(
                   'Invite others to open CTRIM in their browser and add it to their home screen.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                    color:
+                        colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -121,7 +124,10 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
           children: [
             Text(
               'Share the link',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             SelectableText(
@@ -153,7 +159,8 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _onLinkCopyClick(ShareWebAppPage.webAppLink, context),
+                    onPressed: () =>
+                        _onLinkCopyClick(ShareWebAppPage.webAppLink, context),
                     icon: const Icon(Icons.copy, size: 18),
                     label: const Text('Copy'),
                   ),
@@ -179,12 +186,14 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
           children: [
             Text(
               'Scan to open',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Scan this QR code on another device to open the web app.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
             Center(
@@ -239,12 +248,14 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.install_mobile_rounded, size: 28, color: colorScheme.primary),
+                Icon(Icons.install_mobile_rounded,
+                    size: 28, color: colorScheme.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Add to Home Screen',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -253,7 +264,8 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
             if (kIsWeb && _pwaInstallService.canPromptInstall) ...[
               Text(
                 'Install CTRIM as an app on this device for quick access and a full-screen experience.',
-                style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -352,12 +364,14 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
             children: [
               Text(
                 title,
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
-                style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -373,13 +387,16 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
           ShareParams(text: ShareWebAppPage.shareMessage),
         );
         if (!context.mounted) return;
-        if (result.status == ShareResultStatus.dismissed || result.status == ShareResultStatus.unavailable) {
-          _onLinkCopyClick(ShareWebAppPage.shareMessage, context, successText: 'Message copied to clipboard!');
+        if (result.status == ShareResultStatus.dismissed ||
+            result.status == ShareResultStatus.unavailable) {
+          _onLinkCopyClick(ShareWebAppPage.shareMessage, context,
+              successText: 'Message copied to clipboard!');
         }
         return;
       } catch (_) {
         if (!context.mounted) return;
-        _onLinkCopyClick(ShareWebAppPage.shareMessage, context, successText: 'Message copied to clipboard!');
+        _onLinkCopyClick(ShareWebAppPage.shareMessage, context,
+            successText: 'Message copied to clipboard!');
         return;
       }
     }
@@ -388,7 +405,8 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     await SharePlus.instance.share(
       ShareParams(
         text: ShareWebAppPage.shareMessage,
-        sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       ),
     );
   }
@@ -401,7 +419,8 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
       final message = switch (result) {
         PwaInstallResult.accepted => 'CTRIM App installed successfully.',
         PwaInstallResult.dismissed => 'Install cancelled.',
-        PwaInstallResult.unavailable => 'Install is not available right now. Try again from your browser menu.',
+        PwaInstallResult.unavailable =>
+          'Install is not available right now. Try again from your browser menu.',
       };
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1649,6 +1649,30 @@
   "@churchEditorSave": {
     "description": "Primary save button on the church add/edit form"
   },
+  "openPostPageTitle": "Post",
+  "@openPostPageTitle": {
+    "description": "App bar title while resolving a post permalink"
+  },
+  "openPostLoading": "Loading post…",
+  "@openPostLoading": {
+    "description": "Progress message while fetching a post from a link"
+  },
+  "openPostNotFoundTitle": "Post not found",
+  "@openPostNotFoundTitle": {
+    "description": "Title when a post permalink does not match a post"
+  },
+  "openPostNotFoundBody": "This post may have been removed, or the link may be incorrect.",
+  "@openPostNotFoundBody": {
+    "description": "Explanation when a post permalink cannot be opened"
+  },
+  "openPostLoadErrorTitle": "Could not load post",
+  "@openPostLoadErrorTitle": {
+    "description": "Title when fetching a post permalink fails"
+  },
+  "sharePostTooltip": "Share",
+  "@sharePostTooltip": {
+    "description": "Tooltip for the share control on a post body"
+  },
   "notificationViewPost": "View post",
   "@notificationViewPost": {
     "description": "Opens the related post from a push notification dialog"

@@ -2332,6 +2332,42 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get churchEditorSave;
 
+  /// App bar title while resolving a post permalink
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get openPostPageTitle;
+
+  /// Progress message while fetching a post from a link
+  ///
+  /// In en, this message translates to:
+  /// **'Loading post…'**
+  String get openPostLoading;
+
+  /// Title when a post permalink does not match a post
+  ///
+  /// In en, this message translates to:
+  /// **'Post not found'**
+  String get openPostNotFoundTitle;
+
+  /// Explanation when a post permalink cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'This post may have been removed, or the link may be incorrect.'**
+  String get openPostNotFoundBody;
+
+  /// Title when fetching a post permalink fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load post'**
+  String get openPostLoadErrorTitle;
+
+  /// Tooltip for the share control on a post body
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get sharePostTooltip;
+
   /// Opens the related post from a push notification dialog
   ///
   /// In en, this message translates to:

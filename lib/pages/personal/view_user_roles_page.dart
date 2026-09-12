@@ -9,12 +9,12 @@ import '../../models/user_role_assignment.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/app_links.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/paired_row_list.dart';
 import '../../widgets/posts/post_head.dart';
 import '../../widgets/two_column_masonry.dart';
-import '../events/view_event_page.dart';
 
 class ViewUserRolesPage extends StatefulWidget {
   const ViewUserRolesPage({
@@ -641,9 +641,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     }
   }
 
-  void _onPostTap(final EventHead head) => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: head)))
-          .then((_) {
+  void _onPostTap(final EventHead head) => AppLinks.openPost(
+        context,
+        id: head.id,
+        extra: head,
+      ).then((_) {
         setState(() {
           // technically a user can edit a post from here! 🥲
         });

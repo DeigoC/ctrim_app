@@ -47,7 +47,7 @@ def web_click_link(data_dict: dict | None) -> str:
     data = data_dict or {}
     post_id = str(data.get('PostID', '')).strip()
     if post_id:
-        return f'{_WEB_APP_ORIGIN}/?postId={quote(post_id, safe="")}'
+        return f'{_WEB_APP_ORIGIN}/post/{quote(post_id, safe="")}'
     info_page = str(data.get('InfoPage', '')).strip()
     if info_page:
         return f'{_WEB_APP_ORIGIN}/?infoPage={quote(info_page, safe="")}'

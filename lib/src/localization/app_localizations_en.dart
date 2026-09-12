@@ -1283,6 +1283,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorSave => 'Save';
 
   @override
+  String get openPostPageTitle => 'Post';
+
+  @override
+  String get openPostLoading => 'Loading post…';
+
+  @override
+  String get openPostNotFoundTitle => 'Post not found';
+
+  @override
+  String get openPostNotFoundBody =>
+      'This post may have been removed, or the link may be incorrect.';
+
+  @override
+  String get openPostLoadErrorTitle => 'Could not load post';
+
+  @override
+  String get sharePostTooltip => 'Share';
+
+  @override
   String get notificationViewPost => 'View post';
 
   @override

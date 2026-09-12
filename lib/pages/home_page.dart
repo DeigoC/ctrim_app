@@ -18,11 +18,11 @@ import '../utility/responsive_layout.dart';
 import '../utility/user_schedule_service.dart';
 import '../utility/notifications/web_notification_lifecycle.dart';
 import '../utility/notifications/notification_subscription_service.dart';
+import '../utility/app_links.dart';
 import '../utility/notifications/web_notification_deep_link.dart';
 import '../src/localization/app_localizations.dart';
 import '../widgets/common/app_dialog.dart';
 import 'events/post_templates/select_post_template_page.dart';
-import 'events/view_event_page.dart';
 import 'events/events_home.dart';
 import 'cell_groups/cell_groups_home.dart';
 import 'information/ctrim_info_page.dart';
@@ -402,17 +402,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _openFromNotificationData(Map<String, dynamic> data) async {
-    if (_appContext.sharedPref.loggedOut) return;
-
     final appData = WebNotificationDeepLink.extractAppData(data);
     if (appData.containsKey('PostID')) {
       final postID = appData['PostID']?.toString() ?? '';
       if (postID.isEmpty) return;
       final head = await _reloadEventHead(postID);
       if (!mounted) return;
-      _openPost(head);
-      _updateUserRoles();
-    } else if (appData.containsKey('InfoPage')) {
+      AppLinks.openPost(context, id: postID, extra: head);
+      if (head != null) _updateUserRoles();
+      return;
+    }
+
+    if (_appContext.sharedPref.loggedOut) return;
+
+    if (appData.containsKey('InfoPage')) {
       final infoPage = appData['InfoPage']?.toString() ?? '';
       if (infoPage.isEmpty) return;
       if (!mounted) return;
@@ -433,10 +436,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (appData.containsKey('PostID')) {
       final String postID = appData['PostID'].toString();
       final head = await _reloadEventHead(postID);
-      if (openPage) {
-        _openPost(head);
+      if (openPage && mounted) {
+        AppLinks.openPost(context, id: postID, extra: head);
       }
-      _updateUserRoles();
+      if (head != null) _updateUserRoles();
     } else if (appData.containsKey('InfoPage') && openPage) {
       _openInformationTeachingPage(appData['InfoPage'].toString());
     }
@@ -447,16 +450,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await _openFromNotificationData(message.data);
   }
 
-  Future<EventHead> _reloadEventHead(final String postID) async {
-    final EventHeadDBManager eventHeadDBManager = EventHeadDBManager();
-    final head = await eventHeadDBManager.fetchHead(postID);
-    _appContext.addOrUpdatePostHead(head);
-    return head;
-  }
-
-  void _openPost(final EventHead thisHead) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (_) => ViewEventPage(eventHead: thisHead)));
+  Future<EventHead?> _reloadEventHead(final String postID) async {
+    try {
+      final head = await EventHeadDBManager().fetchHeadIfExists(postID);
+      if (head != null) {
+        _appContext.addOrUpdatePostHead(head);
+      }
+      return head;
+    } catch (e) {
+      debugPrint('Failed to reload post head $postID: $e');
+      return null;
+    }
   }
 
   void _openInformationTeachingPage(final String jsonPath) {

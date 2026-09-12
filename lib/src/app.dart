@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:go_router/go_router.dart';
 
-import '../pages/home_page.dart';
 import '../utility/responsive_layout.dart';
+import 'app_router.dart';
 import 'localization/app_localizations.dart';
 import 'settings/settings_controller.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.settingsController,
@@ -39,13 +40,21 @@ class MyApp extends StatelessWidget {
   }
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final GoRouter _router = createAppRouter();
+
+  @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: settingsController,
+      animation: widget.settingsController,
       builder: (BuildContext context, Widget? child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'CTRIM App',
           restorationScopeId: 'app',
+          routerConfig: _router,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -56,10 +65,9 @@ class MyApp extends StatelessWidget {
           supportedLocales: const [
             Locale('en', ''),
           ],
-          // onGenerateTitle: (BuildContext context) => AppLocalizations.of(context)!.appTitle,
-          theme: _themeFor(),
-          darkTheme: _themeFor(brightness: Brightness.dark),
-          themeMode: settingsController.themeMode,
+          theme: MyApp._themeFor(),
+          darkTheme: MyApp._themeFor(brightness: Brightness.dark),
+          themeMode: widget.settingsController.themeMode,
           builder: (context, child) {
             final theme = Theme.of(context);
             return Theme(
@@ -72,7 +80,6 @@ class MyApp extends StatelessWidget {
               child: child ?? const SizedBox.shrink(),
             );
           },
-          home: const HomePage(),
         );
       },
     );

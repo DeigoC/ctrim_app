@@ -26,9 +26,11 @@ import 'utility/users_repository.dart';
 import 'utility/placeholder_user_permissions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
 
   // Shared preferences + theme settings before first frame so the preferred
   // ThemeMode is ready (system / light / dark) without a flash.

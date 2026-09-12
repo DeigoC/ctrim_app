@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../models/event/event_head.dart';
-import '../../pages/events/view_event_page.dart';
 import '../../pages/view_gallery_page.dart';
+import '../../utility/app_links.dart';
 import '../../utility/network_image_helper.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
@@ -545,10 +545,10 @@ class _PostHeadState extends State<PostHead>
   // * Event Handlers
 
   void _onHeadTap(BuildContext context) {
-    Navigator.push(
+    AppLinks.openPost(
       context,
-      MaterialPageRoute(
-          builder: (_) => ViewEventPage(eventHead: widget.thisHead)),
+      id: widget.thisHead.id,
+      extra: widget.thisHead,
     ).then((_) => widget.updatePost());
   }
 
