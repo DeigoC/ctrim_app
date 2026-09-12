@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/info/church_info.dart';
 import '../../models/info/church_page.dart';
+import '../../models/info/church_social.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
@@ -248,6 +249,10 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     });
   }
 
+  Future<void> _openSocial(final ChurchSocialLink link) async {
+    await _openMaps(link.url);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -353,6 +358,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
                       onOpenMaps: church.hasMapLink
                           ? () => _openMaps(church.mapLink)
                           : null,
+                      onOpenSocial: _openSocial,
                       onOpenParent:
                           parent == null ? null : () => _openParent(parent),
                       onOpenPastors: () => _openPastors(church),
