@@ -8,7 +8,7 @@ import '../utility/app_links.dart';
 GoRouter createAppRouter() {
   return GoRouter(
     initialLocation: '/',
-    restorationScopeId: 'app',
+    restorationScopeId: 'router',
     redirect: (context, state) => AppLinks.redirectFromUri(state.uri),
     routes: [
       GoRoute(
@@ -18,7 +18,8 @@ GoRouter createAppRouter() {
           GoRoute(
             path: 'post/:id',
             builder: (context, state) {
-              final id = state.pathParameters['id'] ?? '';
+              final rawId = state.pathParameters['id'] ?? '';
+              final id = Uri.decodeComponent(rawId);
               final extra = state.extra;
               final head = extra is EventHead && extra.id == id ? extra : null;
               return OpenPostPage(postId: id, initialHead: head);
