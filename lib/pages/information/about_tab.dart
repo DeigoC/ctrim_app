@@ -23,6 +23,12 @@ class InformationAboutTab extends StatelessWidget {
         'name of the Father and of the Son and of the Holy Spirit, and '
         'teaching them to obey everything I have commanded you. And '
         'surely I am with you always, to the very end of the age."';
+    const String galatiansVerse =
+        '"Christ redeemed us from the curse of the law by becoming a curse for '
+        "us, for it is written: 'Cursed is everyone who is hung on a pole.' He "
+        'redeemed us in order that the blessing given to Abraham might come to '
+        'the Gentiles through Christ Jesus, so that by faith we might receive '
+        'the promise of the Spirit."';
     const String visionParagraph =
         'Our vision is to become like the early Church in the Book of Acts, effective '
         'and strategic in disciple making. Effective and strategic in harnessing the power of The Holy Spirit, causing '
@@ -96,6 +102,27 @@ class InformationAboutTab extends StatelessWidget {
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: colorScheme.onPrimaryContainer
                                 .withValues(alpha: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          galatiansVerse,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            height: 1.4,
+                            color: colorScheme.onPrimaryContainer
+                                .withValues(alpha: 0.75),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Galatians 3:13-14 (NIV)',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onPrimaryContainer
+                                .withValues(alpha: 0.65),
                           ),
                         ),
                       ],
