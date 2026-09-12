@@ -1371,6 +1371,14 @@
   "@bulletinSortLatestSubtitle": {
     "description": "Explains latest-first sort"
   },
+  "bulletinSortRecent": "Recently updated",
+  "@bulletinSortRecent": {
+    "description": "Bulletin sort: newest create/edit activity first"
+  },
+  "bulletinSortRecentSubtitle": "Newest creates and edits first",
+  "@bulletinSortRecentSubtitle": {
+    "description": "Explains recently-updated sort"
+  },
   "bulletinShowSection": "Show",
   "@bulletinShowSection": {
     "description": "Section label for bulletin time and bookmark filters"
@@ -1386,6 +1394,10 @@
   "bulletinShowPast": "Past",
   "@bulletinShowPast": {
     "description": "Filter the bulletin to past events"
+  },
+  "bulletinShowUndated": "No date",
+  "@bulletinShowUndated": {
+    "description": "Filter the bulletin to posts without an event date"
   },
   "bulletinShowBookmarks": "Bookmarks",
   "@bulletinShowBookmarks": {

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
+import '../../../utility/bulk_post_dates.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
@@ -755,12 +756,24 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     }).toList();
   }
 
-  Future<DateTime?> _selectDate(final BuildContext context) async {
-    return await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime.now().subtract(const Duration(days: 30)),
-        lastDate: DateTime.now().add(const Duration(days: 60)));
+  Future<DateTime?> _selectDate(
+    final BuildContext context, {
+    final int? preferredDayOfWeek,
+  }) async {
+    final now = DateTime.now();
+    final firstDate = now.subtract(const Duration(days: 30));
+    final lastDate = now.add(const Duration(days: 60));
+    var initialDate = preferredDayOfWeek != null
+        ? nextDateForDayOfWeek(dayOfWeek: preferredDayOfWeek, now: now)
+        : now;
+    if (initialDate.isBefore(firstDate)) initialDate = firstDate;
+    if (initialDate.isAfter(lastDate)) initialDate = lastDate;
+    return showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
   }
 
   void _onBulkAddPostTap(final PostTemplate template) {
@@ -786,8 +799,15 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
       allUsers: appContext.allUsers,
     );
 
-    if (eventContext.head.eventDate != null) {
-      final selectedDate = await _selectDate(context);
+    // Typical start time (schedule) *or* default weekday both mean the post
+    // is dated — prompt so undated schedule templates still get an event date.
+    final shouldPickDate = eventContext.head.eventDate != null ||
+        postTemplate.defaultDayOfWeek != null;
+    if (shouldPickDate) {
+      final selectedDate = await _selectDate(
+        context,
+        preferredDayOfWeek: postTemplate.defaultDayOfWeek,
+      );
       if (selectedDate == null || !mounted) return;
       PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
       eventContext.head.setTitle(

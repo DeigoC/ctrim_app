@@ -97,6 +97,19 @@ void main() {
       expect(visible.map((e) => e.id), ['this-morning']);
     });
 
+    test('undated keeps only posts without an event date', () {
+      final visible = apply(
+        [
+          head(id: 'dated', eventDate: DateTime(2026, 8, 23, 10)),
+          head(id: 'fresh', recentDate: DateTime(2026, 8, 22, 12)),
+          head(id: 'older', recentDate: DateTime(2026, 8, 20)),
+        ],
+        timeFilter: BulletinTimeFilter.undated,
+        sort: BulletinSort.recentDate,
+      );
+      expect(visible.map((e) => e.id), ['fresh', 'older']);
+    });
+
     test('bookmarks, location, and tags compose', () {
       final visible = apply(
         [
@@ -223,6 +236,33 @@ void main() {
       expect(visible.map((e) => e.id), ['newer', 'older', 'far-future']);
     });
 
+    test('recentDate sorts by update activity, undated included', () {
+      final visible = apply(
+        [
+          head(
+            id: 'older-update',
+            eventDate: DateTime(2026, 8, 25),
+            recentDate: DateTime(2026, 8, 10),
+          ),
+          head(
+            id: 'fresh-undated',
+            recentDate: DateTime(2026, 8, 22, 12),
+          ),
+          head(
+            id: 'mid-update',
+            eventDate: DateTime(2026, 8, 1),
+            recentDate: DateTime(2026, 8, 20),
+          ),
+        ],
+        sort: BulletinSort.recentDate,
+      );
+      expect(visible.map((e) => e.id), [
+        'fresh-undated',
+        'mid-update',
+        'older-update',
+      ]);
+    });
+
     test('does not mutate the source list', () {
       final source = [
         head(id: 'b', eventDate: DateTime(2026, 8, 25)),
@@ -255,6 +295,8 @@ void main() {
       expect(BulletinSort.fromStorage(null), BulletinSort.relevancy);
       expect(BulletinSort.fromStorage('nope'), BulletinSort.relevancy);
       expect(BulletinTimeFilter.fromStorage('past'), BulletinTimeFilter.past);
+      expect(BulletinTimeFilter.fromStorage('undated'), BulletinTimeFilter.undated);
+      expect(BulletinSort.fromStorage('recentDate'), BulletinSort.recentDate);
       expect(BulletinTimeFilter.fromStorage('x'), BulletinTimeFilter.all);
     });
   });

@@ -1,5 +1,16 @@
 DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
+/// Next calendar date for [dayOfWeek] (1 = Mon … 7 = Sun), including [now]
+/// when that weekday matches.
+DateTime nextDateForDayOfWeek({
+  required int dayOfWeek,
+  DateTime? now,
+}) {
+  final reference = _dateOnly(now ?? DateTime.now());
+  final daysUntil = (dayOfWeek - reference.weekday + 7) % 7;
+  return reference.add(Duration(days: daysUntil));
+}
+
 /// Weekly post dates for bulk creation.
 ///
 /// When [anchorDate] is set (e.g. the source post's event date), the first

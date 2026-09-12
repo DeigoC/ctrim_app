@@ -48,4 +48,22 @@ void main() {
       ]);
     });
   });
+
+  group('nextDateForDayOfWeek', () {
+    test('returns today when it already matches', () {
+      final sunday = DateTime(2026, 7, 12);
+      expect(
+        nextDateForDayOfWeek(dayOfWeek: 7, now: sunday),
+        DateTime(2026, 7, 12),
+      );
+    });
+
+    test('advances to the next matching weekday', () {
+      final sunday = DateTime(2026, 7, 12);
+      expect(
+        nextDateForDayOfWeek(dayOfWeek: 1, now: sunday),
+        DateTime(2026, 7, 13),
+      );
+    });
+  });
 }

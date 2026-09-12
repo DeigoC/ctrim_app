@@ -1930,6 +1930,18 @@ abstract class AppLocalizations {
   /// **'Recent past first, then upcoming'**
   String get bulletinSortLatestSubtitle;
 
+  /// Bulletin sort: newest create/edit activity first
+  ///
+  /// In en, this message translates to:
+  /// **'Recently updated'**
+  String get bulletinSortRecent;
+
+  /// Explains recently-updated sort
+  ///
+  /// In en, this message translates to:
+  /// **'Newest creates and edits first'**
+  String get bulletinSortRecentSubtitle;
+
   /// Section label for bulletin time and bookmark filters
   ///
   /// In en, this message translates to:
@@ -1953,6 +1965,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Past'**
   String get bulletinShowPast;
+
+  /// Filter the bulletin to posts without an event date
+  ///
+  /// In en, this message translates to:
+  /// **'No date'**
+  String get bulletinShowUndated;
 
   /// Filter the bulletin to bookmarked posts
   ///
