@@ -2272,6 +2272,12 @@ abstract class AppLocalizations {
   /// **'Outreach'**
   String get churchHubOutreachBadge;
 
+  /// Subtitle on Churches tab cards for an outreach
+  ///
+  /// In en, this message translates to:
+  /// **'Outreach of {parentTitle}'**
+  String churchesTabOutreachOf(String parentTitle);
+
   /// Card title linking an outreach back to its parent church
   ///
   /// In en, this message translates to:

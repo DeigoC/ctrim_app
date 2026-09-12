@@ -66,6 +66,13 @@ void main() {
       );
     });
 
+    test('forChurchesTab includes outreaches sorted by displayOrder', () {
+      expect(
+        ChurchHierarchy.forChurchesTab(churches).map((c) => c.id),
+        ['belfast', 'orphan', 'portadown', 'bangor', 'lisburn'],
+      );
+    });
+
     test('parentOf resolves parent church', () {
       expect(ChurchHierarchy.parentOf(churches, lisburn)?.id, 'belfast');
       expect(ChurchHierarchy.parentOf(churches, belfast), isNull);
