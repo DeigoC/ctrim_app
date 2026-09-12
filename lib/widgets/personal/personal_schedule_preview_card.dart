@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/event/event_head.dart';
-import '../../pages/events/view_event_page.dart';
 import '../../pages/personal/view_user_roles_page.dart';
+import '../../utility/app_links.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/user_schedule_service.dart';
@@ -126,11 +126,6 @@ class PersonalSchedulePreviewCard extends StatelessWidget {
       eventHeads: eventHeads,
     );
     if (head == null) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ViewEventPage(eventHead: head),
-      ),
-    );
+    AppLinks.openPost(context, id: head.id, extra: head);
   }
 }

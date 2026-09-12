@@ -79,6 +79,13 @@ class EventHeadDBManager {
     return await _ref.doc(id).get().then((value) => value.data() as EventHead);
   }
 
+  /// Null when the document is missing (unlike [fetchHead], which casts).
+  Future<EventHead?> fetchHeadIfExists(final String id) async {
+    final snap = await _ref.doc(id).get();
+    if (!snap.exists) return null;
+    return snap.data();
+  }
+
   Future<List<EventHead>> fetchHeadsFromList(final List<String> ids) async {
     final List<EventHead> result = [];
     for (final String id in ids) {

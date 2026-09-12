@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:share_plus/share_plus.dart';
+import '../../src/localization/app_localizations.dart';
+import '../../utility/app_links.dart';
 import '../../utility/event_context.dart';
 import '../common/app_dialog.dart';
 import '../quill_editor_wrapper.dart';
@@ -92,7 +94,7 @@ class ViewPostBody extends StatelessWidget {
     return IconButton.filledTonal(
       onPressed: () => _onShare(context),
       icon: const Icon(Icons.share, size: 18),
-      tooltip: 'Save content',
+      tooltip: AppLocalizations.of(context)!.sharePostTooltip,
       style: IconButton.styleFrom(
         backgroundColor:
             colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -107,6 +109,7 @@ class ViewPostBody extends StatelessWidget {
     // Prepare share content with title and subtitle
     final StringBuffer shareContent = StringBuffer();
     shareContent.writeln(eventContext.head.title);
+    shareContent.writeln(AppLinks.postUrl(eventContext.id));
 
     // Add event body content as plain text
     shareContent.writeln('---');

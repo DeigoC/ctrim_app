@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../pages/cell_groups/cell_group_detail_page.dart';
-import '../../pages/events/view_event_page.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/app_links.dart';
 import '../../utility/app_context.dart';
 import '../../utility/personal_cell_group_meetings.dart';
 import '../information/info_section_card.dart';
@@ -236,12 +236,7 @@ class _PersonalCellGroupsPreviewCardState
       title: group.name,
       subtitle: '$dateLabel · ${head.title}',
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ViewEventPage(eventHead: head),
-          ),
-        );
+        AppLinks.openPost(context, id: head.id, extra: head);
       },
     );
   }
@@ -315,8 +310,7 @@ class _PreviewRow extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16),
+        if (showDivider) const Divider(height: 1, indent: 16, endIndent: 16),
         Material(
           color: Colors.transparent,
           child: InkWell(

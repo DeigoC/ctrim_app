@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 
+import '../app_links.dart';
+
 /// Reads and clears notification deep-link query params from the browser URL,
 /// and unwraps FCM click payloads (`FCM_MSG.data`).
 class WebNotificationDeepLink {
@@ -68,12 +70,12 @@ class WebNotificationDeepLink {
     return result;
   }
 
-  /// Path the service worker opens on a cold-start click (`/?postId=` …).
+  /// Path the service worker opens on a cold-start click (`/post/:id` …).
   static String pathFromData(Map<String, dynamic> data) {
     final appData = extractAppData(data);
     final postId = appData['PostID']?.toString() ?? '';
     if (postId.isNotEmpty) {
-      return '/?postId=${Uri.encodeComponent(postId)}';
+      return AppLinks.postPath(postId);
     }
     final infoPage = appData['InfoPage']?.toString() ?? '';
     if (infoPage.isNotEmpty) {
@@ -82,17 +84,23 @@ class WebNotificationDeepLink {
     return '/';
   }
 
+  /// Reads and strips leftover `infoPage` query params. `postId` is owned by
+  /// the router redirect and must not be cleared here.
   static Map<String, String> consumeLaunchParams() {
     if (!kIsWeb) return const {};
 
     try {
       final uri = Uri.parse(html.window.location.href);
-      final mapped = paramsFromQuery(uri.queryParameters);
-      if (mapped.isEmpty) return const {};
+      final infoPage = uri.queryParameters['infoPage'];
+      if (infoPage == null || infoPage.isEmpty) return const {};
 
-      final cleaned = uri.replace(queryParameters: {});
+      final remaining = Map<String, String>.from(uri.queryParameters)
+        ..remove('infoPage');
+      final cleaned = remaining.isEmpty
+          ? uri.replace(queryParameters: {})
+          : uri.replace(queryParameters: remaining);
       html.window.history.replaceState(null, '', cleaned.toString());
-      return mapped;
+      return {'InfoPage': infoPage};
     } catch (_) {
       return const {};
     }
