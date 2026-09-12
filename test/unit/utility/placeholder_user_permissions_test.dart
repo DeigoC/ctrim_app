@@ -236,8 +236,11 @@ void main() {
     group('inactive profile visibility', () {
       final admin =
           User(id: '1', forname: 'Ada', surname: 'Admin', isAreaAdmin: true);
-      final active =
-          User(id: '2', forname: 'Pat', surname: 'Active', status: UserStatus.active);
+      final active = User(
+          id: '2',
+          forname: 'Pat',
+          surname: 'Active',
+          status: UserStatus.active);
       final hidden = User(
         id: '3',
         forname: 'Hid',
@@ -280,7 +283,11 @@ void main() {
         expect(canSignInWithVolunteerProfile(hidden), isFalse);
         expect(
           canSignInWithVolunteerProfile(
-            User(id: '4', forname: 'A', surname: 'B', status: UserStatus.archived),
+            User(
+                id: '4',
+                forname: 'A',
+                surname: 'B',
+                status: UserStatus.archived),
           ),
           isFalse,
         );
@@ -289,6 +296,58 @@ void main() {
       test('isSelectableVolunteerProfile matches sign-in rule', () {
         expect(isSelectableVolunteerProfile(active), isTrue);
         expect(isSelectableVolunteerProfile(hidden), isFalse);
+      });
+    });
+
+    group('canOpenPersonPermalink', () {
+      final guest = User(id: '0', forname: 'Guest', surname: 'User');
+
+      test('allows guests to open active profiles', () {
+        expect(
+          canOpenPersonPermalink(user: author, viewer: guest),
+          isTrue,
+        );
+      });
+
+      test('hides placeholders and inactive profiles from guests', () {
+        expect(
+          canOpenPersonPermalink(user: placeholder, viewer: guest),
+          isFalse,
+        );
+        expect(
+          canOpenPersonPermalink(
+            user: User(
+              id: '8',
+              forname: 'Hid',
+              surname: 'Den',
+              status: UserStatus.hidden,
+            ),
+            viewer: guest,
+          ),
+          isFalse,
+        );
+      });
+
+      test('allows area admins and creators to open gated profiles', () {
+        expect(
+          canOpenPersonPermalink(user: placeholder, viewer: admin),
+          isTrue,
+        );
+        expect(
+          canOpenPersonPermalink(user: placeholder, viewer: author),
+          isTrue,
+        );
+        expect(
+          canOpenPersonPermalink(user: placeholder, viewer: other),
+          isFalse,
+        );
+      });
+
+      test('allows a signed-in person to open their own profile', () {
+        expect(
+          canOpenPersonPermalink(user: author, viewer: author),
+          isTrue,
+        );
       });
     });
   });

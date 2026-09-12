@@ -552,12 +552,9 @@ Future<void> openInfoEditorAndRefresh({
 
 void openInfoDetailAndRefresh({
   required BuildContext context,
-  required Widget page,
+  required Future<void> Function() open,
   required VoidCallback onRefresh,
 }) {
   HapticFeedback.lightImpact();
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => page),
-  ).then((_) => onRefresh());
+  open().then((_) => onRefresh());
 }

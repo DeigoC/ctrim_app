@@ -13,7 +13,7 @@ The **CTRIM** tab holds longer-lived information for visitors — not the day-to
 | **Testimonials** | Stories and testimonies (same kind of rich layout) |
 | **Information** | Longer CTRIM info pages, grouped into **Principles** (“Our core ideologies”) and **Teachings** (“Simple lessons to get started!”) |
 
-Content is meant to be readable on phone and web, with richer formatting than a short bulletin post. Guests and signed-in people can browse; only elevated roles can edit.
+Content is meant to be readable on phone and web, with richer formatting than a short bulletin post. Guests and signed-in people can browse; only elevated roles can edit. Opening a church, extra church page, testimonial, or information topic updates the address bar so you can share or bookmark that page.
 
 Each church is linked to **one location** (the same places used on posts, people, and cell groups). The Churches list shows that location under the church name (or **Location not set** until one is chosen). Opening a church shows an overview dashboard: **Find us** (location, address, maps), **Pastors** (photos and names, with **Learn about them** for a longer write-up), extra pages, counts for posts in the last three months, cell groups at that place, and people with a profile there — plus a **weekly activity chart** (posts or attendance over the last three months). Up to four recent posts are shown. **Open in Maps** appears when a maps link has been added. On a wide screen the cards sit side by side.
 

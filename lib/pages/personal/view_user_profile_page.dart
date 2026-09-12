@@ -24,7 +24,6 @@ import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/volunteer_role_badge.dart';
-import '../cell_groups/cell_group_detail_page.dart';
 import '../view_gallery_page.dart';
 import 'edit_user_page.dart';
 import 'view_user_activity_page.dart';
@@ -614,12 +613,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       subtitle: cadence.isEmpty ? null : Text(cadence),
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CellGroupDetailPage(groupId: group.id),
-          ),
-        );
+        AppLinks.openCellGroup(context, id: group.id);
       },
     );
   }

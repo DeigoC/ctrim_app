@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../models/cell_group.dart';
 import '../../models/user.dart';
-import '../../pages/cell_groups/cell_group_detail_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_links.dart';
 import '../../utility/app_context.dart';
@@ -260,12 +259,7 @@ class _PersonalCellGroupsPreviewCardState
       title: group.name,
       subtitle: cadence.isNotEmpty ? cadence : null,
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CellGroupDetailPage(groupId: group.id),
-          ),
-        );
+        AppLinks.openCellGroup(context, id: group.id);
       },
     );
   }

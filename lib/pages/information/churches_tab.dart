@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/info/church_info.dart';
 import '../../src/localization/app_localizations.dart';
-import 'church_info_page.dart';
+import '../../utility/app_links.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
 
@@ -39,7 +39,7 @@ class ChurchesTab extends StatelessWidget {
           heroTag: 'info_church_${church.id}',
           onTap: () => openInfoDetailAndRefresh(
             context: context,
-            page: ChurchInfoPage(documentId: church.id),
+            open: () => AppLinks.openChurch(context, id: church.id),
             onRefresh: onRefresh,
           ),
           overlay: Column(

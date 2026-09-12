@@ -82,14 +82,20 @@ void main() {
   });
 
   group('WebNotificationDeepLink.pathFromData', () {
-    test('builds post path and info query paths', () {
+    test('builds post path and info paths', () {
       expect(
         WebNotificationDeepLink.pathFromData({'PostID': 'post-42'}),
         '/post/post-42',
       );
       expect(
         WebNotificationDeepLink.pathFromData({'InfoPage': 'core values'}),
-        '/?infoPage=core%20values',
+        '/info/core%20values',
+      );
+      expect(
+        WebNotificationDeepLink.pathFromData({
+          'InfoPage': 'assets/info/ctrim_info/core_values.json',
+        }),
+        '/info/core_values',
       );
     });
 

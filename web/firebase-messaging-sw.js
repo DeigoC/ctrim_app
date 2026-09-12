@@ -42,7 +42,7 @@ function targetUrlFromData(data) {
     return `${origin}/post/${encodeURIComponent(data.PostID)}`;
   }
   if (data.InfoPage) {
-    return `${origin}/?infoPage=${encodeURIComponent(data.InfoPage)}`;
+    return `${origin}/info/${encodeURIComponent(data.InfoPage)}`;
   }
   return `${origin}/`;
 }

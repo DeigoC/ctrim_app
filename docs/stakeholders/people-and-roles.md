@@ -81,7 +81,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 **Who's who** (from Personal → People) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**.
 
-Use **Refine & sort** (tune icon in the app bar) to change **location**, **Serving**, role filters, team tags, sort order, and **Placeholders**. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one team tag — open a profile for the full picture.
+Use **Refine & sort** (tune icon in the app bar) to change **location**, **Serving**, role filters, team tags, sort order, and **Placeholders**. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one team tag — open a profile for the full picture. Opening a profile updates the address so you can share or bookmark it; hidden, archived, and placeholder profiles are not reachable from a public link.
 
 If a **search** finds no one under the current filters, the directory still shows people whose names match **without** those filters (other locations, everyone not only Serving, and placeholders you are allowed to see), with a short note and a **Widen search** action — so organisers do not invent a second profile for someone who already exists.
 

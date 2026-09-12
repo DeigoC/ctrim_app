@@ -7,6 +7,7 @@ import '../../models/info/church_info.dart';
 import '../../models/info/church_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/app_links.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
@@ -14,8 +15,6 @@ import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import 'church_hub_dashboard.dart';
-import 'church_page_info_page.dart';
-import 'church_pastors_page.dart';
 import 'edit_info_body_page.dart';
 
 class ChurchInfoPage extends StatefulWidget {
@@ -170,14 +169,10 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   }
 
   Future<void> _openChurchPage(final ChurchPage page) async {
-    await Navigator.push(
+    await AppLinks.openChurchPage(
       context,
-      MaterialPageRoute(
-        builder: (_) => ChurchPageInfoPage(
-          churchId: page.churchId,
-          documentId: page.id,
-        ),
-      ),
+      churchId: page.churchId,
+      pageId: page.id,
     );
     if (mounted) {
       await _load(forceRefresh: false);
@@ -185,12 +180,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   }
 
   Future<void> _openPastors(final ChurchInfo church) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChurchPastorsPage(documentId: church.id),
-      ),
-    );
+    await AppLinks.openChurchPastors(context, churchId: church.id);
     if (mounted) {
       await _load(forceRefresh: false);
     }

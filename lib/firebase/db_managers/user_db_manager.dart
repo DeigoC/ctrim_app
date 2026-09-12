@@ -75,6 +75,13 @@ class UserDBManager {
     return await _ref.doc(id).get().then((value) => value.data() as User);
   }
 
+  /// Null when the document is missing (unlike [fetchUserByID], which casts).
+  Future<User?> fetchUserIfExists(final String id) async {
+    final snap = await _ref.doc(id).get();
+    if (!snap.exists) return null;
+    return snap.data() as User?;
+  }
+
   Future<User?> fetchUserByAuthID(final String authID) async {
     final results = await _ref.where('AuthID', isEqualTo: authID).get();
     if (results.docs.isNotEmpty) {

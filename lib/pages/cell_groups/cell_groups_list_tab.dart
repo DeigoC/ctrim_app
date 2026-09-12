@@ -11,11 +11,11 @@ import '../../utility/cell_group_nearest.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/uk_postcode_lookup.dart';
+import '../../utility/app_links.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/paired_row_list.dart';
-import 'cell_group_detail_page.dart';
 
 /// Catalogue list of cell groups (second tab).
 class CellGroupsListTab extends StatefulWidget {
@@ -480,12 +480,7 @@ class _CellGroupCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CellGroupDetailPage(groupId: group.id),
-            ),
-          );
+          AppLinks.openCellGroup(context, id: group.id);
         },
         child: LayoutBuilder(
           builder: (context, constraints) {

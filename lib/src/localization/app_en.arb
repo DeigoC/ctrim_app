@@ -1673,6 +1673,26 @@
   "@sharePostTooltip": {
     "description": "Tooltip for the share control on a post body"
   },
+  "openPersonPageTitle": "Profile",
+  "@openPersonPageTitle": {
+    "description": "App bar title while resolving a person permalink"
+  },
+  "openPersonLoading": "Loading profile…",
+  "@openPersonLoading": {
+    "description": "Progress message while fetching a profile from a link"
+  },
+  "openPersonNotFoundTitle": "Profile not found",
+  "@openPersonNotFoundTitle": {
+    "description": "Title when a person permalink cannot be shown"
+  },
+  "openPersonNotFoundBody": "This profile may be hidden, or the link may be incorrect.",
+  "@openPersonNotFoundBody": {
+    "description": "Explanation when a person permalink cannot be opened"
+  },
+  "openPersonLoadErrorTitle": "Could not load profile",
+  "@openPersonLoadErrorTitle": {
+    "description": "Title when fetching a person permalink fails"
+  },
   "notificationViewPost": "View post",
   "@notificationViewPost": {
     "description": "Opens the related post from a push notification dialog"

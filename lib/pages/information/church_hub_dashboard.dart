@@ -16,8 +16,7 @@ import '../../widgets/information/info_section_card.dart';
 import '../../widgets/paired_row_list.dart';
 import '../../widgets/two_column_masonry.dart';
 import '../../widgets/posts/post_head.dart';
-import '../cell_groups/cell_group_detail_page.dart';
-import 'church_pastors_page.dart';
+import '../../utility/app_links.dart';
 import 'info_tab_widgets.dart';
 
 class ChurchHubDashboard extends StatelessWidget {
@@ -717,12 +716,7 @@ class _CellGroupsCard extends StatelessWidget {
               )
             : null,
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CellGroupDetailPage(groupId: group.id),
-            ),
-          );
+          AppLinks.openCellGroup(context, id: group.id);
         },
       ),
     );

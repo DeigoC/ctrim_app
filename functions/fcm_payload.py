@@ -42,6 +42,18 @@ def looks_like_image_error(exc: BaseException) -> bool:
     return 'image' in text or 'icon' in text
 
 
+_INFO_PAGE_ALIASES = {
+    'assets/info/ctrim_info/core_values.json': 'core_values',
+    'assets/info/ctrim_info/4xd.json': '4xd',
+    'assets/info/ctrim_info/cell_group.json': 'cell_group',
+    'assets/info/ctrim_info/devotionals.json': 'devotionals',
+}
+
+
+def _info_document_id(raw: str) -> str:
+    return _INFO_PAGE_ALIASES.get(raw, raw)
+
+
 def web_click_link(data_dict: dict | None) -> str:
     """Absolute web URL FCM should open when the notification is tapped."""
     data = data_dict or {}
@@ -50,5 +62,6 @@ def web_click_link(data_dict: dict | None) -> str:
         return f'{_WEB_APP_ORIGIN}/post/{quote(post_id, safe="")}'
     info_page = str(data.get('InfoPage', '')).strip()
     if info_page:
-        return f'{_WEB_APP_ORIGIN}/?infoPage={quote(info_page, safe="")}'
+        info_id = _info_document_id(info_page)
+        return f'{_WEB_APP_ORIGIN}/info/{quote(info_id, safe="")}'
     return f'{_WEB_APP_ORIGIN}/'
