@@ -4,10 +4,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'info_parsing.dart';
 
+/// Full location hub vs nested outreach under a parent church.
+enum ChurchKind {
+  church,
+  outreach;
+
+  static ChurchKind fromStorage(final dynamic raw) {
+    final value = (raw ?? '').toString().trim().toLowerCase();
+    if (value == ChurchKind.outreach.name) return ChurchKind.outreach;
+    return ChurchKind.church;
+  }
+
+  String get storageValue => name;
+}
+
 class ChurchInfo {
   late String _id, _title, _analyticsTitle, _summary, _updatedBy;
   late String _location, _mapLink, _address;
   late String _heroImageSrc, _pastorsImageSrc;
+  late String _parentChurchId;
+  late ChurchKind _kind;
   late List<dynamic> _body;
   late List<String> _galleryImageSources, _pastorUserIds;
   late DateTime _updatedAt;
@@ -18,6 +34,8 @@ class ChurchInfo {
     required String title,
     required String analyticsTitle,
     required List<dynamic> body,
+    ChurchKind kind = ChurchKind.church,
+    String parentChurchId = '',
     String heroImageSrc = '',
     String pastorsImageSrc = '',
     List<String>? galleryImageSources,
@@ -34,6 +52,8 @@ class ChurchInfo {
     _title = title;
     _analyticsTitle = analyticsTitle;
     _body = List<dynamic>.from(body);
+    _kind = kind;
+    _parentChurchId = parentChurchId.trim();
     _heroImageSrc = heroImageSrc.trim();
     _pastorsImageSrc = pastorsImageSrc.trim();
     _galleryImageSources =
@@ -50,6 +70,8 @@ class ChurchInfo {
 
   factory ChurchInfo.fromMap(final String id, final Map<String, dynamic> data) {
     final media = _parseMediaFromMap(data);
+    final kind = ChurchKind.fromStorage(data['kind']);
+    final parentChurchId = (data['parentChurchId'] ?? '').toString().trim();
     return ChurchInfo(
       id: id,
       title: (data['title'] ?? data['Title'] ?? data['analyticTitle'] ?? '')
@@ -58,6 +80,9 @@ class ChurchInfo {
           (data['analyticTitle'] ?? data['title'] ?? data['Title'] ?? '')
               .toString(),
       body: InfoParsing.parseBody(data['body']),
+      kind: kind,
+      parentChurchId:
+          kind == ChurchKind.outreach ? parentChurchId : '',
       heroImageSrc: media.heroImageSrc,
       pastorsImageSrc: media.pastorsImageSrc,
       galleryImageSources: media.galleryImageSources,
@@ -77,6 +102,9 @@ class ChurchInfo {
       'title': _title,
       'analyticTitle': _analyticsTitle,
       'body': _body,
+      'kind': _kind.storageValue,
+      'parentChurchId':
+          _kind == ChurchKind.outreach ? _parentChurchId : '',
       'heroImageSrc': _heroImageSrc,
       'pastorsImageSrc': _pastorsImageSrc,
       'galleryImageSources': _galleryImageSources,
@@ -97,6 +125,9 @@ class ChurchInfo {
       'title': _title,
       'analyticTitle': _analyticsTitle,
       'body': _body,
+      'kind': _kind.storageValue,
+      'parentChurchId':
+          _kind == ChurchKind.outreach ? _parentChurchId : '',
       'heroImageSrc': _heroImageSrc,
       'pastorsImageSrc': _pastorsImageSrc,
       'galleryImageSources': _galleryImageSources,
@@ -115,6 +146,8 @@ class ChurchInfo {
   String get analyticsTitle => _analyticsTitle;
   int get displayOrder => _displayOrder;
   String get id => _id;
+  ChurchKind get kind => _kind;
+  String get parentChurchId => _parentChurchId;
   String get heroImageSrc => _heroImageSrc;
   String get pastorsImageSrc => _pastorsImageSrc;
   List<String> get galleryImageSources =>
@@ -130,6 +163,10 @@ class ChurchInfo {
   DateTime get updatedAt => _updatedAt;
   String get updatedBy => _updatedBy;
 
+  bool get isFullChurch => _kind == ChurchKind.church;
+  bool get isOutreach => _kind == ChurchKind.outreach;
+  bool get hasParentChurch =>
+      isOutreach && _parentChurchId.trim().isNotEmpty;
   bool get hasLocation => _location.trim().isNotEmpty;
   bool get hasMapLink => _mapLink.trim().isNotEmpty;
   bool get hasAddress => _address.trim().isNotEmpty;
@@ -143,6 +180,17 @@ class ChurchInfo {
   void setAnalyticsTitle(final String value) => _analyticsTitle = value;
   void setBody(final List<dynamic> value) => _body = List<dynamic>.from(value);
   void setDisplayOrder(final int value) => _displayOrder = value;
+  void setKind(final ChurchKind value) {
+    _kind = value;
+    if (value != ChurchKind.outreach) {
+      _parentChurchId = '';
+    }
+  }
+
+  void setParentChurchId(final String value) {
+    _parentChurchId = value.trim();
+  }
+
   void setHeroImageSrc(final String value) => _heroImageSrc = value.trim();
   void setPastorsImageSrc(final String value) =>
       _pastorsImageSrc = value.trim();

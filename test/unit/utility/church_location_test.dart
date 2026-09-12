@@ -5,11 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 ChurchInfo _church({
   required String id,
   required String location,
+  ChurchKind kind = ChurchKind.church,
+  String parentChurchId = '',
 }) {
   return ChurchInfo(
     id: id,
     title: id,
     analyticsTitle: id,
+    kind: kind,
+    parentChurchId: parentChurchId,
     body: const [
       {'insert': '\n'}
     ],
@@ -23,6 +27,12 @@ void main() {
       _church(id: 'belfast', location: 'Belfast'),
       _church(id: 'portadown', location: 'Portadown'),
       _church(id: 'draft', location: ''),
+      _church(
+        id: 'lisburn',
+        location: 'Lisburn',
+        kind: ChurchKind.outreach,
+        parentChurchId: 'belfast',
+      ),
     ];
 
     test('otherChurchUsingLocation finds a different church', () {
@@ -60,6 +70,20 @@ void main() {
           excludingId: 'belfast',
         ),
         {'Portadown'},
+      );
+    });
+
+    test('outreaches do not occupy locations', () {
+      expect(
+        ChurchLocation.otherChurchUsingLocation(
+          churches: churches,
+          location: 'Lisburn',
+        ),
+        isNull,
+      );
+      expect(
+        ChurchLocation.occupiedLocationNames(churches: churches),
+        {'Belfast', 'Portadown'},
       );
     });
   });

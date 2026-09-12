@@ -1561,9 +1561,17 @@
   "@churchHubPastorsTitle": {
     "description": "Heading for the pastors section on a church hub page"
   },
+  "churchHubPlantersTitle": "Church planters",
+  "@churchHubPlantersTitle": {
+    "description": "Heading for church planters on an outreach hub"
+  },
   "churchHubUnknownPastor": "Unknown pastor",
   "@churchHubUnknownPastor": {
     "description": "Fallback label when a pastor user record cannot be resolved"
+  },
+  "churchHubUnknownPlanter": "Unknown planter",
+  "@churchHubUnknownPlanter": {
+    "description": "Fallback label when a church planter user cannot be resolved"
   },
   "churchHubFindUsTitle": "Find us",
   "@churchHubFindUsTitle": {
@@ -1577,13 +1585,61 @@
   "@churchHubPastorsSubtitle": {
     "description": "Dashboard card subtitle for the pastors card"
   },
+  "churchHubPlantersSubtitle": "Leading this outreach",
+  "@churchHubPlantersSubtitle": {
+    "description": "Dashboard card subtitle for church planters on an outreach"
+  },
   "churchHubLearnAboutPastors": "Learn about them",
   "@churchHubLearnAboutPastors": {
     "description": "Button on the church hub pastors card that opens the pastors page"
   },
+  "churchHubLearnAboutPlanters": "Learn about them",
+  "@churchHubLearnAboutPlanters": {
+    "description": "Button on the outreach hub that opens the planters write-up"
+  },
   "churchPastorsPageTitle": "Pastors",
   "@churchPastorsPageTitle": {
     "description": "App bar title for the church pastors write-up page"
+  },
+  "churchPlantersPageTitle": "Church planters",
+  "@churchPlantersPageTitle": {
+    "description": "App bar title for the outreach planters write-up page"
+  },
+  "churchHubOutreachBadge": "Outreach",
+  "@churchHubOutreachBadge": {
+    "description": "Label under the title when viewing an outreach hub"
+  },
+  "churchHubParentChurchTitle": "Parent church",
+  "@churchHubParentChurchTitle": {
+    "description": "Card title linking an outreach back to its parent church"
+  },
+  "churchHubParentChurchSubtitle": "This outreach belongs to",
+  "@churchHubParentChurchSubtitle": {
+    "description": "Card subtitle for the parent church link"
+  },
+  "churchHubOutreachesTitle": "Outreaches",
+  "@churchHubOutreachesTitle": {
+    "description": "Card title listing baby churches under a full church"
+  },
+  "churchHubOutreachesSubtitle": "Growing toward a full church",
+  "@churchHubOutreachesSubtitle": {
+    "description": "Card subtitle for outreaches on a church hub"
+  },
+  "churchHubNoOutreaches": "No outreaches yet.",
+  "@churchHubNoOutreaches": {
+    "description": "Empty state when a church has no outreaches"
+  },
+  "churchHubAddOutreach": "Add outreach",
+  "@churchHubAddOutreach": {
+    "description": "CTA to create an outreach under a church"
+  },
+  "churchHubAddOutreachDescription": "Add a baby church with church planters.",
+  "@churchHubAddOutreachDescription": {
+    "description": "Description under Add outreach on the church hub"
+  },
+  "churchHubOutreachFindUsEmpty": "No address or maps link yet.",
+  "@churchHubOutreachFindUsEmpty": {
+    "description": "Empty Find us card when an outreach has no visit details"
   },
   "churchHubGalleryTitle": "Gallery",
   "@churchHubGalleryTitle": {
@@ -1617,6 +1673,146 @@
   "@churchEditorChurchCardSubtitle": {
     "description": "Editor card subtitle for church identity fields"
   },
+  "churchEditorOutreachCardTitle": "Outreach",
+  "@churchEditorOutreachCardTitle": {
+    "description": "Editor card title for outreach name and summary"
+  },
+  "churchEditorOutreachCardSubtitle": "Name and how it appears under the parent church",
+  "@churchEditorOutreachCardSubtitle": {
+    "description": "Editor card subtitle for outreach identity fields"
+  },
+  "churchEditorStatusCardTitle": "Status",
+  "@churchEditorStatusCardTitle": {
+    "description": "Editor card for church vs outreach and parent"
+  },
+  "churchEditorStatusCardSubtitle": "Full church or outreach under a parent",
+  "@churchEditorStatusCardSubtitle": {
+    "description": "Editor card subtitle for kind and parent"
+  },
+  "churchEditorKindChurch": "Full church",
+  "@churchEditorKindChurch": {
+    "description": "Label when editing a full church hub"
+  },
+  "churchEditorKindChurchHint": "Appears in the Churches list and uses its own location.",
+  "@churchEditorKindChurchHint": {
+    "description": "Hint for full church status"
+  },
+  "churchEditorKindOutreach": "Outreach",
+  "@churchEditorKindOutreach": {
+    "description": "Label when editing an outreach"
+  },
+  "churchEditorKindOutreachHint": "Listed on the parent church hub until promoted.",
+  "@churchEditorKindOutreachHint": {
+    "description": "Hint for outreach status"
+  },
+  "churchEditorParentChurchLabel": "Parent church",
+  "@churchEditorParentChurchLabel": {
+    "description": "Dropdown label for outreach parent"
+  },
+  "churchEditorParentChurchHelper": "The full church this outreach belongs to.",
+  "@churchEditorParentChurchHelper": {
+    "description": "Helper under parent church dropdown"
+  },
+  "churchEditorPromoteToChurch": "Promote to full church",
+  "@churchEditorPromoteToChurch": {
+    "description": "Button to turn an outreach into a full church"
+  },
+  "churchEditorDemoteToOutreach": "Demote to outreach",
+  "@churchEditorDemoteToOutreach": {
+    "description": "Button to turn a full church into an outreach"
+  },
+  "churchEditorCancel": "Cancel",
+  "@churchEditorCancel": {
+    "description": "Cancel button on church promote/demote dialogs"
+  },
+  "churchEditorPromoteConfirmTitle": "Promote to full church?",
+  "@churchEditorPromoteConfirmTitle": {
+    "description": "Confirm dialog title when promoting an outreach"
+  },
+  "churchEditorPromoteConfirmBody": "This outreach will leave its parent and need its own location before you save.",
+  "@churchEditorPromoteConfirmBody": {
+    "description": "Confirm dialog body when promoting an outreach"
+  },
+  "churchEditorPromoteBlockedTitle": "Cannot promote",
+  "@churchEditorPromoteBlockedTitle": {
+    "description": "Alert title when promote is blocked"
+  },
+  "churchEditorDemoteConfirmTitle": "Demote to outreach?",
+  "@churchEditorDemoteConfirmTitle": {
+    "description": "Confirm dialog title when demoting a church"
+  },
+  "churchEditorDemoteConfirmBody": "This church will sit under a parent and lose its location assignment. Choose the parent church.",
+  "@churchEditorDemoteConfirmBody": {
+    "description": "Confirm dialog body when demoting a church"
+  },
+  "churchEditorDemoteBlockedTitle": "Cannot demote",
+  "@churchEditorDemoteBlockedTitle": {
+    "description": "Alert title when demote is blocked"
+  },
+  "churchEditorDemoteNoParent": "Add another full church first to use as the parent.",
+  "@churchEditorDemoteNoParent": {
+    "description": "Alert when demote has no eligible parent"
+  },
+  "churchEditorValidationTitle": "Check church details",
+  "@churchEditorValidationTitle": {
+    "description": "Alert title when church hierarchy validation fails"
+  },
+  "churchEditorLocationConflictTitle": "Location already used",
+  "@churchEditorLocationConflictTitle": {
+    "description": "Alert title when two churches share a location"
+  },
+  "churchEditorLocationConflictBody": "Location “{location}” is already used by {churchTitle}. Each church must have its own location.",
+  "@churchEditorLocationConflictBody": {
+    "description": "Alert body when location is already taken",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      },
+      "churchTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "churchEditorDeleteBlockedTitle": "Cannot delete",
+  "@churchEditorDeleteBlockedTitle": {
+    "description": "Alert title when deleting a church with outreaches"
+  },
+  "churchEditorDeleteBlockedBody": "Promote or delete this church’s outreaches first.",
+  "@churchEditorDeleteBlockedBody": {
+    "description": "Alert body when deleting a church that still has outreaches"
+  },
+  "churchEditorLocationLabel": "Location",
+  "@churchEditorLocationLabel": {
+    "description": "Location dropdown label on church editor"
+  },
+  "churchEditorLocationHelper": "Each church must use a unique location from the catalogue.",
+  "@churchEditorLocationHelper": {
+    "description": "Helper under location dropdown"
+  },
+  "churchEditorOutreachLocationHint": "Outreaches do not use a catalogue location until they are promoted to a full church. You can still add an address and maps link.",
+  "@churchEditorOutreachLocationHint": {
+    "description": "Shown instead of location dropdown on outreach editor"
+  },
+  "churchEditorAddressLabel": "Address",
+  "@churchEditorAddressLabel": {
+    "description": "Address field label on church editor"
+  },
+  "churchEditorAddressHelper": "Optional street address shown on the church page.",
+  "@churchEditorAddressHelper": {
+    "description": "Helper under address field"
+  },
+  "churchEditorMapsLabel": "Maps URL",
+  "@churchEditorMapsLabel": {
+    "description": "Maps URL field label on church editor"
+  },
+  "churchEditorMapsHelper": "Optional Google Maps (or similar) link.",
+  "@churchEditorMapsHelper": {
+    "description": "Helper under maps URL field"
+  },
+  "churchEditorMapsHelpTooltip": "Maps URL help",
+  "@churchEditorMapsHelpTooltip": {
+    "description": "Tooltip for maps URL help button"
+  },
   "churchEditorVisitCardTitle": "Find us",
   "@churchEditorVisitCardTitle": {
     "description": "Editor card title for location, address, and maps"
@@ -1633,6 +1829,38 @@
   "@churchEditorPastorsCardSubtitle": {
     "description": "Editor card subtitle for pastors fields and Quill body"
   },
+  "churchEditorPlantersCardTitle": "Church planters",
+  "@churchEditorPlantersCardTitle": {
+    "description": "Editor card title for planters on an outreach"
+  },
+  "churchEditorPlantersCardSubtitle": "People leading this outreach, plus their write-up",
+  "@churchEditorPlantersCardSubtitle": {
+    "description": "Editor card subtitle for planters fields"
+  },
+  "churchEditorChoosePastors": "Choose pastors",
+  "@churchEditorChoosePastors": {
+    "description": "Button to pick pastor users"
+  },
+  "churchEditorChoosePlanters": "Choose church planters",
+  "@churchEditorChoosePlanters": {
+    "description": "Button to pick church planter users"
+  },
+  "churchEditorPastorsImageLabel": "Pastors image URL",
+  "@churchEditorPastorsImageLabel": {
+    "description": "Label for pastors team photo URL"
+  },
+  "churchEditorPastorsImageHelper": "Optional team photo shown in the pastors card.",
+  "@churchEditorPastorsImageHelper": {
+    "description": "Helper for pastors image URL"
+  },
+  "churchEditorPlantersImageLabel": "Planters image URL",
+  "@churchEditorPlantersImageLabel": {
+    "description": "Label for planters team photo URL"
+  },
+  "churchEditorPlantersImageHelper": "Optional team photo shown in the planters card.",
+  "@churchEditorPlantersImageHelper": {
+    "description": "Helper for planters image URL"
+  },
   "churchEditorMediaCardTitle": "Media",
   "@churchEditorMediaCardTitle": {
     "description": "Editor card title for hero and gallery images"
@@ -1644,6 +1872,10 @@
   "churchEditorPastorsBodyLabel": "About the pastors",
   "@churchEditorPastorsBodyLabel": {
     "description": "Label above the pastors Quill editor on the church form"
+  },
+  "churchEditorPlantersBodyLabel": "About the church planters",
+  "@churchEditorPlantersBodyLabel": {
+    "description": "Label above the planters Quill editor on the outreach form"
   },
   "churchEditorSave": "Save",
   "@churchEditorSave": {

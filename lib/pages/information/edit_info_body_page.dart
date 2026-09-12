@@ -15,6 +15,7 @@ class EditInfoBodyPage extends StatelessWidget {
   const EditInfoBodyPage._({
     required this.section,
     this.churchInfo,
+    this.parentChurchId,
     this.churchPage,
     this.churchId,
     this.testimonialInfo,
@@ -22,9 +23,15 @@ class EditInfoBodyPage extends StatelessWidget {
     this.initialCtrimCategory = CtrimInfoCategory.principle,
   });
 
-  factory EditInfoBodyPage.forChurch({final ChurchInfo? info}) {
+  factory EditInfoBodyPage.forChurch({
+    final ChurchInfo? info,
+    final String? parentChurchId,
+  }) {
     return EditInfoBodyPage._(
-        section: InfoEditorSection.church, churchInfo: info);
+      section: InfoEditorSection.church,
+      churchInfo: info,
+      parentChurchId: parentChurchId,
+    );
   }
 
   factory EditInfoBodyPage.forChurchPage({
@@ -55,6 +62,7 @@ class EditInfoBodyPage extends StatelessWidget {
   }
 
   final ChurchInfo? churchInfo;
+  final String? parentChurchId;
   final ChurchPage? churchPage;
   final String? churchId;
   final CtrimInfo? ctrimInfo;
@@ -72,7 +80,10 @@ class EditInfoBodyPage extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     return switch (section) {
-      InfoEditorSection.church => EditChurchInfoBody(info: churchInfo),
+      InfoEditorSection.church => EditChurchInfoBody(
+          info: churchInfo,
+          parentChurchId: parentChurchId,
+        ),
       InfoEditorSection.churchPage => EditChurchPageInfoBody(
           churchId: churchId,
           info: churchPage,

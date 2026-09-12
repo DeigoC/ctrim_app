@@ -8,6 +8,7 @@ import '../../models/info/church_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
+import '../../utility/church_hierarchy.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
@@ -36,6 +37,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   bool _loading = true;
   Object? _error;
   ChurchInfo? _church;
+  List<ChurchInfo> _allChurches = const [];
   ChurchLocationStats? _stats;
   Object? _statsError;
   List<ChurchPage> _pages = const [];
@@ -56,10 +58,16 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       _pagesError = null;
     });
     try {
-      final church = await _repository.fetchChurchById(
-        widget.documentId,
+      final churches = await _repository.fetchChurches(
         forceRefresh: forceRefresh,
       );
+      ChurchInfo? church;
+      for (final candidate in churches) {
+        if (candidate.id == widget.documentId) {
+          church = candidate;
+          break;
+        }
+      }
       if (!mounted) return;
 
       ChurchLocationStats? stats;
@@ -93,6 +101,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
 
       if (!mounted) return;
       setState(() {
+        _allChurches = churches;
         _church = church;
         if (church == null) {
           _stats = null;
@@ -199,6 +208,35 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     }
   }
 
+  Future<void> _openAddOutreach(final ChurchInfo parent) async {
+    final changed = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditInfoBodyPage.forChurch(
+              parentChurchId: parent.id,
+            ),
+          ),
+        ) ??
+        false;
+    if (changed && mounted) {
+      await _load(forceRefresh: true);
+    }
+  }
+
+  Future<void> _openOutreach(final ChurchInfo outreach) async {
+    await AppLinks.openChurch(context, id: outreach.id);
+    if (mounted) {
+      await _load(forceRefresh: false);
+    }
+  }
+
+  Future<void> _openParent(final ChurchInfo parent) async {
+    await AppLinks.openChurch(context, id: parent.id);
+    if (mounted) {
+      await _load(forceRefresh: false);
+    }
+  }
+
   Future<void> _openMaps(final String url) async {
     await launchUrlString(url, mode: LaunchMode.externalApplication)
         .onError((error, stackTrace) async {
@@ -259,6 +297,8 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     final hasHero = church.hasHeroImage;
     // Match post / cell-group key-graphic AppBars: edge-to-edge cover.
     final double? heroHeight = hasHero ? size.height * 0.33 : null;
+    final parent = ChurchHierarchy.parentOf(_allChurches, church);
+    final outreaches = ChurchHierarchy.outreachesOf(_allChurches, church.id);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -306,13 +346,20 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
                       stats: _stats,
                       statsError: _statsError,
                       canAddPages: canManageChurchPages,
+                      canManageInfo: canManageInfo,
                       visiblePostLimit: ChurchInfoPage.visiblePostLimit,
+                      parentChurch: parent,
+                      outreaches: outreaches,
                       onOpenMaps: church.hasMapLink
                           ? () => _openMaps(church.mapLink)
                           : null,
+                      onOpenParent:
+                          parent == null ? null : () => _openParent(parent),
                       onOpenPastors: () => _openPastors(church),
                       onOpenPage: _openChurchPage,
                       onAddPage: () => _openAddPage(church),
+                      onOpenOutreach: _openOutreach,
+                      onAddOutreach: () => _openAddOutreach(church),
                       onRetryPages: () => _load(forceRefresh: false),
                       onRetryStats: () => _load(forceRefresh: false),
                     ),

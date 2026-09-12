@@ -7,6 +7,7 @@ import '../../widgets/information/info_section_card.dart';
 class InformationAboutTab extends StatelessWidget {
   const InformationAboutTab({super.key});
 
+  static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   static const String _mission =
       'https://drive.google.com/uc?id=1RWa_4vx6vo1dXCP3SNc6WglxYTBoRY9T';
   static const String _vision =
@@ -81,12 +82,17 @@ class InformationAboutTab extends StatelessWidget {
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: isWideScreen ? 32 : 28,
+                    ),
                     child: Column(
                       children: [
-                        Icon(Icons.church,
-                            size: 48, color: colorScheme.primary),
-                        const SizedBox(height: 16),
+                        _buildLogoMark(
+                          colorScheme: colorScheme,
+                          size: isWideScreen ? 140.0 : 112.0,
+                        ),
+                        SizedBox(height: isWideScreen ? 24 : 20),
                         Text(
                           'Christ the Redeemer International Ministries',
                           textAlign: TextAlign.center,
@@ -268,6 +274,42 @@ class InformationAboutTab extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLogoMark({
+    required ColorScheme colorScheme,
+    required double size,
+  }) {
+    final radius = size * 0.22;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: 0.22),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Image.asset(
+          _ctrimLogo,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(
+              Icons.church_rounded,
+              size: size * 0.45,
+              color: colorScheme.primary,
+            );
+          },
+        ),
+      ),
     );
   }
 

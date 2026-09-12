@@ -17,6 +17,7 @@ import '../../widgets/paired_row_list.dart';
 import '../../widgets/two_column_masonry.dart';
 import '../../widgets/posts/post_head.dart';
 import '../../utility/app_links.dart';
+import 'church_pastors_page.dart';
 import 'info_tab_widgets.dart';
 
 class ChurchHubDashboard extends StatelessWidget {
@@ -28,11 +29,17 @@ class ChurchHubDashboard extends StatelessWidget {
     required this.stats,
     required this.statsError,
     required this.canAddPages,
+    required this.canManageInfo,
     required this.visiblePostLimit,
+    this.parentChurch,
+    this.outreaches = const [],
     this.onOpenMaps,
+    this.onOpenParent,
     required this.onOpenPastors,
     required this.onOpenPage,
     required this.onAddPage,
+    this.onOpenOutreach,
+    this.onAddOutreach,
     required this.onRetryPages,
     required this.onRetryStats,
   });
@@ -43,11 +50,17 @@ class ChurchHubDashboard extends StatelessWidget {
   final ChurchLocationStats? stats;
   final Object? statsError;
   final bool canAddPages;
+  final bool canManageInfo;
   final int visiblePostLimit;
+  final ChurchInfo? parentChurch;
+  final List<ChurchInfo> outreaches;
   final VoidCallback? onOpenMaps;
+  final VoidCallback? onOpenParent;
   final VoidCallback onOpenPastors;
   final ValueChanged<ChurchPage> onOpenPage;
   final VoidCallback onAddPage;
+  final ValueChanged<ChurchInfo>? onOpenOutreach;
+  final VoidCallback? onAddOutreach;
   final VoidCallback onRetryPages;
   final VoidCallback onRetryStats;
 
@@ -56,17 +69,32 @@ class ChurchHubDashboard extends StatelessWidget {
     context.select((AppContext c) => c.usersEpoch);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     final cards = <Widget>[
+      if (church.isOutreach && parentChurch != null && onOpenParent != null)
+        _ParentChurchCard(
+          parent: parentChurch!,
+          onOpen: onOpenParent!,
+        ),
       _VisitCard(church: church, onOpenMaps: onOpenMaps),
       if (church.hasPastorsSection)
         _PastorsCard(church: church, onLearnAbout: onOpenPastors),
-      _SnapshotCard(
-        church: church,
-        stats: stats,
-        statsError: statsError,
-        onRetryStats: onRetryStats,
-      ),
+      if (church.isFullChurch &&
+          (outreaches.isNotEmpty || (canManageInfo && onAddOutreach != null)))
+        _OutreachesCard(
+          outreaches: outreaches,
+          canAdd: canManageInfo && onAddOutreach != null,
+          onOpen: onOpenOutreach,
+          onAdd: onAddOutreach,
+        ),
+      if (church.isFullChurch || church.hasLocation)
+        _SnapshotCard(
+          church: church,
+          stats: stats,
+          statsError: statsError,
+          onRetryStats: onRetryStats,
+        ),
       if (pagesError != null || pages.isNotEmpty || canAddPages)
         _PagesCard(
           pages: pages,
@@ -98,6 +126,16 @@ class ChurchHubDashboard extends StatelessWidget {
           style: theme.textTheme.headlineSmall
               ?.copyWith(fontWeight: FontWeight.bold),
         ),
+        if (church.isOutreach) ...[
+          const SizedBox(height: 4),
+          Text(
+            l10n.churchHubOutreachBadge,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
         if (church.summary.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
@@ -140,23 +178,25 @@ class _VisitCard extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Chip(
-              avatar: Icon(
-                Icons.place_outlined,
-                size: 18,
-                color: colorScheme.primary,
-              ),
-              label: Text(
-                church.hasLocation
-                    ? church.location
-                    : l10n.churchHubLocationUnset,
+          if (church.hasLocation || church.isFullChurch)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Chip(
+                avatar: Icon(
+                  Icons.place_outlined,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                label: Text(
+                  church.hasLocation
+                      ? church.location
+                      : l10n.churchHubLocationUnset,
+                ),
               ),
             ),
-          ),
           if (church.hasAddress) ...[
-            const SizedBox(height: 12),
+            if (church.hasLocation || church.isFullChurch)
+              const SizedBox(height: 12),
             Text(
               church.address,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -165,7 +205,10 @@ class _VisitCard extends StatelessWidget {
             ),
           ],
           if (onOpenMaps != null) ...[
-            const SizedBox(height: 12),
+            if (church.hasLocation ||
+                church.isFullChurch ||
+                church.hasAddress)
+              const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton.tonalIcon(
@@ -175,6 +218,16 @@ class _VisitCard extends StatelessWidget {
               ),
             ),
           ],
+          if (!church.hasLocation &&
+              !church.hasAddress &&
+              onOpenMaps == null &&
+              church.isOutreach)
+            Text(
+              l10n.churchHubOutreachFindUsEmpty,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
         ],
       ),
     );
@@ -193,11 +246,16 @@ class _PastorsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isOutreach = church.isOutreach;
 
     return InfoSectionCard(
       icon: Icons.groups_outlined,
-      title: l10n.churchHubPastorsTitle,
-      subtitle: l10n.churchHubPastorsSubtitle,
+      title: isOutreach
+          ? l10n.churchHubPlantersTitle
+          : l10n.churchHubPastorsTitle,
+      subtitle: isOutreach
+          ? l10n.churchHubPlantersSubtitle
+          : l10n.churchHubPastorsSubtitle,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -211,15 +269,119 @@ class _PastorsCard extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           if (church.hasPastors)
-            ChurchPastorUserList(pastorUserIds: church.pastorUserIds),
+            ChurchPastorUserList(
+              pastorUserIds: church.pastorUserIds,
+              unknownLabel: isOutreach
+                  ? l10n.churchHubUnknownPlanter
+                  : l10n.churchHubUnknownPastor,
+            ),
           if (church.hasPastorsBody) ...[
             if (church.hasPastors || church.hasPastorsImage)
               const SizedBox(height: 8),
             FilledButton(
               onPressed: onLearnAbout,
-              child: Text(l10n.churchHubLearnAboutPastors),
+              child: Text(
+                isOutreach
+                    ? l10n.churchHubLearnAboutPlanters
+                    : l10n.churchHubLearnAboutPastors,
+              ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ParentChurchCard extends StatelessWidget {
+  const _ParentChurchCard({
+    required this.parent,
+    required this.onOpen,
+  });
+
+  final ChurchInfo parent;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return InfoSectionCard(
+      icon: Icons.church_outlined,
+      title: l10n.churchHubParentChurchTitle,
+      subtitle: l10n.churchHubParentChurchSubtitle,
+      content: InfoTopicListCard(
+        title: parent.title,
+        description: parent.hasLocation
+            ? parent.location
+            : l10n.churchHubLocationUnset,
+        imageUrl: parent.imgSrc,
+        heroTag: 'info_church_parent_${parent.id}',
+        fallbackIcon: Icons.church_outlined,
+        onTap: onOpen,
+      ),
+    );
+  }
+}
+
+class _OutreachesCard extends StatelessWidget {
+  const _OutreachesCard({
+    required this.outreaches,
+    required this.canAdd,
+    this.onOpen,
+    this.onAdd,
+  });
+
+  final List<ChurchInfo> outreaches;
+  final bool canAdd;
+  final ValueChanged<ChurchInfo>? onOpen;
+  final VoidCallback? onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InfoSectionCard(
+      icon: Icons.diversity_3_outlined,
+      title: l10n.churchHubOutreachesTitle,
+      subtitle: l10n.churchHubOutreachesSubtitle,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (outreaches.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                l10n.churchHubNoOutreaches,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            ...outreaches.map(
+              (outreach) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InfoTopicListCard(
+                  title: outreach.title,
+                  description: outreach.summary.isNotEmpty
+                      ? outreach.summary
+                      : l10n.churchHubOutreachBadge,
+                  imageUrl: outreach.imgSrc,
+                  heroTag: 'info_church_${outreach.id}',
+                  fallbackIcon: Icons.diversity_3_outlined,
+                  onTap: () => onOpen?.call(outreach),
+                ),
+              ),
+            ),
+          if (canAdd && onAdd != null)
+            InfoAddContentCard(
+              label: l10n.churchHubAddOutreach,
+              description: l10n.churchHubAddOutreachDescription,
+              onTap: onAdd!,
+            ),
         ],
       ),
     );
