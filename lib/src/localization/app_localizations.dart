@@ -148,6 +148,18 @@ abstract class AppLocalizations {
   /// **'No people match \"{query}\"'**
   String volunteersEmptySearch(String query);
 
+  /// Banner when a refined people search is empty but name matches exist without filters
+  ///
+  /// In en, this message translates to:
+  /// **'No matches with current filters. Showing {count, plural, =1{1 person} other{{count} people}} who match without filters (other locations, everyone, and placeholders you can see).'**
+  String volunteersSearchWithoutFiltersBanner(int count);
+
+  /// Clears location/serving/role filters so search matches are easier to find
+  ///
+  /// In en, this message translates to:
+  /// **'Widen search'**
+  String get volunteersWidenSearch;
+
   /// Empty state when a location filter returns no people
   ///
   /// In en, this message translates to:
@@ -328,29 +340,41 @@ abstract class AppLocalizations {
   /// **'across {count, plural, =1{1 group} other{{count} groups}}'**
   String userProfileCellGroupGroupsAttendedSuffix(int count);
 
-  /// Link label to open the person's latest attended cell group meeting post
-  ///
-  /// In en, this message translates to:
-  /// **'View most recent meeting'**
-  String get userProfileCellGroupViewRecentMeeting;
-
-  /// Link label to open a named cell group meeting post
-  ///
-  /// In en, this message translates to:
-  /// **'View {title}'**
-  String userProfileCellGroupViewRecentMeetingNamed(String title);
-
   /// Profile note when the person did not check in at a cell group meeting in the past 3 weeks
   ///
   /// In en, this message translates to:
   /// **'No cell group attendance in the past 3 weeks'**
   String get userProfileCellGroupNoAttendanceRecent;
 
-  /// Profile detail for the most recent cell group check-in
+  /// Heading above the past few cell group meeting rows on a profile
   ///
   /// In en, this message translates to:
-  /// **'Last attended {date}'**
-  String userProfileCellGroupLastAttended(String date);
+  /// **'Recent meetings'**
+  String get userProfileCellGroupRecentMeetings;
+
+  /// Collapsed subtitle showing how many recent cell group meetings are listed
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 meeting} other{{count} meetings}}'**
+  String userProfileCellGroupRecentMeetingsCount(int count);
+
+  /// Subtitle when the person checked in at that cell group meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get userProfileCellGroupMeetingAttended;
+
+  /// Subtitle when the person did not check in at that cell group meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked in'**
+  String get userProfileCellGroupMeetingMissed;
+
+  /// Empty state when membership exists but no past-window CG posts were found
+  ///
+  /// In en, this message translates to:
+  /// **'No linked cell group meetings in the past 3 weeks'**
+  String get userProfileCellGroupNoRecentMeetings;
 
   /// Section title on a volunteer profile for schedule preview
   ///
@@ -1677,6 +1701,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Short description on the catalogue card and in About.'**
   String get cellGroupsSummaryHelper;
+
+  /// Label for church-area location on create/edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get cellGroupsLocationLabel;
+
+  /// Helper under cell group location dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Church area this group belongs to (Belfast, Portadown, or North Coast).'**
+  String get cellGroupsLocationHelper;
+
+  /// Label for optional UK postcode on create/edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Postcode'**
+  String get cellGroupsPostcodeLabel;
+
+  /// Placeholder example for cell group postcode or outcode
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. BT37 or BT37 0AB'**
+  String get cellGroupsPostcodeHint;
+
+  /// Helper under optional cell group postcode field
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. A full postcode or just the first half (BT37) is public and used to find the nearest group. Leave blank to stay off the map.'**
+  String get cellGroupsPostcodeHelper;
+
+  /// Validation when cell group postcode is not a full postcode or outcode
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a UK postcode or area code (e.g. BT37), or leave this blank.'**
+  String get cellGroupsPostcodeInvalid;
+
+  /// Error when postcodes.io lookup fails on save
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check that postcode. Check it and try again.'**
+  String get cellGroupsPostcodeLookupFailed;
+
+  /// Hint on the Groups tab search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or postcode'**
+  String get cellGroupsListSearchHint;
+
+  /// Empty-state title when nearest search postcode is invalid
+  ///
+  /// In en, this message translates to:
+  /// **'Not a valid postcode'**
+  String get cellGroupsSearchInvalidPostcodeTitle;
+
+  /// Empty-state body when nearest search postcode is invalid
+  ///
+  /// In en, this message translates to:
+  /// **'Try a full UK postcode such as BT9 6AB, or an area code such as BT9.'**
+  String get cellGroupsSearchInvalidPostcodeBody;
+
+  /// Empty-state title when no groups have a postcode pin
+  ///
+  /// In en, this message translates to:
+  /// **'No groups near that postcode'**
+  String get cellGroupsSearchNoNearbyTitle;
+
+  /// Empty-state body when nearest search has no opted-in groups
+  ///
+  /// In en, this message translates to:
+  /// **'Only groups that have added a postcode can appear in nearest results. Search by name, or browse the full list.'**
+  String get cellGroupsSearchNoNearbyBody;
+
+  /// Empty-state title when name search has no matches
+  ///
+  /// In en, this message translates to:
+  /// **'No matching groups'**
+  String get cellGroupsSearchNoNameMatchesTitle;
+
+  /// Empty-state body when name search has no matches
+  ///
+  /// In en, this message translates to:
+  /// **'Try another name, or enter a postcode to see the nearest groups.'**
+  String get cellGroupsSearchNoNameMatchesBody;
+
+  /// Empty-state title when postcodes.io fails on Groups search
+  ///
+  /// In en, this message translates to:
+  /// **'Could not look up that postcode'**
+  String get cellGroupsSearchLookupFailedTitle;
+
+  /// Empty-state body when postcodes.io fails on Groups search
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get cellGroupsSearchLookupFailedBody;
+
+  /// Distance from the seeker's postcode to a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'{miles} miles'**
+  String cellGroupsDistanceMiles(String miles);
+
+  /// Distance label when a cell group is under 0.1 miles away
+  ///
+  /// In en, this message translates to:
+  /// **'< 0.1 miles'**
+  String get cellGroupsDistanceUnderPointOne;
 
   /// Label for usual meeting weekday on create/edit
   ///

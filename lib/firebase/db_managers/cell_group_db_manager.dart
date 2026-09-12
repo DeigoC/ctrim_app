@@ -8,16 +8,21 @@ import 'id_tracker.dart';
 
 class CellGroupDBManager {
   static final CollectionReference<Map<String, dynamic>> _ref =
-      FirebaseFirestore.instance.collection('cell_groups').withConverter<Map<String, dynamic>>(
+      FirebaseFirestore.instance
+          .collection('cell_groups')
+          .withConverter<Map<String, dynamic>>(
             fromFirestore: (snap, _) => snap.data() ?? {},
             toFirestore: (data, _) => data,
           );
 
   Future<List<CellGroup>> fetchAllGroups() async {
     final snapshot = await _ref.get();
-    final groups = snapshot.docs.map((doc) => CellGroup.fromMap(doc.id, doc.data())).toList();
+    final groups = snapshot.docs
+        .map((doc) => CellGroup.fromMap(doc.id, doc.data()))
+        .toList();
     groups.sort((a, b) {
-      final statusOrder = _statusRank(a.status).compareTo(_statusRank(b.status));
+      final statusOrder =
+          _statusRank(a.status).compareTo(_statusRank(b.status));
       if (statusOrder != 0) return statusOrder;
       return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });
@@ -41,6 +46,9 @@ class CellGroupDBManager {
     String status = CellGroupStatus.active,
     int? meetingWeekday,
     String meetingTime = '',
+    String? postcode,
+    double? latitude,
+    double? longitude,
     required String createdByUserID,
   }) async {
     final id = await IDTrackerDBManager().getAndIncrementCellGroupID();
@@ -58,6 +66,9 @@ class CellGroupDBManager {
       status: status,
       meetingWeekday: meetingWeekday,
       meetingTime: meetingTime,
+      postcode: postcode,
+      latitude: latitude,
+      longitude: longitude,
       createdByUserID: createdByUserID,
       createdAt: now,
       updatedAt: now,
@@ -69,7 +80,13 @@ class CellGroupDBManager {
 
   Future<void> updateGroup(final CellGroup group) async {
     group.setUpdatedAt(DateTime.now());
-    await _ref.doc(group.id).update(group.toJson());
+    final data = group.toJson();
+    if (!group.hasCoordinates) {
+      data['Postcode'] = FieldValue.delete();
+      data['Latitude'] = FieldValue.delete();
+      data['Longitude'] = FieldValue.delete();
+    }
+    await _ref.doc(group.id).update(data);
   }
 
   /// Updates only [MemberCount] denorm (e.g. after roster save).

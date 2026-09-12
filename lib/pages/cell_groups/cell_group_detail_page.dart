@@ -80,8 +80,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
       final trail =
           await _db.fetchMeetingTrail(cellGroupId: widget.groupId, limit: 4);
-      final activityMeetings =
-          await _db.fetchLinkedMeetingsInActivityWindow();
+      final activityMeetings = await _db.fetchLinkedMeetingsInActivityWindow();
 
       CellGroupRoster? roster;
       if (!appContext.isCurrentUserGuest) {
@@ -349,12 +348,13 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     final showRoster = _canViewRoster(appContext, group, _roster);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isWide = ResponsiveLayout.isWideScreen(screenWidth);
+    final isWide =
+        ResponsiveLayout.isWideScreen(MediaQuery.sizeOf(context).width);
     final hasKeyGraphic = group.hasKeyGraphic;
     final keySrc = group.keyGraphicSrc;
-    final heroHeight =
-        MediaQuery.sizeOf(context).height * (isWide ? 0.32 : 0.28);
+    // Same edge-to-edge key graphic as viewing a post (phone and wide).
+    final double? heroHeight =
+        hasKeyGraphic ? MediaQuery.sizeOf(context).height * 0.33 : null;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -364,9 +364,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           slivers: [
             SliverAppBar(
               pinned: true,
-              expandedHeight: (!isWide && hasKeyGraphic) ? heroHeight : null,
+              expandedHeight: heroHeight,
               title: Text(group.name),
-              flexibleSpace: (!isWide && hasKeyGraphic && keySrc != null)
+              flexibleSpace: (hasKeyGraphic && keySrc != null)
                   ? FlexibleSpaceBar(
                       background: GestureDetector(
                         onTap: () => _openPhoto(keySrc),
@@ -385,19 +385,11 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                 canEdit: canEdit,
               ),
             ),
-            if (isWide && hasKeyGraphic && keySrc != null)
-              SliverToBoxAdapter(
-                child: _buildWideHero(
-                  keySrc: keySrc,
-                  height: heroHeight,
-                  screenWidth: screenWidth,
-                ),
-              ),
             SliverToBoxAdapter(
               child: ResponsiveContent(
                 narrowPadding: 16,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(0, isWide ? 20 : 16, 0, 32),
+                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
                   child: _buildDetailSections(
                     l10n: l10n,
                     appContext: appContext,
@@ -439,38 +431,6 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           },
         ),
     ];
-  }
-
-  Widget _buildWideHero({
-    required String keySrc,
-    required double height,
-    required double screenWidth,
-  }) {
-    final gutter =
-        ResponsiveLayout.horizontalGutter(screenWidth, narrowPadding: 16);
-    final maxWidth = ResponsiveLayout.maxContentWidth(screenWidth);
-    final sidePad =
-        screenWidth > maxWidth ? (screenWidth - maxWidth) / 2 : gutter;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(sidePad, 8, sidePad, 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          height: height,
-          width: double.infinity,
-          child: GestureDetector(
-            onTap: () => _openPhoto(keySrc),
-            child: CachedImageWidget(
-              imageUrl: keySrc,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: height,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildDetailSections({
@@ -668,6 +628,11 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               _CgMetaChip(
                 icon: Icons.location_on_outlined,
                 label: location,
+              ),
+            if (group.postcode != null)
+              _CgMetaChip(
+                icon: Icons.markunread_mailbox_outlined,
+                label: group.postcode!,
               ),
             if (cadence.isNotEmpty)
               _CgMetaChip(

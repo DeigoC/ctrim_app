@@ -57,52 +57,60 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Apply title/subtitle before pop — canPop: true lost edits after the
+    // WillPopScope → PopScope migration.
     return PopScope(
-      canPop: true,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (_tecSubtitle.text.trim().isEmpty || _tecTitle.text.trim().isEmpty) {
-          DialogManager.showAlertDialog(
-            context: context,
-            title: 'Empty Fields',
-            content:
-                'Please make sure that the title or subtitle fields are not left empty before leaving',
-          );
-          return;
-        }
-
-        final titleChanged =
-            _originalTitle.compareTo(_tecTitle.text.trim()) != 0;
-        final subtitleChanged =
-            _originalSubtitle.compareTo(_tecSubtitle.text.trim()) != 0;
-        final leadSpeakerChanged = _leadSpeakerUID != _originalLeadSpeakerUID;
-        final tagsChanged =
-            !_sameIdLists(_originalTagIDs, widget.eventContext.head.tagIDs);
-        final cellGroupsChanged = !_sameIdLists(
-            _originalCellGroupIDs, widget.eventContext.head.cellGroupIDs);
-        final periodChanged = widget.eventContext.metadata.isPeriodParent !=
-            _originalIsPeriodParent;
-        final parentChanged =
-            widget.eventContext.metadata.parentID != _originalParentID;
-
-        if (titleChanged || subtitleChanged) {
-          widget.eventContext.head.setTitle(_tecTitle.text.trim());
-          widget.eventContext.head.setSubtitle(_tecSubtitle.text.trim());
-        }
-        if (titleChanged ||
-            subtitleChanged ||
-            leadSpeakerChanged ||
-            tagsChanged ||
-            cellGroupsChanged ||
-            periodChanged ||
-            parentChanged) {
-          widget.eventContext.allowSavingOfTheEdit();
-        }
+        if (didPop) return;
+        _applyEditsAndPop();
       },
       child: Scaffold(
         appBar: AppBar(title: const Text('Title & details')),
         body: _buildBody(),
       ),
     );
+  }
+
+  void _applyEditsAndPop() {
+    final newTitle = _tecTitle.text.trim();
+    final newSubtitle = _tecSubtitle.text.trim();
+    if (newTitle.isEmpty || newSubtitle.isEmpty) {
+      DialogManager.showAlertDialog(
+        context: context,
+        title: 'Empty Fields',
+        content:
+            'Please make sure that the title or subtitle fields are not left empty before leaving',
+      );
+      return;
+    }
+
+    final titleChanged = _originalTitle.compareTo(newTitle) != 0;
+    final subtitleChanged = _originalSubtitle.compareTo(newSubtitle) != 0;
+    final leadSpeakerChanged = _leadSpeakerUID != _originalLeadSpeakerUID;
+    final tagsChanged =
+        !_sameIdLists(_originalTagIDs, widget.eventContext.head.tagIDs);
+    final cellGroupsChanged = !_sameIdLists(
+        _originalCellGroupIDs, widget.eventContext.head.cellGroupIDs);
+    final periodChanged =
+        widget.eventContext.metadata.isPeriodParent != _originalIsPeriodParent;
+    final parentChanged =
+        widget.eventContext.metadata.parentID != _originalParentID;
+
+    if (titleChanged || subtitleChanged) {
+      widget.eventContext.head.setTitle(newTitle);
+      widget.eventContext.head.setSubtitle(newSubtitle);
+    }
+    if (titleChanged ||
+        subtitleChanged ||
+        leadSpeakerChanged ||
+        tagsChanged ||
+        cellGroupsChanged ||
+        periodChanged ||
+        parentChanged) {
+      widget.eventContext.allowSavingOfTheEdit();
+    }
+    Navigator.of(context).pop();
   }
 
   bool _sameIdLists(List<String> a, List<String> b) {

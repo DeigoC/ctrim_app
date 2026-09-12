@@ -14,17 +14,26 @@ class CellGroupStatus {
 /// Durable cell group head stored in `cell_groups/{id}`.
 ///
 /// Guest-safe public fields only on this doc. Roster lives in
-/// `cell_groups/{id}/supplemental/roster`. Venue/address omitted in V1.
+/// `cell_groups/{id}/supplemental/roster`. Street venue/address omitted; an
+/// optional [postcode] (with lat/lng) is the public pin for nearest search.
 ///
 /// Catalogue tiles use the first leader's portrait. [keyGraphicSrc] is a wider
 /// cover for the detail page only (optional). [media] is the photo gallery.
 class CellGroup {
-  late String _id, _name, _summary, _location, _status, _meetingTime, _createdByUserID;
+  late String _id,
+      _name,
+      _summary,
+      _location,
+      _status,
+      _meetingTime,
+      _createdByUserID;
   late List<String> _leaderUserIds, _leaderAuthIds;
   late List<Map<String, dynamic>> _media;
   late int _memberCount;
   int? _meetingWeekday;
   String? _keyGraphicSrc;
+  String? _postcode;
+  double? _latitude, _longitude;
   DateTime? _createdAt, _updatedAt;
 
   static const int maxMediaItems = 8;
@@ -42,6 +51,9 @@ class CellGroup {
     String status = CellGroupStatus.active,
     int? meetingWeekday,
     String meetingTime = '',
+    String? postcode,
+    double? latitude,
+    double? longitude,
     String createdByUserID = '',
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -61,6 +73,8 @@ class CellGroup {
     _createdByUserID = createdByUserID;
     _createdAt = createdAt;
     _updatedAt = updatedAt;
+    _applyPostcodeGeo(
+        postcode: postcode, latitude: latitude, longitude: longitude);
     _syncKeyGraphicWithMedia();
   }
 
@@ -80,6 +94,11 @@ class CellGroup {
         _createdByUserID = (data['CreatedByUserID'] as String?) ?? '',
         _createdAt = _parseTimestamp(data['CreatedAt']),
         _updatedAt = _parseTimestamp(data['UpdatedAt']) {
+    _applyPostcodeGeo(
+      postcode: data['Postcode'] as String?,
+      latitude: _parseDouble(data['Latitude']),
+      longitude: _parseDouble(data['Longitude']),
+    );
     _syncKeyGraphicWithMedia();
   }
 
@@ -91,6 +110,11 @@ class CellGroup {
   static DateTime? _parseTimestamp(final dynamic raw) {
     if (raw is Timestamp) return raw.toDate();
     if (raw is DateTime) return raw;
+    return null;
+  }
+
+  static double? _parseDouble(final dynamic raw) {
+    if (raw is num) return raw.toDouble();
     return null;
   }
 
@@ -126,6 +150,9 @@ class CellGroup {
       'MeetingWeekday': _meetingWeekday,
       'MeetingTime': _meetingTime,
       'CreatedByUserID': _createdByUserID,
+      if (_postcode != null) 'Postcode': _postcode,
+      if (_latitude != null) 'Latitude': _latitude,
+      if (_longitude != null) 'Longitude': _longitude,
       if (_createdAt != null) 'CreatedAt': Timestamp.fromDate(_createdAt!),
       if (_updatedAt != null) 'UpdatedAt': Timestamp.fromDate(_updatedAt!),
     };
@@ -143,6 +170,9 @@ class CellGroup {
   String get status => _status;
   int? get meetingWeekday => _meetingWeekday;
   String get meetingTime => _meetingTime;
+  String? get postcode => _postcode;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
   String get createdByUserID => _createdByUserID;
   DateTime? get createdAt => _createdAt;
   DateTime? get updatedAt => _updatedAt;
@@ -152,6 +182,7 @@ class CellGroup {
   bool get isArchived => _status == CellGroupStatus.archived;
   bool get hasKeyGraphic =>
       _keyGraphicSrc != null && _keyGraphicSrc!.isNotEmpty;
+  bool get hasCoordinates => _latitude != null && _longitude != null;
 
   bool isLeaderUser(final String userId) =>
       userId.isNotEmpty && _leaderUserIds.contains(userId);
@@ -196,6 +227,22 @@ class CellGroup {
   void setStatus(final String status) => _status = status;
   void setMeetingWeekday(final int? weekday) => _meetingWeekday = weekday;
   void setMeetingTime(final String time) => _meetingTime = time;
+
+  /// Stores a public postcode pin. Blank [postcode] clears coordinates too.
+  void setPostcodeGeo({
+    required String postcode,
+    required double latitude,
+    required double longitude,
+  }) {
+    _applyPostcodeGeo(
+      postcode: postcode,
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
+
+  void clearPostcodeGeo() => _applyPostcodeGeo();
+
   void setMemberCount(final int count) => _memberCount = count < 0 ? 0 : count;
   void setUpdatedAt(final DateTime value) => _updatedAt = value;
 
@@ -241,6 +288,23 @@ class CellGroup {
     if (!_media.any((e) => e['src'] == src)) return false;
     _keyGraphicSrc = src;
     return true;
+  }
+
+  void _applyPostcodeGeo({
+    String? postcode,
+    double? latitude,
+    double? longitude,
+  }) {
+    final trimmed = postcode?.trim() ?? '';
+    if (trimmed.isEmpty || latitude == null || longitude == null) {
+      _postcode = null;
+      _latitude = null;
+      _longitude = null;
+      return;
+    }
+    _postcode = trimmed;
+    _latitude = latitude;
+    _longitude = longitude;
   }
 
   void _syncKeyGraphicWithMedia() {

@@ -78,6 +78,10 @@ void main() {
       expect(summary.distinctGroupsAttended, 1);
       expect(summary.lastAttendedDate, DateTime(2024, 7, 5));
       expect(summary.lastAttendedMeeting?.id, 'm1');
+      expect(summary.recentMeetings.map((r) => r.head.id).toList(),
+          ['m2', 'm1']);
+      expect(summary.recentMeetings.map((r) => r.attended).toList(),
+          [false, true]);
     });
 
     test('summarize counts distinct groups when meetings span groups', () {
@@ -150,6 +154,8 @@ void main() {
       expect(summary.attendedInPastWindow, isFalse);
       expect(summary.meetingsAttended, 0);
       expect(summary.lastAttendedDate, isNull);
+      expect(summary.recentMeetings, hasLength(1));
+      expect(summary.recentMeetings.single.attended, isFalse);
     });
 
     test('summarize returns empty when there are no meetings', () {
@@ -161,6 +167,7 @@ void main() {
 
       expect(summary.attendedInPastWindow, isFalse);
       expect(summary.meetingsInWindow, 0);
+      expect(summary.recentMeetings, isEmpty);
     });
   });
 }

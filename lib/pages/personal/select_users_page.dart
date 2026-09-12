@@ -13,6 +13,7 @@ import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/persist_users_local_cache.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/people_directory_query.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -132,9 +133,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
     return Consumer<AppContext>(builder: (context, appContext, _) {
       final filteredUsers = _filteredUsers(appContext);
+      final unfilteredSearchMatches = _unfilteredSearchMatches(appContext);
+      final showingUnfilteredSearchFallback =
+          filteredUsers.isEmpty && unfilteredSearchMatches.isNotEmpty;
+      final listUsers =
+          showingUnfilteredSearchFallback ? unfilteredSearchMatches : filteredUsers;
       final showCreate = widget.allowCreatePlaceholder &&
           _searchQuery.trim().isNotEmpty &&
-          filteredUsers.isEmpty;
+          filteredUsers.isEmpty &&
+          unfilteredSearchMatches.isEmpty;
 
       return PopScope(
         canPop: false,
@@ -254,8 +261,50 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                 onSelectionChanged: (selected) =>
                     setState(() => _selectedTagIDs = selected),
               ),
+              if (showingUnfilteredSearchFallback)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    filterHorizontalPadding,
+                    0,
+                    filterHorizontalPadding,
+                    8,
+                  ),
+                  child: Material(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .tertiary
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.volunteersSearchWithoutFiltersBanner(
+                              unfilteredSearchMatches.length,
+                            ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                          ),
+                          TextButton(
+                            onPressed: _widenSearchFilters,
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(l10n.volunteersWidenSearch),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               Expanded(
-                child: filteredUsers.isEmpty
+                child: listUsers.isEmpty
                     ? Center(
                         child: Padding(
                           padding: EdgeInsets.symmetric(
@@ -286,7 +335,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                       )
                     : isWide
                         ? _buildWideUserGrid(
-                            users: filteredUsers,
+                            users: listUsers,
                             allTags: appContext.allTags,
                             horizontalPadding: horizontalPadding,
                             l10n: l10n,
@@ -294,9 +343,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                         : ListView.builder(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
-                            itemCount: filteredUsers.length,
+                            itemCount: listUsers.length,
                             itemBuilder: (_, index) => _buildUserListTile(
-                              user: filteredUsers[index],
+                              user: listUsers[index],
                               allTags: appContext.allTags,
                               l10n: l10n,
                             ),
@@ -499,6 +548,52 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         return a.fullname.compareTo(b.fullname);
       });
     return result;
+  }
+
+  /// Name matches ignoring location / Serving / tags / placeholders-only,
+  /// still respecting picker exclusions and whether placeholders are allowed.
+  List<User> _unfilteredSearchMatches(AppContext appContext) {
+    if (_searchQuery.trim().isEmpty) return const [];
+
+    var matches = PeopleDirectoryQuery.searchWithoutRefineFilters(
+      allUsers: appContext.allUsers,
+      viewer: appContext.currentUser,
+      searchQuery: _searchQuery,
+    );
+
+    if (!widget.includeCurrentUser) {
+      matches =
+          matches.where((user) => user.id != appContext.currentUser.id).toList();
+    }
+    if (widget.excludedUIDs.isNotEmpty) {
+      final excluded = widget.excludedUIDs.toSet();
+      matches = matches.where((user) => !excluded.contains(user.id)).toList();
+    }
+
+    matches = matches
+        .where((user) =>
+            isSelectableVolunteerProfile(user) ||
+            _selectedUIDs.contains(user.id) ||
+            (widget.includePlaceholders && user.isPlaceholder))
+        .toList();
+
+    if (!widget.includePlaceholders) {
+      matches = matches
+          .where(
+              (user) => !user.isPlaceholder || _selectedUIDs.contains(user.id))
+          .toList();
+    }
+
+    return matches;
+  }
+
+  void _widenSearchFilters() {
+    setState(() {
+      _locationFilter = VolunteerLocations.all;
+      _servingOnly = false;
+      _placeholdersOnly = false;
+      _selectedTagIDs = {};
+    });
   }
 
   String _emptyMessage(AppLocalizations l10n) {

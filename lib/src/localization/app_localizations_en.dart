@@ -40,6 +40,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String volunteersSearchWithoutFiltersBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return 'No matches with current filters. Showing $_temp0 who match without filters (other locations, everyone, and placeholders you can see).';
+  }
+
+  @override
+  String get volunteersWidenSearch => 'Widen search';
+
+  @override
   String volunteersEmptyLocation(String location) {
     return 'No people in $location';
   }
@@ -162,22 +176,32 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get userProfileCellGroupViewRecentMeeting =>
-      'View most recent meeting';
-
-  @override
-  String userProfileCellGroupViewRecentMeetingNamed(String title) {
-    return 'View $title';
-  }
-
-  @override
   String get userProfileCellGroupNoAttendanceRecent =>
       'No cell group attendance in the past 3 weeks';
 
   @override
-  String userProfileCellGroupLastAttended(String date) {
-    return 'Last attended $date';
+  String get userProfileCellGroupRecentMeetings => 'Recent meetings';
+
+  @override
+  String userProfileCellGroupRecentMeetingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count meetings',
+      one: '1 meeting',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String get userProfileCellGroupMeetingAttended => 'Attended';
+
+  @override
+  String get userProfileCellGroupMeetingMissed => 'Not checked in';
+
+  @override
+  String get userProfileCellGroupNoRecentMeetings =>
+      'No linked cell group meetings in the past 3 weeks';
 
   @override
   String get userProfileUpcomingTasks => 'Upcoming tasks';
@@ -915,6 +939,71 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cellGroupsSummaryHelper =>
       'Short description on the catalogue card and in About.';
+
+  @override
+  String get cellGroupsLocationLabel => 'Location';
+
+  @override
+  String get cellGroupsLocationHelper =>
+      'Church area this group belongs to (Belfast, Portadown, or North Coast).';
+
+  @override
+  String get cellGroupsPostcodeLabel => 'Postcode';
+
+  @override
+  String get cellGroupsPostcodeHint => 'e.g. BT37 or BT37 0AB';
+
+  @override
+  String get cellGroupsPostcodeHelper =>
+      'Optional. A full postcode or just the first half (BT37) is public and used to find the nearest group. Leave blank to stay off the map.';
+
+  @override
+  String get cellGroupsPostcodeInvalid =>
+      'Enter a UK postcode or area code (e.g. BT37), or leave this blank.';
+
+  @override
+  String get cellGroupsPostcodeLookupFailed =>
+      'Could not check that postcode. Check it and try again.';
+
+  @override
+  String get cellGroupsListSearchHint => 'Search by name or postcode';
+
+  @override
+  String get cellGroupsSearchInvalidPostcodeTitle => 'Not a valid postcode';
+
+  @override
+  String get cellGroupsSearchInvalidPostcodeBody =>
+      'Try a full UK postcode such as BT9 6AB, or an area code such as BT9.';
+
+  @override
+  String get cellGroupsSearchNoNearbyTitle => 'No groups near that postcode';
+
+  @override
+  String get cellGroupsSearchNoNearbyBody =>
+      'Only groups that have added a postcode can appear in nearest results. Search by name, or browse the full list.';
+
+  @override
+  String get cellGroupsSearchNoNameMatchesTitle => 'No matching groups';
+
+  @override
+  String get cellGroupsSearchNoNameMatchesBody =>
+      'Try another name, or enter a postcode to see the nearest groups.';
+
+  @override
+  String get cellGroupsSearchLookupFailedTitle =>
+      'Could not look up that postcode';
+
+  @override
+  String get cellGroupsSearchLookupFailedBody =>
+      'Check your connection and try again.';
+
+  @override
+  String cellGroupsDistanceMiles(String miles) {
+    return '$miles miles';
+  }
+
+  @override
+  String get cellGroupsDistanceUnderPointOne => '< 0.1 miles';
 
   @override
   String get cellGroupsWeekdayLabel => 'Meeting weekday';
