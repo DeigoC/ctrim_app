@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctrim_app/models/info/church_info.dart';
+import 'package:ctrim_app/models/info/church_social.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,6 +34,8 @@ void main() {
       expect(info.hasHeroImage, isTrue);
       expect(info.pastorUserIds, isEmpty);
       expect(info.hasPastors, isFalse);
+      expect(info.socials, isEmpty);
+      expect(info.hasSocials, isFalse);
       expect(info.kind, ChurchKind.church);
       expect(info.isFullChurch, isTrue);
       expect(info.isOutreach, isFalse);
@@ -182,6 +185,25 @@ void main() {
       expect(info.galleryImageSources, ['https://example.com/gallery.png']);
     });
 
+    test('fromMap reads socials', () {
+      final info = ChurchInfo.fromMap('belfast', {
+        'title': 'Belfast',
+        'analyticTitle': 'Belfast',
+        'body': [
+          {'insert': '\n'}
+        ],
+        'socials': [
+          {'platform': 'instagram', 'url': 'https://instagram.com/ctrim'},
+          {'platform': 'website', 'url': 'https://ctrim.app'},
+        ],
+      });
+
+      expect(info.hasSocials, isTrue);
+      expect(info.socials.length, 2);
+      expect(info.socials.first.platform, ChurchSocialPlatform.instagram);
+      expect(info.socials.last.url, 'https://ctrim.app');
+    });
+
     test('toJson writes Firestore friendly shape', () {
       final info = ChurchInfo(
         id: 'portadown',
@@ -198,6 +220,12 @@ void main() {
         mapLink: 'https://maps.example/p',
         address: 'High St',
         pastorUserIds: const ['pastor-1', 'pastor-2'],
+        socials: const [
+          ChurchSocialLink(
+            platform: ChurchSocialPlatform.facebook,
+            url: 'https://facebook.com/ctrim',
+          ),
+        ],
         updatedBy: 'admin-1',
         updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
         displayOrder: 1,
@@ -215,6 +243,9 @@ void main() {
       expect(json['mapLink'], 'https://maps.example/p');
       expect(json['address'], 'High St');
       expect(json['pastorUserIds'], ['pastor-1', 'pastor-2']);
+      expect(json['socials'], [
+        {'platform': 'facebook', 'url': 'https://facebook.com/ctrim'},
+      ]);
       expect(json['kind'], 'church');
       expect(json['parentChurchId'], '');
       expect(json['updatedBy'], 'admin-1');

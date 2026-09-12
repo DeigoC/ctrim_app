@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/info/church_info.dart';
+import '../../models/info/church_social.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/church_hierarchy.dart';
 import '../../utility/church_location.dart';
+import '../../utility/church_social_ui.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
@@ -55,10 +57,12 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   late final String _initialPastorsImage;
   late final String _initialGalleryImages;
   late final List<String> _initialPastorUserIds;
+  late final List<ChurchSocialLink> _initialSocials;
   late final ChurchKind _initialKind;
   late final String _initialParentChurchId;
   String? _selectedLocation;
   List<String> _pastorUserIds = const [];
+  List<ChurchSocialLink> _socials = const [];
   List<ChurchInfo> _allChurches = const [];
   late ChurchKind _kind;
   String? _parentChurchId;
@@ -130,12 +134,16 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     _initialAddress = widget.info?.address ?? '';
     _initialPastorUserIds =
         List<String>.from(widget.info?.pastorUserIds ?? const []);
+    _initialSocials = List<ChurchSocialLink>.from(
+      widget.info?.socials ?? const <ChurchSocialLink>[],
+    );
     _initialHeroImage = widget.info?.heroImageSrc ?? '';
     _initialPastorsImage = widget.info?.pastorsImageSrc ?? '';
     _initialGalleryImages =
         (widget.info?.galleryImageSources ?? const <String>[]).join('\n');
     _selectedLocation = _initialLocation.isEmpty ? null : _initialLocation;
     _pastorUserIds = List<String>.from(_initialPastorUserIds);
+    _socials = List<ChurchSocialLink>.from(_initialSocials);
     _summaryController = TextEditingController(text: _initialSummary);
     _mapLinkController = TextEditingController(text: _initialMapLink);
     _addressController = TextEditingController(text: _initialAddress);
@@ -285,6 +293,12 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       subtitle: l10n.churchEditorVisitCardSubtitle,
       children: _buildChurchHubFields(),
     );
+    final socialsCard = _editorCard(
+      icon: Icons.share_outlined,
+      title: l10n.churchEditorSocialsCardTitle,
+      subtitle: l10n.churchEditorSocialsCardSubtitle,
+      children: _buildSocialsFields(),
+    );
     final pastorsCard = _editorCard(
       icon: Icons.groups_outlined,
       title: _isOutreach
@@ -306,6 +320,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       churchCard,
       statusCard,
       visitCard,
+      socialsCard,
       pastorsCard,
       mediaCard,
     ];
@@ -694,7 +709,159 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     if (!listEquals(_pastorUserIds, _initialPastorUserIds)) {
       return true;
     }
+    if (!_sameSocials(_socials, _initialSocials)) {
+      return true;
+    }
     return false;
+  }
+
+  bool _sameSocials(
+    final List<ChurchSocialLink> a,
+    final List<ChurchSocialLink> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].platform != b[i].platform || a[i].url != b[i].url) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  List<Widget> _buildSocialsFields() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final used = _socials
+        .map((s) => s.platform)
+        .where((p) => p != ChurchSocialPlatform.other)
+        .toSet();
+    final canAddMore = ChurchSocialPlatform.editableOrder.any(
+      (p) => p == ChurchSocialPlatform.other || !used.contains(p),
+    );
+
+    return [
+      if (_socials.isEmpty)
+        Text(
+          l10n.churchEditorSocialsEmptyHint,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      for (var i = 0; i < _socials.length; i++) ...[
+        if (i > 0) const SizedBox(height: 12),
+        _buildSocialRow(index: i),
+      ],
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        onPressed: canAddMore ? _addSocialLink : null,
+        icon: const Icon(Icons.add),
+        label: Text(l10n.churchEditorAddSocial),
+      ),
+    ];
+  }
+
+  Widget _buildSocialRow({required int index}) {
+    final l10n = AppLocalizations.of(context)!;
+    final link = _socials[index];
+    final usedElsewhere = _socials
+        .asMap()
+        .entries
+        .where((e) => e.key != index)
+        .map((e) => e.value.platform)
+        .where((p) => p != ChurchSocialPlatform.other)
+        .toSet();
+    final platforms = ChurchSocialPlatform.editableOrder
+        .where(
+          (p) =>
+              p == ChurchSocialPlatform.other ||
+              p == link.platform ||
+              !usedElsewhere.contains(p),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<ChurchSocialPlatform>(
+                initialValue: platforms.contains(link.platform)
+                    ? link.platform
+                    : platforms.first,
+                decoration: _filledDecoration(
+                  label: l10n.churchEditorSocialPlatformLabel,
+                  prefixIcon: ChurchSocialUi.iconFor(link.platform),
+                ),
+                items: platforms
+                    .map(
+                      (platform) => DropdownMenuItem(
+                        value: platform,
+                        child: Text(ChurchSocialUi.labelFor(l10n, platform)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (platform) {
+                  if (platform == null) return;
+                  setState(() {
+                    _socials = List<ChurchSocialLink>.from(_socials);
+                    _socials[index] = ChurchSocialLink(
+                      platform: platform,
+                      url: link.url,
+                    );
+                  });
+                },
+              ),
+            ),
+            IconButton(
+              tooltip: l10n.churchEditorRemoveSocial,
+              onPressed: () {
+                setState(() {
+                  _socials = List<ChurchSocialLink>.from(_socials)..removeAt(index);
+                });
+              },
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          initialValue: link.url,
+          key: ValueKey('social-url-${link.platform}-$index'),
+          decoration: _filledDecoration(
+            label: l10n.churchEditorSocialUrlLabel,
+            helperText: l10n.churchEditorSocialUrlHelper,
+            prefixIcon: Icons.link,
+          ),
+          keyboardType: TextInputType.url,
+          onChanged: (value) {
+            _socials = List<ChurchSocialLink>.from(_socials);
+            _socials[index] = ChurchSocialLink(
+              platform: link.platform,
+              url: value.trim(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _addSocialLink() {
+    final used = _socials
+        .map((s) => s.platform)
+        .where((p) => p != ChurchSocialPlatform.other)
+        .toSet();
+    final next = ChurchSocialPlatform.editableOrder.firstWhere(
+      (p) => p == ChurchSocialPlatform.other || !used.contains(p),
+      orElse: () => ChurchSocialPlatform.other,
+    );
+    setState(() {
+      _socials = [
+        ..._socials,
+        ChurchSocialLink(platform: next, url: ''),
+      ];
+    });
   }
 
   List<Widget> _buildStatusFields() {
@@ -1139,6 +1306,15 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       mapLink: _mapLinkController.text.trim(),
       address: _addressController.text.trim(),
       pastorUserIds: List<String>.from(_pastorUserIds),
+      socials: _socials
+          .map(
+            (link) => ChurchSocialLink(
+              platform: link.platform,
+              url: ChurchSocialUi.normalizeUrl(link.platform, link.url),
+            ),
+          )
+          .where((link) => link.isValid)
+          .toList(),
       updatedBy: appContext.currentUser.id,
       updatedAt: now,
       displayOrder: displayOrder,

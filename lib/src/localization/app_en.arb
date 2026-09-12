@@ -1830,6 +1830,82 @@
   "@churchEditorVisitCardSubtitle": {
     "description": "Editor card subtitle for visit fields"
   },
+  "churchEditorSocialsCardTitle": "Socials",
+  "@churchEditorSocialsCardTitle": {
+    "description": "Editor card title for church social links"
+  },
+  "churchEditorSocialsCardSubtitle": "Optional Facebook, Instagram, website, and more",
+  "@churchEditorSocialsCardSubtitle": {
+    "description": "Editor card subtitle for social links"
+  },
+  "churchEditorSocialsEmptyHint": "No social links yet. Add any that visitors should see.",
+  "@churchEditorSocialsEmptyHint": {
+    "description": "Empty hint on church socials editor card"
+  },
+  "churchEditorAddSocial": "Add social link",
+  "@churchEditorAddSocial": {
+    "description": "Button to add a social link on the church editor"
+  },
+  "churchEditorRemoveSocial": "Remove",
+  "@churchEditorRemoveSocial": {
+    "description": "Tooltip to remove a social link row"
+  },
+  "churchEditorSocialPlatformLabel": "Platform",
+  "@churchEditorSocialPlatformLabel": {
+    "description": "Dropdown label for social platform"
+  },
+  "churchEditorSocialUrlLabel": "Link or email",
+  "@churchEditorSocialUrlLabel": {
+    "description": "URL field label for a social link"
+  },
+  "churchEditorSocialUrlHelper": "Paste a full URL, or an email / WhatsApp number.",
+  "@churchEditorSocialUrlHelper": {
+    "description": "Helper under social URL field"
+  },
+  "churchHubSocialsTitle": "Socials",
+  "@churchHubSocialsTitle": {
+    "description": "Dashboard card title for church social links"
+  },
+  "churchHubSocialsSubtitle": "Follow and get in touch",
+  "@churchHubSocialsSubtitle": {
+    "description": "Dashboard card subtitle for church social links"
+  },
+  "churchSocialFacebook": "Facebook",
+  "@churchSocialFacebook": {
+    "description": "Label for Facebook social platform"
+  },
+  "churchSocialInstagram": "Instagram",
+  "@churchSocialInstagram": {
+    "description": "Label for Instagram social platform"
+  },
+  "churchSocialYoutube": "YouTube",
+  "@churchSocialYoutube": {
+    "description": "Label for YouTube social platform"
+  },
+  "churchSocialX": "X",
+  "@churchSocialX": {
+    "description": "Label for X / Twitter social platform"
+  },
+  "churchSocialTiktok": "TikTok",
+  "@churchSocialTiktok": {
+    "description": "Label for TikTok social platform"
+  },
+  "churchSocialWhatsapp": "WhatsApp",
+  "@churchSocialWhatsapp": {
+    "description": "Label for WhatsApp social platform"
+  },
+  "churchSocialWebsite": "Website",
+  "@churchSocialWebsite": {
+    "description": "Label for website social platform"
+  },
+  "churchSocialEmail": "Email",
+  "@churchSocialEmail": {
+    "description": "Label for email social platform"
+  },
+  "churchSocialOther": "Link",
+  "@churchSocialOther": {
+    "description": "Label for a generic social / web link"
+  },
   "churchEditorPastorsCardTitle": "Pastors",
   "@churchEditorPastorsCardTitle": {
     "description": "Editor card title for pastors, photo, and write-up"

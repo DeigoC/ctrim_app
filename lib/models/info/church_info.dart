@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'church_social.dart';
 import 'info_parsing.dart';
 
 /// Full location hub vs nested outreach under a parent church.
@@ -26,6 +27,7 @@ class ChurchInfo {
   late ChurchKind _kind;
   late List<dynamic> _body;
   late List<String> _galleryImageSources, _pastorUserIds;
+  late List<ChurchSocialLink> _socials;
   late DateTime _updatedAt;
   int _displayOrder = 0;
 
@@ -40,6 +42,7 @@ class ChurchInfo {
     String pastorsImageSrc = '',
     List<String>? galleryImageSources,
     List<String>? pastorUserIds,
+    List<ChurchSocialLink>? socials,
     String summary = '',
     String location = '',
     String mapLink = '',
@@ -59,6 +62,8 @@ class ChurchInfo {
     _galleryImageSources =
         _dedupeGallery(galleryImageSources ?? const <String>[], _heroImageSrc);
     _pastorUserIds = List<String>.from(pastorUserIds ?? const <String>[]);
+    _socials =
+        List<ChurchSocialLink>.from(socials ?? const <ChurchSocialLink>[]);
     _summary = summary;
     _location = location;
     _mapLink = mapLink;
@@ -81,12 +86,12 @@ class ChurchInfo {
               .toString(),
       body: InfoParsing.parseBody(data['body']),
       kind: kind,
-      parentChurchId:
-          kind == ChurchKind.outreach ? parentChurchId : '',
+      parentChurchId: kind == ChurchKind.outreach ? parentChurchId : '',
       heroImageSrc: media.heroImageSrc,
       pastorsImageSrc: media.pastorsImageSrc,
       galleryImageSources: media.galleryImageSources,
       pastorUserIds: _parseStringList(data['pastorUserIds']),
+      socials: ChurchSocialLink.parseList(data['socials']),
       summary: (data['summary'] ?? '').toString(),
       location: (data['location'] ?? '').toString(),
       mapLink: (data['mapLink'] ?? '').toString(),
@@ -103,12 +108,12 @@ class ChurchInfo {
       'analyticTitle': _analyticsTitle,
       'body': _body,
       'kind': _kind.storageValue,
-      'parentChurchId':
-          _kind == ChurchKind.outreach ? _parentChurchId : '',
+      'parentChurchId': _kind == ChurchKind.outreach ? _parentChurchId : '',
       'heroImageSrc': _heroImageSrc,
       'pastorsImageSrc': _pastorsImageSrc,
       'galleryImageSources': _galleryImageSources,
       'pastorUserIds': _pastorUserIds,
+      'socials': _socials.map((s) => s.toJson()).toList(),
       'summary': _summary,
       'location': _location,
       'mapLink': _mapLink,
@@ -126,12 +131,12 @@ class ChurchInfo {
       'analyticTitle': _analyticsTitle,
       'body': _body,
       'kind': _kind.storageValue,
-      'parentChurchId':
-          _kind == ChurchKind.outreach ? _parentChurchId : '',
+      'parentChurchId': _kind == ChurchKind.outreach ? _parentChurchId : '',
       'heroImageSrc': _heroImageSrc,
       'pastorsImageSrc': _pastorsImageSrc,
       'galleryImageSources': _galleryImageSources,
       'pastorUserIds': _pastorUserIds,
+      'socials': _socials.map((s) => s.toJson()).toList(),
       'summary': _summary,
       'location': _location,
       'mapLink': _mapLink,
@@ -154,6 +159,8 @@ class ChurchInfo {
       UnmodifiableListView<String>(_galleryImageSources);
   List<String> get pastorUserIds =>
       UnmodifiableListView<String>(_pastorUserIds);
+  List<ChurchSocialLink> get socials =>
+      UnmodifiableListView<ChurchSocialLink>(_socials);
   String get imgSrc => _heroImageSrc;
   String get summary => _summary;
   String get title => _title;
@@ -176,6 +183,7 @@ class ChurchInfo {
   bool get hasPastors => _pastorUserIds.isNotEmpty;
   bool get hasPastorsBody => !InfoParsing.isEmptyBody(_body);
   bool get hasPastorsSection => hasPastorsImage || hasPastors || hasPastorsBody;
+  bool get hasSocials => _socials.isNotEmpty;
 
   void setAnalyticsTitle(final String value) => _analyticsTitle = value;
   void setBody(final List<dynamic> value) => _body = List<dynamic>.from(value);
@@ -198,6 +206,8 @@ class ChurchInfo {
       _galleryImageSources = _dedupeGallery(value, _heroImageSrc);
   void setPastorUserIds(final List<String> value) =>
       _pastorUserIds = List<String>.from(value);
+  void setSocials(final List<ChurchSocialLink> value) =>
+      _socials = List<ChurchSocialLink>.from(value);
   void setSummary(final String value) => _summary = value;
   void setTitle(final String value) => _title = value;
   void setLocation(final String value) => _location = value;

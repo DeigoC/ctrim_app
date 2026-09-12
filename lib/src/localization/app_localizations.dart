@@ -2584,6 +2584,120 @@ abstract class AppLocalizations {
   /// **'Location, address, and maps'**
   String get churchEditorVisitCardSubtitle;
 
+  /// Editor card title for church social links
+  ///
+  /// In en, this message translates to:
+  /// **'Socials'**
+  String get churchEditorSocialsCardTitle;
+
+  /// Editor card subtitle for social links
+  ///
+  /// In en, this message translates to:
+  /// **'Optional Facebook, Instagram, website, and more'**
+  String get churchEditorSocialsCardSubtitle;
+
+  /// Empty hint on church socials editor card
+  ///
+  /// In en, this message translates to:
+  /// **'No social links yet. Add any that visitors should see.'**
+  String get churchEditorSocialsEmptyHint;
+
+  /// Button to add a social link on the church editor
+  ///
+  /// In en, this message translates to:
+  /// **'Add social link'**
+  String get churchEditorAddSocial;
+
+  /// Tooltip to remove a social link row
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get churchEditorRemoveSocial;
+
+  /// Dropdown label for social platform
+  ///
+  /// In en, this message translates to:
+  /// **'Platform'**
+  String get churchEditorSocialPlatformLabel;
+
+  /// URL field label for a social link
+  ///
+  /// In en, this message translates to:
+  /// **'Link or email'**
+  String get churchEditorSocialUrlLabel;
+
+  /// Helper under social URL field
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a full URL, or an email / WhatsApp number.'**
+  String get churchEditorSocialUrlHelper;
+
+  /// Dashboard card title for church social links
+  ///
+  /// In en, this message translates to:
+  /// **'Socials'**
+  String get churchHubSocialsTitle;
+
+  /// Dashboard card subtitle for church social links
+  ///
+  /// In en, this message translates to:
+  /// **'Follow and get in touch'**
+  String get churchHubSocialsSubtitle;
+
+  /// Label for Facebook social platform
+  ///
+  /// In en, this message translates to:
+  /// **'Facebook'**
+  String get churchSocialFacebook;
+
+  /// Label for Instagram social platform
+  ///
+  /// In en, this message translates to:
+  /// **'Instagram'**
+  String get churchSocialInstagram;
+
+  /// Label for YouTube social platform
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube'**
+  String get churchSocialYoutube;
+
+  /// Label for X / Twitter social platform
+  ///
+  /// In en, this message translates to:
+  /// **'X'**
+  String get churchSocialX;
+
+  /// Label for TikTok social platform
+  ///
+  /// In en, this message translates to:
+  /// **'TikTok'**
+  String get churchSocialTiktok;
+
+  /// Label for WhatsApp social platform
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get churchSocialWhatsapp;
+
+  /// Label for website social platform
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get churchSocialWebsite;
+
+  /// Label for email social platform
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get churchSocialEmail;
+
+  /// Label for a generic social / web link
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get churchSocialOther;
+
   /// Editor card title for pastors, photo, and write-up
   ///
   /// In en, this message translates to:

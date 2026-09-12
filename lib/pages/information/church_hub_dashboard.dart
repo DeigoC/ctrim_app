@@ -5,10 +5,12 @@ import '../../models/cell_group.dart';
 import '../../models/event/event_head.dart';
 import '../../models/info/church_info.dart';
 import '../../models/info/church_page.dart';
+import '../../models/info/church_social.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/activity_time_series.dart';
 import '../../utility/church_location_stats.dart';
+import '../../utility/church_social_ui.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/activity_trend_section.dart';
 import '../../widgets/information/info_image_carousel.dart';
@@ -35,6 +37,7 @@ class ChurchHubDashboard extends StatelessWidget {
     this.outreaches = const [],
     this.onOpenMaps,
     this.onOpenParent,
+    this.onOpenSocial,
     required this.onOpenPastors,
     required this.onOpenPage,
     required this.onAddPage,
@@ -56,6 +59,7 @@ class ChurchHubDashboard extends StatelessWidget {
   final List<ChurchInfo> outreaches;
   final VoidCallback? onOpenMaps;
   final VoidCallback? onOpenParent;
+  final ValueChanged<ChurchSocialLink>? onOpenSocial;
   final VoidCallback onOpenPastors;
   final ValueChanged<ChurchPage> onOpenPage;
   final VoidCallback onAddPage;
@@ -78,6 +82,11 @@ class ChurchHubDashboard extends StatelessWidget {
           onOpen: onOpenParent!,
         ),
       _VisitCard(church: church, onOpenMaps: onOpenMaps),
+      if (church.hasSocials)
+        _SocialsCard(
+          socials: church.socials,
+          onOpenSocial: onOpenSocial,
+        ),
       if (church.hasPastorsSection)
         _PastorsCard(church: church, onLearnAbout: onOpenPastors),
       if (church.isFullChurch &&
@@ -229,6 +238,49 @@ class _VisitCard extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _SocialsCard extends StatelessWidget {
+  const _SocialsCard({
+    required this.socials,
+    this.onOpenSocial,
+  });
+
+  final List<ChurchSocialLink> socials;
+  final ValueChanged<ChurchSocialLink>? onOpenSocial;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return InfoSectionCard(
+      icon: Icons.share_outlined,
+      title: l10n.churchHubSocialsTitle,
+      subtitle: l10n.churchHubSocialsSubtitle,
+      content: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: socials.map((link) {
+          final label = ChurchSocialUi.labelFor(l10n, link.platform);
+          return Tooltip(
+            message: label,
+            child: FilledButton.tonalIcon(
+              onPressed:
+                  onOpenSocial == null ? null : () => onOpenSocial!(link),
+              icon: Icon(ChurchSocialUi.iconFor(link.platform)),
+              label: Text(label),
+              style: FilledButton.styleFrom(
+                foregroundColor: colorScheme.onSecondaryContainer,
+                backgroundColor: colorScheme.secondaryContainer
+                    .withValues(alpha: 0.65),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

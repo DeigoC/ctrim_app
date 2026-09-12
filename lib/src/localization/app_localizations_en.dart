@@ -1426,6 +1426,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorVisitCardSubtitle => 'Location, address, and maps';
 
   @override
+  String get churchEditorSocialsCardTitle => 'Socials';
+
+  @override
+  String get churchEditorSocialsCardSubtitle =>
+      'Optional Facebook, Instagram, website, and more';
+
+  @override
+  String get churchEditorSocialsEmptyHint =>
+      'No social links yet. Add any that visitors should see.';
+
+  @override
+  String get churchEditorAddSocial => 'Add social link';
+
+  @override
+  String get churchEditorRemoveSocial => 'Remove';
+
+  @override
+  String get churchEditorSocialPlatformLabel => 'Platform';
+
+  @override
+  String get churchEditorSocialUrlLabel => 'Link or email';
+
+  @override
+  String get churchEditorSocialUrlHelper =>
+      'Paste a full URL, or an email / WhatsApp number.';
+
+  @override
+  String get churchHubSocialsTitle => 'Socials';
+
+  @override
+  String get churchHubSocialsSubtitle => 'Follow and get in touch';
+
+  @override
+  String get churchSocialFacebook => 'Facebook';
+
+  @override
+  String get churchSocialInstagram => 'Instagram';
+
+  @override
+  String get churchSocialYoutube => 'YouTube';
+
+  @override
+  String get churchSocialX => 'X';
+
+  @override
+  String get churchSocialTiktok => 'TikTok';
+
+  @override
+  String get churchSocialWhatsapp => 'WhatsApp';
+
+  @override
+  String get churchSocialWebsite => 'Website';
+
+  @override
+  String get churchSocialEmail => 'Email';
+
+  @override
+  String get churchSocialOther => 'Link';
+
+  @override
   String get churchEditorPastorsCardTitle => 'Pastors';
 
   @override
