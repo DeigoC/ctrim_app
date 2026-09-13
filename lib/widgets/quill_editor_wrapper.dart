@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
+import '../utility/quill_image.dart';
+import 'quill_image_embed.dart';
+
 /// A wrapper widget for QuillEditor in read-only mode.
 /// Use this for displaying quill content without editing capabilities.
 class QuillViewerWidget extends StatelessWidget {
@@ -21,10 +24,15 @@ class QuillViewerWidget extends StatelessWidget {
     final controller = quill.QuillController(
       document: document,
       selection: const TextSelection.collapsed(offset: 0),
+      readOnly: true,
     );
 
     final editor = quill.QuillEditor.basic(
       controller: controller,
+      config: quill.QuillEditorConfig(
+        embedBuilders: quillEmbedBuilders(),
+        unknownEmbedBuilder: const QuillUnsupportedEmbedBuilder(),
+      ),
     );
 
     if (padding != null) {
@@ -97,6 +105,7 @@ class QuillEditorWidget extends StatefulWidget {
     this.showSubscript = false,
     this.showSuperscript = true,
     this.showCodeBlock = true,
+    this.showImageButton = true,
     this.multiRowsDisplay = true,
     this.editorPadding,
     this.placeholder,
@@ -111,6 +120,7 @@ class QuillEditorWidget extends StatefulWidget {
   final bool showSubscript;
   final bool showSuperscript;
   final bool showCodeBlock;
+  final bool showImageButton;
   final bool multiRowsDisplay;
   final EdgeInsetsGeometry? editorPadding;
   final String? placeholder;
@@ -145,7 +155,7 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
 
     if (widget.onDocumentChanged != null) {
       _controller.document.changes.listen((event) {
-        widget.onDocumentChanged!(_controller.document.toDelta().toJson());
+        widget.onDocumentChanged!(getDocumentJson());
       });
     }
   }
@@ -179,6 +189,8 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
         // Always expand into a bounded parent (Expanded or ConstrainedBox).
         expands: true,
         scrollPhysics: const ClampingScrollPhysics(),
+        embedBuilders: quillEmbedBuilders(),
+        unknownEmbedBuilder: const QuillUnsupportedEmbedBuilder(),
       ),
     );
 
@@ -194,6 +206,17 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
         showSuperscript: widget.showSuperscript,
         showCodeBlock: widget.showCodeBlock,
         multiRowsDisplay: widget.multiRowsDisplay,
+        customButtons: [
+          if (widget.showImageButton)
+            quill.QuillToolbarCustomButtonOptions(
+              icon: const Icon(Icons.image_outlined),
+              tooltip: 'Insert image from URL',
+              onPressed: () => insertQuillImageFromUrl(
+                context: context,
+                controller: _controller,
+              ),
+            ),
+        ],
       ),
     );
 
@@ -224,14 +247,16 @@ class QuillEditorWidgetState extends State<QuillEditorWidget> {
     );
   }
 
-  /// Get the current document as JSON
+  /// Get the current document as JSON, with Drive share links sanitised.
   List<dynamic> getDocumentJson() {
-    return _controller.document.toDelta().toJson();
+    return QuillImage.sanitizeDeltaImageUrls(
+      _controller.document.toDelta().toJson(),
+    );
   }
 
-  /// Get the document as plain text
+  /// Get the document as plain text without embed replacement characters.
   String getPlainText() {
-    return _controller.document.toPlainText();
+    return QuillImage.stripEmbedsFromPlainText(_controller.document.toPlainText());
   }
 
   /// Exposes the controller for advanced use cases
