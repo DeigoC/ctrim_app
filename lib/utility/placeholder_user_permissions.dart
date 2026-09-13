@@ -8,14 +8,14 @@ bool isSelectableVolunteerProfile(User user) => user.isProfileActive;
 
 /// Whether [actor] may mint a placeholder `users` profile (CF create).
 ///
-/// Medium gate: area admin, author of the post that opened the picker, or a
-/// leader of the cell group that opened the picker (Phase 1).
+/// Leaders and above (incl. area admin), author of the post that opened the
+/// picker, or a leader of the cell group that opened the picker.
 bool canCreatePlaceholderUser({
   required User actor,
   String? postAuthorUid,
   bool isCellGroupLeader = false,
 }) {
-  if (actor.isAreaAdmin) return true;
+  if (actor.isLeader) return true;
   if (isCellGroupLeader) return true;
   if (postAuthorUid != null &&
       postAuthorUid.isNotEmpty &&

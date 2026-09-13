@@ -2044,6 +2044,66 @@ abstract class AppLocalizations {
   /// **'Learn about bookmarks'**
   String get bulletinBookmarksHelpTooltip;
 
+  /// App bar title for the personal My Posts page
+  ///
+  /// In en, this message translates to:
+  /// **'My Posts'**
+  String get myPostsTitle;
+
+  /// Help dialog title on My Posts
+  ///
+  /// In en, this message translates to:
+  /// **'My Posts'**
+  String get myPostsHelpTitle;
+
+  /// Help dialog body explaining My Posts
+  ///
+  /// In en, this message translates to:
+  /// **'Posts where you are the author or a contributor appear here — handy for finding posts you can edit.\n\nUse sort and filter to narrow by date, location, or tags. The list defaults to recently updated.'**
+  String get myPostsHelpBody;
+
+  /// Empty state when the user has no editable posts
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet'**
+  String get myPostsEmptyTitle;
+
+  /// Empty state body when My Posts has no involvements
+  ///
+  /// In en, this message translates to:
+  /// **'When you create or contribute to a post, it will show up here.'**
+  String get myPostsEmptyBody;
+
+  /// Status while My Posts fetches involvement list
+  ///
+  /// In en, this message translates to:
+  /// **'Loading posts…'**
+  String get myPostsLoading;
+
+  /// Step status while loading My Posts
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching posts…'**
+  String get myPostsFetching;
+
+  /// Step status while pruning stale My Posts entries
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning up posts…'**
+  String get myPostsCleaning;
+
+  /// Final step status after My Posts load
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get myPostsDone;
+
+  /// Error title when My Posts fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load posts'**
+  String get myPostsLoadError;
+
   /// App bar fallback title for a church hub page
   ///
   /// In en, this message translates to:

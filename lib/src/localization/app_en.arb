@@ -1452,6 +1452,46 @@
   "@bulletinBookmarksHelpTooltip": {
     "description": "Tooltip on the bookmarks help button"
   },
+  "myPostsTitle": "My Posts",
+  "@myPostsTitle": {
+    "description": "App bar title for the personal My Posts page"
+  },
+  "myPostsHelpTitle": "My Posts",
+  "@myPostsHelpTitle": {
+    "description": "Help dialog title on My Posts"
+  },
+  "myPostsHelpBody": "Posts where you are the author or a contributor appear here — handy for finding posts you can edit.\n\nUse sort and filter to narrow by date, location, or tags. The list defaults to recently updated.",
+  "@myPostsHelpBody": {
+    "description": "Help dialog body explaining My Posts"
+  },
+  "myPostsEmptyTitle": "No posts yet",
+  "@myPostsEmptyTitle": {
+    "description": "Empty state when the user has no editable posts"
+  },
+  "myPostsEmptyBody": "When you create or contribute to a post, it will show up here.",
+  "@myPostsEmptyBody": {
+    "description": "Empty state body when My Posts has no involvements"
+  },
+  "myPostsLoading": "Loading posts…",
+  "@myPostsLoading": {
+    "description": "Status while My Posts fetches involvement list"
+  },
+  "myPostsFetching": "Fetching posts…",
+  "@myPostsFetching": {
+    "description": "Step status while loading My Posts"
+  },
+  "myPostsCleaning": "Cleaning up posts…",
+  "@myPostsCleaning": {
+    "description": "Step status while pruning stale My Posts entries"
+  },
+  "myPostsDone": "Done",
+  "@myPostsDone": {
+    "description": "Final step status after My Posts load"
+  },
+  "myPostsLoadError": "Could not load posts",
+  "@myPostsLoadError": {
+    "description": "Error title when My Posts fails to load"
+  },
   "churchInfoPageTitle": "Church Info",
   "@churchInfoPageTitle": {
     "description": "App bar fallback title for a church hub page"

@@ -24,6 +24,8 @@ class BulletinSettingSheet extends StatefulWidget {
     required this.onBookmarksOnlyChanged,
     required this.onLocationChanged,
     required this.onTagSelectionChanged,
+    this.showBookmarksFilter = true,
+    this.availableSorts,
   });
 
   final BulletinSort sort;
@@ -38,6 +40,12 @@ class BulletinSettingSheet extends StatefulWidget {
   final void Function(bool bookmarksOnly) onBookmarksOnlyChanged;
   final void Function(String location) onLocationChanged;
   final void Function(Set<String> selected) onTagSelectionChanged;
+
+  /// Bulletin shows bookmarks; My Posts does not.
+  final bool showBookmarksFilter;
+
+  /// Which sort options appear. Null = all; My Posts omits relevancy.
+  final List<BulletinSort>? availableSorts;
 
   @override
   State<BulletinSettingSheet> createState() => _BulletinSettingSheetState();
@@ -122,20 +130,22 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
                 onSelected: (_) =>
                     _onTimeFilterChanged(BulletinTimeFilter.undated),
               ),
-              FilterChip(
-                label: Text(l10n.bulletinShowBookmarks),
-                selected: _bookmarksOnly,
-                onSelected: (_) => _onBookmarksOnlyChanged(!_bookmarksOnly),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.help_outline,
-                  size: 20,
-                  color: colorScheme.onSurfaceVariant,
+              if (widget.showBookmarksFilter) ...[
+                FilterChip(
+                  label: Text(l10n.bulletinShowBookmarks),
+                  selected: _bookmarksOnly,
+                  onSelected: (_) => _onBookmarksOnlyChanged(!_bookmarksOnly),
                 ),
-                onPressed: () => _onBookmarkedHelp(l10n),
-                tooltip: l10n.bulletinBookmarksHelpTooltip,
-              ),
+                IconButton(
+                  icon: Icon(
+                    Icons.help_outline,
+                    size: 20,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: () => _onBookmarkedHelp(l10n),
+                  tooltip: l10n.bulletinBookmarksHelpTooltip,
+                ),
+              ],
             ],
           ),
         ),
@@ -236,39 +246,37 @@ class _BulletinSettingSheetState extends State<BulletinSettingSheet> {
   }
 
   List<Widget> _buildSortOptions(AppLocalizations l10n) {
-    final options = [
-      (
-        BulletinSort.relevancy,
+    final allOptions = <BulletinSort,
+        (String, String, IconData, Color)>{
+      BulletinSort.relevancy: (
         l10n.bulletinSortRelevancy,
         l10n.bulletinSortRelevancySubtitle,
         Icons.star_rounded,
         Colors.amber,
       ),
-      (
-        BulletinSort.eventDateSoonest,
+      BulletinSort.eventDateSoonest: (
         l10n.bulletinSortSoonest,
         l10n.bulletinSortSoonestSubtitle,
         Icons.upcoming,
         Colors.green,
       ),
-      (
-        BulletinSort.eventDateLatest,
+      BulletinSort.eventDateLatest: (
         l10n.bulletinSortLatest,
         l10n.bulletinSortLatestSubtitle,
         Icons.history,
         Colors.orange,
       ),
-      (
-        BulletinSort.recentDate,
+      BulletinSort.recentDate: (
         l10n.bulletinSortRecent,
         l10n.bulletinSortRecentSubtitle,
         Icons.update,
         Colors.blueGrey,
       ),
-    ];
+    };
 
-    return options.map((option) {
-      final (sort, title, subtitle, icon, color) = option;
+    final sorts = widget.availableSorts ?? BulletinSort.values;
+    return sorts.map((sort) {
+      final (title, subtitle, icon, color) = allOptions[sort]!;
       return ActionSheetOption(
         icon: icon,
         color: color,

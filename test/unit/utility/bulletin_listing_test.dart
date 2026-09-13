@@ -288,6 +288,22 @@ void main() {
       expect(query.hasActiveFilters, isFalse);
       expect(query.showsNonDefaultBanner, isFalse);
     });
+
+    test('custom defaultSort treats that sort as the baseline banner', () {
+      final baseline = BulletinListingQuery(
+        sort: BulletinSort.recentDate,
+        defaultSort: BulletinSort.recentDate,
+        now: now,
+      );
+      expect(baseline.showsNonDefaultBanner, isFalse);
+
+      final changed = BulletinListingQuery(
+        sort: BulletinSort.eventDateSoonest,
+        defaultSort: BulletinSort.recentDate,
+        now: now,
+      );
+      expect(changed.showsNonDefaultBanner, isTrue);
+    });
   });
 
   group('fromStorage', () {

@@ -1133,6 +1133,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bulletinBookmarksHelpTooltip => 'Learn about bookmarks';
 
   @override
+  String get myPostsTitle => 'My Posts';
+
+  @override
+  String get myPostsHelpTitle => 'My Posts';
+
+  @override
+  String get myPostsHelpBody =>
+      'Posts where you are the author or a contributor appear here — handy for finding posts you can edit.\n\nUse sort and filter to narrow by date, location, or tags. The list defaults to recently updated.';
+
+  @override
+  String get myPostsEmptyTitle => 'No posts yet';
+
+  @override
+  String get myPostsEmptyBody =>
+      'When you create or contribute to a post, it will show up here.';
+
+  @override
+  String get myPostsLoading => 'Loading posts…';
+
+  @override
+  String get myPostsFetching => 'Fetching posts…';
+
+  @override
+  String get myPostsCleaning => 'Cleaning up posts…';
+
+  @override
+  String get myPostsDone => 'Done';
+
+  @override
+  String get myPostsLoadError => 'Could not load posts';
+
+  @override
   String get churchInfoPageTitle => 'Church Info';
 
   @override
