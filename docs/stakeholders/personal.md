@@ -59,6 +59,8 @@ The **Cell groups** dashboard card lists groups you belong to (as a member or le
 
 **My Posts** (under **For you**) is a shortcut to posts where you are the **author** or a **contributor** — handy for finding posts you can edit. It is not the full bulletin; use the bulletin tab to browse everything.
 
+Sort and filter work much like the bulletin: **recently updated** by default, or by event date; narrow by upcoming / past / no date, location, and post tags. Tap the sort button, or the “Showing: …” banner, to change or clear filters.
+
 The app keeps a personal list of those posts on your profile. When you open My Posts, it is matched against the posts already loaded for the bulletin in this session. If a post has aged off the bulletin feed, it may no longer appear here even though you were involved with it.
 
 ## Organiser shortcuts (when you have access)

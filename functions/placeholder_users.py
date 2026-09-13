@@ -17,6 +17,13 @@ def _is_area_or_global_admin(flags: dict) -> bool:
     return flags.get('isAreaAdmin') is True or flags.get('isAdmin') is True
 
 
+def _is_leader_or_above(flags: dict) -> bool:
+    return (
+        flags.get('isLeader') is True
+        or _is_area_or_global_admin(flags)
+    )
+
+
 def _find_volunteer_by_auth(db, auth_uid: str) -> tuple[str | None, dict | None]:
     results = (
         db.collection('users')
@@ -48,7 +55,7 @@ def _caller_may_create_placeholder(
     cell_group_id: str = '',
 ) -> bool:
     flags = _everyone_flags(db, auth_uid)
-    if _is_area_or_global_admin(flags):
+    if _is_leader_or_above(flags):
         return True
 
     if not caller_volunteer_id:

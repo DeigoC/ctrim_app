@@ -47,6 +47,7 @@ from placeholder_users import (  # noqa: E402
     _caller_may_create_placeholder,
     _caller_may_link_auth,
     _is_area_or_global_admin,
+    _is_leader_or_above,
     link_user_auth_impl,
 )
 
@@ -56,6 +57,12 @@ class PlaceholderPermissionTests(unittest.TestCase):
         self.assertTrue(_is_area_or_global_admin({'isAreaAdmin': True}))
         self.assertTrue(_is_area_or_global_admin({'isAdmin': True}))
         self.assertFalse(_is_area_or_global_admin({'isUser': True}))
+
+    def test_is_leader_or_above(self):
+        self.assertTrue(_is_leader_or_above({'isLeader': True}))
+        self.assertTrue(_is_leader_or_above({'isAreaAdmin': True}))
+        self.assertTrue(_is_leader_or_above({'isAdmin': True}))
+        self.assertFalse(_is_leader_or_above({'isUser': True}))
 
     def test_create_allows_area_admin(self):
         db = MagicMock()
@@ -69,6 +76,22 @@ class PlaceholderPermissionTests(unittest.TestCase):
                 db,
                 auth_uid='auth-a',
                 caller_volunteer_id='1',
+                post_id='',
+            )
+        )
+
+    def test_create_allows_leader(self):
+        db = MagicMock()
+        everyone = MagicMock()
+        everyone.get.return_value.exists = True
+        everyone.get.return_value.to_dict.return_value = {'isLeader': True}
+        db.collection.return_value.document.return_value = everyone
+
+        self.assertTrue(
+            _caller_may_create_placeholder(
+                db,
+                auth_uid='auth-leader',
+                caller_volunteer_id='4',
                 post_id='',
             )
         )

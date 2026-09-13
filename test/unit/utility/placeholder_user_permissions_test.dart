@@ -26,8 +26,15 @@ void main() {
     );
 
     group('canCreatePlaceholderUser', () {
+      final leader =
+          User(id: '4', forname: 'Lea', surname: 'Leader', isLeader: true);
+
       test('allows area admin', () {
         expect(canCreatePlaceholderUser(actor: admin), isTrue);
+      });
+
+      test('allows leader without post or cell-group context', () {
+        expect(canCreatePlaceholderUser(actor: leader), isTrue);
       });
 
       test('allows post author', () {
@@ -37,14 +44,14 @@ void main() {
         );
       });
 
-      test('denies non-author non-admin', () {
+      test('denies non-author non-leader', () {
         expect(
           canCreatePlaceholderUser(actor: other, postAuthorUid: '2'),
           isFalse,
         );
       });
 
-      test('denies without post author when not admin', () {
+      test('denies without post author when not leader', () {
         expect(canCreatePlaceholderUser(actor: author), isFalse);
       });
 

@@ -42,6 +42,7 @@ class BulletinListingQuery {
     this.selectedTagIDs = const {},
     this.locationFilter = VolunteerLocations.all,
     this.excludePeriodParents = true,
+    this.defaultSort = BulletinSort.relevancy,
     required this.now,
   });
 
@@ -52,6 +53,10 @@ class BulletinListingQuery {
   final Set<String> selectedTagIDs;
   final String locationFilter;
   final bool excludePeriodParents;
+
+  /// Baseline sort for the “Showing: …” banner (bulletin = relevancy; My Posts =
+  /// recently updated).
+  final BulletinSort defaultSort;
   final DateTime now;
 
   bool get hasActiveFilters =>
@@ -60,8 +65,7 @@ class BulletinListingQuery {
       selectedTagIDs.isNotEmpty ||
       locationFilter != VolunteerLocations.all;
 
-  bool get showsNonDefaultBanner =>
-      sort != BulletinSort.relevancy || hasActiveFilters;
+  bool get showsNonDefaultBanner => sort != defaultSort || hasActiveFilters;
 }
 
 /// Pure bulletin list pipeline: dedupe → filter → sort. Does not mutate [heads].
