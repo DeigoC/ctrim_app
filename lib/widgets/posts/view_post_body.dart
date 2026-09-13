@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_links.dart';
 import '../../utility/event_context.dart';
+import '../../utility/quill_image.dart';
 import '../common/app_dialog.dart';
 import '../quill_editor_wrapper.dart';
 
@@ -115,11 +116,12 @@ class ViewPostBody extends StatelessWidget {
     shareContent.writeln('---');
     shareContent.writeln();
 
-    // Convert Quill JSON to plain text
+    // Convert Quill JSON to plain text (strip image embed markers).
     try {
       final document = quill.Document.fromJson(eventContext.body);
-      final plainText = document.toPlainText();
-      shareContent.write(plainText.trim());
+      final plainText =
+          QuillImage.stripEmbedsFromPlainText(document.toPlainText());
+      shareContent.write(plainText);
     } catch (e) {
       // Fallback if conversion fails
       shareContent.write('Unable to extract post content');
