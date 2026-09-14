@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
+import '../../../models/event/event_program.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
@@ -587,6 +588,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
             : DateTime.now().millisecondsSinceEpoch,
         forGuests:
             role['for_guests'] is bool ? role['for_guests'] as bool : true,
+        tagIDs: EventProgram.tagIDsOf(role),
       );
     }
     eventContext.program.setAddress(postTemplate.address);

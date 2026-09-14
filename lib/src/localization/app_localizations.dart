@@ -472,6 +472,12 @@ abstract class AppLocalizations {
   /// **'Teams & tags'**
   String get userTagsAssignLabel;
 
+  /// Hint on the programme-role editor that team tags mark slot ownership, not named people
+  ///
+  /// In en, this message translates to:
+  /// **'Which teams this slot belongs to — separate from who is assigned.'**
+  String get userTagsScheduleHint;
+
   /// Message when no user tags exist for assignment
   ///
   /// In en, this message translates to:

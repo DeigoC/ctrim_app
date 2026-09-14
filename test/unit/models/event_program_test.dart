@@ -90,6 +90,7 @@ void main() {
         expect(program.roles.first['id'], 1000);
         expect(program.roles.first['for_guests'], true);
         expect(program.roles.first['detail'], '');
+        expect(program.roles.first['tagIDs'], isEmpty);
       });
 
       test('addRole stores forGuests and detail overrides', () {
@@ -106,6 +107,84 @@ void main() {
 
         expect(program.roles.first['for_guests'], false);
         expect(program.roles.first['detail'], 'Welcome guests at door');
+      });
+
+      test('addRole stores tagIDs and defaults missing to empty', () {
+        final program = EventProgram();
+        program.addRole(
+          uids: [],
+          title: 'Sound',
+          start: null,
+          end: null,
+          id: 3,
+          tagIDs: ['worship', 'tech'],
+        );
+
+        expect(program.roles.first['tagIDs'], ['worship', 'tech']);
+
+        program.addRole(uids: [], title: 'Open', start: null, end: null, id: 4);
+        expect(program.roles.last['tagIDs'], isEmpty);
+      });
+
+      test('toJson round-trips tagIDs and fromMap defaults missing to empty',
+          () {
+        final program = EventProgram();
+        program.addRole(
+          uids: ['user-1'],
+          title: 'Open slot',
+          start: null,
+          end: null,
+          id: 3000,
+          tagIDs: ['tech'],
+        );
+
+        final json = program.toJson();
+        final role = (json['Roles'] as List).first as Map<String, dynamic>;
+        expect(role['tagIDs'], ['tech']);
+
+        final withoutTags = EventProgram.fromMap({
+          'AllDay': false,
+          'Online': false,
+          'Address': 'x',
+          'MapLink': 'y',
+          'Roles': [
+            {
+              'uids': ['user-1'],
+              'detail': '',
+              'title': 'Host',
+              'start': null,
+              'end': null,
+              'for_guests': true,
+              'id': 1,
+            }
+          ],
+        });
+        expect(EventProgram.tagIDsOf(withoutTags.roles.first), isEmpty);
+      });
+
+      test('tagIDsOf and role id-line parse stay backward compatible', () {
+        expect(EventProgram.tagIDsOf({'title': 'Host'}), isEmpty);
+        expect(EventProgram.tagIDsOf({'tagIDs': null}), isEmpty);
+        expect(
+          EventProgram.tagIDsOf({
+            'tagIDs': ['a', 2, '']
+          }),
+          ['a', '2'],
+        );
+
+        expect(EventProgram.encodeRoleIdLine(10, const []), '10');
+        expect(
+          EventProgram.encodeRoleIdLine(10, const ['worship', 'tech']),
+          '10|worship,tech',
+        );
+
+        final plain = EventProgram.parseRoleIdLine('10');
+        expect(plain.id, 10);
+        expect(plain.tagIDs, isEmpty);
+
+        final tagged = EventProgram.parseRoleIdLine('10|worship,tech');
+        expect(tagged.id, 10);
+        expect(tagged.tagIDs, ['worship', 'tech']);
       });
 
       test('removeRole removes matching role by id', () {
@@ -137,10 +216,14 @@ void main() {
       test('ensureUniqueRoleIds reassigns later duplicates and keeps the first',
           () {
         final program = EventProgram();
-        program.addRole(uids: [], title: 'Tithes', start: null, end: null, id: 10);
-        program.addRole(uids: [], title: 'Song', start: null, end: null, id: 10);
-        program.addRole(uids: [], title: 'Prayer', start: null, end: null, id: 10);
-        program.addRole(uids: [], title: 'Eating', start: null, end: null, id: 11);
+        program
+            .addRole(uids: [], title: 'Tithes', start: null, end: null, id: 10);
+        program
+            .addRole(uids: [], title: 'Song', start: null, end: null, id: 10);
+        program
+            .addRole(uids: [], title: 'Prayer', start: null, end: null, id: 10);
+        program
+            .addRole(uids: [], title: 'Eating', start: null, end: null, id: 11);
 
         expect(program.ensureUniqueRoleIds(), isTrue);
         expect(program.roles[0]['id'], 10);
@@ -156,7 +239,12 @@ void main() {
 
       test('toJson omits timestamps for roles without start/end', () {
         final program = EventProgram();
-        program.addRole(uids: ['user-1'], title: 'Open slot', start: null, end: null, id: 3000);
+        program.addRole(
+            uids: ['user-1'],
+            title: 'Open slot',
+            start: null,
+            end: null,
+            id: 3000);
 
         final json = program.toJson();
         final role = (json['Roles'] as List).first as Map<String, dynamic>;
@@ -164,6 +252,7 @@ void main() {
         expect(role['start'], isNull);
         expect(role['end'], isNull);
         expect(role['title'], 'Open slot');
+        expect(role['tagIDs'], isEmpty);
       });
     });
 
@@ -245,7 +334,8 @@ void main() {
       test('countRolesStartingAtOrAfter excludes the edited role', () {
         final program = buildSequentialProgram();
         expect(
-          program.countRolesStartingAtOrAfter(DateTime(2024, 6, 15, 10, 15), excludeRoleId: 1),
+          program.countRolesStartingAtOrAfter(DateTime(2024, 6, 15, 10, 15),
+              excludeRoleId: 1),
           2,
         );
       });
@@ -266,7 +356,8 @@ void main() {
         expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 40));
       });
 
-      test('updateRoleTiming without shiftFollowing leaves later items alone', () {
+      test('updateRoleTiming without shiftFollowing leaves later items alone',
+          () {
         final program = buildSequentialProgram();
         program.updateRoleTiming(
           roleId: 1,
@@ -342,7 +433,8 @@ void main() {
         expect(program.roles[2]['end'], DateTime(2024, 6, 22, 11, 30));
       });
 
-      test('rebaseRolesToCalendarDate is a no-op for the same calendar day', () {
+      test('rebaseRolesToCalendarDate is a no-op for the same calendar day',
+          () {
         final program = buildSequentialProgram();
         program.rebaseRolesToCalendarDate(
           oldDay: DateTime(2024, 6, 15, 9, 0),
@@ -363,8 +455,7 @@ void main() {
           );
 
           expect(moved, true);
-          final message =
-              program.roles.firstWhere((role) => role['id'] == 3);
+          final message = program.roles.firstWhere((role) => role['id'] == 3);
           expect(message['start'], DateTime(2024, 6, 15, 10, 0));
           expect(message['end'], DateTime(2024, 6, 15, 10, 45));
 
@@ -382,8 +473,7 @@ void main() {
             mode: ProgramShiftMode.cascade,
           );
 
-          final message =
-              program.roles.firstWhere((role) => role['id'] == 3);
+          final message = program.roles.firstWhere((role) => role['id'] == 3);
           final welcome = program.roles.firstWhere((role) => role['id'] == 1);
           final worship = program.roles.firstWhere((role) => role['id'] == 2);
 

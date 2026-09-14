@@ -68,7 +68,7 @@ Anything happening **at the same time** appears side by side. On a narrow phone 
 
 Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
 
-Tap any item to see its full details: exact times, notes, and who is assigned. On a wide screen those details open in a panel beside the timeline.
+Tap any item to see its full details: exact times, notes, who is assigned, and any **team tags** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline.
 
 ## Guest-visible schedule
 
@@ -105,7 +105,7 @@ When saving important edits, organisers can write a short **update log**. That n
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **teams** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
 
 When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
 

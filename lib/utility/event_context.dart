@@ -385,8 +385,8 @@ class EventContext {
     if (_expectedAttendeeUserIDs.isNotEmpty) {
       return List<String>.from(_expectedAttendeeUserIDs);
     }
-    final ids =
-        await CellGroupRosterHelpers.fetchActiveLinkedUserIds(_head.cellGroupIDs);
+    final ids = await CellGroupRosterHelpers.fetchActiveLinkedUserIds(
+        _head.cellGroupIDs);
     return ids.toList();
   }
 
@@ -469,7 +469,8 @@ class EventContext {
       result +=
           '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['for_guests'] == true ? '1' : '0'}';
-      result += '\n${role['id'] as int}';
+      result +=
+          '\n${EventProgram.encodeRoleIdLine(role['id'] as int, EventProgram.tagIDsOf(role))}';
     }
     result += '\n----PROGRAM_ROLES_END----';
 
@@ -638,6 +639,7 @@ class EventContext {
         uids.addAll(uidLine.split(','));
       }
 
+      final parsedId = EventProgram.parseRoleIdLine(roleDataSet[6]);
       _program.addRole(
           uids: uids,
           title: roleDataSet[1],
@@ -649,7 +651,8 @@ class EventContext {
               ? DateTime.fromMillisecondsSinceEpoch(int.parse(roleDataSet[4]))
               : null,
           forGuests: roleDataSet[5] == '1' ? true : false,
-          id: int.parse(roleDataSet[6]));
+          id: parsedId.id,
+          tagIDs: parsedId.tagIDs);
     }
   }
 

@@ -1,4 +1,5 @@
 import '../models/post_template.dart';
+import '../models/event/event_program.dart';
 import '../models/user.dart';
 import 'notifications/broadcast_audience.dart';
 import 'event_context.dart';
@@ -11,7 +12,8 @@ class PostTemplateMapper {
     String? parentID,
     Iterable<User> allUsers = const [],
   }) {
-    final EventContext eventContext = EventContext.adding(currentUserID: currentUserID, parentID: parentID);
+    final EventContext eventContext =
+        EventContext.adding(currentUserID: currentUserID, parentID: parentID);
 
     // head
     eventContext.head.setEventDate(template.startTime);
@@ -40,7 +42,8 @@ class PostTemplateMapper {
             thumbnail: randomCover['thumbnailSrc'] ?? '');
       }
       // Expose on the head-pool selector so cover can be changed while adding a post.
-      eventContext.setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(coverPool));
+      eventContext
+          .setTemplateHeadMediaPool(List<Map<String, dynamic>>.from(coverPool));
     } else {
       for (final headMediaItem in template.headMedia) {
         eventContext.head.addMediaItem(
@@ -72,7 +75,8 @@ class PostTemplateMapper {
     if (template.contributors.isNotEmpty) {
       eventContext.contributorAdditionUIDs.addAll(template.contributors);
     }
-    if (template.leadSpeakerUID != null && template.leadSpeakerUID!.isNotEmpty) {
+    if (template.leadSpeakerUID != null &&
+        template.leadSpeakerUID!.isNotEmpty) {
       eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
       eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
@@ -88,6 +92,9 @@ class PostTemplateMapper {
           title: role['title'],
           start: role['start'],
           end: role['end'],
+          forGuests:
+              role['for_guests'] is bool ? role['for_guests'] as bool : true,
+          tagIDs: EventProgram.tagIDsOf(role),
           id: roleId);
 
       if (roleUids.isNotEmpty) {
@@ -106,26 +113,34 @@ class PostTemplateMapper {
 
   /// Adjusts the event date and all schedule role times to [selectedDate],
   /// preserving the original hour and minute from the template's start time.
-  static void adjustEventProgramToDate(EventContext eventContext, DateTime selectedDate) {
+  static void adjustEventProgramToDate(
+      EventContext eventContext, DateTime selectedDate) {
     final int hour = eventContext.head.eventDate?.hour ?? 0;
     final int minute = eventContext.head.eventDate?.minute ?? 0;
 
-    eventContext.head.setEventDate(DateTime(selectedDate.year, selectedDate.month, selectedDate.day, hour, minute));
+    eventContext.head.setEventDate(DateTime(
+        selectedDate.year, selectedDate.month, selectedDate.day, hour, minute));
 
     if (eventContext.program.finishTime != null) {
       final DateTime oldFinish = eventContext.program.finishTime!;
-      eventContext.program.setFinishTime(
-          DateTime(selectedDate.year, selectedDate.month, selectedDate.day, oldFinish.hour, oldFinish.minute));
+      eventContext.program.setFinishTime(DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          oldFinish.hour,
+          oldFinish.minute));
     }
 
     for (final scheduleItem in eventContext.program.roles) {
       if (scheduleItem['start'] != null) {
         final DateTime old = scheduleItem['start'] as DateTime;
-        scheduleItem['start'] = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, old.hour, old.minute);
+        scheduleItem['start'] = DateTime(selectedDate.year, selectedDate.month,
+            selectedDate.day, old.hour, old.minute);
       }
       if (scheduleItem['end'] != null) {
         final DateTime old = scheduleItem['end'] as DateTime;
-        scheduleItem['end'] = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, old.hour, old.minute);
+        scheduleItem['end'] = DateTime(selectedDate.year, selectedDate.month,
+            selectedDate.day, old.hour, old.minute);
       }
     }
   }

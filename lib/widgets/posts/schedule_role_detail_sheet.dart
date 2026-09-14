@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../../models/event/event_program.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/app_context.dart';
+import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
+import '../catalog/user_tag_chip.dart';
 import '../user_avatar.dart';
 
 /// Detail for one schedule role: timing, notes, and who is assigned.
@@ -39,6 +44,11 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     final start = role['start'] as DateTime?;
     final end = role['end'] as DateTime?;
     final staffOnly = role['for_guests'] != true;
+    final allTags = context.select((AppContext c) => c.allTags);
+    final tags = UserTagHelpers.resolveTags(
+      tagIDs: EventProgram.tagIDsOf(role),
+      allTags: allTags,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -86,6 +96,11 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        if (tags.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: UserTagChipRow(tags: tags, dense: true),
           ),
         if (staffOnly)
           Padding(
