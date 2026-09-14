@@ -2,6 +2,8 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'event/event_program.dart';
+
 /// Hardcoded grouping for post templates (Services vs Cell Groups).
 enum PostTemplateCategory {
   service('service', 'Services'),
@@ -338,7 +340,8 @@ class PostTemplate {
         'start': start,
         'end': end,
         'for_guests': entry['for_guests'],
-        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch
+        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
+        'tagIDs': EventProgram.tagIDsOf(entry),
       });
     }
 
@@ -387,6 +390,7 @@ class PostTemplate {
         'end': end,
         'for_guests': entry['for_guests'],
         'id': entry['id'],
+        'tagIDs': EventProgram.tagIDsOf(entry),
       });
     }
 

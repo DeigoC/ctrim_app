@@ -11,11 +11,13 @@ class UserTagPicker extends StatelessWidget {
     required this.allTags,
     required this.selectedTagIDs,
     required this.onChanged,
+    this.hint,
   });
 
   final List<UserTag> allTags;
   final Set<String> selectedTagIDs;
   final void Function(Set<String> selected) onChanged;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class UserTagPicker extends StatelessWidget {
 
     return CatalogPickerCard(
       title: l10n.userTagsAssignLabel,
+      hint: hint,
       hasAvailableItems: activeTags.isNotEmpty,
       noneAvailableMessage: l10n.userTagsNoneAvailable,
       inlinePicker: Wrap(

@@ -71,7 +71,35 @@ void main() {
         expect(template.headMedia.single['src'], 'cover.jpg');
         expect(template.roles.single['title'], 'Host');
         expect(template.roles.single['start'], isA<DateTime>());
+        expect(template.roles.single['tagIDs'], isEmpty);
         expect(template.leadSpeakerUID, isNull);
+      });
+
+      test('parses role tagIDs and round-trips them', () {
+        final template = PostTemplate.fromMap(
+          true,
+          'tpl-tags',
+          baseLocalMap(
+            roles: [
+              {
+                'uids': <String>['u1'],
+                'detail': 'Welcome',
+                'title': 'Host',
+                'start': DateTime(2026, 1, 4, 10).millisecondsSinceEpoch,
+                'end': DateTime(2026, 1, 4, 10, 15).millisecondsSinceEpoch,
+                'for_guests': true,
+                'id': 1,
+                'tagIDs': <String>['worship', 'welcome'],
+              },
+            ],
+          ),
+        );
+
+        expect(template.roles.single['tagIDs'], ['worship', 'welcome']);
+        expect(
+          (template.toJson(true)['Roles'] as List).first['tagIDs'],
+          ['worship', 'welcome'],
+        );
       });
 
       test('parses LeadSpeakerUID when present', () {
@@ -180,6 +208,7 @@ void main() {
         expect(template.bodyMediaPool.single['src'], 'alt.jpg');
         expect(template.roles.single['uids'], ['u1']);
         expect(template.roles.single['id'], 42);
+        expect(template.roles.single['tagIDs'], isEmpty);
       });
       test('keyGraphicPool prefers body media pool over head media pool', () {
         final template = PostTemplate.fromMap(

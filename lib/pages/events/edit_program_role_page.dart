@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../personal/select_users_page.dart';
+import '../../models/event/event_program.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../widgets/catalog/user_tag_picker.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/schedule_duration_picker.dart';
 import '../../widgets/schedule_start_picker.dart';
@@ -48,6 +50,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
   late final TextEditingController _tecDetail;
   late final AppContext _appContext;
   late final List<String> _selectedUsers;
+  late final Set<String> _selectedTagIDs;
 
   DateTime? _start;
   DateTime? _end;
@@ -83,10 +86,15 @@ class _EventProgramPageState extends State<EventProgramPage> {
       _tecDetail = TextEditingController(text: entry['detail']);
       _tecTitle = TextEditingController(text: entry['title']);
       _selectedUsers = List<String>.from(entry['uids']);
+      _selectedTagIDs = EventProgram.tagIDsOf(entry).where((id) {
+        final tag = _appContext.tagById(id);
+        return tag != null && tag.isActive;
+      }).toSet();
     } else {
       _tecTitle = TextEditingController();
       _tecDetail = TextEditingController();
       _selectedUsers = [];
+      _selectedTagIDs = {};
     }
   }
 
@@ -237,6 +245,20 @@ class _EventProgramPageState extends State<EventProgramPage> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          UserTagPicker(
+            allTags: _appContext.allTags,
+            selectedTagIDs: _selectedTagIDs,
+            hint: AppLocalizations.of(context)!.userTagsScheduleHint,
+            onChanged: (next) {
+              setState(() {
+                _selectedTagIDs
+                  ..clear()
+                  ..addAll(next);
+              });
+              _onFieldsChanged();
+            },
           ),
           const SizedBox(height: 16),
           Card(
@@ -570,7 +592,8 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _selectedUsers
                 .toString()
                 .compareTo((role['uids'] as List<String>).toString()) ==
-            0) {
+            0 &&
+        _sameTagIDs(EventProgram.tagIDsOf(role), _tagIDsToSave())) {
       setState(() {
         _canSave = false;
       });
@@ -591,6 +614,22 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _start!.minute.compareTo(originalStart.minute) == 0 &&
         _end!.hour.compareTo(originalEnd.hour) == 0 &&
         _end!.minute.compareTo(originalEnd.minute) == 0;
+  }
+
+  List<String> _tagIDsToSave() {
+    final stored =
+        _isEditing ? EventProgram.tagIDsOf(_canonicalRole()) : const <String>[];
+    final preservedInactive = stored.where((id) {
+      final tag = _appContext.tagById(id);
+      return tag != null && !tag.isActive;
+    });
+    return [...preservedInactive, ..._selectedTagIDs];
+  }
+
+  static bool _sameTagIDs(final Iterable<String> a, final Iterable<String> b) {
+    final aSet = a.toSet();
+    final bSet = b.toSet();
+    return aSet.length == bSet.length && aSet.containsAll(bSet);
   }
 
   Future<void> _onStartTimeTap() async {
@@ -685,6 +724,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         end: _end,
         forGuests: _forGuests,
         priority: 1,
+        tagIDs: _tagIDsToSave(),
         id: id);
     widget.eventContext.program.orderProgramsByStartTime();
   }
@@ -738,6 +778,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
     role['title'] = _tecTitle.text.trim();
     role['for_guests'] = _forGuests;
     role['priority'] = 1;
+    role['tagIDs'] = _tagIDsToSave();
 
     if (_start != null && _end != null) {
       final oldEnd = role['end'] as DateTime?;

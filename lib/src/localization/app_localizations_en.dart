@@ -255,6 +255,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userTagsAssignLabel => 'Teams & tags';
 
   @override
+  String get userTagsScheduleHint =>
+      'Which teams this slot belongs to — separate from who is assigned.';
+
+  @override
   String get userTagsNoneAvailable =>
       'No tags defined yet. Area admins can create tags in Admin Tools.';
 

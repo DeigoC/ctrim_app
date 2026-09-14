@@ -12,7 +12,7 @@ enum ProgramShiftMode {
 }
 
 class EventProgram {
-  // * a role is made of 7 fields
+  // * a role is made of 8 fields
   // uids - list of users assigned by their IDs
   // title - short title of the role
   // detail (optional) - more text to describe the role
@@ -20,6 +20,7 @@ class EventProgram {
   // end - datetime/timestamp of finishing time
   // for_guests - bool to signigfy whether to show to guests or not
   // id - DateTime creation (DateTime.now().millisecondsSinceEpoch) int of the role
+  // tagIDs - team/department user-tag IDs that own the slot (may be empty)
   // ! NOTE: start is optional, but if it exists then end must also be a thing
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
@@ -36,19 +37,25 @@ class EventProgram {
     }
     _allDay = data['AllDay'];
     _online = data['Online'] ?? false;
-    _address = data['Address'] ?? '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland';
+    _address = data['Address'] ??
+        '8A Princes Dr, Newtownabbey, BT37 0AZ, Northern Ireland';
     _mapLink = data['MapLink'] ?? 'https://goo.gl/maps/ns21zf5F9KPxeKxn6';
 
-    final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(data['Roles']);
+    final List<Map<String, dynamic>> rawData =
+        List<Map<String, dynamic>>.from(data['Roles']);
     for (final entry in rawData) {
       _roles.add({
         'uids': List<String>.from(entry['uids']),
         'detail': entry['detail'],
         'title': entry['title'],
-        'start': entry['start'] != null ? (entry['start'] as Timestamp).toDate() : null,
-        'end': entry['end'] != null ? (entry['end'] as Timestamp).toDate() : null,
+        'start': entry['start'] != null
+            ? (entry['start'] as Timestamp).toDate()
+            : null,
+        'end':
+            entry['end'] != null ? (entry['end'] as Timestamp).toDate() : null,
         'for_guests': entry['for_guests'],
-        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch
+        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
+        'tagIDs': tagIDsOf(entry),
       });
     }
     ensureUniqueRoleIds();
@@ -60,22 +67,29 @@ class EventProgram {
       'Online': _online,
       'Address': _address,
       'MapLink': _mapLink,
-      'FinishTime': _finishTime == null ? null : Timestamp.fromDate(_finishTime!),
+      'FinishTime':
+          _finishTime == null ? null : Timestamp.fromDate(_finishTime!),
       'Roles': _roleToJson(),
     };
   }
 
   List<Map<String, dynamic>> _roleToJson() {
-    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
+    final List<Map<String, dynamic>> result =
+        List<Map<String, dynamic>>.empty(growable: true);
     for (final entry in _roles) {
       result.add({
         'uids': entry['uids'],
         'detail': entry['detail'],
         'title': entry['title'],
-        'start': entry['start'] == null ? null : Timestamp.fromDate(entry['start'] as DateTime),
-        'end': entry['end'] == null ? null : Timestamp.fromDate(entry['end'] as DateTime),
+        'start': entry['start'] == null
+            ? null
+            : Timestamp.fromDate(entry['start'] as DateTime),
+        'end': entry['end'] == null
+            ? null
+            : Timestamp.fromDate(entry['end'] as DateTime),
         'for_guests': entry['for_guests'],
         'id': entry['id'],
+        'tagIDs': tagIDsOf(entry),
       });
     }
 
@@ -85,14 +99,12 @@ class EventProgram {
   List<Map<String, dynamic>> get roles => UnmodifiableListView(_roles);
 
   /// Changes when any role timing changes — use to bust schedule tab caches.
-  String get scheduleLayoutSignature => roles
-      .map((final role) {
+  String get scheduleLayoutSignature => roles.map((final role) {
         final start = role['start'] as DateTime?;
         final end = role['end'] as DateTime?;
         return '${role['id']}:${start?.millisecondsSinceEpoch}:'
             '${end?.millisecondsSinceEpoch}';
-      })
-      .join('|');
+      }).join('|');
 
   bool get allDay => _allDay;
   bool get online => _online;
@@ -110,6 +122,7 @@ class EventProgram {
   void setOnline(final bool state) => _online = state;
   void setAddress(final String address) => _address = address;
   void setMapLink(final String newMapLink) => _mapLink = newMapLink;
+
   /// Sorts by start time, keeping roles that have no start at the end.
   void orderProgramsByStartTime() {
     _roles.sort((a, b) {
@@ -120,6 +133,7 @@ class EventProgram {
       return aStart.compareTo(bStart);
     });
   }
+
   void clearRoles() => _roles.clear();
 
   void addRole(
@@ -130,7 +144,8 @@ class EventProgram {
       required int id,
       bool forGuests = true,
       int priority = 1,
-      String detail = ''}) {
+      String detail = '',
+      List<String> tagIDs = const []}) {
     _roles.add(<String, dynamic>{
       'uids': uids,
       'detail': detail,
@@ -138,8 +153,41 @@ class EventProgram {
       'start': start,
       'end': end,
       'for_guests': forGuests,
-      'id': id
+      'id': id,
+      'tagIDs': List<String>.from(tagIDs),
     });
+  }
+
+  /// Team-tag IDs on a role map. Missing / malformed values become `[]`.
+  static List<String> tagIDsOf(final Map<String, dynamic> role) {
+    return parseTagIDs(role['tagIDs']);
+  }
+
+  static List<String> parseTagIDs(final dynamic raw) {
+    if (raw is! List) return [];
+    return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
+  }
+
+  /// Local-draft id line: `id` or `id|tag1,tag2` (keeps the 7-line role chunk).
+  static String encodeRoleIdLine(final int id, final List<String> tagIDs) {
+    if (tagIDs.isEmpty) return '$id';
+    return '$id|${tagIDs.join(',')}';
+  }
+
+  static ({int id, List<String> tagIDs}) parseRoleIdLine(final String raw) {
+    final pipe = raw.indexOf('|');
+    if (pipe < 0) {
+      return (id: int.parse(raw), tagIDs: const <String>[]);
+    }
+    final id = int.parse(raw.substring(0, pipe));
+    final tagsPart = raw.substring(pipe + 1);
+    if (tagsPart.isEmpty) {
+      return (id: id, tagIDs: const <String>[]);
+    }
+    return (
+      id: id,
+      tagIDs: tagsPart.split(',').where((tagId) => tagId.isNotEmpty).toList(),
+    );
   }
 
   /// Makes every role id unique, keeping the first occurrence of a duplicate.
@@ -176,7 +224,8 @@ class EventProgram {
     return 0;
   }
 
-  void removeRole(final int id) => _roles.removeWhere((entry) => entry['id'] == id);
+  void removeRole(final int id) =>
+      _roles.removeWhere((entry) => entry['id'] == id);
 
   /// Roles whose start is at or after [threshold], optionally excluding one role.
   int countRolesStartingAtOrAfter(DateTime threshold, {int? excludeRoleId}) {
@@ -188,7 +237,8 @@ class EventProgram {
   }
 
   /// Shifts start/end of roles with start >= [threshold] by [delta].
-  void shiftRolesStartingAtOrAfter(DateTime threshold, Duration delta, {int? excludeRoleId}) {
+  void shiftRolesStartingAtOrAfter(DateTime threshold, Duration delta,
+      {int? excludeRoleId}) {
     if (delta == Duration.zero) return;
     for (final role in _roles) {
       if (excludeRoleId != null && role['id'] == excludeRoleId) continue;
@@ -232,7 +282,8 @@ class EventProgram {
     role['start'] = newStart;
     role['end'] = newEnd;
     if (shiftFollowing) {
-      shiftRolesStartingAtOrAfter(oldEnd, newEnd.difference(oldEnd), excludeRoleId: roleId);
+      shiftRolesStartingAtOrAfter(oldEnd, newEnd.difference(oldEnd),
+          excludeRoleId: roleId);
     }
     orderProgramsByStartTime();
   }
@@ -297,8 +348,8 @@ class EventProgram {
           entry['end'] != null &&
           !start.isBefore(movedStart);
     }).toList()
-      ..sort((a, b) =>
-          (a['start'] as DateTime).compareTo(b['start'] as DateTime));
+      ..sort(
+          (a, b) => (a['start'] as DateTime).compareTo(b['start'] as DateTime));
 
     for (final entry in following) {
       final DateTime start = entry['start'] as DateTime;
@@ -320,7 +371,9 @@ class EventProgram {
 
   @override
   String toString() {
-    final String finishString = _finishTime == null ? 'No finish datetime' : 'Finish datetime is $_finishTime';
+    final String finishString = _finishTime == null
+        ? 'No finish datetime'
+        : 'Finish datetime is $_finishTime';
     String result = '$finishString\n$_allDay';
     for (final roleEntry in _roles) {
       result += '\n Role Entry';

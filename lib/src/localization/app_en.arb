@@ -319,6 +319,10 @@
   "@userTagsAssignLabel": {
     "description": "Section label for assigning tags to a volunteer"
   },
+  "userTagsScheduleHint": "Which teams this slot belongs to — separate from who is assigned.",
+  "@userTagsScheduleHint": {
+    "description": "Hint on the programme-role editor that team tags mark slot ownership, not named people"
+  },
   "userTagsNoneAvailable": "No tags defined yet. Area admins can create tags in Admin Tools.",
   "@userTagsNoneAvailable": {
     "description": "Message when no user tags exist for assignment"

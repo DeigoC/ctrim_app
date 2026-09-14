@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
+import '../../../models/event/event_program.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/notifications/broadcast_audience.dart';
 import '../../../utility/dialog_manager.dart';
@@ -1080,6 +1081,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
         'end': end,
         'for_guests': entry['for_guests'],
         'id': entry['id'],
+        'tagIDs': EventProgram.tagIDsOf(entry),
       });
     }
 
