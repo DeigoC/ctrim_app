@@ -94,6 +94,18 @@ class EventHeadDBManager {
     return result;
   }
 
+  /// Like [fetchHeadsFromList] but skips missing documents instead of throwing.
+  Future<List<EventHead>> fetchExistingHeadsFromList(
+      final List<String> ids) async {
+    final List<EventHead> result = [];
+    for (final String id in ids) {
+      if (id.isEmpty) continue;
+      final head = await fetchHeadIfExists(id);
+      if (head != null) result.add(head);
+    }
+    return result;
+  }
+
   Future<void> saveNewHead(final EventHead head) async {
     await _ref.doc(head.id).set(head);
     await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
@@ -163,6 +175,19 @@ class EventSupplementalDBManager {
   Future<EventProgram> fetchProgram() async {
     final doc = await _colRef.doc('program').get();
     return EventProgram.fromMap(doc.data() as Map<String, dynamic>);
+  }
+
+  /// Null when the program doc is missing or cannot be parsed.
+  Future<EventProgram?> fetchProgramIfExists() async {
+    final doc = await _colRef.doc('program').get();
+    if (!doc.exists) return null;
+    final data = doc.data();
+    if (data is! Map) return null;
+    try {
+      return EventProgram.fromMap(Map<String, dynamic>.from(data));
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> addProgram(EventProgram program) async {

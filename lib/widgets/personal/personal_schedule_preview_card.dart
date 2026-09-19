@@ -6,6 +6,7 @@ import '../../pages/personal/view_user_roles_page.dart';
 import '../../utility/app_links.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/schedule_heads.dart';
 import '../../utility/user_schedule_service.dart';
 import '../information/info_section_card.dart';
 import 'personal_schedule_post_tile.dart';
@@ -15,9 +16,13 @@ class PersonalSchedulePreviewCard extends StatelessWidget {
   const PersonalSchedulePreviewCard({
     super.key,
     required this.appContext,
+    this.extraHeads = const <String, EventHead>{},
   });
 
   final AppContext appContext;
+
+  /// Far-ahead (or otherwise missing) heads fetched for My Schedule only.
+  final Map<String, EventHead> extraHeads;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +30,10 @@ class PersonalSchedulePreviewCard extends StatelessWidget {
     context.select((AppContext c) => (c.sessionEpoch, c.headsEpoch));
 
     final user = appContext.currentUser;
-    final eventHeads = appContext.eventHeads;
+    final eventHeads = ScheduleHeads.merge(
+      sessionHeads: appContext.eventHeads,
+      extraHeads: extraHeads,
+    );
     final rolesLoaded = user.roles != null;
     final postIDs = rolesLoaded
         ? UserScheduleService.upcomingSchedulePostIDsLimited(

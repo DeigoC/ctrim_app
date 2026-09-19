@@ -10,6 +10,7 @@ import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/app_links.dart';
+import '../../utility/schedule_heads.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/paired_row_list.dart';
@@ -36,6 +37,7 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   final UserScheduleService _scheduleService = UserScheduleService();
   final EventHeadDBManager _eventHeadDBManager = EventHeadDBManager();
   final Map<String, Future<EventHead>> _headFutures = {};
+  final Map<String, EventHead> _extraHeads = {};
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
 
@@ -62,8 +64,10 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
         if (mounted) _loadRoles();
       });
     } else {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _runRoleCleanup(showSnackBar: true));
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _prefetchScheduleHeads();
+        if (mounted) await _runRoleCleanup(showSnackBar: true);
+      });
     }
 
     if (widget.allowPostView && widget.selectedUser.posts == null) {
@@ -93,9 +97,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       });
 
       widget.selectedUser.setRoles(roles);
+      await _prefetchScheduleHeads();
+      if (!mounted) return;
       await _scheduleService.pruneStaleRoles(
         user: widget.selectedUser,
-        eventHeads: _appContext.eventHeads,
+        eventHeads: _headsForSchedule,
       );
       _syncCurrentUserRolesIfNeeded();
       if (!mounted) return;
@@ -217,9 +223,10 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       return _buildEmptySchedule();
     }
 
+    final heads = _headsForSchedule;
     final stalePostIDs = UserScheduleService.staleRolePostIDs(
       user: widget.selectedUser,
-      eventHeads: _appContext.eventHeads,
+      eventHeads: heads,
     );
     if (stalePostIDs.isNotEmpty) {
       WidgetsBinding.instance
@@ -228,11 +235,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
 
     final upcomingPostIDs = UserScheduleService.upcomingSchedulePostIDs(
       user: widget.selectedUser,
-      eventHeads: _appContext.eventHeads,
+      eventHeads: heads,
     );
     final recentPastPostIDs = UserScheduleService.recentPastSchedulePostIDs(
       user: widget.selectedUser,
-      eventHeads: _appContext.eventHeads,
+      eventHeads: heads,
     );
 
     if (upcomingPostIDs.isEmpty && recentPastPostIDs.isEmpty) {
@@ -434,8 +441,9 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   }
 
   Widget _buildTile(final String postID, {required bool isPast}) {
-    if (_appContext.eventHeads.any((e) => e.id == postID)) {
-      return _buildScheduleCard(postID, isPast: isPast);
+    final known = _headForPost(postID);
+    if (known != null) {
+      return _buildScheduleCard(known, isPast: isPast);
     }
 
     final future = _headFutures.putIfAbsent(
@@ -444,8 +452,12 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       future: future,
       builder: (_, snap) {
         if (snap.hasData) {
-          _appContext.addOrUpdatePostHead(snap.data!);
-          return _buildScheduleCard(postID, isPast: isPast);
+          final fetched = snap.data!;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || _extraHeads.containsKey(postID)) return;
+            setState(() => _extraHeads[postID] = fetched);
+          });
+          return _buildScheduleCard(fetched, isPast: isPast);
         }
         if (snap.hasError) {
           return LoadProgressBody(
@@ -475,12 +487,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     );
   }
 
-  Widget _buildScheduleCard(final String postID, {required bool isPast}) {
+  Widget _buildScheduleCard(final EventHead postHead, {required bool isPast}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final postHead = _appContext.eventHeads.firstWhere((e) => e.id == postID);
     final userRoles = widget.selectedUser.roles!
-        .where((e) => e.postID == postID)
+        .where((e) => e.postID == postHead.id)
         .toList()
       ..sort((a, b) => a.start.compareTo(b.start));
     final roleCount = userRoles.length;
@@ -611,9 +622,11 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
       debugPrint('Real Refreshing!');
       final roles = await _scheduleService.fetchRoles(widget.selectedUser.id);
       widget.selectedUser.setRoles(roles);
+      await _prefetchScheduleHeads();
+      if (!mounted) return;
       await _scheduleService.pruneStaleRoles(
         user: widget.selectedUser,
-        eventHeads: _appContext.eventHeads,
+        eventHeads: _headsForSchedule,
       );
       _syncCurrentUserRolesIfNeeded();
       if (!mounted) return;
@@ -626,10 +639,33 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
     }
   }
 
+  List<EventHead> get _headsForSchedule => ScheduleHeads.merge(
+        sessionHeads: _appContext.eventHeads,
+        extraHeads: _extraHeads,
+      );
+
+  EventHead? _headForPost(final String postID) => ScheduleHeads.lookup(
+        postID: postID,
+        sessionHeads: _appContext.eventHeads,
+        extraHeads: _extraHeads,
+      );
+
+  Future<void> _prefetchScheduleHeads() async {
+    final roles = widget.selectedUser.roles;
+    if (roles == null || roles.isEmpty) return;
+    final extra = await ScheduleHeads.fetchMissing(
+      postIDs: roles.map((role) => role.postID),
+      knownHeads: _headsForSchedule,
+      db: _eventHeadDBManager,
+    );
+    if (!mounted || extra.isEmpty) return;
+    setState(() => _extraHeads.addAll(extra));
+  }
+
   Future<void> _runRoleCleanup({required bool showSnackBar}) async {
     final removed = await _scheduleService.pruneStaleRoles(
       user: widget.selectedUser,
-      eventHeads: _appContext.eventHeads,
+      eventHeads: _headsForSchedule,
     );
     _syncCurrentUserRolesIfNeeded();
     if (!mounted || !removed) return;

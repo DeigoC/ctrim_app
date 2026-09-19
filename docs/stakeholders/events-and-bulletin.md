@@ -111,7 +111,7 @@ When **choosing a template** to create a post, browse by **Cell Groups** / **Ser
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
-**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date.
+**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. Programme slots tagged for a team on those future dates show on Personal → **Team rota**, so departments can see what they are down for without those posts filling the bulletin.
 
 ## Related posts & period parents
 

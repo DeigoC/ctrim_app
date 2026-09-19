@@ -176,6 +176,63 @@
   "@personalScheduleUntitledEvent": {
     "description": "Fallback title when event head is missing on schedule preview"
   },
+  "teamRota": "Team rota",
+  "@teamRota": {
+    "description": "Personal home item and page title for the team serving rota"
+  },
+  "teamRotaSubtitle": "What your teams are down for",
+  "@teamRotaSubtitle": {
+    "description": "Personal home subtitle for the team rota page"
+  },
+  "teamRotaHorizon": "Next {months} months",
+  "@teamRotaHorizon": {
+    "description": "Date window shown on the team rota page",
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "teamRotaLoadingHeads": "Loading upcoming posts…",
+  "@teamRotaLoadingHeads": {
+    "description": "Progress message while fetching dated posts for the team rota"
+  },
+  "teamRotaLoadingProgrammes": "Loading programmes…",
+  "@teamRotaLoadingProgrammes": {
+    "description": "Progress message while fetching post programmes for the team rota"
+  },
+  "teamRotaCouldNotLoad": "Could not load team rota",
+  "@teamRotaCouldNotLoad": {
+    "description": "Error title when the team rota fetch fails"
+  },
+  "teamRotaEmptyTitle": "No team slots in this window",
+  "@teamRotaEmptyTitle": {
+    "description": "Empty state title when filters yield no tagged programme roles"
+  },
+  "teamRotaEmptyBody": "Tagged programme roles for the selected teams will show here, including slots that still need people. Open a post to edit.",
+  "@teamRotaEmptyBody": {
+    "description": "Empty state body when the team rota has no matching slots"
+  },
+  "teamRotaEmptyNoTeamsTitle": "Pick a team",
+  "@teamRotaEmptyNoTeamsTitle": {
+    "description": "Empty state title when no team tags are selected"
+  },
+  "teamRotaEmptyNoTeamsBody": "Choose one or more team tags to see their upcoming slots. Empty slots still belong to that team.",
+  "@teamRotaEmptyNoTeamsBody": {
+    "description": "Empty state body when the user has not selected any team tags"
+  },
+  "teamRotaUnassigned": "Unassigned",
+  "@teamRotaUnassigned": {
+    "description": "Label when a team rota slot has no people yet"
+  },
+  "teamRotaFilterLocation": "Location",
+  "@teamRotaFilterLocation": {
+    "description": "Section label for location chips on the team rota"
+  },
+  "teamRotaFilterTeams": "Teams",
+  "@teamRotaFilterTeams": {
+    "description": "Section label for team-tag chips on the team rota"
+  },
   "userProfileLeaderBadge": "Leader",
   "@userProfileLeaderBadge": {
     "description": "Badge shown when a volunteer can create events"
