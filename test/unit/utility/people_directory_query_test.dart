@@ -42,6 +42,14 @@ void main() {
         isIncludedInUnfilteredPeopleSearch(user: theirs, viewer: author),
         isFalse,
       );
+      expect(
+        isIncludedInUnfilteredPeopleSearch(
+          user: theirs,
+          viewer: author,
+          leadsCellGroupContainingUser: true,
+        ),
+        isTrue,
+      );
     });
 
     test('area admin sees all placeholders and inactive', () {
@@ -120,6 +128,27 @@ void main() {
       );
 
       expect(matches.map((u) => u.id), ['2', '1']);
+    });
+
+    test('includes placeholders on a cell group the viewer leads', () {
+      final users = [
+        User(
+          id: '8',
+          forname: 'Sam',
+          surname: 'Member',
+          isPlaceholder: true,
+          createdByUserID: 'other',
+        ),
+      ];
+
+      final matches = PeopleDirectoryQuery.searchWithoutRefineFilters(
+        allUsers: users,
+        viewer: viewer,
+        searchQuery: 'sam',
+        cellGroupMemberIdsLedByViewer: {'8'},
+      );
+
+      expect(matches.map((u) => u.id), ['8']);
     });
   });
 }

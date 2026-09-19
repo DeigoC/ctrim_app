@@ -39,7 +39,8 @@ class CloudFunctionManager {
       topicSent = true;
     } catch (e) {
       topicError = e;
-      NotificationDebug.error('send_to_topic failed; still trying web tokens', e);
+      NotificationDebug.error(
+          'send_to_topic failed; still trying web tokens', e);
     }
 
     final webResult = await _sendToWebTokens(
@@ -95,7 +96,8 @@ class CloudFunctionManager {
       NotificationDebug.token('  recipient', t);
     }
 
-    final raw = await _callCloudFunction('send_notification_to_multiple_tokens', callParams);
+    final raw = await _callCloudFunction(
+        'send_notification_to_multiple_tokens', callParams);
     return _parseSendResult(raw, fallbackSuccess: uniqueTokens.length);
   }
 
@@ -222,7 +224,8 @@ class CloudFunctionManager {
       'Surname': surname,
       'Location': location,
       if (postId != null && postId.isNotEmpty) 'PostID': postId,
-      if (cellGroupId != null && cellGroupId.isNotEmpty) 'CellGroupID': cellGroupId,
+      if (cellGroupId != null && cellGroupId.isNotEmpty)
+        'CellGroupID': cellGroupId,
     });
     final data = result.data;
     if (data is Map) {
@@ -231,7 +234,8 @@ class CloudFunctionManager {
     throw StateError('create_placeholder_user returned no data');
   }
 
-  /// Links Auth on a volunteer profile; clears [IsPlaceholder]. Creator or area admin.
+  /// Links Auth on a volunteer profile; clears [IsPlaceholder].
+  /// Creator, cell-group leader of a containing group, or area admin.
   Future<Map<String, dynamic>> linkUserAuth({
     required String userId,
     required String authId,
@@ -250,6 +254,25 @@ class CloudFunctionManager {
       return Map<String, dynamic>.from(data);
     }
     throw StateError('link_user_auth returned no data');
+  }
+
+  /// Name-only update on an unlinked placeholder (creator or cell-group leader).
+  Future<Map<String, dynamic>> updatePlaceholderNames({
+    required String userId,
+    required String forename,
+    required String surname,
+  }) async {
+    final callable = _inst.httpsCallable('update_placeholder_names');
+    final result = await callable.call({
+      'UserID': userId,
+      'Forename': forename,
+      'Surname': surname,
+    });
+    final data = result.data;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw StateError('update_placeholder_names returned no data');
   }
 
   /// One-shot: empty AuthID users → IsPlaceholder true (area admin). Remove UI after use.

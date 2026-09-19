@@ -44,11 +44,14 @@ if 'firebase_functions' not in sys.modules:
     sys.modules['firebase_functions.https_fn'] = https_fn
 
 from placeholder_users import (  # noqa: E402
+    _caller_leads_cell_group_containing_user,
     _caller_may_create_placeholder,
     _caller_may_link_auth,
     _is_area_or_global_admin,
     _is_leader_or_above,
+    _roster_contains_active_user,
     link_user_auth_impl,
+    update_placeholder_names_impl,
 )
 
 
@@ -217,6 +220,146 @@ class PlaceholderPermissionTests(unittest.TestCase):
                 flags={'isUser': True},
                 target={'IsPlaceholder': False, 'CreatedByUserID': '2', 'AuthID': 'auth-x'},
                 target_had_auth=True,
+            )
+        )
+
+    def test_roster_contains_active_user(self):
+        roster = {
+            'Members': [
+                {'UserId': '42', 'Status': 'active'},
+                {'UserId': 7, 'Status': 'inactive'},
+            ]
+        }
+        self.assertTrue(_roster_contains_active_user(roster, '42'))
+        self.assertFalse(_roster_contains_active_user(roster, '7'))
+        self.assertFalse(_roster_contains_active_user(roster, '99'))
+
+    def test_leads_cell_group_containing_user(self):
+        db = MagicMock()
+        cg_snap = MagicMock()
+        cg_snap.id = 'cg-1'
+        cg_snap.to_dict.return_value = {
+            'Status': 'active',
+            'LeaderUserIds': ['9'],
+        }
+        query = MagicMock()
+        query.stream.return_value = [cg_snap]
+        roster_snap = MagicMock()
+        roster_snap.exists = True
+        roster_snap.to_dict.return_value = {
+            'Members': [{'UserId': '42', 'Status': 'active'}],
+        }
+        roster_ref = MagicMock()
+        roster_ref.get.return_value = roster_snap
+        group_ref = MagicMock()
+        group_ref.collection.return_value.document.return_value = roster_ref
+        col = MagicMock()
+        col.where.return_value = query
+        col.document.return_value = group_ref
+        db.collection.return_value = col
+
+        self.assertTrue(
+            _caller_leads_cell_group_containing_user(
+                db,
+                caller_volunteer_id='9',
+                caller_auth_uid='auth-d',
+                target_user_id='42',
+            )
+        )
+
+    def test_link_allows_cell_group_leader_of_containing_group(self):
+        db = MagicMock()
+        creator = MagicMock()
+        creator.exists = True
+        creator.to_dict.return_value = {'AuthID': 'someone-else'}
+
+        caller_user_snap = MagicMock()
+        caller_user_snap.id = '9'
+        caller_user_snap.to_dict.return_value = {'AuthID': 'auth-leader'}
+        volunteer_query = MagicMock()
+        volunteer_query.limit.return_value.get.return_value = [caller_user_snap]
+
+        cg_snap = MagicMock()
+        cg_snap.id = 'cg-1'
+        cg_snap.to_dict.return_value = {
+            'Status': 'active',
+            'LeaderUserIds': ['9'],
+        }
+        cg_query = MagicMock()
+        cg_query.stream.return_value = [cg_snap]
+        roster_snap = MagicMock()
+        roster_snap.exists = True
+        roster_snap.to_dict.return_value = {
+            'Members': [{'UserId': '42', 'Status': 'active'}],
+        }
+
+        def collection(name):
+            col = MagicMock()
+            if name == 'users':
+                col.document.return_value.get.return_value = creator
+                col.where.return_value = volunteer_query
+            elif name == 'cell_groups':
+                col.where.return_value = cg_query
+                col.document.return_value.collection.return_value.document.return_value.get.return_value = (
+                    roster_snap
+                )
+            return col
+
+        db.collection.side_effect = collection
+
+        self.assertTrue(
+            _caller_may_link_auth(
+                db,
+                auth_uid='auth-leader',
+                flags={'isUser': True},
+                target={
+                    'IsPlaceholder': True,
+                    'CreatedByUserID': '2',
+                    'AuthID': '',
+                },
+                target_had_auth=False,
+                target_user_id='42',
+            )
+        )
+
+    def test_link_skips_archived_group(self):
+        db = MagicMock()
+        creator = MagicMock()
+        creator.exists = False
+        volunteer_query = MagicMock()
+        volunteer_query.limit.return_value.get.return_value = []
+        cg_snap = MagicMock()
+        cg_snap.id = 'cg-old'
+        cg_snap.to_dict.return_value = {
+            'Status': 'archived',
+            'LeaderUserIds': ['9'],
+        }
+        cg_query = MagicMock()
+        cg_query.stream.return_value = [cg_snap]
+
+        def collection(name):
+            col = MagicMock()
+            if name == 'users':
+                col.document.return_value.get.return_value = creator
+                col.where.return_value = volunteer_query
+            elif name == 'cell_groups':
+                col.where.return_value = cg_query
+            return col
+
+        db.collection.side_effect = collection
+
+        self.assertFalse(
+            _caller_may_link_auth(
+                db,
+                auth_uid='auth-leader',
+                flags={'isUser': True},
+                target={
+                    'IsPlaceholder': True,
+                    'CreatedByUserID': '',
+                    'AuthID': '',
+                },
+                target_had_auth=False,
+                target_user_id='42',
             )
         )
 
@@ -422,5 +565,91 @@ class LinkUserAuthImplTests(unittest.TestCase):
         self.assertEqual(payload, {'isUser': True})
         self.assertNotIn('isAreaAdmin', payload)
         self.assertNotIn('isLeader', payload)
+
+
+class UpdatePlaceholderNamesImplTests(unittest.TestCase):
+    def test_cell_group_leader_can_update_names(self):
+        req = MagicMock()
+        req.auth = MagicMock()
+        req.auth.uid = 'auth-leader'
+        req.data = {
+            'UserID': '42',
+            'Forename': 'New',
+            'Surname': 'Name',
+        }
+
+        caller_everyone_snap = MagicMock()
+        caller_everyone_snap.exists = True
+        caller_everyone_snap.to_dict.return_value = {'isUser': True}
+
+        user_snap = MagicMock()
+        user_snap.exists = True
+        user_snap.to_dict.return_value = {
+            'Forename': 'Old',
+            'Surname': 'Name',
+            'IsPlaceholder': True,
+            'CreatedByUserID': '2',
+            'AuthID': '',
+        }
+        user_ref = MagicMock()
+        user_ref.get.return_value = user_snap
+
+        creator = MagicMock()
+        creator.exists = True
+        creator.to_dict.return_value = {'AuthID': 'someone-else'}
+
+        caller_user_snap = MagicMock()
+        caller_user_snap.id = '9'
+        caller_user_snap.to_dict.return_value = {'AuthID': 'auth-leader'}
+        volunteer_query = MagicMock()
+        volunteer_query.limit.return_value.get.return_value = [caller_user_snap]
+
+        cg_snap = MagicMock()
+        cg_snap.id = 'cg-1'
+        cg_snap.to_dict.return_value = {
+            'Status': 'active',
+            'LeaderUserIds': ['9'],
+        }
+        cg_query = MagicMock()
+        cg_query.stream.return_value = [cg_snap]
+        roster_snap = MagicMock()
+        roster_snap.exists = True
+        roster_snap.to_dict.return_value = {
+            'Members': [{'UserId': '42', 'Status': 'active'}],
+        }
+
+        db = MagicMock()
+
+        def collection(name):
+            col = MagicMock()
+            if name == 'everyone':
+                col.document.return_value.get.return_value = caller_everyone_snap
+            elif name == 'users':
+                def user_doc_for(doc_id):
+                    if doc_id == '2':
+                        ref = MagicMock()
+                        ref.get.return_value = creator
+                        return ref
+                    return user_ref
+
+                col.document.side_effect = user_doc_for
+                col.where.return_value = volunteer_query
+            elif name == 'cell_groups':
+                col.where.return_value = cg_query
+                col.document.return_value.collection.return_value.document.return_value.get.return_value = (
+                    roster_snap
+                )
+            return col
+
+        db.collection.side_effect = collection
+
+        result = update_placeholder_names_impl(db, req)
+        user_ref.update.assert_called_once_with(
+            {'Forename': 'New', 'Surname': 'Name'}
+        )
+        self.assertEqual(result['Forename'], 'New')
+        self.assertEqual(result['Id'], '42')
+
+
 if __name__ == '__main__':
     unittest.main()

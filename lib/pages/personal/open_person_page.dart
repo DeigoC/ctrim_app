@@ -6,6 +6,8 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
 import 'view_user_profile_page.dart';
 
@@ -89,11 +91,28 @@ class _OpenPersonPageState extends State<OpenPersonPage> {
 
     if (!mounted) return;
 
+    var leadsCellGroup = false;
+    if (resolved != null &&
+        !_fromInApp &&
+        resolved.isPlaceholder &&
+        !appContext.currentUser.isAreaAdmin) {
+      await CellGroupRosterCache.ensureLoaded(
+        appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+      );
+      if (!mounted) return;
+      leadsCellGroup = CellGroupRosterHelpers.actorLeadsGroupContainingUser(
+        actor: appContext.currentUser,
+        targetUserId: resolved.id,
+        catalogue: appContext.allCellGroups,
+      );
+    }
+
     if (resolved == null ||
         (!_fromInApp &&
             !canOpenPersonPermalink(
               user: resolved,
               viewer: appContext.currentUser,
+              leadsCellGroupContainingUser: leadsCellGroup,
             ))) {
       setState(() {
         _user = null;

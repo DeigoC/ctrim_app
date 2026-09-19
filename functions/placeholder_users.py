@@ -174,6 +174,100 @@ def create_placeholder_user_impl(db, req: https_fn.CallableRequest) -> dict:
     return {'Id': new_id, **user_payload}
 
 
+def _cell_group_is_archived(data: dict) -> bool:
+    return str(data.get('Status', '')).strip().lower() == 'archived'
+
+
+def _roster_contains_active_user(roster_data: dict, user_id: str) -> bool:
+    if not user_id:
+        return False
+    members = roster_data.get('Members') or []
+    for member in members:
+        if not isinstance(member, dict):
+            continue
+        uid = str(member.get('UserId', '')).strip()
+        status = str(member.get('Status', '') or 'active').strip() or 'active'
+        if uid == user_id and status == 'active':
+            return True
+    return False
+
+
+def _caller_leads_cell_group_containing_user(
+    db,
+    *,
+    caller_volunteer_id: str | None,
+    caller_auth_uid: str,
+    target_user_id: str,
+) -> bool:
+    if not target_user_id:
+        return False
+
+    snaps = []
+    cell_groups = db.collection('cell_groups')
+    if caller_volunteer_id:
+        snaps.extend(
+            cell_groups.where(
+                'LeaderUserIds', 'array_contains', caller_volunteer_id
+            ).stream()
+        )
+    if caller_auth_uid:
+        snaps.extend(
+            cell_groups.where(
+                'LeaderAuthIds', 'array_contains', caller_auth_uid
+            ).stream()
+        )
+
+    seen = set()
+    for snap in snaps:
+        group_id = getattr(snap, 'id', None)
+        if not group_id or group_id in seen:
+            continue
+        seen.add(group_id)
+        data = snap.to_dict() or {}
+        if _cell_group_is_archived(data):
+            continue
+        roster = (
+            db.collection('cell_groups')
+            .document(group_id)
+            .collection('supplemental')
+            .document('roster')
+            .get()
+        )
+        if not roster.exists:
+            continue
+        if _roster_contains_active_user(roster.to_dict() or {}, target_user_id):
+            return True
+    return False
+
+
+def _caller_is_placeholder_creator(db, *, auth_uid: str, target: dict) -> bool:
+    created_by = str(target.get('CreatedByUserID', '')).strip()
+    if not created_by:
+        return False
+    creator = db.collection('users').document(created_by).get()
+    if not creator.exists:
+        return False
+    return str((creator.to_dict() or {}).get('AuthID', '')).strip() == auth_uid
+
+
+def _caller_may_edit_unlinked_placeholder(
+    db,
+    *,
+    auth_uid: str,
+    target: dict,
+    target_user_id: str,
+) -> bool:
+    if _caller_is_placeholder_creator(db, auth_uid=auth_uid, target=target):
+        return True
+    caller_volunteer_id, _ = _find_volunteer_by_auth(db, auth_uid)
+    return _caller_leads_cell_group_containing_user(
+        db,
+        caller_volunteer_id=caller_volunteer_id,
+        caller_auth_uid=auth_uid,
+        target_user_id=target_user_id,
+    )
+
+
 def _caller_may_link_auth(
     db,
     *,
@@ -181,6 +275,7 @@ def _caller_may_link_auth(
     flags: dict,
     target: dict,
     target_had_auth: bool,
+    target_user_id: str = '',
 ) -> bool:
     if _is_area_or_global_admin(flags):
         return True
@@ -189,14 +284,12 @@ def _caller_may_link_auth(
     if target_had_auth or target.get('IsPlaceholder') is not True:
         return False
 
-    created_by = str(target.get('CreatedByUserID', '')).strip()
-    if not created_by:
-        return False
-
-    creator = db.collection('users').document(created_by).get()
-    if not creator.exists:
-        return False
-    return str((creator.to_dict() or {}).get('AuthID', '')).strip() == auth_uid
+    return _caller_may_edit_unlinked_placeholder(
+        db,
+        auth_uid=auth_uid,
+        target=target,
+        target_user_id=target_user_id,
+    )
 
 
 def link_user_auth_impl(db, req: https_fn.CallableRequest) -> dict:
@@ -231,6 +324,7 @@ def link_user_auth_impl(db, req: https_fn.CallableRequest) -> dict:
         flags=flags,
         target=target,
         target_had_auth=old_auth != '',
+        target_user_id=user_id,
     ):
         raise https_fn.HttpsError(
             code=https_fn.FunctionsErrorCode.PERMISSION_DENIED,
@@ -316,3 +410,49 @@ def backfill_placeholder_flags_impl(db, req: https_fn.CallableRequest) -> dict:
         updated += 1
 
     return {'updated': updated}
+
+
+def update_placeholder_names_impl(db, req: https_fn.CallableRequest) -> dict:
+    auth_uid = _require_auth(req)
+    data = req.data or {}
+
+    user_id = str(data.get('UserID', '')).strip()
+    forename = str(data.get('Forename', '')).strip()
+    surname = str(data.get('Surname', '')).strip()
+
+    if not user_id or not forename or not surname:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+            message='UserID, Forename and Surname are required',
+        )
+
+    flags = _everyone_flags(db, auth_uid)
+    user_ref = db.collection('users').document(user_id)
+    user_snap = user_ref.get()
+    if not user_snap.exists:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.NOT_FOUND,
+            message='User not found',
+        )
+
+    target = user_snap.to_dict() or {}
+    if target.get('IsPlaceholder') is not True:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.PERMISSION_DENIED,
+            message='Not authorized to edit this user',
+        )
+
+    if not _is_area_or_global_admin(flags) and not _caller_may_edit_unlinked_placeholder(
+        db,
+        auth_uid=auth_uid,
+        target=target,
+        target_user_id=user_id,
+    ):
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.PERMISSION_DENIED,
+            message='Not authorized to edit this placeholder',
+        )
+
+    updates = {'Forename': forename, 'Surname': surname}
+    user_ref.update(updates)
+    return {'Id': user_id, **target, **updates}

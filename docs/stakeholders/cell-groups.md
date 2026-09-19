@@ -16,7 +16,7 @@ Also in the app and being tested:
 - Group details for signed-in people (richer than the public card), including an optional wide **cover photo** and photo gallery when area admins have added them. Area admins can add an optional **postcode** (full, or just the first half such as BT37) on the group; if they do, it is public and used to rank nearest groups. Groups without a postcode still appear in the catalogue but not in distance results.  
 - Catalogue cards still show the **first leader’s portrait** (not the cover photo)  
 - Leaders and **cell members** information for organisers who have access  
-- Cell members are people with an app profile — including **placeholders** leaders create when someone is not registered yet (forename, surname, and location). Leaders manage members from the group detail via the people picker.  
+- Cell members are people with an app profile — including **placeholders** leaders create when someone is not registered yet (forename, surname, and location). Leaders manage members from the group detail via the people picker. Any listed leader of a group can also edit a placeholder member’s name and connect it to an account once they register.  
 - Links between groups and related event **posts** / meetings where set up  
 - A simple trail of recent meetings for a group  
 
