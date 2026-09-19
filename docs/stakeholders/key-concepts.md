@@ -42,6 +42,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | Term | Meaning |
 |------|---------|
 | **Template** | A reusable blueprint for a kind of event (title pattern, location, tags, roles, expected people, and similar). Leaders manage these under Personal → **Post Templates**, grouped as **Cell Groups** or **Services**. |
+| **Schedule preset** | A named running order on a template (who is assigned, times, team tags). A template can have several; pick one when creating a post, or apply one onto an existing post. |
 | **Bulk create** | Create many dated posts from one template (e.g. a weekly series) without a push blast for every date. |
 | **Post tag** | A label on posts for **browsing and filtering** the bulletin (for example Sunday Worship or Midweek). Not used for push notification opt-in. |
 | **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |

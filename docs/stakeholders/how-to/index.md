@@ -1,6 +1,6 @@
 # How-to guides
 
-> **Note:** Step-by-step guides — add screenshots, GIFs, or short clips as you flesh each one out.
+> **Note:** Step-by-step guides — add screenshots from the [screenshot checklist](screenshot-checklist.md) as you flesh each one out.
 
 These pages walk through common tasks in the **web app**. They sit alongside the [feature overviews](../overview.md); use overviews for “what exists,” and how-tos for “how do I do it.”
 
@@ -35,4 +35,4 @@ You can drop files under `assets/` in this docs folder:
 | `assets/gifs/` | Short screen recordings as GIF |
 | `assets/video/` | Short local MP4 clips *(keep files small)* |
 
-See [Using images, GIFs, and video](media.md) for the exact Markdown/HTML to paste.
+See [Using images, GIFs, and video](media.md) for the exact Markdown/HTML to paste. Capture list: [screenshot checklist](screenshot-checklist.md).

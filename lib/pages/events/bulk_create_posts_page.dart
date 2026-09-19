@@ -19,6 +19,7 @@ import '../../utility/post_template_mapper.dart';
 import '../../utility/post_title_date.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/posts/schedule_preset_picker.dart';
 
 enum _BulkPostRelation { child, sibling }
 
@@ -87,6 +88,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
   bool get _hasSubtitles => _template.subtitles.isNotEmpty;
 
+  bool get _hasMultiplePresets => _template.schedulePresets.length > 1;
+
+  String? get _defaultPresetId => _template.schedulePresets.isEmpty
+      ? null
+      : _template.schedulePresets.first.id;
+
   @override
   void initState() {
     super.initState();
@@ -154,6 +161,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                 : '',
             date: date,
             headMedia: _pickRandomCover(),
+            schedulePresetId: _defaultPresetId,
           ),
       ];
     });
@@ -171,6 +179,38 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
     if (!_hasCoverPool) return;
     setState(() {
       _previews[index].headMedia = _pickRandomCover();
+    });
+  }
+
+  String _presetName(String? id) {
+    if (id == null) return 'No schedule';
+    return _template.presetById(id)?.name ?? 'Schedule preset';
+  }
+
+  Future<void> _pickPresetForRow(int index) async {
+    final selected = await showSchedulePresetPicker(
+      context: context,
+      presets: _template.schedulePresets,
+      selectedId: _previews[index].schedulePresetId,
+      title: 'Schedule preset',
+      subtitle: 'Running order for this date',
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _previews[index].schedulePresetId = selected.id);
+  }
+
+  Future<void> _applyPresetToAll() async {
+    final selected = await showSchedulePresetPicker(
+      context: context,
+      presets: _template.schedulePresets,
+      title: 'Apply to all',
+      subtitle: 'Use this running order on every date',
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      for (final preview in _previews) {
+        preview.schedulePresetId = selected.id;
+      }
     });
   }
 
@@ -214,6 +254,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
           currentUserID: uid,
           parentID: parentID,
           allUsers: appContext.allUsers,
+          schedulePresetId: preview.schedulePresetId,
         );
         PostTemplateMapper.adjustEventProgramToDate(eventContext, preview.date);
         _applyPreviewHeadMedia(eventContext.head, preview.headMedia);
@@ -449,6 +490,17 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                             : colorScheme.error,
                       ),
                 ),
+                if (_hasMultiplePresets) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.tonalIcon(
+                      onPressed: _previews.isEmpty ? null : _applyPresetToAll,
+                      icon: const Icon(Icons.view_timeline_outlined, size: 18),
+                      label: const Text('Apply schedule to all'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -626,7 +678,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       ),
                     ] else
                       const Spacer(),
-                    if (_hasSubtitles || _hasCoverPool)
+                    if (_hasSubtitles || _hasCoverPool || _hasMultiplePresets)
                       Align(
                         alignment: Alignment.centerRight,
                         child: Wrap(
@@ -649,6 +701,19 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                                 onPressed: () => _shuffleSubtitle(index),
                                 icon: const Icon(Icons.shuffle, size: 16),
                                 label: const Text('Subtitle'),
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                            if (_hasMultiplePresets)
+                              TextButton.icon(
+                                onPressed: () => _pickPresetForRow(index),
+                                icon: const Icon(Icons.view_timeline_outlined,
+                                    size: 16),
+                                label:
+                                    Text(_presetName(preview.schedulePresetId)),
                                 style: TextButton.styleFrom(
                                   visualDensity: VisualDensity.compact,
                                   padding:
@@ -703,10 +768,19 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                     Text(preview.subtitle,
                         style: Theme.of(context).textTheme.bodySmall),
                   ],
+                  if (_hasMultiplePresets) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _presetName(preview.schedulePresetId),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colorScheme.primary,
+                          ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (_hasSubtitles || _hasCoverPool)
+            if (_hasSubtitles || _hasCoverPool || _hasMultiplePresets)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -721,6 +795,12 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
                       icon: const Icon(Icons.shuffle, size: 18),
                       tooltip: 'Randomise subtitle',
                       onPressed: () => _shuffleSubtitle(index),
+                    ),
+                  if (_hasMultiplePresets)
+                    IconButton(
+                      icon: const Icon(Icons.view_timeline_outlined, size: 18),
+                      tooltip: _presetName(preview.schedulePresetId),
+                      onPressed: () => _pickPresetForRow(index),
                     ),
                 ],
               ),
@@ -868,11 +948,13 @@ class _PostPreview {
   String subtitle;
   final DateTime date;
   Map<String, dynamic>? headMedia;
+  String? schedulePresetId;
 
   _PostPreview({
     required this.title,
     required this.subtitle,
     required this.date,
     this.headMedia,
+    this.schedulePresetId,
   });
 }

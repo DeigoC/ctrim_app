@@ -78,8 +78,6 @@ More detail: [Notifications](../../notifications.md). Terms: [Key concepts](../.
 - [Events & bulletin](../../events-and-bulletin.md)  
 - [Key concepts](../../key-concepts.md)
 
-## Media checklist
+## Media
 
-- [ ] Actions menu overview  
-- [ ] One screenshot per edit area above  
-- [ ] Optional GIF: editing schedule or media  
+Shots for this guide: [screenshot checklist → Edit a post](../screenshot-checklist.md#edit-a-post).

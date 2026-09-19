@@ -2,6 +2,8 @@
 
 How to attach media to stakeholder / how-to pages in this MkDocs site.
 
+**What to capture:** one checklist — [Screenshot checklist](screenshot-checklist.md) (filenames, pages, and suggested order). Do not hunt through each how-to.
+
 ## Where files go
 
 Put media under `docs/stakeholders/assets/` (this folder is published with the site):

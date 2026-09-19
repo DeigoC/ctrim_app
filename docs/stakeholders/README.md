@@ -12,6 +12,8 @@ These files are built with **MkDocs Material** and deployed to **GitHub Pages** 
 | **Config** | `mkdocs.yml` (repo root) · `requirements-docs.txt` |
 | **Workflow** | `.github/workflows/docs-pages.yml` |
 
+**Screenshots to take:** one list in [how-to/screenshot-checklist.md](how-to/screenshot-checklist.md) (not in the public nav). Do not hunt per-page checklists.
+
 Preview locally:
 
 ```bash
@@ -20,7 +22,7 @@ pip install -r requirements-docs.txt
 mkdocs serve
 ```
 
-Open http://127.0.0.1:8000 — only files under this folder are published (`docs_dir`). Agent handoffs in `docs/*.md` stay private to the repo.
+Open http://127.0.0.1:8000 — only files under this folder are published (`docs_dir`). Theme extras live in `docs/stakeholders-theme/`. Agent handoffs in `docs/*.md` stay private to the repo.
 
 ## Documents
 
@@ -42,9 +44,10 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 | [how-to/posts/edit-a-post.md](how-to/posts/edit-a-post.md) | In progress | Edit a post (by section) |
 | [how-to/information/add-or-edit-information.md](how-to/information/add-or-edit-information.md) | In progress | Information records |
 | [how-to/people/register-or-edit-users.md](how-to/people/register-or-edit-users.md) | In progress | Register / edit people |
-| [how-to/media.md](how-to/media.md) | Reference | Images, GIFs, video embeds |
+| [how-to/media.md](how-to/media.md) | Reference | How to embed images, GIFs, video |
+| [how-to/screenshot-checklist.md](how-to/screenshot-checklist.md) | Authoring | One capture list (not in public nav) |
 
-Media files go in `assets/images/`, `assets/gifs/`, `assets/video/` (see [how-to/media.md](how-to/media.md)).
+Media files go in `assets/images/`, `assets/gifs/`, `assets/video/` using names from the [screenshot checklist](how-to/screenshot-checklist.md). Embed syntax: [how-to/media.md](how-to/media.md).
 
 Add new pages here, then list them under `nav:` in `mkdocs.yml`. Status: **Current** = published baseline you edit as you go; **In progress** = how-tos still needing steps/screenshots.
 
@@ -52,7 +55,7 @@ Add new pages here, then list them under `nav:` in `mkdocs.yml`. Status: **Curre
 
 In a new agent chat against **ctrim_app**, say:
 
-> Continue stakeholder documentation from `docs/stakeholders/README.md` — edit living pages in plain language; finish how-to guides with steps and screenshots as media is ready. Do not add agent/dev handoff jargon; keep the Documents table status accurate (Current vs In progress).
+> Continue stakeholder documentation from `docs/stakeholders/README.md` — edit living pages in plain language; finish how-to guides with steps and screenshots from `how-to/screenshot-checklist.md`. Do not add agent/dev handoff jargon; keep the Documents table status accurate (Current vs In progress).
 
 Keep stakeholder copy non-technical. Put agent/dev handoffs in `docs/` (parent of this folder), not here.
 

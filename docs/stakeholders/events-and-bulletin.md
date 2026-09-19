@@ -107,11 +107,15 @@ When saving important edits, organisers can write a short **update log**. That n
 
 **Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **teams** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
 
-When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name.
+A template can hold more than one **schedule preset** — named variants of the running order (different people, team tags, or times) for the same kind of meeting. Duplicate a preset to start Team B from Team A, then edit it. Venue (address / online) stays on the template, not on each preset.
+
+When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name. If the template has several schedule presets, pick one after the date; if it has only one, that running order is applied automatically.
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
-**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. Programme slots tagged for a team on those future dates show on Personal → **Team rota**, so departments can see what they are down for without those posts filling the bulletin.
+**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots tagged for a team on those future dates show on Personal → **Team rota**, so departments can see what they are down for without those posts filling the bulletin.
+
+On an existing post, the author or a contributor can **Apply schedule preset** from the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
 
 ## Related posts & period parents
 

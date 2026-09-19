@@ -303,6 +303,119 @@ void main() {
     });
 
     group('toJson', () {
+      test('synthesizes a Default schedule preset from legacy Roles', () {
+        final template = PostTemplate.fromMap(
+          true,
+          'legacy-roles',
+          baseLocalMap(
+            roles: [
+              {
+                'uids': <String>['u1'],
+                'detail': 'Welcome',
+                'title': 'Host',
+                'start': DateTime(2026, 1, 4, 10).millisecondsSinceEpoch,
+                'end': DateTime(2026, 1, 4, 10, 15).millisecondsSinceEpoch,
+                'for_guests': true,
+                'id': 1,
+              },
+            ],
+          ),
+        );
+
+        expect(template.schedulePresets, hasLength(1));
+        expect(template.schedulePresets.single.id, SchedulePreset.defaultId);
+        expect(
+            template.schedulePresets.single.name, SchedulePreset.defaultName);
+        expect(template.schedulePresets.single.roles.single['title'], 'Host');
+        expect(template.startTime, DateTime(2026, 1, 4, 10));
+        expect(template.finishTime, DateTime(2026, 1, 4, 12));
+
+        final json = template.toJson(true);
+        expect(json['SchedulePresets'], hasLength(1));
+        expect((json['Roles'] as List).first['title'], 'Host');
+      });
+
+      test('parses SchedulePresets and aliases the first for roles and times',
+          () {
+        final map = baseLocalMap(roles: <Map<String, dynamic>>[]);
+        map['StartTime'] = DateTime(2026, 1, 4, 9).millisecondsSinceEpoch;
+        map['FinishTime'] = DateTime(2026, 1, 4, 11).millisecondsSinceEpoch;
+        map['SchedulePresets'] = [
+          {
+            'id': 'team-a',
+            'name': 'Team A',
+            'startTime': DateTime(2026, 1, 4, 10).millisecondsSinceEpoch,
+            'finishTime': DateTime(2026, 1, 4, 12).millisecondsSinceEpoch,
+            'roles': [
+              {
+                'uids': <String>['u1'],
+                'detail': '',
+                'title': 'Host A',
+                'start': DateTime(2026, 1, 4, 10).millisecondsSinceEpoch,
+                'end': DateTime(2026, 1, 4, 10, 15).millisecondsSinceEpoch,
+                'for_guests': true,
+                'id': 1,
+                'tagIDs': <String>['welcome'],
+              },
+            ],
+          },
+          {
+            'id': 'team-b',
+            'name': 'Team B',
+            'startTime': DateTime(2026, 1, 4, 10, 30).millisecondsSinceEpoch,
+            'finishTime': DateTime(2026, 1, 4, 12, 30).millisecondsSinceEpoch,
+            'roles': [
+              {
+                'uids': <String>['u2'],
+                'detail': '',
+                'title': 'Host B',
+                'start': DateTime(2026, 1, 4, 10, 30).millisecondsSinceEpoch,
+                'end': DateTime(2026, 1, 4, 10, 45).millisecondsSinceEpoch,
+                'for_guests': true,
+                'id': 2,
+              },
+            ],
+          },
+        ];
+
+        final template = PostTemplate.fromMap(true, 'multi-preset', map);
+
+        expect(template.schedulePresets, hasLength(2));
+        expect(template.presetById('team-b')?.name, 'Team B');
+        expect(template.roles.single['title'], 'Host A');
+        expect(template.startTime, DateTime(2026, 1, 4, 10));
+        expect(template.finishTime, DateTime(2026, 1, 4, 12));
+
+        final json = template.toJson(true);
+        expect(json['Roles'].first['title'], 'Host A');
+        expect(
+            json['StartTime'], DateTime(2026, 1, 4, 10).millisecondsSinceEpoch);
+        expect((json['SchedulePresets'] as List), hasLength(2));
+        expect((json['SchedulePresets'] as List).last['name'], 'Team B');
+      });
+
+      test('does not synthesize a preset when there is no programme', () {
+        final map = baseLocalMap();
+        map['StartTime'] = null;
+        map['FinishTime'] = null;
+        map['Roles'] = <Map<String, dynamic>>[];
+        final template = PostTemplate.fromMap(true, 'empty-program', map);
+
+        expect(template.schedulePresets, isEmpty);
+        expect(template.roles, isEmpty);
+        expect(template.startTime, isNull);
+        expect(template.toJson(true)['SchedulePresets'], isEmpty);
+      });
+
+      test('schedulePresets getter is unmodifiable', () {
+        final template =
+            PostTemplate.fromMap(true, 'unmod-presets', baseLocalMap());
+        expect(
+          () => template.schedulePresets.add(SchedulePreset.emptyDefault()),
+          throwsUnsupportedError,
+        );
+      });
+
       test('round-trips local serialization', () {
         final original = PostTemplate.fromMap(
           true,

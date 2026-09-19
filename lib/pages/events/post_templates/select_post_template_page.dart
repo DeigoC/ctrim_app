@@ -16,6 +16,7 @@ import '../../../widgets/common/load_progress_body.dart';
 import '../../../widgets/paired_row_list.dart';
 import '../../../widgets/responsive_content.dart';
 import '../../../widgets/role_access_gate.dart';
+import '../../../widgets/posts/schedule_preset_picker.dart';
 import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
 
@@ -663,6 +664,12 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
             'Online',
             colorScheme,
           ),
+        if (template.schedulePresets.length > 1)
+          _buildDetailChip(
+            Icons.view_timeline_outlined,
+            '${template.schedulePresets.length} schedule presets',
+            colorScheme,
+          ),
       ],
     );
   }
@@ -791,33 +798,48 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
   Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
+
+    // Typical start time (schedule) *or* default weekday both mean the post
+    // is dated — prompt so undated schedule templates still get an event date.
+    final shouldPickDate = postTemplate.startTime != null ||
+        postTemplate.defaultDayOfWeek != null ||
+        postTemplate.schedulePresets.any((p) => p.startTime != null);
+    DateTime? selectedDate;
+    if (shouldPickDate) {
+      selectedDate = await _selectDate(
+        context,
+        preferredDayOfWeek: postTemplate.defaultDayOfWeek,
+      );
+      if (selectedDate == null || !mounted) return;
+    }
+
+    SchedulePreset? schedulePreset;
+    if (postTemplate.schedulePresets.length > 1) {
+      schedulePreset = await showSchedulePresetPicker(
+        context: context,
+        presets: postTemplate.schedulePresets,
+        title: 'Schedule preset',
+        subtitle: 'Choose the running order for this post',
+      );
+      if (schedulePreset == null || !mounted) return;
+    }
+
     final EventContext eventContext =
         PostTemplateMapper.mapTemplateToEventContext(
       template: postTemplate,
       currentUserID: appContext.currentUser.id,
       parentID: widget.eventContext.metadata.parentID,
       allUsers: appContext.allUsers,
+      schedulePreset: schedulePreset,
     );
 
-    // Typical start time (schedule) *or* default weekday both mean the post
-    // is dated — prompt so undated schedule templates still get an event date.
-    final shouldPickDate = eventContext.head.eventDate != null ||
-        postTemplate.defaultDayOfWeek != null;
-    if (shouldPickDate) {
-      final selectedDate = await _selectDate(
-        context,
-        preferredDayOfWeek: postTemplate.defaultDayOfWeek,
-      );
-      if (selectedDate == null || !mounted) return;
+    if (selectedDate != null) {
       PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
-      eventContext.head.setTitle(
-          formatPostTitle(postTemplate.title, selectedDate));
-      if (!mounted) return;
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => AddEventPage(eventContext: eventContext)));
-    } else {
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => AddEventPage(eventContext: eventContext)));
+      eventContext.head
+          .setTitle(formatPostTitle(postTemplate.title, selectedDate));
     }
+    if (!mounted) return;
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 }

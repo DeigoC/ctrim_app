@@ -539,6 +539,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
       'HeadMediaPool': <Map<String, dynamic>>[],
       'BodyMediaPool': <Map<String, dynamic>>[],
       'Roles': <Map<String, dynamic>>[],
+      'SchedulePresets': [SchedulePreset.emptyDefault().toJson(true)],
       'DefaultDayOfWeek': null,
     });
   }

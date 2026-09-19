@@ -30,8 +30,6 @@ Creating a post usually starts from a **template**, then fills in the date and d
 - [Edit a post](edit-a-post.md) — change details, schedule, media, people, attendance  
 - Feature overview: [Events & bulletin](../../events-and-bulletin.md)
 
-## Media checklist
+## Media
 
-- [ ] Screenshot: template picker  
-- [ ] Screenshot: date / create confirm  
-- [ ] Optional GIF: full create flow  
+Shots for this guide: [screenshot checklist → Create a post](../screenshot-checklist.md#create-a-post).

@@ -31,6 +31,156 @@ enum PostTemplateCategory {
   }
 }
 
+/// Named programme variant on a [PostTemplate] (people, tags, slot times).
+class SchedulePreset {
+  static const String defaultId = 'default';
+  static const String defaultName = 'Default';
+
+  late String _id, _name;
+  DateTime? _startTime, _finishTime;
+  late List<Map<String, dynamic>> _roles;
+
+  SchedulePreset({
+    required String id,
+    required String name,
+    DateTime? startTime,
+    DateTime? finishTime,
+    List<Map<String, dynamic>>? roles,
+  }) {
+    _id = id;
+    _name = name;
+    _startTime = startTime;
+    _finishTime = finishTime;
+    _roles = roles == null
+        ? <Map<String, dynamic>>[]
+        : roles.map(_copyRole).toList();
+  }
+
+  SchedulePreset.emptyDefault() : this(id: defaultId, name: defaultName);
+
+  SchedulePreset.fromMap(final bool forLocal, final Map<String, dynamic> data) {
+    _id = (data['id'] as String?)?.trim().isNotEmpty == true
+        ? data['id'] as String
+        : defaultId;
+    _name = (data['name'] as String?)?.trim().isNotEmpty == true
+        ? data['name'] as String
+        : defaultName;
+    _startTime = _parseDateTime(forLocal, data['startTime']);
+    _finishTime = _parseDateTime(forLocal, data['finishTime']);
+    _roles =
+        parseRoles(forLocal, PostTemplate.asStringKeyedMapList(data['roles']));
+  }
+
+  Map<String, dynamic> toJson(final bool forLocal) {
+    return {
+      'id': _id,
+      'name': _name,
+      'startTime': _dateTimeToJson(forLocal, _startTime),
+      'finishTime': _dateTimeToJson(forLocal, _finishTime),
+      'roles': rolesToJson(forLocal, _roles),
+    };
+  }
+
+  String get id => _id;
+  String get name => _name;
+  DateTime? get startTime => _startTime;
+  DateTime? get finishTime => _finishTime;
+  List<Map<String, dynamic>> get roles => _roles;
+
+  void setName(final String name) => _name = name;
+  void setStartTime(final DateTime? start) => _startTime = start;
+  void setFinishTime(final DateTime? finish) => _finishTime = finish;
+  void setRoles(final List<Map<String, dynamic>> roles) =>
+      _roles = roles.map(_copyRole).toList();
+
+  SchedulePreset copy({String? id, String? name}) {
+    return SchedulePreset(
+      id: id ?? _id,
+      name: name ?? _name,
+      startTime: _startTime,
+      finishTime: _finishTime,
+      roles: _roles,
+    );
+  }
+
+  static String newId() => DateTime.now().millisecondsSinceEpoch.toString();
+
+  static List<String> assignedUserIdsOf(final SchedulePreset preset) {
+    final ids = <String>{};
+    for (final role in preset.roles) {
+      ids.addAll(List<String>.from(role['uids'] ?? const []));
+    }
+    return ids.toList();
+  }
+
+  static List<Map<String, dynamic>> parseRoles(
+      final bool forLocal, final List<Map<String, dynamic>> rawData) {
+    final List<Map<String, dynamic>> result = List.empty(growable: true);
+    for (final entry in rawData) {
+      result.add({
+        'uids': List<String>.from(entry['uids'] ?? const []),
+        'detail': entry['detail'],
+        'title': entry['title'],
+        'start': _parseDateTime(forLocal, entry['start']),
+        'end': _parseDateTime(forLocal, entry['end']),
+        'for_guests': entry['for_guests'],
+        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
+        'tagIDs': EventProgram.tagIDsOf(entry),
+      });
+    }
+    return result;
+  }
+
+  static List<Map<String, dynamic>> rolesToJson(
+      final bool forLocal, final List<Map<String, dynamic>> roles) {
+    final List<Map<String, dynamic>> result =
+        List<Map<String, dynamic>>.empty(growable: true);
+    for (final entry in roles) {
+      result.add({
+        'uids': entry['uids'],
+        'detail': entry['detail'],
+        'title': entry['title'],
+        'start': _dateTimeToJson(forLocal, entry['start'] as DateTime?),
+        'end': _dateTimeToJson(forLocal, entry['end'] as DateTime?),
+        'for_guests': entry['for_guests'],
+        'id': entry['id'],
+        'tagIDs': EventProgram.tagIDsOf(entry),
+      });
+    }
+    return result;
+  }
+
+  static Map<String, dynamic> _copyRole(final Map<String, dynamic> role) {
+    return {
+      'uids': List<String>.from(role['uids'] ?? const []),
+      'detail': role['detail'],
+      'title': role['title'],
+      'start': role['start'],
+      'end': role['end'],
+      'for_guests': role['for_guests'],
+      'id': role['id'],
+      'tagIDs': EventProgram.tagIDsOf(role),
+    };
+  }
+
+  static DateTime? _parseDateTime(final bool forLocal, final dynamic raw) {
+    if (raw == null) return null;
+    if (forLocal) {
+      if (raw is DateTime) return raw;
+      return DateTime.fromMillisecondsSinceEpoch(raw as int);
+    }
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+    if (raw is DateTime) return raw;
+    return null;
+  }
+
+  static dynamic _dateTimeToJson(final bool forLocal, final DateTime? value) {
+    if (value == null) return null;
+    return forLocal ? value.millisecondsSinceEpoch : Timestamp.fromDate(value);
+  }
+}
+
 class PostTemplate {
   late String _id, _title, _description, _headTitle, _body, _location;
   PostTemplateCategory _category = PostTemplateCategory.service;
@@ -52,6 +202,7 @@ class PostTemplate {
   late DateTime? _startTime, _finishTime;
   late String _mapLink, _address;
   late List<Map<String, dynamic>> _roles;
+  late List<SchedulePreset> _schedulePresets;
   bool _allDay = false, _online = false;
   int? _defaultDayOfWeek;
 
@@ -89,35 +240,28 @@ class PostTemplate {
     _online = data['Online'];
     _address = data['Address'];
     _mapLink = data['MapLink'];
-    _roles = _parseRoles(forLocal, _asStringKeyedMapList(data['Roles']));
-
-    if (data['StartTime'] != null) {
-      if (forLocal) {
-        _startTime = DateTime.fromMillisecondsSinceEpoch(data['StartTime']);
-      } else {
-        _startTime = (data['StartTime'] as Timestamp).toDate();
-      }
-    } else {
-      _startTime = null;
-    }
-    if (data['FinishTime'] != null) {
-      if (forLocal) {
-        _finishTime = DateTime.fromMillisecondsSinceEpoch(data['FinishTime']);
-      } else {
-        _finishTime = (data['FinishTime'] as Timestamp).toDate();
-      }
-    } else {
-      _finishTime = null;
-    }
+    final topLevelRoles = SchedulePreset.parseRoles(
+        forLocal, asStringKeyedMapList(data['Roles']));
+    _startTime = SchedulePreset._parseDateTime(forLocal, data['StartTime']);
+    _finishTime = SchedulePreset._parseDateTime(forLocal, data['FinishTime']);
+    _roles = topLevelRoles;
+    _schedulePresets = _parseSchedulePresets(
+      forLocal,
+      data['SchedulePresets'],
+      topLevelRoles: topLevelRoles,
+      startTime: _startTime,
+      finishTime: _finishTime,
+    );
+    _mirrorFirstPresetToTopLevel();
 
     // media — nested Hive/JSON maps are often Map<dynamic, dynamic>
-    _headMedia = _parseMedia(_asStringKeyedMapList(data['HeadMedia']));
-    _media = _parseMedia(_asStringKeyedMapList(data['Media']));
+    _headMedia = _parseMedia(asStringKeyedMapList(data['HeadMedia']));
+    _media = _parseMedia(asStringKeyedMapList(data['Media']));
     _headMediaPool = data['HeadMediaPool'] != null
-        ? _parseMedia(_asStringKeyedMapList(data['HeadMediaPool']))
+        ? _parseMedia(asStringKeyedMapList(data['HeadMediaPool']))
         : <Map<String, dynamic>>[];
     _bodyMediaPool = data['BodyMediaPool'] != null
-        ? _parseMedia(_asStringKeyedMapList(data['BodyMediaPool']))
+        ? _parseMedia(asStringKeyedMapList(data['BodyMediaPool']))
         : <Map<String, dynamic>>[];
     _defaultDayOfWeek = data['DefaultDayOfWeek'] != null
         ? data['DefaultDayOfWeek'] as int?
@@ -126,19 +270,7 @@ class PostTemplate {
   }
 
   Map<String, dynamic> toJson(final bool forLocal) {
-    dynamic startTime = _startTime;
-    dynamic endTime = _finishTime;
-    if (_startTime != null) {
-      startTime = forLocal
-          ? _startTime!.millisecondsSinceEpoch
-          : Timestamp.fromDate(_startTime!);
-    }
-    if (_finishTime != null) {
-      endTime = forLocal
-          ? _finishTime!.millisecondsSinceEpoch
-          : Timestamp.fromDate(_finishTime!);
-    }
-
+    _mirrorFirstPresetToTopLevel();
     return {
       'Title': _title,
       'Description': _description,
@@ -163,9 +295,11 @@ class PostTemplate {
       'HeadMediaPool': _headMediaPool,
       'BodyMediaPool': _bodyMediaPool,
       'DefaultDayOfWeek': _defaultDayOfWeek,
-      'StartTime': startTime,
-      'FinishTime': endTime,
-      'Roles': _rolesToJson(forLocal),
+      'StartTime': SchedulePreset._dateTimeToJson(forLocal, _startTime),
+      'FinishTime': SchedulePreset._dateTimeToJson(forLocal, _finishTime),
+      'Roles': SchedulePreset.rolesToJson(forLocal, _roles),
+      'SchedulePresets':
+          _schedulePresets.map((preset) => preset.toJson(forLocal)).toList(),
       'Logs': _logsToJson(forLocal),
     };
   }
@@ -183,8 +317,11 @@ class PostTemplate {
   bool get allDay => _allDay;
   bool get online => _online;
 
-  DateTime? get startTime => _startTime;
-  DateTime? get finishTime => _finishTime;
+  DateTime? get startTime =>
+      _schedulePresets.isEmpty ? _startTime : _schedulePresets.first.startTime;
+  DateTime? get finishTime => _schedulePresets.isEmpty
+      ? _finishTime
+      : _schedulePresets.first.finishTime;
   int? get defaultDayOfWeek => _defaultDayOfWeek;
 
   List<Map<String, dynamic>> get headMedia => _headMedia;
@@ -196,7 +333,10 @@ class PostTemplate {
   /// fall back to [headMediaPool] for older templates.
   List<Map<String, dynamic>> get keyGraphicPool =>
       _bodyMediaPool.isNotEmpty ? _bodyMediaPool : _headMediaPool;
-  List<Map<String, dynamic>> get roles => _roles;
+  List<Map<String, dynamic>> get roles =>
+      _schedulePresets.isEmpty ? _roles : _schedulePresets.first.roles;
+  List<SchedulePreset> get schedulePresets =>
+      UnmodifiableListView(_schedulePresets);
   List<String> get contributors => _contributorUIDs;
   List<String> get topics => _topics;
   List<String> get tagIDs => UnmodifiableListView(_tagIDs);
@@ -217,6 +357,18 @@ class PostTemplate {
 
   void setExpectedAttendeeUserIDs(final List<String> userIds) =>
       _expectedAttendeeUserIDs = List<String>.from(userIds);
+
+  SchedulePreset? presetById(final String id) {
+    for (final preset in _schedulePresets) {
+      if (preset.id == id) return preset;
+    }
+    return null;
+  }
+
+  void setSchedulePresets(final List<SchedulePreset> presets) {
+    _schedulePresets = presets.map((preset) => preset.copy()).toList();
+    _mirrorFirstPresetToTopLevel();
+  }
 
   /// Prepends a change-history entry (same shape as post [EventLog] entries).
   void addLog(
@@ -239,8 +391,20 @@ class PostTemplate {
   void setIsPeriodParent(final bool value) => _isPeriodParent = value;
   void setCategory(final PostTemplateCategory value) => _category = value;
 
-  void setStartTime(final DateTime? start) => _startTime = start;
-  void setEndtime(final DateTime? end) => _finishTime = end;
+  void setStartTime(final DateTime? start) {
+    _startTime = start;
+    if (_schedulePresets.isNotEmpty) {
+      _schedulePresets.first.setStartTime(start);
+    }
+  }
+
+  void setEndtime(final DateTime? end) {
+    _finishTime = end;
+    if (_schedulePresets.isNotEmpty) {
+      _schedulePresets.first.setFinishTime(end);
+    }
+  }
+
   void setDefaultDayOfWeek(final int? day) => _defaultDayOfWeek = day;
 
   // subtitle list management
@@ -309,43 +473,49 @@ class PostTemplate {
   // private methods
 
   /// Hive (and some JSON paths) yield [Map]<dynamic, dynamic>; cast each entry.
-  static List<Map<String, dynamic>> _asStringKeyedMapList(final dynamic raw) {
+  static List<Map<String, dynamic>> asStringKeyedMapList(final dynamic raw) {
     if (raw == null) return <Map<String, dynamic>>[];
     return (raw as List)
         .map((entry) => Map<String, dynamic>.from(entry as Map))
         .toList();
   }
 
-  List<Map<String, dynamic>> _parseRoles(
-      final bool forLocal, final List<Map<String, dynamic>> rawData) {
-    final List<Map<String, dynamic>> result = List.empty(growable: true);
-    for (final entry in rawData) {
-      DateTime? start;
-      DateTime? end;
-      if (entry['start'] != null) {
-        start = forLocal
-            ? DateTime.fromMillisecondsSinceEpoch(entry['start'])
-            : (entry['start'] as Timestamp).toDate();
-      }
-      if (entry['end'] != null) {
-        end = forLocal
-            ? DateTime.fromMillisecondsSinceEpoch(entry['end'])
-            : (entry['end'] as Timestamp).toDate();
-      }
-
-      result.add({
-        'uids': List<String>.from(entry['uids']),
-        'detail': entry['detail'],
-        'title': entry['title'],
-        'start': start,
-        'end': end,
-        'for_guests': entry['for_guests'],
-        'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
-        'tagIDs': EventProgram.tagIDsOf(entry),
-      });
+  void _mirrorFirstPresetToTopLevel() {
+    if (_schedulePresets.isEmpty) {
+      _startTime = null;
+      _finishTime = null;
+      _roles = <Map<String, dynamic>>[];
+      return;
     }
+    final first = _schedulePresets.first;
+    _startTime = first.startTime;
+    _finishTime = first.finishTime;
+    _roles = first.roles;
+  }
 
-    return result;
+  static List<SchedulePreset> _parseSchedulePresets(
+    final bool forLocal,
+    final dynamic raw, {
+    required List<Map<String, dynamic>> topLevelRoles,
+    required DateTime? startTime,
+    required DateTime? finishTime,
+  }) {
+    final parsed = asStringKeyedMapList(raw)
+        .map((entry) => SchedulePreset.fromMap(forLocal, entry))
+        .toList();
+    if (parsed.isNotEmpty) return parsed;
+    if (topLevelRoles.isEmpty && startTime == null && finishTime == null) {
+      return <SchedulePreset>[];
+    }
+    return [
+      SchedulePreset(
+        id: SchedulePreset.defaultId,
+        name: SchedulePreset.defaultName,
+        startTime: startTime,
+        finishTime: finishTime,
+        roles: topLevelRoles,
+      ),
+    ];
   }
 
   List<Map<String, dynamic>> _parseMedia(
@@ -365,43 +535,11 @@ class PostTemplate {
     return results;
   }
 
-  List<Map<String, dynamic>> _rolesToJson(final bool forLocal) {
-    final List<Map<String, dynamic>> result =
-        List<Map<String, dynamic>>.empty(growable: true);
-    for (final entry in _roles) {
-      var start = entry['start'];
-      var end = entry['end'];
-      if (start != null) {
-        start = forLocal
-            ? (entry['start'] as DateTime).millisecondsSinceEpoch
-            : Timestamp.fromDate(entry['start']);
-      }
-      if (end != null) {
-        end = forLocal
-            ? (entry['end'] as DateTime).millisecondsSinceEpoch
-            : Timestamp.fromDate(entry['end']);
-      }
-
-      result.add({
-        'uids': entry['uids'],
-        'detail': entry['detail'],
-        'title': entry['title'],
-        'start': start,
-        'end': end,
-        'for_guests': entry['for_guests'],
-        'id': entry['id'],
-        'tagIDs': EventProgram.tagIDsOf(entry),
-      });
-    }
-
-    return result;
-  }
-
   List<Map<String, dynamic>> _parseLogs(
       final bool forLocal, final dynamic raw) {
     if (raw == null) return <Map<String, dynamic>>[];
     final List<Map<String, dynamic>> result = <Map<String, dynamic>>[];
-    for (final entry in _asStringKeyedMapList(raw)) {
+    for (final entry in asStringKeyedMapList(raw)) {
       final dynamic rawTs = entry['ts'];
       late final DateTime ts;
       if (forLocal) {

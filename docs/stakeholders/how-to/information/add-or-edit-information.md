@@ -55,8 +55,6 @@ Only **area admins** see this control.
 - Overview: [Information](../../information.md)  
 - Who can edit: [People & roles](../../people-and-roles.md)
 
-## Media checklist
+## Media
 
-- [ ] Screenshot: CTRIM tab with edit affordances  
-- [ ] Screenshot: editor screen  
-- [ ] Optional GIF: create → save → view  
+Shots for this guide: [screenshot checklist → Information](../screenshot-checklist.md#information).
