@@ -412,6 +412,18 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Attended 1 cell group meeting in the past 3 weeks} other{Attended {count} cell group meetings in the past 3 weeks}}'**
   String userProfileCellGroupMeetingsAttendedCount(int count);
 
+  /// Profile summary when the person led linked cell group meetings in the past 3 weeks
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Hosted 1 cell group meeting in the past 3 weeks} other{Hosted {count} cell group meetings in the past 3 weeks}}'**
+  String userProfileCellGroupMeetingsHostedCount(int count);
+
+  /// Profile summary when the person both hosted and attended as a guest in the past 3 weeks
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Took part in 1 cell group meeting in the past 3 weeks} other{Took part in {count} cell group meetings in the past 3 weeks}}'**
+  String userProfileCellGroupMeetingsParticipatedCount(int count);
+
   /// Suffix when attendance spans multiple cell groups
   ///
   /// In en, this message translates to:
@@ -441,6 +453,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attended'**
   String get userProfileCellGroupMeetingAttended;
+
+  /// Subtitle when the person led the cell group for that meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Hosted'**
+  String get userProfileCellGroupMeetingHosted;
 
   /// Subtitle when the person did not check in at that cell group meeting
   ///
