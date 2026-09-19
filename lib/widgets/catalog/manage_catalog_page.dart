@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../models/user.dart';
+import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/responsive_layout.dart';
 import '../common/app_dialog.dart';
 import '../common/load_progress_body.dart';
 import '../role_access_gate.dart';
+import 'catalog_color_field.dart';
 
 /// L10n strings for a catalog manage screen (tags, locations, …).
 class ManageCatalogCopy {
@@ -216,12 +218,18 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
   String? colorLabel,
   String? colorHint,
   String? initialColor,
+  Iterable<String?> takenColors = const [],
   IconData addIcon = Icons.add,
 }) async {
   final nameController = TextEditingController(text: initialName ?? '');
   final colorController = colorLabel == null
       ? null
-      : TextEditingController(text: initialColor ?? '');
+      : TextEditingController(
+          text: UserTagHelpers.normalizeHex(initialColor) ??
+              (isEditing
+                  ? ''
+                  : UserTagHelpers.nextPresetHex(usedHexes: takenColors)),
+        );
 
   try {
     final saved = await showDialog<bool>(
@@ -249,12 +257,10 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
               ),
               if (colorController != null && colorLabel != null) ...[
                 const SizedBox(height: 12),
-                TextField(
+                CatalogColorField(
                   controller: colorController,
-                  decoration: AppDialog.inputDecoration(
-                    label: colorLabel,
-                    hint: colorHint,
-                  ),
+                  label: colorLabel,
+                  hint: colorHint,
                 ),
               ],
             ],
@@ -266,10 +272,9 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
     if (saved != true) return null;
     final name = nameController.text.trim();
     if (name.isEmpty) return null;
-    final color = colorController?.text.trim();
     return CatalogItemDialogResult(
       name: name,
-      color: (color == null || color.isEmpty) ? null : color,
+      color: UserTagHelpers.normalizeHex(colorController?.text),
     );
   } finally {
     nameController.dispose();

@@ -22,10 +22,12 @@ Use the bulletin’s **sort / filter** control. Sort and filters are separate, s
 
 | Option | What it does |
 |--------|----------------|
-| **Relevancy** *(default)* | The next three upcoming events, then recent past (about two weeks), then the rest |
+| **Relevancy** *(default)* | The next three upcoming events, then a few from the past week, then the rest |
 | **Soonest first** | Today and upcoming events by date, then recent past |
 | **Latest first** | Recent past first, then upcoming by date |
 | **Recently updated** | Newest creates and edits first — useful for finding a post you just published |
+
+Dated posts from the **past week** show a **Recent** label. Older dated posts show **Past**.
 
 **Show** (what appears):
 
@@ -84,6 +86,8 @@ Organisers who can edit a post get an **Arrange schedule** screen (from the Sche
 | **Parallel** | Only the item you dragged moves. Everything else keeps its time, so things can deliberately run at once. |
 
 Items that started before the point you drop into are left alone, so a long background job is never dragged along. Times snap to five-minute steps. Changes are saved with the rest of the post, and leaving without keeping them puts the original times back.
+
+Adding a role into a **free slot** on the timeline leaves everything else where it is. You are only asked about later items if the new time **overlaps** something already in the running order (not the all-event band). **Keep times** is the usual choice — items can run together — or you can push later items back to make room.
 
 ## What organisers can do
 

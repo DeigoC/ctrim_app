@@ -30,4 +30,44 @@ void main() {
       expect(users.map((u) => u.id).toList(), ['2', '4', '1', '3']);
     });
   });
+
+  group('UserTagHelpers color', () {
+    test('parseColor accepts hash, plain hex, and trims', () {
+      expect(UserTagHelpers.parseColor(null), isNull);
+      expect(UserTagHelpers.parseColor(''), isNull);
+      expect(UserTagHelpers.parseColor('red'), isNull);
+      expect(UserTagHelpers.parseColor('#6B4EAA')?.toARGB32(), 0xFF6B4EAA);
+      expect(UserTagHelpers.parseColor('6b4eaa')?.toARGB32(), 0xFF6B4EAA);
+      expect(UserTagHelpers.parseColor('  #6b4eaa  ')?.toARGB32(), 0xFF6B4EAA);
+    });
+
+    test('formatHex and normalizeHex round-trip preset colours', () {
+      for (final hex in UserTagHelpers.presetHexes) {
+        final color = UserTagHelpers.parseColor(hex);
+        expect(color, isNotNull, reason: hex);
+        expect(UserTagHelpers.formatHex(color!), hex);
+        expect(UserTagHelpers.normalizeHex(hex.toLowerCase()), hex);
+      }
+      expect(UserTagHelpers.normalizeHex(''), isNull);
+      expect(UserTagHelpers.normalizeHex('not-a-color'), isNull);
+    });
+
+    test('nextPresetHex skips colours already in use', () {
+      expect(UserTagHelpers.nextPresetHex(), UserTagHelpers.presetHexes.first);
+      expect(
+        UserTagHelpers.nextPresetHex(usedHexes: ['#6b4eaa', 'not-hex']),
+        UserTagHelpers.presetHexes[1],
+      );
+      expect(
+        UserTagHelpers.nextPresetHex(usedHexes: UserTagHelpers.presetHexes),
+        UserTagHelpers.presetHexes.first,
+      );
+      expect(
+        UserTagHelpers.nextPresetHex(
+          usedHexes: [...UserTagHelpers.presetHexes, '#6B4EAA'],
+        ),
+        UserTagHelpers.presetHexes[1],
+      );
+    });
+  });
 }

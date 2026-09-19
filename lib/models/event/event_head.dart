@@ -72,7 +72,8 @@ class EventHead {
     if (raw is! List) {
       return List<Map<String, dynamic>>.empty(growable: true);
     }
-    final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.empty(growable: true);
+    final List<Map<String, dynamic>> result =
+        List<Map<String, dynamic>>.empty(growable: true);
     for (final entry in raw) {
       if (entry is! Map) continue;
       result.add({
@@ -135,7 +136,8 @@ class EventHead {
   bool hasTag(final String tagId) => _tagIDs.contains(tagId);
   bool hasAnyTag(final Iterable<String> tagIds) => tagIds.any(_tagIDs.contains);
   List<String> get cellGroupIDs => UnmodifiableListView(_cellGroupIDs);
-  bool hasCellGroup(final String cellGroupId) => _cellGroupIDs.contains(cellGroupId);
+  bool hasCellGroup(final String cellGroupId) =>
+      _cellGroupIDs.contains(cellGroupId);
   DateTime get recentDate => _recentDate;
   DateTime? get eventDate => _eventDate;
   int get interestedCount => _interestedCount;
@@ -144,7 +146,8 @@ class EventHead {
   String? get leadSpeakerUID => _leadSpeakerUID;
   String? get leadSpeakerImgSrc => _leadSpeakerImgSrc;
   String? get leadSpeakerName => _leadSpeakerName;
-  bool get hasLeadSpeaker => _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
+  bool get hasLeadSpeaker =>
+      _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
   bool get hasLeadSpeakerPortrait =>
       hasLeadSpeaker &&
       ((_leadSpeakerImgSrc != null && _leadSpeakerImgSrc!.isNotEmpty) ||
@@ -173,12 +176,15 @@ class EventHead {
   void setEventDate(final DateTime? newEventDate) => _eventDate = newEventDate;
   void removeEventDate() => _eventDate = null;
   void setLocation(final String newLocation) => _location = newLocation;
-  void setTagIDs(final List<String> tagIDs) => _tagIDs = List<String>.from(tagIDs);
+  void setTagIDs(final List<String> tagIDs) =>
+      _tagIDs = List<String>.from(tagIDs);
   void setCellGroupIDs(final List<String> cellGroupIDs) =>
       _cellGroupIDs = List<String>.from(cellGroupIDs);
   void setIsPeriodParent(final bool value) => _isPeriodParent = value;
-  void setInterestedCount(final int count) => _interestedCount = count < 0 ? 0 : count;
-  void setAttendeeCount(final int count) => _attendeeCount = count < 0 ? 0 : count;
+  void setInterestedCount(final int count) =>
+      _interestedCount = count < 0 ? 0 : count;
+  void setAttendeeCount(final int count) =>
+      _attendeeCount = count < 0 ? 0 : count;
 
   void setLeadSpeaker({String? uid, String? imgSrc, String? name}) {
     _leadSpeakerUID = uid;
@@ -192,7 +198,8 @@ class EventHead {
     _leadSpeakerName = null;
   }
 
-  bool containsMediaItem(final String src) => _media.map<String>((e) => e['src']!).toList().contains(src);
+  bool containsMediaItem(final String src) =>
+      _media.map<String>((e) => e['src']!).toList().contains(src);
 
   Map<String, dynamic> _mediaItem({
     required String type,
@@ -208,13 +215,23 @@ class EventHead {
     };
   }
 
-  void addMediaItem({required String type, required String src, String title = '', String thumbnail = ''}) {
-    _media.add(_mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
+  void addMediaItem(
+      {required String type,
+      required String src,
+      String title = '',
+      String thumbnail = ''}) {
+    _media.add(
+        _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
   }
 
   /// Inserts at the front so [getKeyGraphic] / card thumbnail pick this image first.
-  void prependMediaItem({required String type, required String src, String title = '', String thumbnail = ''}) {
-    _media.insert(0, _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
+  void prependMediaItem(
+      {required String type,
+      required String src,
+      String title = '',
+      String thumbnail = ''}) {
+    _media.insert(0,
+        _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
   }
 
   /// Replaces all key media with a single cover item (used by Change cover).
@@ -226,10 +243,12 @@ class EventHead {
   }) {
     _media
       ..clear()
-      ..add(_mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
+      ..add(
+          _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
   }
 
-  void removeMediaItem(final Map<String, dynamic> thisEntry) => _media.remove(thisEntry);
+  void removeMediaItem(final Map<String, dynamic> thisEntry) =>
+      _media.remove(thisEntry);
   void resetMediaWithOriginal(List<Map<String, dynamic>> original) {
     _media.clear();
     _media.addAll(original.map((e) => Map<String, dynamic>.from(e)));
@@ -237,23 +256,38 @@ class EventHead {
 
   void clearMedia() => _media.clear();
 
+  /// Past events keep the Recent chip only within this window; older dated
+  /// posts show Past. Relevancy sort uses the same window.
+  static const Duration recentStatusWindow = Duration(days: 7);
+
   // UI Helper Methods
-  bool get isUpcoming => _eventDate != null && _eventDate!.isAfter(DateTime.now());
-  bool get isRecent => _eventDate != null && _eventDate!.isBefore(DateTime.now());
+  bool get isUpcoming =>
+      _eventDate != null && _eventDate!.isAfter(DateTime.now());
+  bool get isRecent =>
+      _eventDate != null && _eventDate!.isBefore(DateTime.now());
+  bool get isRecentlyPast {
+    if (_eventDate == null) return false;
+    final now = DateTime.now();
+    if (!_eventDate!.isBefore(now)) return false;
+    return !_eventDate!.isBefore(now.subtract(recentStatusWindow));
+  }
+
   bool get hasEventDate => _eventDate != null;
   bool get hasMedia => _media.isNotEmpty;
 
   String get eventStatusText {
     if (_eventDate == null) return 'No date set';
     if (isUpcoming) return 'Upcoming';
-    if (isRecent) return 'Recent';
+    if (isRecentlyPast) return 'Recent';
+    if (isRecent) return 'Past';
     return 'Today';
   }
 
   Color get eventStatusColor {
     if (_eventDate == null) return Colors.grey;
     if (isUpcoming) return Colors.green;
-    if (isRecent) return Colors.orange;
+    if (isRecentlyPast) return Colors.orange;
+    if (isRecent) return Colors.grey;
     return Colors.blue;
   }
 

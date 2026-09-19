@@ -73,7 +73,7 @@ Depending on role, Personal may also show:
 
 - **People → Who's who** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
 - **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services**  
-- **Admin tools →** people / tags / locations management *(area admins)*  
+- **Admin tools →** people / tags / locations management *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional.  
 
 See [People & roles](people-and-roles.md).
 

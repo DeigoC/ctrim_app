@@ -522,5 +522,93 @@ void main() {
       expect(placementFor(layout, 1).laneIndex, 0);
       expect(placementFor(layout, 2).laneIndex, 1);
     });
+
+    test('overlapsCanvasInterval ignores coverage and empty gaps', () {
+      final layout = ScheduleTimelineLayout.build(roles: [
+        role(
+          id: 1,
+          title: 'Technical Sound',
+          start: DateTime(2026, 6, 14, 9, 0),
+          end: DateTime(2026, 6, 14, 12, 0),
+        ),
+        role(
+          id: 2,
+          title: 'Praise and Worship',
+          start: DateTime(2026, 6, 14, 10, 10),
+          end: DateTime(2026, 6, 14, 10, 35),
+        ),
+        role(
+          id: 3,
+          title: 'Word of God',
+          start: DateTime(2026, 6, 14, 10, 45),
+          end: DateTime(2026, 6, 14, 11, 45),
+        ),
+      ]);
+
+      expect(
+        layout.overlapsCanvasInterval(
+          DateTime(2026, 6, 14, 10, 35),
+          DateTime(2026, 6, 14, 10, 45),
+        ),
+        isFalse,
+      );
+      expect(
+        layout.overlapsCanvasInterval(
+          DateTime(2026, 6, 14, 9, 15),
+          DateTime(2026, 6, 14, 9, 45),
+        ),
+        isFalse,
+      );
+      expect(
+        layout.overlapsCanvasInterval(
+          DateTime(2026, 6, 14, 10, 20),
+          DateTime(2026, 6, 14, 10, 40),
+        ),
+        isTrue,
+      );
+      expect(
+        layout.overlapsCanvasInterval(
+          DateTime(2026, 6, 14, 10, 10),
+          DateTime(2026, 6, 14, 10, 35),
+          excludeRoleId: 2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('overlapsCanvasInterval counts overflowed running-order roles', () {
+      final layout = ScheduleTimelineLayout.build(
+        roles: [
+          role(
+            id: 1,
+            title: 'A',
+            start: DateTime(2026, 6, 14, 10, 0),
+            end: DateTime(2026, 6, 14, 11, 0),
+          ),
+          role(
+            id: 2,
+            title: 'B',
+            start: DateTime(2026, 6, 14, 10, 0),
+            end: DateTime(2026, 6, 14, 11, 0),
+          ),
+          role(
+            id: 3,
+            title: 'C',
+            start: DateTime(2026, 6, 14, 10, 0),
+            end: DateTime(2026, 6, 14, 11, 0),
+          ),
+        ],
+        laneCap: 2,
+      );
+
+      expect(layout.overflows, isNotEmpty);
+      expect(
+        layout.overlapsCanvasInterval(
+          DateTime(2026, 6, 14, 10, 15),
+          DateTime(2026, 6, 14, 10, 30),
+        ),
+        isTrue,
+      );
+    });
   });
 }

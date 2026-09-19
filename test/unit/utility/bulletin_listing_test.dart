@@ -132,7 +132,7 @@ void main() {
       final visible = apply([
         head(
           id: 'old-update',
-          eventDate: DateTime(2026, 8, 10),
+          eventDate: DateTime(2026, 8, 20),
           recentDate: DateTime(2026, 8, 21),
         ),
         head(
@@ -187,7 +187,8 @@ void main() {
           recentDate: DateTime(2026, 8, 21),
         ),
       ]);
-      expect(visible.map((e) => e.id), ['tomorrow', 'far-future', 'old-update']);
+      expect(
+          visible.map((e) => e.id), ['tomorrow', 'far-future', 'old-update']);
     });
 
     test('relevancy caps upcoming head at three before recent past', () {
@@ -195,7 +196,7 @@ void main() {
         for (var i = 1; i <= 10; i++)
           head(id: 'u$i', eventDate: DateTime(2026, 8, 22 + i, 10)),
         head(id: 'yesterday', eventDate: DateTime(2026, 8, 21, 10)),
-        head(id: 'last-week', eventDate: DateTime(2026, 8, 15, 10)),
+        head(id: 'two-days-ago', eventDate: DateTime(2026, 8, 20, 10)),
       ];
       final ids = apply(heads).map((e) => e.id).toList();
       expect(ids.take(8), [
@@ -203,12 +204,51 @@ void main() {
         'u2',
         'u3',
         'yesterday',
-        'last-week',
+        'two-days-ago',
         'u4',
         'u5',
         'u6',
       ]);
       expect(ids.indexOf('yesterday'), lessThan(ids.indexOf('u4')));
+    });
+
+    test('relevancy caps recent past at three before remaining upcoming', () {
+      final heads = [
+        for (var i = 1; i <= 5; i++)
+          head(id: 'u$i', eventDate: DateTime(2026, 8, 22 + i, 10)),
+        for (var i = 1; i <= 8; i++)
+          head(id: 'p$i', eventDate: DateTime(2026, 8, 22 - i, 10)),
+      ];
+      final ids = apply(heads).map((e) => e.id).toList();
+      expect(ids.take(8), [
+        'u1',
+        'u2',
+        'u3',
+        'p1',
+        'p2',
+        'p3',
+        'u4',
+        'u5',
+      ]);
+      expect(ids.indexOf('p4'), greaterThan(ids.indexOf('u5')));
+    });
+
+    test('relevancy keeps posts older than a week out of the recent-past boost',
+        () {
+      final visible = apply([
+        head(id: 'tomorrow', eventDate: DateTime(2026, 8, 23, 10)),
+        head(id: 'yesterday', eventDate: DateTime(2026, 8, 21, 10)),
+        head(
+          id: 'eight-days-ago',
+          eventDate: DateTime(2026, 8, 14, 10),
+          recentDate: DateTime(2026, 8, 22, 12),
+        ),
+      ]);
+      expect(visible.map((e) => e.id), [
+        'tomorrow',
+        'yesterday',
+        'eight-days-ago',
+      ]);
     });
 
     test('soonest puts upcoming before past and undated last', () {
@@ -221,7 +261,8 @@ void main() {
         ],
         sort: BulletinSort.eventDateSoonest,
       );
-      expect(visible.map((e) => e.id), ['sooner', 'later', 'ancient', 'undated']);
+      expect(
+          visible.map((e) => e.id), ['sooner', 'later', 'ancient', 'undated']);
     });
 
     test('latest puts recent past before upcoming, not far future first', () {
@@ -311,7 +352,8 @@ void main() {
       expect(BulletinSort.fromStorage(null), BulletinSort.relevancy);
       expect(BulletinSort.fromStorage('nope'), BulletinSort.relevancy);
       expect(BulletinTimeFilter.fromStorage('past'), BulletinTimeFilter.past);
-      expect(BulletinTimeFilter.fromStorage('undated'), BulletinTimeFilter.undated);
+      expect(BulletinTimeFilter.fromStorage('undated'),
+          BulletinTimeFilter.undated);
       expect(BulletinSort.fromStorage('recentDate'), BulletinSort.recentDate);
       expect(BulletinTimeFilter.fromStorage('x'), BulletinTimeFilter.all);
     });

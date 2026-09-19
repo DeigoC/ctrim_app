@@ -272,42 +272,59 @@ class DialogManager {
   }
 
   /// Shows a modern confirmation dialog with customizable content and actions
-  /// Ask whether changing a schedule item should push later items forward.
-  /// Returns null if the user cancels.
+  /// Ask whether an overlapping add/edit should push later running-order items.
+  ///
+  /// Returns `false` (keep times) or `true` (shift). Null if the user cancels.
+  /// Keep times is the default visual choice — the schedule already allows
+  /// parallel items.
   static Future<bool?> askShiftFollowingScheduleItems({
     required BuildContext context,
     required int affectedCount,
+    Duration? shiftBy,
   }) async {
     HapticFeedback.lightImpact();
     final String itemLabel =
         affectedCount == 1 ? '1 later item' : '$affectedCount later items';
+    final int minutes = shiftBy?.inMinutes ?? 0;
+    final String pushSubtitle = minutes > 0
+        ? 'Move $itemLabel back $minutes minutes to make room.'
+        : 'Move $itemLabel later to make room.';
 
     return showDialog<bool>(
       context: context,
       builder: (context) {
         return AppDialog(
           icon: Icons.schedule,
-          title: 'Update schedule timing?',
-          message: 'This change affects $itemLabel.\n\n'
-              'Shift following items to keep the sequence, or keep their times '
-              '(items may overlap).',
-          actions: Column(
+          title: 'Keep other times?',
+          messageAlign: TextAlign.center,
+          message:
+              'This slot overlaps items already on the schedule. Other items '
+              'can stay put, or later items can move to make room.',
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Shift following'),
+              _ScheduleTimingChoiceCard(
+                icon: Icons.call_split,
+                title: 'Keep times',
+                subtitle:
+                    'Recommended. Other items stay put. This can run at the '
+                    'same time.',
+                emphasized: true,
+                onPressed: () => Navigator.of(context).pop(false),
               ),
               const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Keep times'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+              _ScheduleTimingChoiceCard(
+                icon: Icons.low_priority,
+                title: 'Push later items',
+                subtitle: pushSubtitle,
+                emphasized: false,
+                onPressed: () => Navigator.of(context).pop(true),
               ),
             ],
+          ),
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(context).pop(),
+            cancelLabel: 'Cancel',
           ),
         );
       },
@@ -669,6 +686,83 @@ class _ProgressTaskDialogState extends State<_ProgressTaskDialog> {
       completedSteps: _completedSteps,
       totalSteps: _totalSteps,
       stepped: widget.stepped,
+    );
+  }
+}
+
+/// One option in [DialogManager.askShiftFollowingScheduleItems].
+class _ScheduleTimingChoiceCard extends StatelessWidget {
+  const _ScheduleTimingChoiceCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.emphasized,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool emphasized;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final background = emphasized
+        ? colorScheme.primaryContainer
+        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+    final titleColor =
+        emphasized ? colorScheme.onPrimaryContainer : colorScheme.onSurface;
+    final subtitleColor = emphasized
+        ? colorScheme.onPrimaryContainer.withValues(alpha: 0.86)
+        : colorScheme.onSurfaceVariant;
+    final border =
+        emphasized ? colorScheme.primary : colorScheme.outlineVariant;
+
+    return Material(
+      color: background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: border),
+      ),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: titleColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: subtitleColor,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

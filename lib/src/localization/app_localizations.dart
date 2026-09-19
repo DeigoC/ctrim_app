@@ -640,11 +640,29 @@ abstract class AppLocalizations {
   /// **'Tag name'**
   String get manageUserTagsNameLabel;
 
-  /// Label for the optional tag color hex field
+  /// Label for the optional tag color picker
   ///
   /// In en, this message translates to:
   /// **'Color (optional)'**
   String get manageUserTagsColorLabel;
+
+  /// Clears the optional tag color
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get catalogColorNone;
+
+  /// Semantic label for the color picker hue bar
+  ///
+  /// In en, this message translates to:
+  /// **'Hue'**
+  String get catalogColorHue;
+
+  /// Semantic label for the saturation and brightness square
+  ///
+  /// In en, this message translates to:
+  /// **'Shade'**
+  String get catalogColorShade;
 
   /// Create a new tag
   ///
@@ -802,7 +820,7 @@ abstract class AppLocalizations {
   /// **'Tag name'**
   String get managePostTagsNameLabel;
 
-  /// Label for the optional post tag color hex field
+  /// Label for the optional post tag color picker
   ///
   /// In en, this message translates to:
   /// **'Color (optional)'**

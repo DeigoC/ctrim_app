@@ -71,7 +71,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Area admin
 
-**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, cell groups, and extra pages on a church hub. Controls will continue to be gated by area assignment as that model lands fully.
+**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, cell groups, and extra pages on a church hub. Team and post tags get a colour when added (you can change or clear it). Controls will continue to be gated by area assignment as that model lands fully.
 
 ## Site admin *(planned)*
 
