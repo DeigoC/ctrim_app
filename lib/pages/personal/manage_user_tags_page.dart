@@ -107,6 +107,9 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       colorLabel: l10n.manageUserTagsColorLabel,
       colorHint: '#6B4EAA',
       initialColor: existing?.color,
+      takenColors: Provider.of<AppContext>(context, listen: false)
+          .allTags
+          .map((tag) => tag.color),
     );
     if (result == null || !mounted) return;
 

@@ -79,7 +79,12 @@ void main() {
           'Subtitle': 'From Hive',
           'Location': 'Belfast',
           'Media': [
-            {'src': 'img.jpg', 'type': 'img', 'title': 'Cover', 'thumbnailSrc': null},
+            {
+              'src': 'img.jpg',
+              'type': 'img',
+              'title': 'Cover',
+              'thumbnailSrc': null
+            },
           ],
           'RecentDate': now.millisecondsSinceEpoch,
           'EventDate': eventDate.millisecondsSinceEpoch,
@@ -100,7 +105,8 @@ void main() {
       });
 
       test('toCacheJson round-trips through fromMap', () {
-        final head = EventHead(id: 'round-1', title: 'Talk', subtitle: 'Sun', location: 'Belfast');
+        final head = EventHead(
+            id: 'round-1', title: 'Talk', subtitle: 'Sun', location: 'Belfast');
         final recent = DateTime(2024, 3, 1, 12);
         final eventDate = DateTime(2024, 3, 10, 18);
         head.setRecentDate(recent);
@@ -192,7 +198,12 @@ void main() {
           'Subtitle': '',
           'Location': 'Belfast',
           'Media': [
-            {'src': 'img1.jpg', 'type': 'img', 'title': 'Photo 1', 'thumbnailSrc': null},
+            {
+              'src': 'img1.jpg',
+              'type': 'img',
+              'title': 'Photo 1',
+              'thumbnailSrc': null
+            },
           ],
           'RecentDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
           'EventDate': null,
@@ -286,10 +297,20 @@ void main() {
         expect(head.eventStatusText, 'Upcoming');
       });
 
-      test('eventStatusText returns "Recent" for past events', () {
+      test('eventStatusText returns "Recent" for past events within a week',
+          () {
         final head = EventHead(id: 'e1');
         head.setEventDate(DateTime.now().subtract(const Duration(days: 3)));
         expect(head.eventStatusText, 'Recent');
+        expect(head.isRecentlyPast, true);
+      });
+
+      test('eventStatusText returns "Past" for older dated events', () {
+        final head = EventHead(id: 'e1');
+        head.setEventDate(DateTime.now().subtract(const Duration(days: 10)));
+        expect(head.eventStatusText, 'Past');
+        expect(head.isRecentlyPast, false);
+        expect(head.isRecent, true);
       });
 
       test('eventStatusColor returns grey when no event date', () {
@@ -309,6 +330,12 @@ void main() {
         expect(head.eventStatusColor, Colors.orange);
       });
 
+      test('eventStatusColor returns grey for older past events', () {
+        final head = EventHead(id: 'e1');
+        head.setEventDate(DateTime.now().subtract(const Duration(days: 10)));
+        expect(head.eventStatusColor, Colors.grey);
+      });
+
       test('timeUntilEvent returns null when no event date', () {
         final head = EventHead(id: 'e1');
         expect(head.timeUntilEvent, isNull);
@@ -325,7 +352,8 @@ void main() {
         expect(head.formattedTimeUntilEvent, '');
       });
 
-      test('formattedTimeUntilEvent returns "In X days" for upcoming events', () {
+      test('formattedTimeUntilEvent returns "In X days" for upcoming events',
+          () {
         final head = EventHead(id: 'e1');
         head.setEventDate(DateTime.now().add(const Duration(days: 5)));
         expect(head.formattedTimeUntilEvent, startsWith('In '));
@@ -389,7 +417,12 @@ void main() {
         final head = EventHead(id: 'e1');
         head.addMediaItem(type: 'img', src: 'old.jpg');
         final original = [
-          {'src': 'restored.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null}
+          {
+            'src': 'restored.jpg',
+            'type': 'img',
+            'title': '',
+            'thumbnailSrc': null
+          }
         ];
         head.resetMediaWithOriginal(original);
 
@@ -419,16 +452,24 @@ void main() {
         final head = EventHead(id: 'e1');
         head.addMediaItem(type: 'img', src: 'old-a.jpg');
         head.addMediaItem(type: 'img', src: 'old-b.jpg');
-        head.replaceKeyGraphic(type: 'img', src: 'cover.jpg', title: 'New cover');
+        head.replaceKeyGraphic(
+            type: 'img', src: 'cover.jpg', title: 'New cover');
 
         expect(head.mediaCount, 1);
         expect(head.getKeyGraphic(), 'cover.jpg');
         expect(head.toJson()['Media'], [
-          {'type': 'img', 'src': 'cover.jpg', 'title': 'New cover', 'thumbnailSrc': null},
+          {
+            'type': 'img',
+            'src': 'cover.jpg',
+            'title': 'New cover',
+            'thumbnailSrc': null
+          },
         ]);
       });
 
-      test('resetMediaWithOriginal deep-copies so later mutations do not alter the snapshot', () {
+      test(
+          'resetMediaWithOriginal deep-copies so later mutations do not alter the snapshot',
+          () {
         final head = EventHead(id: 'e1');
         final original = [
           {'src': 'snap.jpg', 'type': 'img', 'title': 't', 'thumbnailSrc': null}
@@ -484,7 +525,8 @@ void main() {
 
     group('toJson', () {
       test('serialises to a map with correct keys', () {
-        final head = EventHead(id: 'e1', title: 'Test', subtitle: 'Sub', location: 'Belfast');
+        final head = EventHead(
+            id: 'e1', title: 'Test', subtitle: 'Sub', location: 'Belfast');
 
         final json = head.toJson() as Map<String, dynamic>;
 

@@ -123,6 +123,37 @@ class ScheduleTimelineLayout {
 
   bool get hasOverlaps => placements.any((final p) => p.laneCount > 1);
 
+  /// True when [start]–[end] sits on a running-order block (including overflow).
+  ///
+  /// Coverage-band roles are ignored — they already share the whole event and
+  /// should not count as a busy slot when adding into a visual gap.
+  bool overlapsCanvasInterval(
+    DateTime start,
+    DateTime end, {
+    int? excludeRoleId,
+  }) {
+    bool overlaps(final DateTime otherStart, final DateTime otherEnd) {
+      return otherStart.isBefore(end) && otherEnd.isAfter(start);
+    }
+
+    for (final placement in placements) {
+      if (excludeRoleId != null && placement.roleId == excludeRoleId) {
+        continue;
+      }
+      if (overlaps(placement.start, placement.end)) return true;
+    }
+    for (final overflow in overflows) {
+      for (final role in overflow.roles) {
+        if (excludeRoleId != null && role['id'] == excludeRoleId) continue;
+        final roleStart = role['start'] as DateTime?;
+        final roleEnd = role['end'] as DateTime?;
+        if (roleStart == null || roleEnd == null) continue;
+        if (overlaps(roleStart, roleEnd)) return true;
+      }
+    }
+    return false;
+  }
+
   double get totalMinutes {
     final start = dayStart;
     final end = dayEnd;

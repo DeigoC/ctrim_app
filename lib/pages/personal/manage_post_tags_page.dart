@@ -109,6 +109,9 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
       colorLabel: l10n.managePostTagsColorLabel,
       colorHint: '#6B4EAA',
       initialColor: existing?.color,
+      takenColors: Provider.of<AppContext>(context, listen: false)
+          .allPostTags
+          .map((tag) => tag.color),
     );
     if (result == null || !mounted) return;
 

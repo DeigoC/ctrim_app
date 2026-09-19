@@ -78,8 +78,12 @@ class BulletinListing {
   /// How many upcoming events lead the relevancy feed.
   static const int relevancyUpcomingHeadMax = 3;
 
-  /// Recent past events shown right after the upcoming head.
-  static const Duration relevancyRecentPastWindow = Duration(days: 14);
+  /// How many recent-past events sit right after the upcoming head.
+  static const int relevancyRecentPastHeadMax = 3;
+
+  /// Recent past events eligible for the relevancy boost (and the Recent chip).
+  static const Duration relevancyRecentPastWindow =
+      EventHead.recentStatusWindow;
 
   static List<EventHead> apply({
     required Iterable<EventHead> heads,
@@ -186,7 +190,7 @@ class BulletinListing {
     return sorted;
   }
 
-  /// Next few upcoming events, then recent past, then everything else.
+  /// Next few upcoming events, then a few recent past, then everything else.
   static List<EventHead> _sortRelevancy(
     final List<EventHead> heads,
     final DateTime now,
@@ -217,11 +221,14 @@ class BulletinListing {
 
     final upcomingHead = upcoming.take(relevancyUpcomingHeadMax);
     final upcomingTail = upcoming.skip(relevancyUpcomingHeadMax);
+    final recentPastHead = recentPast.take(relevancyRecentPastHeadMax);
+    final recentPastTail = recentPast.skip(relevancyRecentPastHeadMax);
 
     return [
       ...upcomingHead,
-      ...recentPast,
+      ...recentPastHead,
       ...upcomingTail,
+      ...recentPastTail,
       ...otherPast,
       ...undated,
     ];

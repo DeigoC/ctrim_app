@@ -349,6 +349,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsColorLabel => 'Color (optional)';
 
   @override
+  String get catalogColorNone => 'None';
+
+  @override
+  String get catalogColorHue => 'Hue';
+
+  @override
+  String get catalogColorShade => 'Shade';
+
+  @override
   String get manageUserTagsCreate => 'Create';
 
   @override

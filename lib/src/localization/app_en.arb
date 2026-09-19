@@ -438,7 +438,19 @@
   },
   "manageUserTagsColorLabel": "Color (optional)",
   "@manageUserTagsColorLabel": {
-    "description": "Label for the optional tag color hex field"
+    "description": "Label for the optional tag color picker"
+  },
+  "catalogColorNone": "None",
+  "@catalogColorNone": {
+    "description": "Clears the optional tag color"
+  },
+  "catalogColorHue": "Hue",
+  "@catalogColorHue": {
+    "description": "Semantic label for the color picker hue bar"
+  },
+  "catalogColorShade": "Shade",
+  "@catalogColorShade": {
+    "description": "Semantic label for the saturation and brightness square"
   },
   "manageUserTagsCreate": "Create",
   "@manageUserTagsCreate": {
@@ -556,7 +568,7 @@
   },
   "managePostTagsColorLabel": "Color (optional)",
   "@managePostTagsColorLabel": {
-    "description": "Label for the optional post tag color hex field"
+    "description": "Label for the optional post tag color picker"
   },
   "managePostTagsStreamKindLabel": "Notify stream kind (optional)",
   "@managePostTagsStreamKindLabel": {

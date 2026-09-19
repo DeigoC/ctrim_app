@@ -14,6 +14,7 @@ import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/schedule_duration_picker.dart';
 import '../../widgets/schedule_start_picker.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_timeline_layout.dart';
 
 /// Add or edit a program role. Pass [programEntry] when editing an existing item.
 class EventProgramPage extends StatefulWidget {
@@ -678,25 +679,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Future<void> _saveAdd() async {
-    bool shiftFollowing = false;
-    final int affectedCount =
-        widget.eventContext.program.countRolesStartingAtOrAfter(_start!);
-    if (affectedCount > 0) {
-      final bool? choice = await DialogManager.askShiftFollowingScheduleItems(
-        context: context,
-        affectedCount: affectedCount,
-      );
-      if (choice == null || !mounted) return;
-      shiftFollowing = choice;
-    } else {
-      final bool confirmed = await DialogManager.showConfirmationDialog(
-        context: context,
-        title: 'Save Program Details',
-        content: 'Are you sure the details are correct?',
-        confirmText: 'Save',
-      );
-      if (!confirmed || !mounted) return;
-    }
+    final bool? shiftFollowing = await _resolveShiftFollowing(
+      start: _start!,
+      end: _end!,
+      shiftThreshold: _start!,
+    );
+    if (shiftFollowing == null || !mounted) return;
 
     _addProgramRoleToEventContext(shiftFollowing: shiftFollowing);
     widget.eventContext.allowSavingOfTheEdit();
@@ -734,32 +722,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
     bool shiftFollowing = false;
     if (!_areTimesTheSame()) {
       final DateTime oldEnd = role['end'] as DateTime;
-      final int affectedCount = widget.eventContext.program
-          .countRolesStartingAtOrAfter(oldEnd,
-              excludeRoleId: role['id'] as int);
-      if (affectedCount > 0) {
-        final bool? choice = await DialogManager.askShiftFollowingScheduleItems(
-          context: context,
-          affectedCount: affectedCount,
-        );
-        if (choice == null || !mounted) return;
-        shiftFollowing = choice;
-      } else {
-        final bool confirmed = await DialogManager.showConfirmationDialog(
-          context: context,
-          title: 'Save Program Details',
-          content: 'Are you sure the details are correct?',
-          confirmText: 'Save',
-        );
-        if (!confirmed || !mounted) return;
-      }
-    } else {
-      final bool confirmed = await DialogManager.showConfirmationDialog(
-        context: context,
-        title: 'Save Program Details',
-        content: 'Are you sure the details are correct?',
-        confirmText: 'Save',
+      final bool? choice = await _resolveShiftFollowing(
+        start: _start!,
+        end: _end!,
+        shiftThreshold: oldEnd,
+        excludeRoleId: role['id'] as int,
       );
+      if (choice == null || !mounted) return;
+      shiftFollowing = choice;
+    } else {
+      final bool confirmed = await _confirmSaveDetails();
       if (!confirmed || !mounted) return;
     }
 
@@ -767,6 +739,55 @@ class _EventProgramPageState extends State<EventProgramPage> {
     widget.eventContext.allowSavingOfTheEdit();
     _isSaved = true;
     _popRouteAfterAllowing();
+  }
+
+  /// Null means cancel. `false` keeps other times; `true` shifts later items.
+  ///
+  /// The shift prompt only appears when the new interval sits on a running-order
+  /// block (not a visual gap, and not only an all-event coverage role).
+  Future<bool?> _resolveShiftFollowing({
+    required DateTime start,
+    required DateTime end,
+    required DateTime shiftThreshold,
+    int? excludeRoleId,
+  }) async {
+    final program = widget.eventContext.program;
+    final int affectedCount = program.countRolesStartingAtOrAfter(
+      shiftThreshold,
+      excludeRoleId: excludeRoleId,
+    );
+    final layout = ScheduleTimelineLayout.build(
+      roles: program.roles,
+      laneCap: ScheduleTimelineLayout.wideLaneCap,
+      finishTime: program.finishTime,
+    );
+    final bool overlapsRunningOrder = affectedCount > 0 &&
+        layout.overlapsCanvasInterval(
+          start,
+          end,
+          excludeRoleId: excludeRoleId,
+        );
+
+    if (overlapsRunningOrder) {
+      return DialogManager.askShiftFollowingScheduleItems(
+        context: context,
+        affectedCount: affectedCount,
+        shiftBy: end.difference(shiftThreshold),
+      );
+    }
+
+    final bool confirmed = await _confirmSaveDetails();
+    if (!confirmed) return null;
+    return false;
+  }
+
+  Future<bool> _confirmSaveDetails() {
+    return DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Save Program Details',
+      content: 'Are you sure the details are correct?',
+      confirmText: 'Save',
+    );
   }
 
   void _saveAllChanges({required bool shiftFollowing}) {
