@@ -734,6 +734,15 @@ class EventContext {
   void addRoleDeletionTitle(final int id, final String title) =>
       _deletedRoleTitle[id] = title;
 
+  /// Clears pending role add/remove tracking so a full schedule replace can
+  /// record a fresh diff.
+  void resetRoleDiffTracking() {
+    if (_roleAdditions is UnmodifiableMapView) return;
+    _roleAdditions.clear();
+    _roleRemovals.clear();
+    _deletedRoleTitle.clear();
+  }
+
   void removeRoleAdditionNotification(final int id) =>
       _roleAdditions.remove(id);
 

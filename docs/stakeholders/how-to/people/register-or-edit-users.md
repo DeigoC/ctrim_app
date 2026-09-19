@@ -37,9 +37,6 @@
 - [People & roles](../../people-and-roles.md)  
 - [Personal](../../personal.md)
 
-## Media checklist
+## Media
 
-- [ ] Screenshot: People directory / Serving and location filters  
-- [ ] Screenshot: register form  
-- [ ] Screenshot: placeholder create from picker  
-- [ ] Optional GIF: register → appear in list  
+Shots for this guide: [screenshot checklist → People](../screenshot-checklist.md#people).

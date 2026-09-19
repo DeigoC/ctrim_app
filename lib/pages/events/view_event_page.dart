@@ -9,6 +9,7 @@ import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -16,6 +17,7 @@ import '../../utility/cache/local_data_manager.dart';
 import '../../utility/notifications/notification_topics.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/post_template_mapper.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_edit_sheet.dart';
 import '../../widgets/posts/post_metadata_section.dart';
@@ -31,6 +33,7 @@ import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
 import 'select_template_cover_page.dart';
+import 'select_schedule_preset_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
 import '../personal/select_users_page.dart';
@@ -728,6 +731,7 @@ class _ViewEventPageState extends State<ViewEventPage>
         onEditTitle: _onEditTitleFromSheet,
         onAddSchedule: _onAddScheduleItem,
         onArrangeSchedule: _onArrangeSchedule,
+        onApplySchedulePreset: _onApplySchedulePresetFromSheet,
         onEditMedia: _onEditMediaClick,
         onChangeCover: _onChangeCoverFromSheet,
         onManageContributors: _onManageContributorsFromSheet,
@@ -835,6 +839,53 @@ class _ViewEventPageState extends State<ViewEventPage>
       final scheduleIndex = _scheduleTabIndex;
       if (scheduleIndex != null) _tabController.animateTo(scheduleIndex);
     });
+  }
+
+  Future<void> _onApplySchedulePresetFromSheet() async {
+    Navigator.of(context).pop();
+    final selected =
+        await Navigator.push<({PostTemplate template, SchedulePreset preset})>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectSchedulePresetPage(
+          preferredTitle: _eventContext.head.title,
+          preferredLocation: _eventContext.head.location,
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    final templateTitle = selected.template.title;
+    final presetName = selected.preset.name;
+    final confirm = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Replace the running order?',
+      content:
+          'This replaces the current schedule with “$presetName” from “$templateTitle”. '
+          'Start and finish times update. Attendance and expected people stay. '
+          'Save the post to keep the change.',
+      confirmText: 'Replace',
+      icon: Icons.view_timeline_outlined,
+    );
+    if (!confirm || !mounted) return;
+
+    PostTemplateMapper.applySchedulePreset(
+      _eventContext,
+      selected.preset,
+      eventDate: _eventContext.head.eventDate,
+      trackRoleDiff: true,
+      applyEventWindow: _eventContext.head.eventDate != null,
+    );
+    _eventContext.allowSavingOfTheEdit();
+    setState(() {});
+    final scheduleIndex = _scheduleTabIndex;
+    if (scheduleIndex != null) _tabController.animateTo(scheduleIndex);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            'Schedule updated to “$presetName” — save the post to keep the change'),
+      ),
+    );
   }
 
   void _onEditMediaClick() {

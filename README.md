@@ -12,6 +12,8 @@ Product-facing documentation (plain language) lives in [`docs/stakeholders/`](do
 
 **https://deigoc.github.io/ctrim_app/**
 
+Screenshots to take: [`docs/stakeholders/how-to/screenshot-checklist.md`](docs/stakeholders/how-to/screenshot-checklist.md).
+
 Preview locally:
 
 ```bash

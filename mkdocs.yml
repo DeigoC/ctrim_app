@@ -6,25 +6,36 @@ site_url: https://deigoc.github.io/ctrim_app/
 # Only publish audience-facing docs — never agent handoffs under docs/*.md
 docs_dir: docs/stakeholders
 
+# Livereload: custom_dir is outside docs_dir
+watch:
+  - docs/stakeholders
+  - docs/stakeholders-theme
+
 repo_url: https://github.com/DeigoC/ctrim_app
 repo_name: DeigoC/ctrim_app
 edit_uri: edit/main/docs/stakeholders/
 
 theme:
   name: material
+  custom_dir: docs/stakeholders-theme
   language: en
+  font:
+    text: DM Sans
+    code: Roboto Mono
+  icon:
+    logo: material/account-group
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: teal
-      accent: amber
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
-      accent: amber
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -53,10 +64,22 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra_css:
+  - stylesheets/extra.css
 
 # Keep GitHub-only / agent notes out of the published site
 exclude_docs: |
   README.md
+
+# Authoring aids — built, but not in the public nav
+not_in_nav: |
+  /how-to/screenshot-checklist.md
 
 nav:
   - Home: index.md
@@ -83,6 +106,9 @@ nav:
   - Roadmap & priorities: roadmap.md
 
 extra:
+  generator: false
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/DeigoC/ctrim_app
+
+copyright: CTRIM Community — an open passion project

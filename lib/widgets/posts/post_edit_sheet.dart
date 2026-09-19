@@ -13,6 +13,7 @@ class PostEditSheet extends StatelessWidget {
     required this.onEditTitle,
     required this.onAddSchedule,
     required this.onArrangeSchedule,
+    required this.onApplySchedulePreset,
     required this.onEditMedia,
     required this.onChangeCover,
     required this.onManageContributors,
@@ -31,6 +32,7 @@ class PostEditSheet extends StatelessWidget {
   final VoidCallback onEditTitle;
   final VoidCallback onAddSchedule;
   final VoidCallback onArrangeSchedule;
+  final VoidCallback onApplySchedulePreset;
   final VoidCallback onEditMedia;
   final VoidCallback onChangeCover;
   final VoidCallback onManageContributors;
@@ -79,6 +81,13 @@ class PostEditSheet extends StatelessWidget {
               title: AppLocalizations.of(context)!.scheduleArrangeTitle,
               subtitle: AppLocalizations.of(context)!.scheduleArrangeSubtitle,
               onTap: onArrangeSchedule,
+            ),
+            ActionSheetOption(
+              icon: Icons.view_timeline_outlined,
+              color: Colors.teal,
+              title: 'Apply schedule preset',
+              subtitle: 'Replace the running order from a template',
+              onTap: onApplySchedulePreset,
             ),
             ActionSheetOption(
               icon: Icons.image_outlined,

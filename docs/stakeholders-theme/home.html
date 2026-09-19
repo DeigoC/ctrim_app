@@ -1,0 +1,34 @@
+{% extends "main.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <style>
+    /* Frontmatter title is "Home" — the hero already names the product. */
+    article.md-content__inner > h1:first-of-type {
+      display: none;
+    }
+  </style>
+{% endblock %}
+
+{% block tabs %}
+  {{ super() }}
+  <section class="mdx-container">
+    <div class="md-grid md-typeset">
+      <div class="mdx-hero">
+        <div class="mdx-hero__content">
+          <h1>CTRIM Community</h1>
+          <p>
+            What’s on the bulletin, longer information, your schedule, and cell groups —
+            in the browser, with optional alerts by location.
+          </p>
+          <a href="{{ 'overview/' | url }}" class="md-button md-button--primary">
+            Product overview
+          </a>
+          <a href="{{ 'how-to/' | url }}" class="md-button">
+            How-to guides
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

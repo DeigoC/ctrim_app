@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
-import '../../../models/event/event_program.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/notifications/broadcast_audience.dart';
 import '../../../utility/dialog_manager.dart';
@@ -11,11 +10,13 @@ import '../../../utility/event_context.dart';
 import '../../../utility/cache/local_data_manager.dart';
 import '../../../utility/network_image_helper.dart';
 import '../../../utility/notifications/notification_topics.dart';
+import '../../../utility/post_template_mapper.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/common/app_dialog.dart';
 import '../../../widgets/posts/add_header_meta_tab_body.dart';
+import '../../../widgets/posts/schedule_preset_picker.dart';
 import '../../../widgets/posts/template_edit_sheet.dart';
 import '../../../widgets/posts/template_log_dialog.dart';
 import '../../../widgets/posts/view_all_programs.dart';
@@ -49,6 +50,10 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late List<Map<String, dynamic>> _headMediaPool, _bodyMediaPool;
   late PostTemplateCategory _category;
   late final PostTemplateCategory _initialCategory;
+  late List<SchedulePreset> _presets;
+  late final String _initialPresetSignature;
+  int _selectedPresetIndex = 0;
+  bool _presetsDirty = false;
   bool _allowPop = false;
   bool _isSaved = false;
 
@@ -119,6 +124,10 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       locationName: widget.oldTemplate.location,
     );
     _initialDefaultNotifyLocation = _defaultNotifyLocation;
+    _presets = widget.oldTemplate.schedulePresets.isEmpty
+        ? [SchedulePreset.emptyDefault()]
+        : widget.oldTemplate.schedulePresets.map((p) => p.copy()).toList();
+    _initialPresetSignature = _presetSignature(_presets);
     super.initState();
   }
 
@@ -165,8 +174,13 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       return true;
     if (_category != _initialCategory) return true;
     if (_defaultNotifyLocation != _initialDefaultNotifyLocation) return true;
+    if (_presetsDirty) return true;
+    if (_presetSignature(_presets) != _initialPresetSignature) return true;
     return false;
   }
+
+  String _presetSignature(List<SchedulePreset> presets) =>
+      presets.map((p) => '${p.id}:${p.name}').join('|');
 
   bool _sameStringLists(List<String> a, List<String> b) {
     if (a.length != b.length) return false;
@@ -230,18 +244,191 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           eventContext: widget.eventContext,
           updateBody: () => _updateBody(),
           currentUID: _appContext.currentUser.id),
-      ViewAllPrograms(
-        key: ValueKey(widget.eventContext.program.scheduleLayoutSignature),
-        eventContext: widget.eventContext,
-        onProgramChanged: () {
-          setState(() {});
-          _updateBody();
-        },
-        isAddingPost: true,
-        timeOnlySchedule: true,
+      Column(
+        children: [
+          _buildSchedulePresetBar(),
+          Expanded(
+            child: ViewAllPrograms(
+              key: ValueKey(
+                  '${_currentPreset.id}-${widget.eventContext.program.scheduleLayoutSignature}'),
+              eventContext: widget.eventContext,
+              onProgramChanged: () {
+                setState(() {});
+                _updateBody();
+              },
+              isAddingPost: true,
+              timeOnlySchedule: true,
+            ),
+          ),
+        ],
       ),
       _buildMediaTab(),
     ]);
+  }
+
+  SchedulePreset get _currentPreset => _presets[_selectedPresetIndex];
+
+  Widget _buildSchedulePresetBar() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: ListTile(
+          leading:
+              Icon(Icons.view_timeline_outlined, color: colorScheme.primary),
+          title: Text(
+            _currentPreset.name,
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(schedulePresetSubtitle(_currentPreset)),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Duplicate schedule preset',
+                icon: const Icon(Icons.copy_outlined),
+                onPressed: _onDuplicatePreset,
+              ),
+              PopupMenuButton<_PresetMenuAction>(
+                tooltip: 'Schedule preset actions',
+                onSelected: _onPresetMenuAction,
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: _PresetMenuAction.add,
+                    child: Text('Add empty preset'),
+                  ),
+                  const PopupMenuItem(
+                    value: _PresetMenuAction.rename,
+                    child: Text('Rename'),
+                  ),
+                  if (_presets.length > 1)
+                    const PopupMenuItem(
+                      value: _PresetMenuAction.delete,
+                      child: Text('Delete'),
+                    ),
+                  if (_presets.length > 1)
+                    const PopupMenuItem(
+                      value: _PresetMenuAction.switchPreset,
+                      child: Text('Switch preset'),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          onTap: _presets.length > 1 ? _onSwitchPreset : _onRenamePreset,
+        ),
+      ),
+    );
+  }
+
+  void _flushSelectedPreset() {
+    _presets[_selectedPresetIndex] = PostTemplateMapper.captureProgramAsPreset(
+      existing: _currentPreset,
+      eventContext: widget.eventContext,
+    );
+  }
+
+  void _loadPresetAt(int index) {
+    _selectedPresetIndex = index;
+    PostTemplateMapper.loadSchedulePresetForEditing(
+      widget.eventContext,
+      _presets[index],
+    );
+    widget.eventContext.program.ensureUniqueRoleIds();
+  }
+
+  Future<void> _onSwitchPreset() async {
+    _flushSelectedPreset();
+    final selected = await showSchedulePresetPicker(
+      context: context,
+      presets: _presets,
+      selectedId: _currentPreset.id,
+      title: 'Schedule preset',
+      subtitle: 'Edit a different running order on this template',
+    );
+    if (!mounted || selected == null) return;
+    final index = _presets.indexWhere((p) => p.id == selected.id);
+    if (index < 0 || index == _selectedPresetIndex) return;
+    setState(() => _loadPresetAt(index));
+  }
+
+  Future<void> _onDuplicatePreset() async {
+    _flushSelectedPreset();
+    final copy = _currentPreset.copy(
+      id: SchedulePreset.newId(),
+      name: 'Copy of ${_currentPreset.name}',
+    );
+    setState(() {
+      _presets.insert(_selectedPresetIndex + 1, copy);
+      _presetsDirty = true;
+      _loadPresetAt(_selectedPresetIndex + 1);
+    });
+  }
+
+  Future<void> _onAddEmptyPreset() async {
+    _flushSelectedPreset();
+    final preset = SchedulePreset(
+      id: SchedulePreset.newId(),
+      name: 'Schedule ${_presets.length + 1}',
+    );
+    setState(() {
+      _presets.add(preset);
+      _presetsDirty = true;
+      _loadPresetAt(_presets.length - 1);
+    });
+  }
+
+  Future<void> _onRenamePreset() async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => _SchedulePresetNameDialog(
+        title: 'Rename schedule preset',
+        initialName: _currentPreset.name,
+      ),
+    );
+    if (!mounted || name == null || name.trim().isEmpty) return;
+    setState(() {
+      _currentPreset.setName(name.trim());
+      _presetsDirty = true;
+    });
+  }
+
+  Future<void> _onDeletePreset() async {
+    if (_presets.length < 2) return;
+    final confirm = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: 'Delete schedule preset?',
+      content:
+          '“${_currentPreset.name}” will be removed from this template. This does not change existing posts.',
+      confirmText: 'Delete',
+      icon: Icons.delete_outline,
+    );
+    if (!confirm || !mounted) return;
+    setState(() {
+      _presets.removeAt(_selectedPresetIndex);
+      _presetsDirty = true;
+      _loadPresetAt(_selectedPresetIndex.clamp(0, _presets.length - 1));
+    });
+  }
+
+  void _onPresetMenuAction(_PresetMenuAction action) {
+    switch (action) {
+      case _PresetMenuAction.add:
+        _onAddEmptyPreset();
+      case _PresetMenuAction.rename:
+        _onRenamePreset();
+      case _PresetMenuAction.delete:
+        _onDeletePreset();
+      case _PresetMenuAction.switchPreset:
+        _onSwitchPreset();
+    }
   }
 
   Widget _buildMediaTab() {
@@ -987,15 +1174,10 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     const total = 3;
     onProgress(completed: 0, total: total, message: 'Preparing template…');
     debugPrint('---- begin converting to post template');
-    // Convert to PostTemplate again
-    dynamic startTime = widget.eventContext.head.eventDate;
-    dynamic finishTime = widget.eventContext.program.finishTime;
-    if (startTime != null) {
-      startTime = (startTime as DateTime).millisecondsSinceEpoch;
-    }
-    if (finishTime != null) {
-      finishTime = (finishTime as DateTime).millisecondsSinceEpoch;
-    }
+    _flushSelectedPreset();
+    final first = _presets.first;
+    final startTime = first.startTime?.millisecondsSinceEpoch;
+    final finishTime = first.finishTime?.millisecondsSinceEpoch;
 
     final Map<String, dynamic> templateData = {
       'Title': _tecTitle.text.trim(),
@@ -1027,7 +1209,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       'HeadMedia': widget.eventContext.head.media,
       'HeadMediaPool': _headMediaPool,
       'BodyMediaPool': _bodyMediaPool,
-      'Roles': _rolesToJson(),
+      'Roles': SchedulePreset.rolesToJson(true, first.roles),
+      'SchedulePresets': _presets.map((p) => p.toJson(true)).toList(),
       'DefaultDayOfWeek': _defaultDayOfWeek,
       'Logs': widget.oldTemplate.toJson(true)['Logs'],
     };
@@ -1059,32 +1242,82 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     await localDataManager.writeLastPostTemplateUpdate(lastUpdate);
     debugPrint('---- FINISHED UPDATING POST TEMPLATE');
   }
+}
 
-  List<Map<String, dynamic>> _rolesToJson() {
-    final List<Map<String, dynamic>> result =
-        List<Map<String, dynamic>>.empty(growable: true);
-    for (final entry in widget.eventContext.program.roles) {
-      var start = entry['start'];
-      var end = entry['end'];
-      if (start != null) {
-        start = (entry['start'] as DateTime).millisecondsSinceEpoch;
-      }
-      if (end != null) {
-        end = (entry['end'] as DateTime).millisecondsSinceEpoch;
-      }
+enum _PresetMenuAction { add, rename, delete, switchPreset }
 
-      result.add({
-        'uids': entry['uids'],
-        'detail': entry['detail'],
-        'title': entry['title'],
-        'start': start,
-        'end': end,
-        'for_guests': entry['for_guests'],
-        'id': entry['id'],
-        'tagIDs': EventProgram.tagIDsOf(entry),
-      });
-    }
+class _SchedulePresetNameDialog extends StatefulWidget {
+  const _SchedulePresetNameDialog({
+    required this.title,
+    required this.initialName,
+  });
 
-    return result;
+  final String title;
+  final String initialName;
+
+  @override
+  State<_SchedulePresetNameDialog> createState() =>
+      _SchedulePresetNameDialogState();
+}
+
+class _SchedulePresetNameDialogState extends State<_SchedulePresetNameDialog> {
+  late final TextEditingController _controller;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.of(context).pop(_controller.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppDialog(
+      icon: Icons.drive_file_rename_outline,
+      title: widget.title,
+      child: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: AppDialog.inputDecoration(
+            label: 'Name',
+            hint: 'e.g. Team A',
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Enter a name';
+            }
+            return null;
+          },
+          onFieldSubmitted: (_) => _submit(),
+        ),
+      ),
+      actions: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: _submit,
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 }

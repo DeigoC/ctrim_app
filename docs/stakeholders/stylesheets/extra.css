@@ -1,0 +1,78 @@
+/* Brand matches the web app splash / theme (#0175C2). */
+:root {
+  --md-primary-fg-color: #0175c2;
+  --md-primary-fg-color--light: #4aa3d8;
+  --md-primary-fg-color--dark: #015a96;
+  --md-accent-fg-color: #0288d1;
+  --md-accent-fg-color--transparent: #0288d11a;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #4aa3d8;
+  --md-primary-fg-color--light: #7ec0e6;
+  --md-primary-fg-color--dark: #0175c2;
+}
+
+.mdx-container {
+  background: linear-gradient(165deg, #0175c2 0%, #015a96 58%, #0d47a1 100%);
+  padding: 2.4rem 0 2.8rem;
+}
+
+.mdx-hero {
+  color: #fff;
+  margin: 0 auto;
+  max-width: 42rem;
+}
+
+.mdx-hero h1 {
+  color: #fff;
+  font-weight: 700;
+  margin: 0 0 0.7rem;
+  font-size: 2.1rem;
+}
+
+.mdx-hero p {
+  font-size: 1.05rem;
+  opacity: 0.95;
+  margin: 0 0 1.1rem;
+}
+
+.mdx-hero .md-button {
+  margin: 0.35rem 0.55rem 0 0;
+}
+
+.mdx-hero .md-button--primary {
+  background-color: #fff;
+  color: #0175c2;
+  border-color: #fff;
+}
+
+.mdx-hero .md-button--primary:is(:hover, :focus) {
+  background-color: #e3f2fd;
+  border-color: #e3f2fd;
+  color: #015a96;
+}
+
+.mdx-hero .md-button:not(.md-button--primary) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.mdx-hero .md-button:not(.md-button--primary):is(:hover, :focus) {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: #fff;
+  color: #fff;
+}
+
+.md-typeset .grid.cards > ul > li {
+  border-radius: 0.7rem;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .ctrim-home-note {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.85rem;
+}
