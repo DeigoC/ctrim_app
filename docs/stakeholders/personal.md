@@ -12,7 +12,7 @@ The page is organised into clear sections so everyday options stay separate from
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
-| **For you** | Notifications, my posts, profile picture (create account when browsing as a guest) |
+| **For you** | Notifications, my posts, **team rota**, profile picture (create account when browsing as a guest) |
 | **People** | Who's who — community profiles *(signed in)* |
 | **Admin / Leader tools** | Templates, tags, locations — only when your role allows |
 | **Settings** | Appearance, startup tab (signed in), share app, **product guide** (everyone, including guests), slide deck utils, privacy/terms, account deletion |
@@ -24,7 +24,7 @@ The page is organised into clear sections so everyday options stay separate from
 |--|--------|-----------|
 | Browse bulletin & information | Yes | Yes |
 | Mark interest (“follow updates”) | No (prompted to sign in) | Yes |
-| My Schedule / My Posts | No | Yes (when they have a community profile) |
+| My Schedule / My Posts / Team rota | No | Yes (when they have a community profile) |
 | Notification preferences | Can enable notifications | Full preference page |
 | Product guide | Yes (Settings) | Yes |
 | Create account / Sign in | Offered under **For you** | Profile header and account options |
@@ -50,6 +50,10 @@ Signed-in people see a profile header (including profile picture where set). Fro
 Signed-in people see a **My Schedule** card at the top of Personal — a quick preview of up to three upcoming posts where you have programme roles or are listed as an **expected attendee**. Tap **View full schedule** (or **View all … upcoming**) to open the full list.
 
 That full schedule is the practical “what am I down for?” view across all your assignments on event posts.
+
+## Team rota
+
+Signed-in people also get **Team rota** (under **For you**). It looks ahead **three months** at programme slots tagged for a team — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your team tags; change the chips to look at another site or department. Tap a post to open it and edit. Guests do not see this page.
 
 ## Cell groups on Personal
 

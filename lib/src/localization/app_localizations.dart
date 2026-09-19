@@ -292,6 +292,84 @@ abstract class AppLocalizations {
   /// **'Untitled event'**
   String get personalScheduleUntitledEvent;
 
+  /// Personal home item and page title for the team serving rota
+  ///
+  /// In en, this message translates to:
+  /// **'Team rota'**
+  String get teamRota;
+
+  /// Personal home subtitle for the team rota page
+  ///
+  /// In en, this message translates to:
+  /// **'What your teams are down for'**
+  String get teamRotaSubtitle;
+
+  /// Date window shown on the team rota page
+  ///
+  /// In en, this message translates to:
+  /// **'Next {months} months'**
+  String teamRotaHorizon(int months);
+
+  /// Progress message while fetching dated posts for the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Loading upcoming posts…'**
+  String get teamRotaLoadingHeads;
+
+  /// Progress message while fetching post programmes for the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Loading programmes…'**
+  String get teamRotaLoadingProgrammes;
+
+  /// Error title when the team rota fetch fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load team rota'**
+  String get teamRotaCouldNotLoad;
+
+  /// Empty state title when filters yield no tagged programme roles
+  ///
+  /// In en, this message translates to:
+  /// **'No team slots in this window'**
+  String get teamRotaEmptyTitle;
+
+  /// Empty state body when the team rota has no matching slots
+  ///
+  /// In en, this message translates to:
+  /// **'Tagged programme roles for the selected teams will show here, including slots that still need people. Open a post to edit.'**
+  String get teamRotaEmptyBody;
+
+  /// Empty state title when no team tags are selected
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a team'**
+  String get teamRotaEmptyNoTeamsTitle;
+
+  /// Empty state body when the user has not selected any team tags
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one or more team tags to see their upcoming slots. Empty slots still belong to that team.'**
+  String get teamRotaEmptyNoTeamsBody;
+
+  /// Label when a team rota slot has no people yet
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get teamRotaUnassigned;
+
+  /// Section label for location chips on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get teamRotaFilterLocation;
+
+  /// Section label for team-tag chips on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Teams'**
+  String get teamRotaFilterTeams;
+
   /// Badge shown when a volunteer can create events
   ///
   /// In en, this message translates to:

@@ -12,7 +12,7 @@ Short definitions of **guest**, **community profile**, **placeholder**, **Leader
 |-----|----------------|
 | **Guest** | Browse bulletin, information, and public cell-group cards without signing in |
 | **Signed-in person** | Interest (“follow updates”), notification preferences, and richer personal options once they have an account |
-| **Community profile** | Appear in the People directory; My Schedule, My Posts, and assignments when organisers involve them |
+| **Community profile** | Appear in the People directory; My Schedule, My Posts, Team rota, and assignments when organisers involve them |
 | **Serving** | Shown by default in the directory: Leader or Admin, a team tag, or cell-group leadership |
 | **Placeholder** | An organiser-created name in the directory **before** that person has signed in — for attendance, cell groups, and programmes |
 | **Leader** | Create posts and templates; register / add people they work with; edit the Information (CTRIM) section |
@@ -40,7 +40,7 @@ These are not five separate “apps” — they stack:
 | See interest / attendance **counts** on posts | Yes | Yes | Yes | Yes | Yes |
 | Mark interest (“follow updates”) and see who is interested | — | Yes | Yes | Yes | Yes |
 | Richer people / member details on posts and groups | — | Yes | Yes | Yes | Yes |
-| My Schedule / My Posts | — | When they have a profile & assignments | Yes | Yes | Yes |
+| My Schedule / My Posts / Team rota | — | When they have a profile & assignments | Yes | Yes | Yes |
 | People → Who's who (Personal → People) | — | Yes* | Yes | Yes | Yes |
 | Recent activity on a profile (last few lines) | — | Yes* | Yes | Yes | Yes |
 | Full activity list for a person | — | — | — | — | Yes |

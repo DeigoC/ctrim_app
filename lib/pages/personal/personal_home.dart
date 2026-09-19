@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../models/event/event_head.dart';
 import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
@@ -30,10 +31,12 @@ import 'notification_management_page.dart';
 import 'share_web_app_page.dart';
 import 'view_all_users_page.dart';
 import 'view_my_posts_page.dart';
+import 'view_team_rota_page.dart';
 import 'manage_user_locations_page.dart';
 import 'manage_user_tags_page.dart';
 import 'manage_post_tags_page.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_heads.dart';
 
 class PersonalHome extends StatefulWidget {
   const PersonalHome({
@@ -52,6 +55,7 @@ class _PersonalHomeState extends State<PersonalHome> {
   static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
   final UserScheduleService _scheduleService = UserScheduleService();
   bool _loadingScheduleRoles = false;
+  final Map<String, EventHead> _scheduleExtraHeads = {};
 
   @override
   void initState() {
@@ -282,8 +286,10 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   Widget _buildDashboardCards(AppContext appContext, {required bool wide}) {
-    final scheduleCard =
-        PersonalSchedulePreviewCard(appContext: appContext);
+    final scheduleCard = PersonalSchedulePreviewCard(
+      appContext: appContext,
+      extraHeads: _scheduleExtraHeads,
+    );
     final cellGroupsCard = PersonalCellGroupsPreviewCard(
       appContext: appContext,
       onBrowseCellGroups: widget.onBrowseCellGroups,
@@ -308,6 +314,7 @@ class _PersonalHomeState extends State<PersonalHome> {
   List<PersonalAction> _forYouActions(
       AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
     final actions = <PersonalAction>[];
+    final l10n = AppLocalizations.of(context)!;
 
     if (appContext.isCurrentUserGuest) {
       actions.add(
@@ -350,6 +357,13 @@ class _PersonalHomeState extends State<PersonalHome> {
         subtitle: 'View your created posts',
         onTap: _onOpenPostsClick,
         iconColor: colorScheme.primary,
+      ),
+      PersonalAction(
+        icon: Icons.groups_rounded,
+        title: l10n.teamRota,
+        subtitle: l10n.teamRotaSubtitle,
+        onTap: _onOpenTeamRotaClick,
+        iconColor: colorScheme.tertiary,
       ),
       PersonalAction(
         icon: Icons.account_circle_outlined,
@@ -460,12 +474,26 @@ class _PersonalHomeState extends State<PersonalHome> {
       final user = widget.appContext.currentUser;
       final roles = await _scheduleService.fetchRoles(user.id);
       user.setRoles(roles);
+      final extra = await ScheduleHeads.fetchMissing(
+        postIDs: roles.map((role) => role.postID),
+        knownHeads: [
+          ...widget.appContext.eventHeads,
+          ..._scheduleExtraHeads.values,
+        ],
+      );
+      if (extra.isNotEmpty) {
+        _scheduleExtraHeads.addAll(extra);
+      }
       await _scheduleService.pruneStaleRoles(
         user: user,
-        eventHeads: widget.appContext.eventHeads,
+        eventHeads: ScheduleHeads.merge(
+          sessionHeads: widget.appContext.eventHeads,
+          extraHeads: _scheduleExtraHeads,
+        ),
       );
       if (!mounted) return;
-      widget.appContext.setCurrentUserRoles(List<UserRoleAssignment>.from(user.roles!));
+      widget.appContext
+          .setCurrentUserRoles(List<UserRoleAssignment>.from(user.roles!));
     } catch (e, st) {
       debugPrint('Could not preload schedule roles: $e\n$st');
     } finally {
@@ -491,6 +519,11 @@ class _PersonalHomeState extends State<PersonalHome> {
   void _onOpenPostsClick() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const ViewMyPostsPage()));
+  }
+
+  void _onOpenTeamRotaClick() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const ViewTeamRotaPage()));
   }
 
   void _openShareWebAppClick() {

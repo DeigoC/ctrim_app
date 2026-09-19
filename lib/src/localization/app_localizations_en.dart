@@ -135,6 +135,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalScheduleUntitledEvent => 'Untitled event';
 
   @override
+  String get teamRota => 'Team rota';
+
+  @override
+  String get teamRotaSubtitle => 'What your teams are down for';
+
+  @override
+  String teamRotaHorizon(int months) {
+    return 'Next $months months';
+  }
+
+  @override
+  String get teamRotaLoadingHeads => 'Loading upcoming posts…';
+
+  @override
+  String get teamRotaLoadingProgrammes => 'Loading programmes…';
+
+  @override
+  String get teamRotaCouldNotLoad => 'Could not load team rota';
+
+  @override
+  String get teamRotaEmptyTitle => 'No team slots in this window';
+
+  @override
+  String get teamRotaEmptyBody =>
+      'Tagged programme roles for the selected teams will show here, including slots that still need people. Open a post to edit.';
+
+  @override
+  String get teamRotaEmptyNoTeamsTitle => 'Pick a team';
+
+  @override
+  String get teamRotaEmptyNoTeamsBody =>
+      'Choose one or more team tags to see their upcoming slots. Empty slots still belong to that team.';
+
+  @override
+  String get teamRotaUnassigned => 'Unassigned';
+
+  @override
+  String get teamRotaFilterLocation => 'Location';
+
+  @override
+  String get teamRotaFilterTeams => 'Teams';
+
+  @override
   String get userProfileLeaderBadge => 'Leader';
 
   @override
