@@ -1,12 +1,14 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../utility/cache/local_data_manager.dart';
-import '../../utility/network_image_helper.dart';
+import 'cached_image_widget.dart';
 
 class ImageMediaSlot extends StatefulWidget {
-  const ImageMediaSlot({super.key, required this.mediaEntry, required this.onTap, required this.postID});
+  const ImageMediaSlot(
+      {super.key,
+      required this.mediaEntry,
+      required this.onTap,
+      required this.postID});
   final Map<String, dynamic> mediaEntry;
   final Function()? onTap;
   final String postID;
@@ -70,18 +72,23 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
                     child: Image.memory(
                       snap.data!,
                       fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
                       errorBuilder: (context, error, stackTrace) {
-                        debugPrint('Broken image data detected: ${error.toString()}');
+                        debugPrint(
+                            'Broken image data detected: ${error.toString()}');
 
                         // Only retry if we haven't exceeded max retries
                         if (_retryCount < _maxRetries) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) async {
+                          WidgetsBinding.instance
+                              .addPostFrameCallback((_) async {
                             await _deleteCachedImage();
                             if (mounted) {
                               setState(() {
                                 _retryCount++;
                                 _reloadImage();
-                                debugPrint('Retrying image download (attempt $_retryCount/$_maxRetries)');
+                                debugPrint(
+                                    'Retrying image download (attempt $_retryCount/$_maxRetries)');
                               });
                             }
                           });
@@ -91,7 +98,8 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
                               children: [
                                 CircularProgressIndicator(),
                                 SizedBox(height: 8),
-                                Text('Retrying...', style: TextStyle(fontSize: 12)),
+                                Text('Retrying...',
+                                    style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           );
@@ -112,7 +120,8 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
                   setState(() {
                     _retryCount++;
                     _reloadImage();
-                    debugPrint('Retrying image download after error (attempt $_retryCount/$_maxRetries)');
+                    debugPrint(
+                        'Retrying image download after error (attempt $_retryCount/$_maxRetries)');
                   });
                 }
               });
@@ -186,66 +195,14 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
   }
 
   // * Logic
-  Future<Uint8List> _fetchCachedImage() async {
-    final localDataManager = LocalDataManager();
-    final sanitisedKey = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
-
-    // Check if image exists in cache
-    final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
-    if (cachedImage != null && cachedImage.isNotEmpty) {
-      debugPrint('Using cached image for: $sanitisedKey');
-      return cachedImage;
-    }
-
-    // Download and cache the image
-    debugPrint('Downloading image for: $sanitisedKey');
-    try {
-      final imageUrl = NetworkImageHelper.getImageUrl(widget.mediaEntry['src']!);
-      final response = await http.get(
-        Uri.parse(imageUrl),
-        headers: {'Accept': 'image/*'},
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw TimeoutException('Image download timed out after 30 seconds');
-        },
-      );
-
-      if (response.statusCode != 200) {
-        throw HttpException('Failed to download image: HTTP ${response.statusCode}');
-      }
-
-      final imageBytes = response.bodyBytes;
-
-      if (imageBytes.isEmpty) {
-        throw Exception('Downloaded image is empty');
-      }
-
-      // Cache the image
-      await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
-      debugPrint('Cached image for: $sanitisedKey');
-
-      return imageBytes;
-    } catch (e) {
-      debugPrint('Error downloading image: $e');
-      // Clean up partial cache if it exists
-      await localDataManager.deleteMediaImage(sanitisedKey);
-      rethrow;
-    }
-  }
+  Future<Uint8List> _fetchCachedImage() =>
+      CachedImageLoader.fetchBytes(widget.mediaEntry['src']!);
 
   Future<void> _deleteCachedImage() async {
     final localDataManager = LocalDataManager();
-    final sanitisedKey = widget.mediaEntry['src']!.replaceAll(RegExp(r'[^\w]'), '');
+    final sanitisedKey =
+        CachedImageLoader.cacheKeyFor(widget.mediaEntry['src']!);
     debugPrint('Deleting corrupted/broken cached image: $sanitisedKey');
     await localDataManager.deleteMediaImage(sanitisedKey);
   }
-}
-
-class TimeoutException implements Exception {
-  final String message;
-  TimeoutException(this.message);
-
-  @override
-  String toString() => message;
 }

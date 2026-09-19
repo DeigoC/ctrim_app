@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../../models/event/event_head.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/app_links.dart';
+import '../../utility/image_orientation.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/post_head_media_layout.dart';
+import '../media/cached_image_widget.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
 import '../common/app_dialog.dart';
@@ -40,10 +43,12 @@ class _PostHeadState extends State<PostHead>
 
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  final Map<String, Size> _mediaSizes = <String, Size>{};
 
   @override
   void initState() {
     super.initState();
+    _probeMediaSizes();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -55,6 +60,16 @@ class _PostHeadState extends State<PostHead>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
+  }
+
+  @override
+  void didUpdateWidget(covariant PostHead oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.thisHead.id != widget.thisHead.id ||
+        !_sameMedia(oldWidget.thisHead.media, widget.thisHead.media)) {
+      _mediaSizes.clear();
+      _probeMediaSizes();
+    }
   }
 
   @override
@@ -99,68 +114,157 @@ class _PostHeadState extends State<PostHead>
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with info button
-                    Padding(
-                      padding:
-                          const EdgeInsets.only(left: 16, right: 8, top: 12),
-                      child: Row(
-                        children: [
-                          Expanded(child: _buildStatusRow(theme, colorScheme)),
-                          IconButton(
-                            icon: Icon(
-                              Icons.info_outline,
-                              size: 20,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                            onPressed: () => _showPostInfo(context),
-                            tooltip: 'Post Info',
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Content Section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTitle(theme, colorScheme),
-                          const SizedBox(height: 8),
-                          if (widget.thisHead.subtitle.isNotEmpty) ...[
-                            _buildSubtitle(theme, colorScheme),
-                            const SizedBox(height: 12),
-                          ],
-                          if (widget.thisHead.hasAttendanceCounts) ...[
-                            _buildAttendanceCounts(theme, colorScheme),
-                            const SizedBox(height: 12),
-                          ],
-                          if (widget.thisHead.hasEventDate)
-                            _buildWhenLine(theme, colorScheme),
-                        ],
-                      ),
-                    ),
-
-                    // Media Section
-                    if (widget.thisHead.hasMedia) ...[
-                      const SizedBox(height: 12),
-                      _buildMediaGrid(context),
-                    ] else if (widget.thisHead.hasLeadSpeakerPortrait) ...[
-                      const SizedBox(height: 12),
-                      _buildLeadSpeakerPortrait(theme, colorScheme),
-                    ],
-
-                    const SizedBox(height: 16),
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return _buildCardBody(
+                      context,
+                      theme,
+                      colorScheme,
+                      constraints.maxWidth,
+                    );
+                  },
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCardBody(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    double cardWidth,
+  ) {
+    final allMedia =
+        widget.thisHead.hasMedia ? _getMedia() : const <Map<String, dynamic>>[];
+    final media = allMedia.length <= 4
+        ? allMedia
+        : allMedia.take(4).toList(growable: false);
+    final orientations = [
+      for (final entry in media)
+        PostHeadMediaLayout.orientationForEntry(
+          entry: entry,
+          intrinsic: _mediaSizes[entry['src'] as String?],
+        ),
+    ];
+    final plan = PostHeadMediaLayout.plan(orientations);
+    final width = cardWidth.isFinite && cardWidth > 0
+        ? cardWidth
+        : MediaQuery.sizeOf(context).width;
+    final sideWidth = PostHeadMediaLayout.sideRailWidth(
+      sideCount: plan.sideIndices.length,
+      cardWidth: width,
+    );
+    final Size? singleBottomSize = plan.isSingleBottomFill
+        ? _mediaSizes[media[plan.bottomIndices.first]['src'] as String?]
+        : null;
+    final bottomHeight = PostHeadMediaLayout.bottomBandHeight(
+      plan: plan,
+      orientations: orientations,
+      cardWidth: width,
+      singleIntrinsic: singleBottomSize,
+    );
+    final showLeadSpeaker =
+        !widget.thisHead.hasMedia && widget.thisHead.hasLeadSpeakerPortrait;
+    final textRightPad = plan.hasSide ? 12.0 : 16.0;
+    final textBottomPad =
+        plan.hasBottom ? 12.0 : (plan.hasSide || showLeadSpeaker ? 12.0 : 16.0);
+
+    final textColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: plan.hasSide ? 4 : 8,
+            top: 12,
+          ),
+          child: Row(
+            children: [
+              Expanded(child: _buildStatusRow(theme, colorScheme)),
+              IconButton(
+                icon: Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () => _showPostInfo(context),
+                tooltip: 'Post Info',
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, textRightPad, textBottomPad),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTitle(theme, colorScheme),
+              const SizedBox(height: 8),
+              if (widget.thisHead.subtitle.isNotEmpty) ...[
+                _buildSubtitle(theme, colorScheme),
+                const SizedBox(height: 12),
+              ],
+              if (widget.thisHead.hasAttendanceCounts) ...[
+                _buildAttendanceCounts(theme, colorScheme),
+                const SizedBox(height: 12),
+              ],
+              if (widget.thisHead.hasEventDate)
+                _buildWhenLine(theme, colorScheme),
+            ],
+          ),
+        ),
+        if (showLeadSpeaker) ...[
+          _buildLeadSpeakerPortrait(theme, colorScheme),
+          const SizedBox(height: 16),
+        ],
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: plan.hasSide ? PostHeadMediaLayout.sideMinHeight : 0,
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(right: plan.hasSide ? sideWidth : 0),
+                child: textColumn,
+              ),
+              if (plan.hasSide)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: sideWidth,
+                  child: _buildMediaTiles(
+                    indices: plan.sideIndices,
+                    media: media,
+                    context: context,
+                    stacked: true,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (plan.hasBottom)
+          SizedBox(
+            height: bottomHeight,
+            width: double.infinity,
+            child: _buildMediaTiles(
+              indices: plan.bottomIndices,
+              media: media,
+              context: context,
+              stacked: false,
+            ),
+          ),
+      ],
     );
   }
 
@@ -237,75 +341,106 @@ class _PostHeadState extends State<PostHead>
     );
   }
 
-  Widget _buildMediaGrid(BuildContext context) {
-    final List<Map<String, dynamic>> media = _getMedia();
+  Widget _buildMediaTiles({
+    required List<int> indices,
+    required List<Map<String, dynamic>> media,
+    required BuildContext context,
+    required bool stacked,
+  }) {
+    if (indices.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-    if (media.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: _buildMediaLayout(media, context),
-      ),
-    );
-  }
-
-  Widget _buildMediaLayout(
-      List<Map<String, dynamic>> media, BuildContext context) {
-    if (media.length == 1) {
-      return _buildMediaSlot(media.first, 0, context);
-    } else if (media.length == 2) {
-      return Row(
+    final Widget tiles;
+    if (indices.length == 1) {
+      tiles = _buildMediaSlot(media[indices.first], indices.first, context);
+    } else if (indices.length == 2) {
+      final first = _buildMediaSlot(media[indices[0]], indices[0], context);
+      final second = _buildMediaSlot(media[indices[1]], indices[1], context);
+      tiles = stacked
+          ? Column(
+              children: [
+                Expanded(child: first),
+                const SizedBox(height: PostHeadMediaLayout.mosaicGap),
+                Expanded(child: second),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: first),
+                const SizedBox(width: PostHeadMediaLayout.mosaicGap),
+                Expanded(child: second),
+              ],
+            );
+    } else if (indices.length == 3) {
+      tiles = Row(
         children: [
-          Expanded(child: _buildMediaSlot(media[0], 0, context)),
-          const SizedBox(width: 2),
-          Expanded(child: _buildMediaSlot(media[1], 1, context)),
-        ],
-      );
-    } else if (media.length == 3) {
-      return Row(
-        children: [
-          Expanded(child: _buildMediaSlot(media[0], 0, context)),
-          const SizedBox(width: 2),
+          Expanded(
+            child: _buildMediaSlot(media[indices[0]], indices[0], context),
+          ),
+          const SizedBox(width: PostHeadMediaLayout.mosaicGap),
           Expanded(
             child: Column(
               children: [
-                Expanded(child: _buildMediaSlot(media[1], 1, context)),
-                const SizedBox(height: 2),
-                Expanded(child: _buildMediaSlot(media[2], 2, context)),
+                Expanded(
+                  child:
+                      _buildMediaSlot(media[indices[1]], indices[1], context),
+                ),
+                const SizedBox(height: PostHeadMediaLayout.mosaicGap),
+                Expanded(
+                  child:
+                      _buildMediaSlot(media[indices[2]], indices[2], context),
+                ),
               ],
             ),
           ),
         ],
       );
     } else {
-      // 4+ media items
-      return Row(
+      tiles = Row(
         children: [
           Expanded(
             child: Column(
               children: [
-                Expanded(child: _buildMediaSlot(media[0], 0, context)),
-                const SizedBox(height: 2),
-                Expanded(child: _buildMediaSlot(media[2], 2, context)),
+                Expanded(
+                  child:
+                      _buildMediaSlot(media[indices[0]], indices[0], context),
+                ),
+                const SizedBox(height: PostHeadMediaLayout.mosaicGap),
+                Expanded(
+                  child:
+                      _buildMediaSlot(media[indices[2]], indices[2], context),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 2),
+          const SizedBox(width: PostHeadMediaLayout.mosaicGap),
           Expanded(
             child: Column(
               children: [
-                Expanded(child: _buildMediaSlot(media[1], 1, context)),
-                const SizedBox(height: 2),
-                Expanded(child: _buildMediaSlot(media[3], 3, context)),
+                Expanded(
+                  child:
+                      _buildMediaSlot(media[indices[1]], indices[1], context),
+                ),
+                const SizedBox(height: PostHeadMediaLayout.mosaicGap),
+                Expanded(
+                  child:
+                      _buildMediaSlot(media[indices[3]], indices[3], context),
+                ),
               ],
             ),
           ),
         ],
       );
     }
+
+    return ColoredBox(
+      color: Theme.of(context)
+          .colorScheme
+          .surfaceContainerHighest
+          .withValues(alpha: 0.35),
+      child: tiles,
+    );
   }
 
   Widget _buildStatusRow(ThemeData theme, ColorScheme colorScheme) {
@@ -511,6 +646,48 @@ class _PostHeadState extends State<PostHead>
       return widget.thisHead.media.where((e) => e['type'] == 'img').toList();
     }
     return widget.thisHead.media;
+  }
+
+  bool _sameMedia(
+    final List<Map<String, dynamic>> a,
+    final List<Map<String, dynamic>> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (a[i]['src'] != b[i]['src'] || a[i]['type'] != b[i]['type']) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<void> _probeMediaSizes() async {
+    var changed = false;
+    for (final entry in _getMedia().take(4)) {
+      if (entry['type'] != 'img') {
+        continue;
+      }
+      final src = entry['src'] as String? ?? '';
+      if (src.isEmpty || _mediaSizes.containsKey(src)) {
+        continue;
+      }
+      try {
+        final bytes = await CachedImageLoader.fetchBytes(src);
+        final size = await ImageOrientationHelper.decodeSize(bytes);
+        if (!mounted || size == null) {
+          continue;
+        }
+        _mediaSizes[src] = size;
+        changed = true;
+      } catch (error) {
+        debugPrint('PostHead: failed to probe $src ($error)');
+      }
+    }
+    if (changed && mounted) {
+      setState(() {});
+    }
   }
 
   String _timeAgo(DateTime dateTime) {
