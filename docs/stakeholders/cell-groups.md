@@ -24,7 +24,7 @@ Also in the app and being tested:
 
 ## Posts linked to a cell group
 
-When a bulletin **post** or **template** is linked to a cell group, organisers can **Fill from cell group** or **Add from cell group** (in the expected-attendees picker) to seed **expected attendees** from the group’s members. That keeps meeting attendance close to who’s actually in the group.
+When a bulletin **post** or **template** is linked to a cell group, organisers can **Fill from cell group** or **Add from cell group** (in the expected-attendees picker) to seed **expected attendees** from the group’s members. Listed **leaders** are the hosts of those meetings, so they are not added as guests; their profiles still count those meetings as hosted.
 
 More on posts: [Events & bulletin](events-and-bulletin.md).
 

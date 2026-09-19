@@ -208,6 +208,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String userProfileCellGroupMeetingsHostedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Hosted $count cell group meetings in the past 3 weeks',
+      one: 'Hosted 1 cell group meeting in the past 3 weeks',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String userProfileCellGroupMeetingsParticipatedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Took part in $count cell group meetings in the past 3 weeks',
+      one: 'Took part in 1 cell group meeting in the past 3 weeks',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String userProfileCellGroupGroupsAttendedSuffix(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -238,6 +260,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userProfileCellGroupMeetingAttended => 'Attended';
+
+  @override
+  String get userProfileCellGroupMeetingHosted => 'Hosted';
 
   @override
   String get userProfileCellGroupMeetingMissed => 'Not checked in';

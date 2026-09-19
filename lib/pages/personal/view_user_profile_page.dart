@@ -397,20 +397,30 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     ColorScheme colorScheme,
     UserCellGroupAttendanceSummary summary,
   ) {
-    final attended = summary.attendedInPastWindow;
+    final participated = summary.attendedInPastWindow;
     final icon =
-        attended ? Icons.check_circle_outline : Icons.event_busy_outlined;
+        participated ? Icons.check_circle_outline : Icons.event_busy_outlined;
     final iconColor =
-        attended ? colorScheme.primary : colorScheme.onSurfaceVariant;
+        participated ? colorScheme.primary : colorScheme.onSurfaceVariant;
     final recentMeetings = summary.recentMeetings;
 
     String title;
     if (recentMeetings.isEmpty) {
       title = l10n.userProfileCellGroupNoRecentMeetings;
-    } else if (attended) {
-      title = l10n.userProfileCellGroupMeetingsAttendedCount(
-        summary.meetingsAttended,
-      );
+    } else if (participated) {
+      if (summary.meetingsHosted == summary.meetingsParticipated) {
+        title = l10n.userProfileCellGroupMeetingsHostedCount(
+          summary.meetingsHosted,
+        );
+      } else if (summary.meetingsHosted == 0) {
+        title = l10n.userProfileCellGroupMeetingsAttendedCount(
+          summary.meetingsAttended,
+        );
+      } else {
+        title = l10n.userProfileCellGroupMeetingsParticipatedCount(
+          summary.meetingsParticipated,
+        );
+      }
       if (summary.distinctGroupsAttended > 1) {
         title =
             '$title ${l10n.userProfileCellGroupGroupsAttendedSuffix(summary.distinctGroupsAttended)}';
@@ -420,7 +430,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     }
 
     return Card(
-      color: attended
+      color: participated
           ? colorScheme.primaryContainer.withValues(alpha: 0.35)
           : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
       child: Padding(
@@ -438,7 +448,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
                     title,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: attended
+                      color: participated
                           ? colorScheme.onSurface
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -512,21 +522,30 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     final groupLabel = _groupLabelForMeeting(head);
     final dateLabel =
         date == null ? null : _cellGroupAttendanceDateFormat.format(date);
+    final statusLabel = row.hosted
+        ? l10n.userProfileCellGroupMeetingHosted
+        : row.attended
+            ? l10n.userProfileCellGroupMeetingAttended
+            : l10n.userProfileCellGroupMeetingMissed;
     final subtitleParts = <String>[
       if (dateLabel != null) dateLabel,
       if (groupLabel != null) groupLabel,
-      row.attended
-          ? l10n.userProfileCellGroupMeetingAttended
-          : l10n.userProfileCellGroupMeetingMissed,
+      statusLabel,
     ];
+    final statusIcon = row.hosted
+        ? Icons.home_outlined
+        : row.attended
+            ? Icons.check_circle
+            : Icons.radio_button_unchecked;
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
       leading: Icon(
-        row.attended ? Icons.check_circle : Icons.radio_button_unchecked,
-        color:
-            row.attended ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        statusIcon,
+        color: row.participated
+            ? colorScheme.primary
+            : colorScheme.onSurfaceVariant,
       ),
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(

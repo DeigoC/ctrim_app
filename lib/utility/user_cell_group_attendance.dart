@@ -5,15 +5,23 @@ import '../models/event/event_attendance.dart';
 import '../models/event/event_head.dart';
 import '../models/user.dart';
 
-/// One past cell-group meeting and whether [user] checked in.
+/// One past cell-group meeting and how [user] took part.
 class UserCellGroupMeetingAttendance {
   const UserCellGroupMeetingAttendance({
     required this.head,
     required this.attended,
+    this.hosted = false,
   });
 
   final EventHead head;
+
+  /// Checked in as a guest / attendee on the post.
   final bool attended;
+
+  /// Listed leader of a cell group linked to this meeting (not a guest).
+  final bool hosted;
+
+  bool get participated => attended || hosted;
 }
 
 /// Attendance snapshot for a user across their cell groups' past meetings.
@@ -24,6 +32,8 @@ class UserCellGroupAttendanceSummary {
     this.lastAttendedMeeting,
     this.meetingsInWindow = 0,
     this.meetingsAttended = 0,
+    this.meetingsHosted = 0,
+    this.meetingsParticipated = 0,
     this.distinctGroupsAttended = 0,
     this.recentMeetings = const [],
   });
@@ -32,16 +42,27 @@ class UserCellGroupAttendanceSummary {
   final DateTime? lastAttendedDate;
   final EventHead? lastAttendedMeeting;
   final int meetingsInWindow;
+
+  /// Guest / attendee check-ins in the window.
   final int meetingsAttended;
 
-  /// Distinct cell group IDs the user checked in at during the window.
+  /// Meetings where the user led a linked cell group.
+  final int meetingsHosted;
+
+  /// Distinct meetings the user attended as a guest or hosted.
+  final int meetingsParticipated;
+
+  /// Distinct cell group IDs the user checked in at or hosted during the window.
   final int distinctGroupsAttended;
 
   /// Past-window meetings for this member, newest first.
   final List<UserCellGroupMeetingAttendance> recentMeetings;
 }
 
-/// Profile helper: did [user] check in at a linked CG meeting in the past 3 weeks?
+/// Profile helper: did [user] take part in a linked CG meeting in the past 3 weeks?
+///
+/// Guest check-ins live on the post attendance list. Listed cell-group leaders
+/// (hosts) are not guests, but still count as having been part of the meeting.
 abstract final class UserCellGroupAttendance {
   /// Past meetings linked to any of [memberGroupIds], soonest first.
   static List<EventHead> meetingsForMemberGroups({
@@ -68,18 +89,37 @@ abstract final class UserCellGroupAttendance {
     return rows;
   }
 
+  /// Catalogue groups [user] is listed as a leader/host of.
+  static Set<String> ledGroupIdsFor({
+    required User user,
+    required Iterable<CellGroup> groups,
+  }) {
+    final ids = <String>{};
+    final authId = user.authID.trim();
+    for (final group in groups) {
+      if (group.isLeaderUser(user.id) ||
+          (authId.isNotEmpty && group.isLeaderAuth(authId))) {
+        ids.add(group.id);
+      }
+    }
+    return ids;
+  }
+
   /// Pure summary from already-fetched meetings and attendance docs.
   static UserCellGroupAttendanceSummary summarize({
     required String userId,
     required List<EventHead> memberMeetings,
     required Map<String, EventAttendance> attendanceByPostId,
     Set<String> memberGroupIds = const {},
+    Set<String> ledGroupIds = const {},
   }) {
     if (memberMeetings.isEmpty) {
       return const UserCellGroupAttendanceSummary(attendedInPastWindow: false);
     }
 
     var meetingsAttended = 0;
+    var meetingsHosted = 0;
+    var meetingsParticipated = 0;
     DateTime? lastAttended;
     EventHead? lastMeeting;
     final groupsAttended = <String>{};
@@ -87,14 +127,20 @@ abstract final class UserCellGroupAttendance {
 
     for (final head in memberMeetings) {
       final attendance = attendanceByPostId[head.id];
-      final attended =
-          attendance != null && attendance.hasUserAttendee(userId);
+      final attended = attendance != null && attendance.hasUserAttendee(userId);
+      final hosted = head.cellGroupIDs.any(ledGroupIds.contains);
       recent.add(
-        UserCellGroupMeetingAttendance(head: head, attended: attended),
+        UserCellGroupMeetingAttendance(
+          head: head,
+          attended: attended,
+          hosted: hosted,
+        ),
       );
-      if (!attended) continue;
+      if (!attended && !hosted) continue;
 
-      meetingsAttended++;
+      meetingsParticipated++;
+      if (attended) meetingsAttended++;
+      if (hosted) meetingsHosted++;
       for (final groupId in head.cellGroupIDs) {
         if (memberGroupIds.isEmpty || memberGroupIds.contains(groupId)) {
           groupsAttended.add(groupId);
@@ -119,11 +165,13 @@ abstract final class UserCellGroupAttendance {
     });
 
     return UserCellGroupAttendanceSummary(
-      attendedInPastWindow: meetingsAttended > 0,
+      attendedInPastWindow: meetingsParticipated > 0,
       lastAttendedDate: lastAttended,
       lastAttendedMeeting: lastMeeting,
       meetingsInWindow: memberMeetings.length,
       meetingsAttended: meetingsAttended,
+      meetingsHosted: meetingsHosted,
+      meetingsParticipated: meetingsParticipated,
       distinctGroupsAttended: groupsAttended.length,
       recentMeetings: recent,
     );
@@ -145,6 +193,7 @@ abstract final class UserCellGroupAttendance {
 
     final db = dbManager ?? CellGroupDBManager();
     final memberGroupIds = memberGroups.map((g) => g.id).toSet();
+    final ledGroupIds = ledGroupIdsFor(user: user, groups: memberGroups);
     final pastMeetings = await db.fetchPastLinkedMeetings(now: now);
     final memberMeetings = meetingsForMemberGroups(
       pastMeetings: pastMeetings,
@@ -172,6 +221,7 @@ abstract final class UserCellGroupAttendance {
       memberMeetings: memberMeetings,
       attendanceByPostId: attendanceByPostId,
       memberGroupIds: memberGroupIds,
+      ledGroupIds: ledGroupIds,
     );
   }
 }

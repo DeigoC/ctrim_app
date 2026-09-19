@@ -267,6 +267,26 @@
       }
     }
   },
+  "userProfileCellGroupMeetingsHostedCount": "{count, plural, =1{Hosted 1 cell group meeting in the past 3 weeks} other{Hosted {count} cell group meetings in the past 3 weeks}}",
+  "@userProfileCellGroupMeetingsHostedCount": {
+    "description": "Profile summary when the person led linked cell group meetings in the past 3 weeks",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "userProfileCellGroupMeetingsParticipatedCount": "{count, plural, =1{Took part in 1 cell group meeting in the past 3 weeks} other{Took part in {count} cell group meetings in the past 3 weeks}}",
+  "@userProfileCellGroupMeetingsParticipatedCount": {
+    "description": "Profile summary when the person both hosted and attended as a guest in the past 3 weeks",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "userProfileCellGroupGroupsAttendedSuffix": "across {count, plural, =1{1 group} other{{count} groups}}",
   "@userProfileCellGroupGroupsAttendedSuffix": {
     "description": "Suffix when attendance spans multiple cell groups",
@@ -298,6 +318,10 @@
   "userProfileCellGroupMeetingAttended": "Attended",
   "@userProfileCellGroupMeetingAttended": {
     "description": "Subtitle when the person checked in at that cell group meeting"
+  },
+  "userProfileCellGroupMeetingHosted": "Hosted",
+  "@userProfileCellGroupMeetingHosted": {
+    "description": "Subtitle when the person led the cell group for that meeting"
   },
   "userProfileCellGroupMeetingMissed": "Not checked in",
   "@userProfileCellGroupMeetingMissed": {
