@@ -16,6 +16,7 @@ import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/app_links.dart';
 import '../../utility/user_cell_group_attendance.dart';
 import '../../utility/volunteer_role_helpers.dart';
@@ -166,6 +167,12 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     final canEdit = canEditPlaceholderProfile(
       actor: _appContext.currentUser,
       target: _user,
+      leadsCellGroupContainingTarget:
+          CellGroupRosterHelpers.actorLeadsGroupContainingUser(
+        actor: _appContext.currentUser,
+        targetUserId: _user.id,
+        catalogue: _appContext.allCellGroups,
+      ),
     );
 
     return Scaffold(

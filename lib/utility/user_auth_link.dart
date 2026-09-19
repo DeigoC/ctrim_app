@@ -21,8 +21,9 @@ String? validateAuthRelink({
 
 /// Links / unlinks Firebase Auth (`everyone/{authID}`) on a volunteer `users` profile.
 ///
-/// Link/reassign goes through the `link_user_auth` callable so creators can link
-/// their placeholders and `IsPlaceholder` is cleared server-side.
+/// Link/reassign goes through the `link_user_auth` callable so creators and
+/// cell-group leaders can link their placeholders and `IsPlaceholder` is
+/// cleared server-side.
 class UserAuthLinkService {
   UserAuthLinkService({
     UserDBManager? userDBManager,

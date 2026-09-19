@@ -15,6 +15,7 @@ class PeopleDirectoryQuery {
     required List<User> allUsers,
     required User viewer,
     required String searchQuery,
+    Set<String> cellGroupMemberIdsLedByViewer = const {},
   }) {
     final query = searchQuery.trim().toLowerCase();
     if (query.isEmpty) return const [];
@@ -23,6 +24,8 @@ class PeopleDirectoryQuery {
         .where((user) => isIncludedInUnfilteredPeopleSearch(
               user: user,
               viewer: viewer,
+              leadsCellGroupContainingUser:
+                  cellGroupMemberIdsLedByViewer.contains(user.id),
             ))
         .where((user) => user.fullname.toLowerCase().contains(query))
         .toList()

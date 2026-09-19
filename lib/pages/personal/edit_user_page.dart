@@ -5,10 +5,14 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/everyone_db_manager.dart';
+import '../../firebase/db_managers/id_tracker.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
+import '../../firebase/functions_manager.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/local_data_manager.dart';
 import '../../utility/network_image_helper.dart';
@@ -21,6 +25,7 @@ import '../../utility/cache/users_local_cache.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/common/app_dialog.dart';
+import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/catalog/user_tag_picker.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../utility/responsive_layout.dart';
@@ -59,6 +64,7 @@ class _EditUserPageState extends State<EditUserPage> {
   bool _imageValidated = true;
   bool _authLinkChanged = false;
   bool _allowPop = false;
+  bool _accessReady = false;
 
   Future<String?>? _emailFuture;
 
@@ -83,6 +89,33 @@ class _EditUserPageState extends State<EditUserPage> {
     _tecImgSrc.addListener(_updateChangeState);
 
     _emailFuture = _everyoneDBManager.fetchEmailFromAuthID(_authID);
+
+    final actor = Provider.of<AppContext>(context, listen: false).currentUser;
+    if (actor.canManageVolunteers ||
+        (widget.user.createdByUserID.isNotEmpty &&
+            widget.user.createdByUserID == actor.id)) {
+      _accessReady = true;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadRosterAccess());
+    }
+  }
+
+  Future<void> _loadRosterAccess() async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    await CellGroupRosterCache.ensureLoaded(
+      appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+    );
+    if (mounted) setState(() => _accessReady = true);
+  }
+
+  bool _leadsTarget(User actor) {
+    final catalogue =
+        Provider.of<AppContext>(context, listen: false).allCellGroups;
+    return CellGroupRosterHelpers.actorLeadsGroupContainingUser(
+      actor: actor,
+      targetUserId: widget.user.id,
+      catalogue: catalogue,
+    );
   }
 
   @override
@@ -138,10 +171,25 @@ class _EditUserPageState extends State<EditUserPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_accessReady) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Edit placeholder')),
+        body: const LoadProgressBody(
+          message: 'Checking access…',
+          completedSteps: 0,
+          totalSteps: 1,
+        ),
+      );
+    }
+
     return RoleAccessGate(
       allow: (user) =>
           user.canManageVolunteers ||
-          canEditPlaceholderProfile(actor: user, target: widget.user),
+          canEditPlaceholderProfile(
+            actor: user,
+            target: widget.user,
+            leadsCellGroupContainingTarget: _leadsTarget(user),
+          ),
       deniedMessage: 'You cannot edit this user.',
       child: PopScope(
         canPop: _allowPop || !_hasChanges,
@@ -178,15 +226,25 @@ class _EditUserPageState extends State<EditUserPage> {
       authID: _authID,
       isPlaceholder: _isPlaceholder,
     );
-    return canEditPlaceholderProfile(actor: current, target: liveTarget);
+    return canEditPlaceholderProfile(
+      actor: current,
+      target: liveTarget,
+      leadsCellGroupContainingTarget: _leadsTarget(current),
+    );
   }
 
   bool get _canLinkAuth {
     final current = Provider.of<AppContext>(context, listen: false).currentUser;
-    if (current.canManageVolunteers) return true;
-    return _isPlaceholder &&
-        _authID.isEmpty &&
-        widget.user.createdByUserID == current.id;
+    final liveTarget = copyUser(
+      widget.user,
+      authID: _authID,
+      isPlaceholder: _isPlaceholder,
+    );
+    return canLinkPlaceholderAuth(
+      actor: current,
+      target: liveTarget,
+      leadsCellGroupContainingTarget: _leadsTarget(current),
+    );
   }
 
   bool get _canManagePermissions {
@@ -871,11 +929,24 @@ class _EditUserPageState extends State<EditUserPage> {
       );
 
       if (_isCreatorOnlyEdit) {
-        await _userDBManager.updateUserNames(
-          uid: userToSave.id,
-          forename: userToSave.forname,
-          surname: userToSave.surname,
-        );
+        final current = appContext.currentUser;
+        final isCreator = widget.user.createdByUserID.isNotEmpty &&
+            widget.user.createdByUserID == current.id;
+        if (isCreator) {
+          await _userDBManager.updateUserNames(
+            uid: userToSave.id,
+            forename: userToSave.forname,
+            surname: userToSave.surname,
+          );
+        } else {
+          await CloudFunctionManager().updatePlaceholderNames(
+            userId: userToSave.id,
+            forename: userToSave.forname,
+            surname: userToSave.surname,
+          );
+          await IDTrackerDBManager()
+              .tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
+        }
       } else {
         await _userDBManager.updateUser(userToSave);
         if (userToSave.authID.isNotEmpty) {

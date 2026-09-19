@@ -8,6 +8,8 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/people_directory_query.dart';
 import '../../utility/people_directory_sections.dart';
@@ -60,15 +62,33 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
       assignable,
     );
     // Cache-aware refresh: skips Firestore when lastUpdate matches.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _refreshUsersFromServer(ignoreCooldown: true),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _refreshUsersFromServer(ignoreCooldown: true);
+      if (!mounted) return;
+      await _ensureCellGroupRostersLoaded();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _ensureCellGroupRostersLoaded() async {
+    if (!mounted) return;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    await CellGroupRosterCache.ensureLoaded(
+      appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+    );
+    if (mounted) setState(() {});
+  }
+
+  Set<String> _ledMemberIds(AppContext appContext) {
+    return CellGroupRosterHelpers.activeLinkedUserIdsLedBy(
+      actor: appContext.currentUser,
+      catalogue: appContext.allCellGroups,
+    );
   }
 
   Future<void> _refreshUsersFromServer({
@@ -191,6 +211,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     return Consumer<AppContext>(builder: (context, appContext, child) {
       final cellGroupLeaders =
           CellGroupLeaderIndex.fromGroups(appContext.allCellGroups);
+      final ledMemberIds = _ledMemberIds(appContext);
       final filteredUsers = _filteredUsers(
         appContext.allUsers,
         appContext.allTags,
@@ -202,6 +223,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
               allUsers: appContext.allUsers,
               viewer: appContext.currentUser,
               searchQuery: _searchQuery,
+              cellGroupMemberIdsLedByViewer: ledMemberIds,
             );
       final showingUnfilteredSearchFallback =
           filteredUsers.isEmpty && unfilteredSearchMatches.isNotEmpty;
@@ -692,6 +714,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final canEditUser = canEditPlaceholderProfile(
       actor: appContext.currentUser,
       target: user,
+      leadsCellGroupContainingTarget:
+          _ledMemberIds(appContext).contains(user.id),
     );
     final meta = _compactPersonMeta(roles: roles, tags: userTags);
 
@@ -729,6 +753,8 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final canEditUser = canEditPlaceholderProfile(
       actor: appContext.currentUser,
       target: user,
+      leadsCellGroupContainingTarget:
+          _ledMemberIds(appContext).contains(user.id),
     );
     final theme = Theme.of(context);
     final meta = _compactPersonMeta(roles: roles, tags: userTags);
@@ -821,10 +847,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required CellGroupLeaderIndex cellGroupLeaders,
   }) {
     final l10n = AppLocalizations.of(context)!;
+    final ledMemberIds = _ledMemberIds(appContext);
     final showPlaceholdersOption = canEdit ||
         appContext.allUsers.any((u) =>
             isTransientVolunteerPlaceholder(u) &&
-            u.createdByUserID == appContext.currentUser.id);
+            u.createdByUserID == appContext.currentUser.id) ||
+        appContext.allUsers
+            .any((u) => u.isPlaceholder && ledMemberIds.contains(u.id));
 
     HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
@@ -1055,6 +1084,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   ) {
     final appContext = Provider.of<AppContext>(context, listen: false);
     final currentUser = appContext.currentUser;
+    final ledMemberIds = _ledMemberIds(appContext);
     Iterable<User> users = allUsers;
 
     users = users.where((user) => isVisibleInVolunteerDirectory(
@@ -1062,6 +1092,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           viewer: currentUser,
           placeholdersOnly: _placeholdersOnly,
           showInactive: _showInactive,
+          leadsCellGroupContainingUser: ledMemberIds.contains(user.id),
         ));
 
     if (!_placeholdersOnly && _servingOnly) {

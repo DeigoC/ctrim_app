@@ -26,29 +26,40 @@ bool canCreatePlaceholderUser({
 }
 
 /// Whether [actor] may edit name (and similar safe fields) on [target].
+///
+/// Area admin: any profile. Otherwise only while [target] is still a
+/// placeholder: the creator, or a listed leader of a cell group whose
+/// active roster includes [target] ([leadsCellGroupContainingTarget]).
 bool canEditPlaceholderProfile({
   required User actor,
   required User target,
+  bool leadsCellGroupContainingTarget = false,
 }) {
   if (actor.isAreaAdmin) return true;
-  return target.isPlaceholder &&
-      target.createdByUserID.isNotEmpty &&
-      target.createdByUserID == actor.id;
+  if (!target.isPlaceholder) return false;
+  if (target.createdByUserID.isNotEmpty && target.createdByUserID == actor.id) {
+    return true;
+  }
+  return leadsCellGroupContainingTarget;
 }
 
 /// Whether [actor] may Link / Reassign Auth on [target].
 ///
-/// While still a placeholder (unlinked): creator or area admin.
+/// While still a placeholder (unlinked): creator, area admin, or a listed
+/// leader of a cell group whose active roster includes [target].
 /// After a successful link (`IsPlaceholder` false / Auth set): area admin only.
 bool canLinkPlaceholderAuth({
   required User actor,
   required User target,
+  bool leadsCellGroupContainingTarget = false,
 }) {
   if (actor.isAreaAdmin) return true;
   if (!target.isPlaceholder) return false;
   if (target.authID.isNotEmpty) return false;
-  return target.createdByUserID.isNotEmpty &&
-      target.createdByUserID == actor.id;
+  if (target.createdByUserID.isNotEmpty && target.createdByUserID == actor.id) {
+    return true;
+  }
+  return leadsCellGroupContainingTarget;
 }
 
 /// Whether [actor] may unlink Auth from [target] (area admin only).
@@ -66,12 +77,13 @@ bool isTransientVolunteerPlaceholder(User user) {
 ///
 /// Off: hide every `IsPlaceholder` profile (including legacy empty-Auth
 /// backfill rows). On: placeholders only — area admins see all of them;
-/// others only see ones they created.
+/// others see ones they created or that sit on a cell group they lead.
 bool isVisibleInVolunteerDirectory({
   required User user,
   required User viewer,
   required bool placeholdersOnly,
   bool showInactive = false,
+  bool leadsCellGroupContainingUser = false,
 }) {
   if (!placeholdersOnly) {
     if (!user.isProfileActive) {
@@ -82,7 +94,8 @@ bool isVisibleInVolunteerDirectory({
 
   if (!user.isPlaceholder) return false;
   if (viewer.isAreaAdmin) return true;
-  return user.createdByUserID == viewer.id;
+  if (user.createdByUserID == viewer.id) return true;
+  return leadsCellGroupContainingUser;
 }
 
 /// Whether a permalink (`/people/:id`) may show [user] to [viewer].
@@ -93,11 +106,16 @@ bool isVisibleInVolunteerDirectory({
 bool canOpenPersonPermalink({
   required User user,
   required User viewer,
+  bool leadsCellGroupContainingUser = false,
 }) {
   if (viewer.id == user.id && viewer.id.compareTo('0') != 0) {
     return true;
   }
-  return isIncludedInUnfilteredPeopleSearch(user: user, viewer: viewer);
+  return isIncludedInUnfilteredPeopleSearch(
+    user: user,
+    viewer: viewer,
+    leadsCellGroupContainingUser: leadsCellGroupContainingUser,
+  );
 }
 
 /// Whether [user] should appear in a name search that ignores refine filters
@@ -109,10 +127,12 @@ bool canOpenPersonPermalink({
 bool isIncludedInUnfilteredPeopleSearch({
   required User user,
   required User viewer,
+  bool leadsCellGroupContainingUser = false,
 }) {
   if (user.isPlaceholder) {
     if (viewer.isAreaAdmin) return true;
-    return user.createdByUserID == viewer.id;
+    if (user.createdByUserID == viewer.id) return true;
+    return leadsCellGroupContainingUser;
   }
   if (!user.isProfileActive) {
     return viewer.isAreaAdmin;

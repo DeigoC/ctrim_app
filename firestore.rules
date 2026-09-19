@@ -25,6 +25,8 @@ service cloud.firestore {
 
     /// Creator of an unlinked placeholder may correct Forename/Surname only.
     /// Auth link + IsPlaceholder clear go through link_user_auth CF (Admin SDK).
+    /// Cell-group leaders of a group containing the placeholder edit names via
+    /// update_placeholder_names CF (rules cannot scan rosters).
     function isPlaceholderCreatorNameOnlyUpdate() {
       return request.auth != null
         && resource.data.get('IsPlaceholder', false) == true
@@ -134,6 +136,7 @@ service cloud.firestore {
 
       // Area admins may edit any profile; volunteers may only change their own ImgSrc;
       // placeholder creators may edit name (+ clear IsPlaceholder only via link CF).
+      // Cell-group leaders of a containing group edit name via update_placeholder_names CF.
       allow update: if isAreaAdmin() || isAdmin() || (
         isWorker() &&
         resource.data.AuthID == request.auth.uid &&

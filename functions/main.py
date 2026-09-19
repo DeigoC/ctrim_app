@@ -15,6 +15,7 @@ from placeholder_users import (
     backfill_placeholder_flags_impl,
     create_placeholder_user_impl,
     link_user_auth_impl,
+    update_placeholder_names_impl,
 )
 
 initialize_app()
@@ -290,7 +291,7 @@ def create_placeholder_user(req: https_fn.CallableRequest) -> any:
 
 @https_fn.on_call(region='europe-west1')
 def link_user_auth(req: https_fn.CallableRequest) -> any:
-    """Link AuthID on a volunteer profile; clears IsPlaceholder. Creator or area admin."""
+    """Link AuthID on a volunteer profile; clears IsPlaceholder. Creator, CG leader, or area admin."""
     db = firestore.client()
     result = link_user_auth_impl(db, req)
     print(f'link_user_auth user={result.get("Id")}')
@@ -303,4 +304,13 @@ def backfill_placeholder_flags(req: https_fn.CallableRequest) -> any:
     db = firestore.client()
     result = backfill_placeholder_flags_impl(db, req)
     print(f'backfill_placeholder_flags updated={result.get("updated")}')
+    return result
+
+
+@https_fn.on_call(region='europe-west1')
+def update_placeholder_names(req: https_fn.CallableRequest) -> any:
+    """Creator or cell-group leader name correction on an unlinked placeholder."""
+    db = firestore.client()
+    result = update_placeholder_names_impl(db, req)
+    print(f'update_placeholder_names user={result.get("Id")}')
     return result

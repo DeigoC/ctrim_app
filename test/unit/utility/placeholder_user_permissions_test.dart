@@ -81,6 +81,26 @@ void main() {
         expect(canEditPlaceholderProfile(actor: other, target: placeholder),
             isFalse);
       });
+
+      test('allows cell group leader of a group containing the placeholder',
+          () {
+        expect(
+          canEditPlaceholderProfile(
+            actor: other,
+            target: placeholder,
+            leadsCellGroupContainingTarget: true,
+          ),
+          isTrue,
+        );
+        expect(
+          canEditPlaceholderProfile(
+            actor: other,
+            target: linked,
+            leadsCellGroupContainingTarget: true,
+          ),
+          isFalse,
+        );
+      });
     });
 
     group('canLinkPlaceholderAuth', () {
@@ -99,6 +119,26 @@ void main() {
       test('denies other users', () {
         expect(
             canLinkPlaceholderAuth(actor: other, target: placeholder), isFalse);
+      });
+
+      test('allows cell group leader of a group containing the placeholder',
+          () {
+        expect(
+          canLinkPlaceholderAuth(
+            actor: other,
+            target: placeholder,
+            leadsCellGroupContainingTarget: true,
+          ),
+          isTrue,
+        );
+        expect(
+          canLinkPlaceholderAuth(
+            actor: other,
+            target: linked,
+            leadsCellGroupContainingTarget: true,
+          ),
+          isFalse,
+        );
       });
     });
 
@@ -238,6 +278,27 @@ void main() {
           isTrue,
         );
       });
+
+      test('non-admin sees placeholders on a cell group they lead', () {
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: other,
+            placeholdersOnly: true,
+            leadsCellGroupContainingUser: true,
+          ),
+          isTrue,
+        );
+        expect(
+          isVisibleInVolunteerDirectory(
+            user: placeholder,
+            viewer: other,
+            placeholdersOnly: false,
+            leadsCellGroupContainingUser: true,
+          ),
+          isFalse,
+        );
+      });
     });
 
     group('inactive profile visibility', () {
@@ -347,6 +408,14 @@ void main() {
         expect(
           canOpenPersonPermalink(user: placeholder, viewer: other),
           isFalse,
+        );
+        expect(
+          canOpenPersonPermalink(
+            user: placeholder,
+            viewer: other,
+            leadsCellGroupContainingUser: true,
+          ),
+          isTrue,
         );
       });
 
