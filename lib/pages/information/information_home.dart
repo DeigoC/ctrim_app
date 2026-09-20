@@ -5,6 +5,7 @@ import '../../models/info/ctrim_info.dart';
 import '../../models/info/testimonial_info.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/common/section_tab_bar.dart';
 import 'about_tab.dart';
 import 'churches_tab.dart';
 import 'ctrim_info_list_tab.dart';
@@ -200,22 +201,8 @@ class _InformationHomeState extends State<InformationHome> {
                 )
               : null,
           bottom: showTabBar
-              ? TabBar(
+              ? SectionTabBar(
                   controller: widget.tabController,
-                  indicator: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  labelColor: colorScheme.onPrimary,
-                  unselectedLabelColor: colorScheme.onSurfaceVariant,
-                  labelStyle: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelStyle: theme.textTheme.titleSmall,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  isScrollable: true,
                   tabs: _sections
                       .map((section) => Tab(text: section.label))
                       .toList(),

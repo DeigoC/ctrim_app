@@ -8,6 +8,7 @@ import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/common/section_tab_bar.dart';
 import 'cell_groups_list_tab.dart';
 import 'cell_groups_overview_tab.dart';
 import 'edit_cell_group_page.dart';
@@ -255,22 +256,8 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
               ),
           ],
           bottom: showTabBar
-              ? TabBar(
+              ? SectionTabBar(
                   controller: widget.tabController,
-                  indicator: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  labelColor: colorScheme.onPrimary,
-                  unselectedLabelColor: colorScheme.onSurfaceVariant,
-                  labelStyle: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelStyle: theme.textTheme.titleSmall,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  isScrollable: true,
                   tabs: sections
                       .map((section) => Tab(text: section.label))
                       .toList(),

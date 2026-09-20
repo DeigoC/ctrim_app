@@ -101,15 +101,6 @@ class InformationAboutTab extends StatelessWidget {
                             color: colorScheme.onPrimaryContainer,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Dedicated and committed to making true disciples who will passionately advance the Kingdom of God.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onPrimaryContainer
-                                .withValues(alpha: 0.8),
-                          ),
-                        ),
                         const SizedBox(height: 16),
                         Text(
                           galatiansVerse,
