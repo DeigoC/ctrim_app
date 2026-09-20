@@ -8,6 +8,7 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cell_group_nearest.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/uk_postcode_lookup.dart';
@@ -26,6 +27,7 @@ class CellGroupsListTab extends StatefulWidget {
     required this.onRefresh,
     this.onRetry,
     this.rosterUsersByGroupId = const {},
+    this.locationFilter,
   });
 
   final bool loading;
@@ -35,6 +37,9 @@ class CellGroupsListTab extends StatefulWidget {
 
   /// Linked roster members keyed by cell group id (signed-in only).
   final Map<String, List<User>> rosterUsersByGroupId;
+
+  /// When set, only groups at this church / volunteer location are listed.
+  final String? locationFilter;
 
   @override
   State<CellGroupsListTab> createState() => _CellGroupsListTabState();
@@ -49,6 +54,14 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
   UkPostcodeGeo? _origin;
   UkPostcodeLookupFailure? _lookupFailure;
   int _lookupGeneration = 0;
+
+  String? get _locationFilter {
+    final value = widget.locationFilter?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    return value;
+  }
 
   @override
   void dispose() {
@@ -128,7 +141,9 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
           onRefresh: widget.onRefresh,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            key: const PageStorageKey<String>('cell_groups_list_tab'),
+            key: PageStorageKey<String>(
+              'cell_groups_list_tab_${widget.locationFilter ?? 'all'}',
+            ),
             slivers: _buildContentSlivers(
               context: context,
               appContext: appContext,
@@ -178,9 +193,11 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
       ];
     }
 
-    final catalogue =
-        appContext.allCellGroups.where((g) => !g.isArchived).toList();
+    final catalogue = _catalogueForLocation(appContext.allCellGroups);
     if (catalogue.isEmpty) {
+      final emptyMessage = _locationFilter == null
+          ? l10n.cellGroupsEmpty
+          : l10n.cellGroupsEmptyLocation(_locationFilter!);
       return [
         SliverFillRemaining(
           hasScrollBody: false,
@@ -188,7 +205,7 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                l10n.cellGroupsEmpty,
+                emptyMessage,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
@@ -356,6 +373,7 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
       appDir: appContext.appDir,
       distanceLabel: showNearest ? _distanceLabel(l10n, entry.miles) : null,
       showPostcode: showNearest,
+      showLocation: _locationFilter == null,
     );
   }
 
@@ -371,6 +389,22 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
       if (match.isNotEmpty) return match.first;
     }
     return null;
+  }
+
+  List<CellGroup> _catalogueForLocation(final Iterable<CellGroup> groups) {
+    final location = _locationFilter;
+    return groups.where((group) {
+      if (group.isArchived) {
+        return false;
+      }
+      if (location == null) {
+        return true;
+      }
+      return VolunteerLocations.postLocationMatchesFilter(
+        postLocation: group.location,
+        locationFilter: location,
+      );
+    }).toList();
   }
 }
 
@@ -446,6 +480,7 @@ class _CellGroupCard extends StatelessWidget {
     required this.appDir,
     this.distanceLabel,
     this.showPostcode = false,
+    this.showLocation = true,
   });
 
   final CellGroup group;
@@ -455,6 +490,7 @@ class _CellGroupCard extends StatelessWidget {
   final String? appDir;
   final String? distanceLabel;
   final bool showPostcode;
+  final bool showLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -462,7 +498,7 @@ class _CellGroupCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final cadence = group.cadenceLabel;
-    final titleLine = group.location.trim().isEmpty
+    final titleLine = !showLocation || group.location.trim().isEmpty
         ? group.name
         : '${group.name} | ${group.location}';
     final postcode = showPostcode ? group.postcode : null;

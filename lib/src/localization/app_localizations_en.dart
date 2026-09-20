@@ -926,6 +926,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsEmpty => 'No cell groups yet.';
 
   @override
+  String cellGroupsEmptyLocation(String location) {
+    return 'No cell groups at $location yet.';
+  }
+
+  @override
+  String cellGroupsAtLocationTitle(String location) {
+    return '$location cell groups';
+  }
+
+  @override
   String get cellGroupsCreate => 'New cell group';
 
   @override
@@ -1306,6 +1316,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String churchHubViewAllCellGroups(int count) {
+    return 'View all $count cell groups';
+  }
+
+  @override
   String get churchHubStatsError => 'Could not load location activity.';
 
   @override
@@ -1334,10 +1349,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubPagesRetry => 'Retry';
 
   @override
-  String get churchHubPastorsTitle => 'Pastors';
+  String get churchHubPastorsTitle => 'Pastors & History';
 
   @override
-  String get churchHubPlantersTitle => 'Church planters';
+  String get churchHubPlantersTitle => 'Planters & History';
 
   @override
   String get churchHubUnknownPastor => 'Unknown pastor';
@@ -1352,22 +1367,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubFindUsSubtitle => 'Location, address, and maps';
 
   @override
-  String get churchHubPastorsSubtitle => 'Meet the team';
+  String get churchHubPastorsSubtitle =>
+      'The team and the story of this church';
 
   @override
-  String get churchHubPlantersSubtitle => 'Leading this outreach';
+  String get churchHubPlantersSubtitle =>
+      'The team and the story of this outreach';
 
   @override
-  String get churchHubLearnAboutPastors => 'Learn about them';
+  String get churchHubLearnAboutPastors => 'Read more';
 
   @override
-  String get churchHubLearnAboutPlanters => 'Learn about them';
+  String get churchHubLearnAboutPlanters => 'Read more';
 
   @override
-  String get churchPastorsPageTitle => 'Pastors';
+  String get churchPastorsPageTitle => 'Pastors & History';
 
   @override
-  String get churchPlantersPageTitle => 'Church planters';
+  String get churchPlantersPageTitle => 'Planters & History';
 
   @override
   String get churchHubOutreachBadge => 'Outreach';
@@ -1608,18 +1625,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchSocialOther => 'Link';
 
   @override
-  String get churchEditorPastorsCardTitle => 'Pastors';
+  String get churchEditorPastorsCardTitle => 'Pastors & History';
 
   @override
   String get churchEditorPastorsCardSubtitle =>
-      'People listed as pastors, plus their write-up';
+      'Listed pastors, a team photo, and a write-up about them and this church';
 
   @override
-  String get churchEditorPlantersCardTitle => 'Church planters';
+  String get churchEditorPlantersCardTitle => 'Planters & History';
 
   @override
   String get churchEditorPlantersCardSubtitle =>
-      'People leading this outreach, plus their write-up';
+      'People leading this outreach, plus a write-up about them and its story';
 
   @override
   String get churchEditorChoosePastors => 'Choose pastors';
@@ -1632,14 +1649,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchEditorPastorsImageHelper =>
-      'Optional team photo shown in the pastors card.';
+      'Optional team photo shown on the Pastors & History card.';
 
   @override
   String get churchEditorPlantersImageLabel => 'Planters image URL';
 
   @override
   String get churchEditorPlantersImageHelper =>
-      'Optional team photo shown in the planters card.';
+      'Optional team photo shown on the Planters & History card.';
 
   @override
   String get churchEditorMediaCardTitle => 'Media';
@@ -1648,10 +1665,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorMediaCardSubtitle => 'Cover photo and gallery';
 
   @override
-  String get churchEditorPastorsBodyLabel => 'About the pastors';
+  String get churchEditorPastorsBodyLabel =>
+      'About the pastors and this church';
 
   @override
-  String get churchEditorPlantersBodyLabel => 'About the church planters';
+  String get churchEditorPastorsBodyHelper =>
+      'Write about the pastors, then a section on the history of this church.';
+
+  @override
+  String get churchEditorPlantersBodyLabel =>
+      'About the planters and this outreach';
+
+  @override
+  String get churchEditorPlantersBodyHelper =>
+      'Write about the church planters, then a section on the history of this outreach.';
 
   @override
   String get churchEditorSave => 'Save';

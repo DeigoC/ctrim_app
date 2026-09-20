@@ -119,8 +119,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
 
   @override
   void initSectionControllers() {
-    final creatingOutreach = widget.info == null &&
-        (widget.parentChurchId ?? '').trim().isNotEmpty;
+    final creatingOutreach =
+        widget.info == null && (widget.parentChurchId ?? '').trim().isNotEmpty;
     _initialKind = widget.info?.kind ??
         (creatingOutreach ? ChurchKind.outreach : ChurchKind.church);
     _initialParentChurchId = widget.info?.parentChurchId.trim() ??
@@ -818,7 +818,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
               tooltip: l10n.churchEditorRemoveSocial,
               onPressed: () {
                 setState(() {
-                  _socials = List<ChurchSocialLink>.from(_socials)..removeAt(index);
+                  _socials = List<ChurchSocialLink>.from(_socials)
+                    ..removeAt(index);
                 });
               },
               icon: const Icon(Icons.close),
@@ -877,7 +878,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         _isOutreach
             ? l10n.churchEditorKindOutreach
             : l10n.churchEditorKindChurch,
-        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        style:
+            theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 4),
       Text(
@@ -1080,6 +1082,15 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           fontWeight: FontWeight.w600,
         ),
       ),
+      const SizedBox(height: 4),
+      Text(
+        _isOutreach
+            ? l10n.churchEditorPlantersBodyHelper
+            : l10n.churchEditorPastorsBodyHelper,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
       const SizedBox(height: 8),
       buildBodyEditor(),
     ];
@@ -1116,8 +1127,8 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           selectedUIDs: List<String>.from(_pastorUserIds),
           includeCurrentUser: true,
           title: _isOutreach
-              ? l10n.churchHubPlantersTitle
-              : l10n.churchHubPastorsTitle,
+              ? l10n.churchEditorChoosePlanters
+              : l10n.churchEditorChoosePastors,
           preferServing: true,
         ),
       ),

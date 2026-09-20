@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/cell_group_db_manager.dart';
-import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
-import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/responsive_layout.dart';
 import 'cell_groups_list_tab.dart';
 import 'cell_groups_overview_tab.dart';
@@ -71,9 +70,11 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
       if (!mounted) return;
       appContext.setAllCellGroups(groups);
 
-      final rosterUsers = await _fetchRosterUsers(
-        appContext: appContext,
+      final rosterUsers =
+          await CellGroupRosterHelpers.linkedRosterUsersByGroupId(
         groups: groups,
+        allUsers: appContext.allUsers,
+        isGuest: appContext.isCurrentUserGuest,
       );
       if (!mounted) return;
       appContext.sharedPref.setCellGroupsRefreshTime();
@@ -84,37 +85,6 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  /// Linked roster members per group id (signed-in only; empty for guests).
-  Future<Map<String, List<User>>> _fetchRosterUsers({
-    required AppContext appContext,
-    required List<CellGroup> groups,
-  }) async {
-    if (appContext.isCurrentUserGuest) return const {};
-
-    final active = groups.where((g) => !g.isArchived).toList();
-    if (active.isEmpty) return const {};
-
-    await CellGroupRosterCache.ensureLoaded(active.map((g) => g.id));
-
-    final result = <String, List<User>>{};
-    for (final group in active) {
-      final roster = CellGroupRosterCache.rosterFor(group.id);
-      if (roster == null) {
-        result[group.id] = const [];
-        continue;
-      }
-      final users = <User>[];
-      for (final member in roster.activeMembers) {
-        if (!member.isLinkedUser) continue;
-        final match = appContext.allUsers.where((u) => u.id == member.userId);
-        if (match.isNotEmpty) users.add(match.first);
-        if (users.length >= 8) break;
-      }
-      result[group.id] = users;
-    }
-    return result;
   }
 
   List<({String label, IconData icon})> _sections(AppLocalizations l10n) => [

@@ -1648,6 +1648,18 @@ abstract class AppLocalizations {
   /// **'No cell groups yet.'**
   String get cellGroupsEmpty;
 
+  /// Empty state when the Groups list is filtered to a church location
+  ///
+  /// In en, this message translates to:
+  /// **'No cell groups at {location} yet.'**
+  String cellGroupsEmptyLocation(String location);
+
+  /// App bar title for the Groups catalogue filtered to one church location
+  ///
+  /// In en, this message translates to:
+  /// **'{location} cell groups'**
+  String cellGroupsAtLocationTitle(String location);
+
   /// FAB / action to create a cell group (area admin)
   ///
   /// In en, this message translates to:
@@ -2338,6 +2350,12 @@ abstract class AppLocalizations {
   /// **'And {count} more'**
   String churchHubMorePosts(int count);
 
+  /// Opens the Groups catalogue filtered to this church location
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count} cell groups'**
+  String churchHubViewAllCellGroups(int count);
+
   /// Error when the church hub snapshot query fails
   ///
   /// In en, this message translates to:
@@ -2392,16 +2410,16 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get churchHubPagesRetry;
 
-  /// Heading for the pastors section on a church hub page
+  /// Heading for the pastors and church history section on a church hub
   ///
   /// In en, this message translates to:
-  /// **'Pastors'**
+  /// **'Pastors & History'**
   String get churchHubPastorsTitle;
 
-  /// Heading for church planters on an outreach hub
+  /// Heading for church planters and outreach history on an outreach hub
   ///
   /// In en, this message translates to:
-  /// **'Church planters'**
+  /// **'Planters & History'**
   String get churchHubPlantersTitle;
 
   /// Fallback label when a pastor user record cannot be resolved
@@ -2428,40 +2446,40 @@ abstract class AppLocalizations {
   /// **'Location, address, and maps'**
   String get churchHubFindUsSubtitle;
 
-  /// Dashboard card subtitle for the pastors card
+  /// Dashboard card subtitle for the pastors and history card
   ///
   /// In en, this message translates to:
-  /// **'Meet the team'**
+  /// **'The team and the story of this church'**
   String get churchHubPastorsSubtitle;
 
-  /// Dashboard card subtitle for church planters on an outreach
+  /// Dashboard card subtitle for planters and history on an outreach
   ///
   /// In en, this message translates to:
-  /// **'Leading this outreach'**
+  /// **'The team and the story of this outreach'**
   String get churchHubPlantersSubtitle;
 
-  /// Button on the church hub pastors card that opens the pastors page
+  /// Button on the church hub pastors card that opens the pastors and history page
   ///
   /// In en, this message translates to:
-  /// **'Learn about them'**
+  /// **'Read more'**
   String get churchHubLearnAboutPastors;
 
-  /// Button on the outreach hub that opens the planters write-up
+  /// Button on the outreach hub that opens the planters and history write-up
   ///
   /// In en, this message translates to:
-  /// **'Learn about them'**
+  /// **'Read more'**
   String get churchHubLearnAboutPlanters;
 
-  /// App bar title for the church pastors write-up page
+  /// App bar title for the church pastors and history write-up page
   ///
   /// In en, this message translates to:
-  /// **'Pastors'**
+  /// **'Pastors & History'**
   String get churchPastorsPageTitle;
 
-  /// App bar title for the outreach planters write-up page
+  /// App bar title for the outreach planters and history write-up page
   ///
   /// In en, this message translates to:
-  /// **'Church planters'**
+  /// **'Planters & History'**
   String get churchPlantersPageTitle;
 
   /// Label under the title when viewing an outreach hub
@@ -2896,28 +2914,28 @@ abstract class AppLocalizations {
   /// **'Link'**
   String get churchSocialOther;
 
-  /// Editor card title for pastors, photo, and write-up
+  /// Editor card title for pastors, photo, and history write-up
   ///
   /// In en, this message translates to:
-  /// **'Pastors'**
+  /// **'Pastors & History'**
   String get churchEditorPastorsCardTitle;
 
   /// Editor card subtitle for pastors fields and Quill body
   ///
   /// In en, this message translates to:
-  /// **'People listed as pastors, plus their write-up'**
+  /// **'Listed pastors, a team photo, and a write-up about them and this church'**
   String get churchEditorPastorsCardSubtitle;
 
-  /// Editor card title for planters on an outreach
+  /// Editor card title for planters and history on an outreach
   ///
   /// In en, this message translates to:
-  /// **'Church planters'**
+  /// **'Planters & History'**
   String get churchEditorPlantersCardTitle;
 
   /// Editor card subtitle for planters fields
   ///
   /// In en, this message translates to:
-  /// **'People leading this outreach, plus their write-up'**
+  /// **'People leading this outreach, plus a write-up about them and its story'**
   String get churchEditorPlantersCardSubtitle;
 
   /// Button to pick pastor users
@@ -2941,7 +2959,7 @@ abstract class AppLocalizations {
   /// Helper for pastors image URL
   ///
   /// In en, this message translates to:
-  /// **'Optional team photo shown in the pastors card.'**
+  /// **'Optional team photo shown on the Pastors & History card.'**
   String get churchEditorPastorsImageHelper;
 
   /// Label for planters team photo URL
@@ -2953,7 +2971,7 @@ abstract class AppLocalizations {
   /// Helper for planters image URL
   ///
   /// In en, this message translates to:
-  /// **'Optional team photo shown in the planters card.'**
+  /// **'Optional team photo shown on the Planters & History card.'**
   String get churchEditorPlantersImageHelper;
 
   /// Editor card title for hero and gallery images
@@ -2968,17 +2986,29 @@ abstract class AppLocalizations {
   /// **'Cover photo and gallery'**
   String get churchEditorMediaCardSubtitle;
 
-  /// Label above the pastors Quill editor on the church form
+  /// Label above the pastors and history Quill editor on the church form
   ///
   /// In en, this message translates to:
-  /// **'About the pastors'**
+  /// **'About the pastors and this church'**
   String get churchEditorPastorsBodyLabel;
 
-  /// Label above the planters Quill editor on the outreach form
+  /// Hint under the pastors and history Quill editor
   ///
   /// In en, this message translates to:
-  /// **'About the church planters'**
+  /// **'Write about the pastors, then a section on the history of this church.'**
+  String get churchEditorPastorsBodyHelper;
+
+  /// Label above the planters and history Quill editor on the outreach form
+  ///
+  /// In en, this message translates to:
+  /// **'About the planters and this outreach'**
   String get churchEditorPlantersBodyLabel;
+
+  /// Hint under the planters and history Quill editor
+  ///
+  /// In en, this message translates to:
+  /// **'Write about the church planters, then a section on the history of this outreach.'**
+  String get churchEditorPlantersBodyHelper;
 
   /// Primary save button on the church add/edit form
   ///

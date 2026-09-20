@@ -9,7 +9,7 @@
 The Cell Groups section has two areas (like CTRIM’s About / Churches tabs):
 
 - **Overview** — short introduction plus an **activity** snapshot derived from linked bulletin posts (meetings in the past 3 weeks, attendance totals, meetings coming up this week, and catalogue counts such as active groups and members), and a **weekly chart** over the last three months (meetings or attendance)  
-- **Groups** — the catalogue list of cell groups members and guests can browse (larger cards with leader photo, location on the title line, description, and — when signed in — member avatar stacks). Search by **name** or a **UK postcode** (or area code such as BT9) to see the nearest groups that have shared a postcode, with distance on the card. Opening a group updates the address so you can share or bookmark it.  
+- **Groups** — the catalogue list of cell groups members and guests can browse (larger cards with leader photo, location on the title line, description, and — when signed in — member avatar stacks). Search by **name** or a **UK postcode** (or area code such as BT9) to see the nearest groups that have shared a postcode, with distance on the card. Opening a group updates the address so you can share or bookmark it. A church hub’s **View all** cell groups control opens this same list, already limited to that church’s location.  
 
 Also in the app and being tested:
 

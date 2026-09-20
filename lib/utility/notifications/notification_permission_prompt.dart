@@ -106,7 +106,7 @@ class NotificationPermissionPrompt {
                   Text(
                     'Get notified about events, announcements, and important '
                     'CTRIM updates. You can choose what to receive anytime under '
-                    'Personal → Push Notifications.',
+                    'Personal → Settings → Push Notifications.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       height: 1.4,

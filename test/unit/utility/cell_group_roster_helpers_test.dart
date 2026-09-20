@@ -34,6 +34,45 @@ void main() {
     status: CellGroupStatus.archived,
   );
 
+  group('CellGroupRosterHelpers.linkedRosterUsersByGroupId', () {
+    test('returns empty for guests without reading rosters', () async {
+      CellGroupRosterCache.put(
+        '1',
+        CellGroupRoster(members: [CellGroupRosterMember(userId: '10')]),
+      );
+      final result = await CellGroupRosterHelpers.linkedRosterUsersByGroupId(
+        groups: [alpha],
+        allUsers: [_user(id: '10')],
+        isGuest: true,
+      );
+      expect(result, isEmpty);
+    });
+
+    test('maps active linked members to users, capped', () async {
+      CellGroupRosterCache.put(
+        '1',
+        CellGroupRoster(members: [
+          CellGroupRosterMember(userId: '10'),
+          CellGroupRosterMember(userId: '11'),
+          CellGroupRosterMember(
+            userId: '12',
+            status: CellGroupMemberStatus.inactive,
+          ),
+        ]),
+      );
+      final ten = _user(id: '10');
+      final eleven = _user(id: '11');
+      final result = await CellGroupRosterHelpers.linkedRosterUsersByGroupId(
+        groups: [alpha, archived],
+        allUsers: [ten, eleven, _user(id: '12')],
+        isGuest: false,
+        maxFaces: 1,
+      );
+      expect(result.keys, ['1']);
+      expect(result['1']!.map((u) => u.id), ['10']);
+    });
+  });
+
   group('CellGroupRosterHelpers.activeLinkedUserIdsLedBy', () {
     test('includes active roster members of groups the actor leads', () {
       CellGroupRosterCache.put(

@@ -1190,6 +1190,24 @@
   "@cellGroupsEmpty": {
     "description": "Empty state on the Cell Groups list"
   },
+  "cellGroupsEmptyLocation": "No cell groups at {location} yet.",
+  "@cellGroupsEmptyLocation": {
+    "description": "Empty state when the Groups list is filtered to a church location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "cellGroupsAtLocationTitle": "{location} cell groups",
+  "@cellGroupsAtLocationTitle": {
+    "description": "App bar title for the Groups catalogue filtered to one church location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
   "cellGroupsCreate": "New cell group",
   "@cellGroupsCreate": {
     "description": "FAB / action to create a cell group (area admin)"
@@ -1670,6 +1688,15 @@
       }
     }
   },
+  "churchHubViewAllCellGroups": "View all {count} cell groups",
+  "@churchHubViewAllCellGroups": {
+    "description": "Opens the Groups catalogue filtered to this church location",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "churchHubStatsError": "Could not load location activity.",
   "@churchHubStatsError": {
     "description": "Error when the church hub snapshot query fails"
@@ -1706,13 +1733,13 @@
   "@churchHubPagesRetry": {
     "description": "Retry loading nested church pages"
   },
-  "churchHubPastorsTitle": "Pastors",
+  "churchHubPastorsTitle": "Pastors & History",
   "@churchHubPastorsTitle": {
-    "description": "Heading for the pastors section on a church hub page"
+    "description": "Heading for the pastors and church history section on a church hub"
   },
-  "churchHubPlantersTitle": "Church planters",
+  "churchHubPlantersTitle": "Planters & History",
   "@churchHubPlantersTitle": {
-    "description": "Heading for church planters on an outreach hub"
+    "description": "Heading for church planters and outreach history on an outreach hub"
   },
   "churchHubUnknownPastor": "Unknown pastor",
   "@churchHubUnknownPastor": {
@@ -1730,29 +1757,29 @@
   "@churchHubFindUsSubtitle": {
     "description": "Dashboard card subtitle for the visit / find-us card"
   },
-  "churchHubPastorsSubtitle": "Meet the team",
+  "churchHubPastorsSubtitle": "The team and the story of this church",
   "@churchHubPastorsSubtitle": {
-    "description": "Dashboard card subtitle for the pastors card"
+    "description": "Dashboard card subtitle for the pastors and history card"
   },
-  "churchHubPlantersSubtitle": "Leading this outreach",
+  "churchHubPlantersSubtitle": "The team and the story of this outreach",
   "@churchHubPlantersSubtitle": {
-    "description": "Dashboard card subtitle for church planters on an outreach"
+    "description": "Dashboard card subtitle for planters and history on an outreach"
   },
-  "churchHubLearnAboutPastors": "Learn about them",
+  "churchHubLearnAboutPastors": "Read more",
   "@churchHubLearnAboutPastors": {
-    "description": "Button on the church hub pastors card that opens the pastors page"
+    "description": "Button on the church hub pastors card that opens the pastors and history page"
   },
-  "churchHubLearnAboutPlanters": "Learn about them",
+  "churchHubLearnAboutPlanters": "Read more",
   "@churchHubLearnAboutPlanters": {
-    "description": "Button on the outreach hub that opens the planters write-up"
+    "description": "Button on the outreach hub that opens the planters and history write-up"
   },
-  "churchPastorsPageTitle": "Pastors",
+  "churchPastorsPageTitle": "Pastors & History",
   "@churchPastorsPageTitle": {
-    "description": "App bar title for the church pastors write-up page"
+    "description": "App bar title for the church pastors and history write-up page"
   },
-  "churchPlantersPageTitle": "Church planters",
+  "churchPlantersPageTitle": "Planters & History",
   "@churchPlantersPageTitle": {
-    "description": "App bar title for the outreach planters write-up page"
+    "description": "App bar title for the outreach planters and history write-up page"
   },
   "churchHubOutreachBadge": "Outreach",
   "@churchHubOutreachBadge": {
@@ -2055,19 +2082,19 @@
   "@churchSocialOther": {
     "description": "Label for a generic social / web link"
   },
-  "churchEditorPastorsCardTitle": "Pastors",
+  "churchEditorPastorsCardTitle": "Pastors & History",
   "@churchEditorPastorsCardTitle": {
-    "description": "Editor card title for pastors, photo, and write-up"
+    "description": "Editor card title for pastors, photo, and history write-up"
   },
-  "churchEditorPastorsCardSubtitle": "People listed as pastors, plus their write-up",
+  "churchEditorPastorsCardSubtitle": "Listed pastors, a team photo, and a write-up about them and this church",
   "@churchEditorPastorsCardSubtitle": {
     "description": "Editor card subtitle for pastors fields and Quill body"
   },
-  "churchEditorPlantersCardTitle": "Church planters",
+  "churchEditorPlantersCardTitle": "Planters & History",
   "@churchEditorPlantersCardTitle": {
-    "description": "Editor card title for planters on an outreach"
+    "description": "Editor card title for planters and history on an outreach"
   },
-  "churchEditorPlantersCardSubtitle": "People leading this outreach, plus their write-up",
+  "churchEditorPlantersCardSubtitle": "People leading this outreach, plus a write-up about them and its story",
   "@churchEditorPlantersCardSubtitle": {
     "description": "Editor card subtitle for planters fields"
   },
@@ -2083,7 +2110,7 @@
   "@churchEditorPastorsImageLabel": {
     "description": "Label for pastors team photo URL"
   },
-  "churchEditorPastorsImageHelper": "Optional team photo shown in the pastors card.",
+  "churchEditorPastorsImageHelper": "Optional team photo shown on the Pastors & History card.",
   "@churchEditorPastorsImageHelper": {
     "description": "Helper for pastors image URL"
   },
@@ -2091,7 +2118,7 @@
   "@churchEditorPlantersImageLabel": {
     "description": "Label for planters team photo URL"
   },
-  "churchEditorPlantersImageHelper": "Optional team photo shown in the planters card.",
+  "churchEditorPlantersImageHelper": "Optional team photo shown on the Planters & History card.",
   "@churchEditorPlantersImageHelper": {
     "description": "Helper for planters image URL"
   },
@@ -2103,13 +2130,21 @@
   "@churchEditorMediaCardSubtitle": {
     "description": "Editor card subtitle for church media URLs"
   },
-  "churchEditorPastorsBodyLabel": "About the pastors",
+  "churchEditorPastorsBodyLabel": "About the pastors and this church",
   "@churchEditorPastorsBodyLabel": {
-    "description": "Label above the pastors Quill editor on the church form"
+    "description": "Label above the pastors and history Quill editor on the church form"
   },
-  "churchEditorPlantersBodyLabel": "About the church planters",
+  "churchEditorPastorsBodyHelper": "Write about the pastors, then a section on the history of this church.",
+  "@churchEditorPastorsBodyHelper": {
+    "description": "Hint under the pastors and history Quill editor"
+  },
+  "churchEditorPlantersBodyLabel": "About the planters and this outreach",
   "@churchEditorPlantersBodyLabel": {
-    "description": "Label above the planters Quill editor on the outreach form"
+    "description": "Label above the planters and history Quill editor on the outreach form"
+  },
+  "churchEditorPlantersBodyHelper": "Write about the church planters, then a section on the history of this outreach.",
+  "@churchEditorPlantersBodyHelper": {
+    "description": "Hint under the planters and history Quill editor"
   },
   "churchEditorSave": "Save",
   "@churchEditorSave": {

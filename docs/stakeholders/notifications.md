@@ -6,7 +6,7 @@ Terms such as **interest**, **bookmark**, **broadcast**, and **post tag**: [Key 
 
 ## For members
 
-From Personal → **Push Notifications**, someone can:
+From Personal → **Settings → Push Notifications**, someone can:
 
 - See whether **this device** is ready to receive alerts  
 - Re-register the device if something looks wrong  
@@ -44,7 +44,7 @@ The **web app** is the current focus, so getting notifications working reliably 
 
 When a notification arrives on this device, tapping it (or **View post** / **View page** in the in-app banner) opens the related post or teaching page. Those links work for guests as well as signed-in members.
 
-After sign-in or creating an account on the web, the app shows a short in-app explanation (**Stay in the loop**) before the browser’s Allow prompt, and points people to **Personal → Push Notifications** to fine-tune later. Choosing **Not now** skips the browser prompt for that session pattern until they enable from Personal.
+After sign-in or creating an account on the web, the app shows a short in-app explanation (**Stay in the loop**) before the browser’s Allow prompt, and points people to **Personal → Settings → Push Notifications** to fine-tune later. Choosing **Not now** skips the browser prompt for that session pattern until they enable from Personal.
 
 ## Related pages
 

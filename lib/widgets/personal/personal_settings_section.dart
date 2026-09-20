@@ -15,13 +15,17 @@ class PersonalSettingsSection extends StatefulWidget {
     required this.appContext,
     required this.wide,
     this.gridColumns = 1,
-    required this.onShareWebApp,
+    this.onPushNotifications,
+    this.onEnableNotifications,
   });
+
+  static const String productGuideUrl = 'https://deigoc.github.io/ctrim_app/';
 
   final AppContext appContext;
   final bool wide;
   final int gridColumns;
-  final VoidCallback onShareWebApp;
+  final VoidCallback? onPushNotifications;
+  final VoidCallback? onEnableNotifications;
 
   @override
   State<PersonalSettingsSection> createState() =>
@@ -31,8 +35,6 @@ class PersonalSettingsSection extends StatefulWidget {
 class _PersonalSettingsSectionState extends State<PersonalSettingsSection> {
   static const String _slideDeckUtilsUrl =
       'https://church-slidedeck-utils.streamlit.app/';
-  static const String _stakeholderDocsUrl =
-      'https://deigoc.github.io/ctrim_app/';
 
   @override
   Widget build(BuildContext context) {
@@ -87,21 +89,30 @@ class _PersonalSettingsSectionState extends State<PersonalSettingsSection> {
       );
     }
 
+    if (widget.onPushNotifications != null) {
+      actions.add(
+        PersonalAction(
+          icon: Icons.notifications_active_rounded,
+          title: 'Push Notifications',
+          subtitle: 'Manage notification settings',
+          onTap: widget.onPushNotifications!,
+          iconColor: colorScheme.secondary,
+        ),
+      );
+    }
+    if (widget.onEnableNotifications != null) {
+      actions.add(
+        PersonalAction(
+          icon: Icons.notifications_none_rounded,
+          title: 'Enable Notifications',
+          subtitle: 'Get updates from CTRIM',
+          onTap: widget.onEnableNotifications!,
+          iconColor: colorScheme.tertiary,
+        ),
+      );
+    }
+
     actions.addAll([
-      PersonalAction(
-        icon: Icons.share_rounded,
-        title: 'Share Web App',
-        subtitle: 'Share link or add to home screen',
-        onTap: widget.onShareWebApp,
-        iconColor: colorScheme.tertiary,
-      ),
-      PersonalAction(
-        icon: Icons.menu_book_rounded,
-        title: 'Product guide',
-        subtitle: 'How the app works — open to everyone',
-        onTap: () => launchUrlString(_stakeholderDocsUrl),
-        iconColor: colorScheme.primary,
-      ),
       PersonalAction(
         icon: Icons.slideshow_rounded,
         title: 'Slide Deck Utils',
