@@ -30,7 +30,7 @@ Save under `assets/images/`.
 | [ ] | `home-bulletin.png` | Bulletin tab with a few post cards | Events & bulletin |
 | [ ] | `home-information.png` | CTRIM tab — Churches list or a church hub | Information |
 | [ ] | `home-cell-groups.png` | Cell Groups → Groups catalogue | Cell Groups |
-| [ ] | `home-personal.png` | Personal signed in: profile + dashboard cards | Personal |
+| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For you shortcuts | Personal |
 
 ---
 
@@ -73,7 +73,7 @@ Save under `assets/images/`.
 |------|----------|--------------|
 | [ ] | `info-01-ctrim-edit.png` | CTRIM tab with Add / Edit visible (signed in as Leader) |
 | [ ] | `info-02-editor.png` | An information or church editor screen |
-| [ ] | `info-03-church-hub.png` *(optional)* | Church hub dashboard (Find us, pastors, outreaches) |
+| [ ] | `info-03-church-hub.png` *(optional)* | Church hub dashboard (Find us, Pastors & History, outreaches) |
 | [ ] | `info-04-outreach.png` *(optional)* | Add outreach, or an outreach page |
 | [ ] | `info-create-save-view.gif` *(optional)* | Create → save → view as a reader |
 

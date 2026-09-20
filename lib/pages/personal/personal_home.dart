@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/everyone_db_manager.dart';
@@ -141,8 +142,8 @@ class _PersonalHomeState extends State<PersonalHome> {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: maxWidth),
                     child: isWideScreen
-                        ? _buildWideBody(appContext, theme, colorScheme)
-                        : _buildNarrowBody(appContext, theme, colorScheme),
+                        ? _buildWideBody(appContext, colorScheme)
+                        : _buildNarrowBody(appContext, colorScheme),
                   ),
                 ),
               ),
@@ -153,11 +154,9 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
   }
 
-  Widget _buildNarrowBody(
-      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildNarrowBody(AppContext appContext, ColorScheme colorScheme) {
     final showAdmin = appContext.currentUser.canManagePostTemplates ||
         appContext.currentUser.canManageVolunteers;
-    final peopleActions = _peopleActions(appContext, colorScheme);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -170,17 +169,9 @@ class _PersonalHomeState extends State<PersonalHome> {
         const SizedBox(height: 24),
         PersonalActionSection(
           title: 'For you',
-          actions: _forYouActions(appContext, theme, colorScheme),
+          actions: _forYouActions(appContext, colorScheme),
           wide: false,
         ),
-        if (peopleActions.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          PersonalActionSection(
-            title: 'People',
-            actions: peopleActions,
-            wide: false,
-          ),
-        ],
         if (showAdmin) ...[
           const SizedBox(height: 24),
           PersonalAdminSection(
@@ -196,7 +187,10 @@ class _PersonalHomeState extends State<PersonalHome> {
         PersonalSettingsSection(
           appContext: appContext,
           wide: false,
-          onShareWebApp: _openShareWebAppClick,
+          onPushNotifications: appContext.isCurrentUserGuest
+              ? null
+              : _onNotificationManagerClick,
+          onEnableNotifications: _enableNotificationsAction(appContext),
         ),
         const SizedBox(height: 24),
         PersonalLogoutSection(onLogout: _onLogoutClick),
@@ -204,16 +198,11 @@ class _PersonalHomeState extends State<PersonalHome> {
     );
   }
 
-  Widget _buildWideBody(
-    AppContext appContext,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildWideBody(AppContext appContext, ColorScheme colorScheme) {
     final showAdmin = appContext.currentUser.canManagePostTemplates ||
         appContext.currentUser.canManageVolunteers;
     final actionColumns =
         MediaQuery.sizeOf(context).width >= ResponsiveLayout.desktop ? 3 : 2;
-    final peopleActions = _peopleActions(appContext, colorScheme);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -226,19 +215,10 @@ class _PersonalHomeState extends State<PersonalHome> {
         const SizedBox(height: 28),
         PersonalActionSection(
           title: 'For you',
-          actions: _forYouActions(appContext, theme, colorScheme),
+          actions: _forYouActions(appContext, colorScheme),
           wide: true,
           gridColumns: actionColumns,
         ),
-        if (peopleActions.isNotEmpty) ...[
-          const SizedBox(height: 28),
-          PersonalActionSection(
-            title: 'People',
-            actions: peopleActions,
-            wide: true,
-            gridColumns: actionColumns,
-          ),
-        ],
         const SizedBox(height: 28),
         if (showAdmin)
           Row(
@@ -261,7 +241,10 @@ class _PersonalHomeState extends State<PersonalHome> {
                   appContext: appContext,
                   wide: true,
                   gridColumns: 1,
-                  onShareWebApp: _openShareWebAppClick,
+                  onPushNotifications: appContext.isCurrentUserGuest
+                      ? null
+                      : _onNotificationManagerClick,
+                  onEnableNotifications: _enableNotificationsAction(appContext),
                 ),
               ),
             ],
@@ -271,7 +254,10 @@ class _PersonalHomeState extends State<PersonalHome> {
             appContext: appContext,
             wide: true,
             gridColumns: actionColumns,
-            onShareWebApp: _openShareWebAppClick,
+            onPushNotifications: appContext.isCurrentUserGuest
+                ? null
+                : _onNotificationManagerClick,
+            onEnableNotifications: _enableNotificationsAction(appContext),
           ),
         const SizedBox(height: 28),
         Align(
@@ -312,9 +298,25 @@ class _PersonalHomeState extends State<PersonalHome> {
   }
 
   List<PersonalAction> _forYouActions(
-      AppContext appContext, ThemeData theme, ColorScheme colorScheme) {
+      AppContext appContext, ColorScheme colorScheme) {
     final actions = <PersonalAction>[];
     final l10n = AppLocalizations.of(context)!;
+    final shareAndGuide = [
+      PersonalAction(
+        icon: Icons.share_rounded,
+        title: 'Share Web App',
+        subtitle: 'Share link or add to home screen',
+        onTap: _openShareWebAppClick,
+        iconColor: colorScheme.tertiary,
+      ),
+      PersonalAction(
+        icon: Icons.menu_book_rounded,
+        title: 'Product guide',
+        subtitle: 'How the app works — open to everyone',
+        onTap: () => launchUrlString(PersonalSettingsSection.productGuideUrl),
+        iconColor: colorScheme.primary,
+      ),
+    ];
 
     if (appContext.isCurrentUserGuest) {
       actions.add(
@@ -326,30 +328,10 @@ class _PersonalHomeState extends State<PersonalHome> {
           iconColor: colorScheme.primary,
         ),
       );
+      actions.addAll(shareAndGuide);
       return actions;
     }
 
-    actions.add(
-      PersonalAction(
-        icon: Icons.notifications_active_rounded,
-        title: 'Push Notifications',
-        subtitle: 'Manage notification settings',
-        onTap: _onNotificationManagerClick,
-        iconColor: colorScheme.secondary,
-      ),
-    );
-    if (!appContext.sharedPref.isFirstOpen &&
-        appContext.sharedPref.fcmToken.isEmpty) {
-      actions.add(
-        PersonalAction(
-          icon: Icons.notifications_none_rounded,
-          title: 'Enable Notifications',
-          subtitle: 'Get updates from CTRIM',
-          onTap: () => _onEnableNotificationsClick(appContext),
-          iconColor: colorScheme.tertiary,
-        ),
-      );
-    }
     actions.addAll([
       PersonalAction(
         icon: Icons.article_rounded,
@@ -366,24 +348,6 @@ class _PersonalHomeState extends State<PersonalHome> {
         iconColor: colorScheme.tertiary,
       ),
       PersonalAction(
-        icon: Icons.account_circle_outlined,
-        title: 'Profile picture',
-        subtitle: 'Update your photo URL',
-        onTap: _onUserProfileClick,
-        iconColor: colorScheme.primary,
-      ),
-    ]);
-
-    return actions;
-  }
-
-  List<PersonalAction> _peopleActions(
-      AppContext appContext, ColorScheme colorScheme) {
-    if (appContext.isCurrentUserGuest) return const [];
-
-    final l10n = AppLocalizations.of(context)!;
-    return [
-      PersonalAction(
         icon: Icons.people_rounded,
         title: l10n.volunteersMenuTitle,
         subtitle: l10n.volunteersMenuSubtitle,
@@ -391,7 +355,26 @@ class _PersonalHomeState extends State<PersonalHome> {
             MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
         iconColor: colorScheme.secondary,
       ),
-    ];
+      PersonalAction(
+        icon: Icons.account_circle_outlined,
+        title: 'Profile picture',
+        subtitle: 'Update your photo URL',
+        onTap: _onUserProfileClick,
+        iconColor: colorScheme.primary,
+      ),
+      ...shareAndGuide,
+    ]);
+
+    return actions;
+  }
+
+  VoidCallback? _enableNotificationsAction(AppContext appContext) {
+    if (appContext.isCurrentUserGuest) return null;
+    if (appContext.sharedPref.isFirstOpen ||
+        appContext.sharedPref.fcmToken.isNotEmpty) {
+      return null;
+    }
+    return () => _onEnableNotificationsClick(appContext);
   }
 
   // * Logic

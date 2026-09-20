@@ -8,13 +8,13 @@ CTRIM Community is built to run on phone and browser. **Right now the focus is t
 - Optional **add to home screen** / install so it behaves more like an installed app  
 - Privacy and terms links are available  
 - Push notifications work via the browser; members should check **This device** under notification settings  
-- **Product guide** (this site) is available to everyone from Personal → Settings  
+- **Product guide** (this site) is available to everyone from Personal → **For you**  
 
 Web is where most current development and testing effort goes.
 
 ## Share & add to home screen
 
-From Personal → **Settings → Share Web App** you can:
+From Personal → **For you → Share Web App** you can:
 
 1. **Share** or **copy** the web app link for someone else  
 2. **Install** the app when your browser offers it, or follow **Add to Home Screen** steps (especially on iPhone Safari: Share → Add to Home Screen)  

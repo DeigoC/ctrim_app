@@ -27,6 +27,9 @@ class ChurchInfoPage extends StatefulWidget {
   /// Matches cell-group meeting trail length (`fetchMeetingTrail` limit).
   static const int visiblePostLimit = 4;
 
+  /// Hub preview only; full catalogue opens from View all.
+  static const int visibleCellGroupLimit = 3;
+
   @override
   State<ChurchInfoPage> createState() => _ChurchInfoPageState();
 }
@@ -353,6 +356,8 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
                       canAddPages: canManageChurchPages,
                       canManageInfo: canManageInfo,
                       visiblePostLimit: ChurchInfoPage.visiblePostLimit,
+                      visibleCellGroupLimit:
+                          ChurchInfoPage.visibleCellGroupLimit,
                       parentChurch: parent,
                       outreaches: outreaches,
                       onOpenMaps: church.hasMapLink

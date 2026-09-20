@@ -4,6 +4,52 @@ import 'cell_group_roster_cache.dart';
 
 /// Shared roster lookups for cell-group membership expansion.
 abstract final class CellGroupRosterHelpers {
+  /// Linked roster members per group, capped for avatar stacks (signed-in).
+  static Future<Map<String, List<User>>> linkedRosterUsersByGroupId({
+    required Iterable<CellGroup> groups,
+    required List<User> allUsers,
+    required bool isGuest,
+    int maxFaces = 8,
+  }) async {
+    if (isGuest) {
+      return const {};
+    }
+
+    final active = groups.where((g) => !g.isArchived).toList();
+    if (active.isEmpty) {
+      return const {};
+    }
+
+    await CellGroupRosterCache.ensureLoaded(active.map((g) => g.id));
+
+    final byId = <String, User>{
+      for (final user in allUsers) user.id: user,
+    };
+    final result = <String, List<User>>{};
+    for (final group in active) {
+      final roster = CellGroupRosterCache.rosterFor(group.id);
+      if (roster == null) {
+        result[group.id] = const [];
+        continue;
+      }
+      final users = <User>[];
+      for (final member in roster.activeMembers) {
+        if (!member.isLinkedUser) {
+          continue;
+        }
+        final user = byId[member.userId];
+        if (user != null) {
+          users.add(user);
+        }
+        if (users.length >= maxFaces) {
+          break;
+        }
+      }
+      result[group.id] = users;
+    }
+    return result;
+  }
+
   /// Active linked [UserId]s from one or more cell group rosters.
   static Future<Set<String>> fetchActiveLinkedUserIds(
     Iterable<String> cellGroupIds,

@@ -19,6 +19,7 @@ import '../../widgets/paired_row_list.dart';
 import '../../widgets/two_column_masonry.dart';
 import '../../widgets/posts/post_head.dart';
 import '../../utility/app_links.dart';
+import '../cell_groups/cell_groups_at_location_page.dart';
 import 'church_pastors_page.dart';
 import 'info_tab_widgets.dart';
 
@@ -33,6 +34,7 @@ class ChurchHubDashboard extends StatelessWidget {
     required this.canAddPages,
     required this.canManageInfo,
     required this.visiblePostLimit,
+    this.visibleCellGroupLimit = 3,
     this.parentChurch,
     this.outreaches = const [],
     this.onOpenMaps,
@@ -55,6 +57,7 @@ class ChurchHubDashboard extends StatelessWidget {
   final bool canAddPages;
   final bool canManageInfo;
   final int visiblePostLimit;
+  final int visibleCellGroupLimit;
   final ChurchInfo? parentChurch;
   final List<ChurchInfo> outreaches;
   final VoidCallback? onOpenMaps;
@@ -124,6 +127,8 @@ class ChurchHubDashboard extends StatelessWidget {
         _CellGroupsCard(
           groups: stats?.cellGroups ?? const [],
           loading: stats == null && statsError == null,
+          location: church.location,
+          visibleLimit: visibleCellGroupLimit,
         ),
     ];
 
@@ -214,9 +219,7 @@ class _VisitCard extends StatelessWidget {
             ),
           ],
           if (onOpenMaps != null) ...[
-            if (church.hasLocation ||
-                church.isFullChurch ||
-                church.hasAddress)
+            if (church.hasLocation || church.isFullChurch || church.hasAddress)
               const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
@@ -275,8 +278,8 @@ class _SocialsCard extends StatelessWidget {
               label: Text(label),
               style: FilledButton.styleFrom(
                 foregroundColor: colorScheme.onSecondaryContainer,
-                backgroundColor: colorScheme.secondaryContainer
-                    .withValues(alpha: 0.65),
+                backgroundColor:
+                    colorScheme.secondaryContainer.withValues(alpha: 0.65),
               ),
             ),
           );
@@ -302,9 +305,8 @@ class _PastorsCard extends StatelessWidget {
 
     return InfoSectionCard(
       icon: Icons.groups_outlined,
-      title: isOutreach
-          ? l10n.churchHubPlantersTitle
-          : l10n.churchHubPastorsTitle,
+      title:
+          isOutreach ? l10n.churchHubPlantersTitle : l10n.churchHubPastorsTitle,
       subtitle: isOutreach
           ? l10n.churchHubPlantersSubtitle
           : l10n.churchHubPastorsSubtitle,
@@ -364,9 +366,8 @@ class _ParentChurchCard extends StatelessWidget {
       subtitle: l10n.churchHubParentChurchSubtitle,
       content: InfoTopicListCard(
         title: parent.title,
-        description: parent.hasLocation
-            ? parent.location
-            : l10n.churchHubLocationUnset,
+        description:
+            parent.hasLocation ? parent.location : l10n.churchHubLocationUnset,
         imageUrl: parent.imgSrc,
         heroTag: 'info_church_parent_${parent.id}',
         fallbackIcon: Icons.church_outlined,
@@ -851,16 +852,24 @@ class _CellGroupsCard extends StatelessWidget {
   const _CellGroupsCard({
     required this.groups,
     required this.loading,
+    required this.location,
+    required this.visibleLimit,
   });
 
   final List<CellGroup> groups;
   final bool loading;
+  final String location;
+  final int visibleLimit;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final visible = groups.length > visibleLimit
+        ? groups.take(visibleLimit).toList()
+        : groups;
+    final overflow = groups.length - visible.length;
 
     Widget content;
     if (loading) {
@@ -883,15 +892,18 @@ class _CellGroupsCard extends StatelessWidget {
       );
     } else {
       content = Column(
-        children: groups
-            .map((group) => _hubCellGroupCard(
-                  context,
-                  l10n,
-                  theme,
-                  colorScheme,
-                  group,
-                ))
-            .toList(),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final group in visible)
+            _hubCellGroupRow(context, l10n, theme, colorScheme, group),
+          if (overflow > 0) ...[
+            const SizedBox(height: 8),
+            FilledButton.tonal(
+              onPressed: () => _openLocationGroups(context),
+              child: Text(l10n.churchHubViewAllCellGroups(groups.length)),
+            ),
+          ],
+        ],
       );
     }
 
@@ -903,7 +915,16 @@ class _CellGroupsCard extends StatelessWidget {
     );
   }
 
-  Widget _hubCellGroupCard(
+  void _openLocationGroups(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CellGroupsAtLocationPage(location: location),
+      ),
+    );
+  }
+
+  Widget _hubCellGroupRow(
     BuildContext context,
     AppLocalizations l10n,
     ThemeData theme,
@@ -911,27 +932,47 @@ class _CellGroupsCard extends StatelessWidget {
     CellGroup group,
   ) {
     final cadence = group.cadenceLabel;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(
-          Icons.groups_outlined,
-          color: colorScheme.primary,
-        ),
-        title: Text(group.name),
-        subtitle: cadence.isEmpty ? null : Text(cadence),
-        trailing: group.isPaused
-            ? Text(
-                l10n.cellGroupsStatusPaused,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.tertiary,
-                  fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          visualDensity: VisualDensity.compact,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          leading: Icon(
+            Icons.groups_outlined,
+            color: colorScheme.primary,
+          ),
+          title: Text(
+            group.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: cadence.isEmpty
+              ? null
+              : Text(
+                  cadence,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              )
-            : null,
-        onTap: () {
-          AppLinks.openCellGroup(context, id: group.id);
-        },
+          trailing: group.isPaused
+              ? Text(
+                  l10n.cellGroupsStatusPaused,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.tertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              : const Icon(Icons.chevron_right),
+          onTap: () {
+            AppLinks.openCellGroup(context, id: group.id);
+          },
+        ),
       ),
     );
   }

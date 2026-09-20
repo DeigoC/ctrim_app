@@ -12,10 +12,9 @@ The page is organised into clear sections so everyday options stay separate from
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
-| **For you** | Notifications, my posts, **team rota**, profile picture (create account when browsing as a guest) |
-| **People** | Who's who — community profiles *(signed in)* |
+| **For you** | Everyday shortcuts: my posts, **team rota**, **Who's who**, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
 | **Admin / Leader tools** | Templates, tags, locations — only when your role allows |
-| **Settings** | Appearance, startup tab (signed in), share app, **product guide** (everyone, including guests), slide deck utils, privacy/terms, account deletion |
+| **Settings** | Appearance, startup tab (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
 
 ## Guests vs signed-in
@@ -26,7 +25,7 @@ The page is organised into clear sections so everyday options stay separate from
 | Mark interest (“follow updates”) | No (prompted to sign in) | Yes |
 | My Schedule / My Posts / Team rota | No | Yes (when they have a community profile) |
 | Notification preferences | Can enable notifications | Full preference page |
-| Product guide | Yes (Settings) | Yes |
+| Product guide | Yes (For you) | Yes |
 | Create account / Sign in | Offered under **For you** | Profile header and account options |
 
 For Leaders, area admins, placeholders, and a fuller access grid, see [People & roles](people-and-roles.md).
@@ -43,7 +42,8 @@ Signed-in people see a profile header (including profile picture where set). Fro
 
 - Request account deletion *(web)*  
 - Choose which main tab opens on startup  
-- Change appearance (light / dark / match device)
+- Change appearance (light / dark / match device)  
+- Manage **push notifications** for this device and each location
 
 ## My Schedule
 
@@ -71,7 +71,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 
 Depending on role, Personal may also show:
 
-- **People → Who's who** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
+- **For you → Who's who** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
 - **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services**  
 - **Admin tools →** people / tags / locations management *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional.  
 
@@ -79,7 +79,7 @@ See [People & roles](people-and-roles.md).
 
 ## Notifications
 
-**For you → Push Notifications** is where someone checks:
+**Settings → Push Notifications** is where someone checks:
 
 - Whether **this device** is set up for alerts  
 - Per-**location** switches (for example All Belfast updates)  
@@ -89,7 +89,7 @@ More detail: [Notifications](notifications.md). The **web app** is the current f
 
 ## Share & add to home screen
 
-**Settings → Share Web App** helps you:
+**For you → Share Web App** helps you:
 
 - Share or copy the web app link  
 - **Install** or **Add to Home Screen** so the app opens like an icon on your phone or computer  
