@@ -204,6 +204,34 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                           ),
                         ),
                       ],
+                      // Bulk select/unselect only when tagging filters the list,
+                      // so the full directory cannot be selected in one tap.
+                      if (_selectedTagIDs.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton.tonalIcon(
+                              onPressed: filteredUsers.isEmpty
+                                  ? null
+                                  : () => _selectAllFiltered(
+                                        filteredUsers,
+                                        appContext,
+                                      ),
+                              icon: const Icon(Icons.select_all, size: 18),
+                              label: Text(l10n.selectUsersSelectAll),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: !_filteredSelectionHasAny(filteredUsers)
+                                  ? null
+                                  : () => _unselectAllFiltered(filteredUsers),
+                              icon: const Icon(Icons.deselect, size: 18),
+                              label: Text(l10n.selectUsersUnselectAll),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -629,6 +657,29 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         _selectedUIDs.clear();
       }
       _selectedUIDs.add(uid);
+    });
+  }
+
+  bool _filteredSelectionHasAny(List<User> filteredUsers) {
+    for (final user in filteredUsers) {
+      if (_selectedUIDs.contains(user.id)) return true;
+    }
+    return false;
+  }
+
+  void _selectAllFiltered(List<User> filteredUsers, AppContext appContext) {
+    setState(() {
+      _mergeUserIdsIntoSelection(
+        filteredUsers.map((user) => user.id).toSet(),
+        appContext,
+      );
+    });
+  }
+
+  void _unselectAllFiltered(List<User> filteredUsers) {
+    setState(() {
+      final ids = filteredUsers.map((user) => user.id).toSet();
+      _selectedUIDs.removeWhere(ids.contains);
     });
   }
 
