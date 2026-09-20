@@ -765,6 +765,14 @@
   "@selectUsersAddingFromCellGroup": {
     "description": "Progress title while merging cell group roster members into selection"
   },
+  "selectUsersSelectAll": "Select all",
+  "@selectUsersSelectAll": {
+    "description": "Select every person currently matching the active tag filter on the people picker"
+  },
+  "selectUsersUnselectAll": "Unselect all",
+  "@selectUsersUnselectAll": {
+    "description": "Unselect every person currently matching the active tag filter on the people picker"
+  },
   "selectCatalogSelected": "{count} selected",
   "@selectCatalogSelected": {
     "description": "Selected count on a catalog tag/group picker page",

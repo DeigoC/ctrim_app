@@ -589,6 +589,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectUsersAddingFromCellGroup => 'Adding from cell group…';
 
   @override
+  String get selectUsersSelectAll => 'Select all';
+
+  @override
+  String get selectUsersUnselectAll => 'Unselect all';
+
+  @override
   String selectCatalogSelected(int count) {
     return '$count selected';
   }

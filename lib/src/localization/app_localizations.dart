@@ -1048,6 +1048,18 @@ abstract class AppLocalizations {
   /// **'Adding from cell group…'**
   String get selectUsersAddingFromCellGroup;
 
+  /// Select every person currently matching the active tag filter on the people picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get selectUsersSelectAll;
+
+  /// Unselect every person currently matching the active tag filter on the people picker
+  ///
+  /// In en, this message translates to:
+  /// **'Unselect all'**
+  String get selectUsersUnselectAll;
+
   /// Selected count on a catalog tag/group picker page
   ///
   /// In en, this message translates to:
