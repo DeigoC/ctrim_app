@@ -153,14 +153,17 @@ class _InformationHomeState extends State<InformationHome> {
     return NestedScrollView(
       controller: widget.scrollController,
       headerSliverBuilder: (_, __) => [
-        SliverAppBar.large(
+        // Use a standard AppBar on phone so the title sits beside the logo
+        // instead of leaving the large expanded dead space from .large.
+        SliverAppBar(
           title: Text(
             showTabBar ? 'CTRIM' : _sections[widget.tabController.index].label,
-            style: theme.textTheme.headlineMedium?.copyWith(
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           centerTitle: false,
+          pinned: true,
           floating: true,
           snap: true,
           backgroundColor: colorScheme.surface,
