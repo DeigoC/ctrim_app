@@ -473,6 +473,9 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     AttendeeEntry entry, {
     required bool canManage,
   }) {
+    final note = entry.isExternal && (entry.note?.isNotEmpty ?? false)
+        ? entry.note
+        : null;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       leading: entry.isUser
@@ -483,7 +486,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
               child: const Icon(Icons.person_outline, size: 20),
             ),
       title: Text(entry.displayName),
-      subtitle: Text(_attendeeSubtitle(appContext, entry)),
+      subtitle: note == null ? null : Text(note),
       trailing: canManage
           ? IconButton(
               tooltip: 'Remove attendee',
@@ -492,19 +495,6 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
             )
           : null,
     );
-  }
-
-  String _attendeeSubtitle(AppContext appContext, AttendeeEntry entry) {
-    if (entry.isExternal) {
-      return entry.note?.isNotEmpty == true
-          ? entry.note!
-          : 'Guest (legacy name-only)';
-    }
-    if (entry.userId != null) {
-      final user = appContext.userById(entry.userId!);
-      if (user != null && user.isPlaceholder) return 'Placeholder';
-    }
-    return 'Registered';
   }
 
   Widget _avatarForUserId(
