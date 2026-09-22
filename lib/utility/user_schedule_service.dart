@@ -8,7 +8,8 @@ import '../models/user_role_assignment.dart';
 
 /// Centralises supplemental user schedule/post cleanup and refresh.
 class UserScheduleService {
-  UserScheduleService({UserDBManager? userDBManager}) : _userDBManager = userDBManager ?? UserDBManager();
+  UserScheduleService({UserDBManager? userDBManager})
+      : _userDBManager = userDBManager ?? UserDBManager();
 
   final UserDBManager _userDBManager;
 
@@ -132,7 +133,9 @@ class UserScheduleService {
     if (roles == null || roles.isEmpty) return [];
 
     final clock = now ?? DateTime.now();
-    final stale = staleRolePostIDs(user: user, eventHeads: eventHeads, now: clock).toSet();
+    final stale =
+        staleRolePostIDs(user: user, eventHeads: eventHeads, now: clock)
+            .toSet();
     final Set<String> postIDs = {};
 
     for (final postID in _distinctPostIDs(roles)) {
@@ -151,8 +154,10 @@ class UserScheduleService {
 
     final sorted = postIDs.toList()
       ..sort((a, b) {
-        final aDate = _scheduleAnchorDate(user: user, postID: a, eventHeads: eventHeads);
-        final bDate = _scheduleAnchorDate(user: user, postID: b, eventHeads: eventHeads);
+        final aDate =
+            _scheduleAnchorDate(user: user, postID: a, eventHeads: eventHeads);
+        final bDate =
+            _scheduleAnchorDate(user: user, postID: b, eventHeads: eventHeads);
         if (aDate == null && bDate == null) return 0;
         if (aDate == null) return 1;
         if (bDate == null) return -1;
@@ -171,7 +176,40 @@ class UserScheduleService {
     final posts = user.posts;
     if (posts == null || posts.isEmpty) return [];
 
-    return posts.where((e) => !eventHeads.any((head) => head.id == e.postID)).map((e) => e.postID).toList();
+    return posts
+        .where((e) => !eventHeads.any((head) => head.id == e.postID))
+        .map((e) => e.postID)
+        .toList();
+  }
+
+  /// Contributor posts whose heads are loaded, newest [EventHead.recentDate] first.
+  ///
+  /// Author-only involvements are omitted. Heads that are not in [eventHeads]
+  /// are omitted (same session catalogue as My Posts).
+  static List<EventHead> recentContributorPosts({
+    required User user,
+    required List<EventHead> eventHeads,
+    int limit = 3,
+  }) {
+    final posts = user.posts;
+    if (posts == null || posts.isEmpty || limit <= 0) return [];
+
+    final contributorIds = <String>{
+      for (final post in posts)
+        if (post.ownership == PostOwnership.contributor) post.postID,
+    };
+    if (contributorIds.isEmpty) return [];
+
+    final heads =
+        eventHeads.where((head) => contributorIds.contains(head.id)).toList()
+          ..sort((a, b) {
+            final byRecent = b.recentDate.compareTo(a.recentDate);
+            if (byRecent != 0) return byRecent;
+            return a.id.compareTo(b.id);
+          });
+
+    if (heads.length <= limit) return heads;
+    return heads.sublist(0, limit);
   }
 
   /// Role assignments that are still upcoming (not past, not missing), sorted by start time.
@@ -185,8 +223,12 @@ class UserScheduleService {
     if (roles == null || roles.isEmpty) return [];
 
     final clock = now ?? DateTime.now();
-    final upcomingPostIDs = upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: clock).toSet();
-    final upcoming = roles.where((role) => upcomingPostIDs.contains(role.postID)).toList()
+    final upcomingPostIDs =
+        upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: clock)
+            .toSet();
+    final upcoming = roles
+        .where((role) => upcomingPostIDs.contains(role.postID))
+        .toList()
       ..sort((a, b) => a.start.compareTo(b.start));
 
     if (limit != null && upcoming.length > limit) {
@@ -201,7 +243,8 @@ class UserScheduleService {
     required List<EventHead> eventHeads,
     DateTime? now,
   }) {
-    return upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now).length;
+    return upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now)
+        .length;
   }
 
   /// First [limit] distinct upcoming post IDs (soonest first).
@@ -211,7 +254,8 @@ class UserScheduleService {
     DateTime? now,
     int limit = 3,
   }) {
-    final ids = upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now);
+    final ids =
+        upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now);
     if (ids.length <= limit) return ids;
     return ids.sublist(0, limit);
   }
@@ -224,7 +268,8 @@ class UserScheduleService {
     DateTime? now,
   }) {
     final upcomingPostIDs =
-        upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now).toSet();
+        upcomingSchedulePostIDs(user: user, eventHeads: eventHeads, now: now)
+            .toSet();
     if (!upcomingPostIDs.contains(postID)) return 0;
     final roles = user.roles;
     if (roles == null) return 0;
@@ -237,7 +282,8 @@ class UserScheduleService {
   }) =>
       _headForPost(eventHeads, postID);
 
-  static EventHead? _headForPost(final List<EventHead> eventHeads, final String postID) {
+  static EventHead? _headForPost(
+      final List<EventHead> eventHeads, final String postID) {
     for (final head in eventHeads) {
       if (head.id == postID) return head;
     }
@@ -269,9 +315,11 @@ class UserScheduleService {
     return earliest;
   }
 
-  Future<List<UserRoleAssignment>> fetchRoles(final String uid) => _userDBManager.fetchUserRoles(uid);
+  Future<List<UserRoleAssignment>> fetchRoles(final String uid) =>
+      _userDBManager.fetchUserRoles(uid);
 
-  Future<List<UserPostInvolvement>> fetchPosts(final String uid) => _userDBManager.fetchUserPosts(uid);
+  Future<List<UserPostInvolvement>> fetchPosts(final String uid) =>
+      _userDBManager.fetchUserPosts(uid);
 
   /// Removes stale role assignments from [user] and Firestore. Returns true if any were removed.
   Future<bool> pruneStaleRoles({
@@ -279,7 +327,8 @@ class UserScheduleService {
     required List<EventHead> eventHeads,
     DateTime? now,
   }) async {
-    final postIDs = staleRolePostIDs(user: user, eventHeads: eventHeads, now: now);
+    final postIDs =
+        staleRolePostIDs(user: user, eventHeads: eventHeads, now: now);
     if (postIDs.isEmpty) return false;
 
     debugPrint('removing the following dated roles: $postIDs');

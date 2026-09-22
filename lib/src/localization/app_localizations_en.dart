@@ -284,6 +284,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userProfileViewPosts => 'View posts';
 
   @override
+  String get userProfileContributorPosts => 'Recent contributor posts';
+
+  @override
+  String get userProfileNoContributorPosts =>
+      'Not a contributor on any posts yet.';
+
+  @override
   String get userProfileEditUser => 'Edit user';
 
   @override

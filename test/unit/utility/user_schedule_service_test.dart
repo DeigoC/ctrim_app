@@ -32,55 +32,68 @@ void main() {
         );
       });
 
-      test('does not prune roles when the post head is not in bulletin cache', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+      test('does not prune roles when the post head is not in bulletin cache',
+          () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([assignment]);
         final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: [], now: now),
+          UserScheduleService.staleRolePostIDs(
+              user: user, eventHeads: [], now: now),
           isEmpty,
         );
       });
 
-      test('prunes roles beyond retention using role start when head is missing', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+      test(
+          'prunes roles beyond retention using role start when head is missing',
+          () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([assignment]);
         final now = DateTime(2024, 7, 20);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: [], now: now),
+          UserScheduleService.staleRolePostIDs(
+              user: user, eventHeads: [], now: now),
           ['post-1'],
         );
       });
 
       test('keeps roles within the 28-day retention window', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([assignment]);
         final heads = [headWithDate('post-1', DateTime(2024, 1, 1))];
         final now = DateTime(2024, 1, 20);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: heads, now: now),
+          UserScheduleService.staleRolePostIDs(
+              user: user, eventHeads: heads, now: now),
           isEmpty,
         );
       });
 
       test('includes roles beyond the 28-day retention window', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([assignment]);
         final heads = [headWithDate('post-1', DateTime(2024, 1, 1))];
         final now = DateTime(2024, 1, 30);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: heads, now: now),
+          UserScheduleService.staleRolePostIDs(
+              user: user, eventHeads: heads, now: now),
           ['post-1'],
         );
       });
 
       test('keeps roles for upcoming events', () {
-        final user = User(id: '1', forname: 'John', surname: 'Smith')..setRoles([assignment]);
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setRoles([assignment]);
         final heads = [headWithDate('post-1', DateTime(2024, 6, 20))];
         final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: heads, now: now),
+          UserScheduleService.staleRolePostIDs(
+              user: user, eventHeads: heads, now: now),
           isEmpty,
         );
       });
@@ -100,7 +113,8 @@ void main() {
         final now = DateTime(2024, 7, 20);
 
         expect(
-          UserScheduleService.staleRolePostIDs(user: user, eventHeads: [], now: now),
+          UserScheduleService.staleRolePostIDs(
+              user: user, eventHeads: [], now: now),
           ['post-1'],
         );
       });
@@ -132,11 +146,13 @@ void main() {
         final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.upcomingSchedulePostIDs(user: user, eventHeads: heads, now: now),
+          UserScheduleService.upcomingSchedulePostIDs(
+              user: user, eventHeads: heads, now: now),
           ['future-post'],
         );
         expect(
-          UserScheduleService.recentPastSchedulePostIDs(user: user, eventHeads: heads, now: now),
+          UserScheduleService.recentPastSchedulePostIDs(
+              user: user, eventHeads: heads, now: now),
           ['past-post'],
         );
       });
@@ -166,7 +182,8 @@ void main() {
         final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.recentPastSchedulePostIDs(user: user, eventHeads: heads, now: now),
+          UserScheduleService.recentPastSchedulePostIDs(
+              user: user, eventHeads: heads, now: now),
           ['newer', 'older'],
         );
       });
@@ -177,7 +194,8 @@ void main() {
         final user = User(id: '1', forname: 'John', surname: 'Smith');
 
         expect(
-          UserScheduleService.stalePostInvolvementIDs(user: user, eventHeads: []),
+          UserScheduleService.stalePostInvolvementIDs(
+              user: user, eventHeads: []),
           isEmpty,
         );
       });
@@ -185,13 +203,16 @@ void main() {
       test('includes posts missing from event heads', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith')
           ..setPosts([
-            UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
-            UserPostInvolvement(postID: 'post-2', ownership: PostOwnership.contributor),
+            UserPostInvolvement(
+                postID: 'post-1', ownership: PostOwnership.author),
+            UserPostInvolvement(
+                postID: 'post-2', ownership: PostOwnership.contributor),
           ]);
         final heads = [headWithDate('post-2', DateTime(2024, 6, 20))];
 
         expect(
-          UserScheduleService.stalePostInvolvementIDs(user: user, eventHeads: heads),
+          UserScheduleService.stalePostInvolvementIDs(
+              user: user, eventHeads: heads),
           ['post-1'],
         );
       });
@@ -199,13 +220,80 @@ void main() {
       test('returns empty when all posts have matching heads', () {
         final user = User(id: '1', forname: 'John', surname: 'Smith')
           ..setPosts([
-            UserPostInvolvement(postID: 'post-1', ownership: PostOwnership.author),
+            UserPostInvolvement(
+                postID: 'post-1', ownership: PostOwnership.author),
           ]);
         final heads = [headWithDate('post-1', DateTime(2024, 6, 20))];
 
         expect(
-          UserScheduleService.stalePostInvolvementIDs(user: user, eventHeads: heads),
+          UserScheduleService.stalePostInvolvementIDs(
+              user: user, eventHeads: heads),
           isEmpty,
+        );
+      });
+    });
+
+    group('recentContributorPosts', () {
+      EventHead headAt(String id, DateTime recent) {
+        final head = EventHead(id: id, title: id);
+        head.setRecentDate(recent);
+        return head;
+      }
+
+      test('returns empty when posts are not loaded', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith');
+
+        expect(
+          UserScheduleService.recentContributorPosts(
+              user: user, eventHeads: []),
+          isEmpty,
+        );
+      });
+
+      test('omits authored posts and heads that are not loaded', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setPosts([
+            UserPostInvolvement(
+                postID: 'authored', ownership: PostOwnership.author),
+            UserPostInvolvement(
+                postID: 'missing', ownership: PostOwnership.contributor),
+            UserPostInvolvement(
+                postID: 'kept', ownership: PostOwnership.contributor),
+          ]);
+        final heads = [
+          headAt('authored', DateTime(2024, 6, 2)),
+          headAt('kept', DateTime(2024, 6, 1))
+        ];
+
+        expect(
+          UserScheduleService.recentContributorPosts(
+                  user: user, eventHeads: heads)
+              .map((e) => e.id),
+          ['kept'],
+        );
+      });
+
+      test('orders by recent date and respects the limit', () {
+        final user = User(id: '1', forname: 'John', surname: 'Smith')
+          ..setPosts([
+            UserPostInvolvement(
+                postID: 'older', ownership: PostOwnership.contributor),
+            UserPostInvolvement(
+                postID: 'newer', ownership: PostOwnership.contributor),
+            UserPostInvolvement(
+                postID: 'mid', ownership: PostOwnership.contributor),
+          ]);
+        final heads = [
+          headAt('older', DateTime(2024, 1, 1)),
+          headAt('newer', DateTime(2024, 3, 1)),
+          headAt('mid', DateTime(2024, 2, 1)),
+        ];
+
+        expect(
+          UserScheduleService.recentContributorPosts(
+                  user: user, eventHeads: heads, limit: 2)
+              .map((e) => e.id),
+          ['newer', 'mid'],
         );
       });
     });
@@ -243,11 +331,16 @@ void main() {
         final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.upcomingRoles(user: user, eventHeads: heads, now: now, limit: 1).length,
+          UserScheduleService.upcomingRoles(
+                  user: user, eventHeads: heads, now: now, limit: 1)
+              .length,
           1,
         );
         expect(
-          UserScheduleService.upcomingRoles(user: user, eventHeads: heads, now: now).map((e) => e.title).toList(),
+          UserScheduleService.upcomingRoles(
+                  user: user, eventHeads: heads, now: now)
+              .map((e) => e.title)
+              .toList(),
           ['Future', 'Future 2'],
         );
       });
@@ -332,7 +425,8 @@ void main() {
         final now = DateTime(2024, 6, 15);
 
         expect(
-          UserScheduleService.upcomingPostCount(user: user, eventHeads: heads, now: now),
+          UserScheduleService.upcomingPostCount(
+              user: user, eventHeads: heads, now: now),
           2,
         );
       });

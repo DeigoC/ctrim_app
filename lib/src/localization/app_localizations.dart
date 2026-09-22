@@ -496,6 +496,18 @@ abstract class AppLocalizations {
   /// **'View posts'**
   String get userProfileViewPosts;
 
+  /// Section title for recent bulletin posts this person contributes to
+  ///
+  /// In en, this message translates to:
+  /// **'Recent contributor posts'**
+  String get userProfileContributorPosts;
+
+  /// Empty state when this person has no contributor posts in the loaded bulletin
+  ///
+  /// In en, this message translates to:
+  /// **'Not a contributor on any posts yet.'**
+  String get userProfileNoContributorPosts;
+
   /// App bar action for admins to edit a volunteer profile
   ///
   /// In en, this message translates to:
