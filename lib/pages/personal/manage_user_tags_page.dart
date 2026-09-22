@@ -6,12 +6,14 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
+import '../../utility/network_image_helper.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../widgets/catalog/manage_catalog_page.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/catalog/user_tag_graphic.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/two_column_masonry.dart';
@@ -227,6 +229,9 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       descriptionLabel: l10n.manageUserTagsDescriptionLabel,
       descriptionHint: l10n.manageUserTagsDescriptionHint,
       initialDescription: existing?.description,
+      imageUrlLabel: l10n.manageUserTagsImageUrlLabel,
+      imageUrlHint: l10n.manageUserTagsImageUrlHint,
+      initialImageUrl: existing?.imageUrl,
     );
     if (result == null || !mounted) return;
 
@@ -240,6 +245,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           existing.setVisibleToGuests(result.visibleToGuests!);
         }
         existing.setDescription(result.description);
+        existing.setImageUrl(_storedImageUrl(result.imageUrl));
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdateTag(existing);
         await UserActivityRecorder().record(
@@ -260,6 +266,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           displayOrder: nextOrder,
           visibleToGuests: result.visibleToGuests ?? true,
           description: result.description,
+          imageUrl: _storedImageUrl(result.imageUrl),
         );
         appContext.addOrUpdateTag(tag);
         await UserActivityRecorder().record(
@@ -416,98 +423,115 @@ class _TagCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (tag.imageUrl != null)
+              UserTagGraphic(
+                imageUrl: tag.imageUrl,
+                height: 140,
+                borderRadius: 0,
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: UserTagChip(tag: tag),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: UserTagChip(tag: tag),
+                        ),
+                      ),
+                      if (canManage)
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'edit':
+                                onEdit();
+                              case 'toggle':
+                                onToggle();
+                              case 'delete':
+                                onDelete();
+                            }
+                          },
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text(l10n.manageUserTagsEdit),
+                            ),
+                            PopupMenuItem(
+                              value: 'toggle',
+                              child: Text(tag.isActive
+                                  ? l10n.manageUserTagsDeactivate
+                                  : l10n.manageUserTagsActivate),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text(l10n.manageUserTagsDelete),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
-                  if (canManage)
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        switch (value) {
-                          case 'edit':
-                            onEdit();
-                          case 'toggle':
-                            onToggle();
-                          case 'delete':
-                            onDelete();
-                        }
-                      },
-                      itemBuilder: (_) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Text(l10n.manageUserTagsEdit),
+                  if (description != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ] else if (canManage) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.manageUserTagsDescriptionMissing,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  if (canManage) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            statusLine,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ),
-                        PopupMenuItem(
-                          value: 'toggle',
-                          child: Text(tag.isActive
-                              ? l10n.manageUserTagsDeactivate
-                              : l10n.manageUserTagsActivate),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_upward),
+                          tooltip: l10n.manageUserTagsMoveUp,
+                          onPressed: canMoveUp && !saving ? onMoveUp : null,
                         ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Text(l10n.manageUserTagsDelete),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_downward),
+                          tooltip: l10n.manageUserTagsMoveDown,
+                          onPressed: canMoveDown && !saving ? onMoveDown : null,
                         ),
                       ],
                     ),
+                  ],
                 ],
               ),
-              if (description != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ] else if (canManage) ...[
-                const SizedBox(height: 8),
-                Text(
-                  l10n.manageUserTagsDescriptionMissing,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              if (canManage) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        statusLine,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_upward),
-                      tooltip: l10n.manageUserTagsMoveUp,
-                      onPressed: canMoveUp && !saving ? onMoveUp : null,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_downward),
-                      tooltip: l10n.manageUserTagsMoveDown,
-                      onPressed: canMoveDown && !saving ? onMoveDown : null,
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+String? _storedImageUrl(final String? raw) {
+  if (raw == null) return null;
+  final sanitized = NetworkImageHelper.sanitizeMediaUrl(raw);
+  return sanitized.isEmpty ? null : sanitized;
 }

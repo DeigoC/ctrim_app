@@ -748,6 +748,18 @@ abstract class AppLocalizations {
   /// **'Short description'**
   String get manageUserTagsDescriptionLabel;
 
+  /// Label for the team-tag main graphic URL
+  ///
+  /// In en, this message translates to:
+  /// **'Image URL'**
+  String get manageUserTagsImageUrlLabel;
+
+  /// Hint for the team-tag main graphic URL
+  ///
+  /// In en, this message translates to:
+  /// **'https://…'**
+  String get manageUserTagsImageUrlHint;
+
   /// Hint for the team-tag description field
   ///
   /// In en, this message translates to:

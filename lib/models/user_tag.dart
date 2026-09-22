@@ -6,6 +6,7 @@ class UserTag {
   late bool _isActive;
   late bool _visibleToGuests;
   String? _description;
+  String? _imageUrl;
 
   /// Editor cap for the short public description. Longer copy belongs on the
   /// tag detail page when that grows.
@@ -19,6 +20,7 @@ class UserTag {
     bool isActive = true,
     bool visibleToGuests = true,
     String? description,
+    String? imageUrl,
   }) {
     _id = id;
     _name = name;
@@ -27,6 +29,7 @@ class UserTag {
     _isActive = isActive;
     _visibleToGuests = visibleToGuests;
     _description = _normalizeDescription(description);
+    _imageUrl = _normalizeImageUrl(imageUrl);
   }
 
   UserTag.fromMap(final String id, final Map<String, dynamic> data)
@@ -36,7 +39,8 @@ class UserTag {
         _displayOrder = (data['DisplayOrder'] as num?)?.toInt() ?? 0,
         _isActive = data['IsActive'] as bool? ?? true,
         _visibleToGuests = data['VisibleToGuests'] as bool? ?? true,
-        _description = _normalizeDescription(data['Description'] as String?);
+        _description = _normalizeDescription(data['Description'] as String?),
+        _imageUrl = _normalizeImageUrl(data['ImageUrl'] as String?);
 
   Map<String, dynamic> toJson() {
     return {
@@ -45,11 +49,18 @@ class UserTag {
       'IsActive': _isActive,
       'VisibleToGuests': _visibleToGuests,
       'Description': _description ?? '',
+      'ImageUrl': _imageUrl ?? '',
       if (_color != null && _color!.isNotEmpty) 'Color': _color,
     };
   }
 
   static String? _normalizeDescription(final String? raw) {
+    final trimmed = raw?.trim() ?? '';
+    if (trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  static String? _normalizeImageUrl(final String? raw) {
     final trimmed = raw?.trim() ?? '';
     if (trimmed.isEmpty) return null;
     return trimmed;
@@ -67,6 +78,9 @@ class UserTag {
   /// Short public explanation of the team. Empty values stay null.
   String? get description => _description;
 
+  /// Single main graphic. Empty values stay null.
+  String? get imageUrl => _imageUrl;
+
   void setName(final String name) => _name = name;
   void setColor(final String? color) => _color = color;
   void setDisplayOrder(final int order) => _displayOrder = order;
@@ -74,4 +88,6 @@ class UserTag {
   void setVisibleToGuests(final bool visible) => _visibleToGuests = visible;
   void setDescription(final String? description) =>
       _description = _normalizeDescription(description);
+  void setImageUrl(final String? imageUrl) =>
+      _imageUrl = _normalizeImageUrl(imageUrl);
 }

@@ -211,6 +211,7 @@ class CatalogItemDialogResult {
     this.color,
     this.visibleToGuests,
     this.description,
+    this.imageUrl,
   });
 
   final String name;
@@ -221,6 +222,9 @@ class CatalogItemDialogResult {
 
   /// Set when the dialog showed the description field. Empty input is null.
   final String? description;
+
+  /// Set when the dialog showed the image URL field. Empty input is null.
+  final String? imageUrl;
 }
 
 /// Add/edit dialog for a catalog item. Omit [colorLabel] to hide the color field.
@@ -246,11 +250,17 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
   String? descriptionHint,
   String? initialDescription,
   int descriptionMaxLength = UserTag.descriptionMaxLength,
+  String? imageUrlLabel,
+  String? imageUrlHint,
+  String? initialImageUrl,
 }) async {
   final nameController = TextEditingController(text: initialName ?? '');
   final descriptionController = descriptionLabel == null
       ? null
       : TextEditingController(text: initialDescription ?? '');
+  final imageUrlController = imageUrlLabel == null
+      ? null
+      : TextEditingController(text: initialImageUrl ?? '');
   final colorController = colorLabel == null
       ? null
       : TextEditingController(
@@ -262,6 +272,7 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
   var visibleToGuests = initialVisibleToGuests;
   final showGuestSwitch = visibleToGuestsLabel != null;
   final showDescription = descriptionController != null;
+  final showImageUrl = imageUrlController != null;
 
   try {
     final saved = await showDialog<bool>(
@@ -311,6 +322,17 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
                       ),
                     ),
                   ],
+                  if (showImageUrl) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: imageUrlController!,
+                      keyboardType: TextInputType.url,
+                      decoration: AppDialog.inputDecoration(
+                        label: imageUrlLabel!,
+                        hint: imageUrlHint,
+                      ),
+                    ),
+                  ],
                   if (showGuestSwitch) ...[
                     const SizedBox(height: 4),
                     SwitchListTile(
@@ -341,10 +363,12 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
       visibleToGuests: showGuestSwitch ? visibleToGuests : null,
       description:
           showDescription ? _emptyToNull(descriptionController!.text) : null,
+      imageUrl: showImageUrl ? _emptyToNull(imageUrlController!.text) : null,
     );
   } finally {
     nameController.dispose();
     descriptionController?.dispose();
+    imageUrlController?.dispose();
     colorController?.dispose();
   }
 }
