@@ -530,6 +530,14 @@
   "@manageUserTagsDescriptionLabel": {
     "description": "Label for the team-tag description field"
   },
+  "manageUserTagsImageUrlLabel": "Image URL",
+  "@manageUserTagsImageUrlLabel": {
+    "description": "Label for the team-tag main graphic URL"
+  },
+  "manageUserTagsImageUrlHint": "https://…",
+  "@manageUserTagsImageUrlHint": {
+    "description": "Hint for the team-tag main graphic URL"
+  },
   "manageUserTagsDescriptionHint": "What this team does",
   "@manageUserTagsDescriptionHint": {
     "description": "Hint for the team-tag description field"

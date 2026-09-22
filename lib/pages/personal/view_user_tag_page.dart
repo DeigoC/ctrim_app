@@ -5,12 +5,13 @@ import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/catalog/user_tag_graphic.dart';
 import '../../widgets/responsive_content.dart';
 
 /// Public detail for one team tag.
 ///
-/// The short description lives here today. Further sections (who leads the
-/// team, when they serve, and similar) should be added on this page.
+/// The main graphic and short description live here today. Further sections
+/// (who leads the team, when they serve, and similar) should be added here.
 class ViewUserTagPage extends StatelessWidget {
   const ViewUserTagPage({
     super.key,
@@ -75,6 +76,10 @@ class ViewUserTagPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 24),
       children: [
+        if (tag.imageUrl != null) ...[
+          UserTagGraphic(imageUrl: tag.imageUrl, height: 200),
+          const SizedBox(height: 16),
+        ],
         Align(
           alignment: Alignment.centerLeft,
           child: UserTagChip(tag: tag),

@@ -71,7 +71,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Area admin
 
-**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, cell groups, and extra pages on a church hub. Team and post tags get a colour when added (you can change or clear it). Each team tag can also have a **short description** of what that team is for. A **team tag** can be hidden from **guests**: the label drops off profiles, the People directory, schedule details, and the public team-tags list. The person still appears, and a schedule line stays unless that line itself is marked hidden from guests. Signed-in people still see the tag. Controls will continue to be gated by area assignment as that model lands fully.
+**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, tags and locations, cell groups, and extra pages on a church hub. Team and post tags get a colour when added (you can change or clear it). Each team tag can also have a **short description** of what that team is for, and one **main image**. A **team tag** can be hidden from **guests**: the label drops off profiles, the People directory, schedule details, and the public team-tags list. The person still appears, and a schedule line stays unless that line itself is marked hidden from guests. Signed-in people still see the tag. Controls will continue to be gated by area assignment as that model lands fully.
 
 ## Site admin *(planned)*
 

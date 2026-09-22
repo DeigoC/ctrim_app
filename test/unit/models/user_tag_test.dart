@@ -53,6 +53,7 @@ void main() {
       expect(json['IsActive'], true);
       expect(json['VisibleToGuests'], true);
       expect(json['Description'], '');
+      expect(json['ImageUrl'], '');
       expect(json.containsKey('Color'), false);
     });
 
@@ -68,6 +69,20 @@ void main() {
       tag.setDescription('   ');
       expect(tag.description, isNull);
       expect(tag.toJson()['Description'], '');
+    });
+
+    test('imageUrl trims blanks and round-trips in json', () {
+      final tag = UserTag.fromMap('abc', {
+        'Name': 'Worship',
+        'ImageUrl': '  https://example.com/worship.jpg  ',
+      });
+
+      expect(tag.imageUrl, 'https://example.com/worship.jpg');
+      expect(tag.toJson()['ImageUrl'], 'https://example.com/worship.jpg');
+
+      tag.setImageUrl('   ');
+      expect(tag.imageUrl, isNull);
+      expect(tag.toJson()['ImageUrl'], '');
     });
 
     test('toJson includes color when set', () {

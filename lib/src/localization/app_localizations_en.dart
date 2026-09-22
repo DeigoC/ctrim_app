@@ -422,6 +422,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsDescriptionLabel => 'Short description';
 
   @override
+  String get manageUserTagsImageUrlLabel => 'Image URL';
+
+  @override
+  String get manageUserTagsImageUrlHint => 'https://…';
+
+  @override
   String get manageUserTagsDescriptionHint => 'What this team does';
 
   @override
