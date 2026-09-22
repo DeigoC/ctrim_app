@@ -413,10 +413,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserTagsVisibleToGuestsSubtitle =>
-      'Turn off to hide this label on profiles and schedule details. People and schedule lines still show.';
+      'Turn off to hide this label from guests on profiles, schedule details, and the team tags page. People and schedule lines still show.';
 
   @override
   String get manageUserTagsHiddenFromGuests => 'Hidden from guests';
+
+  @override
+  String get manageUserTagsDescriptionLabel => 'Short description';
+
+  @override
+  String get manageUserTagsDescriptionHint => 'What this team does';
+
+  @override
+  String get manageUserTagsDescriptionMissing => 'No description yet';
+
+  @override
+  String get userTagsBrowseSubtitle => 'What each team is for';
+
+  @override
+  String get userTagsBrowseEmpty => 'No team tags to show yet.';
+
+  @override
+  String get userTagsLoading => 'Loading team tags…';
+
+  @override
+  String get userTagsDetailEmpty => 'More about this team will be added here.';
+
+  @override
+  String get userTagsUnavailable => 'This team tag is no longer available.';
 
   @override
   String get postTagsFilterClear => 'Clear tags';

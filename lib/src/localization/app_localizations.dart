@@ -733,7 +733,7 @@ abstract class AppLocalizations {
   /// Explains that hiding a team tag only hides the label
   ///
   /// In en, this message translates to:
-  /// **'Turn off to hide this label on profiles and schedule details. People and schedule lines still show.'**
+  /// **'Turn off to hide this label from guests on profiles, schedule details, and the team tags page. People and schedule lines still show.'**
   String get manageUserTagsVisibleToGuestsSubtitle;
 
   /// Status on the team-tag list when guests do not see the label
@@ -741,6 +741,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hidden from guests'**
   String get manageUserTagsHiddenFromGuests;
+
+  /// Label for the team-tag description field
+  ///
+  /// In en, this message translates to:
+  /// **'Short description'**
+  String get manageUserTagsDescriptionLabel;
+
+  /// Hint for the team-tag description field
+  ///
+  /// In en, this message translates to:
+  /// **'What this team does'**
+  String get manageUserTagsDescriptionHint;
+
+  /// Admin list note when a team tag has no description
+  ///
+  /// In en, this message translates to:
+  /// **'No description yet'**
+  String get manageUserTagsDescriptionMissing;
+
+  /// Personal menu subtitle for the public team-tags page
+  ///
+  /// In en, this message translates to:
+  /// **'What each team is for'**
+  String get userTagsBrowseSubtitle;
+
+  /// Empty state on the team-tags page for people who cannot manage tags
+  ///
+  /// In en, this message translates to:
+  /// **'No team tags to show yet.'**
+  String get userTagsBrowseEmpty;
+
+  /// Loading message on the team-tags page
+  ///
+  /// In en, this message translates to:
+  /// **'Loading team tags…'**
+  String get userTagsLoading;
+
+  /// Placeholder on a team-tag detail page when there is no description
+  ///
+  /// In en, this message translates to:
+  /// **'More about this team will be added here.'**
+  String get userTagsDetailEmpty;
+
+  /// Shown when a team tag was removed while its detail page is open
+  ///
+  /// In en, this message translates to:
+  /// **'This team tag is no longer available.'**
+  String get userTagsUnavailable;
 
   /// Button to clear selected post tag filters on the bulletin
   ///

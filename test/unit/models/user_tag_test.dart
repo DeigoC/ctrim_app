@@ -13,6 +13,7 @@ void main() {
       expect(tag.displayOrder, 0);
       expect(tag.isActive, true);
       expect(tag.visibleToGuests, true);
+      expect(tag.description, isNull);
     });
 
     test('fromMap parses Firestore fields', () {
@@ -51,7 +52,22 @@ void main() {
       expect(json['DisplayOrder'], 3);
       expect(json['IsActive'], true);
       expect(json['VisibleToGuests'], true);
+      expect(json['Description'], '');
       expect(json.containsKey('Color'), false);
+    });
+
+    test('description trims blanks and round-trips in json', () {
+      final tag = UserTag.fromMap('abc', {
+        'Name': 'Worship',
+        'Description': '  Leads Sunday worship  ',
+      });
+
+      expect(tag.description, 'Leads Sunday worship');
+      expect(tag.toJson()['Description'], 'Leads Sunday worship');
+
+      tag.setDescription('   ');
+      expect(tag.description, isNull);
+      expect(tag.toJson()['Description'], '');
     });
 
     test('toJson includes color when set', () {

@@ -106,6 +106,58 @@ void main() {
     });
   });
 
+  group('UserTagHelpers browseTags', () {
+    final worship = UserTag(
+      id: 'worship',
+      name: 'Worship',
+      displayOrder: 2,
+      description: 'Sunday music',
+    );
+    final hidden = UserTag(
+      id: 'tech',
+      name: 'Technical',
+      displayOrder: 1,
+      visibleToGuests: false,
+    );
+    final paused = UserTag(
+      id: 'paused',
+      name: 'Paused',
+      displayOrder: 0,
+      isActive: false,
+    );
+    final allTags = [worship, hidden, paused];
+
+    test('guests see active tags that are visible to guests', () {
+      final tags = UserTagHelpers.browseTags(
+        allTags: allTags,
+        isGuest: true,
+        canManage: false,
+      );
+
+      expect(tags.map((tag) => tag.id), ['worship']);
+    });
+
+    test('signed-in people also see tags hidden from guests', () {
+      final tags = UserTagHelpers.browseTags(
+        allTags: allTags,
+        isGuest: false,
+        canManage: false,
+      );
+
+      expect(tags.map((tag) => tag.id), ['tech', 'worship']);
+    });
+
+    test('area admins see inactive tags too', () {
+      final tags = UserTagHelpers.browseTags(
+        allTags: allTags,
+        isGuest: false,
+        canManage: true,
+      );
+
+      expect(tags.map((tag) => tag.id), ['paused', 'tech', 'worship']);
+    });
+  });
+
   group('UserTagHelpers color', () {
     test('parseColor accepts hash, plain hex, and trims', () {
       expect(UserTagHelpers.parseColor(null), isNull);

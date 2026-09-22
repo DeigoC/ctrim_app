@@ -5,11 +5,17 @@ import '../../firebase/db_managers/user_tag_db_manager.dart';
 import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../widgets/catalog/manage_catalog_page.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/two_column_masonry.dart';
+import 'view_user_tag_page.dart';
 
 class ManageUserTagsPage extends StatefulWidget {
   const ManageUserTagsPage({super.key});
@@ -47,54 +53,152 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
     }
   }
 
-  ManageCatalogCopy _copy(AppLocalizations l10n) {
-    return ManageCatalogCopy(
-      title: l10n.manageUserTagsTitle,
-      add: l10n.manageUserTagsAdd,
-      empty: l10n.manageUserTagsEmpty,
-      seedDefaults: l10n.manageUserTagsSeedDefaults,
-      loadingMessage: 'Loading tags…',
-      deniedMessage: 'Only area admins can manage user tags.',
-      active: l10n.manageUserTagsActive,
-      inactive: l10n.manageUserTagsInactive,
-      moveUp: l10n.manageUserTagsMoveUp,
-      moveDown: l10n.manageUserTagsMoveDown,
-      edit: l10n.manageUserTagsEdit,
-      activate: l10n.manageUserTagsActivate,
-      deactivate: l10n.manageUserTagsDeactivate,
-      delete: l10n.manageUserTagsDelete,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Consumer<AppContext>(
       builder: (context, appContext, _) {
-        return ManageCatalogPage<UserTag>(
-          copy: _copy(l10n),
-          allow: (user) => user.canManageVolunteers,
-          loading: _loading,
-          saving: _saving,
-          items: appContext.allTags,
-          itemLeading: (tag) => UserTagChip(tag: tag),
-          itemName: (tag) => tag.name,
-          itemIsActive: (tag) => tag.isActive,
-          itemSubtitle: (tag) {
-            final status = tag.isActive
-                ? l10n.manageUserTagsActive
-                : l10n.manageUserTagsInactive;
-            if (tag.visibleToGuests) return status;
-            return '$status · ${l10n.manageUserTagsHiddenFromGuests}';
-          },
-          onAdd: _showTagDialog,
-          onSeed: _seedDefaultTags,
-          onEdit: (tag) => _showTagDialog(existing: tag),
-          onToggle: (tag) => _setTagActive(tag, !tag.isActive),
-          onDelete: _deleteTag,
-          onMove: _moveTag,
+        final canManage = appContext.currentUser.canManageVolunteers;
+        final tags = UserTagHelpers.browseTags(
+          allTags: appContext.allTags,
+          isGuest: appContext.isCurrentUserGuest,
+          canManage: canManage,
+        );
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.manageUserTagsMenuTitle),
+            actions: [
+              if (canManage)
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  tooltip: l10n.manageUserTagsAdd,
+                  onPressed: _saving ? null : () => _showTagDialog(),
+                ),
+            ],
+          ),
+          body: _buildBody(context, l10n, tags, canManage),
         );
       },
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    AppLocalizations l10n,
+    List<UserTag> tags,
+    bool canManage,
+  ) {
+    if (_loading) {
+      return LoadProgressBody(
+        message: l10n.userTagsLoading,
+        completedSteps: 0,
+        totalSteps: 1,
+      );
+    }
+    if (tags.isEmpty) {
+      return _buildEmpty(context, l10n, canManage);
+    }
+
+    final isWide = ResponsiveLayout.isWideScreenOf(context);
+    final cards = [
+      for (var index = 0; index < tags.length; index++)
+        _TagCard(
+          tag: tags[index],
+          canManage: canManage,
+          saving: _saving,
+          canMoveUp: canManage && index > 0,
+          canMoveDown: canManage && index < tags.length - 1,
+          onOpen: () => _openTag(tags[index], canManage),
+          onEdit: () => _showTagDialog(existing: tags[index]),
+          onToggle: () => _setTagActive(tags[index], !tags[index].isActive),
+          onDelete: () => _deleteTag(tags[index]),
+          onMoveUp: () => _moveTag(index, -1),
+          onMoveDown: () => _moveTag(index, 1),
+        ),
+    ];
+
+    return ResponsiveContent(
+      narrowPadding: 16,
+      child: isWide
+          ? SingleChildScrollView(
+              padding: const EdgeInsets.only(top: 16, bottom: 24),
+              child: TwoColumnMasonry(children: cards),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              itemCount: cards.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, index) => cards[index],
+            ),
+    );
+  }
+
+  Widget _buildEmpty(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool canManage,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.label_rounded,
+                  size: 32, color: colorScheme.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              canManage ? l10n.manageUserTagsEmpty : l10n.userTagsBrowseEmpty,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            if (canManage) ...[
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _saving ? null : _seedDefaultTags,
+                icon: const Icon(Icons.auto_awesome),
+                label: Text(l10n.manageUserTagsSeedDefaults),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _saving ? null : () => _showTagDialog(),
+                icon: const Icon(Icons.add),
+                label: Text(l10n.manageUserTagsAdd),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openTag(UserTag tag, bool canManage) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewUserTagPage(
+          tagId: tag.id,
+          onEdit: canManage
+              ? () {
+                  final current =
+                      Provider.of<AppContext>(context, listen: false)
+                          .tagById(tag.id);
+                  if (current == null) return;
+                  _showTagDialog(existing: current);
+                }
+              : null,
+        ),
+      ),
     );
   }
 
@@ -120,6 +224,9 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       visibleToGuestsLabel: l10n.manageUserTagsVisibleToGuests,
       visibleToGuestsSubtitle: l10n.manageUserTagsVisibleToGuestsSubtitle,
       initialVisibleToGuests: existing?.visibleToGuests ?? true,
+      descriptionLabel: l10n.manageUserTagsDescriptionLabel,
+      descriptionHint: l10n.manageUserTagsDescriptionHint,
+      initialDescription: existing?.description,
     );
     if (result == null || !mounted) return;
 
@@ -132,6 +239,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
         if (result.visibleToGuests != null) {
           existing.setVisibleToGuests(result.visibleToGuests!);
         }
+        existing.setDescription(result.description);
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdateTag(existing);
         await UserActivityRecorder().record(
@@ -151,6 +259,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           color: result.color,
           displayOrder: nextOrder,
           visibleToGuests: result.visibleToGuests ?? true,
+          description: result.description,
         );
         appContext.addOrUpdateTag(tag);
         await UserActivityRecorder().record(
@@ -256,5 +365,149 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+class _TagCard extends StatelessWidget {
+  const _TagCard({
+    required this.tag,
+    required this.canManage,
+    required this.saving,
+    required this.canMoveUp,
+    required this.canMoveDown,
+    required this.onOpen,
+    required this.onEdit,
+    required this.onToggle,
+    required this.onDelete,
+    required this.onMoveUp,
+    required this.onMoveDown,
+  });
+
+  final UserTag tag;
+  final bool canManage;
+  final bool saving;
+  final bool canMoveUp;
+  final bool canMoveDown;
+  final VoidCallback onOpen;
+  final VoidCallback onEdit;
+  final VoidCallback onToggle;
+  final VoidCallback onDelete;
+  final VoidCallback onMoveUp;
+  final VoidCallback onMoveDown;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final description = tag.description;
+    final status =
+        tag.isActive ? l10n.manageUserTagsActive : l10n.manageUserTagsInactive;
+    final statusLine = tag.visibleToGuests
+        ? status
+        : '$status · ${l10n.manageUserTagsHiddenFromGuests}';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: UserTagChip(tag: tag),
+                    ),
+                  ),
+                  if (canManage)
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'edit':
+                            onEdit();
+                          case 'toggle':
+                            onToggle();
+                          case 'delete':
+                            onDelete();
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(l10n.manageUserTagsEdit),
+                        ),
+                        PopupMenuItem(
+                          value: 'toggle',
+                          child: Text(tag.isActive
+                              ? l10n.manageUserTagsDeactivate
+                              : l10n.manageUserTagsActivate),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(l10n.manageUserTagsDelete),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              if (description != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ] else if (canManage) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l10n.manageUserTagsDescriptionMissing,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (canManage) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        statusLine,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_upward),
+                      tooltip: l10n.manageUserTagsMoveUp,
+                      onPressed: canMoveUp && !saving ? onMoveUp : null,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_downward),
+                      tooltip: l10n.manageUserTagsMoveDown,
+                      onPressed: canMoveDown && !saving ? onMoveDown : null,
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

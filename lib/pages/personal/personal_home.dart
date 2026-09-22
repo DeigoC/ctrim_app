@@ -318,6 +318,14 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
     ];
 
+    final teamTags = PersonalAction(
+      icon: Icons.label_rounded,
+      title: l10n.manageUserTagsMenuTitle,
+      subtitle: l10n.userTagsBrowseSubtitle,
+      onTap: _openManageUserTagsClick,
+      iconColor: colorScheme.primary,
+    );
+
     if (appContext.isCurrentUserGuest) {
       actions.add(
         PersonalAction(
@@ -328,6 +336,7 @@ class _PersonalHomeState extends State<PersonalHome> {
           iconColor: colorScheme.primary,
         ),
       );
+      actions.add(teamTags);
       actions.addAll(shareAndGuide);
       return actions;
     }
@@ -362,6 +371,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         onTap: _onUserProfileClick,
         iconColor: colorScheme.primary,
       ),
+      teamTags,
       ...shareAndGuide,
     ]);
 

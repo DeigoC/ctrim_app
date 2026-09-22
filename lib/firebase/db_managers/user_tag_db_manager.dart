@@ -29,6 +29,7 @@ class UserTagDBManager {
     String? color,
     required int displayOrder,
     bool visibleToGuests = true,
+    String? description,
   }) async {
     final docRef = _ref.doc();
     final tag = UserTag(
@@ -37,6 +38,7 @@ class UserTagDBManager {
       color: color,
       displayOrder: displayOrder,
       visibleToGuests: visibleToGuests,
+      description: description,
     );
     await docRef.set(tag.toJson());
     return tag;
