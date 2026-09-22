@@ -71,6 +71,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 
 Depending on role, Personal may also show:
 
+- **For you → Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description. Area admins edit tags from the same page (add, reorder, hide from guests). Tags hidden from guests do not appear in this list for guests.
 - **For you → Who's who** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
 - **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services**  
 - **Admin tools →** people / tags / locations management *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional.  

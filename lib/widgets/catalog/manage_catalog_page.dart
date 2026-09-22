@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/user.dart';
+import '../../models/user_tag.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/responsive_layout.dart';
 import '../common/app_dialog.dart';
@@ -209,6 +210,7 @@ class CatalogItemDialogResult {
     required this.name,
     this.color,
     this.visibleToGuests,
+    this.description,
   });
 
   final String name;
@@ -216,6 +218,9 @@ class CatalogItemDialogResult {
 
   /// Set when the dialog showed the guest-visibility switch.
   final bool? visibleToGuests;
+
+  /// Set when the dialog showed the description field. Empty input is null.
+  final String? description;
 }
 
 /// Add/edit dialog for a catalog item. Omit [colorLabel] to hide the color field.
@@ -237,8 +242,15 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
   String? visibleToGuestsLabel,
   String? visibleToGuestsSubtitle,
   bool initialVisibleToGuests = true,
+  String? descriptionLabel,
+  String? descriptionHint,
+  String? initialDescription,
+  int descriptionMaxLength = UserTag.descriptionMaxLength,
 }) async {
   final nameController = TextEditingController(text: initialName ?? '');
+  final descriptionController = descriptionLabel == null
+      ? null
+      : TextEditingController(text: initialDescription ?? '');
   final colorController = colorLabel == null
       ? null
       : TextEditingController(
@@ -249,6 +261,7 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
         );
   var visibleToGuests = initialVisibleToGuests;
   final showGuestSwitch = visibleToGuestsLabel != null;
+  final showDescription = descriptionController != null;
 
   try {
     final saved = await showDialog<bool>(
@@ -284,6 +297,20 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
                       hint: colorHint,
                     ),
                   ],
+                  if (showDescription) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descriptionController!,
+                      maxLines: 4,
+                      maxLength: descriptionMaxLength,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: AppDialog.inputDecoration(
+                        label: descriptionLabel!,
+                        hint: descriptionHint,
+                        maxLines: 4,
+                      ),
+                    ),
+                  ],
                   if (showGuestSwitch) ...[
                     const SizedBox(height: 4),
                     SwitchListTile(
@@ -312,9 +339,17 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
       name: name,
       color: UserTagHelpers.normalizeHex(colorController?.text),
       visibleToGuests: showGuestSwitch ? visibleToGuests : null,
+      description:
+          showDescription ? _emptyToNull(descriptionController!.text) : null,
     );
   } finally {
     nameController.dispose();
+    descriptionController?.dispose();
     colorController?.dispose();
   }
+}
+
+String? _emptyToNull(final String raw) {
+  final trimmed = raw.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }

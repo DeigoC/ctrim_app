@@ -518,13 +518,45 @@
   "@manageUserTagsVisibleToGuests": {
     "description": "Switch on the team-tag editor so guests can see this label"
   },
-  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label on profiles and schedule details. People and schedule lines still show.",
+  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label from guests on profiles, schedule details, and the team tags page. People and schedule lines still show.",
   "@manageUserTagsVisibleToGuestsSubtitle": {
     "description": "Explains that hiding a team tag only hides the label"
   },
   "manageUserTagsHiddenFromGuests": "Hidden from guests",
   "@manageUserTagsHiddenFromGuests": {
     "description": "Status on the team-tag list when guests do not see the label"
+  },
+  "manageUserTagsDescriptionLabel": "Short description",
+  "@manageUserTagsDescriptionLabel": {
+    "description": "Label for the team-tag description field"
+  },
+  "manageUserTagsDescriptionHint": "What this team does",
+  "@manageUserTagsDescriptionHint": {
+    "description": "Hint for the team-tag description field"
+  },
+  "manageUserTagsDescriptionMissing": "No description yet",
+  "@manageUserTagsDescriptionMissing": {
+    "description": "Admin list note when a team tag has no description"
+  },
+  "userTagsBrowseSubtitle": "What each team is for",
+  "@userTagsBrowseSubtitle": {
+    "description": "Personal menu subtitle for the public team-tags page"
+  },
+  "userTagsBrowseEmpty": "No team tags to show yet.",
+  "@userTagsBrowseEmpty": {
+    "description": "Empty state on the team-tags page for people who cannot manage tags"
+  },
+  "userTagsLoading": "Loading team tags…",
+  "@userTagsLoading": {
+    "description": "Loading message on the team-tags page"
+  },
+  "userTagsDetailEmpty": "More about this team will be added here.",
+  "@userTagsDetailEmpty": {
+    "description": "Placeholder on a team-tag detail page when there is no description"
+  },
+  "userTagsUnavailable": "This team tag is no longer available.",
+  "@userTagsUnavailable": {
+    "description": "Shown when a team tag was removed while its detail page is open"
   },
   "postTagsFilterClear": "Clear tags",
   "@postTagsFilterClear": {
