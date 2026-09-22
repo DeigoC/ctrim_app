@@ -44,10 +44,13 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     final start = role['start'] as DateTime?;
     final end = role['end'] as DateTime?;
     final staffOnly = role['for_guests'] != true;
+    final hideGuestTags =
+        context.select((AppContext c) => c.isCurrentUserGuest);
     final allTags = context.select((AppContext c) => c.allTags);
     final tags = UserTagHelpers.resolveTags(
       tagIDs: EventProgram.tagIDsOf(role),
       allTags: allTags,
+      visibleToGuestsOnly: hideGuestTags,
     );
 
     return Column(

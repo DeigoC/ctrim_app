@@ -80,6 +80,13 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           itemLeading: (tag) => UserTagChip(tag: tag),
           itemName: (tag) => tag.name,
           itemIsActive: (tag) => tag.isActive,
+          itemSubtitle: (tag) {
+            final status = tag.isActive
+                ? l10n.manageUserTagsActive
+                : l10n.manageUserTagsInactive;
+            if (tag.visibleToGuests) return status;
+            return '$status · ${l10n.manageUserTagsHiddenFromGuests}';
+          },
           onAdd: _showTagDialog,
           onSeed: _seedDefaultTags,
           onEdit: (tag) => _showTagDialog(existing: tag),
@@ -110,6 +117,9 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       takenColors: Provider.of<AppContext>(context, listen: false)
           .allTags
           .map((tag) => tag.color),
+      visibleToGuestsLabel: l10n.manageUserTagsVisibleToGuests,
+      visibleToGuestsSubtitle: l10n.manageUserTagsVisibleToGuestsSubtitle,
+      initialVisibleToGuests: existing?.visibleToGuests ?? true,
     );
     if (result == null || !mounted) return;
 
@@ -119,6 +129,9 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
       if (existing != null) {
         existing.setName(result.name);
         existing.setColor(result.color);
+        if (result.visibleToGuests != null) {
+          existing.setVisibleToGuests(result.visibleToGuests!);
+        }
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdateTag(existing);
         await UserActivityRecorder().record(
@@ -137,6 +150,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           name: result.name,
           color: result.color,
           displayOrder: nextOrder,
+          visibleToGuests: result.visibleToGuests ?? true,
         );
         appContext.addOrUpdateTag(tag);
         await UserActivityRecorder().record(

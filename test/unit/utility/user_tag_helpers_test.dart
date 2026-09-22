@@ -29,6 +29,81 @@ void main() {
 
       expect(users.map((u) => u.id).toList(), ['2', '4', '1', '3']);
     });
+
+    test('guest sort ignores tags hidden from guests', () {
+      final hidden = UserTag(
+        id: 'tech',
+        name: 'Technical',
+        displayOrder: 0,
+        visibleToGuests: false,
+      );
+      final public = UserTag(id: 'worship', name: 'Worship', displayOrder: 2);
+      final users = [
+        User(id: '1', forname: 'Bob', surname: 'Zulu', tagIDs: ['tech']),
+        User(id: '2', forname: 'Amy', surname: 'Adams', tagIDs: ['worship']),
+      ]..sort((a, b) => UserTagHelpers.compareUsersByPrimaryTag(
+            a,
+            b,
+            [hidden, public],
+            visibleToGuestsOnly: true,
+          ));
+
+      expect(users.map((u) => u.id).toList(), ['2', '1']);
+    });
+  });
+
+  group('UserTagHelpers guest visibility', () {
+    final worship = UserTag(id: 'worship', name: 'Worship', displayOrder: 2);
+    final tech = UserTag(
+      id: 'tech',
+      name: 'Technical',
+      displayOrder: 1,
+      visibleToGuests: false,
+    );
+    final paused = UserTag(
+      id: 'paused',
+      name: 'Paused',
+      isActive: false,
+      visibleToGuests: true,
+    );
+    final allTags = [worship, tech, paused];
+
+    test('resolveTags keeps hidden tags for signed-in viewers', () {
+      final tags = UserTagHelpers.resolveTags(
+        tagIDs: ['tech', 'worship', 'paused', 'missing'],
+        allTags: allTags,
+      );
+
+      expect(tags.map((tag) => tag.id), ['tech', 'worship']);
+    });
+
+    test('resolveTags drops hidden tags when visibleToGuestsOnly is set', () {
+      final tags = UserTagHelpers.resolveTags(
+        tagIDs: ['tech', 'worship'],
+        allTags: allTags,
+        visibleToGuestsOnly: true,
+      );
+
+      expect(tags.map((tag) => tag.id), ['worship']);
+    });
+
+    test('tagsForUser applies the same guest filter', () {
+      final user = User(
+        id: '1',
+        forname: 'Amy',
+        surname: 'Adams',
+        tagIDs: ['tech', 'worship'],
+      );
+
+      expect(
+        UserTagHelpers.tagsForUser(
+          user: user,
+          allTags: allTags,
+          visibleToGuestsOnly: true,
+        ).map((tag) => tag.id),
+        ['worship'],
+      );
+    });
   });
 
   group('UserTagHelpers color', () {

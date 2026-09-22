@@ -29,9 +29,11 @@ class DialogManager {
     Widget buildVerticalUserViewer(User selectedUser) {
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
+      final appContext = Provider.of<AppContext>(context, listen: false);
       final userTags = UserTagHelpers.tagsForUser(
         user: selectedUser,
-        allTags: Provider.of<AppContext>(context, listen: false).allTags,
+        allTags: appContext.allTags,
+        visibleToGuestsOnly: appContext.isCurrentUserGuest,
       );
 
       return Container(
@@ -126,9 +128,11 @@ class DialogManager {
     Widget buildHorizontalUserViewer(User selectedUser) {
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
+      final appContext = Provider.of<AppContext>(context, listen: false);
       final userTags = UserTagHelpers.tagsForUser(
         user: selectedUser,
-        allTags: Provider.of<AppContext>(context, listen: false).allTags,
+        allTags: appContext.allTags,
+        visibleToGuestsOnly: appContext.isCurrentUserGuest,
       );
 
       return Container(

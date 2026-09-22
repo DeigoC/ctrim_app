@@ -71,11 +71,11 @@ Anything happening **at the same time** appears side by side. On a narrow phone 
 
 Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
 
-Tap any item to see its full details: exact times, notes, who is assigned, and any **team tags** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline.
+Tap any item to see its full details: exact times, notes, who is assigned, and any **team tags** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Team tags an area admin has hidden from guests are left off that detail for people who are not signed in.
 
 ## Guest-visible schedule
 
-Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme.
+Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme. Hiding a **team tag** only hides that department label. It does not hide the schedule line.
 
 ## Rearranging the running order
 

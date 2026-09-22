@@ -46,6 +46,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Bulk create** | Create many dated posts from one template (e.g. a weekly series) without a push blast for every date. |
 | **Post tag** | A label on posts for **browsing and filtering** the bulletin (for example Sunday Worship or Midweek). Not used for push notification opt-in. |
 | **Location notification** | A push opt-in tied to a church **location** — for example **All Belfast updates**. Broadcasts about a post can reach everyone who turned that location on. |
+| **Team tag** | A department label on a person and on programme slots (Worship, Technical, and similar). Area admins can hide the label from **guests**. The person and the schedule line still show. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Organisers can mark a line with **team tags** (which departments own it). Some lines can be hidden from **guests**. |
 | **My Schedule** | Personal list of programme roles assigned to **you**, plus posts where you are an **expected attendee**. Far-ahead assignments stay here even when the post is not on the bulletin yet. |
 | **Team rota** | Personal view of upcoming programme slots tagged for a **team** (including empty slots), over the next few months. Filter by location and team. |

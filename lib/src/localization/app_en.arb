@@ -514,6 +514,18 @@
   "@manageUserTagsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing tags"
   },
+  "manageUserTagsVisibleToGuests": "Visible to guests",
+  "@manageUserTagsVisibleToGuests": {
+    "description": "Switch on the team-tag editor so guests can see this label"
+  },
+  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label on profiles and schedule details. People and schedule lines still show.",
+  "@manageUserTagsVisibleToGuestsSubtitle": {
+    "description": "Explains that hiding a team tag only hides the label"
+  },
+  "manageUserTagsHiddenFromGuests": "Hidden from guests",
+  "@manageUserTagsHiddenFromGuests": {
+    "description": "Status on the team-tag list when guests do not see the label"
+  },
   "postTagsFilterClear": "Clear tags",
   "@postTagsFilterClear": {
     "description": "Button to clear selected post tag filters on the bulletin"

@@ -724,6 +724,24 @@ abstract class AppLocalizations {
   /// **'Create and edit team labels'**
   String get manageUserTagsMenuSubtitle;
 
+  /// Switch on the team-tag editor so guests can see this label
+  ///
+  /// In en, this message translates to:
+  /// **'Visible to guests'**
+  String get manageUserTagsVisibleToGuests;
+
+  /// Explains that hiding a team tag only hides the label
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off to hide this label on profiles and schedule details. People and schedule lines still show.'**
+  String get manageUserTagsVisibleToGuestsSubtitle;
+
+  /// Status on the team-tag list when guests do not see the label
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from guests'**
+  String get manageUserTagsHiddenFromGuests;
+
   /// Button to clear selected post tag filters on the bulletin
   ///
   /// In en, this message translates to:

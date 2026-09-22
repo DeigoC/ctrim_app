@@ -4,14 +4,18 @@ import '../../models/user_tag.dart';
 
 class UserTagDBManager {
   static final CollectionReference<Map<String, dynamic>> _ref =
-      FirebaseFirestore.instance.collection('user_tags').withConverter<Map<String, dynamic>>(
+      FirebaseFirestore.instance
+          .collection('user_tags')
+          .withConverter<Map<String, dynamic>>(
             fromFirestore: (snap, _) => snap.data() ?? {},
             toFirestore: (data, _) => data,
           );
 
   Future<List<UserTag>> fetchAllTags() async {
     final snapshot = await _ref.get();
-    final tags = snapshot.docs.map((doc) => UserTag.fromMap(doc.id, doc.data())).toList();
+    final tags = snapshot.docs
+        .map((doc) => UserTag.fromMap(doc.id, doc.data()))
+        .toList();
     tags.sort((a, b) {
       final orderCompare = a.displayOrder.compareTo(b.displayOrder);
       if (orderCompare != 0) return orderCompare;
@@ -24,6 +28,7 @@ class UserTagDBManager {
     required String name,
     String? color,
     required int displayOrder,
+    bool visibleToGuests = true,
   }) async {
     final docRef = _ref.doc();
     final tag = UserTag(
@@ -31,6 +36,7 @@ class UserTagDBManager {
       name: name,
       color: color,
       displayOrder: displayOrder,
+      visibleToGuests: visibleToGuests,
     );
     await docRef.set(tag.toJson());
     return tag;

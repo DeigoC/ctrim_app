@@ -4,6 +4,7 @@ class UserTag {
   String? _color;
   late int _displayOrder;
   late bool _isActive;
+  late bool _visibleToGuests;
 
   UserTag({
     required String id,
@@ -11,12 +12,14 @@ class UserTag {
     String? color,
     int displayOrder = 0,
     bool isActive = true,
+    bool visibleToGuests = true,
   }) {
     _id = id;
     _name = name;
     _color = color;
     _displayOrder = displayOrder;
     _isActive = isActive;
+    _visibleToGuests = visibleToGuests;
   }
 
   UserTag.fromMap(final String id, final Map<String, dynamic> data)
@@ -24,13 +27,15 @@ class UserTag {
         _name = data['Name'] as String,
         _color = data['Color'] as String?,
         _displayOrder = (data['DisplayOrder'] as num?)?.toInt() ?? 0,
-        _isActive = data['IsActive'] as bool? ?? true;
+        _isActive = data['IsActive'] as bool? ?? true,
+        _visibleToGuests = data['VisibleToGuests'] as bool? ?? true;
 
   Map<String, dynamic> toJson() {
     return {
       'Name': _name,
       'DisplayOrder': _displayOrder,
       'IsActive': _isActive,
+      'VisibleToGuests': _visibleToGuests,
       if (_color != null && _color!.isNotEmpty) 'Color': _color,
     };
   }
@@ -41,8 +46,12 @@ class UserTag {
   int get displayOrder => _displayOrder;
   bool get isActive => _isActive;
 
+  /// When false, guests do not see this label. Missing Firestore values stay true.
+  bool get visibleToGuests => _visibleToGuests;
+
   void setName(final String name) => _name = name;
   void setColor(final String? color) => _color = color;
   void setDisplayOrder(final int order) => _displayOrder = order;
   void setActive(final bool active) => _isActive = active;
+  void setVisibleToGuests(final bool visible) => _visibleToGuests = visible;
 }

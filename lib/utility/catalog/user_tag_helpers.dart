@@ -68,6 +68,7 @@ class UserTagHelpers {
     required List<String> tagIDs,
     required List<UserTag> allTags,
     bool activeOnly = true,
+    bool visibleToGuestsOnly = false,
   }) {
     final tagMap = {for (final tag in allTags) tag.id: tag};
     final resolved = <UserTag>[];
@@ -75,6 +76,7 @@ class UserTagHelpers {
       final tag = tagMap[id];
       if (tag == null) continue;
       if (activeOnly && !tag.isActive) continue;
+      if (visibleToGuestsOnly && !tag.visibleToGuests) continue;
       resolved.add(tag);
     }
     resolved.sort((a, b) {
@@ -89,9 +91,14 @@ class UserTagHelpers {
     required User user,
     required List<UserTag> allTags,
     bool activeOnly = true,
+    bool visibleToGuestsOnly = false,
   }) {
     return resolveTags(
-        tagIDs: user.tagIDs, allTags: allTags, activeOnly: activeOnly);
+      tagIDs: user.tagIDs,
+      allTags: allTags,
+      activeOnly: activeOnly,
+      visibleToGuestsOnly: visibleToGuestsOnly,
+    );
   }
 
   static bool userMatchesTagFilter({
@@ -116,10 +123,23 @@ class UserTagHelpers {
 
   /// Primary tag display order, then tag name, then [compareUsersBySurname].
   /// Users without tags sort last.
-  static int compareUsersByPrimaryTag(User a, User b, List<UserTag> allTags) {
+  static int compareUsersByPrimaryTag(
+    User a,
+    User b,
+    List<UserTag> allTags, {
+    bool visibleToGuestsOnly = false,
+  }) {
     const untaggedOrder = 0x7FFFFFFF;
-    final tagsA = tagsForUser(user: a, allTags: allTags);
-    final tagsB = tagsForUser(user: b, allTags: allTags);
+    final tagsA = tagsForUser(
+      user: a,
+      allTags: allTags,
+      visibleToGuestsOnly: visibleToGuestsOnly,
+    );
+    final tagsB = tagsForUser(
+      user: b,
+      allTags: allTags,
+      visibleToGuestsOnly: visibleToGuestsOnly,
+    );
     final orderA = tagsA.isEmpty ? untaggedOrder : tagsA.first.displayOrder;
     final orderB = tagsB.isEmpty ? untaggedOrder : tagsB.first.displayOrder;
 

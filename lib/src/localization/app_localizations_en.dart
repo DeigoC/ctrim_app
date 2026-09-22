@@ -409,6 +409,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
 
   @override
+  String get manageUserTagsVisibleToGuests => 'Visible to guests';
+
+  @override
+  String get manageUserTagsVisibleToGuestsSubtitle =>
+      'Turn off to hide this label on profiles and schedule details. People and schedule lines still show.';
+
+  @override
+  String get manageUserTagsHiddenFromGuests => 'Hidden from guests';
+
+  @override
   String get postTagsFilterClear => 'Clear tags';
 
   @override
