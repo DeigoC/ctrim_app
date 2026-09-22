@@ -55,6 +55,7 @@ class ManageCatalogPage<T> extends StatelessWidget {
     required this.itemLeading,
     required this.itemName,
     required this.itemIsActive,
+    this.itemSubtitle,
     required this.onAdd,
     required this.onSeed,
     required this.onEdit,
@@ -71,6 +72,9 @@ class ManageCatalogPage<T> extends StatelessWidget {
   final Widget Function(T item) itemLeading;
   final String Function(T item) itemName;
   final bool Function(T item) itemIsActive;
+
+  /// Replaces the active/inactive line when the catalogue needs extra status.
+  final String Function(T item)? itemSubtitle;
   final VoidCallback onAdd;
   final VoidCallback onSeed;
   final void Function(T item) onEdit;
@@ -151,7 +155,10 @@ class ManageCatalogPage<T> extends StatelessWidget {
           child: ListTile(
             leading: itemLeading(item),
             title: Text(itemName(item)),
-            subtitle: Text(active ? copy.active : copy.inactive),
+            subtitle: Text(
+              itemSubtitle?.call(item) ??
+                  (active ? copy.active : copy.inactive),
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -198,10 +205,17 @@ class ManageCatalogPage<T> extends StatelessWidget {
 }
 
 class CatalogItemDialogResult {
-  const CatalogItemDialogResult({required this.name, this.color});
+  const CatalogItemDialogResult({
+    required this.name,
+    this.color,
+    this.visibleToGuests,
+  });
 
   final String name;
   final String? color;
+
+  /// Set when the dialog showed the guest-visibility switch.
+  final bool? visibleToGuests;
 }
 
 /// Add/edit dialog for a catalog item. Omit [colorLabel] to hide the color field.
@@ -220,6 +234,9 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
   String? initialColor,
   Iterable<String?> takenColors = const [],
   IconData addIcon = Icons.add,
+  String? visibleToGuestsLabel,
+  String? visibleToGuestsSubtitle,
+  bool initialVisibleToGuests = true,
 }) async {
   final nameController = TextEditingController(text: initialName ?? '');
   final colorController = colorLabel == null
@@ -230,41 +247,60 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
                   ? ''
                   : UserTagHelpers.nextPresetHex(usedHexes: takenColors)),
         );
+  var visibleToGuests = initialVisibleToGuests;
+  final showGuestSwitch = visibleToGuestsLabel != null;
 
   try {
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AppDialog(
-          icon: isEditing ? Icons.edit_outlined : addIcon,
-          title: isEditing ? editTitle : addTitle,
-          actions: AppDialogActions(
-            onCancel: () => Navigator.pop(dialogContext),
-            cancelLabel: cancelLabel,
-            onConfirm: () {
-              if (nameController.text.trim().isEmpty) return;
-              Navigator.pop(dialogContext, true);
-            },
-            confirmLabel: isEditing ? saveLabel : createLabel,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: AppDialog.inputDecoration(label: nameLabel),
-                autofocus: true,
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AppDialog(
+              icon: isEditing ? Icons.edit_outlined : addIcon,
+              title: isEditing ? editTitle : addTitle,
+              actions: AppDialogActions(
+                onCancel: () => Navigator.pop(dialogContext),
+                cancelLabel: cancelLabel,
+                onConfirm: () {
+                  if (nameController.text.trim().isEmpty) return;
+                  Navigator.pop(dialogContext, true);
+                },
+                confirmLabel: isEditing ? saveLabel : createLabel,
               ),
-              if (colorController != null && colorLabel != null) ...[
-                const SizedBox(height: 12),
-                CatalogColorField(
-                  controller: colorController,
-                  label: colorLabel,
-                  hint: colorHint,
-                ),
-              ],
-            ],
-          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: AppDialog.inputDecoration(label: nameLabel),
+                    autofocus: true,
+                  ),
+                  if (colorController != null && colorLabel != null) ...[
+                    const SizedBox(height: 12),
+                    CatalogColorField(
+                      controller: colorController,
+                      label: colorLabel,
+                      hint: colorHint,
+                    ),
+                  ],
+                  if (showGuestSwitch) ...[
+                    const SizedBox(height: 4),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: visibleToGuests,
+                      onChanged: (value) =>
+                          setDialogState(() => visibleToGuests = value),
+                      title: Text(visibleToGuestsLabel!),
+                      subtitle: visibleToGuestsSubtitle == null
+                          ? null
+                          : Text(visibleToGuestsSubtitle),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -275,6 +311,7 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
     return CatalogItemDialogResult(
       name: name,
       color: UserTagHelpers.normalizeHex(colorController?.text),
+      visibleToGuests: showGuestSwitch ? visibleToGuests : null,
     );
   } finally {
     nameController.dispose();

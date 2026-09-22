@@ -12,6 +12,7 @@ void main() {
       expect(tag.color, isNull);
       expect(tag.displayOrder, 0);
       expect(tag.isActive, true);
+      expect(tag.visibleToGuests, true);
     });
 
     test('fromMap parses Firestore fields', () {
@@ -27,6 +28,19 @@ void main() {
       expect(tag.color, '#2E7D6F');
       expect(tag.displayOrder, 2);
       expect(tag.isActive, false);
+      expect(tag.visibleToGuests, true);
+    });
+
+    test('fromMap reads VisibleToGuests and defaults missing values to true',
+        () {
+      final hidden = UserTag.fromMap('abc', {
+        'Name': 'Technical',
+        'VisibleToGuests': false,
+      });
+      final legacy = UserTag.fromMap('def', {'Name': 'Worship'});
+
+      expect(hidden.visibleToGuests, false);
+      expect(legacy.visibleToGuests, true);
     });
 
     test('toJson omits empty color', () {
@@ -36,6 +50,7 @@ void main() {
       expect(json['Name'], 'Usher');
       expect(json['DisplayOrder'], 3);
       expect(json['IsActive'], true);
+      expect(json['VisibleToGuests'], true);
       expect(json.containsKey('Color'), false);
     });
 
@@ -50,11 +65,14 @@ void main() {
       tag.setColor('#FFFFFF');
       tag.setDisplayOrder(5);
       tag.setActive(false);
+      tag.setVisibleToGuests(false);
 
       expect(tag.name, 'New');
       expect(tag.color, '#FFFFFF');
       expect(tag.displayOrder, 5);
       expect(tag.isActive, false);
+      expect(tag.visibleToGuests, false);
+      expect(tag.toJson()['VisibleToGuests'], false);
     });
   });
 }

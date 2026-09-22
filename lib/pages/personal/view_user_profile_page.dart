@@ -234,8 +234,11 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       eventHeads: _appContext.eventHeads,
       limit: 3,
     );
-    final userTags =
-        UserTagHelpers.tagsForUser(user: _user, allTags: _appContext.allTags);
+    final userTags = UserTagHelpers.tagsForUser(
+      user: _user,
+      allTags: _appContext.allTags,
+      visibleToGuestsOnly: _appContext.isCurrentUserGuest,
+    );
     final volunteerRoles = VolunteerRoleHelpers.rolesFor(
       user: _user,
       cellGroupLeaders:

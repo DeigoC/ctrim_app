@@ -231,8 +231,13 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           ? unfilteredSearchMatches
           : filteredUsers;
       final canEdit = appContext.currentUser.canManageVolunteers;
-      final activeTags =
-          appContext.allTags.where((tag) => tag.isActive).toList();
+      final activeTags = appContext.allTags.where((tag) {
+        if (!tag.isActive) return false;
+        if (appContext.isCurrentUserGuest && !tag.visibleToGuests) {
+          return false;
+        }
+        return true;
+      }).toList();
 
       return Scaffold(
           appBar: AppBar(
@@ -706,7 +711,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
-    final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final userTags = UserTagHelpers.tagsForUser(
+      user: user,
+      allTags: allTags,
+      visibleToGuestsOnly: appContext.isCurrentUserGuest,
+    );
     final roles = VolunteerRoleHelpers.rolesFor(
       user: user,
       cellGroupLeaders: cellGroupLeaders,
@@ -745,7 +754,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required AppContext appContext,
     required AppLocalizations l10n,
   }) {
-    final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final userTags = UserTagHelpers.tagsForUser(
+      user: user,
+      allTags: allTags,
+      visibleToGuestsOnly: appContext.isCurrentUserGuest,
+    );
     final roles = VolunteerRoleHelpers.rolesFor(
       user: user,
       cellGroupLeaders: cellGroupLeaders,
@@ -1132,8 +1145,12 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         return switch (_sortMode) {
           _VolunteerSortMode.surname =>
             UserTagHelpers.compareUsersBySurname(a, b),
-          _VolunteerSortMode.tags =>
-            UserTagHelpers.compareUsersByPrimaryTag(a, b, allTags),
+          _VolunteerSortMode.tags => UserTagHelpers.compareUsersByPrimaryTag(
+              a,
+              b,
+              allTags,
+              visibleToGuestsOnly: appContext.isCurrentUserGuest,
+            ),
         };
       });
     return result;
