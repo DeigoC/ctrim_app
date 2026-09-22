@@ -24,6 +24,7 @@ import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/personal/user_contributor_posts_preview.dart';
 import '../../widgets/volunteer_role_badge.dart';
 import '../view_gallery_page.dart';
 import 'edit_user_page.dart';
@@ -62,6 +63,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   int _totalSteps = 2;
   List<CellGroup> _cellGroups = const [];
   UserCellGroupAttendanceSummary? _cellGroupAttendance;
+  Object? _postsError;
 
   @override
   void initState() {
@@ -79,9 +81,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     setState(() {
       _loading = true;
       _loadError = null;
+      _postsError = null;
       _statusMessage = 'Fetching schedule…';
       _completedSteps = 0;
-      _totalSteps = 4;
+      _totalSteps = 5;
     });
 
     try {
@@ -117,10 +120,26 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       final cellGroups = await _loadCellGroups();
       if (!mounted) return;
 
+      setState(() {
+        _completedSteps = 4;
+        _statusMessage = 'Fetching posts…';
+      });
+
+      if (widget.showPostsLink && _user.posts == null) {
+        try {
+          _user.setPosts(await _scheduleService.fetchPosts(_user.id));
+        } catch (e, st) {
+          debugPrint('Error fetching contributor posts: $e\n$st');
+          _postsError = e;
+        }
+      }
+      if (!mounted) return;
+
       UserCellGroupAttendanceSummary? attendance;
       if (!_appContext.isCurrentUserGuest && cellGroups.isNotEmpty) {
         setState(() {
-          _completedSteps = 4;
+          _completedSteps = 5;
+          _totalSteps = 6;
           _statusMessage = 'Checking cell group attendance…';
         });
         attendance = await UserCellGroupAttendance.load(
@@ -161,6 +180,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    context.select((AppContext c) => c.headsEpoch);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -326,6 +346,23 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
           label: Text(l10n.userProfileViewFullSchedule),
         ),
         if (widget.showPostsLink) ...[
+          const SizedBox(height: 16),
+          Text(l10n.userProfileContributorPosts,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          UserContributorPostsPreview(
+            heads: _postsError == null
+                ? UserScheduleService.recentContributorPosts(
+                    user: _user,
+                    eventHeads: _appContext.eventHeads,
+                  )
+                : const [],
+            emptyMessage: _postsError == null
+                ? l10n.userProfileNoContributorPosts
+                : l10n.myPostsLoadError,
+            onPostUpdated: () => setState(() {}),
+          ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _onViewPosts,

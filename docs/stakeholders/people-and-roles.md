@@ -105,6 +105,8 @@ When organisers pick people for **programme roles**, lead speaker, contributors,
 
 Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
 
+The profile also lists up to three **recent contributor posts** (from the bulletin posts already loaded). Tap a post to open it. **View posts** still opens the full list of posts they author or contribute to.
+
 When you are signed in, the profile also lists **cell groups** that person belongs to (from the group roster or as a listed leader). If they are in at least one group, a banner summarises the **past 3 weeks** of linked meetings (the same window as the Cell Groups activity snapshot): check-ins as an attendee, or **hosting** as a listed group leader (leaders are not listed as guests). Expand **Recent meetings** to see up to four of those posts and open them. Guests do not see these details. Tap a group to open its detail page.
 
 ## Placeholders

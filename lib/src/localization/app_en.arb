@@ -347,6 +347,14 @@
   "@userProfileViewPosts": {
     "description": "Button to open posts the volunteer authors or contributes to"
   },
+  "userProfileContributorPosts": "Recent contributor posts",
+  "@userProfileContributorPosts": {
+    "description": "Section title for recent bulletin posts this person contributes to"
+  },
+  "userProfileNoContributorPosts": "Not a contributor on any posts yet.",
+  "@userProfileNoContributorPosts": {
+    "description": "Empty state when this person has no contributor posts in the loaded bulletin"
+  },
   "userProfileEditUser": "Edit user",
   "@userProfileEditUser": {
     "description": "App bar action for admins to edit a volunteer profile"
