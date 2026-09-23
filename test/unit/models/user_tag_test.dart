@@ -105,5 +105,62 @@ void main() {
       expect(tag.visibleToGuests, false);
       expect(tag.toJson()['VisibleToGuests'], false);
     });
+
+    test('missing location maps read as empty and round-trip as empty maps',
+        () {
+      final tag = UserTag.fromMap('abc', {'Name': 'Worship'});
+
+      expect(tag.headsForLocation('belfast'), isEmpty);
+      expect(tag.galleryForLocation('belfast'), isEmpty);
+      expect(tag.toJson()['HeadsByLocation'], isEmpty);
+      expect(tag.toJson()['GalleryByLocation'], isEmpty);
+    });
+
+    test('heads keep order, drop blanks and duplicates, and omit empty sites',
+        () {
+      final tag = UserTag.fromMap('abc', {
+        'Name': 'Worship',
+        'HeadsByLocation': {
+          'belfast': [' u1 ', '', 'u1', 'u2'],
+          '  ': ['u9'],
+          'portadown': ['', '  '],
+        },
+      });
+
+      expect(tag.headsForLocation('belfast'), ['u1', 'u2']);
+      expect(tag.headsForLocation('portadown'), isEmpty);
+      expect(tag.toJson()['HeadsByLocation'], {
+        'belfast': ['u1', 'u2'],
+      });
+
+      tag.setHeadsForLocation('belfast', const []);
+      expect(tag.headsByLocation, isEmpty);
+      expect(tag.toJson()['HeadsByLocation'], isEmpty);
+    });
+
+    test('gallery trims, dedupes, and caps each location at eight', () {
+      final tag = UserTag(
+        id: 't1',
+        name: 'Worship',
+        galleryByLocation: {
+          'belfast': [
+            for (var i = 0; i < 10; i++) ' https://example.com/$i.jpg ',
+            'https://example.com/0.jpg',
+          ],
+        },
+      );
+
+      expect(tag.galleryForLocation('belfast'), [
+        for (var i = 0; i < UserTag.maxGalleryImages; i++)
+          'https://example.com/$i.jpg',
+      ]);
+
+      tag.setGalleryForLocation('north', ['  ', 'https://example.com/a.jpg']);
+      expect(tag.galleryForLocation('north'), ['https://example.com/a.jpg']);
+      expect(
+        (tag.toJson()['GalleryByLocation'] as Map).keys,
+        containsAll(['belfast', 'north']),
+      );
+    });
   });
 }

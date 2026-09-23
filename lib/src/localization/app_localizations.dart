@@ -802,6 +802,168 @@ abstract class AppLocalizations {
   /// **'This team tag is no longer available.'**
   String get userTagsUnavailable;
 
+  /// Heading above the church-location chips on a team tag page
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get userTagDetailLocation;
+
+  /// Shown on a team tag page when there are no active locations
+  ///
+  /// In en, this message translates to:
+  /// **'Church locations are not set up yet, so heads, members, and photos cannot be shown by site.'**
+  String get userTagDetailNoLocations;
+
+  /// Section title for department heads at the selected church location
+  ///
+  /// In en, this message translates to:
+  /// **'Heads'**
+  String get userTagDetailHeads;
+
+  /// Subtitle under the heads section on a team tag page
+  ///
+  /// In en, this message translates to:
+  /// **'Who leads this team at {location}'**
+  String userTagDetailHeadsSubtitle(String location);
+
+  /// Empty state when a team tag has no heads at the selected location
+  ///
+  /// In en, this message translates to:
+  /// **'No heads listed for {location} yet.'**
+  String userTagDetailHeadsEmpty(String location);
+
+  /// Button for an area admin to pick department heads at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Choose heads'**
+  String get userTagDetailChooseHeads;
+
+  /// Section title for people who have this team tag at the selected location
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get userTagDetailMembers;
+
+  /// Subtitle under the members section on a team tag page
+  ///
+  /// In en, this message translates to:
+  /// **'People on this team at {location}'**
+  String userTagDetailMembersSubtitle(String location);
+
+  /// Empty state when no active people at the location carry the tag
+  ///
+  /// In en, this message translates to:
+  /// **'No one at {location} has this team tag yet.'**
+  String userTagDetailMembersEmpty(String location);
+
+  /// Section title for the team tag photo album at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get userTagDetailGallery;
+
+  /// Subtitle under the photo album on a team tag page
+  ///
+  /// In en, this message translates to:
+  /// **'Photos from {location}'**
+  String userTagDetailGallerySubtitle(String location);
+
+  /// Empty photo album shown to area admins on a team tag page
+  ///
+  /// In en, this message translates to:
+  /// **'No photos for {location} yet.'**
+  String userTagDetailGalleryEmpty(String location);
+
+  /// Button to add a photo to a team tag album
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get userTagDetailAddPhoto;
+
+  /// Title of the confirmation dialog that removes a team tag photo
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get userTagDetailRemovePhoto;
+
+  /// Confirmation body before deleting a team tag photo
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this photo from {location}?'**
+  String userTagDetailRemovePhotoConfirm(String location);
+
+  /// Shown when someone tries to add a video to a team tag album
+  ///
+  /// In en, this message translates to:
+  /// **'Team tag albums only support images.'**
+  String get userTagDetailPhotosImagesOnly;
+
+  /// Shown when a team tag album is at the photo cap
+  ///
+  /// In en, this message translates to:
+  /// **'This location already has the maximum of {count} photos.'**
+  String userTagDetailGalleryFull(int count);
+
+  /// Section title for future schedule roles of a team tag
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get userTagDetailUpcoming;
+
+  /// Window shown under upcoming team-tag schedule roles
+  ///
+  /// In en, this message translates to:
+  /// **'Next {months} months at {location}'**
+  String userTagDetailUpcomingSubtitle(int months, String location);
+
+  /// Section title for past schedule roles of a team tag
+  ///
+  /// In en, this message translates to:
+  /// **'Already done'**
+  String get userTagDetailPast;
+
+  /// Window shown under past team-tag schedule roles
+  ///
+  /// In en, this message translates to:
+  /// **'Previous {months} months at {location}'**
+  String userTagDetailPastSubtitle(int months, String location);
+
+  /// Empty state for future team-tag schedule roles
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming slots for this team at {location}.'**
+  String userTagDetailScheduleEmptyUpcoming(String location);
+
+  /// Empty state for past team-tag schedule roles
+  ///
+  /// In en, this message translates to:
+  /// **'No past slots for this team at {location} in this window.'**
+  String userTagDetailScheduleEmptyPast(String location);
+
+  /// Progress message while a team tag page loads dated posts
+  ///
+  /// In en, this message translates to:
+  /// **'Loading posts…'**
+  String get userTagDetailScheduleLoading;
+
+  /// Progress message while a team tag page loads programme roles
+  ///
+  /// In en, this message translates to:
+  /// **'Loading programmes…'**
+  String get userTagDetailScheduleLoadingProgrammes;
+
+  /// Error title when the team tag schedule fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this team\'s schedule'**
+  String get userTagDetailScheduleCouldNotLoad;
+
+  /// Shown when saving heads or photos on a team tag fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this team tag. Try again.'**
+  String get userTagDetailCouldNotSave;
+
   /// Button to clear selected post tag filters on the bulletin
   ///
   /// In en, this message translates to:

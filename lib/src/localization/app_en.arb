@@ -566,6 +566,180 @@
   "@userTagsUnavailable": {
     "description": "Shown when a team tag was removed while its detail page is open"
   },
+  "userTagDetailLocation": "Location",
+  "@userTagDetailLocation": {
+    "description": "Heading above the church-location chips on a team tag page"
+  },
+  "userTagDetailNoLocations": "Church locations are not set up yet, so heads, members, and photos cannot be shown by site.",
+  "@userTagDetailNoLocations": {
+    "description": "Shown on a team tag page when there are no active locations"
+  },
+  "userTagDetailHeads": "Heads",
+  "@userTagDetailHeads": {
+    "description": "Section title for department heads at the selected church location"
+  },
+  "userTagDetailHeadsSubtitle": "Who leads this team at {location}",
+  "@userTagDetailHeadsSubtitle": {
+    "description": "Subtitle under the heads section on a team tag page",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailHeadsEmpty": "No heads listed for {location} yet.",
+  "@userTagDetailHeadsEmpty": {
+    "description": "Empty state when a team tag has no heads at the selected location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailChooseHeads": "Choose heads",
+  "@userTagDetailChooseHeads": {
+    "description": "Button for an area admin to pick department heads at one location"
+  },
+  "userTagDetailMembers": "Members",
+  "@userTagDetailMembers": {
+    "description": "Section title for people who have this team tag at the selected location"
+  },
+  "userTagDetailMembersSubtitle": "People on this team at {location}",
+  "@userTagDetailMembersSubtitle": {
+    "description": "Subtitle under the members section on a team tag page",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailMembersEmpty": "No one at {location} has this team tag yet.",
+  "@userTagDetailMembersEmpty": {
+    "description": "Empty state when no active people at the location carry the tag",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailGallery": "Photos",
+  "@userTagDetailGallery": {
+    "description": "Section title for the team tag photo album at one location"
+  },
+  "userTagDetailGallerySubtitle": "Photos from {location}",
+  "@userTagDetailGallerySubtitle": {
+    "description": "Subtitle under the photo album on a team tag page",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailGalleryEmpty": "No photos for {location} yet.",
+  "@userTagDetailGalleryEmpty": {
+    "description": "Empty photo album shown to area admins on a team tag page",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailAddPhoto": "Add photo",
+  "@userTagDetailAddPhoto": {
+    "description": "Button to add a photo to a team tag album"
+  },
+  "userTagDetailRemovePhoto": "Remove photo",
+  "@userTagDetailRemovePhoto": {
+    "description": "Title of the confirmation dialog that removes a team tag photo"
+  },
+  "userTagDetailRemovePhotoConfirm": "Remove this photo from {location}?",
+  "@userTagDetailRemovePhotoConfirm": {
+    "description": "Confirmation body before deleting a team tag photo",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailPhotosImagesOnly": "Team tag albums only support images.",
+  "@userTagDetailPhotosImagesOnly": {
+    "description": "Shown when someone tries to add a video to a team tag album"
+  },
+  "userTagDetailGalleryFull": "This location already has the maximum of {count} photos.",
+  "@userTagDetailGalleryFull": {
+    "description": "Shown when a team tag album is at the photo cap",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "userTagDetailUpcoming": "Upcoming",
+  "@userTagDetailUpcoming": {
+    "description": "Section title for future schedule roles of a team tag"
+  },
+  "userTagDetailUpcomingSubtitle": "Next {months} months at {location}",
+  "@userTagDetailUpcomingSubtitle": {
+    "description": "Window shown under upcoming team-tag schedule roles",
+    "placeholders": {
+      "months": {
+        "type": "int"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailPast": "Already done",
+  "@userTagDetailPast": {
+    "description": "Section title for past schedule roles of a team tag"
+  },
+  "userTagDetailPastSubtitle": "Previous {months} months at {location}",
+  "@userTagDetailPastSubtitle": {
+    "description": "Window shown under past team-tag schedule roles",
+    "placeholders": {
+      "months": {
+        "type": "int"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailScheduleEmptyUpcoming": "No upcoming slots for this team at {location}.",
+  "@userTagDetailScheduleEmptyUpcoming": {
+    "description": "Empty state for future team-tag schedule roles",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailScheduleEmptyPast": "No past slots for this team at {location} in this window.",
+  "@userTagDetailScheduleEmptyPast": {
+    "description": "Empty state for past team-tag schedule roles",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "userTagDetailScheduleLoading": "Loading posts…",
+  "@userTagDetailScheduleLoading": {
+    "description": "Progress message while a team tag page loads dated posts"
+  },
+  "userTagDetailScheduleLoadingProgrammes": "Loading programmes…",
+  "@userTagDetailScheduleLoadingProgrammes": {
+    "description": "Progress message while a team tag page loads programme roles"
+  },
+  "userTagDetailScheduleCouldNotLoad": "Could not load this team's schedule",
+  "@userTagDetailScheduleCouldNotLoad": {
+    "description": "Error title when the team tag schedule fails to load"
+  },
+  "userTagDetailCouldNotSave": "Could not save this team tag. Try again.",
+  "@userTagDetailCouldNotSave": {
+    "description": "Shown when saving heads or photos on a team tag fails"
+  },
   "postTagsFilterClear": "Clear tags",
   "@postTagsFilterClear": {
     "description": "Button to clear selected post tag filters on the bulletin"
