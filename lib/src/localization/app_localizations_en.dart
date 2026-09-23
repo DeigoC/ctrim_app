@@ -449,6 +449,115 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userTagsUnavailable => 'This team tag is no longer available.';
 
   @override
+  String get userTagDetailLocation => 'Location';
+
+  @override
+  String get userTagDetailNoLocations =>
+      'Church locations are not set up yet, so heads, members, and photos cannot be shown by site.';
+
+  @override
+  String get userTagDetailHeads => 'Heads';
+
+  @override
+  String userTagDetailHeadsSubtitle(String location) {
+    return 'Who leads this team at $location';
+  }
+
+  @override
+  String userTagDetailHeadsEmpty(String location) {
+    return 'No heads listed for $location yet.';
+  }
+
+  @override
+  String get userTagDetailChooseHeads => 'Choose heads';
+
+  @override
+  String get userTagDetailMembers => 'Members';
+
+  @override
+  String userTagDetailMembersSubtitle(String location) {
+    return 'People on this team at $location';
+  }
+
+  @override
+  String userTagDetailMembersEmpty(String location) {
+    return 'No one at $location has this team tag yet.';
+  }
+
+  @override
+  String get userTagDetailGallery => 'Photos';
+
+  @override
+  String userTagDetailGallerySubtitle(String location) {
+    return 'Photos from $location';
+  }
+
+  @override
+  String userTagDetailGalleryEmpty(String location) {
+    return 'No photos for $location yet.';
+  }
+
+  @override
+  String get userTagDetailAddPhoto => 'Add photo';
+
+  @override
+  String get userTagDetailRemovePhoto => 'Remove photo';
+
+  @override
+  String userTagDetailRemovePhotoConfirm(String location) {
+    return 'Remove this photo from $location?';
+  }
+
+  @override
+  String get userTagDetailPhotosImagesOnly =>
+      'Team tag albums only support images.';
+
+  @override
+  String userTagDetailGalleryFull(int count) {
+    return 'This location already has the maximum of $count photos.';
+  }
+
+  @override
+  String get userTagDetailUpcoming => 'Upcoming';
+
+  @override
+  String userTagDetailUpcomingSubtitle(int months, String location) {
+    return 'Next $months months at $location';
+  }
+
+  @override
+  String get userTagDetailPast => 'Already done';
+
+  @override
+  String userTagDetailPastSubtitle(int months, String location) {
+    return 'Previous $months months at $location';
+  }
+
+  @override
+  String userTagDetailScheduleEmptyUpcoming(String location) {
+    return 'No upcoming slots for this team at $location.';
+  }
+
+  @override
+  String userTagDetailScheduleEmptyPast(String location) {
+    return 'No past slots for this team at $location in this window.';
+  }
+
+  @override
+  String get userTagDetailScheduleLoading => 'Loading posts…';
+
+  @override
+  String get userTagDetailScheduleLoadingProgrammes => 'Loading programmes…';
+
+  @override
+  String get userTagDetailScheduleCouldNotLoad =>
+      'Could not load this team\'s schedule';
+
+  @override
+  String get userTagDetailCouldNotSave =>
+      'Could not save this team tag. Try again.';
+
+  @override
   String get postTagsFilterClear => 'Clear tags';
 
   @override

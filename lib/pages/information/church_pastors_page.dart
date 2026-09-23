@@ -91,10 +91,12 @@ class ChurchPastorUserList extends StatelessWidget {
     super.key,
     required this.pastorUserIds,
     this.unknownLabel,
+    this.onUserTap,
   });
 
   final List<String> pastorUserIds;
   final String? unknownLabel;
+  final ValueChanged<User>? onUserTap;
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +136,7 @@ class ChurchPastorUserList extends StatelessWidget {
                   user: appContext.userById(userId),
                   fallbackLabel: fallback,
                   colorScheme: colorScheme,
+                  onTap: onUserTap,
                 ),
               ),
           ],
@@ -148,45 +151,53 @@ class _PastorPersonTile extends StatelessWidget {
     required this.user,
     required this.fallbackLabel,
     required this.colorScheme,
+    this.onTap,
   });
 
   final User? user;
   final String fallbackLabel;
   final ColorScheme colorScheme;
+  final ValueChanged<User>? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final name = user?.fullname ?? fallbackLabel;
+    final person = user;
+    final tap = onTap;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (user != null)
-          MyUserAvatar(
-            user!,
-            radius: ChurchPastorListLayout.avatarRadius,
-          )
-        else
-          CircleAvatar(
-            radius: ChurchPastorListLayout.avatarRadius,
-            backgroundColor: colorScheme.surfaceContainerHighest,
-            child: Icon(
-              Icons.person,
-              color: colorScheme.onSurfaceVariant,
+    return InkWell(
+      onTap: person == null || tap == null ? null : () => tap(person),
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (user != null)
+            MyUserAvatar(
+              user!,
+              radius: ChurchPastorListLayout.avatarRadius,
+            )
+          else
+            CircleAvatar(
+              radius: ChurchPastorListLayout.avatarRadius,
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              child: Icon(
+                Icons.person,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
           ),
-        const SizedBox(height: 8),
-        Text(
-          name,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

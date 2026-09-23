@@ -197,4 +197,110 @@ void main() {
       );
     });
   });
+
+  group('UserTagHelpers location roster', () {
+    final tag = UserTag(
+      id: 'worship',
+      name: 'Worship',
+      headsByLocation: {
+        'loc-belfast': ['head', 'missing', 'hidden', 'placeholder'],
+      },
+    );
+
+    final users = [
+      User(
+        id: 'amy',
+        forname: 'Amy',
+        surname: 'Zulu',
+        location: 'Belfast',
+        tagIDs: ['worship'],
+      ),
+      User(
+        id: 'bob',
+        forname: 'Bob',
+        surname: 'Adams',
+        location: 'Belfast',
+        tagIDs: ['worship'],
+      ),
+      User(
+        id: 'cara',
+        forname: 'Cara',
+        surname: 'North',
+        location: 'Portadown',
+        tagIDs: ['worship'],
+      ),
+      User(
+        id: 'dan',
+        forname: 'Dan',
+        surname: 'Other',
+        location: 'Belfast',
+        tagIDs: ['tech'],
+      ),
+      User(
+        id: 'erin',
+        forname: 'Erin',
+        surname: 'Hidden',
+        location: 'Belfast',
+        tagIDs: ['worship'],
+        status: UserStatus.hidden,
+      ),
+      User(
+        id: 'finn',
+        forname: 'Finn',
+        surname: 'Temp',
+        location: 'Belfast',
+        tagIDs: ['worship'],
+        isPlaceholder: true,
+      ),
+      User(
+        id: 'head',
+        forname: 'Helen',
+        surname: 'Head',
+        location: 'Belfast',
+        tagIDs: ['worship'],
+      ),
+      User(
+        id: 'hidden',
+        forname: 'Hank',
+        surname: 'Quiet',
+        location: 'Belfast',
+        status: UserStatus.archived,
+      ),
+      User(
+        id: 'placeholder',
+        forname: 'Pat',
+        surname: 'Holder',
+        location: 'Belfast',
+        isPlaceholder: true,
+      ),
+    ];
+
+    test('membersAtLocation keeps active tagged people at that site', () {
+      final members = UserTagHelpers.membersAtLocation(
+        tagId: 'worship',
+        locationName: 'Belfast',
+        users: users,
+      );
+
+      expect(members.map((user) => user.id), ['bob', 'head', 'amy']);
+    });
+
+    test('visibleHeadsAtLocation follows stored order and skips inactive', () {
+      final heads = UserTagHelpers.visibleHeadsAtLocation(
+        tag: tag,
+        locationId: 'loc-belfast',
+        users: users,
+      );
+
+      expect(heads.map((user) => user.id), ['head']);
+      expect(
+        UserTagHelpers.visibleHeadsAtLocation(
+          tag: tag,
+          locationId: 'loc-missing',
+          users: users,
+        ),
+        isEmpty,
+      );
+    });
+  });
 }

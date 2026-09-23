@@ -178,4 +178,44 @@ class UserTagHelpers {
 
     return compareUsersBySurname(a, b);
   }
+
+  /// Active, non-placeholder people at [locationName] who carry [tagId].
+  ///
+  /// Sorted by surname, then forename. Location match is the stored location
+  /// name (`users.Location`), not the location document id.
+  static List<User> membersAtLocation({
+    required String tagId,
+    required String locationName,
+    required List<User> users,
+  }) {
+    final members = users.where((user) {
+      if (!user.hasTag(tagId)) return false;
+      if (user.location != locationName) return false;
+      if (!user.isProfileActive) return false;
+      if (user.isPlaceholder) return false;
+      return true;
+    }).toList()
+      ..sort(compareUsersBySurname);
+    return members;
+  }
+
+  /// Heads stored for [locationId] whose profiles are active and not placeholders.
+  ///
+  /// Order follows the tag. Missing and inactive profiles are left out of the
+  /// public list.
+  static List<User> visibleHeadsAtLocation({
+    required UserTag tag,
+    required String locationId,
+    required List<User> users,
+  }) {
+    final byId = {for (final user in users) user.id: user};
+    final heads = <User>[];
+    for (final id in tag.headsForLocation(locationId)) {
+      final user = byId[id];
+      if (user == null) continue;
+      if (!user.isProfileActive || user.isPlaceholder) continue;
+      heads.add(user);
+    }
+    return heads;
+  }
 }

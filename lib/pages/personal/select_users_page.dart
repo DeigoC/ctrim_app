@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -47,6 +49,7 @@ class SelectUsersPage extends StatefulWidget {
     this.postIdForPlaceholderCreate,
     this.cellGroupIdForPlaceholderCreate,
     this.allowCellGroupBulkSelect = false,
+    this.lockedLocation,
   });
 
   final List<String> selectedUIDs;
@@ -82,6 +85,10 @@ class SelectUsersPage extends StatefulWidget {
   /// the current selection (expected-attendee flows).
   final bool allowCellGroupBulkSelect;
 
+  /// When set, the location chips are hidden and the list stays on this
+  /// location name (for example choosing department heads for one church site).
+  final String? lockedLocation;
+
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
 }
@@ -102,13 +109,18 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   void initState() {
     super.initState();
     _selectedUIDs = Set<String>.from(widget.selectedUIDs);
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final assignable =
-        VolunteerLocations.assignableFrom(appContext.allLocations);
-    _locationFilter = VolunteerLocations.defaultFilterForUser(
-      appContext.currentUser.location,
-      assignable,
-    );
+    final locked = widget.lockedLocation?.trim() ?? '';
+    if (locked.isNotEmpty) {
+      _locationFilter = locked;
+    } else {
+      final appContext = Provider.of<AppContext>(context, listen: false);
+      final assignable =
+          VolunteerLocations.assignableFrom(appContext.allLocations);
+      _locationFilter = VolunteerLocations.defaultFilterForUser(
+        appContext.currentUser.location,
+        assignable,
+      );
+    }
     _servingOnly = widget.preferServing;
   }
 
@@ -136,8 +148,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       final unfilteredSearchMatches = _unfilteredSearchMatches(appContext);
       final showingUnfilteredSearchFallback =
           filteredUsers.isEmpty && unfilteredSearchMatches.isNotEmpty;
-      final listUsers =
-          showingUnfilteredSearchFallback ? unfilteredSearchMatches : filteredUsers;
+      final listUsers = showingUnfilteredSearchFallback
+          ? unfilteredSearchMatches
+          : filteredUsers;
       final showCreate = widget.allowCreatePlaceholder &&
           _searchQuery.trim().isNotEmpty &&
           filteredUsers.isEmpty &&
@@ -223,9 +236,11 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                               label: Text(l10n.selectUsersSelectAll),
                             ),
                             FilledButton.tonalIcon(
-                              onPressed: !_filteredSelectionHasAny(filteredUsers)
-                                  ? null
-                                  : () => _unselectAllFiltered(filteredUsers),
+                              onPressed:
+                                  !_filteredSelectionHasAny(filteredUsers)
+                                      ? null
+                                      : () =>
+                                          _unselectAllFiltered(filteredUsers),
                               icon: const Icon(Icons.deselect, size: 18),
                               label: Text(l10n.selectUsersUnselectAll),
                             ),
@@ -242,22 +257,24 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                     filterHorizontalPadding, 8, filterHorizontalPadding, 8),
                 child: Row(
                   children: [
-                    ...VolunteerLocations.filterOptionsFrom(
-                            appContext.allLocations)
-                        .map((location) {
-                      final label = location == VolunteerLocations.all
-                          ? l10n.volunteersFilterAll
-                          : location;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(label),
-                          selected: _locationFilter == location,
-                          onSelected: (_) =>
-                              setState(() => _locationFilter = location),
-                        ),
-                      );
-                    }),
+                    if (widget.lockedLocation == null ||
+                        widget.lockedLocation!.trim().isEmpty)
+                      ...VolunteerLocations.filterOptionsFrom(
+                              appContext.allLocations)
+                          .map((location) {
+                        final label = location == VolunteerLocations.all
+                            ? l10n.volunteersFilterAll
+                            : location;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(label),
+                            selected: _locationFilter == location,
+                            onSelected: (_) =>
+                                setState(() => _locationFilter = location),
+                          ),
+                        );
+                      }),
                     if (widget.preferServing)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -436,82 +453,118 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     required double horizontalPadding,
     required AppLocalizations l10n,
   }) {
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 420,
-        mainAxisExtent: 108,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: users.length,
-      itemBuilder: (_, index) {
-        final user = users[index];
-        final userTags =
-            UserTagHelpers.tagsForUser(user: user, allTags: allTags);
-        final isSelected = _selectedUIDs.contains(user.id);
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-
-        return Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
-          color: isSelected ? colorScheme.secondaryContainer : null,
-          child: InkWell(
-            onTap: () => _toggleUser(user.id),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    const crossAxisSpacing = 12.0;
+    const maxCrossAxisExtent = 420.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentWidth = math.max(
+          0.0,
+          constraints.maxWidth - horizontalPadding * 2,
+        );
+        final crossAxisCount = math.max(
+          1,
+          (contentWidth / (maxCrossAxisExtent + crossAxisSpacing)).ceil(),
+        );
+        final rowCount = (users.length / crossAxisCount).ceil();
+        return ListView.builder(
+          padding:
+              EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
+          itemCount: rowCount,
+          itemBuilder: (context, rowIndex) {
+            final start = rowIndex * crossAxisCount;
+            return Padding(
+              padding:
+                  EdgeInsets.only(bottom: rowIndex == rowCount - 1 ? 0 : 8),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Checkbox(
-                    value: isSelected,
-                    onChanged: (_) => _toggleUser(user.id),
-                  ),
-                  MyUserAvatar(user, radius: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          user.fullname,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user.isPlaceholder
-                              ? l10n
-                                  .selectUsersPlaceholderSubtitle(user.location)
-                              : user.location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (userTags.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          UserTagChipRow(tags: userTags, dense: true),
-                        ],
-                      ],
+                  for (var column = 0; column < crossAxisCount; column++) ...[
+                    if (column > 0) const SizedBox(width: crossAxisSpacing),
+                    Expanded(
+                      child: start + column < users.length
+                          ? _buildWideUserCard(
+                              user: users[start + column],
+                              allTags: allTags,
+                              l10n: l10n,
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                  ),
-                  if (widget.allowTaskCheck)
-                    IconButton(
-                      onPressed: () => _openUserSchedule(user),
-                      icon: const Icon(Icons.checklist),
-                      tooltip: l10n.mySchedule,
-                    ),
+                  ],
                 ],
               ),
-            ),
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildWideUserCard({
+    required User user,
+    required List<UserTag> allTags,
+    required AppLocalizations l10n,
+  }) {
+    final userTags = UserTagHelpers.tagsForUser(user: user, allTags: allTags);
+    final isSelected = _selectedUIDs.contains(user.id);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      color: isSelected ? colorScheme.secondaryContainer : null,
+      child: InkWell(
+        onTap: () => _toggleUser(user.id),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: Row(
+            children: [
+              Checkbox(
+                value: isSelected,
+                onChanged: (_) => _toggleUser(user.id),
+              ),
+              MyUserAvatar(user, radius: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.fullname,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.isPlaceholder
+                          ? l10n.selectUsersPlaceholderSubtitle(user.location)
+                          : user.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (userTags.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      UserTagChipRow(tags: userTags, dense: true),
+                    ],
+                  ],
+                ),
+              ),
+              if (widget.allowTaskCheck)
+                IconButton(
+                  onPressed: () => _openUserSchedule(user),
+                  icon: const Icon(Icons.checklist),
+                  tooltip: l10n.mySchedule,
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -590,8 +643,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     );
 
     if (!widget.includeCurrentUser) {
-      matches =
-          matches.where((user) => user.id != appContext.currentUser.id).toList();
+      matches = matches
+          .where((user) => user.id != appContext.currentUser.id)
+          .toList();
     }
     if (widget.excludedUIDs.isNotEmpty) {
       final excluded = widget.excludedUIDs.toSet();
@@ -616,8 +670,9 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   }
 
   void _widenSearchFilters() {
+    final locked = widget.lockedLocation?.trim() ?? '';
     setState(() {
-      _locationFilter = VolunteerLocations.all;
+      _locationFilter = locked.isEmpty ? VolunteerLocations.all : locked;
       _servingOnly = false;
       _placeholdersOnly = false;
       _selectedTagIDs = {};
@@ -703,7 +758,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         searchHint: l10n.cellGroupsSearchHint,
         emptyMessage: l10n.cellGroupsNoneAvailable,
         noResultsMessage: l10n.selectCatalogNoResults,
-        allEntries: CatalogPickerHelpers.fromCellGroups(appContext.allCellGroups),
+        allEntries:
+            CatalogPickerHelpers.fromCellGroups(appContext.allCellGroups),
         selectedIds: const {},
         showLocationFilter: true,
       ),
@@ -735,14 +791,12 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
     if (!widget.includePlaceholders) {
       final userMap = {for (final user in appContext.allUsers) user.id: user};
-      ids = ids
-          .where((id) {
-            final user = userMap[id];
-            return user != null &&
-                isSelectableVolunteerProfile(user) &&
-                (!user.isPlaceholder || _selectedUIDs.contains(id));
-          })
-          .toSet();
+      ids = ids.where((id) {
+        final user = userMap[id];
+        return user != null &&
+            isSelectableVolunteerProfile(user) &&
+            (!user.isPlaceholder || _selectedUIDs.contains(id));
+      }).toSet();
     } else {
       ids = ids.where((id) {
         final user = appContext.userById(id);
