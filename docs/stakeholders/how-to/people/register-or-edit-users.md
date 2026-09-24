@@ -2,7 +2,7 @@
 
 > **Status:** In progress  
 > **Who:** Leaders (people they work with), area admins (area scope), later site admins  
-> **Where:** Personal → **For you** → **Who's who** / register & edit flows
+> **Where:** Personal → **People & teams** → **Who's who** / register & edit flows
 
 ## Before you start
 
@@ -12,7 +12,7 @@
 ## Register someone
 
 1. Open **Personal**.  
-2. Open **Who's who** (under **For you**). The list starts on people who **serve** at your location — turn **Serving** off in **Refine & sort** to see everyone.  
+2. Open **Who's who** (under **People & teams**). The list starts on people who **serve** at your location — turn **Serving** off in **Refine & sort** to see everyone.  
 3. Choose **Register** / **Add**.  
 4. Enter name and other required details (location, tags, roles as applicable).  
 5. Save.  

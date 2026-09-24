@@ -172,13 +172,18 @@ class _PersonalHomeState extends State<PersonalHome> {
           actions: _forYouActions(appContext, colorScheme),
           wide: false,
         ),
+        const SizedBox(height: 24),
+        PersonalActionSection(
+          title: AppLocalizations.of(context)!.peopleAndTeamsSectionTitle,
+          actions: _peopleAndTeamsActions(appContext, colorScheme),
+          wide: false,
+        ),
         if (showAdmin) ...[
           const SizedBox(height: 24),
           PersonalAdminSection(
             appContext: appContext,
             wide: false,
             onViewTemplates: _openViewTemplatesClick,
-            onManageUserTags: _openManageUserTagsClick,
             onManagePostTags: _openManagePostTagsClick,
             onManageUserLocations: _openManageUserLocationsClick,
           ),
@@ -220,6 +225,13 @@ class _PersonalHomeState extends State<PersonalHome> {
           gridColumns: actionColumns,
         ),
         const SizedBox(height: 28),
+        PersonalActionSection(
+          title: AppLocalizations.of(context)!.peopleAndTeamsSectionTitle,
+          actions: _peopleAndTeamsActions(appContext, colorScheme),
+          wide: true,
+          gridColumns: actionColumns,
+        ),
+        const SizedBox(height: 28),
         if (showAdmin)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +242,6 @@ class _PersonalHomeState extends State<PersonalHome> {
                   wide: true,
                   gridColumns: 1,
                   onViewTemplates: _openViewTemplatesClick,
-                  onManageUserTags: _openManageUserTagsClick,
                   onManagePostTags: _openManagePostTagsClick,
                   onManageUserLocations: _openManageUserLocationsClick,
                 ),
@@ -300,7 +311,6 @@ class _PersonalHomeState extends State<PersonalHome> {
   List<PersonalAction> _forYouActions(
       AppContext appContext, ColorScheme colorScheme) {
     final actions = <PersonalAction>[];
-    final l10n = AppLocalizations.of(context)!;
     final shareAndGuide = [
       PersonalAction(
         icon: Icons.share_rounded,
@@ -318,14 +328,6 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
     ];
 
-    final teamTags = PersonalAction(
-      icon: Icons.label_rounded,
-      title: l10n.manageUserTagsMenuTitle,
-      subtitle: l10n.userTagsBrowseSubtitle,
-      onTap: _openManageUserTagsClick,
-      iconColor: colorScheme.primary,
-    );
-
     if (appContext.isCurrentUserGuest) {
       actions.add(
         PersonalAction(
@@ -336,7 +338,6 @@ class _PersonalHomeState extends State<PersonalHome> {
           iconColor: colorScheme.primary,
         ),
       );
-      actions.add(teamTags);
       actions.addAll(shareAndGuide);
       return actions;
     }
@@ -350,30 +351,54 @@ class _PersonalHomeState extends State<PersonalHome> {
         iconColor: colorScheme.primary,
       ),
       PersonalAction(
-        icon: Icons.groups_rounded,
-        title: l10n.teamRota,
-        subtitle: l10n.teamRotaSubtitle,
-        onTap: _onOpenTeamRotaClick,
-        iconColor: colorScheme.tertiary,
-      ),
-      PersonalAction(
-        icon: Icons.people_rounded,
-        title: l10n.volunteersMenuTitle,
-        subtitle: l10n.volunteersMenuSubtitle,
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
-        iconColor: colorScheme.secondary,
-      ),
-      PersonalAction(
         icon: Icons.account_circle_outlined,
         title: 'Profile picture',
         subtitle: 'Update your photo URL',
         onTap: _onUserProfileClick,
         iconColor: colorScheme.primary,
       ),
-      teamTags,
       ...shareAndGuide,
     ]);
+
+    return actions;
+  }
+
+  List<PersonalAction> _peopleAndTeamsActions(
+      AppContext appContext, ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
+    final actions = <PersonalAction>[];
+
+    if (!appContext.isCurrentUserGuest) {
+      actions.add(
+        PersonalAction(
+          icon: Icons.people_rounded,
+          title: l10n.volunteersMenuTitle,
+          subtitle: l10n.volunteersMenuSubtitle,
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const ViewAllUsersPage())),
+          iconColor: colorScheme.secondary,
+        ),
+      );
+      actions.add(
+        PersonalAction(
+          icon: Icons.groups_rounded,
+          title: l10n.teamRota,
+          subtitle: l10n.teamRotaSubtitle,
+          onTap: _onOpenTeamRotaClick,
+          iconColor: colorScheme.tertiary,
+        ),
+      );
+    }
+
+    actions.add(
+      PersonalAction(
+        icon: Icons.label_rounded,
+        title: l10n.manageUserTagsMenuTitle,
+        subtitle: l10n.userTagsBrowseSubtitle,
+        onTap: _openManageUserTagsClick,
+        iconColor: colorScheme.primary,
+      ),
+    );
 
     return actions;
   }

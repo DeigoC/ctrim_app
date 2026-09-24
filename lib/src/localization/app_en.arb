@@ -92,6 +92,10 @@
   "@volunteersMenuSubtitle": {
     "description": "Personal home menu subtitle for the people directory"
   },
+  "peopleAndTeamsSectionTitle": "People & teams",
+  "@peopleAndTeamsSectionTitle": {
+    "description": "Personal home section for Who's who, team rota, and team tags"
+  },
   "mySchedule": "My Schedule",
   "@mySchedule": {
     "description": "Personal home menu item for the current user's schedule"
