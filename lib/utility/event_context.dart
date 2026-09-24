@@ -48,6 +48,9 @@ class EventContext {
   /// Draft expected attendees for create / template edit (written to attendance on publish).
   final List<String> _expectedAttendeeUserIDs = <String>[];
 
+  /// Draft attendees chosen while creating a past-dated post (written on publish).
+  final List<AttendeeEntry> _draftAttendees = <AttendeeEntry>[];
+
   /// Expected attendees as loaded from the server — used to sync schedule removals on save.
   List<String> _baselineExpectedUserIds = <String>[];
 
@@ -204,6 +207,10 @@ class EventContext {
     headToUpload.setTagIDs(_head.tagIDs);
     headToUpload.setCellGroupIDs(_head.cellGroupIDs);
     headToUpload.setIsPeriodParent(_metadata.isPeriodParent);
+    headToUpload.setAttendeeCount(
+      buildAttendanceForNewPost(expectedUserIds: const [], now: now)
+          .attendeeCount,
+    );
     if (_head.hasLeadSpeaker) {
       headToUpload.setLeadSpeaker(
         uid: _head.leadSpeakerUID,
@@ -232,8 +239,9 @@ class EventContext {
     await dbManager.setLog(_log);
     await dbManager.addProgram(_program);
     final expectedIds = await resolveExpectedUserIdsForNewPost();
-    await dbManager
-        .setAttendance(EventAttendance(expectedUserIds: expectedIds));
+    await dbManager.setAttendance(
+      buildAttendanceForNewPost(expectedUserIds: expectedIds, now: now),
+    );
     await UserActivityRecorder().record(
       actorUserId: uid,
       log: UserActivityMessages.createdBulletinPost,
@@ -378,6 +386,41 @@ class EventContext {
         for (final id in userIds)
           if (id.isNotEmpty) id
       });
+  }
+
+  /// People marked as attended on a new post before it is published.
+  ///
+  /// Included in the attendance doc only when the event date is before [now].
+  List<AttendeeEntry> get draftAttendees =>
+      UnmodifiableListView(_draftAttendees);
+
+  void applyDraftAttendees(final List<AttendeeEntry> attendees) {
+    final seen = <String>{};
+    _draftAttendees.clear();
+    for (final entry in attendees) {
+      final userId = entry.userId;
+      if (!entry.isUser || userId == null || userId.isEmpty) continue;
+      if (!seen.add(userId)) continue;
+      _draftAttendees.add(entry);
+    }
+  }
+
+  /// Attendance written when a post is first published.
+  ///
+  /// Past-dated drafts keep [draftAttendees]. Upcoming and undated posts
+  /// store expected people only.
+  EventAttendance buildAttendanceForNewPost({
+    required List<String> expectedUserIds,
+    DateTime? now,
+  }) {
+    final attendance = EventAttendance(expectedUserIds: expectedUserIds);
+    final eventDate = _head.eventDate;
+    final clock = now ?? DateTime.now();
+    if (eventDate == null || !eventDate.isBefore(clock)) return attendance;
+    for (final entry in _draftAttendees) {
+      attendance.addAttendee(entry);
+    }
+    return attendance;
   }
 
   /// Resolves expected IDs for a new post: draft list, else linked CG roster members.
