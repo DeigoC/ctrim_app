@@ -11,7 +11,6 @@ class PersonalAdminSection extends StatelessWidget {
     required this.wide,
     this.gridColumns = 1,
     required this.onViewTemplates,
-    required this.onManageUserTags,
     required this.onManagePostTags,
     required this.onManageUserLocations,
   });
@@ -20,20 +19,14 @@ class PersonalAdminSection extends StatelessWidget {
   final bool wide;
   final int gridColumns;
   final VoidCallback onViewTemplates;
-  final VoidCallback onManageUserTags;
   final VoidCallback onManagePostTags;
   final VoidCallback onManageUserLocations;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final showTemplates = appContext.currentUser.canManagePostTemplates;
-    final showUserTags = appContext.currentUser.canManageVolunteers;
-    final sectionTitle = showUserTags && !showTemplates
-        ? 'Admin Tools'
-        : showTemplates && !showUserTags
-            ? 'Leader Tools'
-            : 'Admin Tools';
+    final showCatalogAdmin = appContext.currentUser.canManageVolunteers;
+    final sectionTitle = showCatalogAdmin ? 'Admin Tools' : 'Leader Tools';
 
     return PersonalActionSection(
       title: sectionTitle,
@@ -60,15 +53,6 @@ class PersonalAdminSection extends StatelessWidget {
       );
     }
     if (appContext.currentUser.canManageVolunteers) {
-      actions.add(
-        PersonalAction(
-          icon: Icons.label_rounded,
-          title: l10n.manageUserTagsMenuTitle,
-          subtitle: l10n.manageUserTagsMenuSubtitle,
-          onTap: onManageUserTags,
-          iconColor: colorScheme.primary,
-        ),
-      );
       actions.add(
         PersonalAction(
           icon: Icons.style_rounded,

@@ -30,7 +30,7 @@ Save under `assets/images/`.
 | [ ] | `home-bulletin.png` | Bulletin tab with a few post cards | Events & bulletin |
 | [ ] | `home-information.png` | CTRIM tab — Churches list or a church hub | Information |
 | [ ] | `home-cell-groups.png` | Cell Groups → Groups catalogue | Cell Groups |
-| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For you shortcuts | Personal |
+| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For you, People & teams | Personal |
 
 ---
 

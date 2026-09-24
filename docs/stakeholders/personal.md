@@ -12,8 +12,9 @@ The page is organised into clear sections so everyday options stay separate from
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
-| **For you** | Everyday shortcuts: my posts, **team rota**, **Who's who**, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
-| **Admin / Leader tools** | Templates, tags, locations — only when your role allows |
+| **For you** | Everyday shortcuts: my posts, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
+| **People & teams** | **Who's who**, **team rota**, and **team tags**. Team tags stay available to guests; the directory and rota are for signed-in people |
+| **Admin / Leader tools** | Post templates, post tags, and locations — only when your role allows. Team tags are edited from **People & teams**, not from this list |
 | **Settings** | Appearance, startup tab (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
 
@@ -23,7 +24,9 @@ The page is organised into clear sections so everyday options stay separate from
 |--|--------|-----------|
 | Browse bulletin & information | Yes | Yes |
 | Mark interest (“follow updates”) | No (prompted to sign in) | Yes |
-| My Schedule / My Posts / Team rota | No | Yes (when they have a community profile) |
+| My Schedule / My Posts | No | Yes (when they have a community profile) |
+| Who's who / Team rota | No | Yes (when they have a community profile) |
+| Team tags | Yes (People & teams) | Yes |
 | Notification preferences | Can enable notifications | Full preference page |
 | Product guide | Yes (For you) | Yes |
 | Create account / Sign in | Offered under **For you** | Profile header and account options |
@@ -53,7 +56,7 @@ That full schedule is the practical “what am I down for?” view across all yo
 
 ## Team rota
 
-Signed-in people also get **Team rota** (under **For you**). It looks ahead **three months** at programme slots tagged for a team — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your team tags; change the chips to look at another site or department. Tap a post to open it and edit. Guests do not see this page.
+Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots tagged for a team — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your team tags; change the chips to look at another site or department. Tap a post to open it and edit. Guests do not see this page.
 
 ## Cell groups on Personal
 
@@ -67,14 +70,17 @@ Sort and filter work much like the bulletin: **recently updated** by default, or
 
 The app keeps a personal list of those posts on your profile. When you open My Posts, it is matched against the posts already loaded for the bulletin in this session. If a post has aged off the bulletin feed, it may no longer appear here even though you were involved with it.
 
-## Organiser shortcuts (when you have access)
+## People & teams
 
-Depending on role, Personal may also show:
+**Who's who**, **Team rota**, and **Team tags** sit together, separate from account shortcuts.
 
-- **For you → Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description and, when one has been added, its main image. Choose a church location to see who leads that team there, who is on the team, photos from that site, and the team's schedule for the past three months and the next three months. Area admins edit the tag from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Tags hidden from guests do not appear in this list for guests.
-- **For you → Who's who** — searchable list of people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.  
-- **Admin / Leader tools → Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services**  
-- **Admin tools →** people / tags / locations management *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional.  
+- **Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description and, when one has been added, its main image. Choose a church location to see who leads that team there, who is on the team, photos from that site, and the team's schedule for the past three months and the next three months. Area admins edit the tag from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Tags hidden from guests do not appear in this list for guests.
+- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.
+
+**Admin / Leader tools** stay for catalogues that are still editor lists:
+
+- **Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services** *(leaders)*  
+- **Post tags** and **locations** *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional.  
 
 See [People & roles](people-and-roles.md).
 

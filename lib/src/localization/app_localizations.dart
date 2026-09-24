@@ -196,6 +196,12 @@ abstract class AppLocalizations {
   /// **'Leaders, teams, and members'**
   String get volunteersMenuSubtitle;
 
+  /// Personal home section for Who's who, team rota, and team tags
+  ///
+  /// In en, this message translates to:
+  /// **'People & teams'**
+  String get peopleAndTeamsSectionTitle;
+
   /// Personal home menu item for the current user's schedule
   ///
   /// In en, this message translates to:

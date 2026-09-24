@@ -77,6 +77,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersMenuSubtitle => 'Leaders, teams, and members';
 
   @override
+  String get peopleAndTeamsSectionTitle => 'People & teams';
+
+  @override
   String get mySchedule => 'My Schedule';
 
   @override

@@ -41,7 +41,7 @@ These are not five separate “apps” — they stack:
 | Mark interest (“follow updates”) and see who is interested | — | Yes | Yes | Yes | Yes |
 | Richer people / member details on posts and groups | — | Yes | Yes | Yes | Yes |
 | My Schedule / My Posts / Team rota | — | When they have a profile & assignments | Yes | Yes | Yes |
-| Who's who (Personal → For you) | — | Yes* | Yes | Yes | Yes |
+| Who's who (Personal → People & teams) | — | Yes* | Yes | Yes | Yes |
 | Recent activity on a profile (last few lines) | — | Yes* | Yes | Yes | Yes |
 | Full activity list for a person | — | — | — | — | Yes |
 | Create posts / use post templates | — | — | — | Yes | Yes |
@@ -79,7 +79,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## People directory
 
-**Who's who** (from Personal → For you) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**.
+**Who's who** (from Personal → People & teams) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**.
 
 Use **Refine & sort** (tune icon in the app bar) to change **location**, **Serving**, role filters, team tags, sort order, and **Placeholders**. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one team tag — open a profile for the full picture. Opening a profile updates the address so you can share or bookmark it; hidden, archived, and placeholder profiles are not reachable from a public link.
 

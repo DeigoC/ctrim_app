@@ -18,6 +18,9 @@ String _routeId(GoRouterState state, [String key = 'id']) {
 }
 
 GoRouter createAppRouter() {
+  // push/replace leave the address bar unchanged unless this is set.
+  // Permalink opens use context.push, and those paths are real routes.
+  GoRouter.optionURLReflectsImperativeAPIs = true;
   return GoRouter(
     initialLocation: '/',
     restorationScopeId: 'router',
