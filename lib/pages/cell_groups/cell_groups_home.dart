@@ -100,8 +100,8 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     context.select((AppContext c) => c.sessionEpoch);
     final canCreate = appContext.currentUser.canManageCellGroups;
     final onGroupsTab = widget.tabController.index == 1;
-    final useSideNav =
-        ResponsiveLayout.isWideScreen(MediaQuery.sizeOf(context).width);
+    final showTabBar =
+        !ResponsiveLayout.isWideScreen(MediaQuery.sizeOf(context).width);
 
     return Scaffold(
       floatingActionButton: canCreate && onGroupsTab
@@ -117,74 +117,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
               },
             )
           : null,
-      body: useSideNav
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildSectionNav(context, l10n),
-                const VerticalDivider(width: 1),
-                Expanded(child: _buildScrollView(l10n, showTabBar: false)),
-              ],
-            )
-          : _buildScrollView(l10n, showTabBar: true),
-    );
-  }
-
-  Widget _buildSectionNav(BuildContext context, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final sections = _sections(l10n);
-
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      child: SizedBox(
-        width: 220,
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  l10n.cellGroupsSectionTitle,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
-              for (var index = 0; index < sections.length; index++)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  child: ListTile(
-                    selected: widget.tabController.index == index,
-                    selectedTileColor: colorScheme.primaryContainer,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    leading: Icon(
-                      sections[index].icon,
-                      color: widget.tabController.index == index
-                          ? colorScheme.onPrimaryContainer
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                    title: Text(
-                      sections[index].label,
-                      style: TextStyle(
-                        fontWeight: widget.tabController.index == index
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    onTap: () {
-                      if (widget.tabController.index != index) {
-                        widget.tabController.animateTo(index);
-                      }
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+      body: _buildScrollView(l10n, showTabBar: showTabBar),
     );
   }
 

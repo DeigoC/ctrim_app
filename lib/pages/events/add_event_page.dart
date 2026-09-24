@@ -174,6 +174,7 @@ class _AddEventPageState extends State<AddEventPage>
         tecSubtitle: _tecSubtitle,
         onRequiredFieldChange: _onRequiredFieldTextChange,
         eventContext: widget.eventContext,
+        showPastAttendancePicker: true,
       ),
       ViewPostBody(
           eventContext: widget.eventContext,

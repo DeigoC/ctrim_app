@@ -20,6 +20,7 @@ enum PostDraftReviewKind {
   postTags,
   cellGroups,
   expectedAttendees,
+  attended,
   contributors,
   mediaGallery,
   broadcastNotify,
@@ -125,6 +126,7 @@ PostDraftReview buildPostDraftReview({
     _postTagsItem(head.tagIDs.length),
     _cellGroupsItem(head.cellGroupIDs.length),
     _expectedAttendeesItem(eventContext.expectedAttendeeUserIDs.length),
+    if (head.isRecent) _attendedItem(eventContext.draftAttendees.length),
     _contributorsItem(eventContext.metadata.contributorUIDs.length),
     _mediaGalleryItem(eventContext.media.allMedia.length),
     _broadcastNotifyItem(
@@ -284,6 +286,26 @@ PostDraftReviewItem _cellGroupsItem(int groupCount) {
     status: PostDraftReviewStatus.ready,
     title: 'Cell groups',
     subtitle: '$groupCount linked',
+    tab: PostDraftReviewTab.header,
+  );
+}
+
+PostDraftReviewItem _attendedItem(int attendedCount) {
+  if (attendedCount == 0) {
+    return const PostDraftReviewItem(
+      kind: PostDraftReviewKind.attended,
+      status: PostDraftReviewStatus.suggestion,
+      title: 'Who attended',
+      subtitle: 'None selected',
+      tab: PostDraftReviewTab.header,
+    );
+  }
+
+  return PostDraftReviewItem(
+    kind: PostDraftReviewKind.attended,
+    status: PostDraftReviewStatus.ready,
+    title: 'Who attended',
+    subtitle: '$attendedCount attended',
     tab: PostDraftReviewTab.header,
   );
 }

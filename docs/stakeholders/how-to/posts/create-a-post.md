@@ -18,7 +18,7 @@ Creating a post usually starts from a **template**, then fills in the date and d
 2. Choose a **template** from the list. Templates are grouped into **Cell Groups** and **Services**; filter by **location** if you have many templates.  
    <!-- Screenshot: ../../assets/images/create-post-01-templates.png -->  
 3. Set the **date** (and any other fields the template asks for).  
-4. Review the draft details (title, location, roles, media pool).  
+4. Review the draft details (title, location, roles, media pool). If the date is **already in the past**, the Header tab includes **Who attended** — use **Select who attended** to record who was there before you save.  
 5. **Create** the post (or use **bulk create** if you are generating several dates from one template — see note below).  
 6. Open the new post and check it looks right on the bulletin.  
 

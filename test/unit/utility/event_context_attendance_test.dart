@@ -141,4 +141,56 @@ void main() {
       expect(context.attendance!.attendeeCount, 0);
     });
   });
+
+  group('EventContext draft attendees on create', () {
+    AttendeeEntry person(String id) => AttendeeEntry.user(
+          userId: id,
+          displayName: id,
+          addedBy: 'author-1',
+        );
+
+    test('past-dated drafts keep selected attendees with expected people', () {
+      final context = EventContext.adding(currentUserID: 'author-1');
+      context.head.setEventDate(DateTime(2020, 3, 1, 19));
+      context.applyExpectedAttendeeUserIDs(['u-1', 'u-2']);
+      context.applyDraftAttendees([
+        person('u-2'),
+        person('u-2'),
+        person('u-3'),
+        AttendeeEntry.external(name: 'Guest', addedBy: 'author-1'),
+      ]);
+
+      expect(context.draftAttendees.map((e) => e.userId), ['u-2', 'u-3']);
+
+      final attendance = context.buildAttendanceForNewPost(
+        expectedUserIds: context.expectedAttendeeUserIDs,
+        now: DateTime(2026, 9, 24),
+      );
+      expect(attendance.expectedUserIds, ['u-1', 'u-2']);
+      expect(attendance.attendees.map((e) => e.userId), ['u-2', 'u-3']);
+    });
+
+    test('upcoming and undated drafts do not publish attendees', () {
+      final upcoming = EventContext.adding(currentUserID: 'author-1');
+      upcoming.head.setEventDate(DateTime(2026, 10, 1, 19));
+      upcoming.applyDraftAttendees([person('u-1')]);
+
+      final upcomingAttendance = upcoming.buildAttendanceForNewPost(
+        expectedUserIds: const ['u-9'],
+        now: DateTime(2026, 9, 24),
+      );
+      expect(upcomingAttendance.attendeeCount, 0);
+      expect(upcomingAttendance.expectedUserIds, ['u-9']);
+
+      final undated = EventContext.adding(currentUserID: 'author-1');
+      undated.applyDraftAttendees([person('u-1')]);
+      expect(
+        undated.buildAttendanceForNewPost(
+          expectedUserIds: const [],
+          now: DateTime(2026, 9, 24),
+        ).attendeeCount,
+        0,
+      );
+    });
+  });
 }

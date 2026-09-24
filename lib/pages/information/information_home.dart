@@ -18,6 +18,15 @@ class InformationHome extends StatefulWidget {
     required this.scrollController,
   });
 
+  static const String ctrimLogo = 'assets/images/ctrim_logo.png';
+
+  static const List<({String label, IconData icon})> sections = [
+    (label: 'About', icon: Icons.info_outline),
+    (label: 'Churches', icon: Icons.church),
+    (label: 'Testimonials', icon: Icons.format_quote),
+    (label: 'Information', icon: Icons.menu_book),
+  ];
+
   final TabController tabController;
   final ScrollController scrollController;
 
@@ -26,15 +35,6 @@ class InformationHome extends StatefulWidget {
 }
 
 class _InformationHomeState extends State<InformationHome> {
-  static const String _ctrimLogo = 'assets/images/ctrim_logo.png';
-
-  static const List<({String label, IconData icon})> _sections = [
-    (label: 'About', icon: Icons.info_outline),
-    (label: 'Churches', icon: Icons.church),
-    (label: 'Testimonials', icon: Icons.format_quote),
-    (label: 'Information', icon: Icons.menu_book),
-  ];
-
   final InfoRepository _infoRepository = InfoRepository();
   late Future<List<ChurchInfo>> _churchesFuture;
   late Future<List<TestimonialInfo>> _testimonialsFuture;
@@ -73,78 +73,9 @@ class _InformationHomeState extends State<InformationHome> {
 
   @override
   Widget build(BuildContext context) {
-    final useSideNav =
-        ResponsiveLayout.isWideScreen(MediaQuery.sizeOf(context).width);
-
-    if (useSideNav) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildInformationSectionNav(context),
-          const VerticalDivider(width: 1),
-          Expanded(child: _buildInformationScrollView(showTabBar: false)),
-        ],
-      );
-    }
-
-    return _buildInformationScrollView(showTabBar: true);
-  }
-
-  Widget _buildInformationSectionNav(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      child: SizedBox(
-        width: 220,
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'CTRIM',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
-              for (var index = 0; index < _sections.length; index++)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  child: ListTile(
-                    selected: widget.tabController.index == index,
-                    selectedTileColor: colorScheme.primaryContainer,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    leading: Icon(
-                      _sections[index].icon,
-                      color: widget.tabController.index == index
-                          ? colorScheme.onPrimaryContainer
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                    title: Text(
-                      _sections[index].label,
-                      style: TextStyle(
-                        fontWeight: widget.tabController.index == index
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    onTap: () {
-                      if (widget.tabController.index != index) {
-                        widget.tabController.animateTo(index);
-                      }
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
+    final showTabBar =
+        !ResponsiveLayout.isWideScreen(MediaQuery.sizeOf(context).width);
+    return _buildInformationScrollView(showTabBar: showTabBar);
   }
 
   Widget _buildInformationScrollView({required bool showTabBar}) {
@@ -156,7 +87,9 @@ class _InformationHomeState extends State<InformationHome> {
       headerSliverBuilder: (_, __) => [
         SliverAppBar.large(
           title: Text(
-            showTabBar ? 'CTRIM' : _sections[widget.tabController.index].label,
+            showTabBar
+                ? 'CTRIM'
+                : InformationHome.sections[widget.tabController.index].label,
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -182,7 +115,7 @@ class _InformationHomeState extends State<InformationHome> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      _ctrimLogo,
+                      InformationHome.ctrimLogo,
                       fit: BoxFit.contain,
                       height: kToolbarHeight,
                       errorBuilder: (context, error, stackTrace) => Container(
@@ -203,7 +136,7 @@ class _InformationHomeState extends State<InformationHome> {
           bottom: showTabBar
               ? SectionTabBar(
                   controller: widget.tabController,
-                  tabs: _sections
+                  tabs: InformationHome.sections
                       .map((section) => Tab(text: section.label))
                       .toList(),
                 )

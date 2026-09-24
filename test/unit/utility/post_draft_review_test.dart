@@ -1,3 +1,4 @@
+import 'package:ctrim_app/models/event/event_attendance.dart';
 import 'package:ctrim_app/models/post_tag.dart';
 import 'package:ctrim_app/utility/event_context.dart';
 import 'package:ctrim_app/utility/post_draft_review.dart';
@@ -130,6 +131,13 @@ void main() {
       context.head.addMediaItem(type: 'img', src: 'cover.jpg', title: 'Cover');
       context.applyContributorUIDs(['editor-1']);
       context.applyExpectedAttendeeUserIDs(['member-1']);
+      context.applyDraftAttendees([
+        AttendeeEntry.user(
+          userId: 'member-1',
+          displayName: 'Member',
+          addedBy: 'author-1',
+        ),
+      ]);
       context.media.addMediaFile(
           {'type': 'img', 'src': 'gallery.jpg', 'title': 'Photo'});
       context.program.addRole(
@@ -188,6 +196,58 @@ void main() {
             review.infoItems.length +
             review.readyItems.length,
         review.items.length,
+      );
+    });
+
+    test('past-dated draft suggests who attended until people are selected',
+        () {
+      final context = EventContext.adding(currentUserID: 'author-1');
+      context.head.setEventDate(DateTime(2020, 1, 1, 19));
+
+      final empty = buildPostDraftReview(
+        eventContext: context,
+        title: 'Cell group',
+        subtitle: 'January',
+        allTags: const [],
+      );
+      final missing = empty.items
+          .firstWhere((item) => item.kind == PostDraftReviewKind.attended);
+      expect(missing.status, PostDraftReviewStatus.suggestion);
+      expect(missing.subtitle, 'None selected');
+
+      context.applyDraftAttendees([
+        AttendeeEntry.user(
+          userId: 'u-1',
+          displayName: 'One',
+          addedBy: 'author-1',
+        ),
+      ]);
+      final filled = buildPostDraftReview(
+        eventContext: context,
+        title: 'Cell group',
+        subtitle: 'January',
+        allTags: const [],
+      );
+      final attended = filled.items
+          .firstWhere((item) => item.kind == PostDraftReviewKind.attended);
+      expect(attended.status, PostDraftReviewStatus.ready);
+      expect(attended.subtitle, '1 attended');
+    });
+
+    test('upcoming drafts omit who attended', () {
+      final context = EventContext.adding(currentUserID: 'author-1');
+      context.head.setEventDate(DateTime.now().add(const Duration(days: 7)));
+
+      final review = buildPostDraftReview(
+        eventContext: context,
+        title: 'Sunday',
+        subtitle: 'Next week',
+        allTags: const [],
+      );
+
+      expect(
+        review.items.any((item) => item.kind == PostDraftReviewKind.attended),
+        isFalse,
       );
     });
   });

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/event/event_attendance.dart';
 import '../../models/user.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../src/localization/app_localizations.dart';
@@ -26,6 +27,7 @@ class AddEventHeadMeta extends StatefulWidget {
     required this.onRequiredFieldChange,
     required this.eventContext,
     this.showNotificationControls = true,
+    this.showPastAttendancePicker = false,
   });
   final TextEditingController tecTitle, tecSubtitle;
   final EventContext eventContext;
@@ -33,6 +35,9 @@ class AddEventHeadMeta extends StatefulWidget {
 
   /// When false (template editor), omit send-time notify toggles.
   final bool showNotificationControls;
+
+  /// When true, a past event date shows who-attended selection on this draft.
+  final bool showPastAttendancePicker;
 
   @override
   State<AddEventHeadMeta> createState() => _AddEventHeadMetaState();
@@ -793,6 +798,11 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                 ),
                 const SizedBox(height: 12),
                 _buildExpectedAttendeesSection(appContext, theme, colorScheme),
+                if (widget.showPastAttendancePicker &&
+                    widget.eventContext.head.isRecent) ...[
+                  const SizedBox(height: 12),
+                  _buildAttendedSection(appContext, theme, colorScheme),
+                ],
                 if (widget.showNotificationControls) ...[
                   const Divider(height: 32),
                   ..._buildNotificationControls(appContext),
@@ -916,6 +926,60 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     );
   }
 
+  Widget _buildAttendedSection(
+    AppContext appContext,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final attendedIds = widget.eventContext.draftAttendees
+        .map((entry) => entry.userId)
+        .whereType<String>()
+        .toList();
+    final users =
+        appContext.allUsers.where((u) => attendedIds.contains(u.id)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Who attended',
+          style:
+              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'This date is already in the past. Select the people who were there. '
+          'You can still change the list on the People tab after saving.',
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 8),
+        if (attendedIds.isEmpty)
+          Text(
+            'None selected yet',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          )
+        else ...[
+          MyAvatarStack(users: users, appDir: appContext.appDir),
+          const SizedBox(height: 8),
+          Text(
+            '${attendedIds.length} attended',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _onSelectAttendeesTap,
+          icon: const Icon(Icons.how_to_reg_outlined, size: 18),
+          label: const Text('Select who attended'),
+        ),
+      ],
+    );
+  }
+
   // ? Logic
 
   Future<void> _seedExpectedFromLinkedCellGroups() async {
@@ -964,6 +1028,52 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
     if (result == null || !mounted) return;
     setState(() {
       widget.eventContext.applyExpectedAttendeeUserIDs(result);
+    });
+  }
+
+  Future<void> _onSelectAttendeesTap() async {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final selected = widget.eventContext.draftAttendees
+        .map((entry) => entry.userId)
+        .whereType<String>()
+        .toList();
+    final result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectUsersPage(
+          selectedUIDs: selected,
+          title: 'Who attended',
+          includePlaceholders: true,
+          allowCreatePlaceholder: canCreatePlaceholderUser(
+            actor: appContext.currentUser,
+            postAuthorUid: widget.eventContext.metadata.authorUID,
+          ),
+          postIdForPlaceholderCreate: widget.eventContext.id,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final byId = {
+      for (final entry in widget.eventContext.draftAttendees)
+        if (entry.userId != null) entry.userId!: entry,
+    };
+    final next = <AttendeeEntry>[];
+    for (final uid in result) {
+      final existing = byId[uid];
+      if (existing != null) {
+        next.add(existing);
+        continue;
+      }
+      final user = appContext.userById(uid);
+      next.add(AttendeeEntry.user(
+        userId: uid,
+        displayName: user?.fullname ?? uid,
+        addedBy: appContext.currentUser.id,
+      ));
+    }
+    setState(() {
+      widget.eventContext.applyDraftAttendees(next);
     });
   }
 

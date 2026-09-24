@@ -51,6 +51,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   ];
 
   static const String _personalLabel = 'Personal';
+  static const int _ctrimIndex = 1;
+  static const double _iconRailWidth = 80;
+  static const double _labeledRailWidth = 220;
 
   late final TabController _informationTabController;
   late final TabController _cellGroupsTabController;
@@ -69,8 +72,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Set startup tab based on user preference (default to 1 = Information home)
     _selectedIndex = _appContext.sharedPref.preferredStartupTab;
 
-    _informationTabController = TabController(length: 4, vsync: this);
+    _informationTabController = TabController(
+      length: InformationHome.sections.length,
+      vsync: this,
+    );
+    _informationTabController.addListener(_onInformationSectionChanged);
     _cellGroupsTabController = TabController(length: 2, vsync: this);
+    _cellGroupsTabController.addListener(_onCellGroupsSectionChanged);
     _appContext.sharedPref.setPostRefreshTime();
     _setupCloudOnMessage();
     _setupWebNotificationListeners();
@@ -139,7 +147,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _informationTabController.removeListener(_onInformationSectionChanged);
     _informationTabController.dispose();
+    _cellGroupsTabController.removeListener(_onCellGroupsSectionChanged);
     _cellGroupsTabController.dispose();
     _postsScrollController.dispose();
     _informationScrollController.dispose();
@@ -154,8 +164,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final useRail = ResponsiveLayout.isWideScreen(constraints.maxWidth);
+          final nestCtrimSections =
+              constraints.maxWidth >= ResponsiveLayout.desktop;
           return Scaffold(
-            body: useRail ? _buildWideBody() : _buildSelectedBody(),
+            body: useRail
+                ? _buildWideBody(nestCtrimSections: nestCtrimSections)
+                : _buildSelectedBody(),
             floatingActionButton:
                 _selectedIndex == 0 ? const _AddPostFab() : null,
             bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
@@ -165,45 +179,81 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildWideBody() {
+  Widget _buildWideBody({required bool nestCtrimSections}) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
-        _buildNavigationRail(),
+        _ShellNavRail(
+          destinations: _destinations,
+          selectedIndex: _selectedIndex,
+          personalLabel: _personalLabel,
+          nestSections: nestCtrimSections,
+          groups: [
+            _NavSectionGroup(
+              destinationIndex: _ctrimIndex,
+              sections: InformationHome.sections,
+              selectedSection: _informationTabController.index,
+              onSectionSelected: _selectCtrimSection,
+            ),
+            _NavSectionGroup(
+              destinationIndex: 2,
+              sections: [
+                (
+                  label: l10n.cellGroupsTabOverview,
+                  icon: Icons.info_outline,
+                ),
+                (label: l10n.cellGroupsTabGroups, icon: Icons.groups),
+              ],
+              selectedSection: _cellGroupsTabController.index,
+              onSectionSelected: _selectCellGroupSection,
+            ),
+          ],
+          onDestinationSelected: _onNavigationItemTap,
+          width: nestCtrimSections ? _labeledRailWidth : _iconRailWidth,
+        ),
         const VerticalDivider(width: 1),
         Expanded(child: _buildSelectedBody()),
       ],
     );
   }
 
-  Widget _buildNavigationRail() {
-    return NavigationRail(
-      selectedIndex: _selectedIndex,
-      extended: MediaQuery.sizeOf(context).width >= ResponsiveLayout.desktop,
-      onDestinationSelected: _onNavigationItemTap,
-      leading: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.asset(
-            'assets/images/ctrim_logo.png',
-            width: 48,
-            height: 48,
-            errorBuilder: (_, __, ___) => Icon(Icons.church,
-                size: 48, color: Theme.of(context).colorScheme.primary),
-          ),
-        ),
-      ),
-      destinations: _destinations
-          .map(
-            (dest) => NavigationRailDestination(
-              icon: dest.label == _personalLabel
-                  ? _PersonalNavIcon(icon: dest.icon)
-                  : Icon(dest.icon),
-              label: Text(dest.label),
-            ),
-          )
-          .toList(),
+  void _onInformationSectionChanged() {
+    if (_informationTabController.indexIsChanging) return;
+    if (mounted) setState(() {});
+  }
+
+  void _onCellGroupsSectionChanged() {
+    if (_cellGroupsTabController.indexIsChanging) return;
+    if (mounted) setState(() {});
+  }
+
+  void _selectCtrimSection(int section) {
+    _selectNestedSection(
+      destinationIndex: _ctrimIndex,
+      section: section,
+      controller: _informationTabController,
     );
+  }
+
+  void _selectCellGroupSection(int section) {
+    _selectNestedSection(
+      destinationIndex: 2,
+      section: section,
+      controller: _cellGroupsTabController,
+    );
+  }
+
+  void _selectNestedSection({
+    required int destinationIndex,
+    required int section,
+    required TabController controller,
+  }) {
+    if (_selectedIndex != destinationIndex) {
+      setState(() => _selectedIndex = destinationIndex);
+    }
+    if (controller.index != section) {
+      controller.animateTo(section);
+    }
   }
 
   Widget _buildBottomNavigationBar() {
@@ -563,6 +613,243 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await localDataManager.deleteUserImage(user.id);
       }
     }
+  }
+}
+
+class _NavSectionGroup {
+  const _NavSectionGroup({
+    required this.destinationIndex,
+    required this.sections,
+    required this.selectedSection,
+    required this.onSectionSelected,
+  });
+
+  final int destinationIndex;
+  final List<({String label, IconData icon})> sections;
+  final int selectedSection;
+  final ValueChanged<int> onSectionSelected;
+}
+
+class _ShellNavRail extends StatelessWidget {
+  const _ShellNavRail({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.personalLabel,
+    required this.nestSections,
+    required this.groups,
+    required this.onDestinationSelected,
+    required this.width,
+  });
+
+  final List<_NavDestination> destinations;
+  final int selectedIndex;
+  final String personalLabel;
+  final bool nestSections;
+  final List<_NavSectionGroup> groups;
+  final ValueChanged<int> onDestinationSelected;
+  final double width;
+
+  _NavSectionGroup? _groupFor(int index) {
+    for (final group in groups) {
+      if (group.destinationIndex == index) return group;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surface,
+      child: SizedBox(
+        width: width,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/images/ctrim_logo.png',
+                    width: 48,
+                    height: 48,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.church,
+                      size: 48,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  children: [
+                    for (var index = 0; index < destinations.length; index++)
+                      ..._destination(context, index),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _destination(BuildContext context, int index) {
+    final dest = destinations[index];
+    final selected = selectedIndex == index;
+    final icon = dest.label == personalLabel
+        ? _PersonalNavIcon(icon: dest.icon)
+        : Icon(dest.icon);
+    final group = _groupFor(index);
+    final showChildren = nestSections && group != null && selected;
+
+    if (!nestSections && group != null) {
+      return [
+        PopupMenuButton<int>(
+          tooltip: dest.label,
+          offset: Offset(width - 8, 0),
+          onOpened: () {
+            if (!selected) onDestinationSelected(index);
+          },
+          onSelected: group.onSectionSelected,
+          itemBuilder: (context) => [
+            for (var section = 0; section < group.sections.length; section++)
+              PopupMenuItem<int>(
+                value: section,
+                child: Row(
+                  children: [
+                    Icon(
+                      group.sections[section].icon,
+                      color: selected && group.selectedSection == section
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      group.sections[section].label,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight:
+                                selected && group.selectedSection == section
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+          child: _RailButton(
+            icon: icon,
+            label: dest.label,
+            selected: selected,
+            showLabel: false,
+            tooltip: dest.label,
+          ),
+        ),
+      ];
+    }
+
+    return [
+      _RailButton(
+        icon: icon,
+        label: dest.label,
+        selected: selected,
+        showLabel: nestSections,
+        tooltip: nestSections ? '' : dest.label,
+        onTap: () => onDestinationSelected(index),
+      ),
+      if (showChildren)
+        for (var section = 0; section < group.sections.length; section++)
+          _RailButton(
+            icon: Icon(group.sections[section].icon),
+            label: group.sections[section].label,
+            selected: group.selectedSection == section,
+            showLabel: true,
+            indented: true,
+            onTap: () => group.onSectionSelected(section),
+          ),
+    ];
+  }
+}
+
+class _RailButton extends StatelessWidget {
+  const _RailButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.showLabel,
+    this.indented = false,
+    this.tooltip = '',
+    this.onTap,
+  });
+
+  final Widget icon;
+  final String label;
+  final bool selected;
+  final bool showLabel;
+  final bool indented;
+  final String tooltip;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final foreground = selected
+        ? colorScheme.onSecondaryContainer
+        : colorScheme.onSurfaceVariant;
+    final button = Padding(
+      padding: EdgeInsets.only(left: indented ? 12 : 0, bottom: 4),
+      child: Material(
+        color: selected ? colorScheme.secondaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: showLabel ? 12 : 0,
+              vertical: 10,
+            ),
+            child: showLabel
+                ? Row(
+                    children: [
+                      IconTheme(
+                        data: IconThemeData(color: foreground, size: 24),
+                        child: icon,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: foreground,
+                                    fontWeight: selected
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Center(
+                    child: IconTheme(
+                      data: IconThemeData(color: foreground, size: 24),
+                      child: icon,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+    if (tooltip.isEmpty) return button;
+    return Tooltip(message: tooltip, child: button);
   }
 }
 
