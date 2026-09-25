@@ -42,70 +42,115 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
   Widget _buildCachedImage() {
     if (_hasError && _retryCount >= _maxRetries) {
-      return _buildErrorState();
+      return _wrapHero(_buildErrorState());
     }
 
-    return FutureBuilder<Uint8List>(
-      future: _fetchCachedImage(),
-      builder: (_, snap) {
-        Widget result = _buildLoadingState();
+    final peeked = CachedImageLoader.peekBytes(widget.imageUrl);
+    if (peeked != null) {
+      return _wrapHero(_imageFromBytes(peeked));
+    }
 
-        if (snap.hasData) {
-          final image = Image.memory(
-            snap.data!,
-            height: widget.height,
-            width: widget.width,
-            fit: widget.fit,
-            alignment: widget.alignment,
-            errorBuilder: (context, error, stackTrace) {
-              debugPrint('Broken image data detected: ${error.toString()}');
+    return _wrapHero(
+      FutureBuilder<Uint8List>(
+        future: _fetchCachedImage(),
+        builder: (_, snap) {
+          Widget result = _buildLoadingState();
 
-              // Only retry if we haven't exceeded max retries
-              if (_retryCount < _maxRetries) {
-                WidgetsBinding.instance.addPostFrameCallback((_) async {
-                  await _deleteCachedImage();
-                  if (mounted) {
-                    setState(() {
-                      _retryCount++;
-                      debugPrint(
-                          'Retrying image download (attempt $_retryCount/$_maxRetries)');
-                    });
-                  }
-                });
-                return _buildLoadingState();
-              } else {
-                _hasError = true;
-                return _buildErrorState();
-              }
-            },
+          if (snap.hasData) {
+            // Hoist the loaded photo to be the Hero child (not this FutureBuilder)
+            // so the next navigation can fly the picture.
+            if (CachedImageLoader.peekBytes(widget.imageUrl) != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) setState(() {});
+              });
+            }
+            return _imageFromBytes(snap.data!);
+          } else if (snap.hasError) {
+            debugPrint('Image download error: ${snap.error}');
+            _hasError = true;
+
+            if (_retryCount < _maxRetries) {
+              // Attempt retry after a short delay
+              Future.delayed(Duration(seconds: _retryCount + 1), () {
+                if (mounted) {
+                  setState(() {
+                    _retryCount++;
+                    debugPrint(
+                        'Retrying image download after error (attempt $_retryCount/$_maxRetries)');
+                  });
+                }
+              });
+              result = _buildLoadingState();
+            } else {
+              result = _buildErrorState();
+            }
+          }
+
+          return result;
+        },
+      ),
+    );
+  }
+
+  /// Keeps the [Hero] in the tree on the first frame. The shuttle uses the
+  /// photo already on screen so a placeholder does not fly across.
+  Widget _wrapHero(final Widget child) {
+    final tag = widget.heroTag;
+    if (tag == null || tag.isEmpty) return child;
+    return Hero(
+      tag: tag,
+      transitionOnUserGestures: true,
+      flightShuttleBuilder: (
+        context,
+        animation,
+        direction,
+        fromContext,
+        toContext,
+      ) {
+        // A new image, not the route's child. On pop that child is replaced
+        // by an empty placeholder, so reusing it leaves nothing to fly.
+        final bytes = CachedImageLoader.peekBytes(widget.imageUrl);
+        if (bytes != null) {
+          return Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
           );
-
-          if (widget.heroTag != null) {
-            return Hero(tag: widget.heroTag!, child: image);
-          }
-          return image;
-        } else if (snap.hasError) {
-          debugPrint('Image download error: ${snap.error}');
-          _hasError = true;
-
-          if (_retryCount < _maxRetries) {
-            // Attempt retry after a short delay
-            Future.delayed(Duration(seconds: _retryCount + 1), () {
-              if (mounted) {
-                setState(() {
-                  _retryCount++;
-                  debugPrint(
-                      'Retrying image download after error (attempt $_retryCount/$_maxRetries)');
-                });
-              }
-            });
-            result = _buildLoadingState();
-          } else {
-            result = _buildErrorState();
-          }
         }
+        final outgoing = fromContext.widget;
+        if (outgoing is Hero) return outgoing.child;
+        return child;
+      },
+      child: child,
+    );
+  }
 
-        return result;
+  Widget _imageFromBytes(final Uint8List bytes) {
+    return Image.memory(
+      bytes,
+      height: widget.height,
+      width: widget.width,
+      fit: widget.fit,
+      alignment: widget.alignment,
+      errorBuilder: (context, error, stackTrace) {
+        debugPrint('Broken image data detected: ${error.toString()}');
+
+        if (_retryCount < _maxRetries) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            CachedImageLoader.forgetBytes(widget.imageUrl);
+            await _deleteCachedImage();
+            if (mounted) {
+              setState(() {
+                _retryCount++;
+                debugPrint(
+                    'Retrying image download (attempt $_retryCount/$_maxRetries)');
+              });
+            }
+          });
+          return _buildLoadingState();
+        }
+        _hasError = true;
+        return _buildErrorState();
       },
     );
   }
@@ -203,6 +248,7 @@ abstract final class CachedImageLoader {
     final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
     if (cachedImage != null && cachedImage.isNotEmpty) {
       debugPrint('Using cached image for: $sanitisedKey');
+      _remember(imageUrl, cachedImage);
       return cachedImage;
     }
 
@@ -231,12 +277,33 @@ abstract final class CachedImageLoader {
 
       await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
       debugPrint('Cached image for: $sanitisedKey');
+      _remember(imageUrl, imageBytes);
       return imageBytes;
     } catch (e) {
       debugPrint('Error downloading image: $e');
+      forgetBytes(imageUrl);
       await localDataManager.deleteMediaImage(sanitisedKey);
       rethrow;
     }
+  }
+
+  static final Map<String, Uint8List> _memoryBytes = {};
+
+  /// Bytes already shown this session, so a second widget can paint a [Hero]
+  /// on its first frame.
+  static Uint8List? peekBytes(final String imageUrl) {
+    final bytes = _memoryBytes[cacheKeyFor(imageUrl)];
+    if (bytes == null || bytes.isEmpty) return null;
+    return bytes;
+  }
+
+  static void forgetBytes(final String imageUrl) {
+    _memoryBytes.remove(cacheKeyFor(imageUrl));
+  }
+
+  static void _remember(final String imageUrl, final Uint8List bytes) {
+    if (bytes.isEmpty) return;
+    _memoryBytes[cacheKeyFor(imageUrl)] = bytes;
   }
 }
 

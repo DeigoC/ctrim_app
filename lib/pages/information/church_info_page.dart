@@ -20,9 +20,17 @@ import 'church_hub_dashboard.dart';
 import 'edit_info_body_page.dart';
 
 class ChurchInfoPage extends StatefulWidget {
-  const ChurchInfoPage({super.key, required this.documentId});
+  const ChurchInfoPage({
+    super.key,
+    required this.documentId,
+    this.initialChurch,
+  });
 
   final String documentId;
+
+  /// Church already on screen (list or hub card). Paints the cover on the
+  /// first frame so the hero can fly while pages and stats load.
+  final ChurchInfo? initialChurch;
 
   /// Matches cell-group meeting trail length (`fetchMeetingTrail` limit).
   static const int visiblePostLimit = 4;
@@ -39,6 +47,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   final EventHeadDBManager _eventHeads = EventHeadDBManager();
 
   bool _loading = true;
+  bool _detailsReady = false;
   Object? _error;
   ChurchInfo? _church;
   List<ChurchInfo> _allChurches = const [];
@@ -50,16 +59,23 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   @override
   void initState() {
     super.initState();
+    final seeded = widget.initialChurch;
+    if (seeded != null && seeded.id == widget.documentId) {
+      _church = seeded;
+    }
     _load(forceRefresh: false);
   }
 
   Future<void> _load({required bool forceRefresh}) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
+    final keepDetails = _detailsReady;
     setState(() {
-      _loading = true;
+      _loading = _church == null;
       _error = null;
-      _statsError = null;
-      _pagesError = null;
+      if (!keepDetails) {
+        _statsError = null;
+        _pagesError = null;
+      }
     });
     try {
       final churches = await _repository.fetchChurches(
@@ -74,62 +90,66 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       }
       if (!mounted) return;
 
-      ChurchLocationStats? stats;
-      Object? statsError;
-      List<ChurchPage> pages = const [];
-      Object? pagesError;
-      if (church != null) {
-        final pagesFuture = _repository.fetchChurchPages(
-          church.id,
-          forceRefresh: forceRefresh,
-        );
-        if (church.hasLocation) {
-          try {
-            stats = await _loadStats(church, appContext);
-          } catch (e) {
-            statsError = e;
-          }
-        }
-        try {
-          pages = await pagesFuture;
-        } catch (e) {
-          pagesError = e;
-        }
-      }
-
       if (church != null) {
         appContext.analytics.logScreenView(
           screenName: 'Church Info: ${church.analyticsTitle}',
         );
       }
 
-      if (!mounted) return;
       setState(() {
         _allChurches = churches;
         _church = church;
+        _loading = false;
         if (church == null) {
           _stats = null;
           _statsError = null;
           _pages = const [];
           _pagesError = null;
-        } else {
-          if (!church.hasLocation) {
-            _stats = null;
-            _statsError = null;
-          } else if (stats != null) {
-            _stats = stats;
-            _statsError = null;
-          } else {
-            _statsError = statsError;
-          }
-          if (pagesError == null) {
-            _pages = pages;
-            _pagesError = null;
-          } else {
-            _pagesError = pagesError;
-          }
+          _detailsReady = true;
         }
-        _loading = false;
+      });
+      if (church == null || !mounted) return;
+      final resolved = church;
+
+      ChurchLocationStats? stats;
+      Object? statsError;
+      List<ChurchPage> pages = const [];
+      Object? pagesError;
+      final pagesFuture = _repository.fetchChurchPages(
+        resolved.id,
+        forceRefresh: forceRefresh,
+      );
+      if (resolved.hasLocation) {
+        try {
+          stats = await _loadStats(resolved, appContext);
+        } catch (e) {
+          statsError = e;
+        }
+      }
+      try {
+        pages = await pagesFuture;
+      } catch (e) {
+        pagesError = e;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        if (!resolved.hasLocation) {
+          _stats = null;
+          _statsError = null;
+        } else if (stats != null) {
+          _stats = stats;
+          _statsError = null;
+        } else {
+          _statsError = statsError;
+        }
+        if (pagesError == null) {
+          _pages = pages;
+          _pagesError = null;
+        } else {
+          _pagesError = pagesError;
+        }
+        _detailsReady = true;
       });
     } catch (e) {
       if (!mounted) return;
@@ -228,14 +248,14 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   }
 
   Future<void> _openOutreach(final ChurchInfo outreach) async {
-    await AppLinks.openChurch(context, id: outreach.id);
+    await AppLinks.openChurch(context, id: outreach.id, church: outreach);
     if (mounted) {
       await _load(forceRefresh: false);
     }
   }
 
   Future<void> _openParent(final ChurchInfo parent) async {
-    await AppLinks.openChurch(context, id: parent.id);
+    await AppLinks.openChurch(context, id: parent.id, church: parent);
     if (mounted) {
       await _load(forceRefresh: false);
     }
@@ -341,43 +361,57 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
                   ),
               ],
             ),
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(gutter + 16, 20, gutter + 16, 40),
-              sliver: SliverToBoxAdapter(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
-                    child: ChurchHubDashboard(
-                      church: church,
-                      pages: _pages,
-                      pagesError: _pagesError,
-                      stats: _stats,
-                      statsError: _statsError,
-                      canAddPages: canManageChurchPages,
-                      canManageInfo: canManageInfo,
-                      visiblePostLimit: ChurchInfoPage.visiblePostLimit,
-                      visibleCellGroupLimit:
-                          ChurchInfoPage.visibleCellGroupLimit,
-                      parentChurch: parent,
-                      outreaches: outreaches,
-                      onOpenMaps: church.hasMapLink
-                          ? () => _openMaps(church.mapLink)
-                          : null,
-                      onOpenSocial: _openSocial,
-                      onOpenParent:
-                          parent == null ? null : () => _openParent(parent),
-                      onOpenPastors: () => _openPastors(church),
-                      onOpenPage: _openChurchPage,
-                      onAddPage: () => _openAddPage(church),
-                      onOpenOutreach: _openOutreach,
-                      onAddOutreach: () => _openAddOutreach(church),
-                      onRetryPages: () => _load(forceRefresh: false),
-                      onRetryStats: () => _load(forceRefresh: false),
+            if (!_detailsReady)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: LoadProgressBody(
+                  message: _error == null ? 'Loading…' : '',
+                  completedSteps: 0,
+                  totalSteps: 1,
+                  error: _error,
+                  errorTitle: l10n.churchInfoLoadError,
+                  onRetry:
+                      _error == null ? null : () => _load(forceRefresh: true),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(gutter + 16, 20, gutter + 16, 40),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: ChurchHubDashboard(
+                        church: church,
+                        pages: _pages,
+                        pagesError: _pagesError,
+                        stats: _stats,
+                        statsError: _statsError,
+                        canAddPages: canManageChurchPages,
+                        canManageInfo: canManageInfo,
+                        visiblePostLimit: ChurchInfoPage.visiblePostLimit,
+                        visibleCellGroupLimit:
+                            ChurchInfoPage.visibleCellGroupLimit,
+                        parentChurch: parent,
+                        outreaches: outreaches,
+                        onOpenMaps: church.hasMapLink
+                            ? () => _openMaps(church.mapLink)
+                            : null,
+                        onOpenSocial: _openSocial,
+                        onOpenParent:
+                            parent == null ? null : () => _openParent(parent),
+                        onOpenPastors: () => _openPastors(church),
+                        onOpenPage: _openChurchPage,
+                        onAddPage: () => _openAddPage(church),
+                        onOpenOutreach: _openOutreach,
+                        onAddOutreach: () => _openAddOutreach(church),
+                        onRetryPages: () => _load(forceRefresh: false),
+                        onRetryStats: () => _load(forceRefresh: false),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

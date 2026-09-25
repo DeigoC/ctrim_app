@@ -276,27 +276,21 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       title: _isOutreach
           ? l10n.churchEditorOutreachCardTitle
           : l10n.churchEditorChurchCardTitle,
-      subtitle: _isOutreach
-          ? l10n.churchEditorOutreachCardSubtitle
-          : l10n.churchEditorChurchCardSubtitle,
       children: _buildIdentityFields(),
     );
     final statusCard = _editorCard(
       icon: Icons.account_tree_outlined,
       title: l10n.churchEditorStatusCardTitle,
-      subtitle: l10n.churchEditorStatusCardSubtitle,
       children: _buildStatusFields(),
     );
     final visitCard = _editorCard(
       icon: Icons.place_outlined,
       title: l10n.churchEditorVisitCardTitle,
-      subtitle: l10n.churchEditorVisitCardSubtitle,
       children: _buildChurchHubFields(),
     );
     final socialsCard = _editorCard(
       icon: Icons.share_outlined,
       title: l10n.churchEditorSocialsCardTitle,
-      subtitle: l10n.churchEditorSocialsCardSubtitle,
       children: _buildSocialsFields(),
     );
     final pastorsCard = _editorCard(
@@ -304,15 +298,11 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       title: _isOutreach
           ? l10n.churchEditorPlantersCardTitle
           : l10n.churchEditorPastorsCardTitle,
-      subtitle: _isOutreach
-          ? l10n.churchEditorPlantersCardSubtitle
-          : l10n.churchEditorPastorsCardSubtitle,
       children: _buildPastorFields(),
     );
     final mediaCard = _editorCard(
       icon: Icons.photo_library_outlined,
       title: l10n.churchEditorMediaCardTitle,
-      subtitle: l10n.churchEditorMediaCardSubtitle,
       children: _buildMediaFields(),
     );
 
@@ -359,13 +349,11 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   Widget _editorCard({
     required IconData icon,
     required String title,
-    required String subtitle,
     required List<Widget> children,
   }) {
     return InfoSectionCard(
       icon: icon,
       title: title,
-      subtitle: subtitle,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
@@ -415,6 +403,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   List<Widget> buildSectionMetadataFields() => const [];
 
   List<Widget> _buildIdentityFields() {
+    final l10n = AppLocalizations.of(context)!;
     return [
       TextFormField(
         controller: primaryController,
@@ -429,11 +418,14 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       TextFormField(
         controller: _summaryController,
         decoration: _filledDecoration(
-          label: 'Summary / subtitle',
+          label: l10n.churchEditorSummaryLabel,
+          helperText: _isOutreach
+              ? l10n.churchEditorSummaryHelperOutreach
+              : l10n.churchEditorSummaryHelperChurch,
           prefixIcon: Icons.short_text,
         ),
-        minLines: 2,
-        maxLines: 3,
+        minLines: 1,
+        maxLines: 2,
       ),
       const SizedBox(height: 12),
       TextFormField(
@@ -452,8 +444,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       _buildSingleImageField(
         controller: _heroImageController,
         label: 'Hero image URL',
-        helperText:
-            'Shown on the church list and as the wide cover on the church page.',
+        helperText: 'List card and page cover.',
         prefixIcon: Icons.image_outlined,
         testState: _heroImageTest,
         onTest: _testHeroImage,
@@ -463,8 +454,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         controller: _galleryImagesController,
         decoration: _filledDecoration(
           label: 'Gallery image URLs',
-          helperText:
-              'One URL per line. Gallery photos only — not the hero image.',
+          helperText: 'One URL per line.',
           prefixIcon: Icons.collections_outlined,
           suffixIcon: IconButton(
             onPressed: _onImageHelpClick,
@@ -526,7 +516,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   Widget _buildSingleImageField({
     required TextEditingController controller,
     required String label,
-    required String helperText,
+    String? helperText,
     required _ImageUrlTestUiState testState,
     required Future<void> Function() onTest,
     IconData prefixIcon = Icons.link,
@@ -832,7 +822,6 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           key: ValueKey('social-url-${link.platform}-$index'),
           decoration: _filledDecoration(
             label: l10n.churchEditorSocialUrlLabel,
-            helperText: l10n.churchEditorSocialUrlHelper,
             prefixIcon: Icons.link,
           ),
           keyboardType: TextInputType.url,
@@ -898,7 +887,6 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
               : null,
           decoration: _filledDecoration(
             label: l10n.churchEditorParentChurchLabel,
-            helperText: l10n.churchEditorParentChurchHelper,
             prefixIcon: Icons.church_outlined,
           ),
           items: parents
@@ -1059,21 +1047,26 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
               : l10n.churchEditorChoosePastors,
         ),
       ),
-      ..._pastorUserIds.map(_buildPastorTile),
+      if (_pastorUserIds.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 16, bottom: 8),
+          child: Column(
+            children: [
+              for (final userId in _pastorUserIds) _buildPastorTile(userId),
+            ],
+          ),
+        ),
       const SizedBox(height: 12),
       _buildSingleImageField(
         controller: _pastorsImageController,
         label: _isOutreach
             ? l10n.churchEditorPlantersImageLabel
             : l10n.churchEditorPastorsImageLabel,
-        helperText: _isOutreach
-            ? l10n.churchEditorPlantersImageHelper
-            : l10n.churchEditorPastorsImageHelper,
         prefixIcon: Icons.photo_outlined,
         testState: _pastorsImageTest,
         onTest: _testPastorsImage,
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 20),
       Text(
         _isOutreach
             ? l10n.churchEditorPlantersBodyLabel
@@ -1082,16 +1075,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           fontWeight: FontWeight.w600,
         ),
       ),
-      const SizedBox(height: 4),
-      Text(
-        _isOutreach
-            ? l10n.churchEditorPlantersBodyHelper
-            : l10n.churchEditorPastorsBodyHelper,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 12),
       buildBodyEditor(),
     ];
   }
@@ -1099,21 +1083,34 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   Widget _buildPastorTile(final String userId) {
     final user = _userById(userId);
     final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: user != null
-          ? MyUserAvatar(user, radius: 20)
-          : CircleAvatar(
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          if (user != null)
+            MyUserAvatar(user, radius: 20)
+          else
+            CircleAvatar(
+              backgroundColor: colorScheme.surfaceContainerHighest,
               child: Icon(
                 Icons.person,
-                color: theme.colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
-      title: Text(user?.fullname ?? 'Unknown user'),
-      trailing: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () => setState(() => _pastorUserIds.remove(userId)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              user?.fullname ?? 'Unknown user',
+              style: theme.textTheme.bodyLarge,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.close),
+            onPressed: () => setState(() => _pastorUserIds.remove(userId)),
+          ),
+        ],
       ),
     );
   }
@@ -1193,7 +1190,6 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         controller: _addressController,
         decoration: _filledDecoration(
           label: l10n.churchEditorAddressLabel,
-          helperText: l10n.churchEditorAddressHelper,
           prefixIcon: Icons.home_outlined,
         ),
         minLines: 1,
@@ -1204,7 +1200,6 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         controller: _mapLinkController,
         decoration: _filledDecoration(
           label: l10n.churchEditorMapsLabel,
-          helperText: l10n.churchEditorMapsHelper,
           prefixIcon: Icons.map_outlined,
           suffixIcon: IconButton(
             onPressed: _onMapLinkHelpClick,

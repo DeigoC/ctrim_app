@@ -22,12 +22,13 @@ void main() {
   User person({
     required String id,
     required String forname,
+    String surname = 'Estareja',
     required List<String> tagIDs,
   }) {
     return User(
       id: id,
       forname: forname,
-      surname: 'Estareja',
+      surname: surname,
       location: 'Belfast',
       authID: 'auth-$id',
       tagIDs: tagIDs,
@@ -95,7 +96,8 @@ void main() {
       ],
     );
     expect(find.text('Jean Estareja'), findsOneWidget);
-    expect(find.text('Worship Team'), findsWidgets);
+    expect(find.text('Speaker'), findsOneWidget);
+    expect(find.text('+1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -112,6 +114,35 @@ void main() {
       ],
     );
     expect(find.text('Jean Estareja'), findsOneWidget);
+    expect(tester.getSize(find.byType(Card)).height, 108);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wide picker groups people by surname letter', (tester) async {
+    await pumpPicker(
+      tester,
+      width: 1200,
+      users: [
+        person(
+          id: 'zoe',
+          forname: 'Zoe',
+          surname: 'Young',
+          tagIDs: ['worship'],
+        ),
+        person(
+          id: 'amy',
+          forname: 'Amy',
+          surname: 'Adams',
+          tagIDs: ['speaker'],
+        ),
+      ],
+    );
+
+    expect(find.text('A'), findsOneWidget);
+    expect(find.text('Y'), findsOneWidget);
+    final amyTop = tester.getTopLeft(find.text('Amy Adams')).dy;
+    final zoeTop = tester.getTopLeft(find.text('Zoe Young')).dy;
+    expect(amyTop, lessThan(zoeTop));
     expect(tester.takeException(), isNull);
   });
 
@@ -124,6 +155,25 @@ void main() {
       ],
     );
     expect(find.text('Jean Estareja'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('location and team filters open in a sheet', (tester) async {
+    await pumpPicker(
+      tester,
+      width: 1200,
+      users: [
+        person(id: 'jean', forname: 'Jean', tagIDs: ['worship']),
+      ],
+    );
+
+    expect(find.text('Portadown'), findsNothing);
+    await tester.tap(find.byTooltip('Refine & sort'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Portadown'), findsOneWidget);
+    expect(find.text('Serving'), findsWidgets);
+    expect(find.text('Worship Team'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

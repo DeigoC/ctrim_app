@@ -734,6 +734,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectUsersTitle => 'Select people';
 
   @override
+  String get selectUsersFilterSheetSubtitle =>
+      'Location, team, or who is shown';
+
+  @override
   String get selectUsersDone => 'Done';
 
   @override
@@ -1606,22 +1610,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorChurchCardTitle => 'Church';
 
   @override
-  String get churchEditorChurchCardSubtitle =>
-      'Name and how it appears in the list';
-
-  @override
   String get churchEditorOutreachCardTitle => 'Outreach';
 
   @override
-  String get churchEditorOutreachCardSubtitle =>
-      'Name and how it appears under the parent church';
+  String get churchEditorSummaryLabel => 'Subtitle';
+
+  @override
+  String get churchEditorSummaryHelperChurch =>
+      'Shown under the title. Leave blank for the title only.';
+
+  @override
+  String get churchEditorSummaryHelperOutreach =>
+      'Shown under the title. Leave blank to name the parent church.';
 
   @override
   String get churchEditorStatusCardTitle => 'Status';
-
-  @override
-  String get churchEditorStatusCardSubtitle =>
-      'Full church or outreach under a parent';
 
   @override
   String get churchEditorKindChurch => 'Full church';
@@ -1639,10 +1642,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchEditorParentChurchLabel => 'Parent church';
-
-  @override
-  String get churchEditorParentChurchHelper =>
-      'The full church this outreach belongs to.';
 
   @override
   String get churchEditorPromoteToChurch => 'Promote to full church';
@@ -1704,21 +1703,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchEditorOutreachLocationHint =>
-      'Outreaches do not use a catalogue location until they are promoted to a full church. You can still add an address and maps link.';
+      'No catalogue location until this is a full church.';
 
   @override
   String get churchEditorAddressLabel => 'Address';
 
   @override
-  String get churchEditorAddressHelper =>
-      'Optional street address shown on the church page.';
-
-  @override
   String get churchEditorMapsLabel => 'Maps URL';
-
-  @override
-  String get churchEditorMapsHelper =>
-      'Optional Google Maps (or similar) link.';
 
   @override
   String get churchEditorMapsHelpTooltip => 'Maps URL help';
@@ -1727,18 +1718,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorVisitCardTitle => 'Find us';
 
   @override
-  String get churchEditorVisitCardSubtitle => 'Location, address, and maps';
-
-  @override
   String get churchEditorSocialsCardTitle => 'Socials';
 
   @override
-  String get churchEditorSocialsCardSubtitle =>
-      'Optional Facebook, Instagram, website, and more';
-
-  @override
-  String get churchEditorSocialsEmptyHint =>
-      'No social links yet. Add any that visitors should see.';
+  String get churchEditorSocialsEmptyHint => 'No social links yet.';
 
   @override
   String get churchEditorAddSocial => 'Add social link';
@@ -1751,10 +1734,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get churchEditorSocialUrlLabel => 'Link or email';
-
-  @override
-  String get churchEditorSocialUrlHelper =>
-      'Paste a full URL, or an email / WhatsApp number.';
 
   @override
   String get churchHubSocialsTitle => 'Socials';
@@ -1793,15 +1772,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorPastorsCardTitle => 'Pastors & History';
 
   @override
-  String get churchEditorPastorsCardSubtitle =>
-      'Listed pastors, a team photo, and a write-up about them and this church';
-
-  @override
   String get churchEditorPlantersCardTitle => 'Planters & History';
-
-  @override
-  String get churchEditorPlantersCardSubtitle =>
-      'People leading this outreach, plus a write-up about them and its story';
 
   @override
   String get churchEditorChoosePastors => 'Choose pastors';
@@ -1813,37 +1784,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorPastorsImageLabel => 'Pastors image URL';
 
   @override
-  String get churchEditorPastorsImageHelper =>
-      'Optional team photo shown on the Pastors & History card.';
-
-  @override
   String get churchEditorPlantersImageLabel => 'Planters image URL';
 
   @override
-  String get churchEditorPlantersImageHelper =>
-      'Optional team photo shown on the Planters & History card.';
-
-  @override
   String get churchEditorMediaCardTitle => 'Media';
-
-  @override
-  String get churchEditorMediaCardSubtitle => 'Cover photo and gallery';
 
   @override
   String get churchEditorPastorsBodyLabel =>
       'About the pastors and this church';
 
   @override
-  String get churchEditorPastorsBodyHelper =>
-      'Write about the pastors, then a section on the history of this church.';
-
-  @override
   String get churchEditorPlantersBodyLabel =>
       'About the planters and this outreach';
-
-  @override
-  String get churchEditorPlantersBodyHelper =>
-      'Write about the church planters, then a section on the history of this outreach.';
 
   @override
   String get churchEditorSave => 'Save';

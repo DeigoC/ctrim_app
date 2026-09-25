@@ -87,7 +87,7 @@ Save under `assets/images/`.
 |------|----------|--------------|
 | [ ] | `people-01-directory-filters.png` | Who's who with Serving and location filters |
 | [ ] | `people-02-register-form.png` | Register / add person form |
-| [ ] | `people-03-placeholder-picker.png` | People picker: Placeholders chip or Create placeholder |
+| [ ] | `people-03-placeholder-picker.png` | People picker: Placeholders in the Refine sheet, or Create placeholder |
 | [ ] | `people-register-list.gif` *(optional)* | Register someone → they appear in the list |
 
 ---
