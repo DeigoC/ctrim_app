@@ -6,9 +6,14 @@ import 'edit_info_body_page.dart';
 import 'info_detail_scaffold.dart';
 
 class TestimonialInfoPage extends StatelessWidget {
-  const TestimonialInfoPage({super.key, required this.documentId});
+  const TestimonialInfoPage({
+    super.key,
+    required this.documentId,
+    this.initialInfo,
+  });
 
   final String documentId;
+  final TestimonialInfo? initialInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +25,9 @@ class TestimonialInfoPage extends StatelessWidget {
       analyticsScreenName: (info) => 'Testimonial: ${info.name}',
       pageTitleFallback: 'Testimonial',
       notFoundMessage: 'No testimonial found.',
+      initialInfo: initialInfo != null && initialInfo!.id == documentId
+          ? initialInfo
+          : null,
       openEditor: (context, info) async {
         return await Navigator.push<bool>(
               context,

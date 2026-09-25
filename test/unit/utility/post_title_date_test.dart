@@ -11,15 +11,6 @@ void main() {
     });
   });
 
-  group('formatPostTitle', () {
-    test('wraps date in parentheses after template title', () {
-      expect(
-        formatPostTitle('Sunday Service', DateTime(2026, 7, 26)),
-        'Sunday Service (26th Jul)',
-      );
-    });
-  });
-
   group('formatPostTitlePreviewDate', () {
     test('includes weekday before title date', () {
       expect(

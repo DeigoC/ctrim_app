@@ -168,6 +168,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
     required this.notFoundMessage,
     required this.openEditor,
     required this.buildScaffold,
+    this.initialInfo,
     this.canEdit,
   });
 
@@ -176,6 +177,10 @@ class InfoDetailLoader<T> extends StatefulWidget {
   final String pageTitleFallback;
   final String notFoundMessage;
   final Future<bool> Function(BuildContext context, T info) openEditor;
+
+  /// Record already on screen (list or hub card). Paints the shared image on
+  /// the first frame so the hero can fly while a refresh runs behind it.
+  final T? initialInfo;
   final bool Function(User user)? canEdit;
   final Widget Function({
     required BuildContext context,
@@ -189,22 +194,58 @@ class InfoDetailLoader<T> extends StatefulWidget {
 }
 
 class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
-  late Future<T?> _future;
+  T? _info;
+  Object? _error;
+  bool _loading = true;
+  bool _loggedView = false;
 
   @override
   void initState() {
     super.initState();
-    _future = _load(forceRefresh: false);
+    _info = widget.initialInfo;
+    _loading = _info == null;
+    if (_info != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _info != null) _logScreen(_info as T);
+      });
+    }
+    _load(forceRefresh: false);
   }
 
-  Future<T?> _load({required bool forceRefresh}) async {
-    final info = await widget.load(forceRefresh: forceRefresh);
-    if (info != null && mounted) {
-      Provider.of<AppContext>(context, listen: false)
-          .analytics
-          .logScreenView(screenName: widget.analyticsScreenName(info));
+  void _logScreen(final T info) {
+    if (_loggedView) return;
+    _loggedView = true;
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logScreenView(screenName: widget.analyticsScreenName(info));
+  }
+
+  Future<void> _load({required bool forceRefresh}) async {
+    final hadInfo = _info != null;
+    if (!hadInfo && _error != null && mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
     }
-    return info;
+    try {
+      final info = await widget.load(forceRefresh: forceRefresh);
+      if (!mounted) return;
+      if (info != null) _logScreen(info);
+      setState(() {
+        _loading = false;
+        _error = null;
+        if (info != null || !hadInfo) {
+          _info = info;
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        if (_info == null) _error = error;
+      });
+    }
   }
 
   Future<void> _refresh() async {
@@ -214,10 +255,7 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
       return;
     }
     pref.setInfoRefreshTime();
-    setState(() {
-      _future = _load(forceRefresh: false);
-    });
-    await _future;
+    await _load(forceRefresh: false);
   }
 
   Future<void> _openEditor(final T info) async {
@@ -237,7 +275,9 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
     }
 
     setState(() {
-      _future = Future<T?>.value(refreshed);
+      _info = refreshed;
+      _loading = false;
+      _error = null;
     });
   }
 
@@ -245,53 +285,44 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
   Widget build(BuildContext context) {
     final user = context.select((AppContext c) => c.currentUser);
     final canEdit = (widget.canEdit ?? (u) => u.canManageInfo)(user);
+    final info = _info;
 
-    return FutureBuilder<T?>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: LoadProgressBody(
-              message: 'Loading…',
-              completedSteps: 0,
-              totalSteps: 1,
-            ),
-          );
-        }
+    if (info != null) {
+      return widget.buildScaffold(
+        context: context,
+        info: info,
+        onRefresh: _refresh,
+        onEdit: canEdit ? () => _openEditor(info) : null,
+      );
+    }
 
-        if (snapshot.hasError) {
-          return Scaffold(
-            appBar: AppBar(title: Text(widget.pageTitleFallback)),
-            body: LoadProgressBody(
-              message: '',
-              completedSteps: 0,
-              totalSteps: 1,
-              error: snapshot.error,
-              errorTitle: 'Could not load page',
-              onRetry: () {
-                setState(() {
-                  _future = _load(forceRefresh: true);
-                });
-              },
-            ),
-          );
-        }
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.pageTitleFallback)),
+        body: LoadProgressBody(
+          message: '',
+          completedSteps: 0,
+          totalSteps: 1,
+          error: _error,
+          errorTitle: 'Could not load page',
+          onRetry: () => _load(forceRefresh: true),
+        ),
+      );
+    }
 
-        final info = snapshot.data;
-        if (info == null) {
-          return Scaffold(
-            appBar: AppBar(title: Text(widget.pageTitleFallback)),
-            body: Center(child: Text(widget.notFoundMessage)),
-          );
-        }
+    if (_loading) {
+      return const Scaffold(
+        body: LoadProgressBody(
+          message: 'Loading…',
+          completedSteps: 0,
+          totalSteps: 1,
+        ),
+      );
+    }
 
-        return widget.buildScaffold(
-          context: context,
-          info: info,
-          onRefresh: _refresh,
-          onEdit: canEdit ? () => _openEditor(info) : null,
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.pageTitleFallback)),
+      body: Center(child: Text(widget.notFoundMessage)),
     );
   }
 }

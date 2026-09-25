@@ -15,13 +15,9 @@ String dayWithOrdinal(int day) {
   }
 }
 
-/// Date portion used in post titles, e.g. "26th Jul".
+/// Date label for bulk-create previews, e.g. "26th Jul".
 String formatPostTitleDate(DateTime date) =>
     '${dayWithOrdinal(date.day)} ${DateFormat('MMM').format(date)}';
-
-/// Full post title with template name and date, e.g. "Sunday Service (26th Jul)".
-String formatPostTitle(String templateTitle, DateTime date) =>
-    '$templateTitle (${formatPostTitleDate(date)})';
 
 /// Richer date label for bulk-create previews, e.g. "Sun 26th Jul".
 String formatPostTitlePreviewDate(DateTime date) =>

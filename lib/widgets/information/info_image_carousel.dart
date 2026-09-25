@@ -258,9 +258,14 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
 
 /// Gallery tile that uses the image's intrinsic aspect ratio.
 class AdaptiveInfoGalleryImage extends StatefulWidget {
-  const AdaptiveInfoGalleryImage({super.key, required this.imageUrl});
+  const AdaptiveInfoGalleryImage({
+    super.key,
+    required this.imageUrl,
+    this.heroTag,
+  });
 
   final String imageUrl;
+  final String? heroTag;
 
   @override
   State<AdaptiveInfoGalleryImage> createState() =>
@@ -319,6 +324,7 @@ class _AdaptiveInfoGalleryImageState extends State<AdaptiveInfoGalleryImage> {
           child: CachedImageWidget(
             imageUrl: widget.imageUrl,
             fit: naturalFrame ? BoxFit.contain : BoxFit.cover,
+            heroTag: widget.heroTag,
           ),
         ),
       ),

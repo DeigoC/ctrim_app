@@ -6,9 +6,14 @@ import 'edit_info_body_page.dart';
 import 'info_detail_scaffold.dart';
 
 class CTRIMInfoPage extends StatelessWidget {
-  const CTRIMInfoPage({super.key, required this.documentId});
+  const CTRIMInfoPage({
+    super.key,
+    required this.documentId,
+    this.initialInfo,
+  });
 
   final String documentId;
+  final CtrimInfo? initialInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +25,9 @@ class CTRIMInfoPage extends StatelessWidget {
       analyticsScreenName: (info) => 'CTRIM Info: ${info.analyticsTitle}',
       pageTitleFallback: 'CTRIM Information',
       notFoundMessage: 'No information found.',
+      initialInfo: initialInfo != null && initialInfo!.id == documentId
+          ? initialInfo
+          : null,
       openEditor: (context, info) async {
         return await Navigator.push<bool>(
               context,

@@ -4,14 +4,19 @@ import '../../utility/cache/local_data_manager.dart';
 import 'cached_image_widget.dart';
 
 class ImageMediaSlot extends StatefulWidget {
-  const ImageMediaSlot(
-      {super.key,
-      required this.mediaEntry,
-      required this.onTap,
-      required this.postID});
+  const ImageMediaSlot({
+    super.key,
+    required this.mediaEntry,
+    required this.onTap,
+    required this.postID,
+    this.heroTag,
+  });
   final Map<String, dynamic> mediaEntry;
   final Function()? onTap;
   final String postID;
+
+  /// When set, this tile flies to the post cover instead of the photo viewer.
+  final String? heroTag;
 
   @override
   State<ImageMediaSlot> createState() => _ImageMediaSlotState();
@@ -68,7 +73,8 @@ class _ImageMediaSlotState extends State<ImageMediaSlot> {
             return InkWell(
                 onTap: widget.onTap,
                 child: Hero(
-                    tag: widget.postID + widget.mediaEntry['src']!,
+                    tag: widget.heroTag ??
+                        widget.postID + widget.mediaEntry['src']!,
                     child: Image.memory(
                       snap.data!,
                       fit: BoxFit.cover,

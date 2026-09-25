@@ -1,10 +1,6 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
@@ -13,11 +9,10 @@ import '../../models/post_template.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/cache/local_data_manager.dart';
 import '../../utility/notifications/notification_topics.dart';
-import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/post_template_mapper.dart';
+import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/event_log_dialog.dart';
 import '../../widgets/posts/post_edit_sheet.dart';
 import '../../widgets/posts/post_metadata_section.dart';
@@ -63,9 +58,6 @@ class _ViewEventPageState extends State<ViewEventPage>
       _originalLeadSpeakerImgSrc,
       _originalLeadSpeakerName;
   late int _originalAttendeeCount;
-
-  String? _appBarGraphicSrc;
-  Future<Uint8List>? _appBarGraphicFuture;
 
   final List<Widget> _appBarTabs = [
     const Tab(icon: Icon(Icons.info_outline), text: 'About'),
@@ -431,33 +423,15 @@ class _ViewEventPageState extends State<ViewEventPage>
   }
 
   Widget? _buildAppBarBackground() {
-    // * If there are no images, we should just remove the expanded height
     final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
+    if (keyGraphicSrc == null) return null;
 
-    if (keyGraphicSrc == null) {
-      _appBarGraphicSrc = null;
-      _appBarGraphicFuture = null;
-      return null;
-    }
-
-    if (_appBarGraphicSrc != keyGraphicSrc) {
-      _appBarGraphicSrc = keyGraphicSrc;
-      _appBarGraphicFuture = _fetchImage(keyGraphicSrc);
-    }
-
-    return FutureBuilder<Uint8List>(
-      key: ValueKey(keyGraphicSrc),
-      future: _appBarGraphicFuture,
-      builder: (_, snapshot) {
-        if (snapshot.hasData) {
-          return Image.memory(snapshot.data!,
-              key: ValueKey(keyGraphicSrc), fit: BoxFit.cover);
-        } else if (snapshot.hasError) {
-          return const Center(
-              child: Text('Something went wrong trying to get the image'));
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
+    return CachedImageWidget(
+      imageUrl: keyGraphicSrc,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      heroTag: 'post_cover_${_eventContext.head.id}',
     );
   }
 
@@ -539,54 +513,6 @@ class _ViewEventPageState extends State<ViewEventPage>
   }
 
   // * Logic
-  Future<Uint8List> _fetchImage(final String src) async {
-    final localDataManager = LocalDataManager();
-    final sanitisedKey = src.replaceAll(RegExp(r'[^\w]'), '');
-
-    // Check if image exists in cache
-    final cachedImage = await localDataManager.readMediaImage(sanitisedKey);
-    if (cachedImage != null && cachedImage.isNotEmpty) {
-      debugPrint('Using cached key graphic for: $sanitisedKey');
-      return cachedImage;
-    }
-
-    // Download and cache the image
-    debugPrint('Downloading key graphic for: $sanitisedKey');
-    try {
-      final imageUrl = NetworkImageHelper.getImageUrl(src);
-      final response = await http.get(
-        Uri.parse(imageUrl),
-        headers: {'Accept': 'image/*'},
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw TimeoutException('Image download timed out after 30 seconds');
-        },
-      );
-
-      if (response.statusCode != 200) {
-        throw HttpException(
-            'Failed to download image: HTTP ${response.statusCode}');
-      }
-
-      final imageBytes = response.bodyBytes;
-
-      if (imageBytes.isEmpty) {
-        throw Exception('Downloaded image is empty');
-      }
-
-      // Cache the image
-      await localDataManager.writeMediaImage(sanitisedKey, imageBytes);
-      debugPrint('Cached key graphic for: $sanitisedKey');
-
-      return imageBytes;
-    } catch (e) {
-      debugPrint('Error downloading key graphic: $e');
-      // Clean up partial cache if it exists
-      await localDataManager.deleteMediaImage(sanitisedKey);
-      rethrow;
-    }
-  }
 
   Future<void> _fetchEssentialPostData() async {
     final EventSupplementalDBManager dbManager =

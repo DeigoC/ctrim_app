@@ -206,6 +206,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       context,
       churchId: page.churchId,
       pageId: page.id,
+      page: page,
     );
     if (mounted) {
       await _load(forceRefresh: false);
@@ -213,7 +214,11 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   }
 
   Future<void> _openPastors(final ChurchInfo church) async {
-    await AppLinks.openChurchPastors(context, churchId: church.id);
+    await AppLinks.openChurchPastors(
+      context,
+      churchId: church.id,
+      church: church,
+    );
     if (mounted) {
       await _load(forceRefresh: false);
     }
