@@ -154,7 +154,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
       _previews = [
         for (final date in dates)
           _PostPreview(
-            title: formatPostTitle(_template.title, date),
+            title: _template.title,
             subtitle: _hasSubtitles
                 ? _template
                     .subtitles[_random.nextInt(_template.subtitles.length)]

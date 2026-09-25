@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../models/event/event_head.dart';
 import '../models/info/church_info.dart';
+import '../models/info/church_page.dart';
+import '../models/info/ctrim_info.dart';
+import '../models/info/testimonial_info.dart';
 import '../models/user.dart';
 
 /// Public permalinks and in-app navigation for shareable records.
@@ -99,29 +102,41 @@ class AppLinks {
     BuildContext context, {
     required String churchId,
     required String pageId,
+    ChurchPage? page,
   }) {
-    return context.push<T>(churchPagePath(churchId, pageId));
+    final extra = page != null && page.churchId == churchId && page.id == pageId
+        ? page
+        : null;
+    return context.push<T>(churchPagePath(churchId, pageId), extra: extra);
   }
 
   static Future<T?> openChurchPastors<T extends Object?>(
     BuildContext context, {
     required String churchId,
+    ChurchInfo? church,
   }) {
-    return context.push<T>(churchPastorsPath(churchId));
+    final extra = church != null && church.id == churchId ? church : null;
+    return context.push<T>(churchPastorsPath(churchId), extra: extra);
   }
 
   static Future<T?> openInfo<T extends Object?>(
     BuildContext context, {
     required String id,
+    CtrimInfo? info,
   }) {
-    return context.push<T>(infoPath(infoDocumentIdFromPayload(id)));
+    final documentId = infoDocumentIdFromPayload(id);
+    final extra = info != null && info.id == documentId ? info : null;
+    return context.push<T>(infoPath(documentId), extra: extra);
   }
 
   static Future<T?> openTestimonial<T extends Object?>(
     BuildContext context, {
     required String id,
+    TestimonialInfo? testimonial,
   }) {
-    return context.push<T>(testimonialPath(id));
+    final extra =
+        testimonial != null && testimonial.id == id ? testimonial : null;
+    return context.push<T>(testimonialPath(id), extra: extra);
   }
 
   static Future<T?> openPerson<T extends Object?>(

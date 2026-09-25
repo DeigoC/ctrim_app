@@ -6,7 +6,6 @@ import '../../models/event/event_head.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/app_links.dart';
 import '../../utility/image_orientation.dart';
-import '../../utility/network_image_helper.dart';
 import '../../utility/post_head_media_layout.dart';
 import '../media/cached_image_widget.dart';
 import '../media/image_media_slot.dart';
@@ -286,13 +285,15 @@ class _PostHeadState extends State<PostHead>
           children: [
             if (hasImage)
               ClipOval(
-                child: Image.network(
-                  NetworkImageHelper.getImageUrl(imgSrc),
+                child: CachedImageWidget(
+                  imageUrl: imgSrc,
                   width: 120,
                   height: 120,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      _leadSpeakerInitialsAvatar(theme, colorScheme, name),
+                  heroTag: widget.thisHead.media
+                          .every((entry) => entry['type'] != 'img')
+                      ? 'post_cover_${widget.thisHead.id}'
+                      : null,
                 ),
               )
             else
@@ -625,12 +626,24 @@ class _PostHeadState extends State<PostHead>
 
   Widget _buildMediaSlot(
       Map<String, dynamic> entry, int index, BuildContext context) {
+    final src = entry['src'] as String? ?? '';
+    final media = _getMedia();
+    final cover = widget.thisHead.getKeyGraphic();
+    var coverIndex = -1;
+    for (var i = 0; i < media.length; i++) {
+      if (media[i]['type'] == 'img' && media[i]['src'] == cover) {
+        coverIndex = i;
+        break;
+      }
+    }
+    final isCover = src.isNotEmpty && index == coverIndex;
     return entry['type']!.compareTo('img') == 0
         ? ImageMediaSlot(
             key: ValueKey('${widget.thisHead.id}-${entry['src']}'),
             mediaEntry: entry,
             onTap: () => _onMediaTap(index, context),
             postID: widget.thisHead.id,
+            heroTag: isCover ? 'post_cover_${widget.thisHead.id}' : null,
           )
         : VideoMediaSlot(
             mediaEntry: entry,

@@ -207,16 +207,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             ),
         ],
       ),
-      body: (_loading || _loadError != null)
-          ? LoadProgressBody(
-              message: _statusMessage,
-              completedSteps: _completedSteps,
-              totalSteps: _totalSteps,
-              error: _loadError,
-              errorTitle: 'Could not load profile',
-              onRetry: _loadProfileData,
-            )
-          : _buildBody(context, l10n, theme, colorScheme),
+      body: _buildBody(context, l10n, theme, colorScheme),
     );
   }
 
@@ -247,7 +238,10 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
     final isWide = ResponsiveLayout.isWideScreenOf(context);
 
-    final avatar = MyUserAvatar(_user, radius: isWide ? 56 : 48);
+    final avatar = Hero(
+      tag: 'user_avatar_${_user.id}',
+      child: MyUserAvatar(_user, radius: isWide ? 56 : 48),
+    );
     final profileCard = Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -297,98 +291,111 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       ),
     );
 
-    final details = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(l10n.userProfileCellGroups,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        if (_cellGroupAttendance != null) ...[
-          _buildCellGroupAttendanceBanner(
-            l10n,
-            theme,
-            colorScheme,
-            _cellGroupAttendance!,
-          ),
-          const SizedBox(height: 8),
-        ],
-        _buildCellGroupsCard(l10n, theme, colorScheme),
-        const SizedBox(height: 16),
-        Text(l10n.userProfileUpcomingTasks,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        if (upcomingRoles.isEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.userProfileNoUpcomingTasks,
-                style: theme.textTheme.bodyLarge
-                    ?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
+    final Widget details = (_loading || _loadError != null)
+        ? SizedBox(
+            height: 320,
+            child: LoadProgressBody(
+              message: _statusMessage,
+              completedSteps: _completedSteps,
+              totalSteps: _totalSteps,
+              error: _loadError,
+              errorTitle: 'Could not load profile',
+              onRetry: _loadProfileData,
             ),
           )
-        else
-          Card(
-            child: Column(
-              children: [
-                for (var i = 0; i < upcomingRoles.length; i++) ...[
-                  if (i > 0)
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                  _buildPreviewTile(upcomingRoles[i], l10n, theme, colorScheme),
-                ],
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.userProfileCellGroups,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              if (_cellGroupAttendance != null) ...[
+                _buildCellGroupAttendanceBanner(
+                  l10n,
+                  theme,
+                  colorScheme,
+                  _cellGroupAttendance!,
+                ),
+                const SizedBox(height: 8),
               ],
-            ),
-          ),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: _onViewFullSchedule,
-          icon: const Icon(Icons.checklist_rounded),
-          label: Text(l10n.userProfileViewFullSchedule),
-        ),
-        if (widget.showPostsLink) ...[
-          const SizedBox(height: 16),
-          Text(l10n.userProfileContributorPosts,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          UserContributorPostsPreview(
-            heads: _postsError == null
-                ? UserScheduleService.recentContributorPosts(
-                    user: _user,
-                    eventHeads: _appContext.eventHeads,
-                  )
-                : const [],
-            emptyMessage: _postsError == null
-                ? l10n.userProfileNoContributorPosts
-                : l10n.myPostsLoadError,
-            onPostUpdated: () => setState(() {}),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _onViewPosts,
-            icon: const Icon(Icons.article_outlined),
-            label: Text(l10n.userProfileViewPosts),
-          ),
-        ],
-        const SizedBox(height: 16),
-        Text(l10n.userProfileRecentActivity,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        _buildActivityCard(l10n, theme, colorScheme),
-        if (_appContext.currentUser.canManageVolunteers) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _onViewAllActivity,
-            icon: const Icon(Icons.history),
-            label: Text(l10n.userProfileViewAllActivity),
-          ),
-        ],
-      ],
-    );
+              _buildCellGroupsCard(l10n, theme, colorScheme),
+              const SizedBox(height: 16),
+              Text(l10n.userProfileUpcomingTasks,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              if (upcomingRoles.isEmpty)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      l10n.userProfileNoUpcomingTasks,
+                      style: theme.textTheme.bodyLarge
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                )
+              else
+                Card(
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < upcomingRoles.length; i++) ...[
+                        if (i > 0)
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                        _buildPreviewTile(
+                            upcomingRoles[i], l10n, theme, colorScheme),
+                      ],
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _onViewFullSchedule,
+                icon: const Icon(Icons.checklist_rounded),
+                label: Text(l10n.userProfileViewFullSchedule),
+              ),
+              if (widget.showPostsLink) ...[
+                const SizedBox(height: 16),
+                Text(l10n.userProfileContributorPosts,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                UserContributorPostsPreview(
+                  heads: _postsError == null
+                      ? UserScheduleService.recentContributorPosts(
+                          user: _user,
+                          eventHeads: _appContext.eventHeads,
+                        )
+                      : const [],
+                  emptyMessage: _postsError == null
+                      ? l10n.userProfileNoContributorPosts
+                      : l10n.myPostsLoadError,
+                  onPostUpdated: () => setState(() {}),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _onViewPosts,
+                  icon: const Icon(Icons.article_outlined),
+                  label: Text(l10n.userProfileViewPosts),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Text(l10n.userProfileRecentActivity,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              _buildActivityCard(l10n, theme, colorScheme),
+              if (_appContext.currentUser.canManageVolunteers) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _onViewAllActivity,
+                  icon: const Icon(Icons.history),
+                  label: Text(l10n.userProfileViewAllActivity),
+                ),
+              ],
+            ],
+          );
 
     return ListView(
       padding: EdgeInsets.fromLTRB(

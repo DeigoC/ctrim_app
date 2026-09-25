@@ -12,9 +12,14 @@ import 'edit_info_body_page.dart';
 import 'info_detail_scaffold.dart';
 
 class ChurchPastorsPage extends StatelessWidget {
-  const ChurchPastorsPage({super.key, required this.documentId});
+  const ChurchPastorsPage({
+    super.key,
+    required this.documentId,
+    this.initialChurch,
+  });
 
   final String documentId;
+  final ChurchInfo? initialChurch;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +35,9 @@ class ChurchPastorsPage extends StatelessWidget {
           'Church Pastors: ${church.analyticsTitle}',
       pageTitleFallback: l10n.churchPastorsPageTitle,
       notFoundMessage: l10n.churchInfoNotFound,
+      initialInfo: initialChurch != null && initialChurch!.id == documentId
+          ? initialChurch
+          : null,
       openEditor: (context, church) async {
         return await Navigator.push<bool>(
               context,

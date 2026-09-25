@@ -10,7 +10,7 @@ import '../../widgets/common/load_progress_body.dart';
 import 'edit_info_body_page.dart';
 import 'info_tab_widgets.dart';
 
-class CtrimInfoListTab extends StatelessWidget {
+class CtrimInfoListTab extends StatefulWidget {
   const CtrimInfoListTab({
     super.key,
     required this.ctrimInfoFuture,
@@ -38,14 +38,41 @@ class CtrimInfoListTab extends StatelessWidget {
   ];
 
   @override
+  State<CtrimInfoListTab> createState() => _CtrimInfoListTabState();
+}
+
+class _CtrimInfoListTabState extends State<CtrimInfoListTab> {
+  /// Last successful topics. A refresh must not replace the cards with a
+  /// loader — that removes heroes before a pop flight can land.
+  List<CtrimInfo>? _items;
+
+  @override
   Widget build(BuildContext context) {
     final bool canManageInfo =
         context.select((AppContext c) => c.currentUser.canManageInfo);
 
     return FutureBuilder<List<CtrimInfo>>(
-      future: ctrimInfoFuture,
+      future: widget.ctrimInfoFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.hasData) {
+          _items = snapshot.data;
+        }
+        final items = _items;
+
+        if (items == null) {
+          if (snapshot.hasError) {
+            return InfoErrorState(
+              error: snapshot.error,
+              canManageInfo: canManageInfo,
+              addLabel: 'Add CTRIM Topic',
+              addDescription: 'Create a new Principles or Teachings topic.',
+              onRetry: widget.onRefresh,
+              onAdd: () => _openEditor(
+                context,
+                category: CtrimInfoCategory.principle,
+              ),
+            );
+          }
           return const LoadProgressBody(
             message: 'Loading…',
             completedSteps: 0,
@@ -53,13 +80,13 @@ class CtrimInfoListTab extends StatelessWidget {
           );
         }
 
-        if (snapshot.hasError) {
+        if (snapshot.hasError && items.isEmpty) {
           return InfoErrorState(
             error: snapshot.error,
             canManageInfo: canManageInfo,
             addLabel: 'Add CTRIM Topic',
             addDescription: 'Create a new Principles or Teachings topic.',
-            onRetry: onRefresh,
+            onRetry: widget.onRefresh,
             onAdd: () => _openEditor(
               context,
               category: CtrimInfoCategory.principle,
@@ -67,7 +94,6 @@ class CtrimInfoListTab extends StatelessWidget {
           );
         }
 
-        final items = snapshot.data ?? <CtrimInfo>[];
         if (items.isEmpty && !canManageInfo) {
           return const InfoEmptyState(
             message: 'No CTRIM information available yet.',
@@ -95,13 +121,15 @@ class CtrimInfoListTab extends StatelessWidget {
                 24,
               ),
               children: [
-                for (var i = 0; i < _sections.length; i++) ...[
+                for (var i = 0; i < CtrimInfoListTab._sections.length; i++) ...[
                   if (i > 0) const SizedBox(height: 20),
                   _buildCategorySection(
                     context: context,
-                    section: _sections[i],
+                    section: CtrimInfoListTab._sections[i],
                     items: items
-                        .where((info) => info.category == _sections[i].category)
+                        .where((info) =>
+                            info.category ==
+                            CtrimInfoListTab._sections[i].category)
                         .toList(),
                     canManageInfo: canManageInfo,
                     isWideScreen: isWideScreen,
@@ -188,8 +216,8 @@ class CtrimInfoListTab extends StatelessWidget {
   ) {
     void openDetail() => openInfoDetailAndRefresh(
           context: context,
-          open: () => AppLinks.openInfo(context, id: info.id),
-          onRefresh: onRefresh,
+          open: () => AppLinks.openInfo(context, id: info.id, info: info),
+          onRefresh: widget.onRefresh,
         );
 
     if (wide && info.imgSrc.isNotEmpty) {
@@ -241,7 +269,7 @@ class CtrimInfoListTab extends StatelessWidget {
     return openInfoEditorAndRefresh(
       context: context,
       editor: EditInfoBodyPage.forCtrim(initialCategory: category),
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
     );
   }
 }

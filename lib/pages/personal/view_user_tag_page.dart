@@ -465,7 +465,10 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              MyUserAvatar(user),
+              Hero(
+                tag: 'user_avatar_${user.id}',
+                child: MyUserAvatar(user),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(

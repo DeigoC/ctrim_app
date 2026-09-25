@@ -38,7 +38,11 @@ class TestimonialsTab extends StatelessWidget {
           imageAlignment: Alignment.topCenter,
           onTap: () => openInfoDetailAndRefresh(
             context: context,
-            open: () => AppLinks.openTestimonial(context, id: testimonial.id),
+            open: () => AppLinks.openTestimonial(
+              context,
+              id: testimonial.id,
+              testimonial: testimonial,
+            ),
             onRefresh: onRefresh,
           ),
           overlay: Column(

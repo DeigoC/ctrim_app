@@ -318,6 +318,7 @@ class _PastorsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               child: AdaptiveInfoGalleryImage(
                 imageUrl: church.pastorsImageSrc,
+                heroTag: 'info_church_pastors_${church.id}',
               ),
             ),
             const SizedBox(height: 12),
@@ -369,7 +370,7 @@ class _ParentChurchCard extends StatelessWidget {
         description:
             parent.hasLocation ? parent.location : l10n.churchHubLocationUnset,
         imageUrl: parent.imgSrc,
-        heroTag: 'info_church_parent_${parent.id}',
+        heroTag: 'info_church_${parent.id}',
         fallbackIcon: Icons.church_outlined,
         onTap: onOpen,
       ),

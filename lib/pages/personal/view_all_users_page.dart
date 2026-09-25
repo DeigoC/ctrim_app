@@ -741,7 +741,10 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         ],
       ),
       isThreeLine: meta != null,
-      leading: MyUserAvatar(user),
+      leading: Hero(
+        tag: 'user_avatar_${user.id}',
+        child: MyUserAvatar(user),
+      ),
       onTap: () => _onUserTap(user),
       onLongPress: canEditUser ? () => _navigateToEditUser(user) : null,
     );
@@ -782,7 +785,10 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              MyUserAvatar(user, radius: 28),
+              Hero(
+                tag: 'user_avatar_${user.id}',
+                child: MyUserAvatar(user, radius: 28),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

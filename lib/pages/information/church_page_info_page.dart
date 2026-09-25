@@ -11,10 +11,12 @@ class ChurchPageInfoPage extends StatelessWidget {
     super.key,
     required this.churchId,
     required this.documentId,
+    this.initialPage,
   });
 
   final String churchId;
   final String documentId;
+  final ChurchPage? initialPage;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +31,11 @@ class ChurchPageInfoPage extends StatelessWidget {
       analyticsScreenName: (page) => 'Church Page: ${page.title}',
       pageTitleFallback: 'Church page',
       notFoundMessage: 'No page found.',
+      initialInfo: initialPage != null &&
+              initialPage!.churchId == churchId &&
+              initialPage!.id == documentId
+          ? initialPage
+          : null,
       canEdit: (User user) => user.canManageChurchPages,
       openEditor: (context, page) async {
         return await Navigator.push<bool>(

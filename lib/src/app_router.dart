@@ -2,6 +2,9 @@ import 'package:go_router/go_router.dart';
 
 import '../models/event/event_head.dart';
 import '../models/info/church_info.dart';
+import '../models/info/church_page.dart';
+import '../models/info/ctrim_info.dart';
+import '../models/info/testimonial_info.dart';
 import '../models/user.dart';
 import '../pages/cell_groups/cell_group_detail_page.dart';
 import '../pages/events/open_post_page.dart';
@@ -57,28 +60,58 @@ GoRouter createAppRouter() {
             routes: [
               GoRoute(
                 path: 'pages/:pageId',
-                builder: (context, state) => ChurchPageInfoPage(
-                  churchId: _routeId(state),
-                  documentId: _routeId(state, 'pageId'),
-                ),
+                builder: (context, state) {
+                  final churchId = _routeId(state);
+                  final pageId = _routeId(state, 'pageId');
+                  final extra = state.extra;
+                  final page = extra is ChurchPage &&
+                          extra.churchId == churchId &&
+                          extra.id == pageId
+                      ? extra
+                      : null;
+                  return ChurchPageInfoPage(
+                    churchId: churchId,
+                    documentId: pageId,
+                    initialPage: page,
+                  );
+                },
               ),
               GoRoute(
                 path: 'pastors',
-                builder: (context, state) =>
-                    ChurchPastorsPage(documentId: _routeId(state)),
+                builder: (context, state) {
+                  final id = _routeId(state);
+                  final extra = state.extra;
+                  final church =
+                      extra is ChurchInfo && extra.id == id ? extra : null;
+                  return ChurchPastorsPage(
+                    documentId: id,
+                    initialChurch: church,
+                  );
+                },
               ),
             ],
           ),
           GoRoute(
             path: 'info/:id',
-            builder: (context, state) => CTRIMInfoPage(
-              documentId: AppLinks.infoDocumentIdFromPayload(_routeId(state)),
-            ),
+            builder: (context, state) {
+              final id = AppLinks.infoDocumentIdFromPayload(_routeId(state));
+              final extra = state.extra;
+              final info = extra is CtrimInfo && extra.id == id ? extra : null;
+              return CTRIMInfoPage(documentId: id, initialInfo: info);
+            },
           ),
           GoRoute(
             path: 'testimonials/:id',
-            builder: (context, state) =>
-                TestimonialInfoPage(documentId: _routeId(state)),
+            builder: (context, state) {
+              final id = _routeId(state);
+              final extra = state.extra;
+              final testimonial =
+                  extra is TestimonialInfo && extra.id == id ? extra : null;
+              return TestimonialInfoPage(
+                documentId: id,
+                initialInfo: testimonial,
+              );
+            },
           ),
           GoRoute(
             path: 'people/:id',

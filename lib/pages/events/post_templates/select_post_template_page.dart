@@ -9,7 +9,6 @@ import '../../../utility/event_context.dart';
 import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
 import '../../../utility/post_template_mapper.dart';
-import '../../../utility/post_title_date.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/common/load_progress_body.dart';
@@ -835,8 +834,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
 
     if (selectedDate != null) {
       PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
-      eventContext.head
-          .setTitle(formatPostTitle(postTemplate.title, selectedDate));
     }
     if (!mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
