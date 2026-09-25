@@ -1282,6 +1282,12 @@ abstract class AppLocalizations {
   /// **'Select people'**
   String get selectUsersTitle;
 
+  /// Subtitle for the people picker refine sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Location, team, or who is shown'**
+  String get selectUsersFilterSheetSubtitle;
+
   /// Confirm button on the volunteer picker page
   ///
   /// In en, this message translates to:
@@ -2854,35 +2860,35 @@ abstract class AppLocalizations {
   /// **'Church'**
   String get churchEditorChurchCardTitle;
 
-  /// Editor card subtitle for church identity fields
-  ///
-  /// In en, this message translates to:
-  /// **'Name and how it appears in the list'**
-  String get churchEditorChurchCardSubtitle;
-
   /// Editor card title for outreach name and summary
   ///
   /// In en, this message translates to:
   /// **'Outreach'**
   String get churchEditorOutreachCardTitle;
 
-  /// Editor card subtitle for outreach identity fields
+  /// Label for the optional line under a church title
   ///
   /// In en, this message translates to:
-  /// **'Name and how it appears under the parent church'**
-  String get churchEditorOutreachCardSubtitle;
+  /// **'Subtitle'**
+  String get churchEditorSummaryLabel;
+
+  /// Helper for a full church subtitle field
+  ///
+  /// In en, this message translates to:
+  /// **'Shown under the title. Leave blank for the title only.'**
+  String get churchEditorSummaryHelperChurch;
+
+  /// Helper for an outreach subtitle field
+  ///
+  /// In en, this message translates to:
+  /// **'Shown under the title. Leave blank to name the parent church.'**
+  String get churchEditorSummaryHelperOutreach;
 
   /// Editor card for church vs outreach and parent
   ///
   /// In en, this message translates to:
   /// **'Status'**
   String get churchEditorStatusCardTitle;
-
-  /// Editor card subtitle for kind and parent
-  ///
-  /// In en, this message translates to:
-  /// **'Full church or outreach under a parent'**
-  String get churchEditorStatusCardSubtitle;
 
   /// Label when editing a full church hub
   ///
@@ -2913,12 +2919,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parent church'**
   String get churchEditorParentChurchLabel;
-
-  /// Helper under parent church dropdown
-  ///
-  /// In en, this message translates to:
-  /// **'The full church this outreach belongs to.'**
-  String get churchEditorParentChurchHelper;
 
   /// Button to turn an outreach into a full church
   ///
@@ -3025,7 +3025,7 @@ abstract class AppLocalizations {
   /// Shown instead of location dropdown on outreach editor
   ///
   /// In en, this message translates to:
-  /// **'Outreaches do not use a catalogue location until they are promoted to a full church. You can still add an address and maps link.'**
+  /// **'No catalogue location until this is a full church.'**
   String get churchEditorOutreachLocationHint;
 
   /// Address field label on church editor
@@ -3034,23 +3034,11 @@ abstract class AppLocalizations {
   /// **'Address'**
   String get churchEditorAddressLabel;
 
-  /// Helper under address field
-  ///
-  /// In en, this message translates to:
-  /// **'Optional street address shown on the church page.'**
-  String get churchEditorAddressHelper;
-
   /// Maps URL field label on church editor
   ///
   /// In en, this message translates to:
   /// **'Maps URL'**
   String get churchEditorMapsLabel;
-
-  /// Helper under maps URL field
-  ///
-  /// In en, this message translates to:
-  /// **'Optional Google Maps (or similar) link.'**
-  String get churchEditorMapsHelper;
 
   /// Tooltip for maps URL help button
   ///
@@ -3064,28 +3052,16 @@ abstract class AppLocalizations {
   /// **'Find us'**
   String get churchEditorVisitCardTitle;
 
-  /// Editor card subtitle for visit fields
-  ///
-  /// In en, this message translates to:
-  /// **'Location, address, and maps'**
-  String get churchEditorVisitCardSubtitle;
-
   /// Editor card title for church social links
   ///
   /// In en, this message translates to:
   /// **'Socials'**
   String get churchEditorSocialsCardTitle;
 
-  /// Editor card subtitle for social links
-  ///
-  /// In en, this message translates to:
-  /// **'Optional Facebook, Instagram, website, and more'**
-  String get churchEditorSocialsCardSubtitle;
-
   /// Empty hint on church socials editor card
   ///
   /// In en, this message translates to:
-  /// **'No social links yet. Add any that visitors should see.'**
+  /// **'No social links yet.'**
   String get churchEditorSocialsEmptyHint;
 
   /// Button to add a social link on the church editor
@@ -3111,12 +3087,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link or email'**
   String get churchEditorSocialUrlLabel;
-
-  /// Helper under social URL field
-  ///
-  /// In en, this message translates to:
-  /// **'Paste a full URL, or an email / WhatsApp number.'**
-  String get churchEditorSocialUrlHelper;
 
   /// Dashboard card title for church social links
   ///
@@ -3190,23 +3160,11 @@ abstract class AppLocalizations {
   /// **'Pastors & History'**
   String get churchEditorPastorsCardTitle;
 
-  /// Editor card subtitle for pastors fields and Quill body
-  ///
-  /// In en, this message translates to:
-  /// **'Listed pastors, a team photo, and a write-up about them and this church'**
-  String get churchEditorPastorsCardSubtitle;
-
   /// Editor card title for planters and history on an outreach
   ///
   /// In en, this message translates to:
   /// **'Planters & History'**
   String get churchEditorPlantersCardTitle;
-
-  /// Editor card subtitle for planters fields
-  ///
-  /// In en, this message translates to:
-  /// **'People leading this outreach, plus a write-up about them and its story'**
-  String get churchEditorPlantersCardSubtitle;
 
   /// Button to pick pastor users
   ///
@@ -3226,23 +3184,11 @@ abstract class AppLocalizations {
   /// **'Pastors image URL'**
   String get churchEditorPastorsImageLabel;
 
-  /// Helper for pastors image URL
-  ///
-  /// In en, this message translates to:
-  /// **'Optional team photo shown on the Pastors & History card.'**
-  String get churchEditorPastorsImageHelper;
-
   /// Label for planters team photo URL
   ///
   /// In en, this message translates to:
   /// **'Planters image URL'**
   String get churchEditorPlantersImageLabel;
-
-  /// Helper for planters image URL
-  ///
-  /// In en, this message translates to:
-  /// **'Optional team photo shown on the Planters & History card.'**
-  String get churchEditorPlantersImageHelper;
 
   /// Editor card title for hero and gallery images
   ///
@@ -3250,35 +3196,17 @@ abstract class AppLocalizations {
   /// **'Media'**
   String get churchEditorMediaCardTitle;
 
-  /// Editor card subtitle for church media URLs
-  ///
-  /// In en, this message translates to:
-  /// **'Cover photo and gallery'**
-  String get churchEditorMediaCardSubtitle;
-
   /// Label above the pastors and history Quill editor on the church form
   ///
   /// In en, this message translates to:
   /// **'About the pastors and this church'**
   String get churchEditorPastorsBodyLabel;
 
-  /// Hint under the pastors and history Quill editor
-  ///
-  /// In en, this message translates to:
-  /// **'Write about the pastors, then a section on the history of this church.'**
-  String get churchEditorPastorsBodyHelper;
-
   /// Label above the planters and history Quill editor on the outreach form
   ///
   /// In en, this message translates to:
   /// **'About the planters and this outreach'**
   String get churchEditorPlantersBodyLabel;
-
-  /// Hint under the planters and history Quill editor
-  ///
-  /// In en, this message translates to:
-  /// **'Write about the church planters, then a section on the history of this outreach.'**
-  String get churchEditorPlantersBodyHelper;
 
   /// Primary save button on the church add/edit form
   ///

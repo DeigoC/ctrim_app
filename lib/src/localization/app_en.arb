@@ -982,6 +982,10 @@
   "@selectUsersTitle": {
     "description": "Title for the multi-select people picker page"
   },
+  "selectUsersFilterSheetSubtitle": "Location, team, or who is shown",
+  "@selectUsersFilterSheetSubtitle": {
+    "description": "Subtitle for the people picker refine sheet"
+  },
   "selectUsersDone": "Done",
   "@selectUsersDone": {
     "description": "Confirm button on the volunteer picker page"
@@ -2100,25 +2104,25 @@
   "@churchEditorChurchCardTitle": {
     "description": "Editor card title for church name and summary"
   },
-  "churchEditorChurchCardSubtitle": "Name and how it appears in the list",
-  "@churchEditorChurchCardSubtitle": {
-    "description": "Editor card subtitle for church identity fields"
-  },
   "churchEditorOutreachCardTitle": "Outreach",
   "@churchEditorOutreachCardTitle": {
     "description": "Editor card title for outreach name and summary"
   },
-  "churchEditorOutreachCardSubtitle": "Name and how it appears under the parent church",
-  "@churchEditorOutreachCardSubtitle": {
-    "description": "Editor card subtitle for outreach identity fields"
+  "churchEditorSummaryLabel": "Subtitle",
+  "@churchEditorSummaryLabel": {
+    "description": "Label for the optional line under a church title"
+  },
+  "churchEditorSummaryHelperChurch": "Shown under the title. Leave blank for the title only.",
+  "@churchEditorSummaryHelperChurch": {
+    "description": "Helper for a full church subtitle field"
+  },
+  "churchEditorSummaryHelperOutreach": "Shown under the title. Leave blank to name the parent church.",
+  "@churchEditorSummaryHelperOutreach": {
+    "description": "Helper for an outreach subtitle field"
   },
   "churchEditorStatusCardTitle": "Status",
   "@churchEditorStatusCardTitle": {
     "description": "Editor card for church vs outreach and parent"
-  },
-  "churchEditorStatusCardSubtitle": "Full church or outreach under a parent",
-  "@churchEditorStatusCardSubtitle": {
-    "description": "Editor card subtitle for kind and parent"
   },
   "churchEditorKindChurch": "Full church",
   "@churchEditorKindChurch": {
@@ -2139,10 +2143,6 @@
   "churchEditorParentChurchLabel": "Parent church",
   "@churchEditorParentChurchLabel": {
     "description": "Dropdown label for outreach parent"
-  },
-  "churchEditorParentChurchHelper": "The full church this outreach belongs to.",
-  "@churchEditorParentChurchHelper": {
-    "description": "Helper under parent church dropdown"
   },
   "churchEditorPromoteToChurch": "Promote to full church",
   "@churchEditorPromoteToChurch": {
@@ -2220,7 +2220,7 @@
   "@churchEditorLocationHelper": {
     "description": "Helper under location dropdown"
   },
-  "churchEditorOutreachLocationHint": "Outreaches do not use a catalogue location until they are promoted to a full church. You can still add an address and maps link.",
+  "churchEditorOutreachLocationHint": "No catalogue location until this is a full church.",
   "@churchEditorOutreachLocationHint": {
     "description": "Shown instead of location dropdown on outreach editor"
   },
@@ -2228,17 +2228,9 @@
   "@churchEditorAddressLabel": {
     "description": "Address field label on church editor"
   },
-  "churchEditorAddressHelper": "Optional street address shown on the church page.",
-  "@churchEditorAddressHelper": {
-    "description": "Helper under address field"
-  },
   "churchEditorMapsLabel": "Maps URL",
   "@churchEditorMapsLabel": {
     "description": "Maps URL field label on church editor"
-  },
-  "churchEditorMapsHelper": "Optional Google Maps (or similar) link.",
-  "@churchEditorMapsHelper": {
-    "description": "Helper under maps URL field"
   },
   "churchEditorMapsHelpTooltip": "Maps URL help",
   "@churchEditorMapsHelpTooltip": {
@@ -2248,19 +2240,11 @@
   "@churchEditorVisitCardTitle": {
     "description": "Editor card title for location, address, and maps"
   },
-  "churchEditorVisitCardSubtitle": "Location, address, and maps",
-  "@churchEditorVisitCardSubtitle": {
-    "description": "Editor card subtitle for visit fields"
-  },
   "churchEditorSocialsCardTitle": "Socials",
   "@churchEditorSocialsCardTitle": {
     "description": "Editor card title for church social links"
   },
-  "churchEditorSocialsCardSubtitle": "Optional Facebook, Instagram, website, and more",
-  "@churchEditorSocialsCardSubtitle": {
-    "description": "Editor card subtitle for social links"
-  },
-  "churchEditorSocialsEmptyHint": "No social links yet. Add any that visitors should see.",
+  "churchEditorSocialsEmptyHint": "No social links yet.",
   "@churchEditorSocialsEmptyHint": {
     "description": "Empty hint on church socials editor card"
   },
@@ -2279,10 +2263,6 @@
   "churchEditorSocialUrlLabel": "Link or email",
   "@churchEditorSocialUrlLabel": {
     "description": "URL field label for a social link"
-  },
-  "churchEditorSocialUrlHelper": "Paste a full URL, or an email / WhatsApp number.",
-  "@churchEditorSocialUrlHelper": {
-    "description": "Helper under social URL field"
   },
   "churchHubSocialsTitle": "Socials",
   "@churchHubSocialsTitle": {
@@ -2332,17 +2312,9 @@
   "@churchEditorPastorsCardTitle": {
     "description": "Editor card title for pastors, photo, and history write-up"
   },
-  "churchEditorPastorsCardSubtitle": "Listed pastors, a team photo, and a write-up about them and this church",
-  "@churchEditorPastorsCardSubtitle": {
-    "description": "Editor card subtitle for pastors fields and Quill body"
-  },
   "churchEditorPlantersCardTitle": "Planters & History",
   "@churchEditorPlantersCardTitle": {
     "description": "Editor card title for planters and history on an outreach"
-  },
-  "churchEditorPlantersCardSubtitle": "People leading this outreach, plus a write-up about them and its story",
-  "@churchEditorPlantersCardSubtitle": {
-    "description": "Editor card subtitle for planters fields"
   },
   "churchEditorChoosePastors": "Choose pastors",
   "@churchEditorChoosePastors": {
@@ -2356,41 +2328,21 @@
   "@churchEditorPastorsImageLabel": {
     "description": "Label for pastors team photo URL"
   },
-  "churchEditorPastorsImageHelper": "Optional team photo shown on the Pastors & History card.",
-  "@churchEditorPastorsImageHelper": {
-    "description": "Helper for pastors image URL"
-  },
   "churchEditorPlantersImageLabel": "Planters image URL",
   "@churchEditorPlantersImageLabel": {
     "description": "Label for planters team photo URL"
-  },
-  "churchEditorPlantersImageHelper": "Optional team photo shown on the Planters & History card.",
-  "@churchEditorPlantersImageHelper": {
-    "description": "Helper for planters image URL"
   },
   "churchEditorMediaCardTitle": "Media",
   "@churchEditorMediaCardTitle": {
     "description": "Editor card title for hero and gallery images"
   },
-  "churchEditorMediaCardSubtitle": "Cover photo and gallery",
-  "@churchEditorMediaCardSubtitle": {
-    "description": "Editor card subtitle for church media URLs"
-  },
   "churchEditorPastorsBodyLabel": "About the pastors and this church",
   "@churchEditorPastorsBodyLabel": {
     "description": "Label above the pastors and history Quill editor on the church form"
   },
-  "churchEditorPastorsBodyHelper": "Write about the pastors, then a section on the history of this church.",
-  "@churchEditorPastorsBodyHelper": {
-    "description": "Hint under the pastors and history Quill editor"
-  },
   "churchEditorPlantersBodyLabel": "About the planters and this outreach",
   "@churchEditorPlantersBodyLabel": {
     "description": "Label above the planters and history Quill editor on the outreach form"
-  },
-  "churchEditorPlantersBodyHelper": "Write about the church planters, then a section on the history of this outreach.",
-  "@churchEditorPlantersBodyHelper": {
-    "description": "Hint under the planters and history Quill editor"
   },
   "churchEditorSave": "Save",
   "@churchEditorSave": {

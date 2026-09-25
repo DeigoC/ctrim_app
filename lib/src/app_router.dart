@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../models/event/event_head.dart';
+import '../models/info/church_info.dart';
 import '../models/user.dart';
 import '../pages/cell_groups/cell_group_detail_page.dart';
 import '../pages/events/open_post_page.dart';
@@ -46,8 +47,13 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: 'churches/:id',
-            builder: (context, state) =>
-                ChurchInfoPage(documentId: _routeId(state)),
+            builder: (context, state) {
+              final id = _routeId(state);
+              final extra = state.extra;
+              final church =
+                  extra is ChurchInfo && extra.id == id ? extra : null;
+              return ChurchInfoPage(documentId: id, initialChurch: church);
+            },
             routes: [
               GoRoute(
                 path: 'pages/:pageId',

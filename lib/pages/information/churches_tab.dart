@@ -55,20 +55,22 @@ class ChurchesTab extends StatelessWidget {
       itemBuilder: (context, entry, {required bool wide}) {
         final l10n = AppLocalizations.of(context)!;
         final church = entry.church;
-        final subtitle = church.isOutreach
-            ? (entry.parentTitle != null
-                ? l10n.churchesTabOutreachOf(entry.parentTitle!)
-                : l10n.churchHubOutreachBadge)
-            : (church.hasLocation
-                ? church.location
-                : l10n.churchHubLocationUnset);
+        final subtitle = _churchListSubtitle(
+          church: church,
+          parentTitle: entry.parentTitle,
+          l10n: l10n,
+        );
 
         return InfoHeroOverlayCard(
           imageUrl: church.imgSrc,
           heroTag: 'info_church_${church.id}',
           onTap: () => openInfoDetailAndRefresh(
             context: context,
-            open: () => AppLinks.openChurch(context, id: church.id),
+            open: () => AppLinks.openChurch(
+              context,
+              id: church.id,
+              church: church,
+            ),
             onRefresh: onRefresh,
           ),
           overlay: Column(
@@ -87,21 +89,42 @@ class ChurchesTab extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: wide ? 14 : 16,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontWeight: FontWeight.w500,
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: wide ? 14 : 16,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         );
       },
     );
   }
+}
+
+/// Line under the title on a Churches card.
+///
+/// A filled subtitle wins. Full churches with no subtitle show the title only.
+/// Outreaches with no subtitle name their parent church.
+String? _churchListSubtitle({
+  required ChurchInfo church,
+  required String? parentTitle,
+  required AppLocalizations l10n,
+}) {
+  final summary = church.summary.trim();
+  if (summary.isNotEmpty) return summary;
+  if (!church.isOutreach) return null;
+  final parent = parentTitle?.trim() ?? '';
+  if (parent.isNotEmpty) return l10n.churchesTabOutreachOf(parent);
+  return l10n.churchHubOutreachBadge;
 }
 
 class _OutreachListTag extends StatelessWidget {

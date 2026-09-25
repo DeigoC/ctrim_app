@@ -407,7 +407,7 @@ class InfoErrorState extends StatelessWidget {
 }
 
 /// Shared grid/list shell for churches, testimonials, and CTRIM info tabs.
-class InfoSectionListTab<T> extends StatelessWidget {
+class InfoSectionListTab<T> extends StatefulWidget {
   const InfoSectionListTab({
     super.key,
     required this.future,
@@ -435,14 +435,38 @@ class InfoSectionListTab<T> extends StatelessWidget {
   final double? mobileItemHeight;
 
   @override
+  State<InfoSectionListTab<T>> createState() => _InfoSectionListTabState<T>();
+}
+
+class _InfoSectionListTabState<T> extends State<InfoSectionListTab<T>> {
+  /// Last successful items. A refresh future must not replace the grid with a
+  /// loader — that removes card heroes before a pop flight can land.
+  List<T>? _items;
+
+  @override
   Widget build(BuildContext context) {
     final bool canManageInfo =
         context.select((AppContext c) => c.currentUser.canManageInfo);
 
     return FutureBuilder<List<T>>(
-      future: future,
+      future: widget.future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.hasData) {
+          _items = snapshot.data;
+        }
+        final items = _items;
+
+        if (items == null) {
+          if (snapshot.hasError) {
+            return InfoErrorState(
+              error: snapshot.error,
+              canManageInfo: canManageInfo,
+              addLabel: widget.addLabel,
+              addDescription: widget.addDescription,
+              onRetry: widget.onRefresh,
+              onAdd: () => widget.onAdd(context),
+            );
+          }
           return const LoadProgressBody(
             message: 'Loading…',
             completedSteps: 0,
@@ -450,20 +474,8 @@ class InfoSectionListTab<T> extends StatelessWidget {
           );
         }
 
-        if (snapshot.hasError) {
-          return InfoErrorState(
-            error: snapshot.error,
-            canManageInfo: canManageInfo,
-            addLabel: addLabel,
-            addDescription: addDescription,
-            onRetry: onRefresh,
-            onAdd: () => onAdd(context),
-          );
-        }
-
-        final items = snapshot.data ?? <T>[];
         if (items.isEmpty && !canManageInfo) {
-          return InfoEmptyState(message: emptyMessage);
+          return InfoEmptyState(message: widget.emptyMessage);
         }
 
         return LayoutBuilder(
@@ -481,12 +493,12 @@ class InfoSectionListTab<T> extends StatelessWidget {
 
             if (isWideScreen) {
               return GridView.builder(
-                key: PageStorageKey<String>(storageKey),
+                key: PageStorageKey<String>(widget.storageKey),
                 padding: EdgeInsets.fromLTRB(
                     horizontalPadding, 16, horizontalPadding, 24),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
-                  childAspectRatio: gridAspectRatio(crossAxisCount),
+                  childAspectRatio: widget.gridAspectRatio(crossAxisCount),
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -494,12 +506,12 @@ class InfoSectionListTab<T> extends StatelessWidget {
                 itemBuilder: (context, index) {
                   if (canManageInfo && index == items.length) {
                     return InfoAddContentCard(
-                      label: addLabel,
-                      description: addDescription,
-                      onTap: () => onAdd(context),
+                      label: widget.addLabel,
+                      description: widget.addDescription,
+                      onTap: () => widget.onAdd(context),
                     );
                   }
-                  return itemBuilder(context, items[index], wide: true);
+                  return widget.itemBuilder(context, items[index], wide: true);
                 },
               );
             }
@@ -508,7 +520,7 @@ class InfoSectionListTab<T> extends StatelessWidget {
               removeTop: true,
               context: context,
               child: ListView.separated(
-                key: PageStorageKey<String>(storageKey),
+                key: PageStorageKey<String>(widget.storageKey),
                 padding: EdgeInsets.fromLTRB(
                     horizontalPadding, 8, horizontalPadding, 24),
                 itemCount: itemCount,
@@ -516,16 +528,17 @@ class InfoSectionListTab<T> extends StatelessWidget {
                 itemBuilder: (context, index) {
                   if (canManageInfo && index == items.length) {
                     return InfoAddContentCard(
-                      label: addLabel,
-                      description: addDescription,
-                      onTap: () => onAdd(context),
+                      label: widget.addLabel,
+                      description: widget.addDescription,
+                      onTap: () => widget.onAdd(context),
                     );
                   }
-                  final item = itemBuilder(context, items[index], wide: false);
-                  if (mobileItemHeight == null) {
+                  final item =
+                      widget.itemBuilder(context, items[index], wide: false);
+                  if (widget.mobileItemHeight == null) {
                     return item;
                   }
-                  return SizedBox(height: mobileItemHeight, child: item);
+                  return SizedBox(height: widget.mobileItemHeight, child: item);
                 },
               ),
             );

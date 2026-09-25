@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/event/event_head.dart';
+import '../models/info/church_info.dart';
 import '../models/user.dart';
 
 /// Public permalinks and in-app navigation for shareable records.
@@ -88,8 +89,10 @@ class AppLinks {
   static Future<T?> openChurch<T extends Object?>(
     BuildContext context, {
     required String id,
+    ChurchInfo? church,
   }) {
-    return context.push<T>(churchPath(id));
+    final extra = church != null && church.id == id ? church : null;
+    return context.push<T>(churchPath(id), extra: extra);
   }
 
   static Future<T?> openChurchPage<T extends Object?>(

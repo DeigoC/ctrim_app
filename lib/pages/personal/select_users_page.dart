@@ -1,6 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/id_tracker.dart';
@@ -16,6 +15,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/cache/persist_users_local_cache.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/people_directory_query.dart';
+import '../../utility/people_directory_sections.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -26,7 +26,7 @@ import '../../widgets/app_search_bar.dart';
 import '../../widgets/common/app_dialog.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
-import '../../widgets/catalog/user_tag_filter_bar.dart';
+import '../../widgets/common/action_sheet.dart';
 import 'view_user_roles_page.dart';
 
 /// Full-screen multi-select picker for people and placeholder profiles.
@@ -175,6 +175,16 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                   )
                 : Text(widget.title ?? l10n.selectUsersTitle),
             actions: [
+              if (!_isSearching)
+                IconButton(
+                  tooltip: l10n.volunteersFilterTooltip,
+                  onPressed: () => _showFilterSheet(appContext),
+                  icon: Badge(
+                    isLabelVisible: _activeFilterCount(appContext) > 0,
+                    label: Text('${_activeFilterCount(appContext)}'),
+                    child: const Icon(Icons.tune),
+                  ),
+                ),
               IconButton(
                 icon: Icon(_isSearching ? Icons.close : Icons.search),
                 onPressed: () {
@@ -251,60 +261,10 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                   ),
                 ),
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(
-                    filterHorizontalPadding, 8, filterHorizontalPadding, 8),
-                child: Row(
-                  children: [
-                    if (widget.lockedLocation == null ||
-                        widget.lockedLocation!.trim().isEmpty)
-                      ...VolunteerLocations.filterOptionsFrom(
-                              appContext.allLocations)
-                          .map((location) {
-                        final label = location == VolunteerLocations.all
-                            ? l10n.volunteersFilterAll
-                            : location;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(label),
-                            selected: _locationFilter == location,
-                            onSelected: (_) =>
-                                setState(() => _locationFilter = location),
-                          ),
-                        );
-                      }),
-                    if (widget.preferServing)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(l10n.volunteersFilterServing),
-                          selected: _servingOnly,
-                          onSelected: (selected) =>
-                              setState(() => _servingOnly = selected),
-                        ),
-                      ),
-                    if (widget.includePlaceholders)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          avatar: const Icon(Icons.person_outline, size: 18),
-                          label: Text(l10n.volunteersShowPlaceholders),
-                          selected: _placeholdersOnly,
-                          onSelected: (selected) =>
-                              setState(() => _placeholdersOnly = selected),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              UserTagFilterBar(
-                tags: appContext.allTags,
-                selectedTagIDs: _selectedTagIDs,
+              _buildActiveFiltersBanner(
+                l10n: l10n,
+                appContext: appContext,
                 horizontalPadding: filterHorizontalPadding,
-                onSelectionChanged: (selected) =>
-                    setState(() => _selectedTagIDs = selected),
               ),
               if (showingUnfilteredSearchFallback)
                 Padding(
@@ -378,23 +338,13 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                           ),
                         ),
                       )
-                    : isWide
-                        ? _buildWideUserGrid(
-                            users: listUsers,
-                            allTags: appContext.allTags,
-                            horizontalPadding: horizontalPadding,
-                            l10n: l10n,
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            itemCount: listUsers.length,
-                            itemBuilder: (_, index) => _buildUserListTile(
-                              user: listUsers[index],
-                              allTags: appContext.allTags,
-                              l10n: l10n,
-                            ),
-                          ),
+                    : _buildSectionedUserList(
+                        users: listUsers,
+                        allTags: appContext.allTags,
+                        horizontalPadding: horizontalPadding,
+                        isWide: isWide,
+                        l10n: l10n,
+                      ),
               ),
             ],
           ),
@@ -426,7 +376,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           if (userTags.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: UserTagChipRow(tags: userTags, dense: true),
+              child: UserTagChipLine(tags: userTags),
             ),
         ],
       ),
@@ -447,55 +397,93 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     );
   }
 
-  Widget _buildWideUserGrid({
+  bool get _useLetterSections => _searchQuery.isEmpty;
+
+  Widget _buildSectionedUserList({
     required List<User> users,
     required List<UserTag> allTags,
     required double horizontalPadding,
+    required bool isWide,
     required AppLocalizations l10n,
   }) {
-    const crossAxisSpacing = 12.0;
-    const maxCrossAxisExtent = 420.0;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final contentWidth = math.max(
-          0.0,
-          constraints.maxWidth - horizontalPadding * 2,
-        );
-        final crossAxisCount = math.max(
-          1,
-          (contentWidth / (maxCrossAxisExtent + crossAxisSpacing)).ceil(),
-        );
-        final rowCount = (users.length / crossAxisCount).ceil();
-        return ListView.builder(
-          padding:
-              EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
-          itemCount: rowCount,
-          itemBuilder: (context, rowIndex) {
-            final start = rowIndex * crossAxisCount;
-            return Padding(
-              padding:
-                  EdgeInsets.only(bottom: rowIndex == rowCount - 1 ? 0 : 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (var column = 0; column < crossAxisCount; column++) ...[
-                    if (column > 0) const SizedBox(width: crossAxisSpacing),
-                    Expanded(
-                      child: start + column < users.length
-                          ? _buildWideUserCard(
-                              user: users[start + column],
-                              allTags: allTags,
-                              l10n: l10n,
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  ],
-                ],
+    final sections = _useLetterSections
+        ? PeopleDirectorySections.bySurnameLetter(users)
+        : [
+            PeopleDirectorySection(letter: '', users: users),
+          ];
+
+    return CustomScrollView(
+      slivers: [
+        for (final section in sections) ...[
+          if (_useLetterSections)
+            SliverToBoxAdapter(
+              child: _buildLetterHeader(
+                section.letter,
+                horizontalPadding: horizontalPadding,
               ),
-            );
-          },
-        );
-      },
+            ),
+          if (isWide)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                0,
+                horizontalPadding,
+                0,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 420,
+                  mainAxisExtent: 108,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 8,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildWideUserCard(
+                    user: section.users[index],
+                    allTags: allTags,
+                    l10n: l10n,
+                  ),
+                  childCount: section.users.length,
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildUserListTile(
+                    user: section.users[index],
+                    allTags: allTags,
+                    l10n: l10n,
+                  ),
+                  childCount: section.users.length,
+                ),
+              ),
+            ),
+        ],
+        const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
+      ],
+    );
+  }
+
+  Widget _buildLetterHeader(
+    String letter, {
+    required double horizontalPadding,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding:
+          EdgeInsets.fromLTRB(horizontalPadding + 4, 12, horizontalPadding, 4),
+      child: Text(
+        letter,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: colorScheme.primary,
+        ),
+      ),
     );
   }
 
@@ -527,7 +515,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -550,7 +538,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                     ),
                     if (userTags.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      UserTagChipRow(tags: userTags, dense: true),
+                      UserTagChipLine(tags: userTags),
                     ],
                   ],
                 ),
@@ -619,15 +607,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           users.where((user) => user.fullname.toLowerCase().contains(query));
     }
 
-    final result = users.toList()
-      ..sort((a, b) {
-        final aSelected = _selectedUIDs.contains(a.id);
-        final bSelected = _selectedUIDs.contains(b.id);
-        if (aSelected != bSelected) {
-          return aSelected ? -1 : 1;
-        }
-        return a.fullname.compareTo(b.fullname);
-      });
+    final result = users.toList()..sort(UserTagHelpers.compareUsersBySurname);
     return result;
   }
 
@@ -667,6 +647,254 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     }
 
     return matches;
+  }
+
+  bool get _locationIsLocked =>
+      (widget.lockedLocation?.trim() ?? '').isNotEmpty;
+
+  String _defaultLocationFilter(AppContext appContext) {
+    if (_locationIsLocked) return widget.lockedLocation!.trim();
+    return VolunteerLocations.defaultFilterForUser(
+      appContext.currentUser.location,
+      VolunteerLocations.assignableFrom(appContext.allLocations),
+    );
+  }
+
+  int _activeFilterCount(AppContext appContext) {
+    var count = 0;
+    if (!_locationIsLocked &&
+        _locationFilter != _defaultLocationFilter(appContext)) {
+      count++;
+    }
+    if (widget.preferServing && !_servingOnly) count++;
+    if (widget.includePlaceholders && _placeholdersOnly) count++;
+    count += _selectedTagIDs.length;
+    return count;
+  }
+
+  List<String> _scopeSummaryParts(AppLocalizations l10n) {
+    final parts = <String>[];
+    if (_locationFilter != VolunteerLocations.all) {
+      parts.add(_locationFilter);
+    }
+    if (_servingOnly) parts.add(l10n.volunteersFilterServing);
+    if (_placeholdersOnly) parts.add(l10n.volunteersShowPlaceholders);
+    if (_selectedTagIDs.isNotEmpty) {
+      parts.add(l10n.volunteersFilterTagsCount(_selectedTagIDs.length));
+    }
+    return parts;
+  }
+
+  void _clearFilters(AppContext appContext) {
+    setState(() {
+      _locationFilter = _defaultLocationFilter(appContext);
+      _servingOnly = widget.preferServing;
+      _placeholdersOnly = false;
+      _selectedTagIDs = {};
+    });
+  }
+
+  Widget _buildActiveFiltersBanner({
+    required AppLocalizations l10n,
+    required AppContext appContext,
+    required double horizontalPadding,
+  }) {
+    final parts = _scopeSummaryParts(l10n);
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final accent = colorScheme.primary;
+    final canClear = _activeFilterCount(appContext) > 0;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
+      child: Material(
+        color: accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: accent.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _showFilterSheet(appContext),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.tune, size: 16, color: accent),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.volunteersShowing(parts.join(' · ')),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (canClear)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: l10n.volunteersClearFilters,
+                  onPressed: () => _clearFilters(appContext),
+                  icon: Icon(Icons.close, size: 16, color: accent),
+                )
+              else
+                const SizedBox(width: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+
+  void _showFilterSheet(AppContext appContext) {
+    final l10n = AppLocalizations.of(context)!;
+    final activeTags =
+        appContext.allTags.where((tag) => tag.isActive).toList();
+    final showShowSection =
+        widget.preferServing || widget.includePlaceholders;
+
+    HapticFeedback.lightImpact();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void refreshSheet(VoidCallback update) {
+              setSheetState(update);
+              setState(update);
+            }
+
+            return ActionSheetShell(
+              icon: Icons.tune,
+              title: l10n.volunteersFilterSheetTitle,
+              subtitle: l10n.selectUsersFilterSheetSubtitle,
+              children: [
+                if (!_locationIsLocked) ...[
+                  _filterSectionLabel(l10n.volunteersFilterLocationSection),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: VolunteerLocations.filterOptionsFrom(
+                              appContext.allLocations)
+                          .map((location) {
+                        final label = location == VolunteerLocations.all
+                            ? l10n.volunteersFilterAll
+                            : location;
+                        return FilterChip(
+                          label: Text(label),
+                          selected: _locationFilter == location,
+                          onSelected: (selected) {
+                            if (!selected) return;
+                            refreshSheet(() => _locationFilter = location);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+                if (showShowSection)
+                  _filterSectionLabel(l10n.volunteersFilterShowSection),
+                if (widget.preferServing)
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    title: Text(l10n.volunteersFilterServing),
+                    subtitle: Text(l10n.volunteersFilterServingSubtitle),
+                    value: _servingOnly,
+                    onChanged: (value) =>
+                        refreshSheet(() => _servingOnly = value),
+                  ),
+                if (widget.includePlaceholders)
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    title: Text(l10n.volunteersShowPlaceholders),
+                    value: _placeholdersOnly,
+                    onChanged: (value) =>
+                        refreshSheet(() => _placeholdersOnly = value),
+                  ),
+                if (activeTags.isNotEmpty) ...[
+                  _filterSectionLabel(l10n.volunteersFilterTeamsSection),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: activeTags.map((tag) {
+                        final selected = _selectedTagIDs.contains(tag.id);
+                        return UserTagChip(
+                          tag: tag,
+                          selected: selected,
+                          onTap: () => refreshSheet(() {
+                            _selectedTagIDs = Set<String>.from(_selectedTagIDs);
+                            if (selected) {
+                              _selectedTagIDs.remove(tag.id);
+                            } else {
+                              _selectedTagIDs.add(tag.id);
+                            }
+                          }),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+                if (_activeFilterCount(appContext) > 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () => refreshSheet(() {
+                          _locationFilter = _defaultLocationFilter(appContext);
+                          _servingOnly = widget.preferServing;
+                          _placeholdersOnly = false;
+                          _selectedTagIDs = {};
+                        }),
+                        child: Text(l10n.volunteersClearFilters),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _widenSearchFilters() {
