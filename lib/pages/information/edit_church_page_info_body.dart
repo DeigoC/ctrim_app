@@ -86,9 +86,10 @@ class _EditChurchPageInfoBodyState extends State<EditChurchPageInfoBody>
         controller: _summaryController,
         decoration: const InputDecoration(
           labelText: 'Summary / subtitle',
+          alignLabelWithHint: true,
         ),
-        minLines: 2,
-        maxLines: 3,
+        minLines: 6,
+        maxLines: null,
       ),
     ];
   }

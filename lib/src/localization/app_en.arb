@@ -530,7 +530,7 @@
   "@manageUserTagsHiddenFromGuests": {
     "description": "Status on the team-tag list when guests do not see the label"
   },
-  "manageUserTagsDescriptionLabel": "Short description",
+  "manageUserTagsDescriptionLabel": "Description",
   "@manageUserTagsDescriptionLabel": {
     "description": "Label for the team-tag description field"
   },
@@ -1575,7 +1575,7 @@
   "@cellGroupsSummaryHint": {
     "description": "Placeholder for cell group summary"
   },
-  "cellGroupsSummaryHelper": "Short description on the catalogue card and in About.",
+  "cellGroupsSummaryHelper": "Shown on the catalogue card and in About.",
   "@cellGroupsSummaryHelper": {
     "description": "Helper under cell group summary field"
   },

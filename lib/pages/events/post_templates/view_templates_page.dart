@@ -695,11 +695,12 @@ class _NewTemplateDetailsDialogState extends State<_NewTemplateDetailsDialog> {
             TextFormField(
               controller: _descriptionController,
               textCapitalization: TextCapitalization.sentences,
-              maxLines: 2,
+              minLines: 6,
+              maxLines: null,
               decoration: AppDialog.inputDecoration(
                 label: 'Description (optional)',
-                hint: 'Short summary for admins',
-                maxLines: 2,
+                hint: 'What this template is for',
+                maxLines: 6,
               ),
             ),
             const SizedBox(height: 12),

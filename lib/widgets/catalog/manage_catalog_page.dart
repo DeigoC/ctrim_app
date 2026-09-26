@@ -312,13 +312,14 @@ Future<CatalogItemDialogResult?> showCatalogItemDialog({
                     const SizedBox(height: 12),
                     TextField(
                       controller: descriptionController!,
-                      maxLines: 4,
+                      minLines: 6,
+                      maxLines: null,
                       maxLength: descriptionMaxLength,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: AppDialog.inputDecoration(
                         label: descriptionLabel!,
                         hint: descriptionHint,
-                        maxLines: 4,
+                        maxLines: 6,
                       ),
                     ),
                   ],
