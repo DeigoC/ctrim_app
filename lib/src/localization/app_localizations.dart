@@ -3046,6 +3046,72 @@ abstract class AppLocalizations {
   /// **'Maps URL help'**
   String get churchEditorMapsHelpTooltip;
 
+  /// Helper under the church location preview
+  ///
+  /// In en, this message translates to:
+  /// **'Pin starts at the postcode. Adjust it if the building is nearby.'**
+  String get churchEditorPinHint;
+
+  /// Button that opens the church pin editor
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust pin'**
+  String get churchEditorAdjustPin;
+
+  /// Title of the church pin dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust pin'**
+  String get churchEditorAdjustPinTitle;
+
+  /// Instructions in the church pin dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Move the map, then tap where the building is.'**
+  String get churchEditorAdjustPinHelp;
+
+  /// Shown when the address postcode is not in the lookup
+  ///
+  /// In en, this message translates to:
+  /// **'That postcode could not be found. Check the address and try again.'**
+  String get churchEditorPostcodeInvalid;
+
+  /// Shown when the address postcode lookup fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not place the pin. Check your connection and try again.'**
+  String get churchEditorPostcodeLookupFailed;
+
+  /// Caption under a single cell-group area map
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate area'**
+  String get mapApproximateArea;
+
+  /// Caption under the nearest cell-groups map
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate areas'**
+  String get mapApproximateAreas;
+
+  /// Attribution link under embedded maps
+  ///
+  /// In en, this message translates to:
+  /// **'OpenStreetMap'**
+  String get mapAttribution;
+
+  /// Shown when map tiles fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Map could not be loaded.'**
+  String get mapLoadFailed;
+
+  /// Retry button when a map fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get mapRetry;
+
   /// Editor card title for location, address, and maps
   ///
   /// In en, this message translates to:

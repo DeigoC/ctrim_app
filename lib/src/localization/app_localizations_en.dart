@@ -1715,6 +1715,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchEditorMapsHelpTooltip => 'Maps URL help';
 
   @override
+  String get churchEditorPinHint =>
+      'Pin starts at the postcode. Adjust it if the building is nearby.';
+
+  @override
+  String get churchEditorAdjustPin => 'Adjust pin';
+
+  @override
+  String get churchEditorAdjustPinTitle => 'Adjust pin';
+
+  @override
+  String get churchEditorAdjustPinHelp =>
+      'Move the map, then tap where the building is.';
+
+  @override
+  String get churchEditorPostcodeInvalid =>
+      'That postcode could not be found. Check the address and try again.';
+
+  @override
+  String get churchEditorPostcodeLookupFailed =>
+      'Could not place the pin. Check your connection and try again.';
+
+  @override
+  String get mapApproximateArea => 'Approximate area';
+
+  @override
+  String get mapApproximateAreas => 'Approximate areas';
+
+  @override
+  String get mapAttribution => 'OpenStreetMap';
+
+  @override
+  String get mapLoadFailed => 'Map could not be loaded.';
+
+  @override
+  String get mapRetry => 'Try again';
+
+  @override
   String get churchEditorVisitCardTitle => 'Find us';
 
   @override
