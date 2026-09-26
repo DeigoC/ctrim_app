@@ -56,6 +56,9 @@ class _ViewUserRolesPageState extends State<ViewUserRolesPage> {
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
+    if (widget.selectedUser.id == _appContext.currentUser.id) {
+      _appContext.analytics.logMySchedule();
+    }
     super.initState();
 
     if (widget.selectedUser.roles == null) {

@@ -482,7 +482,7 @@ class _GuestRegistrationCardState extends State<GuestRegistrationCard> {
       if (!mounted || !created) return;
 
       final appContext = Provider.of<AppContext>(context, listen: false);
-      appContext.analytics.logEvent(name: 'register email');
+      appContext.analytics.logRegisterEmail();
 
       await _showVerificationDialog();
     } finally {

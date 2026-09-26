@@ -604,7 +604,13 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     );
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) widget.onChanged();
+    if (ok) {
+      appContext.analytics.logPostInterest(
+        postId: widget.eventContext.id,
+        interested: interested,
+      );
+      widget.onChanged();
+    }
   }
 
   Future<void> _removeInterest(String authId) async {
@@ -665,6 +671,10 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           addedBy: appContext.currentUser.id,
         ));
       _applyAttendeesLocally(next);
+      appContext.analytics.logPostExpected(
+        postId: widget.eventContext.id,
+        checked: true,
+      );
       return;
     }
 
@@ -672,12 +682,20 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         .where((e) => !(e.isUser && e.userId == userId))
         .toList();
     _applyAttendeesLocally(next);
+    appContext.analytics.logPostExpected(
+      postId: widget.eventContext.id,
+      checked: false,
+    );
   }
 
   Future<void> _removeAttendee(String id) async {
     final attendance = widget.eventContext.attendance ?? EventAttendance();
     final next = attendance.attendees.where((e) => e.id != id).toList();
     _applyAttendeesLocally(next);
+    if (!mounted) return;
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logPostAttendanceRemove(widget.eventContext.id);
   }
 
   void _applyAttendeesLocally(List<AttendeeEntry> attendees) {

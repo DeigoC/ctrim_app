@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
+import '../../utility/app_analytics.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../widgets/common/load_progress_body.dart';
@@ -105,7 +106,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
   const InfoDetailLoader({
     super.key,
     required this.load,
-    required this.analyticsScreenName,
+    required this.logScreen,
     required this.pageTitleFallback,
     required this.notFoundMessage,
     required this.openEditor,
@@ -115,7 +116,7 @@ class InfoDetailLoader<T> extends StatefulWidget {
   });
 
   final Future<T?> Function({required bool forceRefresh}) load;
-  final String Function(T info) analyticsScreenName;
+  final void Function(AppAnalytics analytics, T info) logScreen;
   final String pageTitleFallback;
   final String notFoundMessage;
   final Future<bool> Function(BuildContext context, T info) openEditor;
@@ -157,9 +158,10 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
   void _logScreen(final T info) {
     if (_loggedView) return;
     _loggedView = true;
-    Provider.of<AppContext>(context, listen: false)
-        .analytics
-        .logScreenView(screenName: widget.analyticsScreenName(info));
+    widget.logScreen(
+      Provider.of<AppContext>(context, listen: false).analytics,
+      info,
+    );
   }
 
   Future<void> _load({required bool forceRefresh}) async {

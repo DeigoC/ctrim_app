@@ -273,6 +273,7 @@ class _AddEventPageState extends State<AddEventPage>
       _updateParentMetadata(newID);
       final newHead = await _headDBManager.fetchHead(newID);
       _appContext.addNewPostHead(newHead);
+      _appContext.analytics.logPostCreate(newID);
       return newID;
     });
 

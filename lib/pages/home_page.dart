@@ -10,6 +10,7 @@ import '../firebase/auth_manager.dart';
 import '../firebase/db_managers/event_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../models/event/event_head.dart';
+import '../utility/app_analytics.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
 import '../utility/cache/local_data_manager.dart';
@@ -58,6 +59,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final TabController _informationTabController;
   late final TabController _cellGroupsTabController;
   late int _selectedIndex;
+  String? _loggedShellScreen;
 
   late final AppContext _appContext;
   final ScrollController _postsScrollController = ScrollController(),
@@ -79,6 +81,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _informationTabController.addListener(_onInformationSectionChanged);
     _cellGroupsTabController = TabController(length: 2, vsync: this);
     _cellGroupsTabController.addListener(_onCellGroupsSectionChanged);
+    _logShellScreen();
     _appContext.sharedPref.setPostRefreshTime();
     _setupCloudOnMessage();
     _setupWebNotificationListeners();
@@ -219,12 +222,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _onInformationSectionChanged() {
     if (_informationTabController.indexIsChanging) return;
+    _logShellScreen();
     if (mounted) setState(() {});
   }
 
   void _onCellGroupsSectionChanged() {
     if (_cellGroupsTabController.indexIsChanging) return;
+    _logShellScreen();
     if (mounted) setState(() {});
+  }
+
+  void _logShellScreen() {
+    final name = AppAnalytics.homeScreenName(
+      destinationIndex: _selectedIndex,
+      ctrimSection: _informationTabController.index,
+      cellGroupsSection: _cellGroupsTabController.index,
+    );
+    if (name == _loggedShellScreen) return;
+    _loggedShellScreen = name;
+    _appContext.analytics.logHome(
+      destinationIndex: _selectedIndex,
+      ctrimSection: _informationTabController.index,
+      cellGroupsSection: _cellGroupsTabController.index,
+    );
   }
 
   void _selectCtrimSection(int section) {
@@ -254,6 +274,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (controller.index != section) {
       controller.animateTo(section);
     }
+    _logShellScreen();
   }
 
   Widget _buildBottomNavigationBar() {
@@ -304,7 +325,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
     return PersonalHome(
       appContext: _appContext,
-      onBrowseCellGroups: () => setState(() => _selectedIndex = 2),
+      onBrowseCellGroups: () {
+        setState(() => _selectedIndex = 2);
+        _logShellScreen();
+      },
     );
   }
 
@@ -315,6 +339,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _selectedIndex = index;
       });
+      _logShellScreen();
     } else {
       // scroll page to top
       if (index == 0) {

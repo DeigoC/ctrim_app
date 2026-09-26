@@ -31,6 +31,9 @@ class _CellGroupsAtLocationPageState extends State<CellGroupsAtLocationPage> {
   @override
   void initState() {
     super.initState();
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logCellGroupsAtLocation(widget.location);
     _refresh(ignoreCooldown: true);
   }
 

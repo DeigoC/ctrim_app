@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/pwa_install_service.dart';
@@ -387,6 +389,10 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
           ShareParams(text: ShareWebAppPage.shareMessage),
         );
         if (!context.mounted) return;
+        if (result.status == ShareResultStatus.success) {
+          _logAppShare(context, method: 'share');
+          return;
+        }
         if (result.status == ShareResultStatus.dismissed ||
             result.status == ShareResultStatus.unavailable) {
           _onLinkCopyClick(ShareWebAppPage.shareMessage, context,
@@ -402,13 +408,25 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     }
 
     final box = context.findRenderObject() as RenderBox?;
-    await SharePlus.instance.share(
+    final result = await SharePlus.instance.share(
       ShareParams(
         text: ShareWebAppPage.shareMessage,
         sharePositionOrigin:
             box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       ),
     );
+    if (!context.mounted) return;
+    if (result.status == ShareResultStatus.success) {
+      _logAppShare(context, method: 'share');
+    }
+  }
+
+  void _logAppShare(BuildContext context, {required String method}) {
+    Provider.of<AppContext>(context, listen: false).analytics.logShare(
+          contentType: 'app',
+          method: method,
+          itemId: 'app',
+        );
   }
 
   Future<void> _onInstallAppClick() async {
@@ -473,6 +491,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
     String successText = 'Link copied to clipboard!',
   }) {
     Clipboard.setData(ClipboardData(text: link));
+    _logAppShare(context, method: 'copy');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

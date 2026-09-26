@@ -55,6 +55,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   @override
   void initState() {
     super.initState();
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logCellGroup(widget.groupId);
     _load();
   }
 

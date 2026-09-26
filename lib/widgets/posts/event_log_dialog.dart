@@ -84,6 +84,7 @@ class _EventLogDialogState extends State<EventLogDialog> {
           _performUpdate(_appContext.currentUser.id, log, onProgress),
     );
     if (!mounted || !saved) return;
+    _appContext.analytics.logPostSave(widget.eventContext.id);
     _appContext.setMetadata(
         widget.eventContext.id, widget.eventContext.metadata);
     for (final entry in widget.eventContext.lastParentLinkSync.entries) {

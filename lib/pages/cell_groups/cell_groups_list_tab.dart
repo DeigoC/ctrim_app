@@ -95,6 +95,13 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
         _lookingUp = false;
         _origin = null;
       });
+      _debounce = Timer(const Duration(milliseconds: 400), () {
+        if (!mounted) return;
+        final current = _query.trim();
+        if (current.isEmpty) return;
+        if (UkPostcodeLookup.classify(current) != UkPostcodeKind.none) return;
+        _logCellGroupSearch(UkPostcodeKind.none);
+      });
       return;
     }
 
@@ -102,6 +109,20 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
     _debounce = Timer(const Duration(milliseconds: 400), () {
       _lookupPostcode(trimmed);
     });
+  }
+
+  void _logCellGroupSearch(UkPostcodeKind kind, {bool? resolved}) {
+    final mode = switch (kind) {
+      UkPostcodeKind.full => 'postcode',
+      UkPostcodeKind.outcode => 'outcode',
+      UkPostcodeKind.none => 'name',
+    };
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logCellGroupSearch(
+          mode: mode,
+          resolved: resolved,
+        );
   }
 
   Future<void> _lookupPostcode(final String query) async {
@@ -114,6 +135,7 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
         _lookingUp = false;
         _lookupFailure = null;
       });
+      _logCellGroupSearch(UkPostcodeLookup.classify(query), resolved: true);
     } on UkPostcodeLookupException catch (error) {
       if (!mounted || generation != _lookupGeneration) return;
       setState(() {
@@ -121,6 +143,7 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
         _lookingUp = false;
         _lookupFailure = error.failure;
       });
+      _logCellGroupSearch(UkPostcodeLookup.classify(query), resolved: false);
     }
   }
 

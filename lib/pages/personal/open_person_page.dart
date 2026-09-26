@@ -44,6 +44,10 @@ class _OpenPersonPageState extends State<OpenPersonPage> {
     super.initState();
     final extra = widget.initialUser;
     _fromInApp = extra != null && extra.id == widget.userId;
+    Provider.of<AppContext>(context, listen: false).analytics.logPerson(
+          personId: widget.userId,
+          source: _fromInApp ? 'in_app' : 'link',
+        );
     if (_fromInApp) {
       _user = extra;
       _loading = false;

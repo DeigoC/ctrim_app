@@ -37,7 +37,7 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     _pageController = PageController(initialPage: widget.initialIndex);
     Provider.of<AppContext>(context, listen: false)
         .analytics
-        .logScreenView(screenName: 'Post Gallery: ${widget.postId}');
+        .logPostGallery(widget.postId);
 
     debugPrint('length is ${widget.media.length}');
     for (final entry in widget.media) {

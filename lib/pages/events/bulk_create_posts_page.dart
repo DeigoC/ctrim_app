@@ -294,6 +294,7 @@ class _BulkCreatePostsPageState extends State<BulkCreatePostsPage> {
 
       if (mounted) {
         _isSaved = true;
+        appContext.analytics.logPostBulkCreate(_createdCount);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('${_previews.length} posts created successfully')),

@@ -22,7 +22,7 @@ class TestimonialInfoPage extends StatelessWidget {
     return InfoDetailLoader<TestimonialInfo>(
       load: ({required bool forceRefresh}) => repository
           .fetchTestimonialById(documentId, forceRefresh: forceRefresh),
-      analyticsScreenName: (info) => 'Testimonial: ${info.name}',
+      logScreen: (analytics, info) => analytics.logTestimonial(info.id),
       pageTitleFallback: 'Testimonial',
       notFoundMessage: 'No testimonial found.',
       initialInfo: initialInfo != null && initialInfo!.id == documentId

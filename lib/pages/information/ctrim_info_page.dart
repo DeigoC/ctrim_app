@@ -22,7 +22,7 @@ class CTRIMInfoPage extends StatelessWidget {
     return InfoDetailLoader<CtrimInfo>(
       load: ({required bool forceRefresh}) =>
           repository.fetchCtrimInfoById(documentId, forceRefresh: forceRefresh),
-      analyticsScreenName: (info) => 'CTRIM Info: ${info.analyticsTitle}',
+      logScreen: (analytics, info) => analytics.logCtrimInfo(info.id),
       pageTitleFallback: 'CTRIM Information',
       notFoundMessage: 'No information found.',
       initialInfo: initialInfo != null && initialInfo!.id == documentId

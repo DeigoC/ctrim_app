@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,6 +11,7 @@ import '../models/user.dart';
 import '../models/user_location.dart';
 import '../models/user_role_assignment.dart';
 import '../models/user_tag.dart';
+import 'app_analytics.dart';
 import 'app_shared_preferences.dart';
 
 /// Session cache for the signed-in user, people directory, bulletin heads,
@@ -35,7 +35,7 @@ class AppContext extends ChangeNotifier {
 
   late final AppSharedPreferences _sharedPref;
   late final String? _cacheDir, _appDir;
-  final FirebaseAnalytics? _analytics;
+  final AppAnalytics _analytics;
 
   late User _currentUser;
 
@@ -68,7 +68,7 @@ class AppContext extends ChangeNotifier {
       {required SharedPreferences prefInstance,
       required String? cacheDir,
       required String? appDir,
-      FirebaseAnalytics? analytics,
+      AppAnalytics? analytics,
       List<EventHead>? heads,
       List<User>? allUsers,
       List<UserTag>? allTags,
@@ -82,7 +82,7 @@ class AppContext extends ChangeNotifier {
         _allPostTags = List<PostTag>.from(allPostTags ?? const []),
         _allLocations = List<UserLocation>.from(allLocations ?? const []),
         _allCellGroups = List<CellGroup>.from(allCellGroups ?? const []),
-        _analytics = analytics {
+        _analytics = analytics ?? AppAnalytics(null) {
     _currentUser = user ?? _guest;
     _sharedPref = AppSharedPreferences(preferences: prefInstance);
     _cacheDir = cacheDir;
@@ -90,6 +90,7 @@ class AppContext extends ChangeNotifier {
     _sortUsers();
     _reindexUsers();
     _reindexHeads();
+    _syncAnalyticsIdentity();
   }
 
   // * meta related
@@ -346,17 +347,20 @@ class AppContext extends ChangeNotifier {
     final currentChanged = _currentUser.location == oldName;
     if (currentChanged) {
       _currentUser.setLocation(newName);
+      _syncAnalyticsIdentity();
     }
     _notify(users: true, session: currentChanged);
   }
 
   void setUserToGuest() {
     _currentUser = _guest;
+    _syncAnalyticsIdentity();
     _notify(session: true);
   }
 
   void setCurrentUser(final User? user) {
     _currentUser = user ?? _guest;
+    _syncAnalyticsIdentity();
     _notify(session: true);
   }
 
@@ -381,7 +385,12 @@ class AppContext extends ChangeNotifier {
     _sortUsers();
     _reindexUsers();
     _reindexHeads();
+    _syncAnalyticsIdentity();
     _notify(session: true, users: true, heads: true);
+  }
+
+  void _syncAnalyticsIdentity() {
+    _analytics.syncUser(_currentUser, isGuest: isCurrentUserGuest);
   }
 
   List<String> getTokensFromUserID(final String userID) =>
@@ -424,5 +433,5 @@ class AppContext extends ChangeNotifier {
   String? get cacheDir => _cacheDir;
   String? get appDir => _appDir;
 
-  FirebaseAnalytics get analytics => _analytics!;
+  AppAnalytics get analytics => _analytics;
 }

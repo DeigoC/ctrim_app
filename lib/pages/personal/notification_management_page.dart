@@ -588,10 +588,7 @@ class _NotificationManagementPageState
     });
 
     if (ok) {
-      _appContext.analytics.logEvent(
-        name: newState ? 'notif_subscribe' : 'notif_unsubscribe',
-        parameters: {'topic': topic},
-      );
+      _appContext.analytics.logNotifTopic(topic: topic, subscribed: newState);
       await _refreshStatus();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

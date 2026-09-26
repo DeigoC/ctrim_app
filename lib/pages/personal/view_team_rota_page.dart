@@ -51,6 +51,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
   @override
   void initState() {
     _appContext = Provider.of<AppContext>(context, listen: false);
+    _appContext.analytics.logTeamRota();
     _locationFilter = VolunteerLocations.defaultFilterForUser(
       _appContext.currentUser.location,
       VolunteerLocations.assignableFrom(_appContext.allLocations),

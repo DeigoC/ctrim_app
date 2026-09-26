@@ -56,6 +56,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   void initState() {
     super.initState();
     final appContext = Provider.of<AppContext>(context, listen: false);
+    appContext.analytics.logPeopleDirectory();
     final assignable =
         VolunteerLocations.assignableFrom(appContext.allLocations);
     _locationFilter = VolunteerLocations.defaultFilterForUser(

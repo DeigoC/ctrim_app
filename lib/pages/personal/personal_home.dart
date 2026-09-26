@@ -449,7 +449,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         initialMessage: 'Removing notification token…',
         errorTitle: 'Could not sign out',
         action: (onProgress) async {
-          widget.appContext.analytics.logEvent(name: 'logout');
+          widget.appContext.analytics.logLogout();
           await _logout(onProgress);
         },
       );
@@ -599,6 +599,8 @@ class _PersonalHomeState extends State<PersonalHome> {
       authId: authId,
       isGuest: appContext.isCurrentUserGuest,
     );
+
+    appContext.analytics.logNotifPermission(granted: result.isEnabled);
 
     if (result.isEnabled) {
       appContext.sharedPref.setSubscribedToBelfast(true);

@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/app_analytics.dart';
+import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
 import '../../utility/event_context.dart';
 import '../../utility/quill_image.dart';
@@ -107,6 +110,8 @@ class ViewPostBody extends StatelessWidget {
   }
 
   void _onShare(BuildContext context) async {
+    final analytics = Provider.of<AppContext>(context, listen: false).analytics;
+    final postId = eventContext.id;
     // Prepare share content with title and subtitle
     final StringBuffer shareContent = StringBuffer();
     shareContent.writeln(eventContext.head.title);
@@ -131,41 +136,67 @@ class ViewPostBody extends StatelessWidget {
 
     if (kIsWeb) {
       // Web: Try native share API, fallback to clipboard
-      await _shareOnWeb(context, finalContent);
+      await _shareOnWeb(context, finalContent, analytics, postId);
     } else {
       // Mobile: Use native share sheet with positioning
       final box = context.findRenderObject() as RenderBox?;
-      await SharePlus.instance.share(
+      final result = await SharePlus.instance.share(
         ShareParams(
           text: finalContent,
           sharePositionOrigin:
               box != null ? box.localToGlobal(Offset.zero) & box.size : null,
         ),
       );
+      if (result.status == ShareResultStatus.success) {
+        analytics.logShare(
+          contentType: 'post',
+          method: 'share',
+          itemId: postId,
+        );
+      }
     }
   }
 
   /// Handle sharing on web platform with fallback
-  Future<void> _shareOnWeb(BuildContext context, String content) async {
+  Future<void> _shareOnWeb(
+    BuildContext context,
+    String content,
+    AppAnalytics analytics,
+    String postId,
+  ) async {
     try {
       // Try Web Share API first (works on Chrome, Edge, mobile browsers)
       final result = await SharePlus.instance.share(ShareParams(text: content));
+
+      if (result.status == ShareResultStatus.success) {
+        analytics.logShare(
+          contentType: 'post',
+          method: 'share',
+          itemId: postId,
+        );
+        return;
+      }
 
       // If share was dismissed or failed, offer clipboard option
       if (result.status == ShareResultStatus.dismissed ||
           result.status == ShareResultStatus.unavailable) {
         if (!context.mounted) return;
-        await _showCopyDialog(context, content);
+        await _showCopyDialog(context, content, analytics, postId);
       }
     } catch (e) {
       // Web Share API not supported, show copy dialog
       if (!context.mounted) return;
-      await _showCopyDialog(context, content);
+      await _showCopyDialog(context, content, analytics, postId);
     }
   }
 
   /// Show dialog with copy to clipboard option
-  Future<void> _showCopyDialog(BuildContext context, String content) async {
+  Future<void> _showCopyDialog(
+    BuildContext context,
+    String content,
+    AppAnalytics analytics,
+    String postId,
+  ) async {
     final theme = Theme.of(context);
 
     await showDialog(
@@ -193,6 +224,11 @@ class ViewPostBody extends StatelessWidget {
           onCancel: () => Navigator.of(context).pop(),
           onConfirm: () async {
             await Clipboard.setData(ClipboardData(text: content));
+            analytics.logShare(
+              contentType: 'post',
+              method: 'copy',
+              itemId: postId,
+            );
             if (context.mounted) {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
