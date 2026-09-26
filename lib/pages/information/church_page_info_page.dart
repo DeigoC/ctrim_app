@@ -28,7 +28,10 @@ class ChurchPageInfoPage extends StatelessWidget {
         documentId,
         forceRefresh: forceRefresh,
       ),
-      analyticsScreenName: (page) => 'Church Page: ${page.title}',
+      logScreen: (analytics, page) => analytics.logChurchPage(
+        churchId: churchId,
+        pageId: page.id,
+      ),
       pageTitleFallback: 'Church page',
       notFoundMessage: 'No page found.',
       initialInfo: initialPage != null &&

@@ -31,8 +31,7 @@ class _ViewMetaLogsPageState extends State<ViewMetaLogsPage> {
         widget.eventContext.metadata.contributorUIDs,
         growable: false);
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _appContext.analytics.logScreenView(
-        screenName: 'Meta-logs for Post:${widget.eventContext.id}');
+    _appContext.analytics.logPostMetaLogs(widget.eventContext.id);
     widget.eventContext.log.orderLogsBackwards(); // needed?
     super.initState();
   }

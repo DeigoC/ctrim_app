@@ -31,8 +31,7 @@ class ChurchPastorsPage extends StatelessWidget {
         documentId,
         forceRefresh: forceRefresh,
       ),
-      analyticsScreenName: (church) =>
-          'Church Pastors: ${church.analyticsTitle}',
+      logScreen: (analytics, church) => analytics.logChurchPastors(church.id),
       pageTitleFallback: l10n.churchPastorsPageTitle,
       notFoundMessage: l10n.churchInfoNotFound,
       initialInfo: initialChurch != null && initialChurch!.id == documentId

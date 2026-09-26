@@ -47,6 +47,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
   @override
   void initState() {
     _appContext = Provider.of(context, listen: false);
+    _appContext.analytics.logMyPosts();
     _locationFilter = VolunteerLocations.all;
     super.initState();
     if (_appContext.currentUser.posts == null) {
@@ -445,8 +446,7 @@ class _ViewMyPostsPageState extends State<ViewMyPostsPage> {
               VolunteerLocations.filterOptionsFrom(_appContext.allLocations),
           selectedLocation: _locationFilter,
           onSortChanged: (sort) => setState(() => _sort = sort),
-          onTimeFilterChanged: (filter) =>
-              setState(() => _timeFilter = filter),
+          onTimeFilterChanged: (filter) => setState(() => _timeFilter = filter),
           onBookmarksOnlyChanged: (_) {},
           onLocationChanged: (location) =>
               setState(() => _locationFilter = location),

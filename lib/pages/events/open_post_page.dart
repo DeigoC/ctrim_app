@@ -99,7 +99,12 @@ class _OpenPostPageState extends State<OpenPostPage> {
   Widget build(BuildContext context) {
     final head = _head;
     if (head != null) {
-      return ViewEventPage(eventHead: head);
+      final openedInApp =
+          widget.initialHead != null && widget.initialHead!.id == widget.postId;
+      return ViewEventPage(
+        eventHead: head,
+        analyticsSource: openedInApp ? 'in_app' : 'link',
+      );
     }
 
     final l10n = AppLocalizations.of(context)!;

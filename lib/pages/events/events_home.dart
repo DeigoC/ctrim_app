@@ -50,6 +50,8 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _logListingChange();
       if (!_appContext.sharedPref.hasSeenBulletinDialog) {
         _showBulletinFirstTimeDialog();
       }
@@ -76,13 +78,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
   }
 
   void _logListingChange() {
-    _appContext.analytics.logEvent(
-      name: 'bulletin_listing',
-      parameters: {
-        'sort': _sort.name,
-        'time': _timeFilter.name,
-        'bookmarks': _bookmarksOnly ? '1' : '0',
-      },
+    _appContext.analytics.logBulletinListing(
+      sort: _sort.name,
+      time: _timeFilter.name,
+      bookmarksOnly: _bookmarksOnly,
+      location: _locationFilter,
+      tagCount: _selectedPostTagIDs.length,
     );
   }
 
@@ -488,6 +489,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
           },
           onLocationChanged: (location) {
             setState(() => _locationFilter = location);
+            _logListingChange();
           },
           onTagSelectionChanged: (selected) {
             setState(() {
@@ -495,6 +497,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                 ..clear()
                 ..addAll(selected);
             });
+            _logListingChange();
           },
         ),
       ),

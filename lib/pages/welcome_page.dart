@@ -462,7 +462,7 @@ class _WelcomePageState extends State<WelcomePage>
       final canVerifyEmail = await _attemptToRegister();
       if (!mounted) return;
       if (canVerifyEmail) {
-        _appContext.analytics.logEvent(name: 'register email');
+        _appContext.analytics.logRegisterEmail();
         setState(() {
           _isWaitingForVerification = true;
           _isLoading = false;

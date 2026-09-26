@@ -18,6 +18,7 @@ import 'models/user.dart' as ctrim;
 import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
+import 'utility/app_analytics.dart';
 import 'utility/app_context.dart';
 import 'utility/event_heads_repository.dart';
 import 'utility/cache/local_data_manager.dart';
@@ -87,7 +88,11 @@ void main() async {
   // }
 
   final AuthManager authManager = AuthManager();
-  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  final FirebaseAnalytics firebaseAnalytics = FirebaseAnalytics.instance;
+  await firebaseAnalytics.setAnalyticsCollectionEnabled(kReleaseMode);
+  final AppAnalytics analytics = AppAnalytics(
+    FirebaseAnalyticsClient(firebaseAnalytics),
+  );
 
   String? cacheDir, appDir;
   try {

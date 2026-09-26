@@ -37,8 +37,15 @@ import 'view_event_local_store.dart';
 import 'view_event_notify_helpers.dart';
 
 class ViewEventPage extends StatefulWidget {
-  const ViewEventPage({super.key, required this.eventHead});
+  const ViewEventPage({
+    super.key,
+    required this.eventHead,
+    required this.analyticsSource,
+  });
   final EventHead eventHead;
+
+  /// `in_app` when the route extra was an [EventHead]; otherwise `link`.
+  final String analyticsSource;
 
   @override
   State<ViewEventPage> createState() => _ViewEventPageState();
@@ -94,9 +101,10 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   @override
   void initState() {
-    Provider.of<AppContext>(context, listen: false)
-        .analytics
-        .logScreenView(screenName: 'post-${widget.eventHead.id}');
+    Provider.of<AppContext>(context, listen: false).analytics.logPost(
+          postId: widget.eventHead.id,
+          source: widget.analyticsSource,
+        );
     _currentUID =
         Provider.of<AppContext>(context, listen: false).currentUser.id;
 
@@ -697,6 +705,10 @@ class _ViewEventPageState extends State<ViewEventPage>
         _messagingManager.subscribeToTopic(_topic, authId: webAuthId);
       }
     });
+    appContext.analytics.logPostBookmark(
+      postId: _eventContext.id,
+      added: !bookmarked,
+    );
   }
 
   void _onTitleTap() {
@@ -886,6 +898,9 @@ class _ViewEventPageState extends State<ViewEventPage>
       trackRoleDiff: true,
       applyEventWindow: _eventContext.head.eventDate != null,
     );
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logSchedulePresetApply(_eventContext.id);
     _eventContext.allowSavingOfTheEdit();
     setState(() {});
     final scheduleIndex = _scheduleTabIndex;

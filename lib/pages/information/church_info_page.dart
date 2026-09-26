@@ -47,6 +47,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   final EventHeadDBManager _eventHeads = EventHeadDBManager();
 
   bool _loading = true;
+  bool _loggedScreen = false;
   bool _detailsReady = false;
   Object? _error;
   ChurchInfo? _church;
@@ -90,9 +91,11 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
       }
       if (!mounted) return;
 
-      if (church != null) {
-        appContext.analytics.logScreenView(
-          screenName: 'Church Info: ${church.analyticsTitle}',
+      if (church != null && !_loggedScreen) {
+        _loggedScreen = true;
+        appContext.analytics.logChurch(
+          churchId: church.id,
+          kind: church.kind.storageValue,
         );
       }
 
@@ -266,7 +269,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     }
   }
 
-  Future<void> _openMaps(final String url) async {
+  Future<void> _launchExternal(final String url) async {
     await launchUrlString(url, mode: LaunchMode.externalApplication)
         .onError((error, stackTrace) async {
       if (!mounted) return false;
@@ -277,8 +280,25 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     });
   }
 
+  Future<void> _openMaps(final String url) async {
+    final church = _church;
+    if (church != null) {
+      Provider.of<AppContext>(context, listen: false)
+          .analytics
+          .logOpenMaps(church.id);
+    }
+    await _launchExternal(url);
+  }
+
   Future<void> _openSocial(final ChurchSocialLink link) async {
-    await _openMaps(link.url);
+    final church = _church;
+    if (church != null) {
+      Provider.of<AppContext>(context, listen: false).analytics.logOpenSocial(
+            churchId: church.id,
+            platform: link.platform.storageValue,
+          );
+    }
+    await _launchExternal(link.url);
   }
 
   @override
