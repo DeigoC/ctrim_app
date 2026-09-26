@@ -85,9 +85,12 @@ class _EditCtrimInfoBodyState extends State<EditCtrimInfoBody>
       const SizedBox(height: 12),
       TextFormField(
         controller: _secondaryController,
-        decoration: const InputDecoration(labelText: 'Description'),
-        minLines: 2,
-        maxLines: 3,
+        decoration: const InputDecoration(
+          labelText: 'Description',
+          alignLabelWithHint: true,
+        ),
+        minLines: 6,
+        maxLines: null,
         validator: (value) =>
             (value == null || value.trim().isEmpty) ? 'Required' : null,
       ),

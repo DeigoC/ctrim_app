@@ -751,7 +751,7 @@ abstract class AppLocalizations {
   /// Label for the team-tag description field
   ///
   /// In en, this message translates to:
-  /// **'Short description'**
+  /// **'Description'**
   String get manageUserTagsDescriptionLabel;
 
   /// Label for the team-tag main graphic URL
@@ -2107,7 +2107,7 @@ abstract class AppLocalizations {
   /// Helper under cell group summary field
   ///
   /// In en, this message translates to:
-  /// **'Short description on the catalogue card and in About.'**
+  /// **'Shown on the catalogue card and in About.'**
   String get cellGroupsSummaryHelper;
 
   /// Label for church-area location on create/edit cell group

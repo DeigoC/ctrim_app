@@ -16,7 +16,7 @@ import '../../utility/app_links.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/my_avatar_stack.dart';
-import '../../widgets/paired_row_list.dart';
+import '../../widgets/two_column_masonry.dart';
 
 /// Catalogue list of cell groups (second tab).
 class CellGroupsListTab extends StatefulWidget {
@@ -257,16 +257,19 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
         SliverPadding(
           padding: padding,
           sliver: SliverToBoxAdapter(
-            child: PairedRowList(
-              itemCount: resolved.length,
+            child: TwoColumnMasonry(
+              spacing: 12,
               runSpacing: 12,
-              itemBuilder: (context, index) => _buildCard(
-                appContext: appContext,
-                l10n: l10n,
-                entry: resolved[index],
-                isGuest: isGuest,
-                showNearest: nearest,
-              ),
+              children: [
+                for (final entry in resolved)
+                  _buildCard(
+                    appContext: appContext,
+                    l10n: l10n,
+                    entry: entry,
+                    isGuest: isGuest,
+                    showNearest: nearest,
+                  ),
+              ],
             ),
           ),
         ),

@@ -91,9 +91,10 @@ class _EditTestimonialInfoBodyState extends State<EditTestimonialInfoBody>
         controller: _summaryController,
         decoration: const InputDecoration(
           labelText: 'Summary',
+          alignLabelWithHint: true,
         ),
-        minLines: 2,
-        maxLines: 3,
+        minLines: 6,
+        maxLines: null,
       ),
     ];
   }

@@ -199,7 +199,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _summaryController,
-                    maxLines: 3,
+                    minLines: 6,
+                    maxLines: null,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
                       labelText: l10n.cellGroupsSummaryLabel,

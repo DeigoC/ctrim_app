@@ -422,7 +422,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsHiddenFromGuests => 'Hidden from guests';
 
   @override
-  String get manageUserTagsDescriptionLabel => 'Short description';
+  String get manageUserTagsDescriptionLabel => 'Description';
 
   @override
   String get manageUserTagsImageUrlLabel => 'Image URL';
@@ -1198,7 +1198,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cellGroupsSummaryHelper =>
-      'Short description on the catalogue card and in About.';
+      'Shown on the catalogue card and in About.';
 
   @override
   String get cellGroupsLocationLabel => 'Location';
