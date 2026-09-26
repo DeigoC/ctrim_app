@@ -586,14 +586,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTagsNotifiableFilter => 'Notification streams';
 
   @override
-  String get managePostTagsTitle => 'Manage Post Tags';
+  String get managePostTagsTitle => 'Post tags';
 
   @override
   String get managePostTagsAdd => 'Add tag';
 
   @override
   String get managePostTagsEmpty =>
-      'No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.';
+      'No post tags yet. Add labels such as Sunday Worship or Midweek so people can filter the bulletin.';
 
   @override
   String get managePostTagsSeedDefaults => 'Add starter tags';
@@ -657,11 +657,67 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get managePostTagsMenuTitle => 'Post Tags';
+  String get managePostTagsMenuTitle => 'Post tags';
 
   @override
-  String get managePostTagsMenuSubtitle =>
-      'Labels for bulletin filtering & notify streams';
+  String get managePostTagsMenuSubtitle => 'Events and attendance by location';
+
+  @override
+  String get managePostTagsImageUrlLabel => 'Image URL';
+
+  @override
+  String get managePostTagsImageUrlHint => 'https://…';
+
+  @override
+  String get postTagsBrowseEmpty => 'No post tags to show yet.';
+
+  @override
+  String get postTagsSignedInOnly => 'Sign in to view post tags.';
+
+  @override
+  String get postTagsLoading => 'Loading post tags…';
+
+  @override
+  String get postTagDetailStatsTitle => 'By location';
+
+  @override
+  String get postTagDetailStatsSubtitle => 'Past 2 months and the next 3 weeks';
+
+  @override
+  String get postTagDetailEmpty =>
+      'No dated posts with this tag in this window.';
+
+  @override
+  String postTagDetailEvents(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count events',
+      one: '1 event',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String postTagDetailAttendance(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attended',
+      one: '1 attended',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get postTagDetailLoading => 'Loading tag activity…';
+
+  @override
+  String get postTagDetailLoadError => 'Could not load tag activity';
+
+  @override
+  String get postTagDetailUnavailable =>
+      'This post tag is no longer available.';
 
   @override
   String get manageUserLocationsTitle => 'Manage Locations';

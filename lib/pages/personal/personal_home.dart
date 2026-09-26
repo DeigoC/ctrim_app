@@ -184,7 +184,6 @@ class _PersonalHomeState extends State<PersonalHome> {
             appContext: appContext,
             wide: false,
             onViewTemplates: _openViewTemplatesClick,
-            onManagePostTags: _openManagePostTagsClick,
             onManageUserLocations: _openManageUserLocationsClick,
           ),
         ],
@@ -242,7 +241,6 @@ class _PersonalHomeState extends State<PersonalHome> {
                   wide: true,
                   gridColumns: 1,
                   onViewTemplates: _openViewTemplatesClick,
-                  onManagePostTags: _openManagePostTagsClick,
                   onManageUserLocations: _openManageUserLocationsClick,
                 ),
               ),
@@ -342,12 +340,20 @@ class _PersonalHomeState extends State<PersonalHome> {
       return actions;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     actions.addAll([
       PersonalAction(
         icon: Icons.article_rounded,
         title: 'My Posts',
         subtitle: 'View your created posts',
         onTap: _onOpenPostsClick,
+        iconColor: colorScheme.primary,
+      ),
+      PersonalAction(
+        icon: Icons.style_rounded,
+        title: l10n.managePostTagsMenuTitle,
+        subtitle: l10n.managePostTagsMenuSubtitle,
+        onTap: _openManagePostTagsClick,
         iconColor: colorScheme.primary,
       ),
       PersonalAction(

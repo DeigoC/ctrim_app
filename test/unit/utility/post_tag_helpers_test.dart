@@ -64,5 +64,19 @@ void main() {
       expect(head.hasTag('a'), isTrue);
       expect(head.hasAnyTag(['c', 'x']), isTrue);
     });
+
+    test('browseTags hides inactive tags unless the viewer can manage', () {
+      final readers = PostTagHelpers.browseTags(
+        allTags: tags,
+        canManage: false,
+      );
+      final admins = PostTagHelpers.browseTags(
+        allTags: tags,
+        canManage: true,
+      );
+
+      expect(readers.map((tag) => tag.id), ['c', 'a']);
+      expect(admins.map((tag) => tag.id), ['c', 'a', 'b']);
+    });
   });
 }

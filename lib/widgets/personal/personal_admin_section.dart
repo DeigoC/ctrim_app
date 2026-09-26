@@ -11,7 +11,6 @@ class PersonalAdminSection extends StatelessWidget {
     required this.wide,
     this.gridColumns = 1,
     required this.onViewTemplates,
-    required this.onManagePostTags,
     required this.onManageUserLocations,
   });
 
@@ -19,7 +18,6 @@ class PersonalAdminSection extends StatelessWidget {
   final bool wide;
   final int gridColumns;
   final VoidCallback onViewTemplates;
-  final VoidCallback onManagePostTags;
   final VoidCallback onManageUserLocations;
 
   @override
@@ -53,15 +51,6 @@ class PersonalAdminSection extends StatelessWidget {
       );
     }
     if (appContext.currentUser.canManageVolunteers) {
-      actions.add(
-        PersonalAction(
-          icon: Icons.style_rounded,
-          title: l10n.managePostTagsMenuTitle,
-          subtitle: l10n.managePostTagsMenuSubtitle,
-          onTap: onManagePostTags,
-          iconColor: colorScheme.primary,
-        ),
-      );
       actions.add(
         PersonalAction(
           icon: Icons.location_on_rounded,
