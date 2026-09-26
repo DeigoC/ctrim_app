@@ -12,7 +12,9 @@ import '../../utility/activity_time_series.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/church_social_ui.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/map_area.dart';
 import '../../widgets/common/activity_trend_section.dart';
+import '../../widgets/maps/area_map.dart';
 import '../../widgets/information/info_image_carousel.dart';
 import '../../widgets/information/info_section_card.dart';
 import '../../widgets/paired_row_list.dart';
@@ -208,8 +210,24 @@ class _VisitCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (church.hasAddress) ...[
+          if (church.hasCoordinates) ...[
             if (church.hasLocation || church.isFullChurch)
+              const SizedBox(height: 12),
+            AreaMap(
+              pins: [
+                MapAreaPin(
+                  latitude: church.latitude!,
+                  longitude: church.longitude!,
+                ),
+              ],
+              pinZoom: MapArea.churchPinZoom,
+              maxZoom: MapArea.churchPinZoom,
+            ),
+          ],
+          if (church.hasAddress) ...[
+            if (church.hasLocation ||
+                church.isFullChurch ||
+                church.hasCoordinates)
               const SizedBox(height: 12),
             Text(
               church.address,
@@ -219,7 +237,10 @@ class _VisitCard extends StatelessWidget {
             ),
           ],
           if (onOpenMaps != null) ...[
-            if (church.hasLocation || church.isFullChurch || church.hasAddress)
+            if (church.hasLocation ||
+                church.isFullChurch ||
+                church.hasAddress ||
+                church.hasCoordinates)
               const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
@@ -232,6 +253,7 @@ class _VisitCard extends StatelessWidget {
           ],
           if (!church.hasLocation &&
               !church.hasAddress &&
+              !church.hasCoordinates &&
               onOpenMaps == null &&
               church.isOutreach)
             Text(

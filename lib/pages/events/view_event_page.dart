@@ -159,7 +159,10 @@ class _ViewEventPageState extends State<ViewEventPage>
         }
       },
       child: Scaffold(
-        appBar: _haveFetchedPost
+        // A key graphic is already on the head. Paint it on the first frame so
+        // the bulletin cover has a destination for the open hero flight.
+        // Waiting for the supplemental fetch only leaves a hero on the way out.
+        appBar: _showCoverShell
             ? null
             : AppBar(
                 title: Text(
@@ -168,12 +171,15 @@ class _ViewEventPageState extends State<ViewEventPage>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-        body: _haveFetchedPost
-            ? _buildBodyWithData()
-            : _buildLoadingOrErrorBody(),
+        body:
+            _showCoverShell ? _buildBodyWithData() : _buildLoadingOrErrorBody(),
       ),
     );
   }
+
+  /// Cover shell while the body is still loading, and the full page after.
+  bool get _showCoverShell =>
+      _haveFetchedPost || widget.eventHead.getKeyGraphic() != null;
 
   Widget _buildLoadingOrErrorBody() {
     if (_loadError != null) {
@@ -303,15 +309,57 @@ class _ViewEventPageState extends State<ViewEventPage>
         headerSliverBuilder: (_, __) {
           return _buildHeaderSliver(webHorizontalPadding);
         },
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-          child: _buildTabBody(),
-        ));
+        body: _haveFetchedPost
+            ? Padding(
+                padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+                child: _buildTabBody(),
+              )
+            : CustomScrollView(
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _buildLoadingOrErrorBody(),
+                  ),
+                ],
+              ));
   }
 
   List<Widget> _buildHeaderSliver(final double webHorizontalPadding) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final String? keyGraphic = widget.eventHead.getKeyGraphic();
+    final header = <Widget>[
+      SliverAppBar(
+          key: ValueKey('post_cover_bar_${widget.eventHead.id}'),
+          expandedHeight: keyGraphic != null
+              ? MediaQuery.of(context).size.height * 0.33
+              : null,
+          flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+          actions: _haveFetchedPost ? _buildAppBarActions() : null),
+    ];
+    if (!_haveFetchedPost) {
+      header.add(
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
+          sliver: SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16, left: 8, right: 8),
+              child: Text(
+                widget.eventHead.title,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      return header;
+    }
+
     final List<Widget> metaChildren = [
       PostMetadataSection(
           eventContext: _eventContext, update: _updateWholePostBody)
@@ -322,15 +370,7 @@ class _ViewEventPageState extends State<ViewEventPage>
       metaChildren.insert(0, _buildBookmarkButton());
     }
 
-    return [
-      SliverAppBar(
-          expandedHeight: _eventContext.head.getKeyGraphic() != null
-              ? MediaQuery.of(context).size.height * 0.33
-              : null,
-          flexibleSpace: FlexibleSpaceBar(background: _buildAppBarBackground()),
-          backgroundColor: colorScheme.surface,
-          surfaceTintColor: colorScheme.surfaceTint,
-          actions: _buildAppBarActions()),
+    header.add(
       SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
         sliver: SliverList(
@@ -355,8 +395,9 @@ class _ViewEventPageState extends State<ViewEventPage>
               controller: _tabController,
               tabs: _appBarTabs)
         ])),
-      )
-    ];
+      ),
+    );
+    return header;
   }
 
   Widget _buildUnsavedChangesBanner(ThemeData theme, ColorScheme colorScheme) {
@@ -423,15 +464,16 @@ class _ViewEventPageState extends State<ViewEventPage>
   }
 
   Widget? _buildAppBarBackground() {
-    final String? keyGraphicSrc = _eventContext.head.getKeyGraphic();
+    final String? keyGraphicSrc = widget.eventHead.getKeyGraphic();
     if (keyGraphicSrc == null) return null;
 
     return CachedImageWidget(
+      key: ValueKey('post_cover_${widget.eventHead.id}'),
       imageUrl: keyGraphicSrc,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      heroTag: 'post_cover_${_eventContext.head.id}',
+      heroTag: 'post_cover_${widget.eventHead.id}',
     );
   }
 

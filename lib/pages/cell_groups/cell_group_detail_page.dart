@@ -15,11 +15,13 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cache/refresh_cooldown.dart';
+import '../../utility/map_area.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/cell_group_roster_cache.dart';
 import '../../widgets/cell_groups/cell_group_activity_panel.dart';
+import '../../widgets/maps/area_map.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
@@ -603,6 +605,43 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     );
   }
 
+  List<Widget> _buildAreaMap(
+    final AppLocalizations l10n,
+    final ThemeData theme,
+    final ColorScheme colorScheme,
+    final CellGroup group,
+  ) {
+    final radius = MapArea.cellGroupRadiusMeters(group.postcode);
+    final latitude = group.latitude;
+    final longitude = group.longitude;
+    if (!group.hasCoordinates ||
+        radius == null ||
+        latitude == null ||
+        longitude == null) {
+      return const [];
+    }
+    return [
+      const SizedBox(height: 12),
+      AreaMap(
+        maxZoom: MapArea.cellGroupMaxZoom,
+        circles: [
+          MapAreaCircle(
+            latitude: latitude,
+            longitude: longitude,
+            radiusMeters: radius,
+          ),
+        ],
+      ),
+      const SizedBox(height: 4),
+      Text(
+        l10n.mapApproximateArea,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ];
+  }
+
   Widget _buildAboutBody({
     required AppLocalizations l10n,
     required ThemeData theme,
@@ -646,6 +685,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               ),
           ],
         ),
+        ..._buildAreaMap(l10n, theme, colorScheme, group),
         if (isGuest) ...[
           const SizedBox(height: 12),
           Text(

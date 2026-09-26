@@ -19,6 +19,17 @@ class UkPostcodeLookupException implements Exception {
   String toString() => 'UkPostcodeLookupException($failure)';
 }
 
+/// A UK postcode found in free text, or a signal that one is unfinished.
+class UkPostcodeInAddress {
+  const UkPostcodeInAddress({this.postcode, this.pending = false});
+
+  /// Normalised postcode or outcode. Null when [pending] or nothing matched.
+  final String? postcode;
+
+  /// True while an inward code is only partly typed (`BT9 6`).
+  final bool pending;
+}
+
 /// Centroid returned by postcodes.io for a full postcode or outcode.
 class UkPostcodeGeo {
   const UkPostcodeGeo({
@@ -81,6 +92,52 @@ class UkPostcodeLookup {
   /// `BT9 6AB` or `BT37`, or null if [raw] is neither.
   static String? normalize(final String raw) {
     return normalizeFull(raw) ?? normalizeOutcode(raw);
+  }
+
+  /// Full postcode inside free text, e.g. `BT9 6AB` or `BT96AB`.
+  static final RegExp _fullInText = RegExp(
+    r'\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b',
+  );
+
+  /// Outward code inside free text, e.g. `BT37`.
+  static final RegExp _outcodeInText = RegExp(
+    r'\b([A-Z]{1,2}\d[A-Z\d]?)\b',
+  );
+
+  /// Outcode followed by an unfinished inward code (`BT9 6`, `BT9 6A`).
+  static final RegExp _partialInward = RegExp(
+    r'\b[A-Z]{1,2}\d[A-Z\d]?\s+(\d[A-Z]{0,2})\b',
+  );
+
+  /// Last full postcode in [address], otherwise the last outcode.
+  ///
+  /// [UkPostcodeInAddress.pending] is true while someone is still typing
+  /// the inward code, so callers can wait instead of geocoding `BT9`.
+  static UkPostcodeInAddress extractFromAddress(final String address) {
+    final upper = address.toUpperCase();
+    final full = _fullInText.allMatches(upper).toList();
+    if (full.isNotEmpty) {
+      final match = full.last;
+      final normalised = normalizeFull('${match.group(1)}${match.group(2)}');
+      if (normalised != null) {
+        return UkPostcodeInAddress(postcode: normalised);
+      }
+    }
+    for (final match in _partialInward.allMatches(upper)) {
+      final inward = match.group(1) ?? '';
+      if (!_inward.hasMatch(inward)) {
+        return const UkPostcodeInAddress(pending: true);
+      }
+    }
+    String? lastOutcode;
+    for (final match in _outcodeInText.allMatches(upper)) {
+      final token = match.group(1);
+      if (token == null) continue;
+      final normalised = normalizeOutcode(token);
+      if (normalised != null) lastOutcode = normalised;
+    }
+    if (lastOutcode == null) return const UkPostcodeInAddress();
+    return UkPostcodeInAddress(postcode: lastOutcode);
   }
 
   /// Looks up a full postcode, or an outcode when [allowOutcode] is true.
