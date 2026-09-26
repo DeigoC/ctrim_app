@@ -40,6 +40,20 @@ class PostTagHelpers {
         tagIDs: head.tagIDs, allTags: allTags, activeOnly: activeOnly);
   }
 
+  /// Active tags for signed-in readers. Area admins also see inactive tags.
+  static List<PostTag> browseTags({
+    required List<PostTag> allTags,
+    required bool canManage,
+  }) {
+    final visible = allTags.where((tag) => canManage || tag.isActive).toList();
+    visible.sort((a, b) {
+      final orderCompare = a.displayOrder.compareTo(b.displayOrder);
+      if (orderCompare != 0) return orderCompare;
+      return a.name.compareTo(b.name);
+    });
+    return visible;
+  }
+
   static bool headMatchesTagFilter({
     required EventHead head,
     required Set<String> selectedTagIDs,

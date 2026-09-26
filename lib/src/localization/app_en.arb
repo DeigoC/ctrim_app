@@ -776,17 +776,17 @@
   "@postTagsNotifiableFilter": {
     "description": "Filter chip to show only post tags that drive push streams"
   },
-  "managePostTagsTitle": "Manage Post Tags",
+  "managePostTagsTitle": "Post tags",
   "@managePostTagsTitle": {
-    "description": "Title for the admin page that manages post content tag definitions"
+    "description": "Title for the signed-in page that lists post content tags"
   },
   "managePostTagsAdd": "Add tag",
   "@managePostTagsAdd": {
     "description": "Action to create a new post content tag"
   },
-  "managePostTagsEmpty": "No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.",
+  "managePostTagsEmpty": "No post tags yet. Add labels such as Sunday Worship or Midweek so people can filter the bulletin.",
   "@managePostTagsEmpty": {
-    "description": "Empty state on the manage post tags page"
+    "description": "Empty state on the post tags page for area admins"
   },
   "managePostTagsSeedDefaults": "Add starter tags",
   "@managePostTagsSeedDefaults": {
@@ -875,13 +875,75 @@
       }
     }
   },
-  "managePostTagsMenuTitle": "Post Tags",
+  "managePostTagsMenuTitle": "Post tags",
   "@managePostTagsMenuTitle": {
-    "description": "Personal home admin menu item for managing post tags"
+    "description": "Personal home menu item for the post tags page"
   },
-  "managePostTagsMenuSubtitle": "Labels for bulletin filtering & notify streams",
+  "managePostTagsMenuSubtitle": "Events and attendance by location",
   "@managePostTagsMenuSubtitle": {
-    "description": "Personal home admin menu subtitle for managing post tags"
+    "description": "Personal home menu subtitle for the post tags page"
+  },
+  "managePostTagsImageUrlLabel": "Image URL",
+  "@managePostTagsImageUrlLabel": {
+    "description": "Label for the post tag cover image URL"
+  },
+  "managePostTagsImageUrlHint": "https://…",
+  "@managePostTagsImageUrlHint": {
+    "description": "Hint for the post tag cover image URL"
+  },
+  "postTagsBrowseEmpty": "No post tags to show yet.",
+  "@postTagsBrowseEmpty": {
+    "description": "Empty state on the post tags page for people who cannot manage tags"
+  },
+  "postTagsSignedInOnly": "Sign in to view post tags.",
+  "@postTagsSignedInOnly": {
+    "description": "Shown when a guest opens the post tags page"
+  },
+  "postTagsLoading": "Loading post tags…",
+  "@postTagsLoading": {
+    "description": "Status while the post tags list is loading"
+  },
+  "postTagDetailStatsTitle": "By location",
+  "@postTagDetailStatsTitle": {
+    "description": "Section title for post tag event and attendance totals"
+  },
+  "postTagDetailStatsSubtitle": "Past 2 months and the next 3 weeks",
+  "@postTagDetailStatsSubtitle": {
+    "description": "Window shown under post tag location totals"
+  },
+  "postTagDetailEmpty": "No dated posts with this tag in this window.",
+  "@postTagDetailEmpty": {
+    "description": "Empty state when a post tag has no dated posts in the activity window"
+  },
+  "postTagDetailEvents": "{count, plural, =1{1 event} other{{count} events}}",
+  "@postTagDetailEvents": {
+    "description": "Dated post count for one location on a post tag",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postTagDetailAttendance": "{count, plural, =1{1 attended} other{{count} attended}}",
+  "@postTagDetailAttendance": {
+    "description": "Attendance total for one location on a post tag",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postTagDetailLoading": "Loading tag activity…",
+  "@postTagDetailLoading": {
+    "description": "Status while a post tag's location totals are loading"
+  },
+  "postTagDetailLoadError": "Could not load tag activity",
+  "@postTagDetailLoadError": {
+    "description": "Error title when a post tag's location totals fail to load"
+  },
+  "postTagDetailUnavailable": "This post tag is no longer available.",
+  "@postTagDetailUnavailable": {
+    "description": "Shown when a post tag was removed before its page finished opening"
   },
   "manageUserLocationsTitle": "Manage Locations",
   "@manageUserLocationsTitle": {

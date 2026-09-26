@@ -12,9 +12,9 @@ The page is organised into clear sections so everyday options stay separate from
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
-| **For you** | Everyday shortcuts: my posts, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
+| **For you** | Everyday shortcuts: my posts, **post tags**, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
 | **People & teams** | **Who's who**, **team rota**, and **team tags**. Team tags stay available to guests; the directory and rota are for signed-in people |
-| **Admin / Leader tools** | Post templates, post tags, and locations — only when your role allows. Team tags are edited from **People & teams**, not from this list |
+| **Admin / Leader tools** | Post templates and locations — only when your role allows. Post tags are browsed from **For you**. Team tags are edited from **People & teams** |
 | **Settings** | Appearance, startup tab (signed in), **full surname for guests** (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
 
@@ -25,6 +25,7 @@ The page is organised into clear sections so everyday options stay separate from
 | Browse bulletin & information | Yes | Yes |
 | Mark interest (“follow updates”) | No (prompted to sign in) | Yes |
 | My Schedule / My Posts | No | Yes (when they have a community profile) |
+| Post tags | No | Yes |
 | Who's who / Team rota | No | Yes (when they have a community profile) |
 | Team tags | Yes (People & teams) | Yes |
 | Notification preferences | Can enable notifications | Full preference page |
@@ -71,6 +72,10 @@ Sort and filter work much like the bulletin: **recently updated** by default, or
 
 The app keeps a personal list of those posts on your profile. When you open My Posts, it is matched against the posts already loaded for the bulletin in this session. If a post has aged off the bulletin feed, it may no longer appear here even though you were involved with it.
 
+## Post tags
+
+**Post tags** (under **For you**) is for signed-in people. Each tag can have one main image. Tap a tag to see, for each church location, how many dated posts used that label in the past two months and the next three weeks, and how many people attended. Locations with nothing in that window are left off the list. Area admins add, edit, reorder, and remove tags, and set the image address. Guests can still filter the bulletin by these labels; they do not open this page.
+
 ## People & teams
 
 **Who's who**, **Team rota**, and **Team tags** sit together, separate from account shortcuts.
@@ -81,7 +86,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 
 - **Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services** *(leaders)*  
-- **Post tags** and **locations** *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's who** when that place is selected.  
+- **Locations** *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. A post tag can also have one image address; that image shows on the Post tags list and at the top of the tag. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's who** when that place is selected.  
 
 See [People & roles](people-and-roles.md).
 

@@ -4,14 +4,18 @@ import '../../models/post_tag.dart';
 
 class PostTagDBManager {
   static final CollectionReference<Map<String, dynamic>> _ref =
-      FirebaseFirestore.instance.collection('post_tags').withConverter<Map<String, dynamic>>(
+      FirebaseFirestore.instance
+          .collection('post_tags')
+          .withConverter<Map<String, dynamic>>(
             fromFirestore: (snap, _) => snap.data() ?? {},
             toFirestore: (data, _) => data,
           );
 
   Future<List<PostTag>> fetchAllTags() async {
     final snapshot = await _ref.get();
-    final tags = snapshot.docs.map((doc) => PostTag.fromMap(doc.id, doc.data())).toList();
+    final tags = snapshot.docs
+        .map((doc) => PostTag.fromMap(doc.id, doc.data()))
+        .toList();
     tags.sort((a, b) {
       final orderCompare = a.displayOrder.compareTo(b.displayOrder);
       if (orderCompare != 0) return orderCompare;
@@ -24,6 +28,7 @@ class PostTagDBManager {
     required String name,
     String? color,
     String? streamKind,
+    String? imageUrl,
     required int displayOrder,
   }) async {
     final docRef = _ref.doc();
@@ -32,6 +37,7 @@ class PostTagDBManager {
       name: name,
       color: color,
       streamKind: streamKind,
+      imageUrl: imageUrl,
       displayOrder: displayOrder,
     );
     await docRef.set(tag.toJson());

@@ -1018,10 +1018,10 @@ abstract class AppLocalizations {
   /// **'Notification streams'**
   String get postTagsNotifiableFilter;
 
-  /// Title for the admin page that manages post content tag definitions
+  /// Title for the signed-in page that lists post content tags
   ///
   /// In en, this message translates to:
-  /// **'Manage Post Tags'**
+  /// **'Post tags'**
   String get managePostTagsTitle;
 
   /// Action to create a new post content tag
@@ -1030,10 +1030,10 @@ abstract class AppLocalizations {
   /// **'Add tag'**
   String get managePostTagsAdd;
 
-  /// Empty state on the manage post tags page
+  /// Empty state on the post tags page for area admins
   ///
   /// In en, this message translates to:
-  /// **'No post tags yet. Create tags like Sunday Worship or Youth for bulletin filtering and optional notifications.'**
+  /// **'No post tags yet. Add labels such as Sunday Worship or Midweek so people can filter the bulletin.'**
   String get managePostTagsEmpty;
 
   /// Button to seed default post tags with Belfast stream kinds
@@ -1144,17 +1144,95 @@ abstract class AppLocalizations {
   /// **'Cannot delete — {count} posts still have this tag. Deactivate it instead.'**
   String managePostTagsDeleteBlocked(int count);
 
-  /// Personal home admin menu item for managing post tags
+  /// Personal home menu item for the post tags page
   ///
   /// In en, this message translates to:
-  /// **'Post Tags'**
+  /// **'Post tags'**
   String get managePostTagsMenuTitle;
 
-  /// Personal home admin menu subtitle for managing post tags
+  /// Personal home menu subtitle for the post tags page
   ///
   /// In en, this message translates to:
-  /// **'Labels for bulletin filtering & notify streams'**
+  /// **'Events and attendance by location'**
   String get managePostTagsMenuSubtitle;
+
+  /// Label for the post tag cover image URL
+  ///
+  /// In en, this message translates to:
+  /// **'Image URL'**
+  String get managePostTagsImageUrlLabel;
+
+  /// Hint for the post tag cover image URL
+  ///
+  /// In en, this message translates to:
+  /// **'https://…'**
+  String get managePostTagsImageUrlHint;
+
+  /// Empty state on the post tags page for people who cannot manage tags
+  ///
+  /// In en, this message translates to:
+  /// **'No post tags to show yet.'**
+  String get postTagsBrowseEmpty;
+
+  /// Shown when a guest opens the post tags page
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view post tags.'**
+  String get postTagsSignedInOnly;
+
+  /// Status while the post tags list is loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading post tags…'**
+  String get postTagsLoading;
+
+  /// Section title for post tag event and attendance totals
+  ///
+  /// In en, this message translates to:
+  /// **'By location'**
+  String get postTagDetailStatsTitle;
+
+  /// Window shown under post tag location totals
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months and the next 3 weeks'**
+  String get postTagDetailStatsSubtitle;
+
+  /// Empty state when a post tag has no dated posts in the activity window
+  ///
+  /// In en, this message translates to:
+  /// **'No dated posts with this tag in this window.'**
+  String get postTagDetailEmpty;
+
+  /// Dated post count for one location on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 event} other{{count} events}}'**
+  String postTagDetailEvents(int count);
+
+  /// Attendance total for one location on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attended} other{{count} attended}}'**
+  String postTagDetailAttendance(int count);
+
+  /// Status while a post tag's location totals are loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading tag activity…'**
+  String get postTagDetailLoading;
+
+  /// Error title when a post tag's location totals fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load tag activity'**
+  String get postTagDetailLoadError;
+
+  /// Shown when a post tag was removed before its page finished opening
+  ///
+  /// In en, this message translates to:
+  /// **'This post tag is no longer available.'**
+  String get postTagDetailUnavailable;
 
   /// Title for the admin page that manages volunteer location definitions
   ///

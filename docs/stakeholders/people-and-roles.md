@@ -77,9 +77,11 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 **Site admin** is the working title for a level **above** area admin: the same kind of admin power **without** being limited to a single area’s location scope.
 
-## People directory
+## Names guests see
 
-On public pages — a profile link, a team list, pastors, a schedule role, or the speaker on a bulletin card — people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full surname for guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names. Who's who itself stays available only when you are signed in.
+On a profile link, a team list, pastors, a schedule role, or the speaker on a bulletin card, people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full surname for guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
+
+## People directory
 
 **Who's who** (from Personal → People & teams) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**. When that location has a cover photo, the photo appears at the top of the list; it stays while you keep that place selected and hides on **All**.
 
