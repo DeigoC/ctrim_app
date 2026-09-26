@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/info/info_parsing.dart';
 import '../../models/user.dart';
 import '../../utility/app_context.dart';
 import '../../utility/cache/refresh_cooldown.dart';
-import '../../utility/responsive_layout.dart';
-import '../../widgets/information/info_image_carousel.dart';
 import '../../widgets/common/load_progress_body.dart';
-import '../../widgets/quill_editor_wrapper.dart';
+import 'info_detail_body.dart';
 
 /// Shared detail layout for church / testimonial / CTRIM info pages.
 class InfoDetailPageScaffold extends StatelessWidget {
@@ -28,6 +25,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
     this.aboveBody,
     this.bodyHeading,
     this.belowBody,
+    this.pinPortraitAside = false,
   });
 
   final String title;
@@ -45,20 +43,42 @@ class InfoDetailPageScaffold extends StatelessWidget {
   final Widget? bodyHeading;
   final Widget? belowBody;
 
+  /// Wide windows pin a portrait or square lead photo beside the story.
+  /// Testimonials and Pastors & History opt in. Landscape photos and narrow
+  /// windows keep the banner. Leave this off for church hubs, CTRIM topics,
+  /// and nested church pages.
+  final bool pinPortraitAside;
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final size = MediaQuery.sizeOf(context);
-    final double gutter =
-        ResponsiveLayout.horizontalGutter(size.width, narrowPadding: 0);
-    final bool isWide = ResponsiveLayout.isWideScreen(size.width);
-    final double carouselHeight = size.height *
-        (isWide ? carouselHeightFraction * 0.9 : carouselHeightFraction);
-    final bool showCarousel = imageUrls.isNotEmpty || showCarouselWhenEmpty;
-    final List<String> galleryImages = galleryImageUrls ??
-        (imageUrls.length > 1 ? imageUrls.skip(1).toList() : const <String>[]);
-    final bool hasBody = !InfoParsing.isEmptyBody(body);
+    final colorScheme = Theme.of(context).colorScheme;
+    final pageBody = pinPortraitAside
+        ? InfoDetailAsideHost(
+            imageUrls: imageUrls,
+            heroTag: heroTag,
+            body: body,
+            header: header,
+            onRefresh: onRefresh,
+            showCarouselWhenEmpty: showCarouselWhenEmpty,
+            carouselHeightFraction: carouselHeightFraction,
+            galleryImageUrls: galleryImageUrls,
+            aboveBody: aboveBody,
+            bodyHeading: bodyHeading,
+            belowBody: belowBody,
+          )
+        : InfoDetailStackedBody(
+            imageUrls: imageUrls,
+            heroTag: heroTag,
+            body: body,
+            header: header,
+            onRefresh: onRefresh,
+            showCarouselWhenEmpty: showCarouselWhenEmpty,
+            carouselHeightFraction: carouselHeightFraction,
+            galleryImageUrls: galleryImageUrls,
+            aboveBody: aboveBody,
+            bodyHeading: bodyHeading,
+            belowBody: belowBody,
+          );
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -75,85 +95,7 @@ class InfoDetailPageScaffold extends StatelessWidget {
             ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: onRefresh,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            if (showCarousel)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      EdgeInsets.fromLTRB(gutter, isWide ? 8 : 0, gutter, 0),
-                  child: InfoImageCarousel(
-                    imageUrls: imageUrls,
-                    heroTag: heroTag,
-                    landscapeHeight: carouselHeight,
-                    borderRadius: isWide ? 16 : 0,
-                  ),
-                ),
-              ),
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(gutter + 16, 20, gutter + 16, 40),
-              sliver: SliverToBoxAdapter(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isWide
-                          ? ResponsiveLayout.chordMaxWidth
-                          : double.infinity,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        header,
-                        if (aboveBody != null) ...[
-                          const SizedBox(height: 16),
-                          aboveBody!,
-                        ],
-                        if (hasBody) ...[
-                          const SizedBox(height: 12),
-                          const Divider(),
-                          const SizedBox(height: 8),
-                          if (bodyHeading != null) ...[
-                            bodyHeading!,
-                            const SizedBox(height: 8),
-                          ],
-                          QuillViewerWidget(
-                            jsonContent: body,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 8),
-                          ),
-                        ],
-                        if (galleryImages.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            'Gallery',
-                            style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 12),
-                          ...galleryImages.map(
-                            (imageUrl) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child:
-                                  AdaptiveInfoGalleryImage(imageUrl: imageUrl),
-                            ),
-                          ),
-                        ],
-                        if (belowBody != null) ...[
-                          const SizedBox(height: 20),
-                          belowBody!,
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: pageBody,
     );
   }
 }

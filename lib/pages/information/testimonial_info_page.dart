@@ -51,6 +51,10 @@ class TestimonialInfoPage extends StatelessWidget {
           onRefresh: onRefresh,
           onEdit: onEdit,
           editTooltip: 'Edit testimonial',
+          pinPortraitAside: true,
+          aboveBody: info.summary.isEmpty
+              ? null
+              : Text(info.summary, style: theme.textTheme.titleMedium),
           header: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -67,10 +71,6 @@ class TestimonialInfoPage extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ],
-              if (info.summary.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(info.summary, style: theme.textTheme.titleMedium),
               ],
             ],
           ),

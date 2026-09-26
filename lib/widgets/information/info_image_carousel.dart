@@ -4,6 +4,10 @@ import '../../utility/image_orientation.dart';
 import '../../utility/responsive_layout.dart';
 import '../media/cached_image_widget.dart';
 
+/// [InfoImageCarouselFrame.band] is the full-width banner.
+/// [InfoImageCarouselFrame.rail] sizes to the photo for a side column.
+enum InfoImageCarouselFrame { band, rail }
+
 class InfoImageCarousel extends StatefulWidget {
   const InfoImageCarousel({
     super.key,
@@ -12,6 +16,8 @@ class InfoImageCarousel extends StatefulWidget {
     required this.landscapeHeight,
     this.borderRadius = 0,
     this.portraitMaxWidth = 420,
+    this.frame = InfoImageCarouselFrame.band,
+    this.railMaxHeight,
   });
 
   final double borderRadius;
@@ -19,6 +25,10 @@ class InfoImageCarousel extends StatefulWidget {
   final double portraitMaxWidth;
   final String heroTag;
   final List<String> imageUrls;
+  final InfoImageCarouselFrame frame;
+
+  /// Caps the photo height in [InfoImageCarouselFrame.rail].
+  final double? railMaxHeight;
 
   @override
   State<InfoImageCarousel> createState() => _InfoImageCarouselState();
@@ -113,6 +123,10 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
     final double availableWidth = screen.width -
         (isWide ? ResponsiveLayout.horizontalGutter(screen.width) * 2 : 0);
 
+    if (widget.frame == InfoImageCarouselFrame.rail) {
+      return _buildRail(colorScheme);
+    }
+
     if (widget.imageUrls.isEmpty) {
       return Container(
         height: widget.landscapeHeight * 0.5,
@@ -137,8 +151,11 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
     // centered natural frame instead of a full-bleed wide banner.
     final bool useNaturalFrame = orientation != ImageOrientation.landscape;
 
+    final double maxHeightCap =
+        widget.landscapeHeight * (useNaturalFrame ? 1.65 : 1.0);
+    final double maxHeightFloor = maxHeightCap < 220 ? maxHeightCap : 220.0;
     final double maxHeight = (screen.height * (useNaturalFrame ? 0.58 : 0.42))
-        .clamp(220.0, widget.landscapeHeight * (useNaturalFrame ? 1.65 : 1.0));
+        .clamp(maxHeightFloor, maxHeightCap);
     final double maxWidth = useNaturalFrame
         ? widget.portraitMaxWidth
             .clamp(240.0, availableWidth * (isWide ? 0.38 : 0.78))
@@ -169,89 +186,156 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
             curve: Curves.easeOutCubic,
             width: displaySize.width,
             height: displaySize.height,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(
-                useNaturalFrame || isWide ? 16 : widget.borderRadius,
-              ),
-              child: ColoredBox(
-                color: colorScheme.surfaceContainerHighest,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    PageView.builder(
-                      controller: _pageController,
-                      itemCount: widget.imageUrls.length,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentIndex = index;
-                        });
-                        _probeAround(index);
-                      },
-                      itemBuilder: (context, index) {
-                        final url = widget.imageUrls[index];
-                        final pageSize = _intrinsicSizes[url];
-                        final pageNatural = pageSize != null &&
-                            ImageOrientationHelper.fromSize(
-                                  pageSize.width,
-                                  pageSize.height,
-                                ) !=
-                                ImageOrientation.landscape;
-
-                        return CachedImageWidget(
-                          imageUrl: url,
-                          fit: pageNatural ? BoxFit.contain : fit,
-                          heroTag: index == 0 ? widget.heroTag : null,
-                        );
-                      },
-                    ),
-                    if (widget.imageUrls.length > 1)
-                      Positioned(
-                        right: 12,
-                        bottom: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.45),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            '${_currentIndex + 1}/${widget.imageUrls.length}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+            child: _buildPhotoFrame(
+              colorScheme: colorScheme,
+              fit: fit,
+              radius: useNaturalFrame || isWide ? 16 : widget.borderRadius,
             ),
           ),
         ),
         if (widget.imageUrls.length > 1) ...[
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List<Widget>.generate(widget.imageUrls.length, (index) {
-              final isActive = index == _currentIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                height: 8,
-                width: isActive ? 20 : 8,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? colorScheme.primary
-                      : colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              );
-            }),
-          ),
+          _buildDots(colorScheme),
         ],
       ],
+    );
+  }
+
+  /// Photo sized to its frame, top-aligned. Unknown images start at 3:4 so a
+  /// testimonial hero matches the list card.
+  Widget _buildRail(ColorScheme colorScheme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double maxWidth = constraints.maxWidth;
+        final double cap = widget.railMaxHeight ??
+            (constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : maxWidth * 4 / 3);
+        final bool hasDots = widget.imageUrls.length > 1;
+        final double photoBudget = hasDots ? cap - 28 : cap;
+        final double photoMax = photoBudget < 80
+            ? (cap < 80 ? cap : 80.0)
+            : photoBudget.clamp(80.0, cap);
+        final Size? intrinsic = _currentIntrinsic;
+        final ImageOrientation orientation = intrinsic == null
+            ? ImageOrientation.portrait
+            : ImageOrientationHelper.fromSize(
+                intrinsic.width, intrinsic.height);
+        final bool natural = orientation != ImageOrientation.landscape;
+        final Size displaySize = ImageOrientationHelper.fitWithin(
+          intrinsic: intrinsic ?? const Size(3, 4),
+          maxWidth: maxWidth,
+          maxHeight: photoMax,
+        );
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                width: displaySize.width,
+                height: displaySize.height,
+                child: _buildPhotoFrame(
+                  colorScheme: colorScheme,
+                  fit: natural ? BoxFit.contain : BoxFit.cover,
+                  radius: 16,
+                ),
+              ),
+            ),
+            if (hasDots) ...[
+              const SizedBox(height: 12),
+              _buildDots(colorScheme),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPhotoFrame({
+    required ColorScheme colorScheme,
+    required BoxFit fit,
+    required double radius,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: ColoredBox(
+        color: colorScheme.surfaceContainerHighest,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.imageUrls.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+                _probeAround(index);
+              },
+              itemBuilder: (context, index) {
+                final url = widget.imageUrls[index];
+                final pageSize = _intrinsicSizes[url];
+                final pageNatural = pageSize != null &&
+                    ImageOrientationHelper.fromSize(
+                          pageSize.width,
+                          pageSize.height,
+                        ) !=
+                        ImageOrientation.landscape;
+
+                return CachedImageWidget(
+                  imageUrl: url,
+                  fit: pageNatural ? BoxFit.contain : fit,
+                  heroTag: index == 0 ? widget.heroTag : null,
+                );
+              },
+            ),
+            if (widget.imageUrls.length > 1)
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${_currentIndex + 1}/${widget.imageUrls.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDots(ColorScheme colorScheme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List<Widget>.generate(widget.imageUrls.length, (index) {
+        final isActive = index == _currentIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          height: 8,
+          width: isActive ? 20 : 8,
+          decoration: BoxDecoration(
+            color: isActive ? colorScheme.primary : colorScheme.outlineVariant,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
     );
   }
 }
