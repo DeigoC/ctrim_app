@@ -397,6 +397,16 @@ class AppContext extends ChangeNotifier {
     return user.authID;
   }
 
+  /// Guest-facing surname visibility for the signed-in profile.
+  void setShowFullSurnameToGuests(final bool value) {
+    _currentUser.setShowFullSurnameToGuests(value);
+    final directory = _usersById[_currentUser.id];
+    if (directory != null && !identical(directory, _currentUser)) {
+      directory.setShowFullSurnameToGuests(value);
+    }
+    _notify(session: true, users: true);
+  }
+
   bool get useUserImageSrc => _useCurrentUserSrc;
   void setNewUserImage(final String newSrc) {
     _currentUser.setImgSrc(newSrc);

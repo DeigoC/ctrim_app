@@ -21,7 +21,7 @@ class User {
       _id,
       _location,
       _createdByUserID;
-  late bool _isAreaAdmin, _isLeader, _isPlaceholder;
+  late bool _isAreaAdmin, _isLeader, _isPlaceholder, _showFullSurnameToGuests;
   late String _status;
   late List<String> _tagIDs;
   List<UserRoleAssignment>? _roles;
@@ -40,7 +40,8 @@ class User {
       List<String> tagIDs = const [],
       String createdByUserID = '',
       bool isPlaceholder = false,
-      String status = UserStatus.active}) {
+      String status = UserStatus.active,
+      bool showFullSurnameToGuests = false}) {
     _id = id;
     _forename = forname;
     _surname = surname;
@@ -53,6 +54,7 @@ class User {
     _createdByUserID = createdByUserID;
     _isPlaceholder = isPlaceholder;
     _status = UserStatus.all.contains(status) ? status : UserStatus.active;
+    _showFullSurnameToGuests = showFullSurnameToGuests;
   }
 
   User.fromMap(final String id, final Map<String, dynamic> data)
@@ -69,7 +71,9 @@ class User {
         // Linked accounts are never placeholders, even if a stale flag remains.
         _isPlaceholder = ((data['AuthID'] as String?) ?? '').trim().isEmpty &&
             ((data['IsPlaceholder'] as bool?) ?? false),
-        _status = _parseStatus(data['Status']);
+        _status = _parseStatus(data['Status']),
+        _showFullSurnameToGuests =
+            (data['ShowFullSurnameToGuests'] as bool?) ?? false;
 
   static String _parseStatus(final dynamic raw) {
     final value = (raw as String?)?.trim() ?? '';
@@ -94,6 +98,7 @@ class User {
       'CreatedByUserID': _createdByUserID,
       'IsPlaceholder': _isPlaceholder,
       'Status': _status,
+      'ShowFullSurnameToGuests': _showFullSurnameToGuests,
     };
   }
 
@@ -104,6 +109,8 @@ class User {
   void setIsPlaceholder(final bool value) => _isPlaceholder = value;
   void setForename(final String value) => _forename = value;
   void setSurname(final String value) => _surname = value;
+  void setShowFullSurnameToGuests(final bool value) =>
+      _showFullSurnameToGuests = value;
   void setStatus(final String value) {
     _status = UserStatus.all.contains(value) ? value : UserStatus.active;
   }
@@ -144,6 +151,13 @@ class User {
     return '$_forename $surnameParts.';
   }
 
+  /// Name painted for [guest] viewers. Signed-in viewers always see [fullname].
+  /// Guests see [shortenedFullName] unless this person opted in.
+  String nameForViewer({required bool guest}) {
+    if (!guest || _showFullSurnameToGuests) return fullname;
+    return shortenedFullName;
+  }
+
   String get imgSrc => _imgSrc;
   String get location => _location;
   String get authID => _authID;
@@ -160,6 +174,9 @@ class User {
   bool get isProfileHidden => _status == UserStatus.hidden;
   bool get isProfileArchived => _status == UserStatus.archived;
   bool get isProfileInactive => !isProfileActive;
+
+  /// When true, guests see [fullname]. Missing on older profiles means false.
+  bool get showFullSurnameToGuests => _showFullSurnameToGuests;
 
   /// Churches, testimonials, and CTRIM info add/edit/delete.
   bool get canManageInfo => isLeader;

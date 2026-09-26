@@ -53,6 +53,7 @@ class _EditUserPageState extends State<EditUserPage> {
   late bool _isAreaAdmin;
   late bool _isLeader;
   late bool _isPlaceholder;
+  late bool _showFullSurnameToGuests;
   late String _status;
   late String _src;
   late String _authID;
@@ -78,6 +79,7 @@ class _EditUserPageState extends State<EditUserPage> {
     _isAreaAdmin = widget.user.isAreaAdmin;
     _isLeader = widget.user.isLeader;
     _isPlaceholder = widget.user.isPlaceholder;
+    _showFullSurnameToGuests = widget.user.showFullSurnameToGuests;
     _status = widget.user.status;
     _src = widget.user.imgSrc;
     _authID = widget.user.authID;
@@ -133,7 +135,8 @@ class _EditUserPageState extends State<EditUserPage> {
         _currentLocation != widget.user.location;
     final hasImgFieldChange = sanitizedImg != widget.user.imgSrc;
     final hasFlagChanges = _isAreaAdmin != widget.user.isAreaAdmin ||
-        _isLeader != widget.user.isLeader;
+        _isLeader != widget.user.isLeader ||
+        _showFullSurnameToGuests != widget.user.showFullSurnameToGuests;
     final hasStatusChange = _status != widget.user.status;
     final hasTagChanges =
         !_setEquals(_selectedTagIDs, widget.user.tagIDs.toSet());
@@ -454,6 +457,25 @@ class _EditUserPageState extends State<EditUserPage> {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  if (!_isCreatorOnlyEdit) ...[
+                    const SizedBox(height: 4),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        AppLocalizations.of(context)!
+                            .showFullSurnameToGuestsTitle,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!
+                            .showFullSurnameToGuestsSubtitle,
+                      ),
+                      value: _showFullSurnameToGuests,
+                      onChanged: (value) {
+                        _showFullSurnameToGuests = value;
+                        _updateChangeState();
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _buildEmailField(),
                   const SizedBox(height: 12),
@@ -675,6 +697,7 @@ class _EditUserPageState extends State<EditUserPage> {
         fallbackIsPlaceholder: _isPlaceholder,
       ),
       status: _status,
+      showFullSurnameToGuests: _showFullSurnameToGuests,
     );
   }
 
@@ -902,6 +925,7 @@ class _EditUserPageState extends State<EditUserPage> {
       createdByUserID: widget.user.createdByUserID,
       isPlaceholder: placeholder,
       status: _status,
+      showFullSurnameToGuests: _showFullSurnameToGuests,
     );
 
     try {
@@ -926,6 +950,7 @@ class _EditUserPageState extends State<EditUserPage> {
         createdByUserID: updatedUser.createdByUserID,
         isPlaceholder: updatedUser.isPlaceholder,
         status: updatedUser.status,
+        showFullSurnameToGuests: updatedUser.showFullSurnameToGuests,
       );
 
       if (_isCreatorOnlyEdit) {

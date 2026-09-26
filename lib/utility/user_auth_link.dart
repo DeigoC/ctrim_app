@@ -103,8 +103,11 @@ class UserAuthLinkService {
       isLeader: (raw['IsLeader'] as bool?) ?? previous.isLeader,
       authID: (raw['AuthID'] as String?) ?? '',
       tagIDs: _parseTags(raw['Tags']) ?? previous.tagIDs.toList(),
-      createdByUserID: (raw['CreatedByUserID'] as String?) ?? previous.createdByUserID,
+      createdByUserID:
+          (raw['CreatedByUserID'] as String?) ?? previous.createdByUserID,
       isPlaceholder: (raw['IsPlaceholder'] as bool?) ?? false,
+      showFullSurnameToGuests: (raw['ShowFullSurnameToGuests'] as bool?) ??
+          previous.showFullSurnameToGuests,
     );
     if (previous.roles != null) updated.setRoles(previous.roles!.toList());
     if (previous.posts != null) updated.setPosts(previous.posts!.toList());
@@ -131,6 +134,7 @@ User copyUser(
   List<String>? tagIDs,
   String? createdByUserID,
   String? status,
+  bool? showFullSurnameToGuests,
 }) {
   final copy = User(
     id: user.id,
@@ -145,6 +149,8 @@ User copyUser(
     createdByUserID: createdByUserID ?? user.createdByUserID,
     isPlaceholder: isPlaceholder ?? user.isPlaceholder,
     status: status ?? user.status,
+    showFullSurnameToGuests:
+        showFullSurnameToGuests ?? user.showFullSurnameToGuests,
   );
   if (user.roles != null) copy.setRoles(user.roles!.toList());
   if (user.posts != null) copy.setPosts(user.posts!.toList());

@@ -77,6 +77,11 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     return _appContext.userById(fallback.id) ?? fallback;
   }
 
+  String _displayName() {
+    return (_appContext.userById(_user.id) ?? _user)
+        .nameForViewer(guest: _appContext.isCurrentUserGuest);
+  }
+
   Future<void> _loadProfileData() async {
     setState(() {
       _loading = true;
@@ -181,6 +186,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   @override
   Widget build(BuildContext context) {
     context.select((AppContext c) => c.headsEpoch);
+    context.select((AppContext c) => c.usersEpoch);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -197,7 +203,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_user.fullname),
+        title: Text(_displayName()),
         actions: [
           if (canEdit)
             IconButton(
@@ -256,7 +262,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
               avatar,
             const SizedBox(height: 16),
             Text(
-              _user.fullname,
+              _displayName(),
               style: theme.textTheme.headlineSmall
                   ?.copyWith(fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
@@ -764,7 +770,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
             {
               'type': 'img',
               'src': _user.imgSrc,
-              'title': _user.fullname,
+              'title': _displayName(),
             },
           ],
           initialIndex: 0,

@@ -10,6 +10,8 @@ import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/catalog/manage_catalog_page.dart';
+import '../../widgets/catalog/user_tag_graphic.dart';
+import 'edit_user_location_media_page.dart';
 
 class ManageUserLocationsPage extends StatefulWidget {
   const ManageUserLocationsPage({super.key});
@@ -84,6 +86,15 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           ),
           itemName: (location) => location.name,
           itemIsActive: (location) => location.isActive,
+          itemBanner: (location) => location.hasKeyGraphic
+              ? UserTagGraphic(
+                  imageUrl: location.keyGraphicSrc,
+                  height: 140,
+                  borderRadius: 0,
+                )
+              : null,
+          photosLabel: l10n.manageUserLocationsPhotos,
+          onPhotos: _editLocationPhotos,
           onAdd: _showLocationDialog,
           onSeed: _seedDefaultLocations,
           onEdit: (location) => _showLocationDialog(existing: location),
@@ -93,6 +104,15 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           onMove: _moveLocation,
         );
       },
+    );
+  }
+
+  Future<void> _editLocationPhotos(final UserLocation location) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditUserLocationMediaPage(location: location),
+      ),
     );
   }
 

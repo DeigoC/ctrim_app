@@ -15,7 +15,7 @@ The page is organised into clear sections so everyday options stay separate from
 | **For you** | Everyday shortcuts: my posts, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
 | **People & teams** | **Who's who**, **team rota**, and **team tags**. Team tags stay available to guests; the directory and rota are for signed-in people |
 | **Admin / Leader tools** | Post templates, post tags, and locations — only when your role allows. Team tags are edited from **People & teams**, not from this list |
-| **Settings** | Appearance, startup tab (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
+| **Settings** | Appearance, startup tab (signed in), **full surname for guests** (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
 
 ## Guests vs signed-in
@@ -29,6 +29,7 @@ The page is organised into clear sections so everyday options stay separate from
 | Team tags | Yes (People & teams) | Yes |
 | Notification preferences | Can enable notifications | Full preference page |
 | Product guide | Yes (For you) | Yes |
+| Full surname on public pages | Sees a first name and surname initial, unless that person has chosen otherwise | Chooses this for their own name under Settings |
 | Create account / Sign in | Offered under **For you** | Profile header and account options |
 
 For Leaders, area admins, placeholders, and a fuller access grid, see [People & roles](people-and-roles.md).
@@ -75,12 +76,12 @@ The app keeps a personal list of those posts on your profile. When you open My P
 **Who's who**, **Team rota**, and **Team tags** sit together, separate from account shortcuts.
 
 - **Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description and, when one has been added, its main image. Choose a church location to see who leads that team there, who is on the team, photos from that site, and the team's schedule for the past three months and the next three months. Area admins edit the tag from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Tags hidden from guests do not appear in this list for guests.
-- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone.
+- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone. When a location has a cover photo, that photo sits at the top while Who's who is filtered to that place.
 
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 
 - **Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services** *(leaders)*  
-- **Post tags** and **locations** *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional.  
+- **Post tags** and **locations** *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's who** when that place is selected.  
 
 See [People & roles](people-and-roles.md).
 

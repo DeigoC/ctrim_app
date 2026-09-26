@@ -970,9 +970,45 @@
   "@manageUserLocationsMenuTitle": {
     "description": "Personal home admin menu item for managing locations"
   },
-  "manageUserLocationsMenuSubtitle": "Create and edit place labels",
+  "manageUserLocationsMenuSubtitle": "Names and cover photos",
   "@manageUserLocationsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing locations"
+  },
+  "manageUserLocationsPhotos": "Photos",
+  "@manageUserLocationsPhotos": {
+    "description": "Menu item and section title for a location photo gallery"
+  },
+  "manageUserLocationsPhotosHint": "Add photos for this place. The cover appears on the locations list and at the top of Who's who when this location is selected.",
+  "@manageUserLocationsPhotosHint": {
+    "description": "Hint under the location photos section"
+  },
+  "manageUserLocationsPhotosEmpty": "No photos yet.",
+  "@manageUserLocationsPhotosEmpty": {
+    "description": "Empty state for a location photo gallery"
+  },
+  "manageUserLocationsAddPhoto": "Add photo",
+  "@manageUserLocationsAddPhoto": {
+    "description": "Button to add a photo to a location"
+  },
+  "manageUserLocationsCoverPhoto": "Cover",
+  "@manageUserLocationsCoverPhoto": {
+    "description": "Label for the location photo chosen as the cover"
+  },
+  "manageUserLocationsSetAsCover": "Tap to set as cover",
+  "@manageUserLocationsSetAsCover": {
+    "description": "Hint on a location photo that is not the cover"
+  },
+  "manageUserLocationsPhotosImagesOnly": "Locations only support images for now.",
+  "@manageUserLocationsPhotosImagesOnly": {
+    "description": "SnackBar when a video is added to a location"
+  },
+  "manageUserLocationsRemovePhoto": "Remove photo",
+  "@manageUserLocationsRemovePhoto": {
+    "description": "Tooltip for removing a location photo"
+  },
+  "manageUserLocationsPhotoFallback": "Photo",
+  "@manageUserLocationsPhotoFallback": {
+    "description": "Title shown for a location photo that has no caption"
   },
   "volunteersEmptyTags": "No people match the selected tags",
   "@volunteersEmptyTags": {
@@ -1491,7 +1527,7 @@
   "@cellGroupsLeadersLabel": {
     "description": "Label for leaders list on CG detail"
   },
-  "cellGroupsRosterTitle": "Cell Members",
+  "cellGroupsRosterTitle": "Regular members",
   "@cellGroupsRosterTitle": {
     "description": "Section title for CG members on detail (UI label; code/Firestore may still say roster)"
   },
@@ -2268,9 +2304,9 @@
   "@mapApproximateAreas": {
     "description": "Caption under the nearest cell-groups map"
   },
-  "mapAttribution": "OpenStreetMap",
+  "mapAttribution": "© OpenStreetMap",
   "@mapAttribution": {
-    "description": "Attribution link under embedded maps"
+    "description": "Tappable corner credit on embedded maps"
   },
   "mapLoadFailed": "Map could not be loaded.",
   "@mapLoadFailed": {
@@ -2537,6 +2573,26 @@
   "scheduleArrangeParallelHint": "Long press an item and drag it. Everything else keeps its time, so items can run at the same time.",
   "@scheduleArrangeParallelHint": {
     "description": "Helper text for parallel drag mode"
+  },
+  "showFullSurnameToGuestsTitle": "Full surname for guests",
+  "@showFullSurnameToGuestsTitle": {
+    "description": "Setting that lets people who are not signed in see this person's full surname"
+  },
+  "showFullSurnameToGuestsSubtitle": "People who are not signed in see your first name and surname initial, unless this is on.",
+  "@showFullSurnameToGuestsSubtitle": {
+    "description": "Explains the guest surname setting. Off shows a first name and initial."
+  },
+  "showFullSurnameToGuestsOn": "On",
+  "@showFullSurnameToGuestsOn": {
+    "description": "Guest surname setting is enabled"
+  },
+  "showFullSurnameToGuestsOff": "Off",
+  "@showFullSurnameToGuestsOff": {
+    "description": "Guest surname setting is disabled"
+  },
+  "showFullSurnameToGuestsSaveFailed": "Could not update that setting. Try again.",
+  "@showFullSurnameToGuestsSaveFailed": {
+    "description": "Shown when saving the guest surname setting fails"
   },
   "scheduleArrangeDragHint": "Long press \"{title}\" to drag it",
   "@scheduleArrangeDragHint": {

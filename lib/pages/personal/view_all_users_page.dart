@@ -23,6 +23,7 @@ import '../../widgets/common/action_sheet.dart';
 import '../../widgets/app_search_bar.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/catalog/user_tag_graphic.dart';
 import '../../widgets/volunteer_role_badge.dart';
 import 'edit_user_page.dart';
 import 'register_user_page.dart';
@@ -239,6 +240,11 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
         return true;
       }).toList();
 
+      final locationCover = VolunteerLocations.keyGraphicSrcForName(
+        locations: appContext.allLocations,
+        name: _locationFilter,
+      );
+
       return Scaffold(
           appBar: AppBar(
             title: _isSearching
@@ -337,6 +343,19 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+              if (locationCover != null)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    filterHorizontalPadding,
+                    8,
+                    filterHorizontalPadding,
+                    4,
+                  ),
+                  child: UserTagGraphic(
+                    imageUrl: locationCover,
+                    height: 180,
                   ),
                 ),
               Padding(

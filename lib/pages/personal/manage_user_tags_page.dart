@@ -431,6 +431,7 @@ class _TagCard extends StatelessWidget {
                 imageUrl: tag.imageUrl,
                 height: 140,
                 borderRadius: 0,
+                heroTag: 'user_tag_cover_${tag.id}',
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),

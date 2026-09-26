@@ -55,6 +55,20 @@ class VolunteerLocations {
     return location.replaceAll(onlineSuffix, '').trim();
   }
 
+  /// Cover image for a directory filter, or null for [all] and places with no cover.
+  static String? keyGraphicSrcForName({
+    required Iterable<UserLocation> locations,
+    required String name,
+  }) {
+    if (name == all) return null;
+    for (final location in locations) {
+      if (location.name == name && location.hasKeyGraphic) {
+        return location.keyGraphicSrc;
+      }
+    }
+    return null;
+  }
+
   /// Bulletin / list filter against a post's [Location] field.
   static bool postLocationMatchesFilter({
     required String postLocation,

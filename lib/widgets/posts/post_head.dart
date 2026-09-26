@@ -2,7 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../models/event/event_head.dart';
+import '../../utility/app_context.dart';
+import '../../utility/person_display_name.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/app_links.dart';
 import '../../utility/image_orientation.dart';
@@ -269,7 +272,15 @@ class _PostHeadState extends State<PostHead>
 
   Widget _buildLeadSpeakerPortrait(ThemeData theme, ColorScheme colorScheme) {
     final imgSrc = widget.thisHead.leadSpeakerImgSrc;
-    final name = widget.thisHead.leadSpeakerName ?? 'Lead speaker';
+    final name = context.select((AppContext appContext) {
+      final uid = widget.thisHead.leadSpeakerUID;
+      final user = uid == null || uid.isEmpty ? null : appContext.userById(uid);
+      return PersonDisplayName.leadSpeakerLabel(
+        storedName: widget.thisHead.leadSpeakerName,
+        user: user,
+        guest: appContext.isCurrentUserGuest,
+      );
+    });
     final hasImage = imgSrc != null && imgSrc.isNotEmpty;
 
     return Padding(
