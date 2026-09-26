@@ -2236,6 +2236,50 @@
   "@churchEditorMapsHelpTooltip": {
     "description": "Tooltip for maps URL help button"
   },
+  "churchEditorPinHint": "Pin starts at the postcode. Adjust it if the building is nearby.",
+  "@churchEditorPinHint": {
+    "description": "Helper under the church location preview"
+  },
+  "churchEditorAdjustPin": "Adjust pin",
+  "@churchEditorAdjustPin": {
+    "description": "Button that opens the church pin editor"
+  },
+  "churchEditorAdjustPinTitle": "Adjust pin",
+  "@churchEditorAdjustPinTitle": {
+    "description": "Title of the church pin dialog"
+  },
+  "churchEditorAdjustPinHelp": "Move the map, then tap where the building is.",
+  "@churchEditorAdjustPinHelp": {
+    "description": "Instructions in the church pin dialog"
+  },
+  "churchEditorPostcodeInvalid": "That postcode could not be found. Check the address and try again.",
+  "@churchEditorPostcodeInvalid": {
+    "description": "Shown when the address postcode is not in the lookup"
+  },
+  "churchEditorPostcodeLookupFailed": "Could not place the pin. Check your connection and try again.",
+  "@churchEditorPostcodeLookupFailed": {
+    "description": "Shown when the address postcode lookup fails"
+  },
+  "mapApproximateArea": "Approximate area",
+  "@mapApproximateArea": {
+    "description": "Caption under a single cell-group area map"
+  },
+  "mapApproximateAreas": "Approximate areas",
+  "@mapApproximateAreas": {
+    "description": "Caption under the nearest cell-groups map"
+  },
+  "mapAttribution": "OpenStreetMap",
+  "@mapAttribution": {
+    "description": "Attribution link under embedded maps"
+  },
+  "mapLoadFailed": "Map could not be loaded.",
+  "@mapLoadFailed": {
+    "description": "Shown when map tiles fail to load"
+  },
+  "mapRetry": "Try again",
+  "@mapRetry": {
+    "description": "Retry button when a map fails to load"
+  },
   "churchEditorVisitCardTitle": "Find us",
   "@churchEditorVisitCardTitle": {
     "description": "Editor card title for location, address, and maps"

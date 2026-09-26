@@ -372,5 +372,58 @@ void main() {
 
       expect(info.displayOrder, 3);
     });
+
+    test('round-trips coordinates and clears a pin', () {
+      final info = ChurchInfo(
+        id: 'belfast',
+        title: 'Belfast',
+        analyticsTitle: 'Belfast',
+        body: const [
+          {'insert': '\n'}
+        ],
+        latitude: 54.6,
+        longitude: -5.93,
+        geoPostcode: 'BT9 6AB',
+      );
+
+      expect(info.hasCoordinates, isTrue);
+      expect(info.toJson()['latitude'], 54.6);
+      expect(info.toJson()['longitude'], -5.93);
+      expect(info.toJson()['geoPostcode'], 'BT9 6AB');
+
+      final again = ChurchInfo.fromMap('belfast', info.toCacheJson());
+      expect(again.latitude, 54.6);
+      expect(again.longitude, -5.93);
+      expect(again.geoPostcode, 'BT9 6AB');
+
+      info.setGeo(latitude: null, longitude: null);
+      expect(info.hasCoordinates, isFalse);
+      expect(info.geoPostcode, isEmpty);
+      expect(info.toJson()['latitude'], isNull);
+      expect(info.toJson()['longitude'], isNull);
+      expect(info.toJson()['geoPostcode'], isNull);
+
+      final missing = ChurchInfo.fromMap('belfast', {
+        'title': 'Belfast',
+        'analyticTitle': 'Belfast',
+        'body': [
+          {'insert': '\n'}
+        ],
+      });
+      expect(missing.hasCoordinates, isFalse);
+      expect(missing.toJson()['latitude'], isNull);
+
+      final half = ChurchInfo.fromMap('belfast', {
+        'title': 'Belfast',
+        'analyticTitle': 'Belfast',
+        'body': [
+          {'insert': '\n'}
+        ],
+        'latitude': 54.6,
+      });
+      expect(half.hasCoordinates, isFalse);
+      expect(half.toJson()['latitude'], isNull);
+      expect(half.toJson()['longitude'], isNull);
+    });
   });
 }

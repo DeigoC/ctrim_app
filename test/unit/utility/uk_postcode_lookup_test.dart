@@ -128,4 +128,44 @@ void main() {
       );
     });
   });
+
+  group('UkPostcodeLookup.extractFromAddress', () {
+    test('takes the last full postcode, otherwise the last outcode', () {
+      expect(
+        UkPostcodeLookup.extractFromAddress(
+          '123 Somewhere Road\nBelfast\nbt9 6ab',
+        ).postcode,
+        'BT9 6AB',
+      );
+      expect(
+        UkPostcodeLookup.extractFromAddress('Near BT37').postcode,
+        'BT37',
+      );
+      expect(
+        UkPostcodeLookup.extractFromAddress('BT1 1AA then BT9 6AB').postcode,
+        'BT9 6AB',
+      );
+      expect(
+        UkPostcodeLookup.extractFromAddress('BT37 and BT9').postcode,
+        'BT9',
+      );
+      expect(
+        UkPostcodeLookup.extractFromAddress('was BT9 6AB, now BT37').postcode,
+        'BT9 6AB',
+      );
+      final empty = UkPostcodeLookup.extractFromAddress('Belfast');
+      expect(empty.postcode, isNull);
+      expect(empty.pending, isFalse);
+    });
+
+    test('waits while the inward code is unfinished', () {
+      final partial = UkPostcodeLookup.extractFromAddress('High Street\nBT9 6');
+      expect(partial.pending, isTrue);
+      expect(partial.postcode, isNull);
+      expect(
+        UkPostcodeLookup.extractFromAddress('BT9 6AB').pending,
+        isFalse,
+      );
+    });
+  });
 }
