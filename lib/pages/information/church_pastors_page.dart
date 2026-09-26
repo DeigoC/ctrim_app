@@ -67,6 +67,7 @@ class ChurchPastorsPage extends StatelessWidget {
           onEdit: onEdit,
           editTooltip: l10n.churchInfoEditTooltip,
           showCarouselWhenEmpty: false,
+          pinPortraitAside: true,
           header: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
