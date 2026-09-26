@@ -10,10 +10,12 @@ import '../../utility/app_context.dart';
 import '../../utility/cell_group_nearest.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/network_image_helper.dart';
+import '../../utility/map_area.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/uk_postcode_lookup.dart';
 import '../../utility/app_links.dart';
 import '../../widgets/app_search_bar.dart';
+import '../../widgets/maps/area_map.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/two_column_masonry.dart';
@@ -244,6 +246,24 @@ class _CellGroupsListTabState extends State<CellGroupsListTab> {
         child: _buildSearchEmptyState(context, l10n),
       ));
       return slivers;
+    }
+
+    final origin = _origin;
+    final showNearestMap = origin != null &&
+        UkPostcodeLookup.classify(_query) != UkPostcodeKind.none;
+    if (showNearestMap) {
+      slivers.add(
+        SliverPadding(
+          padding:
+              EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 0),
+          sliver: SliverToBoxAdapter(
+            child: _NearestGroupsMap(
+              origin: origin,
+              groups: [for (final entry in resolved) entry.group],
+            ),
+          ),
+        ),
+      );
     }
 
     final isGuest = appContext.isCurrentUserGuest;
@@ -700,6 +720,62 @@ class _LeaderPhotoStrip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _NearestGroupsMap extends StatelessWidget {
+  const _NearestGroupsMap({
+    required this.origin,
+    required this.groups,
+  });
+
+  final UkPostcodeGeo origin;
+  final List<CellGroup> groups;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final circles = <MapAreaCircle>[];
+    for (final group in groups) {
+      final radius = MapArea.cellGroupRadiusMeters(group.postcode);
+      final latitude = group.latitude;
+      final longitude = group.longitude;
+      if (radius == null || latitude == null || longitude == null) continue;
+      circles.add(
+        MapAreaCircle(
+          latitude: latitude,
+          longitude: longitude,
+          radiusMeters: radius,
+        ),
+      );
+    }
+    if (circles.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AreaMap(
+          height: 220,
+          maxZoom: MapArea.cellGroupMaxZoom,
+          circles: circles,
+          pins: [
+            MapAreaPin(
+              latitude: origin.latitude,
+              longitude: origin.longitude,
+              origin: true,
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.mapApproximateAreas,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+        ),
+      ],
     );
   }
 }

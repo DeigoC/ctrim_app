@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/info/church_info.dart';
@@ -11,11 +14,15 @@ import '../../utility/church_hierarchy.dart';
 import '../../utility/church_location.dart';
 import '../../utility/church_social_ui.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/map_area.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/uk_postcode_lookup.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../widgets/information/info_section_card.dart';
+import '../../widgets/maps/adjust_pin_dialog.dart';
+import '../../widgets/maps/area_map.dart';
 import '../../widgets/two_column_masonry.dart';
 import '../../widgets/user_avatar.dart';
 import '../personal/select_users_page.dart';
@@ -53,6 +60,17 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
   late final String _initialLocation;
   late final String _initialMapLink;
   late final String _initialAddress;
+  late final String _initialGeoPostcode;
+  final UkPostcodeLookup _postcodeLookup = UkPostcodeLookup();
+  Timer? _geoDebounce;
+  int _geoGeneration = 0;
+  double? _latitude;
+  double? _longitude;
+  double? _initialLatitude;
+  double? _initialLongitude;
+  String _geoPostcode = '';
+  String? _geoError;
+  bool _geoLookingUp = false;
   late final String _initialHeroImage;
   late final String _initialPastorsImage;
   late final String _initialGalleryImages;
@@ -132,6 +150,12 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     _initialLocation = widget.info?.location.trim() ?? '';
     _initialMapLink = widget.info?.mapLink ?? '';
     _initialAddress = widget.info?.address ?? '';
+    _initialLatitude = widget.info?.latitude;
+    _initialLongitude = widget.info?.longitude;
+    _initialGeoPostcode = widget.info?.geoPostcode ?? '';
+    _latitude = _initialLatitude;
+    _longitude = _initialLongitude;
+    _geoPostcode = _initialGeoPostcode;
     _initialPastorUserIds =
         List<String>.from(widget.info?.pastorUserIds ?? const []);
     _initialSocials = List<ChurchSocialLink>.from(
@@ -147,6 +171,11 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     _summaryController = TextEditingController(text: _initialSummary);
     _mapLinkController = TextEditingController(text: _initialMapLink);
     _addressController = TextEditingController(text: _initialAddress);
+    _addressController.addListener(_onAddressChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _primePinFromAddress();
+    });
     _heroImageController = TextEditingController(text: _initialHeroImage);
     _pastorsImageController = TextEditingController(text: _initialPastorsImage);
     _galleryImagesController =
@@ -235,8 +264,10 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     _heroImageController.removeListener(_onHeroImageChanged);
     _pastorsImageController.removeListener(_onPastorsImageChanged);
     _galleryImagesController.removeListener(_onGalleryImagesChanged);
+    _geoDebounce?.cancel();
     _summaryController.dispose();
     _mapLinkController.dispose();
+    _addressController.removeListener(_onAddressChanged);
     _addressController.dispose();
     _heroImageController.dispose();
     _pastorsImageController.dispose();
@@ -696,6 +727,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     if (_addressController.text.trim() != _initialAddress.trim()) {
       return true;
     }
+    if (_pinDiffersFromInitial) return true;
     if (!listEquals(_pastorUserIds, _initialPastorUserIds)) {
       return true;
     }
@@ -1139,6 +1171,161 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
     return appContext.userById(id);
   }
 
+  bool get _pinDiffersFromInitial {
+    if (_geoPostcode != _initialGeoPostcode) return true;
+    if (!_sameCoord(_latitude, _initialLatitude)) return true;
+    return !_sameCoord(_longitude, _initialLongitude);
+  }
+
+  bool _sameCoord(final double? a, final double? b) {
+    if (a == null || b == null) return a == b;
+    return (a - b).abs() < 0.000001;
+  }
+
+  void _primePinFromAddress() {
+    final extracted =
+        UkPostcodeLookup.extractFromAddress(_addressController.text);
+    if (extracted.pending) return;
+    if (_latitude != null && _longitude != null) {
+      if (_geoPostcode.isEmpty && extracted.postcode != null) {
+        setState(() => _geoPostcode = extracted.postcode!);
+      }
+      return;
+    }
+    final postcode = extracted.postcode;
+    if (postcode == null) return;
+    _lookupPin(postcode);
+  }
+
+  void _onAddressChanged() {
+    _geoDebounce?.cancel();
+    final extracted =
+        UkPostcodeLookup.extractFromAddress(_addressController.text);
+    if (extracted.pending) {
+      if (_geoError != null || _geoLookingUp) {
+        setState(() {
+          _geoError = null;
+          _geoLookingUp = false;
+        });
+      }
+      return;
+    }
+    final postcode = extracted.postcode;
+    if (postcode == null) {
+      _geoGeneration++;
+      setState(() {
+        _latitude = null;
+        _longitude = null;
+        _geoPostcode = '';
+        _geoError = null;
+        _geoLookingUp = false;
+      });
+      return;
+    }
+    if (postcode == _geoPostcode && _latitude != null && _longitude != null) {
+      if (_geoError != null || _geoLookingUp) {
+        setState(() {
+          _geoError = null;
+          _geoLookingUp = false;
+        });
+      }
+      return;
+    }
+    setState(() {
+      _geoLookingUp = true;
+      _geoError = null;
+    });
+    _geoDebounce = Timer(const Duration(milliseconds: 400), () {
+      _lookupPin(postcode);
+    });
+  }
+
+  Future<void> _lookupPin(final String postcode) async {
+    final generation = ++_geoGeneration;
+    try {
+      final geo = await _postcodeLookup.lookup(postcode);
+      if (!mounted || generation != _geoGeneration) return;
+      setState(() {
+        _latitude = geo.latitude;
+        _longitude = geo.longitude;
+        _geoPostcode = geo.label;
+        _geoLookingUp = false;
+        _geoError = null;
+      });
+    } on UkPostcodeLookupException catch (error) {
+      if (!mounted || generation != _geoGeneration) return;
+      final l10n = AppLocalizations.of(context)!;
+      setState(() {
+        _geoLookingUp = false;
+        _geoError = error.isInvalid
+            ? l10n.churchEditorPostcodeInvalid
+            : l10n.churchEditorPostcodeLookupFailed;
+      });
+    }
+  }
+
+  Future<void> _adjustPin() async {
+    final latitude = _latitude;
+    final longitude = _longitude;
+    if (latitude == null || longitude == null) return;
+    final result = await showDialog<LatLng>(
+      context: context,
+      builder: (_) => AdjustPinDialog(
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _latitude = result.latitude;
+      _longitude = result.longitude;
+    });
+  }
+
+  List<Widget> _buildPinPreview(final AppLocalizations l10n) {
+    final latitude = _latitude;
+    final longitude = _longitude;
+    return [
+      if (_geoLookingUp) ...[
+        const SizedBox(height: 12),
+        const LinearProgressIndicator(),
+      ],
+      if (latitude != null && longitude != null) ...[
+        const SizedBox(height: 12),
+        AreaMap(
+          pins: [MapAreaPin(latitude: latitude, longitude: longitude)],
+          pinZoom: MapArea.churchPinZoom,
+          maxZoom: MapArea.churchPinZoom,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.churchEditorPinHint,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _adjustPin,
+            icon: const Icon(Icons.edit_location_alt_outlined),
+            label: Text(l10n.churchEditorAdjustPin),
+          ),
+        ),
+      ],
+      if (_geoError != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            _geoError!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+          ),
+        ),
+    ];
+  }
+
   List<Widget> _buildChurchHubFields() {
     final l10n = AppLocalizations.of(context)!;
     final appContext = Provider.of<AppContext>(context);
@@ -1195,6 +1382,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
         minLines: 1,
         maxLines: 2,
       ),
+      ..._buildPinPreview(l10n),
       const SizedBox(height: 12),
       TextFormField(
         controller: _mapLinkController,
@@ -1311,6 +1499,9 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       location: location,
       mapLink: _mapLinkController.text.trim(),
       address: _addressController.text.trim(),
+      latitude: _latitude,
+      longitude: _longitude,
+      geoPostcode: _geoPostcode,
       pastorUserIds: List<String>.from(_pastorUserIds),
       socials: _socials
           .map(

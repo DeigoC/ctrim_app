@@ -21,7 +21,8 @@ enum ChurchKind {
 
 class ChurchInfo {
   late String _id, _title, _analyticsTitle, _summary, _updatedBy;
-  late String _location, _mapLink, _address;
+  late String _location, _mapLink, _address, _geoPostcode;
+  double? _latitude, _longitude;
   late String _heroImageSrc, _pastorsImageSrc;
   late String _parentChurchId;
   late ChurchKind _kind;
@@ -47,6 +48,9 @@ class ChurchInfo {
     String location = '',
     String mapLink = '',
     String address = '',
+    double? latitude,
+    double? longitude,
+    String geoPostcode = '',
     String updatedBy = '',
     DateTime? updatedAt,
     int displayOrder = 0,
@@ -68,6 +72,11 @@ class ChurchInfo {
     _location = location;
     _mapLink = mapLink;
     _address = address;
+    _applyGeo(
+      latitude: latitude,
+      longitude: longitude,
+      geoPostcode: geoPostcode,
+    );
     _updatedBy = updatedBy;
     _updatedAt = updatedAt ?? DateTime.now();
     _displayOrder = displayOrder;
@@ -96,6 +105,9 @@ class ChurchInfo {
       location: (data['location'] ?? '').toString(),
       mapLink: (data['mapLink'] ?? '').toString(),
       address: (data['address'] ?? '').toString(),
+      latitude: _parseDouble(data['latitude']),
+      longitude: _parseDouble(data['longitude']),
+      geoPostcode: (data['geoPostcode'] ?? '').toString(),
       updatedBy: (data['updatedBy'] ?? '').toString(),
       updatedAt: InfoParsing.parseUpdatedAt(data['updatedAt']),
       displayOrder: InfoParsing.parseDisplayOrder(data['displayOrder']),
@@ -118,6 +130,9 @@ class ChurchInfo {
       'location': _location,
       'mapLink': _mapLink,
       'address': _address,
+      'latitude': _latitude,
+      'longitude': _longitude,
+      'geoPostcode': _geoPostcode.isEmpty ? null : _geoPostcode,
       'updatedBy': _updatedBy,
       'updatedAt': Timestamp.fromDate(_updatedAt),
       'displayOrder': _displayOrder,
@@ -141,6 +156,9 @@ class ChurchInfo {
       'location': _location,
       'mapLink': _mapLink,
       'address': _address,
+      'latitude': _latitude,
+      'longitude': _longitude,
+      'geoPostcode': _geoPostcode.isEmpty ? null : _geoPostcode,
       'updatedBy': _updatedBy,
       'updatedAt': _updatedAt.millisecondsSinceEpoch,
       'displayOrder': _displayOrder,
@@ -167,16 +185,19 @@ class ChurchInfo {
   String get location => _location;
   String get mapLink => _mapLink;
   String get address => _address;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
+  String get geoPostcode => _geoPostcode;
   DateTime get updatedAt => _updatedAt;
   String get updatedBy => _updatedBy;
 
   bool get isFullChurch => _kind == ChurchKind.church;
   bool get isOutreach => _kind == ChurchKind.outreach;
-  bool get hasParentChurch =>
-      isOutreach && _parentChurchId.trim().isNotEmpty;
+  bool get hasParentChurch => isOutreach && _parentChurchId.trim().isNotEmpty;
   bool get hasLocation => _location.trim().isNotEmpty;
   bool get hasMapLink => _mapLink.trim().isNotEmpty;
   bool get hasAddress => _address.trim().isNotEmpty;
+  bool get hasCoordinates => _latitude != null && _longitude != null;
   bool get hasHeroImage => _heroImageSrc.isNotEmpty;
   bool get hasPastorsImage => _pastorsImageSrc.isNotEmpty;
   bool get hasGalleryImages => _galleryImageSources.isNotEmpty;
@@ -213,6 +234,40 @@ class ChurchInfo {
   void setLocation(final String value) => _location = value;
   void setMapLink(final String value) => _mapLink = value;
   void setAddress(final String value) => _address = value;
+
+  void setGeo({
+    required final double? latitude,
+    required final double? longitude,
+    final String geoPostcode = '',
+  }) {
+    _applyGeo(
+      latitude: latitude,
+      longitude: longitude,
+      geoPostcode: geoPostcode,
+    );
+  }
+
+  void _applyGeo({
+    required final double? latitude,
+    required final double? longitude,
+    required final String geoPostcode,
+  }) {
+    if (latitude == null || longitude == null) {
+      _latitude = null;
+      _longitude = null;
+      _geoPostcode = '';
+      return;
+    }
+    _latitude = latitude;
+    _longitude = longitude;
+    _geoPostcode = geoPostcode.trim();
+  }
+
+  static double? _parseDouble(final dynamic raw) {
+    if (raw is num) return raw.toDouble();
+    return null;
+  }
+
   void setUpdatedAt(final DateTime value) => _updatedAt = value;
   void setUpdatedBy(final String value) => _updatedBy = value;
 
