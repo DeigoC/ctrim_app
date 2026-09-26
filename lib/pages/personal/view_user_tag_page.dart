@@ -32,6 +32,7 @@ import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/paired_row_list.dart';
 import '../../widgets/responsive_content.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../../widgets/user_avatar.dart';
 import '../events/add_media_file_page.dart';
 import '../information/church_pastors_page.dart';
@@ -59,7 +60,17 @@ class ViewUserTagPage extends StatefulWidget {
 
 class _ViewUserTagPageState extends State<ViewUserTagPage> {
   static const int _horizonMonths = UserTagScheduleQuery.horizonMonths;
+
+  /// Pair member rows once this card is wide enough. Same cutoff as the church
+  /// gallery.
+  static const double _memberPairMinWidth = 520;
+
+  /// Masonry every post in a schedule section once the card can hold two.
+  /// A half-width section stays one column so it does not nest a second grid.
+  static const double _postMasonryMinWidth = ResponsiveLayout.wideGutter;
+
   static final DateFormat _eventDateFormat = DateFormat('EEE d MMM');
+  static final DateFormat _eventDateWithYearFormat = DateFormat('EEE d MMM y');
   static final DateFormat _timeFormat = DateFormat('HH:mm');
 
   late final AppContext _appContext;
@@ -299,7 +310,11 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
       padding: const EdgeInsets.symmetric(vertical: 24),
       children: [
         if (tag.imageUrl != null) ...[
-          UserTagGraphic(imageUrl: tag.imageUrl, height: 200),
+          UserTagGraphic(
+            imageUrl: tag.imageUrl,
+            height: 200,
+            heroTag: 'user_tag_cover_${tag.id}',
+          ),
           const SizedBox(height: 16),
         ],
         Align(
@@ -351,18 +366,33 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
             ],
           ),
           const SizedBox(height: 20),
-          _headsSection(l10n, appContext, tag, location, canManage),
-          const SizedBox(height: 16),
-          _membersSection(l10n, appContext, tag, location),
-          if (canManage || tag.galleryForLocation(location.id).isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _gallerySection(l10n, tag, location, canManage),
-          ],
-          const SizedBox(height: 16),
-          _scheduleBlock(l10n, tag, location, guestsOnly),
+          _stackSectionCards([
+            _headsSection(l10n, appContext, tag, location, canManage),
+            _membersSection(l10n, appContext, tag, location),
+            if (canManage || tag.galleryForLocation(location.id).isNotEmpty)
+              _gallerySection(l10n, tag, location, canManage),
+            ..._scheduleCards(l10n, tag, location, guestsOnly),
+          ]),
         ],
       ],
     );
+  }
+
+  /// Wide windows pack these cards into the shorter column, same as the church
+  /// hub. Narrow windows keep one column.
+  Widget _stackSectionCards(List<Widget> cards) {
+    if (!ResponsiveLayout.isWideScreenOf(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            cards[i],
+          ],
+        ],
+      );
+    }
+    return TwoColumnMasonry(children: cards);
   }
 
   Widget _headsSection(
@@ -423,7 +453,6 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
       locationName: location.name,
       users: appContext.allUsers,
     );
-    final isWide = ResponsiveLayout.isWideScreenOf(context);
 
     return InfoSectionCard(
       icon: Icons.groups_outlined,
@@ -431,21 +460,32 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
       subtitle: l10n.userTagDetailMembersSubtitle(location.name),
       content: members.isEmpty
           ? _sectionEmpty(l10n.userTagDetailMembersEmpty(location.name))
-          : isWide
-              ? PairedRowList(
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < _memberPairMinWidth) {
+                  return Column(
+                    children: [
+                      for (var i = 0; i < members.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 12),
+                        _memberCard(members[i]),
+                      ],
+                    ],
+                  );
+                }
+                return PairedRowList(
                   itemCount: members.length,
                   runSpacing: 12,
                   itemBuilder: (_, index) => _memberCard(members[index]),
-                )
-              : Column(
-                  children: [
-                    for (var i = 0; i < members.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 12),
-                      _memberCard(members[i]),
-                    ],
-                  ],
-                ),
+                );
+              },
+            ),
     );
+  }
+
+  String _nameForGuest(User user) {
+    final appContext = context.read<AppContext>();
+    final live = appContext.userById(user.id) ?? user;
+    return live.nameForViewer(guest: appContext.isCurrentUserGuest);
   }
 
   Widget _memberCard(User user) {
@@ -472,7 +512,7 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  user.fullname,
+                  _nameForGuest(user),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
@@ -596,57 +636,53 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     );
   }
 
-  Widget _scheduleBlock(
+  List<Widget> _scheduleCards(
     AppLocalizations l10n,
     UserTag tag,
     UserLocation location,
     bool guestsOnly,
   ) {
     if (_scheduleLoading || _programsLoading || _scheduleError != null) {
-      return SizedBox(
-        height: 220,
-        child: LoadProgressBody(
-          message: _statusMessage,
-          completedSteps: _completedSteps,
-          totalSteps: _totalSteps,
-          error: _scheduleError,
-          errorTitle: l10n.userTagDetailScheduleCouldNotLoad,
-          onRetry: _loadSchedule,
+      return [
+        SizedBox(
+          height: 220,
+          child: LoadProgressBody(
+            message: _statusMessage,
+            completedSteps: _completedSteps,
+            totalSteps: _totalSteps,
+            error: _scheduleError,
+            errorTitle: l10n.userTagDetailScheduleCouldNotLoad,
+            onRetry: _loadSchedule,
+          ),
         ),
-      );
+      ];
     }
 
     final split = _scheduleFor(tag, location.name, guestsOnly);
-    final isWide = ResponsiveLayout.isWideScreenOf(context);
-    return Column(
-      children: [
-        _scheduleSection(
-          icon: Icons.event_outlined,
-          title: l10n.userTagDetailUpcoming,
-          subtitle: l10n.userTagDetailUpcomingSubtitle(
-            _horizonMonths,
-            location.name,
-          ),
-          posts: split.upcoming,
-          empty: l10n.userTagDetailScheduleEmptyUpcoming(location.name),
-          isWide: isWide,
-          l10n: l10n,
+    return [
+      _scheduleSection(
+        icon: Icons.event_outlined,
+        title: l10n.userTagDetailUpcoming,
+        subtitle: l10n.userTagDetailUpcomingSubtitle(
+          _horizonMonths,
+          location.name,
         ),
-        const SizedBox(height: 16),
-        _scheduleSection(
-          icon: Icons.history,
-          title: l10n.userTagDetailPast,
-          subtitle: l10n.userTagDetailPastSubtitle(
-            _horizonMonths,
-            location.name,
-          ),
-          posts: split.past,
-          empty: l10n.userTagDetailScheduleEmptyPast(location.name),
-          isWide: isWide,
-          l10n: l10n,
+        posts: split.upcoming,
+        empty: l10n.userTagDetailScheduleEmptyUpcoming(location.name),
+        l10n: l10n,
+      ),
+      _scheduleSection(
+        icon: Icons.history,
+        title: l10n.userTagDetailPast,
+        subtitle: l10n.userTagDetailPastSubtitle(
+          _horizonMonths,
+          location.name,
         ),
-      ],
-    );
+        posts: split.past,
+        empty: l10n.userTagDetailScheduleEmptyPast(location.name),
+        l10n: l10n,
+      ),
+    ];
   }
 
   Widget _scheduleSection({
@@ -655,37 +691,41 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     required String subtitle,
     required List<TeamRotaPost> posts,
     required String empty,
-    required bool isWide,
     required AppLocalizations l10n,
   }) {
-    final groups = TeamRotaQuery.groupByMonth(posts);
     return InfoSectionCard(
       icon: icon,
       title: title,
       subtitle: subtitle,
       content: posts.isEmpty
           ? _sectionEmpty(empty)
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < groups.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 20),
-                  _monthHeader(groups[i]),
-                  const SizedBox(height: 8),
-                  if (isWide)
-                    PairedRowList(
-                      itemCount: groups[i].posts.length,
-                      runSpacing: 12,
-                      itemBuilder: (_, index) =>
-                          _postCard(groups[i].posts[index], l10n),
-                    )
-                  else
-                    for (var p = 0; p < groups[i].posts.length; p++) ...[
-                      if (p > 0) const SizedBox(height: 12),
-                      _postCard(groups[i].posts[p], l10n),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= _postMasonryMinWidth) {
+                  return TwoColumnMasonry(
+                    runSpacing: 12,
+                    children: [
+                      for (final post in posts)
+                        _postCard(post, l10n, includeYear: true),
                     ],
-                ],
-              ],
+                  );
+                }
+                final groups = TeamRotaQuery.groupByMonth(posts);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < groups.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 20),
+                      _monthHeader(groups[i]),
+                      const SizedBox(height: 8),
+                      for (var p = 0; p < groups[i].posts.length; p++) ...[
+                        if (p > 0) const SizedBox(height: 12),
+                        _postCard(groups[i].posts[p], l10n),
+                      ],
+                    ],
+                  ],
+                );
+              },
             ),
     );
   }
@@ -701,11 +741,17 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     );
   }
 
-  Widget _postCard(TeamRotaPost post, AppLocalizations l10n) {
+  Widget _postCard(
+    TeamRotaPost post,
+    AppLocalizations l10n, {
+    bool includeYear = false,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final dateLabel = post.head.eventDate != null
-        ? _eventDateFormat.format(post.head.eventDate!)
+    final eventDate = post.head.eventDate;
+    final dateLabel = eventDate != null
+        ? (includeYear ? _eventDateWithYearFormat : _eventDateFormat)
+            .format(eventDate)
         : l10n.personalScheduleDateTbc;
 
     return Material(

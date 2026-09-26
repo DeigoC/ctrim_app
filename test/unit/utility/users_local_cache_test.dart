@@ -43,6 +43,75 @@ void main() {
       createdByUserID: '1',
     );
 
+    test('round-trips v5 encode/decode including guest surname visibility', () {
+      final visible = User(
+        id: '9',
+        forname: 'Adam',
+        surname: 'Barr',
+        showFullSurnameToGuests: true,
+      );
+      final encoded = UsersLocalCache.encode(
+        lastUpdate: 101,
+        appVersion: '1.2.5',
+        users: [visible, sample],
+      );
+      final decoded =
+          UsersLocalCache.decodeBody(encoded.split('\n').sublist(1));
+      expect(decoded, isNotNull);
+      expect(decoded!.first.showFullSurnameToGuests, isTrue);
+      expect(decoded.last.showFullSurnameToGuests, isFalse);
+      expect(decoded.last.surname, 'Lovelace');
+    });
+
+    test('v4 body defaults guest surname visibility to false', () {
+      final hidden = User(
+        id: '8',
+        forname: 'Hidden',
+        surname: 'User',
+        status: UserStatus.hidden,
+      );
+      final encoded = UsersLocalCache.encode(
+        lastUpdate: 100,
+        appVersion: '1.2.4',
+        users: [hidden],
+      );
+      final lines = encoded.split('\n').sublist(1);
+      // Drop the v5 flag line so this body is a v4 record.
+      expect(lines.length, UsersLocalCache.chunkSizeV5);
+      final v4 = lines.sublist(0, UsersLocalCache.chunkSizeV4);
+      final decoded = UsersLocalCache.decodeBody(v4);
+      expect(decoded, isNotNull);
+      expect(decoded!.single.status, UserStatus.hidden);
+      expect(decoded.single.showFullSurnameToGuests, isFalse);
+    });
+
+    test('thirteen v4 records are not read as v5', () {
+      final one = [
+        '7',
+        'Ada',
+        'Lovelace',
+        '',
+        '0',
+        '0',
+        'Belfast',
+        'auth-ada',
+        't1',
+        '0',
+        '1',
+        UserStatus.active,
+      ];
+      final body = [for (var i = 0; i < 13; i++) ...one];
+      expect(body.length % UsersLocalCache.chunkSizeV4, 0);
+      expect(body.length % UsersLocalCache.chunkSizeV5, 0);
+
+      final decoded = UsersLocalCache.decodeBody(body);
+      expect(decoded, isNotNull);
+      expect(decoded, hasLength(13));
+      expect(decoded!.first.forname, 'Ada');
+      expect(decoded.first.showFullSurnameToGuests, isFalse);
+      expect(decoded.last.location, 'Belfast');
+    });
+
     test('round-trips v4 encode/decode including profile status', () {
       final hidden = User(
         id: '8',

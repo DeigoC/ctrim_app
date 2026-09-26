@@ -41,66 +41,84 @@ class _AreaMapState extends State<AreaMap> {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: widget.height,
-            child: ColoredBox(
-              color: colorScheme.surfaceContainerHighest,
-              child: FutureBuilder<vt.Style>(
-                key: ValueKey(_attempt),
-                future: OpenFreeMapStyle.load(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return _MapStatus(
-                      icon: Icons.wifi_off_outlined,
-                      message: l10n.mapLoadFailed,
-                      onRetry: () => setState(() => _attempt++),
-                    );
-                  }
-                  final style = snapshot.data;
-                  if (style == null) {
-                    return const _MapStatus(
-                      icon: Icons.map_outlined,
-                      message: '',
-                    );
-                  }
-                  return _MapCanvas(
-                    style: style,
-                    circles: widget.circles,
-                    pins: widget.pins,
-                    interactive: widget.interactive,
-                    maxZoom: widget.maxZoom,
-                    pinZoom: widget.pinZoom,
-                    onTap: widget.onTap,
-                    colorScheme: colorScheme,
-                  );
-                },
-              ),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: widget.height,
+        child: ColoredBox(
+          color: colorScheme.surfaceContainerHighest,
+          child: FutureBuilder<vt.Style>(
+            key: ValueKey(_attempt),
+            future: OpenFreeMapStyle.load(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _MapStatus(
+                  icon: Icons.wifi_off_outlined,
+                  message: l10n.mapLoadFailed,
+                  onRetry: () => setState(() => _attempt++),
+                );
+              }
+              final style = snapshot.data;
+              if (style == null) {
+                return const _MapStatus(
+                  icon: Icons.map_outlined,
+                  message: '',
+                );
+              }
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: _MapCanvas(
+                      style: style,
+                      circles: widget.circles,
+                      pins: widget.pins,
+                      interactive: widget.interactive,
+                      maxZoom: widget.maxZoom,
+                      pinZoom: widget.pinZoom,
+                      onTap: widget.onTap,
+                      colorScheme: colorScheme,
+                    ),
+                  ),
+                  const Positioned(
+                    right: 6,
+                    bottom: 6,
+                    child: _MapCredit(),
+                  ),
+                ],
+              );
+            },
           ),
         ),
-        const SizedBox(height: 4),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            onPressed: () => launchUrlString(
-              OpenFreeMapStyle.copyrightUrl,
-              mode: LaunchMode.externalApplication,
-            ),
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(l10n.mapAttribution),
-          ),
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _MapCredit extends StatelessWidget {
+  const _MapCredit();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return TextButton(
+      onPressed: () => launchUrlString(
+        OpenFreeMapStyle.copyrightUrl,
+        mode: LaunchMode.externalApplication,
+      ),
+      style: TextButton.styleFrom(
+        foregroundColor: colorScheme.onSurface,
+        backgroundColor: colorScheme.surface.withValues(alpha: 0.84),
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        minimumSize: Size.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        textStyle: theme.textTheme.labelSmall,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      ),
+      child: Text(l10n.mapAttribution),
     );
   }
 }

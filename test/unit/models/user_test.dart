@@ -271,6 +271,32 @@ void main() {
         final json = user.toJson() as Map<String, dynamic>;
         expect(json['Status'], UserStatus.archived);
       });
+
+      test('missing ShowFullSurnameToGuests defaults to false', () {
+        final user = User.fromMap('1', {
+          'Forename': 'Adam',
+          'Surname': 'Barr',
+          'Location': 'Belfast',
+          'IsAreaAdmin': false,
+          'IsLeader': false,
+          'AuthID': '',
+          'ImgSrc': '',
+        });
+        expect(user.showFullSurnameToGuests, isFalse);
+      });
+
+      test('round-trips ShowFullSurnameToGuests', () {
+        final user = User(
+          id: '1',
+          forname: 'Adam',
+          surname: 'Barr',
+          showFullSurnameToGuests: true,
+        );
+        final json = user.toJson() as Map<String, dynamic>;
+        expect(json['ShowFullSurnameToGuests'], isTrue);
+        final restored = User.fromMap('1', json);
+        expect(restored.showFullSurnameToGuests, isTrue);
+      });
     });
 
     group('computed name getters', () {
@@ -303,6 +329,21 @@ void main() {
         final user = User(id: '1', forname: '', surname: '');
         expect(user.initials, '?');
         expect(user.shortenedFullName, '?');
+      });
+
+      test('nameForViewer abbreviates for guests unless they opted in', () {
+        final user = User(id: '1', forname: 'Adam', surname: 'Barr');
+        expect(user.nameForViewer(guest: true), 'Adam B.');
+        expect(user.nameForViewer(guest: false), 'Adam Barr');
+
+        final optedIn = User(
+          id: '2',
+          forname: 'Adam',
+          surname: 'Barr',
+          showFullSurnameToGuests: true,
+        );
+        expect(optedIn.nameForViewer(guest: true), 'Adam Barr');
+        expect(optedIn.nameForViewer(guest: false), 'Adam Barr');
       });
     });
 

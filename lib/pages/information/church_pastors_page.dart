@@ -171,8 +171,13 @@ class _PastorPersonTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final name = user?.fullname ?? fallbackLabel;
+    final guest = context.select((AppContext c) => c.isCurrentUserGuest);
+    context.select((AppContext c) => c.usersEpoch);
     final person = user;
+    final live = person == null
+        ? null
+        : context.read<AppContext>().userById(person.id) ?? person;
+    final name = live?.nameForViewer(guest: guest) ?? fallbackLabel;
     final tap = onTap;
 
     return InkWell(

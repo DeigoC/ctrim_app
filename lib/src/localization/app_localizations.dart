@@ -1267,8 +1267,62 @@ abstract class AppLocalizations {
   /// Personal home admin menu subtitle for managing locations
   ///
   /// In en, this message translates to:
-  /// **'Create and edit place labels'**
+  /// **'Names and cover photos'**
   String get manageUserLocationsMenuSubtitle;
+
+  /// Menu item and section title for a location photo gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get manageUserLocationsPhotos;
+
+  /// Hint under the location photos section
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos for this place. The cover appears on the locations list and at the top of Who\'s who when this location is selected.'**
+  String get manageUserLocationsPhotosHint;
+
+  /// Empty state for a location photo gallery
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet.'**
+  String get manageUserLocationsPhotosEmpty;
+
+  /// Button to add a photo to a location
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get manageUserLocationsAddPhoto;
+
+  /// Label for the location photo chosen as the cover
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get manageUserLocationsCoverPhoto;
+
+  /// Hint on a location photo that is not the cover
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to set as cover'**
+  String get manageUserLocationsSetAsCover;
+
+  /// SnackBar when a video is added to a location
+  ///
+  /// In en, this message translates to:
+  /// **'Locations only support images for now.'**
+  String get manageUserLocationsPhotosImagesOnly;
+
+  /// Tooltip for removing a location photo
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get manageUserLocationsRemovePhoto;
+
+  /// Title shown for a location photo that has no caption
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get manageUserLocationsPhotoFallback;
 
   /// Empty state when tag filter returns no people
   ///
@@ -1981,7 +2035,7 @@ abstract class AppLocalizations {
   /// Section title for CG members on detail (UI label; code/Firestore may still say roster)
   ///
   /// In en, this message translates to:
-  /// **'Cell Members'**
+  /// **'Regular members'**
   String get cellGroupsRosterTitle;
 
   /// Button to open user picker for roster
@@ -3094,10 +3148,10 @@ abstract class AppLocalizations {
   /// **'Approximate areas'**
   String get mapApproximateAreas;
 
-  /// Attribution link under embedded maps
+  /// Tappable corner credit on embedded maps
   ///
   /// In en, this message translates to:
-  /// **'OpenStreetMap'**
+  /// **'© OpenStreetMap'**
   String get mapAttribution;
 
   /// Shown when map tiles fail to load
@@ -3483,6 +3537,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.'**
   String get scheduleArrangeParallelHint;
+
+  /// Setting that lets people who are not signed in see this person's full surname
+  ///
+  /// In en, this message translates to:
+  /// **'Full surname for guests'**
+  String get showFullSurnameToGuestsTitle;
+
+  /// Explains the guest surname setting. Off shows a first name and initial.
+  ///
+  /// In en, this message translates to:
+  /// **'People who are not signed in see your first name and surname initial, unless this is on.'**
+  String get showFullSurnameToGuestsSubtitle;
+
+  /// Guest surname setting is enabled
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get showFullSurnameToGuestsOn;
+
+  /// Guest surname setting is disabled
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get showFullSurnameToGuestsOff;
+
+  /// Shown when saving the guest surname setting fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update that setting. Try again.'**
+  String get showFullSurnameToGuestsSaveFailed;
 
   /// Snackbar telling the user how to move a schedule item
   ///

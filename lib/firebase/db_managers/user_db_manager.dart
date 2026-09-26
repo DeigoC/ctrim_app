@@ -66,6 +66,13 @@ class UserDBManager {
     await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
   }
 
+  /// Self-serve guest surname visibility — only touches `ShowFullSurnameToGuests`.
+  Future<void> updateShowFullSurnameToGuests(
+      final String uid, final bool value) async {
+    await _ref.doc(uid).update({'ShowFullSurnameToGuests': value});
+    await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.usersDoc);
+  }
+
   Future<List<User>> fetchAllUsers() async {
     final collection = await _ref.get();
     return List<User>.from(collection.docs.map((doc) => doc.data()).toList());

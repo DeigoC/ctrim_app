@@ -10,6 +10,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/activity_time_series.dart';
 import '../../utility/church_location_stats.dart';
+import '../../utility/church_social_button_layout.dart';
 import '../../utility/church_social_ui.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/map_area.dart';
@@ -242,13 +243,10 @@ class _VisitCard extends StatelessWidget {
                 church.hasAddress ||
                 church.hasCoordinates)
               const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.tonalIcon(
-                onPressed: onOpenMaps,
-                icon: const Icon(Icons.map_outlined),
-                label: Text(l10n.churchHubOpenMaps),
-              ),
+            FilledButton.tonalIcon(
+              onPressed: onOpenMaps,
+              icon: const Icon(Icons.map_outlined),
+              label: Text(l10n.churchHubOpenMaps),
             ),
           ],
           if (!church.hasLocation &&
@@ -280,32 +278,82 @@ class _SocialsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
 
     return InfoSectionCard(
       icon: Icons.share_outlined,
       title: l10n.churchHubSocialsTitle,
       subtitle: l10n.churchHubSocialsSubtitle,
-      content: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: socials.map((link) {
-          final label = ChurchSocialUi.labelFor(l10n, link.platform);
-          return Tooltip(
-            message: label,
-            child: FilledButton.tonalIcon(
-              onPressed:
-                  onOpenSocial == null ? null : () => onOpenSocial!(link),
-              icon: Icon(ChurchSocialUi.iconFor(link.platform)),
-              label: Text(label),
-              style: FilledButton.styleFrom(
-                foregroundColor: colorScheme.onSecondaryContainer,
-                backgroundColor:
-                    colorScheme.secondaryContainer.withValues(alpha: 0.65),
-              ),
-            ),
+      content: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width;
+          final columns = ChurchSocialButtonLayout.columns(
+            count: socials.length,
+            maxWidth: maxWidth,
           );
-        }).toList(),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var start = 0; start < socials.length; start += columns) ...[
+                if (start > 0)
+                  const SizedBox(height: ChurchSocialButtonLayout.gap),
+                Row(
+                  children: [
+                    for (var i = start;
+                        i < start + columns && i < socials.length;
+                        i++) ...[
+                      if (i > start)
+                        const SizedBox(width: ChurchSocialButtonLayout.gap),
+                      Expanded(
+                        child: _SocialLinkButton(
+                          link: socials[i],
+                          onOpenSocial: onOpenSocial,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SocialLinkButton extends StatelessWidget {
+  const _SocialLinkButton({
+    required this.link,
+    this.onOpenSocial,
+  });
+
+  final ChurchSocialLink link;
+  final ValueChanged<ChurchSocialLink>? onOpenSocial;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final label = ChurchSocialUi.labelFor(l10n, link.platform);
+
+    return Tooltip(
+      message: label,
+      child: FilledButton.tonalIcon(
+        onPressed: onOpenSocial == null ? null : () => onOpenSocial!(link),
+        icon: Icon(ChurchSocialUi.iconFor(link.platform)),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: FilledButton.styleFrom(
+          foregroundColor: colorScheme.onSecondaryContainer,
+          backgroundColor: colorScheme.secondaryContainer.withValues(
+            alpha: 0.65,
+          ),
+        ),
       ),
     );
   }

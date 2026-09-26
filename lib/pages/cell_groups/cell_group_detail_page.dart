@@ -471,18 +471,27 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               children: _buildLeaders(appContext, group),
             ),
           );
+    final rosterMembers = _roster?.activeMembers.toList() ?? const [];
+    final spreadMembers = isWide && rosterMembers.length >= 4;
     final membersCard = (showRoster && _roster != null)
         ? _CgSectionCard(
             title: l10n.cellGroupsRosterTitle,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ..._buildRosterPreview(
-                  appContext: appContext,
-                  group: group,
-                  roster: _roster!,
-                  canManage: canRoster,
-                ),
+                if (spreadMembers)
+                  _buildRosterSpread(
+                    members: rosterMembers,
+                    canManage: canRoster,
+                    group: group,
+                  )
+                else
+                  ..._buildRosterPreview(
+                    appContext: appContext,
+                    group: group,
+                    roster: _roster!,
+                    canManage: canRoster,
+                  ),
                 if (canRoster) ...[
                   const SizedBox(height: 4),
                   Align(
@@ -538,9 +547,10 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
     final peopleColumn = <Widget>[
       if (leadersCard != null) leadersCard,
-      if (leadersCard != null && membersCard != null)
-        const SizedBox(height: 12),
-      if (membersCard != null) membersCard,
+      if (membersCard != null) ...[
+        if (leadersCard != null) const SizedBox(height: 12),
+        membersCard,
+      ],
     ];
 
     if (!isWide || peopleColumn.isEmpty) {
@@ -867,6 +877,70 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
             : null,
       );
     }).toList();
+  }
+
+  Widget _buildRosterSpread({
+    required List<CellGroupRosterMember> members,
+    required bool canManage,
+    required CellGroup group,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final columns = constraints.maxWidth >= 480
+            ? 3
+            : constraints.maxWidth >= 280
+                ? 2
+                : 1;
+        final itemWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: 4,
+          children: [
+            for (final m in members)
+              SizedBox(
+                width: itemWidth,
+                child: Row(
+                  children: [
+                    _rosterAvatar(m),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _rosterName(m),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (canManage && m.isFreeText)
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        tooltip: 'Remove',
+                        onPressed: () =>
+                            _removeFreeTextMember(group: group, member: m),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _rosterAvatar(CellGroupRosterMember member) {
+    final user = member.isLinkedUser ? _userForId(member.userId) : null;
+    final name = _rosterName(member);
+    if (user != null) return MyUserAvatar(user, radius: 16);
+    return CircleAvatar(
+      radius: 16,
+      child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+    );
+  }
+
+  String _rosterName(CellGroupRosterMember member) {
+    final user = member.isLinkedUser ? _userForId(member.userId) : null;
+    return _displayNameFor(user: user, displayName: member.displayName);
   }
 }
 

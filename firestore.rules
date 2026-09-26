@@ -134,13 +134,19 @@ service cloud.firestore {
       // Placeholder minting for non-admins goes through create_placeholder_user CF.
       allow create: if isAreaAdmin() || isAdmin();
 
-      // Area admins may edit any profile; volunteers may only change their own ImgSrc;
+      // Area admins may edit any profile; volunteers may only change their own ImgSrc
+      // or ShowFullSurnameToGuests;
       // placeholder creators may edit name (+ clear IsPlaceholder only via link CF).
       // Cell-group leaders of a containing group edit name via update_placeholder_names CF.
       allow update: if isAreaAdmin() || isAdmin() || (
         isWorker() &&
         resource.data.AuthID == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ImgSrc'])
+      ) || (
+        isWorker() &&
+        resource.data.AuthID == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['ShowFullSurnameToGuests'])
       ) || isPlaceholderCreatorNameOnlyUpdate();
 
       // Role/post tracking updated by workers when managing events.

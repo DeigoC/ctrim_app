@@ -45,6 +45,42 @@ void main() {
       expect(VolunteerLocations.normalizePostLocation('Belfast'), 'Belfast');
     });
 
+    test('keyGraphicSrcForName returns the cover for that place only', () {
+      final locations = [
+        UserLocation(
+          id: '1',
+          name: 'Belfast',
+          media: [
+            {'src': 'belfast.jpg', 'type': 'img'},
+          ],
+          keyGraphicSrc: 'belfast.jpg',
+        ),
+        UserLocation(id: '2', name: 'Portadown'),
+      ];
+
+      expect(
+        VolunteerLocations.keyGraphicSrcForName(
+          locations: locations,
+          name: 'Belfast',
+        ),
+        'belfast.jpg',
+      );
+      expect(
+        VolunteerLocations.keyGraphicSrcForName(
+          locations: locations,
+          name: 'Portadown',
+        ),
+        isNull,
+      );
+      expect(
+        VolunteerLocations.keyGraphicSrcForName(
+          locations: locations,
+          name: VolunteerLocations.all,
+        ),
+        isNull,
+      );
+    });
+
     test('postLocationMatchesFilter compares base location', () {
       expect(
         VolunteerLocations.postLocationMatchesFilter(

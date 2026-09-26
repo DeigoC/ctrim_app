@@ -64,6 +64,11 @@ class _ViewEventPageState extends State<ViewEventPage>
   ];
 
   bool _haveFetchedPost = false;
+
+  /// NestedScrollView lays its header out too late for the push flight.
+  /// Keep a plain scroll view until that animation has finished.
+  bool _openFlightDone = false;
+  Animation<double>? _routeAnimation;
   bool _allowPop = false;
   bool _showScheduleTab = false;
   bool _showMediaTab = false;
@@ -101,6 +106,27 @@ class _ViewEventPageState extends State<ViewEventPage>
     _loadPost();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final animation = ModalRoute.of(context)?.animation;
+    if (identical(animation, _routeAnimation)) return;
+    _routeAnimation?.removeStatusListener(_onRouteAnimation);
+    _routeAnimation = animation;
+    if (animation == null || animation.status == AnimationStatus.completed) {
+      _openFlightDone = true;
+      return;
+    }
+    animation.addStatusListener(_onRouteAnimation);
+  }
+
+  void _onRouteAnimation(AnimationStatus status) {
+    if (status != AnimationStatus.completed || _openFlightDone || !mounted) {
+      return;
+    }
+    setState(() => _openFlightDone = true);
+  }
+
   /// Deep-copies current head fields so discard-on-exit can restore last saved state.
   void _captureOriginalHeadState() {
     _originalHeadMedia = widget.eventHead.media
@@ -117,6 +143,7 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_onRouteAnimation);
     if (_haveFetchedPost) {
       _tabController.dispose();
     }
@@ -305,7 +332,22 @@ class _ViewEventPageState extends State<ViewEventPage>
         MediaQuery.sizeOf(context).width,
         narrowPadding: 0);
 
+    if (!_openFlightDone) {
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          ..._buildHeaderSliver(webHorizontalPadding),
+          if (!_haveFetchedPost)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _buildLoadingOrErrorBody(),
+            ),
+        ],
+      );
+    }
+
     return NestedScrollView(
+        clipBehavior: Clip.none,
         headerSliverBuilder: (_, __) {
           return _buildHeaderSliver(webHorizontalPadding);
         },

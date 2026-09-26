@@ -7,13 +7,16 @@ import '../../models/user.dart';
 /// - v2 (9): v1 + tagIDs (comma-separated)
 /// - v3 (11): v2 + isPlaceholder + createdByUserID
 /// - v4 (12): v3 + status
+/// - v5 (13): v4 + showFullSurnameToGuests (`1` / `0`)
 ///
-/// Older caches omit placeholder / creator / status fields; decode defaults those safely.
+/// Older caches omit placeholder / creator / status / surname-visibility fields;
+/// decode defaults those safely.
 class UsersLocalCache {
   static const int chunkSizeV1 = 8;
   static const int chunkSizeV2 = 9;
   static const int chunkSizeV3 = 11;
   static const int chunkSizeV4 = 12;
+  static const int chunkSizeV5 = 13;
 
   /// Builds the string written to [LocalDataManager.writeUsersList].
   static String encode({
@@ -35,6 +38,7 @@ class UsersLocalCache {
       buffer.write('\n${user.isPlaceholder ? '1' : '0'}');
       buffer.write('\n${_field(user.createdByUserID)}');
       buffer.write('\n${_field(user.status)}');
+      buffer.write('\n${user.showFullSurnameToGuests ? '1' : '0'}');
     }
     return buffer.toString();
   }
@@ -59,6 +63,7 @@ class UsersLocalCache {
   static List<User>? decodeBody(List<String> bodyLines) {
     if (bodyLines.isEmpty) return <User>[];
     final candidates = <int>[
+      if (bodyLines.length % chunkSizeV5 == 0) chunkSizeV5,
       if (bodyLines.length % chunkSizeV4 == 0) chunkSizeV4,
       if (bodyLines.length % chunkSizeV3 == 0) chunkSizeV3,
       if (bodyLines.length % chunkSizeV2 == 0) chunkSizeV2,
@@ -68,15 +73,21 @@ class UsersLocalCache {
 
     for (final chunkSize in candidates) {
       final decoded = _decodeWithChunkSize(bodyLines, chunkSize);
-      if (!looksScrambled(decoded)) return decoded;
+      if (decoded != null && !looksScrambled(decoded)) return decoded;
     }
     return null;
   }
 
-  static List<User> _decodeWithChunkSize(
+  static List<User>? _decodeWithChunkSize(
       List<String> bodyLines, int chunkSize) {
-    final result = <User>[];
     final chunks = bodyLines.length ~/ chunkSize;
+    if (chunkSize >= chunkSizeV5) {
+      for (var i = 0; i < chunks; i++) {
+        final flag = bodyLines[i * chunkSize + (chunkSizeV5 - 1)];
+        if (flag != '0' && flag != '1') return null;
+      }
+    }
+    final result = <User>[];
     for (var i = 0; i < chunks; i++) {
       final start = i * chunkSize;
       final entry = bodyLines.sublist(start, start + chunkSize);
@@ -120,6 +131,8 @@ class UsersLocalCache {
     );
     final createdByUserID = chunkSize >= chunkSizeV3 ? entry[10] : '';
     final status = chunkSize >= chunkSizeV4 ? entry[11] : UserStatus.active;
+    final showFullSurnameToGuests =
+        chunkSize >= chunkSizeV5 && entry[12] == '1';
 
     return User(
       id: entry[0],
@@ -134,6 +147,7 @@ class UsersLocalCache {
       isPlaceholder: isPlaceholder,
       createdByUserID: createdByUserID,
       status: status,
+      showFullSurnameToGuests: showFullSurnameToGuests,
     );
   }
 }

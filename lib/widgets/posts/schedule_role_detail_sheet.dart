@@ -46,6 +46,7 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     final staffOnly = role['for_guests'] != true;
     final hideGuestTags =
         context.select((AppContext c) => c.isCurrentUserGuest);
+    context.select((AppContext c) => c.usersEpoch);
     final allTags = context.select((AppContext c) => c.allTags);
     final tags = UserTagHelpers.resolveTags(
       tagIDs: EventProgram.tagIDsOf(role),
@@ -133,7 +134,7 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
           const Divider(indent: 16, endIndent: 16),
           for (final user in assignedUsers)
             ListTile(
-              title: Text(user.fullname),
+              title: Text(user.nameForViewer(guest: hideGuestTags)),
               leading: MyUserAvatar(user),
               onTap: () => DialogManager.showUserProfile(
                 selectedUser: user,

@@ -4,8 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../firebase/db_managers/user_db_manager.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../src/settings/settings_controller.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/persist_users_local_cache.dart';
 import '../common/app_dialog.dart';
 import 'personal_action_section.dart';
 
@@ -67,6 +70,24 @@ class _PersonalSettingsSectionState extends State<PersonalSettingsSection> {
     );
 
     if (!widget.appContext.isCurrentUserGuest) {
+      final l10n = AppLocalizations.of(context)!;
+      final showFullSurname =
+          widget.appContext.currentUser.showFullSurnameToGuests;
+      actions.add(
+        PersonalAction(
+          icon: Icons.badge_outlined,
+          title: l10n.showFullSurnameToGuestsTitle,
+          subtitle: showFullSurname
+              ? l10n.showFullSurnameToGuestsOn
+              : l10n.showFullSurnameToGuestsOff,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _showFullSurnameDialog();
+          },
+          iconColor: colorScheme.tertiary,
+        ),
+      );
+
       final currentTab = widget.appContext.sharedPref.preferredStartupTab;
       final tabName = currentTab == 0
           ? 'Events'
@@ -213,6 +234,70 @@ class _PersonalSettingsSectionState extends State<PersonalSettingsSection> {
         return 'Dark';
       case ThemeMode.system:
         return 'Match device';
+    }
+  }
+
+  void _showFullSurnameDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        var saving = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final enabled =
+                widget.appContext.currentUser.showFullSurnameToGuests;
+            return AppDialog(
+              icon: Icons.badge_outlined,
+              title: l10n.showFullSurnameToGuestsTitle,
+              message: l10n.showFullSurnameToGuestsSubtitle,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  enabled
+                      ? l10n.showFullSurnameToGuestsOn
+                      : l10n.showFullSurnameToGuestsOff,
+                ),
+                value: enabled,
+                onChanged: saving
+                    ? null
+                    : (value) async {
+                        setDialogState(() => saving = true);
+                        final ok = await _saveShowFullSurname(value);
+                        if (!dialogContext.mounted) return;
+                        setDialogState(() => saving = false);
+                        if (mounted) setState(() {});
+                        if (!ok && dialogContext.mounted) {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text(l10n.showFullSurnameToGuestsSaveFailed),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+              ),
+              actions: AppDialogActions(
+                onCancel: () => Navigator.pop(dialogContext),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<bool> _saveShowFullSurname(bool value) async {
+    final user = widget.appContext.currentUser;
+    try {
+      await UserDBManager().updateShowFullSurnameToGuests(user.id, value);
+      widget.appContext.setShowFullSurnameToGuests(value);
+      await persistUsersLocalCache(widget.appContext.allUsers);
+      return true;
+    } catch (error) {
+      debugPrint('Could not save guest surname setting: $error');
+      return false;
     }
   }
 

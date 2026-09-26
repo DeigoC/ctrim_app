@@ -63,6 +63,9 @@ class ManageCatalogPage<T> extends StatelessWidget {
     required this.onToggle,
     required this.onDelete,
     required this.onMove,
+    this.itemBanner,
+    this.photosLabel,
+    this.onPhotos,
   });
 
   final ManageCatalogCopy copy;
@@ -82,6 +85,13 @@ class ManageCatalogPage<T> extends StatelessWidget {
   final void Function(T item) onToggle;
   final void Function(T item) onDelete;
   final void Function(int index, int direction) onMove;
+
+  /// Optional cover drawn above the list row. Null skips the banner.
+  final Widget? Function(T item)? itemBanner;
+
+  /// When both are set, the row menu includes a photos action.
+  final String? photosLabel;
+  final void Function(T item)? onPhotos;
 
   @override
   Widget build(BuildContext context) {
@@ -152,52 +162,70 @@ class ManageCatalogPage<T> extends StatelessWidget {
       itemBuilder: (_, index) {
         final item = items[index];
         final active = itemIsActive(item);
+        final banner = itemBanner?.call(item);
+        final showPhotos = photosLabel != null && onPhotos != null;
         return Card(
-          child: ListTile(
-            leading: itemLeading(item),
-            title: Text(itemName(item)),
-            subtitle: Text(
-              itemSubtitle?.call(item) ??
-                  (active ? copy.active : copy.inactive),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_upward),
-                  tooltip: copy.moveUp,
-                  onPressed:
-                      index == 0 || saving ? null : () => onMove(index, -1),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (banner != null) banner,
+              ListTile(
+                leading: itemLeading(item),
+                title: Text(itemName(item)),
+                subtitle: Text(
+                  itemSubtitle?.call(item) ??
+                      (active ? copy.active : copy.inactive),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_downward),
-                  tooltip: copy.moveDown,
-                  onPressed: index == items.length - 1 || saving
-                      ? null
-                      : () => onMove(index, 1),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'edit':
-                        onEdit(item);
-                      case 'toggle':
-                        onToggle(item);
-                      case 'delete':
-                        onDelete(item);
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(value: 'edit', child: Text(copy.edit)),
-                    PopupMenuItem(
-                      value: 'toggle',
-                      child: Text(active ? copy.deactivate : copy.activate),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_upward),
+                      tooltip: copy.moveUp,
+                      onPressed:
+                          index == 0 || saving ? null : () => onMove(index, -1),
                     ),
-                    PopupMenuItem(value: 'delete', child: Text(copy.delete)),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_downward),
+                      tooltip: copy.moveDown,
+                      onPressed: index == items.length - 1 || saving
+                          ? null
+                          : () => onMove(index, 1),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'edit':
+                            onEdit(item);
+                          case 'photos':
+                            onPhotos?.call(item);
+                          case 'toggle':
+                            onToggle(item);
+                          case 'delete':
+                            onDelete(item);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem(value: 'edit', child: Text(copy.edit)),
+                        if (showPhotos)
+                          PopupMenuItem(
+                            value: 'photos',
+                            child: Text(photosLabel!),
+                          ),
+                        PopupMenuItem(
+                          value: 'toggle',
+                          child: Text(active ? copy.deactivate : copy.activate),
+                        ),
+                        PopupMenuItem(
+                            value: 'delete', child: Text(copy.delete)),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

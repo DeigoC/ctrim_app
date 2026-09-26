@@ -725,7 +725,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserLocationsMenuTitle => 'Locations';
 
   @override
-  String get manageUserLocationsMenuSubtitle => 'Create and edit place labels';
+  String get manageUserLocationsMenuSubtitle => 'Names and cover photos';
+
+  @override
+  String get manageUserLocationsPhotos => 'Photos';
+
+  @override
+  String get manageUserLocationsPhotosHint =>
+      'Add photos for this place. The cover appears on the locations list and at the top of Who\'s who when this location is selected.';
+
+  @override
+  String get manageUserLocationsPhotosEmpty => 'No photos yet.';
+
+  @override
+  String get manageUserLocationsAddPhoto => 'Add photo';
+
+  @override
+  String get manageUserLocationsCoverPhoto => 'Cover';
+
+  @override
+  String get manageUserLocationsSetAsCover => 'Tap to set as cover';
+
+  @override
+  String get manageUserLocationsPhotosImagesOnly =>
+      'Locations only support images for now.';
+
+  @override
+  String get manageUserLocationsRemovePhoto => 'Remove photo';
+
+  @override
+  String get manageUserLocationsPhotoFallback => 'Photo';
 
   @override
   String get volunteersEmptyTags => 'No people match the selected tags';
@@ -1128,7 +1157,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsLeadersLabel => 'Leaders';
 
   @override
-  String get cellGroupsRosterTitle => 'Cell Members';
+  String get cellGroupsRosterTitle => 'Regular members';
 
   @override
   String get cellGroupsAddMembers => 'Add members';
@@ -1743,7 +1772,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapApproximateAreas => 'Approximate areas';
 
   @override
-  String get mapAttribution => 'OpenStreetMap';
+  String get mapAttribution => '© OpenStreetMap';
 
   @override
   String get mapLoadFailed => 'Map could not be loaded.';
@@ -1951,6 +1980,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get scheduleArrangeParallelHint =>
       'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.';
+
+  @override
+  String get showFullSurnameToGuestsTitle => 'Full surname for guests';
+
+  @override
+  String get showFullSurnameToGuestsSubtitle =>
+      'People who are not signed in see your first name and surname initial, unless this is on.';
+
+  @override
+  String get showFullSurnameToGuestsOn => 'On';
+
+  @override
+  String get showFullSurnameToGuestsOff => 'Off';
+
+  @override
+  String get showFullSurnameToGuestsSaveFailed =>
+      'Could not update that setting. Try again.';
 
   @override
   String scheduleArrangeDragHint(String title) {
