@@ -20,11 +20,16 @@ class ScheduleTimelineBlock extends StatelessWidget {
     required this.assignedUsers,
     required this.selected,
     required this.staffOnly,
+    this.subtitle = '',
     this.onTap,
     this.dragging = false,
   });
 
   final String title;
+
+  /// Role detail, such as "By Rhey Eusebio". Shown under the title when the
+  /// block is tall enough.
+  final String subtitle;
   final DateTime start;
   final DateTime end;
   final double height;
@@ -45,6 +50,7 @@ class ScheduleTimelineBlock extends StatelessWidget {
     final fit = ScheduleBlockLayout.forHeight(
       height,
       hasUsers: assignedUsers.isNotEmpty,
+      hasSubtitle: subtitle.trim().isNotEmpty,
     );
 
     final Color background = selected
@@ -190,6 +196,15 @@ class ScheduleTimelineBlock extends StatelessWidget {
                 ],
               ],
             ),
+            if (fit.showSubtitle)
+              Text(
+                subtitle.trim(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: mutedForeground,
+                ),
+              ),
             Text(
               '${_timeFormat.format(start)} - ${_timeFormat.format(end)}',
               maxLines: 1,

@@ -10,13 +10,23 @@ void main() {
           height <= 400;
           height += 0.5) {
         for (final hasUsers in [true, false]) {
-          final fit = ScheduleBlockLayout.forHeight(height, hasUsers: hasUsers);
-          expect(
-            fit.requiredHeight,
-            lessThanOrEqualTo(height),
-            reason: 'height $height (hasUsers: $hasUsers) overflows by '
-                '${fit.requiredHeight - height}px',
-          );
+          for (final hasSubtitle in [true, false]) {
+            final fit = ScheduleBlockLayout.forHeight(
+              height,
+              hasUsers: hasUsers,
+              hasSubtitle: hasSubtitle,
+            );
+            expect(
+              fit.requiredHeight,
+              lessThanOrEqualTo(height),
+              reason: 'height $height (hasUsers: $hasUsers, '
+                  'hasSubtitle: $hasSubtitle) overflows by '
+                  '${fit.requiredHeight - height}px',
+            );
+            if (!hasSubtitle) {
+              expect(fit.showSubtitle, isFalse);
+            }
+          }
         }
       }
     });
@@ -78,6 +88,59 @@ void main() {
       expect(fit.avatars, ScheduleBlockAvatars.inline);
     });
 
+    test('a subtitle waits until a stacked block has a spare line', () {
+      final justTitleAndTime = ScheduleBlockLayout.forHeight(
+        ScheduleBlockLayout.stackedHeight,
+        hasUsers: true,
+        hasSubtitle: true,
+      );
+      expect(justTitleAndTime.showSubtitle, isFalse);
+      expect(justTitleAndTime.twoLineTitle, isFalse);
+
+      final withSubtitle = ScheduleBlockLayout.forHeight(
+        ScheduleBlockLayout.subtitleHeight,
+        hasUsers: true,
+        hasSubtitle: true,
+      );
+      expect(withSubtitle.showSubtitle, isTrue);
+      expect(withSubtitle.twoLineTitle, isFalse);
+
+      final justBelow = ScheduleBlockLayout.forHeight(
+        ScheduleBlockLayout.subtitleHeight - 0.5,
+        hasUsers: true,
+        hasSubtitle: true,
+      );
+      expect(justBelow.showSubtitle, isFalse);
+    });
+
+    test('a second title line waits until the subtitle already fits', () {
+      final subtitleOnly = ScheduleBlockLayout.forHeight(
+        ScheduleBlockLayout.twoLineWithSubtitleHeight - 0.5,
+        hasUsers: false,
+        hasSubtitle: true,
+      );
+      expect(subtitleOnly.showSubtitle, isTrue);
+      expect(subtitleOnly.twoLineTitle, isFalse);
+
+      final both = ScheduleBlockLayout.forHeight(
+        ScheduleBlockLayout.twoLineWithSubtitleHeight,
+        hasUsers: false,
+        hasSubtitle: true,
+      );
+      expect(both.showSubtitle, isTrue);
+      expect(both.twoLineTitle, isTrue);
+    });
+
+    test('a tall block with no detail never reserves a subtitle line', () {
+      final fit = ScheduleBlockLayout.forHeight(
+        ScheduleBlockLayout.twoLineWithSubtitleHeight,
+        hasUsers: true,
+      );
+
+      expect(fit.showSubtitle, isFalse);
+      expect(fit.twoLineTitle, isTrue);
+    });
+
     test('a second title line waits for the space it needs', () {
       final withoutAvatars = ScheduleBlockLayout.forHeight(
         ScheduleBlockLayout.twoLineHeight,
@@ -108,6 +171,26 @@ void main() {
         expect(seenTwoLine && !fit.twoLineTitle, isFalse,
             reason: 'block at $height dropped back to a one-line title');
       }
+
+      seenTwoLine = false;
+      var seenSubtitle = false;
+      for (var height = ScheduleBlockLayout.compactHeight;
+          height <= 400;
+          height += 0.5) {
+        final fit = ScheduleBlockLayout.forHeight(
+          height,
+          hasUsers: true,
+          hasSubtitle: true,
+        );
+        if (fit.showSubtitle) seenSubtitle = true;
+        if (fit.twoLineTitle) seenTwoLine = true;
+
+        expect(seenSubtitle && !fit.showSubtitle, isFalse,
+            reason: 'block at $height dropped its subtitle');
+        expect(seenTwoLine && !fit.twoLineTitle, isFalse,
+            reason: 'block at $height dropped back to a one-line title');
+      }
+      expect(seenSubtitle, isTrue);
 
       expect(seenStacked, isTrue);
       expect(seenTwoLine, isTrue);
