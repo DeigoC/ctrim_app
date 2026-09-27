@@ -32,7 +32,7 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 ### Schedule & roles
 
 1. Open the **Schedule** tab on the post (day timeline with overlapping items side by side).  
-2. Add or change roles / assignments, or open **Arrange schedule** to drag items to new times (cascade or parallel mode). Adding into a **free slot** keeps other times; overlapping a timed item asks whether to **keep times** (run together) or push later items. Changing the event **start time** (date & location) asks whether the whole schedule should **move with the start** or **keep current times**.  
+2. Add or change roles / assignments, or open **Arrange schedule** to drag items to new times (cascade or parallel mode). Adding into a **free slot** keeps other times; overlapping a timed item asks whether to **keep times** (run together) or push later items. After a new item is saved, you can start the next one at that finish time. Changing the event **start time** (date & location) asks whether the whole schedule should **move with the start** or **keep current times**.  
 3. Save.  
 
 See [Reading the schedule](../../events-and-bulletin.md#reading-the-schedule) and [Rearranging the running order](../../events-and-bulletin.md#rearranging-the-running-order) for how the timeline works.

@@ -52,9 +52,15 @@ class _EventProgramPageState extends State<EventProgramPage> {
   late final AppContext _appContext;
   late final List<String> _selectedUsers;
   late final Set<String> _selectedTagIDs;
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _titleFocus = FocusNode();
 
   DateTime? _start;
   DateTime? _end;
+
+  /// Start time offered for a follow-on item. Set only after the user chooses
+  /// to add the next item; null on a fresh add or while editing.
+  DateTime? _followOnStart;
   bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
 
   bool get _isEditing => widget.isEditing;
@@ -103,7 +109,23 @@ class _EventProgramPageState extends State<EventProgramPage> {
   void dispose() {
     _tecTitle.dispose();
     _tecDetail.dispose();
+    _scrollController.dispose();
+    _titleFocus.dispose();
     super.dispose();
+  }
+
+  /// A follow-on form that still has only the prefilled start. Leaving it
+  /// keeps the item already saved.
+  bool get _isUntouchedFollowOn {
+    return !_isEditing &&
+        _followOnStart != null &&
+        _start == _followOnStart &&
+        _end == null &&
+        _forGuests &&
+        _tecTitle.text.trim().isEmpty &&
+        _tecDetail.text.trim().isEmpty &&
+        _selectedUsers.isEmpty &&
+        _selectedTagIDs.isEmpty;
   }
 
   @override
@@ -112,6 +134,10 @@ class _EventProgramPageState extends State<EventProgramPage> {
       canPop: _allowPop || _isSaved,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || _allowPop || _isSaved) return;
+        if (_isUntouchedFollowOn) {
+          _popRouteAfterAllowing();
+          return;
+        }
         final shouldPop = await DialogManager.discardChanges(context: context);
         if (shouldPop && mounted) {
           _popRouteAfterAllowing();
@@ -132,6 +158,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         narrowPadding: 16);
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: EdgeInsets.symmetric(
           vertical: 16.0, horizontal: webHorizontalPadding),
       child: Column(
@@ -212,6 +239,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _tecTitle,
+                    focusNode: _titleFocus,
                     maxLength: 48,
                     decoration: InputDecoration(
                       label: const Text('Title*'),
@@ -686,10 +714,49 @@ class _EventProgramPageState extends State<EventProgramPage> {
     );
     if (shiftFollowing == null || !mounted) return;
 
+    final DateTime savedEnd = _end!;
     _addProgramRoleToEventContext(shiftFollowing: shiftFollowing);
     widget.eventContext.allowSavingOfTheEdit();
     _isSaved = true;
+
+    final bool addNext = await DialogManager.askAddNextScheduleItem(
+      context: context,
+      finishTimeLabel: _timeFormat.format(savedEnd),
+    );
+    if (!mounted) return;
+    if (addNext) {
+      _prepareNextItem(start: savedEnd);
+      return;
+    }
     _popRouteAfterAllowing();
+  }
+
+  /// Clears the form and starts the next item at [start] (the previous finish).
+  void _prepareNextItem({required DateTime start}) {
+    _tecTitle.clear();
+    _tecDetail.clear();
+    _selectedUsers.clear();
+    _selectedTagIDs.clear();
+    _followOnStart = start;
+    setState(() {
+      _start = start;
+      _end = null;
+      _forGuests = true;
+      _canSave = false;
+      _isSaved = false;
+      _allowPop = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+      _titleFocus.requestFocus();
+    });
   }
 
   void _addProgramRoleToEventContext({required bool shiftFollowing}) {

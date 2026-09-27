@@ -90,6 +90,8 @@ Items that started before the point you drop into are left alone, so a long back
 
 Adding a role into a **free slot** on the timeline leaves everything else where it is. You are only asked about later items if the new time **overlaps** something already in the running order (not the all-event band). **Keep times** is the usual choice — items can run together — or you can push later items back to make room.
 
+After you save a new item, you can add the next one starting at that finish time. The new form keeps that start and clears the title, people, and length, so each slot is filled in on its own. **Done** returns to the schedule. The item you just saved stays either way.
+
 ## Changing the event start
 
 When a post already has a schedule, changing the **start time** asks whether the running order should move with it.
