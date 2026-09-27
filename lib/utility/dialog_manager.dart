@@ -335,6 +335,60 @@ class DialogManager {
     );
   }
 
+  /// Ask whether a new event start should slide the whole running order.
+  ///
+  /// Returns `true` (move every timed item by [shiftBy]), `false` (leave them),
+  /// or null if the user cancels the time change.
+  static Future<bool?> askShiftScheduleWithEventStart({
+    required BuildContext context,
+    required int roleCount,
+    required Duration shiftBy,
+    required String newStartLabel,
+  }) async {
+    HapticFeedback.lightImpact();
+    final String itemLabel =
+        roleCount == 1 ? '1 schedule item' : '$roleCount schedule items';
+    final String phrase = _scheduleShiftPhrase(shiftBy);
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AppDialog(
+          icon: Icons.schedule,
+          title: 'Move the schedule?',
+          messageAlign: TextAlign.center,
+          message:
+              'The start time is now $newStartLabel. Schedule items can move '
+              'with it, or stay at their current times.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ScheduleTimingChoiceCard(
+                icon: Icons.low_priority,
+                title: 'Move with the start',
+                subtitle: 'Shift $itemLabel $phrase, keeping the same gaps.',
+                emphasized: true,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+              const SizedBox(height: 8),
+              _ScheduleTimingChoiceCard(
+                icon: Icons.event_available,
+                title: 'Keep current times',
+                subtitle: 'Schedule items stay at their current times.',
+                emphasized: false,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+            ],
+          ),
+          actions: AppDialogActions(
+            onCancel: () => Navigator.of(context).pop(),
+            cancelLabel: 'Cancel',
+          ),
+        );
+      },
+    );
+  }
+
   static Future<bool> showConfirmationDialog({
     required BuildContext context,
     required String title,
@@ -695,6 +749,25 @@ class _ProgressTaskDialogState extends State<_ProgressTaskDialog> {
 }
 
 /// One option in [DialogManager.askShiftFollowingScheduleItems].
+String _scheduleShiftPhrase(Duration shiftBy) {
+  final int minutes = shiftBy.inMinutes.abs();
+  final String direction = shiftBy.isNegative ? 'earlier' : 'later';
+  if (minutes >= 60 && minutes % 60 == 0) {
+    final int hours = minutes ~/ 60;
+    final String unit = hours == 1 ? 'hour' : 'hours';
+    return '$hours $unit $direction';
+  }
+  if (minutes > 60) {
+    final int hours = minutes ~/ 60;
+    final int remainder = minutes % 60;
+    final String hourUnit = hours == 1 ? 'hour' : 'hours';
+    final String minuteUnit = remainder == 1 ? 'minute' : 'minutes';
+    return '$hours $hourUnit $remainder $minuteUnit $direction';
+  }
+  final String unit = minutes == 1 ? 'minute' : 'minutes';
+  return '$minutes $unit $direction';
+}
+
 class _ScheduleTimingChoiceCard extends StatelessWidget {
   const _ScheduleTimingChoiceCard({
     required this.icon,

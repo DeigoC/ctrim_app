@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/event/event_program.dart';
 import '../../utility/app_context.dart';
 import '../../utility/notifications/broadcast_audience.dart';
 import '../../utility/event_context.dart';
@@ -43,6 +44,9 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   String _webLink = '';
   DateTime? _start, _end;
   bool _isAllDay = false, _online = false;
+
+  /// Clock-time shift already applied to roles during this visit.
+  Duration _appliedScheduleShift = Duration.zero;
 
   bool get _timeOnly => widget.timeOnly;
 
@@ -823,14 +827,16 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }) async {
     final DateTime? previousStart = _start;
     final DateTime? previousEnd = _end;
+    final DateTime? nextEnd = _endFollowingStart(
+      start: start,
+      previousStart: previousStart,
+      previousEnd: previousEnd,
+    );
+    final bool accepted = await _maybeShiftScheduleWithStart(start);
+    if (!accepted || !mounted) return;
     setState(() {
       _start = start;
-      if (previousEnd != null && previousStart != null) {
-        _end = start.add(previousEnd.difference(previousStart));
-      } else if (_end != null) {
-        _end = DateTime(
-            start.year, start.month, start.day, _end!.hour, _end!.minute);
-      }
+      _end = nextEnd;
     });
     if (!promptForDuration || !mounted) return;
     await showDialog(
@@ -984,6 +990,7 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
   }
 
   void _onDeleteStartTimeClick() {
+    _undoAppliedScheduleShift();
     setState(() {
       _start = null;
       _end = null;
@@ -991,8 +998,62 @@ class _EditEventDateLocationPageState extends State<EditEventDateLocationPage> {
     });
   }
 
+  /// End time that keeps the previous duration when the start moves.
+  DateTime? _endFollowingStart({
+    required DateTime start,
+    required DateTime? previousStart,
+    required DateTime? previousEnd,
+  }) {
+    if (previousEnd != null && previousStart != null) {
+      return start.add(previousEnd.difference(previousStart));
+    }
+    if (previousEnd != null) {
+      return DateTime(
+        start.year,
+        start.month,
+        start.day,
+        previousEnd.hour,
+        previousEnd.minute,
+      );
+    }
+    return null;
+  }
+
+  /// Asks to slide timed roles when the clock time changes.
+  ///
+  /// Returns false when the user cancels, so the start time stays as it was.
+  Future<bool> _maybeShiftScheduleWithStart(DateTime start) async {
+    final DateTime? baseline = _start ??
+        (_appliedScheduleShift == Duration.zero ? _originalStart : null);
+    if (baseline == null) return true;
+    final Duration shiftBy = EventProgram.clockTimeDelta(baseline, start);
+    final int timedRoles = widget.eventContext.program.timedRoleCount;
+    if (shiftBy.inMinutes == 0 || timedRoles == 0) return true;
+
+    final bool? choice = await DialogManager.askShiftScheduleWithEventStart(
+      context: context,
+      roleCount: timedRoles,
+      shiftBy: shiftBy,
+      newStartLabel: _timeFormat.format(start),
+    );
+    if (!mounted || choice == null) return false;
+    if (choice) {
+      widget.eventContext.program.shiftAllTimedRoles(shiftBy);
+      _appliedScheduleShift += shiftBy;
+    }
+    return true;
+  }
+
+  void _undoAppliedScheduleShift() {
+    if (_appliedScheduleShift == Duration.zero) return;
+    widget.eventContext.program.shiftAllTimedRoles(-_appliedScheduleShift);
+    _appliedScheduleShift = Duration.zero;
+  }
+
   void _checkToUpdate() {
-    if (_start != _originalStart ||
+    final bool scheduleMoved = _appliedScheduleShift != Duration.zero;
+    if (scheduleMoved ||
+        _start != _originalStart ||
         _end != _originalEnd ||
         _isAllDay != _originalAllDay ||
         _tecAddress.text

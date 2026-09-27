@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/event/event_head.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/cache/local_data_manager.dart';
@@ -122,7 +123,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                     ),
                                   ),
                                   Text(
-                                    '${widget.eventContext.head.media.length}/4 items · shown on the post card',
+                                    '${widget.eventContext.head.media.length}/${EventHead.maxKeyMediaItems} items · shown on the post card',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: colorScheme.onSurface
                                           .withValues(alpha: 0.6),
@@ -728,11 +729,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
   }
 
   bool _canBeKeyMedia(final String src) {
-    return widget.eventContext.head.media.length < 4 &&
-        !widget.eventContext.head.media
-            .map<String>((e) => e['src']!)
-            .toList()
-            .contains(src);
+    final head = widget.eventContext.head;
+    return head.hasRoomForKeyMedia && !head.containsMediaItem(src);
   }
 
   void _shouldBeAbleToSave() {
@@ -854,7 +852,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           'Key media are the most important images and videos for your event.\n\n'
           '• First image becomes the event thumbnail\n'
           '• Displayed prominently in event previews\n'
-          '• Maximum of 4 key media items\n'
+          '• Maximum of ${EventHead.maxKeyMediaItems} key media items\n'
+          '• New gallery items are added here while there is room\n'
           '• Can be images or videos',
     );
   }
@@ -866,7 +865,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
       title: 'Post Media',
       content: 'All images and videos associated with your event.\n\n'
           '• Add captions to describe your media\n'
-          '• Mark important items as key media\n'
+          '• New items are marked as key media while there is room\n'
           '• Videos can have custom thumbnails\n'
           '• Organize your media gallery',
     );

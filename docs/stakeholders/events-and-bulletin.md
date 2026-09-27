@@ -90,6 +90,18 @@ Items that started before the point you drop into are left alone, so a long back
 
 Adding a role into a **free slot** on the timeline leaves everything else where it is. You are only asked about later items if the new time **overlaps** something already in the running order (not the all-event band). **Keep times** is the usual choice — items can run together — or you can push later items back to make room.
 
+## Changing the event start
+
+When a post already has a schedule, changing the **start time** asks whether the running order should move with it.
+
+| Choice | What it does |
+|--------|----------------|
+| **Move with the start** | Every timed item shifts by the same amount. A welcome that began fifteen minutes after the old start still begins fifteen minutes after the new one. Setup calls move too. |
+| **Keep current times** | Those items stay on the clock. |
+| **Cancel** | The start time goes back to what it was. |
+
+Changing the **date** still moves the schedule onto that day at the same times of day, without this question. The event’s finish time follows the start, so the meeting stays the same length.
+
 ## What organisers can do
 
 People with **Leader** access can create posts (usually by picking a **template** first). Leaders can also register / add people they need for their work — see [People & roles](people-and-roles.md).

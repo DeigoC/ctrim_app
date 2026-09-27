@@ -378,6 +378,51 @@ void main() {
         expect(head.videoCount, 0);
       });
 
+      test('addKeyMediaIfRoom fills empty slots and keeps the cover first', () {
+        final head = EventHead(id: 'e1');
+        head.addMediaItem(type: 'img', src: 'cover.jpg', title: 'Cover');
+
+        expect(
+          head.addKeyMediaIfRoom(type: 'img', src: 'second.jpg', title: 'Two'),
+          isTrue,
+        );
+        expect(head.mediaCount, 2);
+        expect(head.getKeyGraphic(), 'cover.jpg');
+        expect(head.media.last['src'], 'second.jpg');
+      });
+
+      test('addKeyMediaIfRoom stops at the key-media cap', () {
+        final head = EventHead(id: 'e1');
+        for (var i = 0; i < EventHead.maxKeyMediaItems; i++) {
+          expect(
+            head.addKeyMediaIfRoom(type: 'img', src: 'src-$i.jpg'),
+            isTrue,
+          );
+        }
+
+        expect(head.hasRoomForKeyMedia, isFalse);
+        expect(
+          head.addKeyMediaIfRoom(type: 'vid', src: 'overflow.mp4'),
+          isFalse,
+        );
+        expect(head.mediaCount, EventHead.maxKeyMediaItems);
+        expect(head.containsMediaItem('overflow.mp4'), isFalse);
+      });
+
+      test('addKeyMediaIfRoom skips duplicates and empty sources', () {
+        final head = EventHead(id: 'e1');
+        expect(head.addKeyMediaIfRoom(type: 'img', src: ''), isFalse);
+        expect(
+          head.addKeyMediaIfRoom(type: 'img', src: 'photo.jpg'),
+          isTrue,
+        );
+        expect(
+          head.addKeyMediaIfRoom(type: 'img', src: 'photo.jpg'),
+          isFalse,
+        );
+        expect(head.mediaCount, 1);
+      });
+
       test('addMediaItem adds a video entry', () {
         final head = EventHead(id: 'e1');
         head.addMediaItem(type: 'video', src: 'clip.mp4');
