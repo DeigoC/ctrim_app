@@ -8,6 +8,13 @@ import '../../utility/schedule_block_layout.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import 'schedule_timeline_block.dart';
 
+/// Role detail shown under the title on a tall timeline block.
+String _roleDetail(final Map<String, dynamic> role) {
+  final detail = role['detail'];
+  if (detail is! String) return '';
+  return detail.replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
 /// Day-view canvas for a post schedule.
 ///
 /// Blocks are positioned by clock time and sized by duration, so concurrent
@@ -147,6 +154,7 @@ class ScheduleTimeline extends StatelessWidget {
     final Widget block = onMoved == null
         ? ScheduleTimelineBlock(
             title: placement.role['title'] as String,
+            subtitle: _roleDetail(placement.role),
             start: placement.start,
             end: placement.end,
             height: height,
@@ -287,6 +295,7 @@ class _DraggableTimelineBlockState extends State<_DraggableTimelineBlock> {
         }),
         child: ScheduleTimelineBlock(
           title: widget.placement.role['title'] as String,
+          subtitle: _roleDetail(widget.placement.role),
           start: widget.placement.start.add(shift),
           end: widget.placement.end.add(shift),
           height: widget.height,

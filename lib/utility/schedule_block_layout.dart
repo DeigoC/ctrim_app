@@ -24,6 +24,7 @@ class ScheduleBlockLayout {
   const ScheduleBlockLayout._({
     required this.stacked,
     required this.twoLineTitle,
+    required this.showSubtitle,
     required this.avatars,
     required this.requiredHeight,
   });
@@ -31,6 +32,13 @@ class ScheduleBlockLayout {
   /// False when the block shows time, title and avatars on a single line.
   final bool stacked;
   final bool twoLineTitle;
+
+  /// One muted line of the role's detail, under the title.
+  ///
+  /// Only once a stacked block has a spare line. A short slot stays on one
+  /// line, and a second title line waits until the subtitle already fits, so
+  /// a taller block never drops text a shorter one was showing.
+  final bool showSubtitle;
   final ScheduleBlockAvatars avatars;
 
   /// What the chosen content occupies. Always `<=` the height asked for.
@@ -97,9 +105,42 @@ class ScheduleBlockLayout {
   static const double twoLineWithBottomAvatarHeight =
       2 * stackedPadding + 2 * titleLine + timeLine + bottomAvatar + slack;
 
+  /// Same rendered height as the time line: the subtitle uses `labelSmall`.
+  static const double subtitleLine = timeLine;
+
+  /// Stacked title, subtitle and time, with avatars still on the title row.
+  static const double subtitleHeight = 2 * stackedPadding +
+      _titleRowWithAvatar +
+      subtitleLine +
+      timeLine +
+      slack;
+
+  /// Same stack when nobody is assigned, so the title row is only one line.
+  static const double subtitleHeightNoUsers =
+      2 * stackedPadding + titleLine + subtitleLine + timeLine + slack;
+
+  static const double twoLineWithSubtitleHeight =
+      2 * stackedPadding + 2 * titleLine + subtitleLine + timeLine + slack;
+
+  static const double bottomAvatarWithSubtitleHeight = 2 * stackedPadding +
+      titleLine +
+      subtitleLine +
+      timeLine +
+      bottomAvatar +
+      slack;
+
+  static const double twoLineWithSubtitleAndBottomAvatarHeight =
+      2 * stackedPadding +
+          2 * titleLine +
+          subtitleLine +
+          timeLine +
+          bottomAvatar +
+          slack;
+
   static ScheduleBlockLayout forHeight(
     final double height, {
     required final bool hasUsers,
+    final bool hasSubtitle = false,
   }) {
     if (height < stackedHeight) {
       final avatars =
@@ -107,20 +148,32 @@ class ScheduleBlockLayout {
       return ScheduleBlockLayout._(
         stacked: false,
         twoLineTitle: false,
+        showSubtitle: false,
         avatars: avatars,
         requiredHeight: 2 * tightPadding + _compactRow,
       );
     }
 
     // Decided first, and independently of the avatars: a taller block must
-    // never show less text than a shorter one.
-    final twoLine = height >= twoLineHeight;
+    // never show less text than a shorter one. The subtitle earns its line
+    // before the title is allowed to wrap, so "By …" is not pushed out by a
+    // second title line.
+    final showSubtitle = hasSubtitle &&
+        height >= (hasUsers ? subtitleHeight : subtitleHeightNoUsers);
+    final twoLine =
+        height >= (hasSubtitle ? twoLineWithSubtitleHeight : twoLineHeight);
 
     // Avatars only move to the bottom edge once that fits alongside the title
     // the block has already earned; until then they ride on the title row.
     final bottom = hasUsers &&
         height >=
-            (twoLine ? twoLineWithBottomAvatarHeight : bottomAvatarHeight);
+            (twoLine
+                ? (showSubtitle
+                    ? twoLineWithSubtitleAndBottomAvatarHeight
+                    : twoLineWithBottomAvatarHeight)
+                : (showSubtitle
+                    ? bottomAvatarWithSubtitleHeight
+                    : bottomAvatarHeight));
 
     final titleRow = twoLine
         ? 2 * titleLine
@@ -131,6 +184,7 @@ class ScheduleBlockLayout {
     return ScheduleBlockLayout._(
       stacked: true,
       twoLineTitle: twoLine,
+      showSubtitle: showSubtitle,
       avatars: bottom
           ? ScheduleBlockAvatars.bottom
           : hasUsers
@@ -138,6 +192,7 @@ class ScheduleBlockLayout {
               : ScheduleBlockAvatars.none,
       requiredHeight: 2 * stackedPadding +
           titleRow +
+          (showSubtitle ? subtitleLine : 0) +
           timeLine +
           (bottom ? bottomAvatar : 0),
     );
