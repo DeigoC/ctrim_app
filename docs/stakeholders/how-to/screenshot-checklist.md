@@ -55,6 +55,7 @@ Save under `assets/images/`.
 | [ ] | `edit-post-00-actions.png` | Post actions / edit menu |
 | [ ] | `edit-post-01-title-details.png` | Title & details editor |
 | [ ] | `edit-post-02-schedule.png` | Schedule tab (day timeline) |
+| [ ] | `edit-post-02b-move-schedule.png` | Start-time change asking to move the schedule or keep current times |
 | [ ] | `edit-post-03-media.png` | Media tab / editor |
 | [ ] | `edit-post-04-people.png` | Contributors / people on the post |
 | [ ] | `edit-post-05-attendance.png` | People tab: expected attendees and attendance |

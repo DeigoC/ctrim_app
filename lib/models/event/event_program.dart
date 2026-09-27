@@ -250,6 +250,41 @@ class EventProgram {
     }
   }
 
+  /// Timed roles — items with a start. Untimed slots are left out.
+  int get timedRoleCount =>
+      _roles.where((role) => role['start'] != null).length;
+
+  /// Difference in clock time from [from] to [to], ignoring the calendar date.
+  static Duration clockTimeDelta(DateTime from, DateTime to) {
+    final fromClock = Duration(
+      hours: from.hour,
+      minutes: from.minute,
+      seconds: from.second,
+      milliseconds: from.millisecond,
+      microseconds: from.microsecond,
+    );
+    final toClock = Duration(
+      hours: to.hour,
+      minutes: to.minute,
+      seconds: to.second,
+      milliseconds: to.millisecond,
+      microseconds: to.microsecond,
+    );
+    return toClock - fromClock;
+  }
+
+  /// Moves every timed role by [delta], keeping each item's length and the gaps
+  /// between items. Untimed roles stay put. A zero [delta] does nothing.
+  void shiftAllTimedRoles(Duration delta) {
+    if (delta == Duration.zero) return;
+    for (final role in _roles) {
+      final start = role['start'] as DateTime?;
+      final end = role['end'] as DateTime?;
+      if (start != null) role['start'] = start.add(delta);
+      if (end != null) role['end'] = end.add(delta);
+    }
+  }
+
   /// Moves every role onto [newDay]'s calendar date relative to [oldDay],
   /// preserving each role's clock time (and any overnight day offset).
   void rebaseRolesToCalendarDate({

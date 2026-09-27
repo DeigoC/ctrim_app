@@ -198,6 +198,11 @@ class EventHead {
     _leadSpeakerName = null;
   }
 
+  /// Key media shown on the post card. Extra gallery items stay in post media.
+  static const int maxKeyMediaItems = 4;
+
+  bool get hasRoomForKeyMedia => _media.length < maxKeyMediaItems;
+
   bool containsMediaItem(final String src) =>
       _media.map<String>((e) => e['src']!).toList().contains(src);
 
@@ -222,6 +227,20 @@ class EventHead {
       String thumbnail = ''}) {
     _media.add(
         _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
+  }
+
+  /// Appends [src] as key media when there is room and it is not already there.
+  /// Returns whether it was added. An existing cover stays first.
+  bool addKeyMediaIfRoom(
+      {required String type,
+      required String src,
+      String title = '',
+      String thumbnail = ''}) {
+    if (src.isEmpty || !hasRoomForKeyMedia || containsMediaItem(src)) {
+      return false;
+    }
+    addMediaItem(type: type, src: src, title: title, thumbnail: thumbnail);
+    return true;
   }
 
   /// Inserts at the front so [getKeyGraphic] / card thumbnail pick this image first.

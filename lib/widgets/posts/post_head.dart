@@ -220,7 +220,7 @@ class _PostHeadState extends State<PostHead>
           ),
         ),
         if (showLeadSpeaker) ...[
-          _buildLeadSpeakerPortrait(theme, colorScheme),
+          _LeadSpeakerPortrait(head: widget.thisHead),
           const SizedBox(height: 16),
         ],
       ],
@@ -267,89 +267,6 @@ class _PostHeadState extends State<PostHead>
             ),
           ),
       ],
-    );
-  }
-
-  Widget _buildLeadSpeakerPortrait(ThemeData theme, ColorScheme colorScheme) {
-    final imgSrc = widget.thisHead.leadSpeakerImgSrc;
-    final name = context.select((AppContext appContext) {
-      final uid = widget.thisHead.leadSpeakerUID;
-      final user = uid == null || uid.isEmpty ? null : appContext.userById(uid);
-      return PersonDisplayName.leadSpeakerLabel(
-        storedName: widget.thisHead.leadSpeakerName,
-        user: user,
-        guest: appContext.isCurrentUserGuest,
-      );
-    });
-    final hasImage = imgSrc != null && imgSrc.isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            if (hasImage)
-              ClipOval(
-                child: CachedImageWidget(
-                  imageUrl: imgSrc,
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                  heroTag: widget.thisHead.media
-                          .every((entry) => entry['type'] != 'img')
-                      ? 'post_cover_${widget.thisHead.id}'
-                      : null,
-                ),
-              )
-            else
-              _leadSpeakerInitialsAvatar(theme, colorScheme, name),
-            const SizedBox(height: 12),
-            Text(
-              name,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Lead speaker',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _leadSpeakerInitialsAvatar(
-      ThemeData theme, ColorScheme colorScheme, String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    final initials = parts.isEmpty
-        ? '?'
-        : parts
-            .take(2)
-            .map((p) => p.isNotEmpty ? p[0].toUpperCase() : '')
-            .join();
-    return CircleAvatar(
-      radius: 60,
-      backgroundColor: colorScheme.primaryContainer,
-      child: Text(
-        initials,
-        style: theme.textTheme.headlineMedium?.copyWith(
-          color: colorScheme.onPrimaryContainer,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
     );
   }
 
@@ -827,6 +744,100 @@ class _PostHeadState extends State<PostHead>
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Lead-speaker block for posts with no media. Owns the [context.select]
+/// so the lookup runs inside this widget's [build], not the card's layout
+/// callback.
+class _LeadSpeakerPortrait extends StatelessWidget {
+  const _LeadSpeakerPortrait({required this.head});
+
+  final EventHead head;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final imgSrc = head.leadSpeakerImgSrc;
+    final name = context.select((AppContext appContext) {
+      final uid = head.leadSpeakerUID;
+      final user = uid == null || uid.isEmpty ? null : appContext.userById(uid);
+      return PersonDisplayName.leadSpeakerLabel(
+        storedName: head.leadSpeakerName,
+        user: user,
+        guest: appContext.isCurrentUserGuest,
+      );
+    });
+    final hasImage = imgSrc != null && imgSrc.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            if (hasImage)
+              ClipOval(
+                child: CachedImageWidget(
+                  imageUrl: imgSrc,
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                  heroTag: head.media.every((entry) => entry['type'] != 'img')
+                      ? 'post_cover_${head.id}'
+                      : null,
+                ),
+              )
+            else
+              _initialsAvatar(theme, colorScheme, name),
+            const SizedBox(height: 12),
+            Text(
+              name,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Lead speaker',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _initialsAvatar(
+      ThemeData theme, ColorScheme colorScheme, String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    final initials = parts.isEmpty
+        ? '?'
+        : parts
+            .take(2)
+            .map((part) => part.isNotEmpty ? part[0].toUpperCase() : '')
+            .join();
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: colorScheme.primaryContainer,
+      child: Text(
+        initials,
+        style: theme.textTheme.headlineMedium?.copyWith(
+          color: colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

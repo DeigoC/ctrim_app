@@ -445,6 +445,71 @@ void main() {
         expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 30));
       });
 
+      test('clockTimeDelta ignores the calendar date', () {
+        expect(
+          EventProgram.clockTimeDelta(
+            DateTime(2024, 6, 15, 10, 0),
+            DateTime(2024, 6, 22, 11, 30),
+          ),
+          const Duration(hours: 1, minutes: 30),
+        );
+        expect(
+          EventProgram.clockTimeDelta(
+            DateTime(2024, 6, 15, 11, 0),
+            DateTime(2024, 6, 15, 10, 15),
+          ),
+          const Duration(minutes: -45),
+        );
+      });
+
+      test('shiftAllTimedRoles moves every timed role and keeps gaps', () {
+        final program = buildSequentialProgram();
+        program.addRole(
+          uids: [],
+          title: 'Open',
+          start: null,
+          end: null,
+          id: 9,
+        );
+        program.addRole(
+          uids: [],
+          title: 'Night',
+          start: DateTime(2024, 6, 15, 23, 30),
+          end: DateTime(2024, 6, 16, 0, 15),
+          id: 8,
+        );
+
+        program.shiftAllTimedRoles(const Duration(hours: 1));
+
+        expect(program.timedRoleCount, 4);
+        expect(program.roles[0]['start'], DateTime(2024, 6, 15, 11, 0));
+        expect(program.roles[0]['end'], DateTime(2024, 6, 15, 11, 15));
+        expect(program.roles[1]['start'], DateTime(2024, 6, 15, 11, 15));
+        final open = program.roles.firstWhere((role) => role['id'] == 9);
+        expect(open['start'], isNull);
+        expect(open['end'], isNull);
+        final night = program.roles.firstWhere((role) => role['id'] == 8);
+        expect(night['start'], DateTime(2024, 6, 16, 0, 30));
+        expect(night['end'], DateTime(2024, 6, 16, 1, 15));
+      });
+
+      test('shiftAllTimedRoles can move the schedule earlier', () {
+        final program = buildSequentialProgram();
+        program.shiftAllTimedRoles(const Duration(minutes: -30));
+
+        expect(program.roles[0]['start'], DateTime(2024, 6, 15, 9, 30));
+        expect(program.roles[0]['end'], DateTime(2024, 6, 15, 9, 45));
+        expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 0));
+      });
+
+      test('shiftAllTimedRoles ignores a zero delta', () {
+        final program = buildSequentialProgram();
+        program.shiftAllTimedRoles(Duration.zero);
+
+        expect(program.roles[0]['start'], DateTime(2024, 6, 15, 10, 0));
+        expect(program.roles[2]['end'], DateTime(2024, 6, 15, 11, 30));
+      });
+
       group('moveRoleToStart', () {
         test('parallel keeps the duration and leaves other roles alone', () {
           final program = buildSequentialProgram();

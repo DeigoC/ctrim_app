@@ -558,6 +558,12 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               }
 
               widget.eventContext.media.addMediaFile(data);
+              widget.eventContext.head.addKeyMediaIfRoom(
+                type: data['type'] as String,
+                src: data['src'] as String,
+                title: (data['title'] as String?) ?? '',
+                thumbnail: (data['thumbnailSrc'] as String?) ?? '',
+              );
               Navigator.of(context).pop();
               _isSaved = true;
               _popRouteAfterAllowing();
