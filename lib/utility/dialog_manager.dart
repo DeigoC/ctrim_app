@@ -335,6 +335,25 @@ class DialogManager {
     );
   }
 
+  /// After a new schedule item is saved, offer to start the next one at its finish.
+  ///
+  /// Returns true when the user wants another item. False means they are done,
+  /// including dismissing the dialog. The item already saved stays either way.
+  static Future<bool> askAddNextScheduleItem({
+    required BuildContext context,
+    required String finishTimeLabel,
+  }) {
+    return showConfirmationDialog(
+      context: context,
+      title: 'Add the next item?',
+      content:
+          'This item finishes at $finishTimeLabel. The next one can start then.',
+      confirmText: 'Add next',
+      cancelText: 'Done',
+      icon: Icons.playlist_add,
+    );
+  }
+
   /// Ask whether a new event start should slide the whole running order.
   ///
   /// Returns `true` (move every timed item by [shiftBy]), `false` (leave them),
