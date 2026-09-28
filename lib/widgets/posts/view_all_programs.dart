@@ -316,8 +316,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             "${_startFormatAllDay.format(widget.eventContext.head.eventDate!)} (All Day)";
       } else {
         dateStr = _startFormat.format(widget.eventContext.head.eventDate!);
-        timeStr =
-            'From ${_timeFormat.format(widget.eventContext.head.eventDate!)} to ${_timeFormat.format(widget.eventContext.program.finishTime!)}';
+        final finish = widget.eventContext.program.finishTime;
+        final startLabel =
+            _timeFormat.format(widget.eventContext.head.eventDate!);
+        timeStr = finish == null
+            ? startLabel
+            : 'From $startLabel to ${_timeFormat.format(finish)}';
       }
     } else if (widget.timeOnlySchedule) {
       timeStr = 'Tap to set typical time & location';
