@@ -10,6 +10,7 @@ import '../../models/user.dart';
 import '../../pages/personal/guest_registration_page.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../utility/app_context.dart';
+import '../../utility/attendance_name_order.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
@@ -130,8 +131,16 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
     final authId = _authManager.currentAuthUID;
     final isInterested = attendance.hasInterest(authId);
     final hasInterested = attendance.interested.isNotEmpty;
-    final hasExpected = attendance.expectedUserIds.isNotEmpty;
-    final hasAttendees = attendance.attendees.isNotEmpty;
+    final expectedUserIds = AttendanceNameOrder.userIdsBySurname(
+      attendance.expectedUserIds,
+      appContext.userById,
+    );
+    final attendees = AttendanceNameOrder.attendeesBySurname(
+      attendance.attendees,
+      appContext.userById,
+    );
+    final hasExpected = expectedUserIds.isNotEmpty;
+    final hasAttendees = attendees.isNotEmpty;
     final attendeeLabel =
         widget.eventContext.head.isRecent ? 'Attended' : 'Attending';
     final hasLinkedCellGroups =
@@ -187,7 +196,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                     ),
                   )
                 else
-                  for (final userId in attendance.expectedUserIds)
+                  for (final userId in expectedUserIds)
                     _buildExpectedTile(
                       theme,
                       colorScheme,
@@ -237,7 +246,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                 : null,
             child: Column(
               children: [
-                for (final entry in attendance.attendees)
+                for (final entry in attendees)
                   _buildAttendeeTile(theme, colorScheme, appContext, entry,
                       canManage: canManage),
               ],
