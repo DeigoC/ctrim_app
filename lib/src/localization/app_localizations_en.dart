@@ -2058,4 +2058,166 @@ class AppLocalizationsEn extends AppLocalizations {
   String scheduleArrangeDragHint(String title) {
     return 'Long press \"$title\" to drag it';
   }
+
+  @override
+  String get notificationSchedulesMenuTitle => 'Scheduled notifications';
+
+  @override
+  String get notificationSchedulesMenuSubtitle => 'Reminders from tagged posts';
+
+  @override
+  String get notificationSchedulesTitle => 'Scheduled notifications';
+
+  @override
+  String get notificationSchedulesEmptyTitle => 'No reminders yet';
+
+  @override
+  String get notificationSchedulesEmptyBody =>
+      'Add a reminder for a post tag at one location. The next matching post is sent on its own.';
+
+  @override
+  String get notificationSchedulesAdd => 'Add reminder';
+
+  @override
+  String get notificationSchedulesAddTitle => 'New reminder';
+
+  @override
+  String get notificationSchedulesEditTitle => 'Edit reminder';
+
+  @override
+  String get notificationSchedulesEditSubtitle =>
+      'One post tag at one location. The next matching post is sent to that site.';
+
+  @override
+  String get notificationSchedulesSave => 'Save';
+
+  @override
+  String get notificationSchedulesSaving => 'Saving reminder';
+
+  @override
+  String get notificationSchedulesDelete => 'Delete';
+
+  @override
+  String get notificationSchedulesDeleteTitle => 'Delete this reminder?';
+
+  @override
+  String get notificationSchedulesDeleteBody =>
+      'It will stop sending. Posts that already went out are unchanged.';
+
+  @override
+  String get notificationSchedulesDeleting => 'Deleting reminder';
+
+  @override
+  String get notificationSchedulesTagLabel => 'Post tag';
+
+  @override
+  String get notificationSchedulesLocationLabel => 'Location';
+
+  @override
+  String get notificationSchedulesTimingLabel => 'When to send';
+
+  @override
+  String get notificationSchedulesTimingDayBefore => 'Day before';
+
+  @override
+  String get notificationSchedulesTimingMorningOf => 'Morning of';
+
+  @override
+  String get notificationSchedulesTimingHoursBefore => 'Hours before';
+
+  @override
+  String notificationSchedulesTimingDayBeforeAt(String time) {
+    return 'Day before at $time';
+  }
+
+  @override
+  String notificationSchedulesTimingMorningAt(String time) {
+    return 'Morning of the event at $time';
+  }
+
+  @override
+  String notificationSchedulesTimingHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours hours before the start',
+      one: '1 hour before the start',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notificationSchedulesClockLabel => 'Time (UK)';
+
+  @override
+  String get notificationSchedulesHoursLabel => 'Hours before the start';
+
+  @override
+  String get notificationSchedulesHoursInvalid =>
+      'Enter a number from 1 to 48.';
+
+  @override
+  String notificationSchedulesAudience(String audience) {
+    return 'Sends to $audience';
+  }
+
+  @override
+  String notificationSchedulesNext(String title) {
+    return 'Next: $title';
+  }
+
+  @override
+  String notificationSchedulesSendsAt(String when) {
+    return 'Sends $when';
+  }
+
+  @override
+  String get notificationSchedulesMorningAfterStart =>
+      'This post starts before the chosen time, so it will not be sent.';
+
+  @override
+  String get notificationSchedulesNoUpcoming =>
+      'No upcoming post with this tag at this location.';
+
+  @override
+  String notificationSchedulesLastSent(String when) {
+    return 'Last sent $when';
+  }
+
+  @override
+  String notificationSchedulesLastError(String error) {
+    return 'Last send failed: $error';
+  }
+
+  @override
+  String get notificationSchedulesUnknownTag => 'Unknown tag';
+
+  @override
+  String get notificationSchedulesNotAllowed =>
+      'Only area admins can manage scheduled notifications.';
+
+  @override
+  String get notificationSchedulesSaveFailed =>
+      'Could not save that reminder. Try again.';
+
+  @override
+  String get notificationSchedulesLoadFailed =>
+      'Could not load scheduled notifications';
+
+  @override
+  String get notificationSchedulesNeedTag =>
+      'Add a post tag before creating a reminder.';
+
+  @override
+  String get notificationSchedulesNeedLocation =>
+      'Add a location before creating a reminder.';
+
+  @override
+  String get notificationSchedulesOn => 'On';
+
+  @override
+  String get notificationSchedulesOff => 'Off';
+
+  @override
+  String get notificationSchedulesLoading => 'Loading reminders';
 }

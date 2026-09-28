@@ -177,6 +177,12 @@ service cloud.firestore {
         (isAreaAdmin() || isAdmin());
     }
 
+    // Area-admin reminder rows. The scheduled function writes last-sent via
+    // the Admin SDK. The hub must not be readable by guests or leaders.
+    match /notification_schedules/{scheduleId} {
+      allow read, create, update, delete: if isAreaAdmin() || isAdmin();
+    }
+
     // Cell groups: guest-safe head readable by all; roster is signed-in only.
     // LeaderAuthIds denorm lets leaders edit roster without reverse user lookup.
     function isCellGroupLeaderFromParent() {

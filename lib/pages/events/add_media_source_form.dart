@@ -68,7 +68,7 @@ class AddMediaSourceForm extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tap the field to paste a link from your clipboard. Google Drive share links are converted automatically.',
+                  'Tap the field to paste a link from your clipboard. The link is checked automatically. Google Drive share links are converted automatically.',
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -80,7 +80,8 @@ class AddMediaSourceForm extends StatelessWidget {
                       kGoogleDriveUrl,
                       mode: LaunchMode.externalApplication,
                     ),
-                    icon: Icon(Icons.open_in_new, size: 16, color: colorScheme.primary),
+                    icon: Icon(Icons.open_in_new,
+                        size: 16, color: colorScheme.primary),
                     label: Text(
                       'Open Google Drive',
                       style: theme.textTheme.labelLarge?.copyWith(

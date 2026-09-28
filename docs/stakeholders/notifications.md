@@ -38,6 +38,20 @@ When creating or editing a post, organisers can:
 
 Saving edits with an **update log** can notify people who **bookmarked** that post (separate from a full broadcast).
 
+## For area admins
+
+From Personal → **Admin Tools → Scheduled notifications**, an area admin can keep a list of reminders that go out on their own.
+
+Each reminder watches **one post tag at one location** (for example Sunday Worship in Belfast). When a post with that tag is coming up, it is sent to people who turned on **All {location} updates** for that site.
+
+A reminder can go out:
+
+- the day before, at a time you choose
+- the morning of the event, at a time you choose
+- a set number of hours before the start
+
+The list shows the next matching post, when it will send, and whether the last send worked. A reminder can be turned off or deleted. If the morning time is later than that post’s start, that post is skipped.
+
 ## Web first
 
 The **web app** is the current focus, so getting notifications working reliably in the browser (“This device”) matters most right now. See [Platforms](platforms.md).

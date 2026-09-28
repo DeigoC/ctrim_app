@@ -2664,5 +2664,217 @@
         "type": "String"
       }
     }
+  },
+  "notificationSchedulesMenuTitle": "Scheduled notifications",
+  "@notificationSchedulesMenuTitle": {
+    "description": "Personal admin menu item for repeating post reminders"
+  },
+  "notificationSchedulesMenuSubtitle": "Reminders from tagged posts",
+  "@notificationSchedulesMenuSubtitle": {
+    "description": "Personal admin menu subtitle for scheduled notifications"
+  },
+  "notificationSchedulesTitle": "Scheduled notifications",
+  "@notificationSchedulesTitle": {
+    "description": "Title of the scheduled notifications hub"
+  },
+  "notificationSchedulesEmptyTitle": "No reminders yet",
+  "@notificationSchedulesEmptyTitle": {
+    "description": "Empty state title on the scheduled notifications hub"
+  },
+  "notificationSchedulesEmptyBody": "Add a reminder for a post tag at one location. The next matching post is sent on its own.",
+  "@notificationSchedulesEmptyBody": {
+    "description": "Empty state body on the scheduled notifications hub"
+  },
+  "notificationSchedulesAdd": "Add reminder",
+  "@notificationSchedulesAdd": {
+    "description": "Button to create a scheduled notification"
+  },
+  "notificationSchedulesAddTitle": "New reminder",
+  "@notificationSchedulesAddTitle": {
+    "description": "Title of the sheet for a new scheduled notification"
+  },
+  "notificationSchedulesEditTitle": "Edit reminder",
+  "@notificationSchedulesEditTitle": {
+    "description": "Title of the sheet for an existing scheduled notification"
+  },
+  "notificationSchedulesEditSubtitle": "One post tag at one location. The next matching post is sent to that site.",
+  "@notificationSchedulesEditSubtitle": {
+    "description": "Subtitle of the scheduled notification editor"
+  },
+  "notificationSchedulesSave": "Save",
+  "@notificationSchedulesSave": {
+    "description": "Saves a scheduled notification"
+  },
+  "notificationSchedulesSaving": "Saving reminder",
+  "@notificationSchedulesSaving": {
+    "description": "Progress title while a scheduled notification is saved"
+  },
+  "notificationSchedulesDelete": "Delete",
+  "@notificationSchedulesDelete": {
+    "description": "Deletes a scheduled notification"
+  },
+  "notificationSchedulesDeleteTitle": "Delete this reminder?",
+  "@notificationSchedulesDeleteTitle": {
+    "description": "Confirmation title before deleting a scheduled notification"
+  },
+  "notificationSchedulesDeleteBody": "It will stop sending. Posts that already went out are unchanged.",
+  "@notificationSchedulesDeleteBody": {
+    "description": "Confirmation body before deleting a scheduled notification"
+  },
+  "notificationSchedulesDeleting": "Deleting reminder",
+  "@notificationSchedulesDeleting": {
+    "description": "Progress title while a scheduled notification is deleted"
+  },
+  "notificationSchedulesTagLabel": "Post tag",
+  "@notificationSchedulesTagLabel": {
+    "description": "Label for the post tag on a scheduled notification"
+  },
+  "notificationSchedulesLocationLabel": "Location",
+  "@notificationSchedulesLocationLabel": {
+    "description": "Label for the location on a scheduled notification"
+  },
+  "notificationSchedulesTimingLabel": "When to send",
+  "@notificationSchedulesTimingLabel": {
+    "description": "Label for the timing choice on a scheduled notification"
+  },
+  "notificationSchedulesTimingDayBefore": "Day before",
+  "@notificationSchedulesTimingDayBefore": {
+    "description": "Timing choice: the day before the event"
+  },
+  "notificationSchedulesTimingMorningOf": "Morning of",
+  "@notificationSchedulesTimingMorningOf": {
+    "description": "Timing choice: the morning of the event"
+  },
+  "notificationSchedulesTimingHoursBefore": "Hours before",
+  "@notificationSchedulesTimingHoursBefore": {
+    "description": "Timing choice: a number of hours before the start"
+  },
+  "notificationSchedulesTimingDayBeforeAt": "Day before at {time}",
+  "@notificationSchedulesTimingDayBeforeAt": {
+    "description": "Card summary for a day-before reminder",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesTimingMorningAt": "Morning of the event at {time}",
+  "@notificationSchedulesTimingMorningAt": {
+    "description": "Card summary for a morning-of reminder",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesTimingHours": "{hours, plural, =1{1 hour before the start} other{{hours} hours before the start}}",
+  "@notificationSchedulesTimingHours": {
+    "description": "Card summary for an hours-before reminder",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationSchedulesClockLabel": "Time (UK)",
+  "@notificationSchedulesClockLabel": {
+    "description": "Label for the Europe/London clock time on a reminder"
+  },
+  "notificationSchedulesHoursLabel": "Hours before the start",
+  "@notificationSchedulesHoursLabel": {
+    "description": "Label for how many hours before the event to send"
+  },
+  "notificationSchedulesHoursInvalid": "Enter a number from 1 to 48.",
+  "@notificationSchedulesHoursInvalid": {
+    "description": "Validation message for the hours-before field"
+  },
+  "notificationSchedulesAudience": "Sends to {audience}",
+  "@notificationSchedulesAudience": {
+    "description": "Who receives a scheduled notification",
+    "placeholders": {
+      "audience": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesNext": "Next: {title}",
+  "@notificationSchedulesNext": {
+    "description": "The next post a reminder will announce",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesSendsAt": "Sends {when}",
+  "@notificationSchedulesSendsAt": {
+    "description": "When the next reminder will be sent",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesMorningAfterStart": "This post starts before the chosen time, so it will not be sent.",
+  "@notificationSchedulesMorningAfterStart": {
+    "description": "Shown when a morning-of clock is after the event start"
+  },
+  "notificationSchedulesNoUpcoming": "No upcoming post with this tag at this location.",
+  "@notificationSchedulesNoUpcoming": {
+    "description": "Shown when a reminder has no matching post in the next two weeks"
+  },
+  "notificationSchedulesLastSent": "Last sent {when}",
+  "@notificationSchedulesLastSent": {
+    "description": "When this reminder last sent",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesLastError": "Last send failed: {error}",
+  "@notificationSchedulesLastError": {
+    "description": "Error from the last attempt to send this reminder",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesUnknownTag": "Unknown tag",
+  "@notificationSchedulesUnknownTag": {
+    "description": "Shown when a reminder's post tag no longer exists"
+  },
+  "notificationSchedulesNotAllowed": "Only area admins can manage scheduled notifications.",
+  "@notificationSchedulesNotAllowed": {
+    "description": "Shown if someone who is not an area admin opens the hub"
+  },
+  "notificationSchedulesSaveFailed": "Could not save that reminder. Try again.",
+  "@notificationSchedulesSaveFailed": {
+    "description": "Shown when saving a scheduled notification fails"
+  },
+  "notificationSchedulesLoadFailed": "Could not load scheduled notifications",
+  "@notificationSchedulesLoadFailed": {
+    "description": "Title when the scheduled notifications hub fails to load"
+  },
+  "notificationSchedulesNeedTag": "Add a post tag before creating a reminder.",
+  "@notificationSchedulesNeedTag": {
+    "description": "Shown when there are no post tags to attach a reminder to"
+  },
+  "notificationSchedulesNeedLocation": "Add a location before creating a reminder.",
+  "@notificationSchedulesNeedLocation": {
+    "description": "Shown when there are no locations to attach a reminder to"
+  },
+  "notificationSchedulesOn": "On",
+  "@notificationSchedulesOn": {
+    "description": "A scheduled notification is enabled"
+  },
+  "notificationSchedulesOff": "Off",
+  "@notificationSchedulesOff": {
+    "description": "A scheduled notification is paused"
+  },
+  "notificationSchedulesLoading": "Loading reminders",
+  "@notificationSchedulesLoading": {
+    "description": "Progress message while scheduled notifications load"
   }
 }

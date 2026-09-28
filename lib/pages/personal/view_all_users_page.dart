@@ -356,7 +356,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   ),
                   child: UserTagGraphic(
                     imageUrl: locationCover,
-                    height: 180,
+                    height: MediaQuery.sizeOf(context).height * 0.33,
                   ),
                 ),
               Padding(

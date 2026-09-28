@@ -12,6 +12,7 @@ class PersonalAdminSection extends StatelessWidget {
     this.gridColumns = 1,
     required this.onViewTemplates,
     required this.onManageUserLocations,
+    required this.onNotificationSchedules,
   });
 
   final AppContext appContext;
@@ -19,6 +20,7 @@ class PersonalAdminSection extends StatelessWidget {
   final int gridColumns;
   final VoidCallback onViewTemplates;
   final VoidCallback onManageUserLocations;
+  final VoidCallback onNotificationSchedules;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +59,15 @@ class PersonalAdminSection extends StatelessWidget {
           title: l10n.manageUserLocationsMenuTitle,
           subtitle: l10n.manageUserLocationsMenuSubtitle,
           onTap: onManageUserLocations,
+          iconColor: colorScheme.primary,
+        ),
+      );
+      actions.add(
+        PersonalAction(
+          icon: Icons.schedule_send_rounded,
+          title: l10n.notificationSchedulesMenuTitle,
+          subtitle: l10n.notificationSchedulesMenuSubtitle,
+          onTap: onNotificationSchedules,
           iconColor: colorScheme.primary,
         ),
       );
