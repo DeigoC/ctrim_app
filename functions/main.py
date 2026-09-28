@@ -1,9 +1,11 @@
 # Deploy with `firebase deploy --only functions`
 
-from firebase_functions import firestore_fn, https_fn, options
+from firebase_functions import firestore_fn, https_fn, options, scheduler_fn
 from firebase_admin import firestore, initialize_app, messaging
 
-from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error, web_click_link
+from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error
+from notification_schedule import run_scheduled_notifications
+from topic_message import apns_android_configs, build_topic_message
 from user_role_sync import (
     sync_attendance_roles_from_change,
     sync_post_program_roles,
@@ -60,30 +62,12 @@ def _notification_payload(req_data) -> messaging.Notification:
     )
 
 
-def _apns_android_configs(ios_image: str, android_image: str):
-    apns = messaging.APNSConfig(
-        payload=messaging.APNSPayload(aps=messaging.Aps(mutable_content=True)),
-    )
-    if ios_image:
-        apns = messaging.APNSConfig(
-            payload=messaging.APNSPayload(aps=messaging.Aps(mutable_content=True)),
-            fcm_options=messaging.APNSFCMOptions(image=ios_image),
-        )
-
-    android = messaging.AndroidConfig()
-    if android_image:
-        android = messaging.AndroidConfig(
-            notification=messaging.AndroidNotification(image=android_image),
-        )
-    return apns, android
-
-
 def _build_multicast_message(req_data, tokens: list[str]) -> messaging.MulticastMessage:
     data_dict = _parse_data_dict(req_data)
     ios_image = fcm_image_url(req_data.get('iOSImage', ''))
     android_image = fcm_image_url(req_data.get('AndroidImage', ''))
 
-    apns, android = _apns_android_configs(ios_image, android_image)
+    apns, android = apns_android_configs(ios_image, android_image)
     return messaging.MulticastMessage(
         tokens=tokens,
         data=data_dict,
@@ -163,23 +147,24 @@ def send_notification_to_multiple_tokens(req: https_fn.CallableRequest) -> any:
 
 
 def _build_topic_message(req_data, *, include_images: bool) -> messaging.Message:
-    topic = str(req_data.get('Topic', ''))
-    data_dict = _parse_data_dict(req_data)
-    ios_image = fcm_image_url(req_data.get('iOSImage', '')) if include_images else ''
-    android_image = fcm_image_url(req_data.get('AndroidImage', '')) if include_images else ''
-    apns, android = _apns_android_configs(ios_image, android_image)
-    return messaging.Message(
-        topic=topic,
-        data=data_dict,
-        notification=_notification_payload(req_data),
-        apns=apns,
-        android=android,
-        webpush=messaging.WebpushConfig(
-            fcm_options=messaging.WebpushFCMOptions(
-                link=web_click_link(data_dict),
-            ),
-        ),
+    return build_topic_message(
+        topic=str(req_data.get('Topic', '')),
+        title=str(req_data.get('Title', '')),
+        body=str(req_data.get('Body', '')),
+        data=_parse_data_dict(req_data),
+        ios_image=fcm_image_url(req_data.get('iOSImage', '')) if include_images else '',
+        android_image=fcm_image_url(req_data.get('AndroidImage', '')) if include_images else '',
     )
+
+
+@scheduler_fn.on_schedule(
+    schedule='*/15 * * * *',
+    timezone=scheduler_fn.Timezone('Europe/London'),
+    region='europe-west1',
+)
+def dispatch_scheduled_notifications(event: scheduler_fn.ScheduledEvent) -> None:
+    """Send due tag reminders. One tick covers every enabled schedule row."""
+    run_scheduled_notifications(firestore.client(), now=event.schedule_time)
 
 
 @https_fn.on_call(region='europe-west1')

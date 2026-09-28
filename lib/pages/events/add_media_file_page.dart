@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,9 @@ import 'add_media_drive_help.dart';
 import 'add_media_image_test.dart';
 import 'add_media_source_form.dart';
 import 'add_media_video_test.dart';
+
+/// Wait after a keystroke before checking a URL the user is still typing.
+const Duration _typedMediaUrlTestDelay = Duration(milliseconds: 700);
 
 class AddMediaFilePage extends StatefulWidget {
   const AddMediaFilePage({
@@ -49,8 +53,11 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   bool _allowPop = false;
   bool _isSaved = false;
   String _src = '';
+  String _lastSrcText = '';
   File? _tmpFile;
   int? _mediaFileSizeBytes;
+  int _mediaTestGeneration = 0;
+  Timer? _autoTestTimer;
 
   void _popRouteAfterAllowing({Object? result}) {
     setState(() => _allowPop = true);
@@ -78,6 +85,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       debugPrint('Disposing the video player!');
       _videoPlayerController!.dispose();
     }
+    _autoTestTimer?.cancel();
     _srcFocusNode.dispose();
     _tecSrc.dispose();
     _tecThumbnailSrc.clear();
@@ -158,7 +166,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '1. Paste a public URL  ·  2. Choose type  ·  3. Test & preview  ·  4. Add',
+                      '1. Paste a public URL  ·  2. Choose type  ·  3. The link is checked  ·  4. Add',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w500,
@@ -279,7 +287,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Add a URL and test to see preview',
+                'Paste a URL to check the link',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
@@ -306,6 +314,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   Widget _buildImageTest() {
+    final generation = _mediaTestGeneration;
     return AddMediaImageTest(
       canSave: _canSave,
       getSrc: () => _src,
@@ -314,25 +323,30 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       fetchFile: () => _fetchFile(true),
       mediaFileSizeBytes: () => _mediaFileSizeBytes,
       onFetched: (file) {
+        if (!_isCurrentMediaTest(generation)) return;
         _canTestSrc = true;
         _tmpFile = file;
       },
       onReadyToSave: () {
+        if (!_isCurrentMediaTest(generation)) return;
         setState(() {
           _canSave = true;
         });
       },
       onFileTooLarge: () {
+        if (!_isCurrentMediaTest(generation)) return;
         _canSave = false;
         _canTestSrc = true;
       },
       onFetchFailed: () {
+        if (!_isCurrentMediaTest(generation)) return;
         _canTestSrc = true;
       },
     );
   }
 
   Widget _buildVideoPlayerTest() {
+    final generation = _mediaTestGeneration;
     return AddMediaVideoPlayerTest(
       canSave: _canSave,
       getSrc: () => _src,
@@ -343,28 +357,37 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       videoPlayerController: _videoPlayerController,
       isVideo: _isVideo,
       onFetched: (file) {
+        if (!_isCurrentMediaTest(generation)) return;
         _canTestSrc = true;
         _tmpFile = file;
       },
       onControllerCreated: (controller) {
+        if (!_isCurrentMediaTest(generation)) {
+          controller.dispose();
+          return;
+        }
         _videoPlayerController = controller;
       },
       onVideoReady: () {
+        if (!_isCurrentMediaTest(generation)) return;
         setState(() {
           _canSave = true;
           _videoPlayerController!.play();
         });
       },
       onVideoInitFailed: () {
+        if (!_isCurrentMediaTest(generation)) return;
         setState(() {
           _canTestSrc = true;
         });
       },
       onFileTooLarge: () {
+        if (!_isCurrentMediaTest(generation)) return;
         _canTestSrc = true;
         _canSave = false;
       },
       onFetchFailed: () {
+        if (!_isCurrentMediaTest(generation)) return;
         _canTestSrc = true;
       },
     );
@@ -443,9 +466,18 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
   }
 
   void _onClearMediaSrc() {
+    _autoTestTimer?.cancel();
+    _lastSrcText = '';
     setState(() {
-      _canTestSrc = true;
+      _mediaTestGeneration++;
+      _canTestSrc = false;
+      _canSave = false;
+      _isTesting = false;
+      _src = '';
+      _tmpFile = null;
+      _mediaFileSizeBytes = null;
       _tecSrc.clear();
+      _disposeVideoPlayer();
     });
   }
 
@@ -457,9 +489,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
       final text = data?.text?.trim() ?? '';
       if (text.isEmpty) return;
-      if (!isValidMediaUrl(text) && !driveShareLinkRegExp.hasMatch(text)) {
-        return;
-      }
+      if (!isTestableMediaUrl(text)) return;
 
       _tecSrc.value = TextEditingValue(
         text: text,
@@ -575,13 +605,21 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     );
   }
 
+  void _disposeVideoPlayer() {
+    final controller = _videoPlayerController;
+    if (controller == null) return;
+    _videoPlayerController = null;
+    if (controller.value.isInitialized) {
+      controller.pause();
+    }
+    controller.dispose();
+  }
+
   void _onTestSrcClick() {
+    _autoTestTimer?.cancel();
     setState(() {
-      if (_videoPlayerController != null) {
-        _videoPlayerController!.pause();
-        _videoPlayerController!.dispose();
-        _videoPlayerController = null;
-      }
+      _mediaTestGeneration++;
+      _disposeVideoPlayer();
       _src = '';
       _canSave = false;
       _tmpFile = null;
@@ -591,35 +629,62 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
     });
   }
 
+  bool _isCurrentMediaTest(int generation) {
+    return mounted && generation == _mediaTestGeneration;
+  }
+
   void _onSrcTextChange(String newText) {
+    if (newText == _lastSrcText) return;
+    final previous = _lastSrcText;
+    _lastSrcText = newText;
     setState(() {
-      final trimmedText = newText.trim();
+      _canTestSrc = isTestableMediaUrl(newText);
 
-      if (trimmedText.isEmpty) {
-        _canTestSrc = false;
-      } else {
-        _canTestSrc = isValidMediaUrl(trimmedText) ||
-            driveShareLinkRegExp.hasMatch(trimmedText);
-      }
-
-      // Reset states when URL changes
+      // Drop a preview of the previous link. Bump the generation so a
+      // check still in flight cannot mark this new URL as ready.
       if (_isTesting) {
+        _mediaTestGeneration++;
         _isTesting = false;
         _canSave = false;
         _tmpFile = null;
         _mediaFileSizeBytes = null;
-        if (_videoPlayerController != null) {
-          _videoPlayerController!.dispose();
-          _videoPlayerController = null;
-        }
+        _disposeVideoPlayer();
       }
     });
+    _queueAutoTest(
+      immediate: shouldAutoTestMediaUrlNow(previous, newText),
+      afterPause: shouldAutoTestMediaUrlAfterPause(previous, newText),
+    );
+  }
+
+  void _queueAutoTest({required bool immediate, required bool afterPause}) {
+    _autoTestTimer?.cancel();
+    _autoTestTimer = null;
+    if (!immediate && !afterPause) return;
+
+    final textAtSchedule = _tecSrc.text;
+    void run() {
+      _autoTestTimer = null;
+      if (!mounted) return;
+      if (_tecSrc.text != textAtSchedule) return;
+      if (!isTestableMediaUrl(_tecSrc.text) || _isTesting) return;
+      _onTestSrcClick();
+    }
+
+    if (immediate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => run());
+      return;
+    }
+    _autoTestTimer = Timer(_typedMediaUrlTestDelay, run);
   }
 
   void _onIsVideoChange(bool newState) {
+    if (newState == _isVideo) return;
     setState(() {
       _isVideo = newState;
     });
+    if (!isTestableMediaUrl(_tecSrc.text)) return;
+    _onTestSrcClick();
   }
 
   String get _addButtonLabel {
@@ -649,7 +714,7 @@ class _AddMediaFilePageState extends State<AddMediaFilePage> {
           '3. Change access to “Anyone with the link”\n'
           '4. Copy and paste the share link\n\n'
           'Tips\n'
-          '• Test your URL before saving\n'
+          '• A pasted link is checked for you. Use Test & Preview to try again\n'
           '• For videos, add a thumbnail for better preview\n'
           '• Compress large files using the suggested tools',
     );

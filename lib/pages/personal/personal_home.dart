@@ -36,6 +36,7 @@ import 'view_team_rota_page.dart';
 import 'manage_user_locations_page.dart';
 import 'manage_user_tags_page.dart';
 import 'manage_post_tags_page.dart';
+import 'notification_schedules_page.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/schedule_heads.dart';
 
@@ -185,6 +186,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             wide: false,
             onViewTemplates: _openViewTemplatesClick,
             onManageUserLocations: _openManageUserLocationsClick,
+            onNotificationSchedules: _openNotificationSchedulesClick,
           ),
         ],
         const SizedBox(height: 24),
@@ -242,6 +244,7 @@ class _PersonalHomeState extends State<PersonalHome> {
                   gridColumns: 1,
                   onViewTemplates: _openViewTemplatesClick,
                   onManageUserLocations: _openManageUserLocationsClick,
+                  onNotificationSchedules: _openNotificationSchedulesClick,
                 ),
               ),
               const SizedBox(width: 20),
@@ -568,6 +571,13 @@ class _PersonalHomeState extends State<PersonalHome> {
   void _openManageUserLocationsClick() {
     Navigator.push(context,
         MaterialPageRoute(builder: (_) => const ManageUserLocationsPage()));
+  }
+
+  void _openNotificationSchedulesClick() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationSchedulesPage()),
+    );
   }
 
   void _openManagePostTagsClick() {

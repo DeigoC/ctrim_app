@@ -3651,6 +3651,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press \"{title}\" to drag it'**
   String scheduleArrangeDragHint(String title);
+
+  /// Personal admin menu item for repeating post reminders
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled notifications'**
+  String get notificationSchedulesMenuTitle;
+
+  /// Personal admin menu subtitle for scheduled notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders from tagged posts'**
+  String get notificationSchedulesMenuSubtitle;
+
+  /// Title of the scheduled notifications hub
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled notifications'**
+  String get notificationSchedulesTitle;
+
+  /// Empty state title on the scheduled notifications hub
+  ///
+  /// In en, this message translates to:
+  /// **'No reminders yet'**
+  String get notificationSchedulesEmptyTitle;
+
+  /// Empty state body on the scheduled notifications hub
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reminder for a post tag at one location. The next matching post is sent on its own.'**
+  String get notificationSchedulesEmptyBody;
+
+  /// Button to create a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get notificationSchedulesAdd;
+
+  /// Title of the sheet for a new scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'New reminder'**
+  String get notificationSchedulesAddTitle;
+
+  /// Title of the sheet for an existing scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reminder'**
+  String get notificationSchedulesEditTitle;
+
+  /// Subtitle of the scheduled notification editor
+  ///
+  /// In en, this message translates to:
+  /// **'One post tag at one location. The next matching post is sent to that site.'**
+  String get notificationSchedulesEditSubtitle;
+
+  /// Saves a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get notificationSchedulesSave;
+
+  /// Progress title while a scheduled notification is saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saving reminder'**
+  String get notificationSchedulesSaving;
+
+  /// Deletes a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get notificationSchedulesDelete;
+
+  /// Confirmation title before deleting a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this reminder?'**
+  String get notificationSchedulesDeleteTitle;
+
+  /// Confirmation body before deleting a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'It will stop sending. Posts that already went out are unchanged.'**
+  String get notificationSchedulesDeleteBody;
+
+  /// Progress title while a scheduled notification is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting reminder'**
+  String get notificationSchedulesDeleting;
+
+  /// Label for the post tag on a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Post tag'**
+  String get notificationSchedulesTagLabel;
+
+  /// Label for the location on a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get notificationSchedulesLocationLabel;
+
+  /// Label for the timing choice on a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'When to send'**
+  String get notificationSchedulesTimingLabel;
+
+  /// Timing choice: the day before the event
+  ///
+  /// In en, this message translates to:
+  /// **'Day before'**
+  String get notificationSchedulesTimingDayBefore;
+
+  /// Timing choice: the morning of the event
+  ///
+  /// In en, this message translates to:
+  /// **'Morning of'**
+  String get notificationSchedulesTimingMorningOf;
+
+  /// Timing choice: a number of hours before the start
+  ///
+  /// In en, this message translates to:
+  /// **'Hours before'**
+  String get notificationSchedulesTimingHoursBefore;
+
+  /// Card summary for a day-before reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Day before at {time}'**
+  String notificationSchedulesTimingDayBeforeAt(String time);
+
+  /// Card summary for a morning-of reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Morning of the event at {time}'**
+  String notificationSchedulesTimingMorningAt(String time);
+
+  /// Card summary for an hours-before reminder
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 hour before the start} other{{hours} hours before the start}}'**
+  String notificationSchedulesTimingHours(int hours);
+
+  /// Label for the Europe/London clock time on a reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Time (UK)'**
+  String get notificationSchedulesClockLabel;
+
+  /// Label for how many hours before the event to send
+  ///
+  /// In en, this message translates to:
+  /// **'Hours before the start'**
+  String get notificationSchedulesHoursLabel;
+
+  /// Validation message for the hours-before field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number from 1 to 48.'**
+  String get notificationSchedulesHoursInvalid;
+
+  /// Who receives a scheduled notification
+  ///
+  /// In en, this message translates to:
+  /// **'Sends to {audience}'**
+  String notificationSchedulesAudience(String audience);
+
+  /// The next post a reminder will announce
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {title}'**
+  String notificationSchedulesNext(String title);
+
+  /// When the next reminder will be sent
+  ///
+  /// In en, this message translates to:
+  /// **'Sends {when}'**
+  String notificationSchedulesSendsAt(String when);
+
+  /// Shown when a morning-of clock is after the event start
+  ///
+  /// In en, this message translates to:
+  /// **'This post starts before the chosen time, so it will not be sent.'**
+  String get notificationSchedulesMorningAfterStart;
+
+  /// Shown when a reminder has no matching post in the next two weeks
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming post with this tag at this location.'**
+  String get notificationSchedulesNoUpcoming;
+
+  /// When this reminder last sent
+  ///
+  /// In en, this message translates to:
+  /// **'Last sent {when}'**
+  String notificationSchedulesLastSent(String when);
+
+  /// Error from the last attempt to send this reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Last send failed: {error}'**
+  String notificationSchedulesLastError(String error);
+
+  /// Shown when a reminder's post tag no longer exists
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown tag'**
+  String get notificationSchedulesUnknownTag;
+
+  /// Shown if someone who is not an area admin opens the hub
+  ///
+  /// In en, this message translates to:
+  /// **'Only area admins can manage scheduled notifications.'**
+  String get notificationSchedulesNotAllowed;
+
+  /// Shown when saving a scheduled notification fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save that reminder. Try again.'**
+  String get notificationSchedulesSaveFailed;
+
+  /// Title when the scheduled notifications hub fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load scheduled notifications'**
+  String get notificationSchedulesLoadFailed;
+
+  /// Shown when there are no post tags to attach a reminder to
+  ///
+  /// In en, this message translates to:
+  /// **'Add a post tag before creating a reminder.'**
+  String get notificationSchedulesNeedTag;
+
+  /// Shown when there are no locations to attach a reminder to
+  ///
+  /// In en, this message translates to:
+  /// **'Add a location before creating a reminder.'**
+  String get notificationSchedulesNeedLocation;
+
+  /// A scheduled notification is enabled
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get notificationSchedulesOn;
+
+  /// A scheduled notification is paused
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get notificationSchedulesOff;
+
+  /// Progress message while scheduled notifications load
+  ///
+  /// In en, this message translates to:
+  /// **'Loading reminders'**
+  String get notificationSchedulesLoading;
 }
 
 class _AppLocalizationsDelegate

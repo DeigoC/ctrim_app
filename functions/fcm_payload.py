@@ -20,6 +20,34 @@ def is_valid_fcm_topic(topic: str) -> bool:
     return bool(topic) and _FCM_TOPIC_PATTERN.fullmatch(topic) is not None
 
 
+_ONLINE_SUFFIX = re.compile(r'\s*\(Online\)\s*$', re.IGNORECASE)
+
+
+def location_name_for_streams(location_name: str | None) -> str:
+    """Strip a trailing `(Online)` the same way `NotificationTopics` does."""
+    return _ONLINE_SUFFIX.sub('', str(location_name or '')).strip()
+
+
+def location_slug(location_name: str | None) -> str:
+    cleaned = location_name_for_streams(location_name).lower()
+    cleaned = re.sub(r'[^a-z0-9]+', '-', cleaned)
+    return cleaned.strip('-')
+
+
+def location_umbrella(location_name: str | None) -> str:
+    """FCM topic for a location audience.
+
+    Belfast stays the literal `Belfast`. Other names that are already valid
+    topic ids (`Portadown`) are used as-is. Spaces (`North Coast`) become a slug.
+    """
+    name = location_name_for_streams(location_name)
+    if location_slug(name) == 'belfast' or not name:
+        return 'Belfast'
+    if is_valid_fcm_topic(name):
+        return name
+    return location_slug(name)
+
+
 def fcm_image_url(url: str | None) -> str:
     """Return an HTTPS image URL FCM can fetch, or empty to omit the image.
 
