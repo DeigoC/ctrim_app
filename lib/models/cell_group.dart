@@ -110,6 +110,8 @@ class CellGroup {
   static DateTime? _parseTimestamp(final dynamic raw) {
     if (raw is Timestamp) return raw.toDate();
     if (raw is DateTime) return raw;
+    if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+    if (raw is num) return DateTime.fromMillisecondsSinceEpoch(raw.toInt());
     return null;
   }
 
@@ -134,6 +136,23 @@ class CellGroup {
       });
     }
     return results;
+  }
+
+  /// Hive-safe map: epoch millis instead of Firestore [Timestamp].
+  Map<String, dynamic> toCacheJson() {
+    final json = Map<String, dynamic>.from(toJson());
+    json['id'] = _id;
+    if (_createdAt != null) {
+      json['CreatedAt'] = _createdAt!.millisecondsSinceEpoch;
+    } else {
+      json.remove('CreatedAt');
+    }
+    if (_updatedAt != null) {
+      json['UpdatedAt'] = _updatedAt!.millisecondsSinceEpoch;
+    } else {
+      json.remove('UpdatedAt');
+    }
+    return json;
   }
 
   Map<String, dynamic> toJson() {

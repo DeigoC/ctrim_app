@@ -215,12 +215,19 @@ service cloud.firestore {
       // Allow anyone to read tracker (needed for guest user/event caching)
       allow read: if true;
       
-      allow create: if false;
+      // directories holds the shared catalogue watermark map. Signed-in
+      // clients create it once; later edits only touch lastUpdate.
+      allow create: if docId == 'directories' &&
+        request.auth != null &&
+        request.resource.data.keys().hasOnly(['lastUpdate']);
 
       // users counter: area admins register volunteers; events: leaders;
       // cell_groups: area admins create catalogue records.
+      // directories: watermark map only.
       // lastUpdate-only: any signed-in user (self-serve photo / attendance denorm).
-      allow update: if isLastUpdateOnlyTrackerUpdate() || (
+      allow update: if docId == 'directories'
+        ? isLastUpdateOnlyTrackerUpdate()
+        : isLastUpdateOnlyTrackerUpdate() || (
         docId == 'users'
           ? (isAreaAdmin() || isLeader() || isAdmin())
           : docId == 'cell_groups'

@@ -5,6 +5,7 @@ import '../../firebase/db_managers/cell_group_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/activity_time_series.dart';
 import '../../utility/cell_group_activity_stats.dart';
 import '../../utility/responsive_layout.dart';
@@ -45,8 +46,15 @@ class _CellGroupsOverviewTabState extends State<CellGroupsOverviewTab> {
     });
     try {
       final appContext = Provider.of<AppContext>(context, listen: false);
-      final cached = appContext.allCellGroups;
-      final groups = cached.isEmpty ? await _db.fetchAllGroups() : cached;
+      if (appContext.allCellGroups.isEmpty) {
+        await DirectoryCacheCoordinator.instance.revalidate(
+          app: appContext,
+          ignoreCooldown: true,
+        );
+      }
+      if (!mounted) return;
+      final groups =
+          Provider.of<AppContext>(context, listen: false).allCellGroups;
       final meetings = await _db.fetchLinkedMeetingsInActivityWindow();
       final stats = CellGroupActivityStats.compute(
         groups: groups,

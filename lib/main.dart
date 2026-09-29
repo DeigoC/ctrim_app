@@ -8,10 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase/auth_manager.dart';
 import 'firebase/db_managers/user_db_manager.dart';
-import 'firebase/db_managers/user_location_db_manager.dart';
-import 'firebase/db_managers/user_tag_db_manager.dart';
-import 'firebase/db_managers/post_tag_db_manager.dart';
-import 'firebase/db_managers/cell_group_db_manager.dart';
 import 'firebase_options.dart';
 import 'models/event/event_head.dart';
 import 'models/user.dart' as ctrim;
@@ -21,6 +17,7 @@ import 'src/settings/settings_service.dart';
 import 'utility/app_analytics.dart';
 import 'utility/app_context.dart';
 import 'utility/event_heads_repository.dart';
+import 'utility/cache/directory_cache.dart';
 import 'utility/cache/local_data_manager.dart';
 import 'utility/user_schedule_service.dart';
 import 'utility/users_repository.dart';
@@ -143,6 +140,9 @@ Future<void> _fetchEssentialDataInBackground(
 ) async {
   final eventHeadsRepository = EventHeadsRepository();
   final usersRepository = UsersRepository();
+  final directories = DirectoryCacheCoordinator.instance;
+  directories.attach(guestContext);
+  await directories.hydrateCatalogs(guestContext);
 
   List<EventHead> heads = <EventHead>[];
   List<ctrim.User> allUsers = <ctrim.User>[];
@@ -156,6 +156,7 @@ Future<void> _fetchEssentialDataInBackground(
           .fetchEventHeads()
           .then((value) => fetchedHeads = value),
       usersRepository.fetchUsersWithMeta().then((value) => usersResult = value),
+      directories.revalidate(app: guestContext, ignoreCooldown: true),
     ]);
     heads = fetchedHeads;
     allUsers = usersResult.users;
@@ -165,29 +166,6 @@ Future<void> _fetchEssentialDataInBackground(
 
     guestContext.setAllEventHeads(heads);
     guestContext.setAllUsers(allUsers);
-
-    await Future.wait([
-      _tryLoadCatalog(
-        label: 'user tags',
-        fetch: () => UserTagDBManager().fetchAllTags(),
-        apply: guestContext.setAllTags,
-      ),
-      _tryLoadCatalog(
-        label: 'post tags',
-        fetch: () => PostTagDBManager().fetchAllTags(),
-        apply: guestContext.setAllPostTags,
-      ),
-      _tryLoadCatalog(
-        label: 'cell groups',
-        fetch: () => CellGroupDBManager().fetchAllGroups(),
-        apply: guestContext.setAllCellGroups,
-      ),
-      _tryLoadCatalog(
-        label: 'user locations',
-        fetch: () => UserLocationDBManager().fetchAllLocations(),
-        apply: guestContext.setAllLocations,
-      ),
-    ]);
 
     debugPrint('Successfully loaded ${heads.length} posts for guest user');
   } catch (e) {
@@ -230,6 +208,7 @@ Future<void> _fetchEssentialDataInBackground(
           heads: loadedHeads,
           allUsers: loadedUsers,
         );
+        await directories.seedFromLocalIfSignedIn();
 
         debugPrint(
             'Successfully upgraded guest to authenticated user: ${currentUser.forname}');
@@ -238,17 +217,5 @@ Future<void> _fetchEssentialDataInBackground(
       debugPrint('Background login failed: $e');
       // Stay as guest with already-loaded data
     }
-  }
-}
-
-Future<void> _tryLoadCatalog<T>({
-  required String label,
-  required Future<List<T>> Function() fetch,
-  required void Function(List<T> records) apply,
-}) async {
-  try {
-    apply(await fetch());
-  } catch (e) {
-    debugPrint('Error fetching $label (deploy firestore.rules if needed): $e');
   }
 }

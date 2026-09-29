@@ -24,6 +24,10 @@ class LocalDataManager {
   static const String _imagesCacheBox = 'images_cache';
   static const String _cacheTimestampsBox = 'cache_timestamps';
   static const String _eventHeadsBox = 'event_heads';
+  static const String _postTagsBox = 'post_tags';
+  static const String _userLocationsBox = 'user_locations';
+  static const String _userTagsBox = 'user_tags';
+  static const String _cellGroupsBox = 'cell_groups';
 
   // Cache size limits (in bytes)
   static const int maxCacheSizeBytes = 50 * 1024 * 1024; // 50MB
@@ -50,6 +54,10 @@ class LocalDataManager {
       Hive.openBox(_imagesCacheBox),
       Hive.openBox(_cacheTimestampsBox),
       Hive.openBox(_eventHeadsBox),
+      Hive.openBox(_postTagsBox),
+      Hive.openBox(_userLocationsBox),
+      Hive.openBox(_userTagsBox),
+      Hive.openBox(_cellGroupsBox),
     ]);
 
     _initialized = true;
@@ -115,6 +123,57 @@ class LocalDataManager {
   Future<List<Map<String, dynamic>>> readEventHeads() async {
     final box = Hive.box(_eventHeadsBox);
     final dynamic content = box.get('event_heads');
+    if (content is! List) {
+      return <Map<String, dynamic>>[];
+    }
+    final result = <Map<String, dynamic>>[];
+    for (final entry in content) {
+      if (entry is Map) {
+        result.add(Map<String, dynamic>.from(entry));
+      }
+    }
+    return result;
+  }
+
+  Future<void> writePostTags(final List<Map<String, dynamic>> records) =>
+      _writeMapList(_postTagsBox, 'post_tags', records);
+
+  Future<List<Map<String, dynamic>>> readPostTags() =>
+      _readMapList(_postTagsBox, 'post_tags');
+
+  Future<void> writeUserLocations(final List<Map<String, dynamic>> records) =>
+      _writeMapList(_userLocationsBox, 'user_locations', records);
+
+  Future<List<Map<String, dynamic>>> readUserLocations() =>
+      _readMapList(_userLocationsBox, 'user_locations');
+
+  Future<void> writeUserTags(final List<Map<String, dynamic>> records) =>
+      _writeMapList(_userTagsBox, 'user_tags', records);
+
+  Future<List<Map<String, dynamic>>> readUserTags() =>
+      _readMapList(_userTagsBox, 'user_tags');
+
+  Future<void> writeCellGroups(final List<Map<String, dynamic>> records) =>
+      _writeMapList(_cellGroupsBox, 'cell_groups', records);
+
+  Future<List<Map<String, dynamic>>> readCellGroups() =>
+      _readMapList(_cellGroupsBox, 'cell_groups');
+
+  Future<void> _writeMapList(
+    final String boxName,
+    final String key,
+    final List<Map<String, dynamic>> records,
+  ) async {
+    final box = Hive.box(boxName);
+    await box.put(key, records);
+  }
+
+  Future<List<Map<String, dynamic>>> _readMapList(
+    final String boxName,
+    final String key,
+  ) async {
+    final box = Hive.box(boxName);
+    final dynamic content = box.get(key);
     if (content is! List) {
       return <Map<String, dynamic>>[];
     }

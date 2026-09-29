@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import '../firebase/db_managers/info_db_manager.dart';
 import '../models/info/church_info.dart';
 import '../models/info/church_page.dart';
 import '../models/info/ctrim_info.dart';
 import '../models/info/testimonial_info.dart';
+import 'cache/directory_cache.dart';
+import 'cache/directory_load_plan.dart';
 import 'cache/local_data_manager.dart';
 
 class InfoRepository {
@@ -12,12 +16,14 @@ class InfoRepository {
     TestimonialInfoDBManager? testimonialInfoDBManager,
     CtrimInfoDBManager? ctrimInfoDBManager,
     ChurchPageDBManager? churchPageDBManager,
+    DirectoryCacheCoordinator? coordinator,
   })  : _localDataManager = localDataManager ?? LocalDataManager(),
         _churchInfoDBManager = churchInfoDBManager ?? ChurchInfoDBManager(),
         _testimonialInfoDBManager =
             testimonialInfoDBManager ?? TestimonialInfoDBManager(),
         _ctrimInfoDBManager = ctrimInfoDBManager ?? CtrimInfoDBManager(),
-        _churchPageDBManager = churchPageDBManager ?? ChurchPageDBManager();
+        _churchPageDBManager = churchPageDBManager ?? ChurchPageDBManager(),
+        _coordinator = coordinator ?? DirectoryCacheCoordinator.instance;
 
   static const String churchesSection = 'churches';
   static const String testimonialsSection = 'testimonials';
@@ -28,6 +34,7 @@ class InfoRepository {
   final TestimonialInfoDBManager _testimonialInfoDBManager;
   final CtrimInfoDBManager _ctrimInfoDBManager;
   final ChurchPageDBManager _churchPageDBManager;
+  final DirectoryCacheCoordinator _coordinator;
 
   Future<List<ChurchInfo>> fetchChurches({bool forceRefresh = false}) async {
     return _loadCollection<ChurchInfo>(
@@ -76,22 +83,61 @@ class InfoRepository {
     final String churchId, {
     bool forceRefresh = false,
   }) async {
-    return _loadCollection<ChurchPage>(
-      sectionKey: LocalDataManager.churchPagesSectionKey(churchId),
+    final String sectionKey = LocalDataManager.churchPagesSectionKey(churchId);
+    final List<ChurchPage> cachedRecords =
+        await _localDataManager.readChurchPages(churchId);
+    final int localLastUpdate =
+        await _localDataManager.readInfoCollectionLastUpdate(sectionKey);
+    final plan = planDirectoryLoad(
       forceRefresh: forceRefresh,
-      fetchRemote: () => _churchPageDBManager.fetchAll(churchId),
-      readLocal: () => _localDataManager.readChurchPages(churchId),
-      writeLocal: (records) async {
-        await _localDataManager.clearChurchPages(churchId);
-        for (final record in records) {
-          await _localDataManager.writeChurchPageData(record);
-        }
-      },
-      fetchRemoteLastUpdate: () =>
-          _churchPageDBManager.fetchLastUpdate(churchId),
-      sortRecords: (records) => _sortByDisplayOrder(
-          records, (record) => record.displayOrder, (record) => record.title),
+      hasCachedRecords: cachedRecords.isNotEmpty || localLastUpdate > 0,
+      sessionValidated: _coordinator.isPagesChecked(churchId),
     );
+    List<ChurchPage> sort(final List<ChurchPage> records) {
+      return _sortByDisplayOrder(
+        records,
+        (record) => record.displayOrder,
+        (record) => record.title,
+      );
+    }
+
+    if (plan == DirectoryLoadPlan.useLocal) {
+      return sort(cachedRecords);
+    }
+    if (plan == DirectoryLoadPlan.useLocalThenRevalidate) {
+      unawaited(_coordinator.revalidateChurchPages(churchId));
+      return sort(cachedRecords);
+    }
+
+    if (!forceRefresh) {
+      await _coordinator.revalidateChurchPages(churchId);
+      if (_coordinator.isPagesChecked(churchId)) {
+        return sort(await _localDataManager.readChurchPages(churchId));
+      }
+    }
+
+    final List<ChurchPage> remoteRecords;
+    try {
+      remoteRecords = await _churchPageDBManager.fetchAll(churchId);
+    } catch (_) {
+      if (cachedRecords.isNotEmpty) return sort(cachedRecords);
+      rethrow;
+    }
+    await _localDataManager.clearChurchPages(churchId);
+    for (final record in remoteRecords) {
+      await _localDataManager.writeChurchPageData(record);
+    }
+    var stamp = 0;
+    try {
+      stamp = await _churchPageDBManager.fetchLastUpdate(churchId);
+    } catch (_) {
+      stamp = 0;
+    }
+    if (stamp <= 0) stamp = DateTime.now().millisecondsSinceEpoch;
+    await _localDataManager.writeInfoCollectionLastUpdate(sectionKey, stamp);
+    _coordinator.markPagesChecked(churchId);
+    _coordinator.notifyInfoChanged();
+    return sort(remoteRecords);
   }
 
   Future<ChurchPage?> fetchChurchPageById(
@@ -217,24 +263,55 @@ class InfoRepository {
     required List<T> Function(List<T>) sortRecords,
   }) async {
     final List<T> cachedRecords = await readLocal();
+    final int localLastUpdate =
+        await _localDataManager.readInfoCollectionLastUpdate(sectionKey);
+    final plan = planDirectoryLoad(
+      forceRefresh: forceRefresh,
+      hasCachedRecords: cachedRecords.isNotEmpty || localLastUpdate > 0,
+      sessionValidated: _coordinator.isValidated(sectionKey),
+    );
 
-    int remoteLastUpdate;
+    if (plan == DirectoryLoadPlan.useLocal) {
+      return sortRecords(cachedRecords);
+    }
+    if (plan == DirectoryLoadPlan.useLocalThenRevalidate) {
+      unawaited(_coordinator.revalidate());
+      return sortRecords(cachedRecords);
+    }
+
+    if (!forceRefresh) {
+      await _coordinator.revalidate(ignoreCooldown: true);
+      if (_coordinator.isValidated(sectionKey)) {
+        final List<T> refreshed = await readLocal();
+        return sortRecords(refreshed);
+      }
+    }
+
+    return _downloadCollection(
+      sectionKey: sectionKey,
+      cachedRecords: cachedRecords,
+      fetchRemote: fetchRemote,
+      writeLocal: writeLocal,
+      fetchRemoteLastUpdate: fetchRemoteLastUpdate,
+      sortRecords: sortRecords,
+    );
+  }
+
+  Future<List<T>> _downloadCollection<T>({
+    required String sectionKey,
+    required List<T> cachedRecords,
+    required Future<List<T>> Function() fetchRemote,
+    required Future<void> Function(List<T> records) writeLocal,
+    required Future<int> Function() fetchRemoteLastUpdate,
+    required List<T> Function(List<T>) sortRecords,
+  }) async {
+    int remoteLastUpdate = 0;
     try {
       remoteLastUpdate = await fetchRemoteLastUpdate();
     } catch (_) {
       if (cachedRecords.isNotEmpty) {
         return sortRecords(cachedRecords);
       }
-      rethrow;
-    }
-
-    final int localLastUpdate =
-        await _localDataManager.readInfoCollectionLastUpdate(sectionKey);
-
-    if (!forceRefresh &&
-        cachedRecords.isNotEmpty &&
-        remoteLastUpdate == localLastUpdate) {
-      return sortRecords(cachedRecords);
     }
 
     final List<T> remoteRecords;
@@ -247,8 +324,12 @@ class InfoRepository {
       rethrow;
     }
     await writeLocal(remoteRecords);
-    await _localDataManager.writeInfoCollectionLastUpdate(
-        sectionKey, remoteLastUpdate);
+    final int stamp = remoteLastUpdate > 0
+        ? remoteLastUpdate
+        : DateTime.now().millisecondsSinceEpoch;
+    await _localDataManager.writeInfoCollectionLastUpdate(sectionKey, stamp);
+    _coordinator.markValidated(sectionKey);
+    _coordinator.notifyInfoChanged();
     return sortRecords(remoteRecords);
   }
 

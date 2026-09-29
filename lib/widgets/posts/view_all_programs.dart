@@ -187,16 +187,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.fromLTRB(0, 8, 12, 16),
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      child: ScheduleRoleDetailSheet(
-        role: role,
-        assignedUsers: _usersForRole(role),
-        canEdit: _canEditRole(role),
-        onEdit: () => _openEditProgramPage(role),
-        onClose: () => setState(() => _selectedRoleId = null),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.topCenter,
+        child: ScheduleRoleDetailSheet(
+          role: role,
+          assignedUsers: _usersForRole(role),
+          canEdit: _canEditRole(role),
+          onEdit: () => _openEditProgramPage(role),
+          onClose: () => setState(() => _selectedRoleId = null),
+        ),
       ),
     );
   }

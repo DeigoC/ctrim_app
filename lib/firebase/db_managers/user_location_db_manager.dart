@@ -1,17 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/user_location.dart';
+import '../../utility/cache/directory_catalog_store.dart';
 
 class UserLocationDBManager {
   static final CollectionReference<Map<String, dynamic>> _ref =
-      FirebaseFirestore.instance.collection('user_locations').withConverter<Map<String, dynamic>>(
+      FirebaseFirestore.instance
+          .collection('user_locations')
+          .withConverter<Map<String, dynamic>>(
             fromFirestore: (snap, _) => snap.data() ?? {},
             toFirestore: (data, _) => data,
           );
 
   Future<List<UserLocation>> fetchAllLocations() async {
     final snapshot = await _ref.get();
-    final locations = snapshot.docs.map((doc) => UserLocation.fromMap(doc.id, doc.data())).toList();
+    final locations = snapshot.docs
+        .map((doc) => UserLocation.fromMap(doc.id, doc.data()))
+        .toList();
     locations.sort((a, b) {
       final orderCompare = a.displayOrder.compareTo(b.displayOrder);
       if (orderCompare != 0) return orderCompare;
@@ -31,11 +36,13 @@ class UserLocationDBManager {
       displayOrder: displayOrder,
     );
     await docRef.set(location.toJson());
+    await DirectoryCatalogStore().upsertUserLocation(location);
     return location;
   }
 
   Future<void> updateLocation(final UserLocation location) async {
     await _ref.doc(location.id).update(location.toJson());
+    await DirectoryCatalogStore().upsertUserLocation(location);
   }
 
   /// Renames a location definition and rewrites matching `users.Location` values.
@@ -61,6 +68,7 @@ class UserLocationDBManager {
       batch.update(doc.reference, {'Location': newName});
     }
     await batch.commit();
+    await DirectoryCatalogStore().upsertUserLocation(location);
   }
 
   Future<int> countUsersWithLocation(final String locationName) async {
@@ -74,5 +82,6 @@ class UserLocationDBManager {
 
   Future<void> deleteLocation(final String locationId) async {
     await _ref.doc(locationId).delete();
+    await DirectoryCatalogStore().deleteUserLocation(locationId);
   }
 }

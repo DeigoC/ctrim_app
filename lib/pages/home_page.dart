@@ -13,6 +13,7 @@ import '../models/event/event_head.dart';
 import '../utility/app_analytics.dart';
 import '../utility/app_context.dart';
 import '../utility/event_context.dart';
+import '../utility/cache/directory_cache.dart';
 import '../utility/cache/local_data_manager.dart';
 import '../utility/network_image_helper.dart';
 import '../utility/responsive_layout.dart';
@@ -43,7 +44,8 @@ class _NavDestination {
   final String label;
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   static const List<_NavDestination> _destinations = [
     _NavDestination(icon: Icons.library_books, label: 'Bulletin'),
     _NavDestination(icon: Icons.church, label: 'CTRIM'),
@@ -70,6 +72,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     // * initial setup of data
     _appContext = Provider.of<AppContext>(context, listen: false);
+    WidgetsBinding.instance.addObserver(this);
 
     // Set startup tab based on user preference (default to 1 = Information home)
     _selectedIndex = _appContext.sharedPref.preferredStartupTab;
@@ -149,7 +152,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeAppLifecycleState(final AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      DirectoryCacheCoordinator.instance.revalidate(app: _appContext);
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _informationTabController.removeListener(_onInformationSectionChanged);
     _informationTabController.dispose();
     _cellGroupsTabController.removeListener(_onCellGroupsSectionChanged);

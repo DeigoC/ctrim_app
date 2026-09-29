@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/post_tag.dart';
+import '../../utility/cache/directory_catalog_store.dart';
 
 class PostTagDBManager {
   static final CollectionReference<Map<String, dynamic>> _ref =
@@ -41,11 +42,13 @@ class PostTagDBManager {
       displayOrder: displayOrder,
     );
     await docRef.set(tag.toJson());
+    await DirectoryCatalogStore().upsertPostTag(tag);
     return tag;
   }
 
   Future<void> updateTag(final PostTag tag) async {
     await _ref.doc(tag.id).update(tag.toJson());
+    await DirectoryCatalogStore().upsertPostTag(tag);
   }
 
   /// Counts event heads that reference [tagId] in `TagIDs`.
@@ -60,5 +63,6 @@ class PostTagDBManager {
 
   Future<void> deleteTag(final String tagId) async {
     await _ref.doc(tagId).delete();
+    await DirectoryCatalogStore().deletePostTag(tagId);
   }
 }
