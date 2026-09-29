@@ -30,6 +30,41 @@ abstract final class ImageOrientationHelper {
     return fromSize(width.toDouble(), height.toDouble());
   }
 
+  /// Size already decoded for these [bytes] (the list card's image cache).
+  ///
+  /// Returns null when the codec is not ready yet, without starting a decode.
+  static Size? sizeIfDecoded(final Uint8List bytes) {
+    if (bytes.isEmpty) {
+      return null;
+    }
+
+    Size? size;
+    var synchronous = false;
+    final stream = MemoryImage(bytes).resolve(const ImageConfiguration());
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, synchronousCall) {
+        synchronous = synchronousCall;
+        size = Size(info.image.width.toDouble(), info.image.height.toDouble());
+        if (synchronousCall) {
+          stream.removeListener(listener);
+        }
+      },
+      onError: (Object error, StackTrace? stackTrace) {
+        stream.removeListener(listener);
+      },
+    );
+    stream.addListener(listener);
+    if (!synchronous) {
+      stream.removeListener(listener);
+      return null;
+    }
+    if (size == null || size!.width <= 0 || size!.height <= 0) {
+      return null;
+    }
+    return size;
+  }
+
   /// Decodes via [MemoryImage] so EXIF orientation is applied (phone portraits).
   static Future<Size?> decodeSize(final Uint8List bytes) async {
     if (bytes.isEmpty) {

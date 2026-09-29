@@ -142,12 +142,14 @@ class _InfoDetailAsideHostState extends State<InfoDetailAsideHost> {
   @override
   void initState() {
     super.initState();
-    final known = widget.knownLeadOrientation;
+    final known = widget.knownLeadOrientation ?? _cachedLeadOrientation();
     if (known != null) {
       _probe = _LeadProbe.known;
       _orientation = known;
-      _arrived = true;
-      return;
+      if (widget.knownLeadOrientation != null) {
+        _arrived = true;
+        return;
+      }
     }
     _probeLead();
     WidgetsBinding.instance.addPostFrameCallback((_) => _listenForArrival());
@@ -188,12 +190,22 @@ class _InfoDetailAsideHostState extends State<InfoDetailAsideHost> {
         oldWidget.imageUrls.isEmpty ? '' : oldWidget.imageUrls.first;
     final next = widget.imageUrls.isEmpty ? '' : widget.imageUrls.first;
     if (previous != next) {
+      final cached = _cachedLeadOrientation();
       setState(() {
-        _probe = _LeadProbe.pending;
-        _orientation = null;
+        _probe = cached == null ? _LeadProbe.pending : _LeadProbe.known;
+        _orientation = cached;
       });
       _probeLead();
     }
+  }
+
+  ImageOrientation? _cachedLeadOrientation() {
+    final url = widget.imageUrls.isEmpty ? '' : widget.imageUrls.first;
+    final size = CachedImageLoader.sizeFor(url);
+    if (size == null) {
+      return null;
+    }
+    return ImageOrientationHelper.fromSize(size.width, size.height);
   }
 
   Future<void> _probeLead() async {
@@ -217,19 +229,23 @@ class _InfoDetailAsideHostState extends State<InfoDetailAsideHost> {
         return;
       }
       if (size == null) {
+        if (_orientation != null) {
+          return;
+        }
         setState(() {
           _probe = _LeadProbe.failed;
           _orientation = null;
         });
         return;
       }
+      CachedImageLoader.rememberSize(url, size);
       setState(() {
         _probe = _LeadProbe.known;
         _orientation = ImageOrientationHelper.fromSize(size.width, size.height);
       });
     } catch (error) {
       debugPrint('InfoDetailAsideHost: lead probe failed ($error)');
-      if (!mounted || generation != _generation) {
+      if (!mounted || generation != _generation || _orientation != null) {
         return;
       }
       setState(() {

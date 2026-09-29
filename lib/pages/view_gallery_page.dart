@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import '../src/localization/app_localizations.dart';
 import '../utility/app_context.dart';
-import '../utility/dialog_manager.dart';
+import '../utility/gallery_viewer.dart';
 import '../widgets/media/my_photo_viewer.dart';
 import '../widgets/media/my_video_player.dart';
 
 class ViewGalleryPage extends StatefulWidget {
-  const ViewGalleryPage(
-      {super.key,
-      required this.media,
-      required this.initialIndex,
-      required this.postId,
-      this.useHero = true});
+  const ViewGalleryPage({
+    super.key,
+    required this.media,
+    required this.initialIndex,
+    required this.postId,
+    this.useHero = true,
+  });
+
   final List<Map<String, dynamic>> media;
   final int initialIndex;
   final String postId;
@@ -28,186 +32,279 @@ class ViewGalleryPage extends StatefulWidget {
 
 class _ViewGalleryPageState extends State<ViewGalleryPage> {
   late final PageController _pageController;
-  bool _dismissed = false, _lockScreen = false;
+  late int _index;
+  bool _popped = false;
 
   final Map<String, VideoPlayerController> _videoControllers = {};
+  final Map<int, bool> _photoFit = {};
 
   @override
   void initState() {
-    _pageController = PageController(initialPage: widget.initialIndex);
-    Provider.of<AppContext>(context, listen: false)
-        .analytics
-        .logPostGallery(widget.postId);
+    super.initState();
+    final last = widget.media.isEmpty ? 0 : widget.media.length - 1;
+    _index = widget.initialIndex.clamp(0, last).toInt();
+    _pageController =
+        PageController(initialPage: widget.media.isEmpty ? 0 : _index);
 
-    debugPrint('length is ${widget.media.length}');
     for (final entry in widget.media) {
-      if (entry['type'] == 'vid') {
-        _videoControllers[entry['src']!] =
-            VideoPlayerController.networkUrl(Uri.parse(entry['src']!));
+      final src = entry['src'];
+      if (entry['type'] == 'vid' && src is String && src.isNotEmpty) {
+        _videoControllers[src] =
+            VideoPlayerController.networkUrl(Uri.parse(src));
       }
     }
 
-    super.initState();
+    Provider.of<AppContext>(context, listen: false)
+        .analytics
+        .logPostGallery(widget.postId);
   }
 
   @override
   void dispose() {
-    for (final vidController in _videoControllers.values) {
-      vidController.dispose();
+    for (final controller in _videoControllers.values) {
+      controller.dispose();
     }
-
     _pageController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody(), backgroundColor: Colors.black);
+  void _popOnce() {
+    if (_popped || !mounted) return;
+    _popped = true;
+    Navigator.of(context).pop();
   }
 
-  Widget _buildBody() {
-    // https://drive.google.com/file/d/1zhyUfJ7pPHPL2t78Vo8Uwf7IHHoFwDcz/view?usp=sharing
-    // the above becomes
-    // https://drive.google.com/uc?id=1zhyUfJ7pPHPL2t78Vo8Uwf7IHHoFwDcz
-    // test this out for the video - it works!
-    // https://drive.google.com/file/d/16CfgsqABldM6shwmzmYokJj9Je0xq7k2/view?usp=drive_link for an image turns into:
-    // https://drive.google.com/uc?id=16CfgsqABldM6shwmzmYokJj9Je0xq7k2
-    // final Map<String, String> testData = {
-    //   'https://drive.google.com/uc?id=16CfgsqABldM6shwmzmYokJj9Je0xq7k2': 'image',
-    //   'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4': 'video',
-    //   'https://drive.google.com/uc?id=1zhyUfJ7pPHPL2t78Vo8Uwf7IHHoFwDcz': 'video'
-    // };
-
-    // final List<String> mediaSrcs = testData.keys.toList();
-
-    return SafeArea(
-        top: false,
-        child: PageView.builder(
-            onPageChanged: (newIndex) {
-              debugPrint('the new index is $newIndex');
-              for (var videoPlayer in _videoControllers.values) {
-                // pause all videos that aren't the current one being switched to
-                if (videoPlayer.value.isInitialized &&
-                    widget.media.indexWhere((entry) =>
-                            entry['src']!.compareTo(videoPlayer.dataSource) ==
-                            0) !=
-                        newIndex) {
-                  videoPlayer.pause();
-                  videoPlayer.seekTo(Duration.zero);
-                } else {
-                  videoPlayer.play();
-                }
-              }
-            },
-            physics: _lockScreen ? const NeverScrollableScrollPhysics() : null,
-            itemCount: widget.media.length,
-            controller: _pageController,
-            itemBuilder: (_, index) => _lockScreen
-                ? _buildMediaBody(index)
-                : _buildWithDismissible(index)));
+  void _onPhotoFitChanged(int index, bool fit) {
+    if ((_photoFit[index] ?? true) == fit) return;
+    setState(() => _photoFit[index] = fit);
   }
 
-  Widget _buildWithDismissible(int index) {
-    return Dismissible(
-        movementDuration: const Duration(milliseconds: 800),
-        direction: DismissDirection.vertical,
-        dismissThresholds: const {DismissDirection.vertical: 0.4},
-        onUpdate: (details) {
-          if (details.progress >= 0.4 && !_dismissed) {
-            // debugPrint('Reached beyond 0.4');
-            _dismissed = true;
-            Navigator.of(context).pop();
-          }
-        },
-        key: Key(index.toString()),
-        child: _buildMediaBody(index),
-        onDismissed: (_) {
-          Navigator.of(context).pop();
-        });
-  }
-
-  Widget _buildMediaBody(int index) {
-    final Map<String, dynamic> thisEntry = widget.media[index];
-    final List<Widget> children = [
-      Positioned.fill(child: _buildMediaView(thisEntry)),
-    ];
-
-    if (!_lockScreen) {
-      children.addAll([
-        Align(
-            alignment: Alignment.topCenter,
-            child: SafeArea(
-              child: SizedBox(
-                height: kToolbarHeight,
-                child: AppBar(
-                  backgroundColor: Colors.transparent.withValues(alpha: 0.3),
-                  iconTheme: const IconThemeData(color: Colors.white),
-                  actions: [
-                    IconButton(
-                        onPressed: _onHelpClick, icon: const Icon(Icons.help))
-                  ],
-                ),
-              ),
-            )),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.55),
-            child: ListTile(
-                title: Text(thisEntry['title']!,
-                    style: const TextStyle(color: Colors.white)),
-                leading: const Icon(Icons.photo_library, color: Colors.white)),
-          ),
-        )
-      ]);
-    } else {
-      children.add(const Align(
-        alignment: Alignment.bottomCenter,
-        child: ListTile(leading: Icon(Icons.lock, color: Colors.white)),
-      ));
-    }
-
-    return Stack(
-      alignment: Alignment.center,
-      children: children,
+  bool _allowsSwipe(int index) {
+    final entry = widget.media[index];
+    return GalleryViewer.allowsPagingAndDismiss(
+      isPhoto: entry['type'] == 'img',
+      photoIsFit: _photoFit[index] ?? true,
     );
   }
 
-  Widget _buildMediaView(final Map<String, dynamic> thisEntry) {
-    final String thisMediaSrc = thisEntry['src']!;
-    final String type = thisEntry['type']!;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          if (widget.media.isEmpty)
+            Center(
+              child: Text(
+                l10n.galleryMediaUnsupported,
+                style: const TextStyle(color: Colors.white),
+              ),
+            )
+          else
+            PhotoViewGestureDetectorScope(
+              axis: Axis.horizontal,
+              child: SafeArea(
+                top: false,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.media.length,
+                  physics: _allowsSwipe(_index)
+                      ? null
+                      : const NeverScrollableScrollPhysics(),
+                  onPageChanged: (index) => setState(() => _index = index),
+                  itemBuilder: (context, index) {
+                    return _GalleryDragDismiss(
+                      enabled: _allowsSwipe(index),
+                      onDismissed: _popOnce,
+                      child: _buildMediaBody(index),
+                    );
+                  },
+                ),
+              ),
+            ),
+          _buildChrome(l10n),
+        ],
+      ),
+    );
+  }
 
-    if (type.compareTo('vid') == 0) {
-      return MyVideoPlayer(
-          src: thisMediaSrc,
-          postID: widget.postId,
-          onLockTap: _onLockTap,
-          showControls: !_lockScreen,
-          videoPlayerController: _videoControllers[thisMediaSrc]!);
-    } else if (type.compareTo('img') == 0) {
-      return MyPhotoViewer(
-          src: thisMediaSrc,
-          postID: widget.postId,
-          onLockTap: _onLockTap,
-          useHero: widget.useHero);
+  Widget _buildChrome(AppLocalizations l10n) {
+    final title = widget.media.isEmpty ? '' : _titleAt(_index);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: kToolbarHeight,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.35),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: l10n.galleryClose,
+                    onPressed: _popOnce,
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                  Expanded(
+                    child: IgnorePointer(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  if (widget.media.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: IgnorePointer(
+                        child: Text(
+                          l10n.galleryPosition(_index + 1, widget.media.length),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMediaBody(int index) {
+    return SizedBox.expand(child: _buildMediaView(widget.media[index], index));
+  }
+
+  Widget _buildMediaView(Map<String, dynamic> entry, int index) {
+    final src = entry['src'];
+    if (src is! String || src.isEmpty) {
+      return const _Unsupported();
     }
 
-    return const Center(child: Text('Something went wrong'));
+    if (entry['type'] == 'vid') {
+      final controller = _videoControllers[src];
+      if (controller == null) return const _Unsupported();
+      return MyVideoPlayer(
+        key: ValueKey('vid-$src'),
+        src: src,
+        postID: widget.postId,
+        isActive: index == _index,
+        videoPlayerController: controller,
+      );
+    }
+
+    if (entry['type'] == 'img') {
+      return MyPhotoViewer(
+        key: ValueKey('img-$src'),
+        src: src,
+        postID: widget.postId,
+        useHero: widget.useHero,
+        onFitChanged: (fit) => _onPhotoFitChanged(index, fit),
+      );
+    }
+
+    return const _Unsupported();
   }
 
-  // * Logic
-  void _onLockTap() {
-    // we will rerbuild without the appbar, with lock scoll physics and without the dismissable
-    setState(() {
-      _lockScreen = !_lockScreen;
-    });
+  String _titleAt(int index) {
+    final title = widget.media[index]['title'];
+    if (title is! String) return '';
+    return title;
+  }
+}
+
+class _Unsupported extends StatelessWidget {
+  const _Unsupported();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        AppLocalizations.of(context)!.galleryMediaUnsupported,
+        style: const TextStyle(color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _GalleryDragDismiss extends StatefulWidget {
+  const _GalleryDragDismiss({
+    required this.enabled,
+    required this.onDismissed,
+    required this.child,
+  });
+
+  final bool enabled;
+  final VoidCallback onDismissed;
+  final Widget child;
+
+  @override
+  State<_GalleryDragDismiss> createState() => _GalleryDragDismissState();
+}
+
+class _GalleryDragDismissState extends State<_GalleryDragDismiss> {
+  double _drag = 0;
+  bool _dragging = false;
+
+  @override
+  void didUpdateWidget(covariant _GalleryDragDismiss oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.enabled && (_drag != 0 || _dragging)) {
+      _drag = 0;
+      _dragging = false;
+    }
   }
 
-  void _onHelpClick() {
-    DialogManager.showAlertDialog(
-        context: context,
-        title: 'Viewing Media',
-        content:
-            "Because of the many scrolling effects in place, please tap the screen once to toggle the 'locking' of the page.\n\nThis allows you to pinch in and out of images as well as to scrub through videos (which can be tricky!)");
+  @override
+  Widget build(BuildContext context) {
+    final duration =
+        _dragging ? Duration.zero : const Duration(milliseconds: 180);
+    final media = AnimatedContainer(
+      duration: duration,
+      curve: Curves.easeOut,
+      transform: Matrix4.translationValues(0, _drag, 0),
+      child: AnimatedOpacity(
+        duration: duration,
+        opacity: (1 - (_drag.abs() / 500)).clamp(0.45, 1.0),
+        child: widget.child,
+      ),
+    );
+
+    if (!widget.enabled) return media;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragStart: (_) => setState(() => _dragging = true),
+      onVerticalDragUpdate: (details) =>
+          setState(() => _drag += details.delta.dy),
+      onVerticalDragCancel: () => setState(() {
+        _dragging = false;
+        _drag = 0;
+      }),
+      onVerticalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (GalleryViewer.shouldDismissDrag(
+            offset: _drag, velocity: velocity)) {
+          widget.onDismissed();
+          return;
+        }
+        setState(() {
+          _dragging = false;
+          _drag = 0;
+        });
+      },
+      child: media,
+    );
   }
 }

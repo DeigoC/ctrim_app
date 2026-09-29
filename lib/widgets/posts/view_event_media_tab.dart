@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import '../../pages/events/edit_gallery_page.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/event_context.dart';
+import '../../utility/gallery_viewer.dart';
 import '../media/image_media_slot.dart';
 import '../media/video_media_slot.dart';
 
 class ViewEventMediaTab extends StatefulWidget {
-  const ViewEventMediaTab({super.key, required this.eventContext, required this.currentUID});
+  const ViewEventMediaTab(
+      {super.key, required this.eventContext, required this.currentUID});
   final EventContext eventContext;
   final String currentUID;
 
@@ -45,23 +47,28 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
                     onTap: _openEditGallery,
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       child: Row(
                         children: [
-                          Icon(Icons.photo_library_outlined, size: 20, color: colorScheme.primary),
+                          Icon(Icons.photo_library_outlined,
+                              size: 20, color: colorScheme.primary),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'Edit gallery',
-                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                              style: theme.textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),
                           Text(
                             'Add or manage media',
-                            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                          Icon(Icons.chevron_right,
+                              color: colorScheme.onSurfaceVariant),
                         ],
                       ),
                     ),
@@ -74,8 +81,11 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 4.0,
+                                  mainAxisSpacing: 4.0),
                           itemCount: media.length,
                           itemBuilder: (itemContext, index) {
                             final Map<String, dynamic> entry = media[index];
@@ -83,9 +93,11 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
                               return ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: ImageMediaSlot(
-                                    key: ValueKey('${widget.eventContext.id}-${entry['src']}'),
+                                    key: ValueKey(
+                                        '${widget.eventContext.id}-${entry['src']}'),
                                     mediaEntry: entry,
-                                    onTap: () => _onMediaTap(index, itemContext),
+                                    onTap: () =>
+                                        _onMediaTap(index, itemContext),
                                     postID: widget.eventContext.id),
                               );
                             }
@@ -112,11 +124,13 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.photo_library_outlined, size: 48, color: colorScheme.onSurfaceVariant),
+            Icon(Icons.photo_library_outlined,
+                size: 48, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(
               'No media yet',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             Text(
@@ -124,7 +138,8 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
                   ? 'Add images or videos to this post’s gallery.'
                   : 'Media for this post will appear here.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
             if (_canEditGallery) ...[
               const SizedBox(height: 16),
@@ -143,7 +158,8 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
   void _openEditGallery() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => EditGalleryPage(eventContext: widget.eventContext)),
+      MaterialPageRoute(
+          builder: (_) => EditGalleryPage(eventContext: widget.eventContext)),
     ).then((_) {
       if (mounted) setState(() {});
     });
@@ -154,13 +170,15 @@ class _ViewEventMediaTabState extends State<ViewEventMediaTab> {
         context,
         MaterialPageRoute(
             builder: (_) => ViewGalleryPage(
-                media: widget.eventContext.media.allMedia, initialIndex: index, postId: widget.eventContext.id)));
+                media: _getMedia(),
+                initialIndex: index,
+                postId: widget.eventContext.id)));
   }
 
   List<Map<String, dynamic>> _getMedia() {
-    if (kIsWeb) {
-      return widget.eventContext.media.allMedia.where((e) => e['type'] == 'img').toList();
-    }
-    return widget.eventContext.media.allMedia;
+    return GalleryViewer.visibleMedia(
+      widget.eventContext.media.allMedia,
+      imagesOnly: kIsWeb,
+    );
   }
 }

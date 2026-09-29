@@ -3909,6 +3909,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading reminders'**
   String get notificationSchedulesLoading;
+
+  /// Closes the full-screen photo and video viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get galleryClose;
+
+  /// Which item is open in the photo and video viewer
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String galleryPosition(int current, int total);
+
+  /// Shown when a photo in the viewer fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this photo'**
+  String get galleryImageFailed;
+
+  /// Shown when a video in the viewer fails to start
+  ///
+  /// In en, this message translates to:
+  /// **'Could not play this video'**
+  String get galleryVideoFailed;
+
+  /// Retries a photo or video that failed to load in the viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get galleryRetry;
+
+  /// Starts video playback in the viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get galleryPlay;
+
+  /// Pauses video playback in the viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get galleryPause;
+
+  /// Repeats the current video when it reaches the end
+  ///
+  /// In en, this message translates to:
+  /// **'Loop'**
+  String get galleryLoop;
+
+  /// Shown when a gallery item is neither a photo nor a video
+  ///
+  /// In en, this message translates to:
+  /// **'This file cannot be shown'**
+  String get galleryMediaUnsupported;
 }
 
 class _AppLocalizationsDelegate
