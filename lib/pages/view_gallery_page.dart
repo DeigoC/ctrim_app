@@ -16,15 +16,21 @@ class ViewGalleryPage extends StatefulWidget {
     required this.initialIndex,
     required this.postId,
     this.useHero = true,
+    this.logPostView = true,
   });
 
   final List<Map<String, dynamic>> media;
   final int initialIndex;
   final String postId;
 
-  /// Post media thumbnails share a [Hero] tag; profile / other opens should
-  /// pass false so the image does not try to fly without a matching source.
+  /// Post media thumbnails share a [Hero] tag (`postId + src`). Other screens
+  /// set `heroTag` on each entry. Pass false when the tapped image has no
+  /// matching source hero (the cell group cover).
   final bool useHero;
+
+  /// Post opens record a gallery view. Profile, cell group, and team tag
+  /// opens pass false so they are not logged as a post.
+  final bool logPostView;
 
   @override
   State<ViewGalleryPage> createState() => _ViewGalleryPageState();
@@ -54,9 +60,11 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
       }
     }
 
-    Provider.of<AppContext>(context, listen: false)
-        .analytics
-        .logPostGallery(widget.postId);
+    if (widget.logPostView) {
+      Provider.of<AppContext>(context, listen: false)
+          .analytics
+          .logPostGallery(widget.postId);
+    }
   }
 
   @override
@@ -205,11 +213,22 @@ class _ViewGalleryPageState extends State<ViewGalleryPage> {
     }
 
     if (entry['type'] == 'img') {
+      final explicit = entry['heroTag'];
+      final heroTag = GalleryViewer.resolvedHeroTag(
+        useHero: widget.useHero,
+        explicitTag: explicit is String ? explicit : null,
+        fallbackTag: widget.postId + src,
+      );
       return MyPhotoViewer(
         key: ValueKey('img-$src'),
         src: src,
         postID: widget.postId,
-        useHero: widget.useHero,
+        heroTag: heroTag,
+        useHero: GalleryViewer.attachHero(
+          useHero: widget.useHero,
+          isCurrentPage: index == _index,
+          heroTag: heroTag,
+        ),
         onFitChanged: (fit) => _onPhotoFitChanged(index, fit),
       );
     }

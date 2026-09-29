@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
@@ -12,7 +11,7 @@ import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/network_image_helper.dart';
+import '../../utility/gallery_viewer.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/map_area.dart';
@@ -28,6 +27,7 @@ import '../../widgets/posts/post_head.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/user_avatar.dart';
 import '../personal/select_users_page.dart';
+import '../view_gallery_page.dart';
 import 'edit_cell_group_page.dart';
 
 class CellGroupDetailPage extends StatefulWidget {
@@ -374,7 +374,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               flexibleSpace: (hasKeyGraphic && keySrc != null)
                   ? FlexibleSpaceBar(
                       background: GestureDetector(
-                        onTap: () => _openPhoto(keySrc),
+                        onTap: () => _openPhoto(keySrc, useHero: false),
                         child: CachedImageWidget(
                           imageUrl: keySrc,
                           fit: BoxFit.cover,
@@ -724,7 +724,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           if (src.isEmpty) return const SizedBox.shrink();
           final isCover = src == group.keyGraphicSrc;
           return GestureDetector(
-            onTap: () => _openPhoto(src),
+            onTap: () => _openPhoto(src, useHero: true),
             child: AspectRatio(
               aspectRatio: 4 / 3,
               child: Stack(
@@ -768,22 +768,38 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     );
   }
 
-  void _openPhoto(String src) {
-    final groupId = _group?.id ?? widget.groupId;
+  void _openPhoto(String src, {required bool useHero}) {
+    final group = _group;
+    final groupId = group?.id ?? widget.groupId;
+    final name = group?.name ?? '';
+    final media = <Map<String, dynamic>>[
+      if (group != null)
+        for (final entry in group.media)
+          if (entry['src'] is String && (entry['src'] as String).isNotEmpty)
+            {
+              'type': entry['type'] == 'vid' ? 'vid' : 'img',
+              'src': entry['src'],
+              'title': entry['title'] is String &&
+                      (entry['title'] as String).isNotEmpty
+                  ? entry['title']
+                  : name,
+              if (entry['thumbnailSrc'] != null)
+                'thumbnailSrc': entry['thumbnailSrc'],
+              if (useHero && entry['type'] != 'vid')
+                'heroTag': '$groupId-${entry['src']}',
+            },
+    ];
+    if (media.isEmpty && src.isNotEmpty) {
+      media.add(GalleryViewer.photoEntry(src: src, title: name));
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-          ),
-          body: PhotoView(
-            imageProvider: NetworkImage(NetworkImageHelper.getImageUrl(src)),
-            heroAttributes: PhotoViewHeroAttributes(tag: '$groupId-$src'),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2.5,
-          ),
+        builder: (_) => ViewGalleryPage(
+          media: media,
+          initialIndex: GalleryViewer.indexForSrc(media, src),
+          postId: groupId,
+          useHero: useHero,
+          logPostView: false,
         ),
       ),
     );

@@ -110,6 +110,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
         usersForRole: _usersForRole,
         onRoleTap: (role) => _onRoleTap(role, isWide),
         onOverflowTap: _showOverflowRoles,
+        onEmptyTap: _canEditPostProgram() ? _onAddScheduleAt : null,
       ),
     );
 
@@ -150,6 +151,16 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
               usersForRole: _usersForRole,
               onRoleTap: (role) => _onRoleTap(role, isWide),
               selectedRoleId: isWide ? _selectedRoleId : null,
+            ),
+          ),
+        if (_canEditPostProgram() && layout.dayStart != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              AppLocalizations.of(context)!.scheduleTapGapToAdd,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
         body,
@@ -475,6 +486,22 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
             DateTime.now().subtract(const Duration(days: 1))) &&
         (widget.eventContext.isUserAuthor(_appContext.currentUser.id) ||
             widget.eventContext.isUserContributor(_appContext.currentUser.id));
+  }
+
+  void _onAddScheduleAt(final DateTime start) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddEventProgramPage(
+          eventContext: widget.eventContext,
+          initialStart: start,
+        ),
+      ),
+    ).then((_) {
+      if (!mounted) return;
+      setState(() {});
+      widget.onProgramChanged();
+    });
   }
 
   void _openEditProgramPage(final Map<String, dynamic> programEntry) {

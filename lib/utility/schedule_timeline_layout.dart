@@ -121,6 +121,27 @@ class ScheduleTimelineLayout {
 
   bool get isEmpty => placements.isEmpty;
 
+  /// Clock time for a point [minutesFromStart] down the canvas.
+  ///
+  /// Rounded to [snapMinutes] and kept inside [dayStart]..[dayEnd], matching
+  /// the five-minute grid used when dragging and picking a duration.
+  static DateTime timeAtMinutes({
+    required DateTime dayStart,
+    required DateTime dayEnd,
+    required double minutesFromStart,
+    int snapMinutes = 5,
+  }) {
+    final int step = snapMinutes < 1 ? 1 : snapMinutes;
+    final double raw = minutesFromStart.isFinite && minutesFromStart > 0
+        ? minutesFromStart
+        : 0;
+    var snapped = (raw / step).round() * step;
+    final int spanMinutes = dayEnd.difference(dayStart).inMinutes;
+    if (spanMinutes <= 0) return dayStart;
+    if (snapped > spanMinutes) snapped = spanMinutes;
+    return dayStart.add(Duration(minutes: snapped));
+  }
+
   bool get hasOverlaps => placements.any((final p) => p.laneCount > 1);
 
   /// True when [start]–[end] sits on a running-order block (including overflow).

@@ -94,4 +94,78 @@ void main() {
       );
     });
   });
+
+  group('GalleryViewer.photoEntries', () {
+    test('keeps order, skips blanks, and stamps hero tags', () {
+      final entries = GalleryViewer.photoEntries(
+        srcs: ['a', '', 'b'],
+        title: 'Team',
+        heroTagFor: (src) => 'tag-$src',
+      );
+      expect(entries.map((entry) => entry['src']), ['a', 'b']);
+      expect(entries.first['heroTag'], 'tag-a');
+      expect(entries.first['title'], 'Team');
+      expect(entries.first['type'], 'img');
+    });
+
+    test('finds the tapped photo and falls back to the first', () {
+      final media = GalleryViewer.photoEntries(srcs: ['a', 'b']);
+      expect(GalleryViewer.indexForSrc(media, 'b'), 1);
+      expect(GalleryViewer.indexForSrc(media, 'missing'), 0);
+    });
+  });
+
+  group('GalleryViewer hero tags', () {
+    test('uses the thumbnail tag when one was passed', () {
+      expect(
+        GalleryViewer.resolvedHeroTag(
+          useHero: true,
+          explicitTag: 'group-photo',
+          fallbackTag: 'postsrc',
+        ),
+        'group-photo',
+      );
+    });
+
+    test('uses the post thumbnail tag when none was passed', () {
+      expect(
+        GalleryViewer.resolvedHeroTag(
+          useHero: true,
+          explicitTag: null,
+          fallbackTag: 'postsrc',
+        ),
+        'postsrc',
+      );
+    });
+
+    test('skips the hero when the open has no matching source', () {
+      expect(
+        GalleryViewer.resolvedHeroTag(
+          useHero: false,
+          explicitTag: 'group-photo',
+          fallbackTag: 'postsrc',
+        ),
+        isNull,
+      );
+    });
+
+    test('attaches a hero only on the visible page', () {
+      expect(
+        GalleryViewer.attachHero(
+          useHero: true,
+          isCurrentPage: true,
+          heroTag: 'tag-a',
+        ),
+        isTrue,
+      );
+      expect(
+        GalleryViewer.attachHero(
+          useHero: true,
+          isCurrentPage: false,
+          heroTag: 'tag-b',
+        ),
+        isFalse,
+      );
+    });
+  });
 }

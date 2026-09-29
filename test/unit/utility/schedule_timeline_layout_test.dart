@@ -611,4 +611,47 @@ void main() {
       );
     });
   });
+
+  group('ScheduleTimelineLayout.timeAtMinutes', () {
+    final dayStart = DateTime(2026, 6, 14, 10, 0);
+    final dayEnd = DateTime(2026, 6, 14, 12, 0);
+
+    test('snaps onto the five-minute grid', () {
+      expect(
+        ScheduleTimelineLayout.timeAtMinutes(
+          dayStart: dayStart,
+          dayEnd: dayEnd,
+          minutesFromStart: 12,
+        ),
+        DateTime(2026, 6, 14, 10, 10),
+      );
+      expect(
+        ScheduleTimelineLayout.timeAtMinutes(
+          dayStart: dayStart,
+          dayEnd: dayEnd,
+          minutesFromStart: 13,
+        ),
+        DateTime(2026, 6, 14, 10, 15),
+      );
+    });
+
+    test('stays inside the canvas', () {
+      expect(
+        ScheduleTimelineLayout.timeAtMinutes(
+          dayStart: dayStart,
+          dayEnd: dayEnd,
+          minutesFromStart: -4,
+        ),
+        dayStart,
+      );
+      expect(
+        ScheduleTimelineLayout.timeAtMinutes(
+          dayStart: dayStart,
+          dayEnd: dayEnd,
+          minutesFromStart: 200,
+        ),
+        dayEnd,
+      );
+    });
+  });
 }

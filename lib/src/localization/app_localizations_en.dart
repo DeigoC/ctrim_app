@@ -1974,6 +1974,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add schedule items from the edit menu and they will appear here on the timeline.';
 
   @override
+  String get scheduleTapGapToAdd => 'Tap an empty time to add an item';
+
+  @override
   String get scheduleEmptyBodyViewer =>
       'The running order for this post has not been shared yet.';
 
