@@ -108,6 +108,21 @@ void main() {
       expect(entries.first['type'], 'img');
     });
 
+    test('stamps the bulletin cover tag onto that photo only', () {
+      const media = [
+        {'type': 'img', 'src': 'cover'},
+        {'type': 'img', 'src': 'other'},
+      ];
+      final stamped = GalleryViewer.withCoverHero(
+        media: media,
+        coverSrc: 'cover',
+        coverHeroTag: 'post_cover_1',
+      );
+      expect(stamped[0]['heroTag'], 'post_cover_1');
+      expect(stamped[1].containsKey('heroTag'), isFalse);
+      expect(media[0].containsKey('heroTag'), isFalse);
+    });
+
     test('finds the tapped photo and falls back to the first', () {
       final media = GalleryViewer.photoEntries(srcs: ['a', 'b']);
       expect(GalleryViewer.indexForSrc(media, 'b'), 1);

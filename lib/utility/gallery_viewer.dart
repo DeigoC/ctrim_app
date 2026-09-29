@@ -66,6 +66,26 @@ abstract final class GalleryViewer {
     ];
   }
 
+  /// The bulletin cover flies with `post_cover_{id}`, not `postId + src`.
+  /// Stamp that tag onto the matching photo so the gallery can meet it.
+  static List<Map<String, dynamic>> withCoverHero({
+    required List<Map<String, dynamic>> media,
+    required String? coverSrc,
+    required String coverHeroTag,
+  }) {
+    if (coverSrc == null || coverSrc.isEmpty || coverHeroTag.isEmpty) {
+      return media;
+    }
+    final index = media.indexWhere(
+      (entry) => entry['type'] == 'img' && entry['src'] == coverSrc,
+    );
+    if (index < 0) return media;
+    return [
+      for (var i = 0; i < media.length; i++)
+        if (i == index) {...media[i], 'heroTag': coverHeroTag} else media[i],
+    ];
+  }
+
   /// Index of [src] in [media], or the first item when it is missing.
   static int indexForSrc(List<Map<String, dynamic>> media, String src) {
     final index = media.indexWhere((entry) => entry['src'] == src);

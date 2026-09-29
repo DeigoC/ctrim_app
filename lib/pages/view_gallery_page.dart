@@ -275,30 +275,50 @@ class _GalleryDragDismiss extends StatefulWidget {
 class _GalleryDragDismissState extends State<_GalleryDragDismiss> {
   double _drag = 0;
   bool _dragging = false;
+  bool _settling = false;
+
+  /// Opacity and Transform ancestors stop a Hero flight. Keep them off until
+  /// the user actually drags, so the bulletin thumbnail can fly in.
+  bool get _transformsChild => _dragging || _settling || _drag != 0;
 
   @override
   void didUpdateWidget(covariant _GalleryDragDismiss oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.enabled && (_drag != 0 || _dragging)) {
+    if (!widget.enabled && _transformsChild) {
       _drag = 0;
       _dragging = false;
+      _settling = false;
     }
+  }
+
+  void _snapBack() {
+    setState(() {
+      _dragging = false;
+      _settling = true;
+      _drag = 0;
+    });
+    Future<void>.delayed(const Duration(milliseconds: 180), () {
+      if (!mounted || _dragging) return;
+      setState(() => _settling = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final duration =
         _dragging ? Duration.zero : const Duration(milliseconds: 180);
-    final media = AnimatedContainer(
-      duration: duration,
-      curve: Curves.easeOut,
-      transform: Matrix4.translationValues(0, _drag, 0),
-      child: AnimatedOpacity(
-        duration: duration,
-        opacity: (1 - (_drag.abs() / 500)).clamp(0.45, 1.0),
-        child: widget.child,
-      ),
-    );
+    final media = _transformsChild
+        ? AnimatedContainer(
+            duration: duration,
+            curve: Curves.easeOut,
+            transform: Matrix4.translationValues(0, _drag, 0),
+            child: AnimatedOpacity(
+              duration: duration,
+              opacity: (1 - (_drag.abs() / 500)).clamp(0.45, 1.0),
+              child: widget.child,
+            ),
+          )
+        : widget.child;
 
     if (!widget.enabled) return media;
 
@@ -307,10 +327,7 @@ class _GalleryDragDismissState extends State<_GalleryDragDismiss> {
       onVerticalDragStart: (_) => setState(() => _dragging = true),
       onVerticalDragUpdate: (details) =>
           setState(() => _drag += details.delta.dy),
-      onVerticalDragCancel: () => setState(() {
-        _dragging = false;
-        _drag = 0;
-      }),
+      onVerticalDragCancel: _snapBack,
       onVerticalDragEnd: (details) {
         final velocity = details.primaryVelocity ?? 0;
         if (GalleryViewer.shouldDismissDrag(
@@ -318,10 +335,7 @@ class _GalleryDragDismissState extends State<_GalleryDragDismiss> {
           widget.onDismissed();
           return;
         }
-        setState(() {
-          _dragging = false;
-          _drag = 0;
-        });
+        _snapBack();
       },
       child: media,
     );

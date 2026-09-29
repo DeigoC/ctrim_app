@@ -99,6 +99,49 @@ class _MyPhotoViewerState extends State<MyPhotoViewer> {
 
   @override
   Widget build(BuildContext context) {
+    final photo = _buildPhoto();
+    if (!widget.useHero) return photo;
+
+    final explicit = widget.heroTag;
+    final tag = (explicit != null && explicit.isNotEmpty)
+        ? explicit
+        : widget.postID + widget.src;
+    return Hero(
+      tag: tag,
+      flightShuttleBuilder: _shuttle,
+      child: photo,
+    );
+  }
+
+  /// PhotoView attaches its hero only after the image decodes, which is after
+  /// the route has already looked for a match. This hero is in the first frame.
+  /// The flying picture is the whole photo on black, same as the viewer.
+  /// Cover would re-crop as the box grows and then snap when the viewer fits
+  /// the full image.
+  Widget _shuttle(
+    BuildContext flightContext,
+    Animation<double> animation,
+    HeroFlightDirection flightDirection,
+    BuildContext fromHeroContext,
+    BuildContext toHeroContext,
+  ) {
+    final bytes = CachedImageLoader.peekBytes(widget.src) ?? _bytes;
+    if (bytes != null) {
+      return ColoredBox(
+        color: Colors.black,
+        child: Image.memory(
+          bytes,
+          fit: BoxFit.contain,
+          gaplessPlayback: true,
+        ),
+      );
+    }
+    final fromHero = fromHeroContext.widget;
+    if (fromHero is Hero) return fromHero.child;
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildPhoto() {
     if (_failed) return _Failure(onRetry: _retry);
 
     final bytes = _bytes;
@@ -116,13 +159,6 @@ class _MyPhotoViewerState extends State<MyPhotoViewer> {
       initialScale: PhotoViewComputedScale.contained,
       gaplessPlayback: true,
       scaleStateChangedCallback: _onScaleState,
-      heroAttributes: widget.useHero
-          ? PhotoViewHeroAttributes(
-              tag: (widget.heroTag != null && widget.heroTag!.isNotEmpty)
-                  ? widget.heroTag!
-                  : widget.postID + widget.src,
-            )
-          : null,
       loadingBuilder: (context, event) => const Center(
         child: CircularProgressIndicator(color: Colors.white),
       ),
