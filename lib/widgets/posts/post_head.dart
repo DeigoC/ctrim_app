@@ -8,6 +8,7 @@ import '../../utility/app_context.dart';
 import '../../utility/person_display_name.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/app_links.dart';
+import '../../utility/gallery_viewer.dart';
 import '../../utility/image_orientation.dart';
 import '../../utility/post_head_media_layout.dart';
 import '../media/cached_image_widget.dart';
@@ -583,10 +584,10 @@ class _PostHeadState extends State<PostHead>
   // * Helper Methods
 
   List<Map<String, dynamic>> _getMedia() {
-    if (kIsWeb) {
-      return widget.thisHead.media.where((e) => e['type'] == 'img').toList();
-    }
-    return widget.thisHead.media;
+    return GalleryViewer.visibleMedia(
+      widget.thisHead.media,
+      imagesOnly: kIsWeb,
+    );
   }
 
   bool _sameMedia(
@@ -676,7 +677,7 @@ class _PostHeadState extends State<PostHead>
       context,
       MaterialPageRoute(
         builder: (_) => ViewGalleryPage(
-          media: widget.thisHead.media,
+          media: _getMedia(),
           initialIndex: index,
           postId: widget.thisHead.id,
         ),

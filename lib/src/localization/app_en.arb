@@ -2876,5 +2876,49 @@
   "notificationSchedulesLoading": "Loading reminders",
   "@notificationSchedulesLoading": {
     "description": "Progress message while scheduled notifications load"
+  },
+  "galleryClose": "Close",
+  "@galleryClose": {
+    "description": "Closes the full-screen photo and video viewer"
+  },
+  "galleryPosition": "{current} of {total}",
+  "@galleryPosition": {
+    "description": "Which item is open in the photo and video viewer",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryImageFailed": "Could not load this photo",
+  "@galleryImageFailed": {
+    "description": "Shown when a photo in the viewer fails to load"
+  },
+  "galleryVideoFailed": "Could not play this video",
+  "@galleryVideoFailed": {
+    "description": "Shown when a video in the viewer fails to start"
+  },
+  "galleryRetry": "Try again",
+  "@galleryRetry": {
+    "description": "Retries a photo or video that failed to load in the viewer"
+  },
+  "galleryPlay": "Play",
+  "@galleryPlay": {
+    "description": "Starts video playback in the viewer"
+  },
+  "galleryPause": "Pause",
+  "@galleryPause": {
+    "description": "Pauses video playback in the viewer"
+  },
+  "galleryLoop": "Loop",
+  "@galleryLoop": {
+    "description": "Repeats the current video when it reaches the end"
+  },
+  "galleryMediaUnsupported": "This file cannot be shown",
+  "@galleryMediaUnsupported": {
+    "description": "Shown when a gallery item is neither a photo nor a video"
   }
 }

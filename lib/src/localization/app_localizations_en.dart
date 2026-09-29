@@ -2220,4 +2220,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationSchedulesLoading => 'Loading reminders';
+
+  @override
+  String get galleryClose => 'Close';
+
+  @override
+  String galleryPosition(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get galleryImageFailed => 'Could not load this photo';
+
+  @override
+  String get galleryVideoFailed => 'Could not play this video';
+
+  @override
+  String get galleryRetry => 'Try again';
+
+  @override
+  String get galleryPlay => 'Play';
+
+  @override
+  String get galleryPause => 'Pause';
+
+  @override
+  String get galleryLoop => 'Loop';
+
+  @override
+  String get galleryMediaUnsupported => 'This file cannot be shown';
 }

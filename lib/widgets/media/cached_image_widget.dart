@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../utility/cache/local_data_manager.dart';
+import '../../utility/image_orientation.dart';
 import '../../utility/network_image_helper.dart';
 
 /// A widget that downloads and caches images for display.
@@ -34,6 +35,17 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
   int _retryCount = 0;
   static const int _maxRetries = 3;
   bool _hasError = false;
+  bool _sizeCacheStarted = false;
+
+  @override
+  void didUpdateWidget(covariant CachedImageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _hasError = false;
+      _retryCount = 0;
+      _sizeCacheStarted = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +59,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
     final peeked = CachedImageLoader.peekBytes(widget.imageUrl);
     if (peeked != null) {
+      _cacheSize(peeked);
       return _wrapHero(_imageFromBytes(peeked));
     }
 
@@ -57,6 +70,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
           Widget result = _buildLoadingState();
 
           if (snap.hasData) {
+            _cacheSize(snap.data!);
             // Hoist the loaded photo to be the Hero child (not this FutureBuilder)
             // so the next navigation can fly the picture.
             if (CachedImageLoader.peekBytes(widget.imageUrl) != null) {
@@ -99,6 +113,9 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
     if (tag == null || tag.isEmpty) return child;
     return Hero(
       tag: tag,
+      // A straight flight. The material arc tween bows the rect and the
+      // cover-crop pumps, which reads as a fade into the destination box.
+      createRectTween: (begin, end) => RectTween(begin: begin, end: end),
       transitionOnUserGestures: true,
       flightShuttleBuilder: (
         context,
@@ -111,9 +128,13 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
         // by an empty placeholder, so reusing it leaves nothing to fly.
         final bytes = CachedImageLoader.peekBytes(widget.imageUrl);
         if (bytes != null) {
+          final Alignment alignment = direction == HeroFlightDirection.push
+              ? _heroImageAlignment(fromContext) ?? widget.alignment
+              : widget.alignment;
           return Image.memory(
             bytes,
             fit: BoxFit.cover,
+            alignment: alignment,
             gaplessPlayback: true,
           );
         }
@@ -125,6 +146,18 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
     );
   }
 
+  /// Crop alignment of the hero already on screen, so the flight starts on
+  /// the same pixels (testimonial cards pin the top of a portrait).
+  Alignment? _heroImageAlignment(final BuildContext heroContext) {
+    final hero = heroContext.widget;
+    if (hero is! Hero) return null;
+    final child = hero.child;
+    if (child is Image && child.alignment is Alignment) {
+      return child.alignment as Alignment;
+    }
+    return null;
+  }
+
   Widget _imageFromBytes(final Uint8List bytes) {
     return Image.memory(
       bytes,
@@ -132,6 +165,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
       width: widget.width,
       fit: widget.fit,
       alignment: widget.alignment,
+      gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) {
         debugPrint('Broken image data detected: ${error.toString()}');
 
@@ -223,6 +257,25 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
     );
   }
 
+  /// Records the decoded size so the next route can frame the hero on frame one.
+  void _cacheSize(final Uint8List bytes) {
+    if (CachedImageLoader.peekSize(widget.imageUrl) != null ||
+        _sizeCacheStarted) {
+      return;
+    }
+    _sizeCacheStarted = true;
+    final decoded = ImageOrientationHelper.sizeIfDecoded(bytes);
+    if (decoded != null) {
+      CachedImageLoader.rememberSize(widget.imageUrl, decoded);
+      return;
+    }
+    ImageOrientationHelper.decodeSize(bytes).then((size) {
+      if (size != null) {
+        CachedImageLoader.rememberSize(widget.imageUrl, size);
+      }
+    });
+  }
+
   // * Logic
   Future<Uint8List> _fetchCachedImage() =>
       CachedImageLoader.fetchBytes(widget.imageUrl);
@@ -288,6 +341,7 @@ abstract final class CachedImageLoader {
   }
 
   static final Map<String, Uint8List> _memoryBytes = {};
+  static final Map<String, Size> _memorySizes = {};
 
   /// Bytes already shown this session, so a second widget can paint a [Hero]
   /// on its first frame.
@@ -298,7 +352,33 @@ abstract final class CachedImageLoader {
   }
 
   static void forgetBytes(final String imageUrl) {
-    _memoryBytes.remove(cacheKeyFor(imageUrl));
+    final key = cacheKeyFor(imageUrl);
+    _memoryBytes.remove(key);
+    _memorySizes.remove(key);
+  }
+
+  static Size? peekSize(final String imageUrl) {
+    final size = _memorySizes[cacheKeyFor(imageUrl)];
+    if (size == null || size.width <= 0 || size.height <= 0) return null;
+    return size;
+  }
+
+  static void rememberSize(final String imageUrl, final Size size) {
+    if (imageUrl.isEmpty || size.width <= 0 || size.height <= 0) return;
+    _memorySizes[cacheKeyFor(imageUrl)] = size;
+  }
+
+  /// Aspect already known this session: a stored size, or the decoded cache
+  /// for bytes the list card is showing.
+  static Size? sizeFor(final String imageUrl) {
+    final remembered = peekSize(imageUrl);
+    if (remembered != null) return remembered;
+    final bytes = peekBytes(imageUrl);
+    if (bytes == null) return null;
+    final size = ImageOrientationHelper.sizeIfDecoded(bytes);
+    if (size == null) return null;
+    rememberSize(imageUrl, size);
+    return size;
   }
 
   static void _remember(final String imageUrl, final Uint8List bytes) {

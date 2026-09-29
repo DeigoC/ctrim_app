@@ -54,6 +54,8 @@ Opening a post shows tabs when that content exists:
 | **Media** | Photos and video |
 | **Related** | Linked parent, sibling, or child posts |
 
+Tap a photo or video to open it. Pinch a photo to look closer, swipe sideways for the next item, and swipe down to close. Video playback includes pause, a timeline, and a loop control.
+
 ## Interest, bookmarks & attendance
 
 | Idea | In plain language |

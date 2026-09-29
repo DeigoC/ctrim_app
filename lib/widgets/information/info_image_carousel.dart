@@ -39,6 +39,11 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
   final Map<String, Size> _intrinsicSizes = <String, Size>{};
   int _currentIndex = 0;
 
+  /// Page swipes ease the frame. The first measurement does not — easing a
+  /// portrait into a gray matte is the hero "fade".
+  bool _resizeFrames = false;
+  bool _armedResize = false;
+
   @override
   void initState() {
     super.initState();
@@ -100,6 +105,7 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
       if (!mounted || size == null) {
         return;
       }
+      CachedImageLoader.rememberSize(url, size);
       setState(() {
         _intrinsicSizes[url] = size;
       });
@@ -108,11 +114,33 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
     }
   }
 
+  Size? _sizeFor(final String url) {
+    if (url.isEmpty) {
+      return null;
+    }
+    return _intrinsicSizes[url] ?? CachedImageLoader.sizeFor(url);
+  }
+
   Size? get _currentIntrinsic {
     if (widget.imageUrls.isEmpty) {
       return null;
     }
-    return _intrinsicSizes[widget.imageUrls[_currentIndex]];
+    return _sizeFor(widget.imageUrls[_currentIndex]);
+  }
+
+  Duration get _frameDuration =>
+      _resizeFrames ? const Duration(milliseconds: 240) : Duration.zero;
+
+  void _scheduleResizeFrames() {
+    if (_resizeFrames || _armedResize || _currentIntrinsic == null) {
+      return;
+    }
+    _armedResize = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _resizeFrames = true;
+      }
+    });
   }
 
   @override
@@ -144,11 +172,13 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
     }
 
     final Size? intrinsic = _currentIntrinsic;
+    _scheduleResizeFrames();
     final ImageOrientation orientation = intrinsic == null
         ? ImageOrientation.landscape
         : ImageOrientationHelper.fromSize(intrinsic.width, intrinsic.height);
     // Anything not clearly landscape (portraits + square headshots) gets a
-    // centered natural frame instead of a full-bleed wide banner.
+    // centered frame the same shape as the photo. No gray matte: a matte
+    // behind BoxFit.contain is what the hero appears to fade into.
     final bool useNaturalFrame = orientation != ImageOrientation.landscape;
 
     final double maxHeightCap =
@@ -169,26 +199,22 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
             maxHeight: maxHeight,
           );
 
-    final BoxFit fit = useNaturalFrame ? BoxFit.contain : BoxFit.cover;
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
+          duration: _frameDuration,
           curve: Curves.easeOutCubic,
           width: double.infinity,
           height: displaySize.height,
           alignment: Alignment.center,
-          color: useNaturalFrame ? colorScheme.surfaceContainerLow : null,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 240),
+            duration: _frameDuration,
             curve: Curves.easeOutCubic,
             width: displaySize.width,
             height: displaySize.height,
             child: _buildPhotoFrame(
-              colorScheme: colorScheme,
-              fit: fit,
+              fit: BoxFit.cover,
               radius: useNaturalFrame || isWide ? 16 : widget.borderRadius,
             ),
           ),
@@ -217,11 +243,7 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
             ? (cap < 80 ? cap : 80.0)
             : photoBudget.clamp(80.0, cap);
         final Size? intrinsic = _currentIntrinsic;
-        final ImageOrientation orientation = intrinsic == null
-            ? ImageOrientation.portrait
-            : ImageOrientationHelper.fromSize(
-                intrinsic.width, intrinsic.height);
-        final bool natural = orientation != ImageOrientation.landscape;
+        _scheduleResizeFrames();
         final Size displaySize = ImageOrientationHelper.fitWithin(
           intrinsic: intrinsic ?? const Size(3, 4),
           maxWidth: maxWidth,
@@ -235,13 +257,12 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
             Align(
               alignment: Alignment.topCenter,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 240),
+                duration: _frameDuration,
                 curve: Curves.easeOutCubic,
                 width: displaySize.width,
                 height: displaySize.height,
                 child: _buildPhotoFrame(
-                  colorScheme: colorScheme,
-                  fit: natural ? BoxFit.contain : BoxFit.cover,
+                  fit: BoxFit.cover,
                   radius: 16,
                 ),
               ),
@@ -257,65 +278,53 @@ class _InfoImageCarouselState extends State<InfoImageCarousel> {
   }
 
   Widget _buildPhotoFrame({
-    required ColorScheme colorScheme,
     required BoxFit fit,
     required double radius,
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: ColoredBox(
-        color: colorScheme.surfaceContainerHighest,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              itemCount: widget.imageUrls.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-                _probeAround(index);
-              },
-              itemBuilder: (context, index) {
-                final url = widget.imageUrls[index];
-                final pageSize = _intrinsicSizes[url];
-                final pageNatural = pageSize != null &&
-                    ImageOrientationHelper.fromSize(
-                          pageSize.width,
-                          pageSize.height,
-                        ) !=
-                        ImageOrientation.landscape;
-
-                return CachedImageWidget(
-                  imageUrl: url,
-                  fit: pageNatural ? BoxFit.contain : fit,
-                  heroTag: index == 0 ? widget.heroTag : null,
-                );
-              },
-            ),
-            if (widget.imageUrls.length > 1)
-              Positioned(
-                right: 12,
-                bottom: 12,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '${_currentIndex + 1}/${widget.imageUrls.length}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.imageUrls.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+              _probeAround(index);
+            },
+            itemBuilder: (context, index) {
+              final url = widget.imageUrls[index];
+              return CachedImageWidget(
+                imageUrl: url,
+                fit: fit,
+                heroTag: index == 0 ? widget.heroTag : null,
+              );
+            },
+          ),
+          if (widget.imageUrls.length > 1)
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${_currentIndex + 1}/${widget.imageUrls.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -362,15 +371,20 @@ class _AdaptiveInfoGalleryImageState extends State<AdaptiveInfoGalleryImage> {
   @override
   void initState() {
     super.initState();
-    _probe();
+    _intrinsic = CachedImageLoader.sizeFor(widget.imageUrl);
+    if (_intrinsic == null) {
+      _probe();
+    }
   }
 
   @override
   void didUpdateWidget(covariant AdaptiveInfoGalleryImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageUrl != widget.imageUrl) {
-      _intrinsic = null;
-      _probe();
+      _intrinsic = CachedImageLoader.sizeFor(widget.imageUrl);
+      if (_intrinsic == null) {
+        _probe();
+      }
     }
   }
 
@@ -381,6 +395,7 @@ class _AdaptiveInfoGalleryImageState extends State<AdaptiveInfoGalleryImage> {
       if (!mounted || size == null) {
         return;
       }
+      CachedImageLoader.rememberSize(widget.imageUrl, size);
       setState(() {
         _intrinsic = size;
       });
@@ -391,8 +406,7 @@ class _AdaptiveInfoGalleryImageState extends State<AdaptiveInfoGalleryImage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final intrinsic = _intrinsic;
+    final intrinsic = _intrinsic ?? CachedImageLoader.sizeFor(widget.imageUrl);
     final bool naturalFrame = intrinsic != null &&
         ImageOrientationHelper.fromSize(intrinsic.width, intrinsic.height) !=
             ImageOrientation.landscape;
@@ -403,13 +417,10 @@ class _AdaptiveInfoGalleryImageState extends State<AdaptiveInfoGalleryImage> {
       borderRadius: BorderRadius.circular(16),
       child: AspectRatio(
         aspectRatio: ratio,
-        child: ColoredBox(
-          color: colorScheme.surfaceContainerHighest,
-          child: CachedImageWidget(
-            imageUrl: widget.imageUrl,
-            fit: naturalFrame ? BoxFit.contain : BoxFit.cover,
-            heroTag: widget.heroTag,
-          ),
+        child: CachedImageWidget(
+          imageUrl: widget.imageUrl,
+          fit: BoxFit.cover,
+          heroTag: widget.heroTag,
         ),
       ),
     );
