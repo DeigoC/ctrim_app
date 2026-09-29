@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/event/event_head.dart';
+import '../../models/post_tag.dart';
 import '../../utility/app_context.dart';
+import '../../utility/catalog/post_tag_helpers.dart';
 import '../../utility/person_display_name.dart';
 import '../../pages/view_gallery_page.dart';
 import '../../utility/app_links.dart';
@@ -81,10 +83,19 @@ class _PostHeadState extends State<PostHead>
     super.dispose();
   }
 
+  List<PostTag> _visiblePostTags(BuildContext context) {
+    context.select((AppContext app) => app.catalogsEpoch);
+    return PostTagHelpers.tagsForHead(
+      head: widget.thisHead,
+      allTags: context.read<AppContext>().allPostTags,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final postTags = _visiblePostTags(context);
 
     return AnimatedBuilder(
       animation: _scaleAnimation,
@@ -124,6 +135,7 @@ class _PostHeadState extends State<PostHead>
                       theme,
                       colorScheme,
                       constraints.maxWidth,
+                      postTags,
                     );
                   },
                 ),
@@ -140,6 +152,7 @@ class _PostHeadState extends State<PostHead>
     ThemeData theme,
     ColorScheme colorScheme,
     double cardWidth,
+    List<PostTag> postTags,
   ) {
     final allMedia =
         widget.thisHead.hasMedia ? _getMedia() : const <Map<String, dynamic>>[];
@@ -187,7 +200,9 @@ class _PostHeadState extends State<PostHead>
           ),
           child: Row(
             children: [
-              Expanded(child: _buildStatusRow(theme, colorScheme)),
+              Expanded(
+                child: _buildStatusRow(theme, colorScheme, postTags),
+              ),
               IconButton(
                 icon: Icon(
                   Icons.info_outline,
@@ -206,18 +221,17 @@ class _PostHeadState extends State<PostHead>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTitle(theme, colorScheme),
-              if (widget.thisHead.hasEventDate) ...[
-                const SizedBox(height: 8),
-                _buildWhenLine(theme, colorScheme),
-              ],
+              const SizedBox(height: 8),
               if (widget.thisHead.subtitle.isNotEmpty) ...[
-                const SizedBox(height: 10),
                 _buildSubtitle(theme, colorScheme),
+                const SizedBox(height: 12),
               ],
               if (widget.thisHead.hasAttendanceCounts) ...[
-                const SizedBox(height: 12),
                 _buildAttendanceCounts(theme, colorScheme),
+                const SizedBox(height: 12),
               ],
+              if (widget.thisHead.hasEventDate)
+                _buildWhenLine(theme, colorScheme),
             ],
           ),
         ),
@@ -374,7 +388,11 @@ class _PostHeadState extends State<PostHead>
     );
   }
 
-  Widget _buildStatusRow(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildStatusRow(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    List<PostTag> postTags,
+  ) {
     return Row(
       children: [
         if (widget.relationTag != null) ...[
@@ -382,7 +400,7 @@ class _PostHeadState extends State<PostHead>
           const SizedBox(width: 8),
         ],
         // Event Status Badge
-        if (widget.thisHead.hasEventDate)
+        if (widget.thisHead.hasEventDate) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -412,8 +430,15 @@ class _PostHeadState extends State<PostHead>
               ],
             ),
           ),
+          if (postTags.isNotEmpty) const SizedBox(width: 8),
+        ],
 
-        const Spacer(),
+        if (postTags.isNotEmpty)
+          Expanded(child: _buildPostTagLabel(theme, colorScheme, postTags))
+        else
+          const Spacer(),
+
+        const SizedBox(width: 8),
 
         // Location & Time Info
         Row(
@@ -531,41 +556,58 @@ class _PostHeadState extends State<PostHead>
     );
   }
 
-  Widget _buildWhenLine(ThemeData theme, ColorScheme colorScheme) {
-    final dateColor = colorScheme.primary;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: dateColor.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 16,
-              color: dateColor,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                _eventDateFormat.format(widget.thisHead.eventDate!),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: dateColor,
-                  height: 1.2,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+  Widget _buildPostTagLabel(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    List<PostTag> tags,
+  ) {
+    final base = theme.textTheme.labelMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+    final separator = base?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.w500,
+    );
+    return Text.rich(
+      TextSpan(
+        children: [
+          for (var i = 0; i < tags.length; i++) ...[
+            if (i > 0) TextSpan(text: ' · ', style: separator),
+            TextSpan(
+              text: tags[i].name,
+              style: base?.copyWith(
+                color: PostTagHelpers.parseColor(tags[i].color) ??
+                    colorScheme.onSurface,
               ),
             ),
           ],
-        ),
+        ],
       ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildWhenLine(ThemeData theme, ColorScheme colorScheme) {
+    return Row(
+      children: [
+        Icon(
+          Icons.schedule,
+          size: 16,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            _eventDateFormat.format(widget.thisHead.eventDate!),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
@@ -693,7 +735,11 @@ class _PostHeadState extends State<PostHead>
       context,
       MaterialPageRoute(
         builder: (_) => ViewGalleryPage(
-          media: _getMedia(),
+          media: GalleryViewer.withCoverHero(
+            media: _getMedia(),
+            coverSrc: widget.thisHead.getKeyGraphic(),
+            coverHeroTag: 'post_cover_${widget.thisHead.id}',
+          ),
           initialIndex: index,
           postId: widget.thisHead.id,
         ),
