@@ -12,6 +12,7 @@ import '../../utility/app_links.dart';
 import '../../utility/church_hierarchy.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/info_repository.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/load_progress_body.dart';
@@ -45,6 +46,9 @@ class ChurchInfoPage extends StatefulWidget {
 class _ChurchInfoPageState extends State<ChurchInfoPage> {
   final InfoRepository _repository = InfoRepository();
   final EventHeadDBManager _eventHeads = EventHeadDBManager();
+  final DirectoryCacheCoordinator _directories =
+      DirectoryCacheCoordinator.instance;
+  late int _infoEpoch;
 
   bool _loading = true;
   bool _loggedScreen = false;
@@ -60,10 +64,24 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
   @override
   void initState() {
     super.initState();
+    _infoEpoch = _directories.epoch;
+    _directories.addListener(_onDirectories);
     final seeded = widget.initialChurch;
     if (seeded != null && seeded.id == widget.documentId) {
       _church = seeded;
     }
+    _load(forceRefresh: false);
+  }
+
+  @override
+  void dispose() {
+    _directories.removeListener(_onDirectories);
+    super.dispose();
+  }
+
+  void _onDirectories() {
+    if (!mounted || _directories.epoch == _infoEpoch) return;
+    _infoEpoch = _directories.epoch;
     _load(forceRefresh: false);
   }
 

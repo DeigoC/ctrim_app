@@ -5,6 +5,7 @@ import '../../firebase/db_managers/user_location_db_manager.dart';
 import '../../models/user_location.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -32,18 +33,15 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
   @override
   void initState() {
     super.initState();
-    _refreshLocations();
-  }
-
-  Future<void> _refreshLocations() async {
-    setState(() => _loading = true);
-    try {
-      final locations = await _locationDBManager.fetchAllLocations();
-      if (!mounted) return;
-      Provider.of<AppContext>(context, listen: false)
-          .setAllLocations(locations);
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final ready = appContext.allLocations.isNotEmpty ||
+        DirectoryCacheCoordinator.instance.initialPassCompleted;
+    if (ready) {
+      _loading = false;
+    } else {
+      DirectoryCacheCoordinator.instance.catalogsReady.then((_) {
+        if (mounted) setState(() => _loading = false);
+      });
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/user_tag.dart';
+import '../../utility/cache/directory_catalog_store.dart';
 
 class UserTagDBManager {
   static final CollectionReference<Map<String, dynamic>> _ref =
@@ -43,11 +44,13 @@ class UserTagDBManager {
       imageUrl: imageUrl,
     );
     await docRef.set(tag.toJson());
+    await DirectoryCatalogStore().upsertUserTag(tag);
     return tag;
   }
 
   Future<void> updateTag(final UserTag tag) async {
     await _ref.doc(tag.id).update(tag.toJson());
+    await DirectoryCatalogStore().upsertUserTag(tag);
   }
 
   Future<int> countUsersWithTag(final String tagId) async {
@@ -61,5 +64,6 @@ class UserTagDBManager {
 
   Future<void> deleteTag(final String tagId) async {
     await _ref.doc(tagId).delete();
+    await DirectoryCatalogStore().deleteUserTag(tagId);
   }
 }

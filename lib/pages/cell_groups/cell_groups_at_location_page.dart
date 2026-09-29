@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/db_managers/cell_group_db_manager.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import 'cell_groups_list_tab.dart';
@@ -23,7 +23,6 @@ class CellGroupsAtLocationPage extends StatefulWidget {
 }
 
 class _CellGroupsAtLocationPageState extends State<CellGroupsAtLocationPage> {
-  final CellGroupDBManager _db = CellGroupDBManager();
   bool _loading = true;
   Object? _error;
   Map<String, List<User>> _rosterUsersByGroupId = const {};
@@ -34,33 +33,50 @@ class _CellGroupsAtLocationPageState extends State<CellGroupsAtLocationPage> {
     Provider.of<AppContext>(context, listen: false)
         .analytics
         .logCellGroupsAtLocation(widget.location);
-    _refresh(ignoreCooldown: true);
+    if (Provider.of<AppContext>(context, listen: false)
+        .allCellGroups
+        .isNotEmpty) {
+      _loading = false;
+    }
+    _refresh();
   }
 
-  Future<void> _refresh({bool ignoreCooldown = false}) async {
+  Future<void> _refresh({
+    bool forceCatalog = false,
+    bool ignoreCooldown = false,
+  }) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!ignoreCooldown && !appContext.sharedPref.canRefreshCellGroups) {
+    if (forceCatalog &&
+        !ignoreCooldown &&
+        !appContext.sharedPref.canRefreshCellGroups) {
       await Future.delayed(kRefreshCooldownBusyWait);
       return;
     }
 
     setState(() {
-      _loading = true;
+      _loading = appContext.allCellGroups.isEmpty;
       _error = null;
     });
     try {
-      final groups = await _db.fetchAllGroups();
-      if (!mounted) return;
-      appContext.setAllCellGroups(groups);
+      if (forceCatalog) {
+        await DirectoryCacheCoordinator.instance
+            .forceRefreshCellGroups(appContext);
+        appContext.sharedPref.setCellGroupsRefreshTime();
+      } else if (appContext.allCellGroups.isEmpty) {
+        await DirectoryCacheCoordinator.instance.revalidate(
+          app: appContext,
+          ignoreCooldown: true,
+        );
+      }
 
+      if (!mounted) return;
       final rosterUsers =
           await CellGroupRosterHelpers.linkedRosterUsersByGroupId(
-        groups: groups,
+        groups: appContext.allCellGroups,
         allUsers: appContext.allUsers,
         isGuest: appContext.isCurrentUserGuest,
       );
       if (!mounted) return;
-      appContext.sharedPref.setCellGroupsRefreshTime();
       setState(() => _rosterUsersByGroupId = rosterUsers);
     } catch (e) {
       if (!mounted) return;
@@ -84,8 +100,8 @@ class _CellGroupsAtLocationPageState extends State<CellGroupsAtLocationPage> {
       body: CellGroupsListTab(
         loading: _loading,
         error: _error,
-        onRefresh: () => _refresh(),
-        onRetry: () => _refresh(ignoreCooldown: true),
+        onRefresh: () => _refresh(forceCatalog: true),
+        onRetry: () => _refresh(forceCatalog: true, ignoreCooldown: true),
         rosterUsersByGroupId: _rosterUsersByGroupId,
         locationFilter: widget.location,
       ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/user.dart';
 import '../../utility/app_analytics.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../widgets/common/load_progress_body.dart';
 import 'info_detail_body.dart';
@@ -137,14 +138,19 @@ class InfoDetailLoader<T> extends StatefulWidget {
 }
 
 class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
+  final DirectoryCacheCoordinator _directories =
+      DirectoryCacheCoordinator.instance;
   T? _info;
   Object? _error;
   bool _loading = true;
   bool _loggedView = false;
+  late int _infoEpoch;
 
   @override
   void initState() {
     super.initState();
+    _infoEpoch = _directories.epoch;
+    _directories.addListener(_onDirectories);
     _info = widget.initialInfo;
     _loading = _info == null;
     if (_info != null) {
@@ -152,6 +158,18 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
         if (mounted && _info != null) _logScreen(_info as T);
       });
     }
+    _load(forceRefresh: false);
+  }
+
+  @override
+  void dispose() {
+    _directories.removeListener(_onDirectories);
+    super.dispose();
+  }
+
+  void _onDirectories() {
+    if (!mounted || _directories.epoch == _infoEpoch) return;
+    _infoEpoch = _directories.epoch;
     _load(forceRefresh: false);
   }
 
@@ -199,7 +217,7 @@ class _InfoDetailLoaderState<T> extends State<InfoDetailLoader<T>> {
       return;
     }
     pref.setInfoRefreshTime();
-    await _load(forceRefresh: false);
+    await _load(forceRefresh: true);
   }
 
   Future<void> _openEditor(final T info) async {

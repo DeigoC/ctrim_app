@@ -206,17 +206,18 @@ class _PostHeadState extends State<PostHead>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTitle(theme, colorScheme),
-              const SizedBox(height: 8),
+              if (widget.thisHead.hasEventDate) ...[
+                const SizedBox(height: 8),
+                _buildWhenLine(theme, colorScheme),
+              ],
               if (widget.thisHead.subtitle.isNotEmpty) ...[
+                const SizedBox(height: 10),
                 _buildSubtitle(theme, colorScheme),
-                const SizedBox(height: 12),
               ],
               if (widget.thisHead.hasAttendanceCounts) ...[
-                _buildAttendanceCounts(theme, colorScheme),
                 const SizedBox(height: 12),
+                _buildAttendanceCounts(theme, colorScheme),
               ],
-              if (widget.thisHead.hasEventDate)
-                _buildWhenLine(theme, colorScheme),
             ],
           ),
         ),
@@ -531,25 +532,40 @@ class _PostHeadState extends State<PostHead>
   }
 
   Widget _buildWhenLine(ThemeData theme, ColorScheme colorScheme) {
-    return Row(
-      children: [
-        Icon(
-          Icons.schedule,
-          size: 16,
-          color: colorScheme.onSurfaceVariant,
+    final dateColor = colorScheme.primary;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: dateColor.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(12),
         ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            _eventDateFormat.format(widget.thisHead.eventDate!),
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 16,
+              color: dateColor,
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                _eventDateFormat.format(widget.thisHead.eventDate!),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: dateColor,
+                  height: 1.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 

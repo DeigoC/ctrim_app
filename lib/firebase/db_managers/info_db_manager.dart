@@ -4,6 +4,7 @@ import '../../models/info/church_info.dart';
 import '../../models/info/church_page.dart';
 import '../../models/info/ctrim_info.dart';
 import '../../models/info/testimonial_info.dart';
+import 'id_tracker.dart';
 
 typedef InfoFactory<T> = T Function(String id, Map<String, dynamic> data);
 typedef InfoSerializer<T> = Map<String, dynamic> Function(T model);
@@ -69,6 +70,8 @@ class InfoCollectionDBManager<T> {
     await _rootRef
         .doc(_sectionKey)
         .set({'lastUpdate': lastUpdate}, SetOptions(merge: true));
+    await IDTrackerDBManager()
+        .trySetDirectoryLastUpdate(_sectionKey, lastUpdate);
   }
 }
 

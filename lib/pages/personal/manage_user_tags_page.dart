@@ -5,6 +5,7 @@ import '../../firebase/db_managers/user_tag_db_manager.dart';
 import '../../models/user_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/network_image_helper.dart';
 import '../../utility/dialog_manager.dart';
@@ -41,17 +42,15 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
   @override
   void initState() {
     super.initState();
-    _refreshTags();
-  }
-
-  Future<void> _refreshTags() async {
-    setState(() => _loading = true);
-    try {
-      final tags = await _tagDBManager.fetchAllTags();
-      if (!mounted) return;
-      Provider.of<AppContext>(context, listen: false).setAllTags(tags);
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final ready = appContext.allTags.isNotEmpty ||
+        DirectoryCacheCoordinator.instance.initialPassCompleted;
+    if (ready) {
+      _loading = false;
+    } else {
+      DirectoryCacheCoordinator.instance.catalogsReady.then((_) {
+        if (mounted) setState(() => _loading = false);
+      });
     }
   }
 

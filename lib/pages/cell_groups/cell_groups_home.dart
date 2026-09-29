@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../firebase/db_managers/cell_group_db_manager.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/responsive_layout.dart';
@@ -31,7 +31,6 @@ class CellGroupsHome extends StatefulWidget {
 }
 
 class _CellGroupsHomeState extends State<CellGroupsHome> {
-  final CellGroupDBManager _db = CellGroupDBManager();
   bool _loading = true;
   Object? _error;
 
@@ -42,7 +41,10 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
   void initState() {
     super.initState();
     widget.tabController.addListener(_onTabChanged);
-    _refresh(ignoreCooldown: true);
+    final cached =
+        Provider.of<AppContext>(context, listen: false).allCellGroups;
+    if (cached.isNotEmpty) _loading = false;
+    _refresh();
   }
 
   @override
@@ -55,22 +57,36 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _refresh({bool ignoreCooldown = false}) async {
+  Future<void> _refresh({
+    bool forceCatalog = false,
+    bool ignoreCooldown = false,
+  }) async {
     final appContext = Provider.of<AppContext>(context, listen: false);
-    if (!ignoreCooldown && !appContext.sharedPref.canRefreshCellGroups) {
+    if (forceCatalog &&
+        !ignoreCooldown &&
+        !appContext.sharedPref.canRefreshCellGroups) {
       await Future.delayed(kRefreshCooldownBusyWait);
       return;
     }
 
     setState(() {
-      _loading = true;
+      _loading = appContext.allCellGroups.isEmpty;
       _error = null;
     });
     try {
-      final groups = await _db.fetchAllGroups();
-      if (!mounted) return;
-      appContext.setAllCellGroups(groups);
+      if (forceCatalog) {
+        await DirectoryCacheCoordinator.instance
+            .forceRefreshCellGroups(appContext);
+        appContext.sharedPref.setCellGroupsRefreshTime();
+      } else if (appContext.allCellGroups.isEmpty) {
+        await DirectoryCacheCoordinator.instance.revalidate(
+          app: appContext,
+          ignoreCooldown: true,
+        );
+      }
 
+      if (!mounted) return;
+      final groups = appContext.allCellGroups;
       final rosterUsers =
           await CellGroupRosterHelpers.linkedRosterUsersByGroupId(
         groups: groups,
@@ -78,7 +94,6 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
         isGuest: appContext.isCurrentUserGuest,
       );
       if (!mounted) return;
-      appContext.sharedPref.setCellGroupsRefreshTime();
       setState(() => _rosterUsersByGroupId = rosterUsers);
     } catch (e) {
       if (!mounted) return;
@@ -113,7 +128,9 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
                   context,
                   MaterialPageRoute(builder: (_) => const EditCellGroupPage()),
                 );
-                if (created == true && mounted) _refresh(ignoreCooldown: true);
+                if (created == true && mounted) {
+                  _refresh(forceCatalog: true, ignoreCooldown: true);
+                }
               },
             )
           : null,
@@ -184,7 +201,7 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
                 onPressed: _loading
                     ? null
                     : () {
-                        _refresh();
+                        _refresh(forceCatalog: true);
                       },
               ),
           ],
@@ -205,8 +222,8 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
           CellGroupsListTab(
             loading: _loading,
             error: _error,
-            onRefresh: () => _refresh(),
-            onRetry: () => _refresh(ignoreCooldown: true),
+            onRefresh: () => _refresh(forceCatalog: true),
+            onRetry: () => _refresh(forceCatalog: true, ignoreCooldown: true),
             rosterUsersByGroupId: _rosterUsersByGroupId,
           ),
         ],

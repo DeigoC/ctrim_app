@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/cell_group.dart';
 import '../../models/cell_group_roster.dart';
 import '../../models/event/event_head.dart';
+import '../../utility/cache/directory_catalog_store.dart';
 import '../../utility/cell_group_activity_stats.dart';
 import 'id_tracker.dart';
 
@@ -75,6 +76,7 @@ class CellGroupDBManager {
     );
     await _ref.doc(id).set(group.toJson());
     await CellGroupSupplementalDBManager(id).setRoster(CellGroupRoster());
+    await DirectoryCatalogStore().upsertCellGroup(group);
     return group;
   }
 
@@ -87,6 +89,7 @@ class CellGroupDBManager {
       data['Longitude'] = FieldValue.delete();
     }
     await _ref.doc(group.id).update(data);
+    await DirectoryCatalogStore().upsertCellGroup(group);
   }
 
   /// Updates only [MemberCount] denorm (e.g. after roster save).
@@ -94,10 +97,15 @@ class CellGroupDBManager {
     required String id,
     required int memberCount,
   }) async {
+    final count = memberCount < 0 ? 0 : memberCount;
     await _ref.doc(id).update({
-      'MemberCount': memberCount < 0 ? 0 : memberCount,
+      'MemberCount': count,
       'UpdatedAt': Timestamp.fromDate(DateTime.now()),
     });
+    await DirectoryCatalogStore().patchCellGroupMemberCount(
+      id: id,
+      memberCount: count,
+    );
   }
 
   /// Recent bulletin heads linked to this CG (`CellGroupIDs` array-contains).

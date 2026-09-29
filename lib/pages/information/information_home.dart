@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/info/church_info.dart';
 import '../../models/info/ctrim_info.dart';
 import '../../models/info/testimonial_info.dart';
+import '../../utility/app_context.dart';
+import '../../utility/cache/directory_cache.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/section_tab_bar.dart';
@@ -36,32 +39,54 @@ class InformationHome extends StatefulWidget {
 
 class _InformationHomeState extends State<InformationHome> {
   final InfoRepository _infoRepository = InfoRepository();
+  final DirectoryCacheCoordinator _directories =
+      DirectoryCacheCoordinator.instance;
   late Future<List<ChurchInfo>> _churchesFuture;
   late Future<List<TestimonialInfo>> _testimonialsFuture;
   late Future<List<CtrimInfo>> _ctrimInfoFuture;
+  late int _infoEpoch;
 
   @override
   void initState() {
     super.initState();
+    _infoEpoch = _directories.epoch;
+    _directories.addListener(_onDirectories);
     widget.tabController.addListener(_onTabChanged);
     _refreshInfoFutures(setStateCall: false);
   }
 
   @override
   void dispose() {
+    _directories.removeListener(_onDirectories);
     widget.tabController.removeListener(_onTabChanged);
     super.dispose();
+  }
+
+  void _onDirectories() {
+    if (!mounted || _directories.epoch == _infoEpoch) return;
+    _infoEpoch = _directories.epoch;
+    _refreshInfoFutures();
   }
 
   void _onTabChanged() {
     if (mounted) setState(() {});
   }
 
-  void _refreshInfoFutures({final bool setStateCall = true}) {
+  void _refreshInfoFutures({
+    final bool setStateCall = true,
+    final bool force = false,
+  }) {
+    if (force) {
+      final pref = Provider.of<AppContext>(context, listen: false).sharedPref;
+      if (!pref.canRefreshInfo) return;
+      pref.setInfoRefreshTime();
+    }
+
     void assignFutures() {
-      _churchesFuture = _infoRepository.fetchChurches();
-      _testimonialsFuture = _infoRepository.fetchTestimonials();
-      _ctrimInfoFuture = _infoRepository.fetchCtrimInfo();
+      _churchesFuture = _infoRepository.fetchChurches(forceRefresh: force);
+      _testimonialsFuture =
+          _infoRepository.fetchTestimonials(forceRefresh: force);
+      _ctrimInfoFuture = _infoRepository.fetchCtrimInfo(forceRefresh: force);
     }
 
     if (setStateCall) {
@@ -149,15 +174,15 @@ class _InformationHomeState extends State<InformationHome> {
           const InformationAboutTab(),
           ChurchesTab(
             churchesFuture: _churchesFuture,
-            onRefresh: () => _refreshInfoFutures(),
+            onRefresh: () => _refreshInfoFutures(force: true),
           ),
           TestimonialsTab(
             testimonialsFuture: _testimonialsFuture,
-            onRefresh: () => _refreshInfoFutures(),
+            onRefresh: () => _refreshInfoFutures(force: true),
           ),
           CtrimInfoListTab(
             ctrimInfoFuture: _ctrimInfoFuture,
-            onRefresh: () => _refreshInfoFutures(),
+            onRefresh: () => _refreshInfoFutures(force: true),
           ),
         ],
       ),

@@ -130,6 +130,11 @@ void main() {
       expect(json['MeetingTime'], '20:00');
       expect(json['Status'], CellGroupStatus.active);
       expect(json['CreatedAt'], isA<Timestamp>());
+      final cached = CellGroup.fromMap(group.id, group.toCacheJson());
+      expect(cached.createdAt, group.createdAt);
+      expect(cached.updatedAt, group.updatedAt);
+      expect(cached.name, group.name);
+      expect(group.toCacheJson()['CreatedAt'], isA<int>());
       expect(json['Media'], hasLength(1));
       expect(json['KeyGraphicSrc'], 'drive/cover');
       expect(json.containsKey('Postcode'), isFalse);
