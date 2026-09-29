@@ -11,6 +11,7 @@ import '../../models/user_activity_record.dart';
 import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/gallery_viewer.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/user_schedule_service.dart';
@@ -767,15 +768,15 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       MaterialPageRoute(
         builder: (_) => ViewGalleryPage(
           media: [
-            {
-              'type': 'img',
-              'src': _user.imgSrc,
-              'title': _displayName(),
-            },
+            GalleryViewer.photoEntry(
+              src: _user.imgSrc,
+              title: _displayName(),
+              heroTag: 'user_avatar_${_user.id}',
+            ),
           ],
           initialIndex: 0,
           postId: _user.id,
-          useHero: false,
+          logPostView: false,
         ),
       ),
     );

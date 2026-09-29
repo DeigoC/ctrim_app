@@ -3508,6 +3508,12 @@ abstract class AppLocalizations {
   /// **'Add schedule items from the edit menu and they will appear here on the timeline.'**
   String get scheduleEmptyBodyEditor;
 
+  /// Hint above the schedule timeline for people who can edit the post
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an empty time to add an item'**
+  String get scheduleTapGapToAdd;
+
   /// Empty schedule message for people who cannot edit the post
   ///
   /// In en, this message translates to:

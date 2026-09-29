@@ -14,17 +14,19 @@ class MyPhotoViewer extends StatefulWidget {
     required this.postID,
     required this.onFitChanged,
     this.useHero = true,
+    this.heroTag,
   });
 
   final String src;
   final String postID;
+  final String? heroTag;
 
   /// True while the photo is fit to the screen. The gallery uses this to
   /// decide whether paging and swipe-to-close may take the gesture.
   final ValueChanged<bool> onFitChanged;
 
-  /// When true, pairs with thumbnail [Hero] tags (`postID + src`) on post media.
-  /// Keep false when opening from places without a matching source Hero (e.g. profiles).
+  /// When true, pairs with the thumbnail [Hero]. [heroTag] wins; otherwise
+  /// the tag is `postID + src` (post media).
   final bool useHero;
 
   @override
@@ -115,7 +117,11 @@ class _MyPhotoViewerState extends State<MyPhotoViewer> {
       gaplessPlayback: true,
       scaleStateChangedCallback: _onScaleState,
       heroAttributes: widget.useHero
-          ? PhotoViewHeroAttributes(tag: widget.postID + widget.src)
+          ? PhotoViewHeroAttributes(
+              tag: (widget.heroTag != null && widget.heroTag!.isNotEmpty)
+                  ? widget.heroTag!
+                  : widget.postID + widget.src,
+            )
           : null,
       loadingBuilder: (context, event) => const Center(
         child: CircularProgressIndicator(color: Colors.white),

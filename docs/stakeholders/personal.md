@@ -80,7 +80,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 
 **Who's who**, **Team rota**, and **Team tags** sit together, separate from account shortcuts.
 
-- **Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description and, when one has been added, its main image. Choose a church location to see who leads that team there, who is on the team, photos from that site, and the team's schedule for the past three months and the next three months. Area admins edit the tag from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Tags hidden from guests do not appear in this list for guests.
+- **Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description and, when one has been added, its main image. Choose a church location to see who leads that team there, who is on the team, photos from that site (open one to swipe through them), and the team's schedule for the past three months and the next three months. Area admins edit the tag from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Tags hidden from guests do not appear in this list for guests.
 - **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone. When a location has a cover photo, that photo sits at the top while Who's who is filtered to that place.
 
 **Admin / Leader tools** stay for catalogues that are still editor lists:

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
@@ -17,7 +16,7 @@ import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
-import '../../utility/network_image_helper.dart';
+import '../../utility/gallery_viewer.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/team_rota.dart';
 import '../../utility/user_activity_messages.dart';
@@ -36,6 +35,7 @@ import '../../widgets/two_column_masonry.dart';
 import '../../widgets/user_avatar.dart';
 import '../events/add_media_file_page.dart';
 import '../information/church_pastors_page.dart';
+import '../view_gallery_page.dart';
 import 'select_users_page.dart';
 
 /// Public detail for one team tag.
@@ -586,7 +586,7 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => _openPhoto(tag.id, src),
+                onTap: () => _openPhoto(tag, location, src),
                 borderRadius: BorderRadius.circular(12),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -616,21 +616,28 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     );
   }
 
-  void _openPhoto(String tagId, String src) {
+  void _openPhoto(UserTag tag, UserLocation location, String src) {
+    final photos = GalleryViewer.photoEntries(
+      srcs: tag.galleryForLocation(location.id),
+      title: tag.name,
+      heroTagFor: (photo) => '${tag.id}-$photo',
+    );
+    final media = photos.isEmpty
+        ? [
+            GalleryViewer.photoEntry(
+              src: src,
+              title: tag.name,
+              heroTag: '${tag.id}-$src',
+            ),
+          ]
+        : photos;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-          ),
-          body: PhotoView(
-            imageProvider: NetworkImage(NetworkImageHelper.getImageUrl(src)),
-            heroAttributes: PhotoViewHeroAttributes(tag: '$tagId-$src'),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2.5,
-          ),
+        builder: (_) => ViewGalleryPage(
+          media: media,
+          initialIndex: GalleryViewer.indexForSrc(media, src),
+          postId: tag.id,
+          logPostView: false,
         ),
       ),
     );

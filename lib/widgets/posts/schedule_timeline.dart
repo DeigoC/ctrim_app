@@ -27,6 +27,7 @@ class ScheduleTimeline extends StatelessWidget {
     required this.onRoleTap,
     this.selectedRoleId,
     this.onOverflowTap,
+    this.onEmptyTap,
     this.onRoleMoved,
     this.pixelsPerMinute = defaultPixelsPerMinute,
     this.snapMinutes = defaultSnapMinutes,
@@ -51,6 +52,12 @@ class ScheduleTimeline extends StatelessWidget {
   final void Function(Map<String, dynamic> role) onRoleTap;
   final int? selectedRoleId;
   final void Function(ScheduleTimelineOverflow overflow)? onOverflowTap;
+
+  /// When set, a tap on empty canvas (not on a block) adds an item at that time.
+  ///
+  /// Leave this null for viewers, and on the arrange screen where the canvas
+  /// is for dragging.
+  final void Function(DateTime start)? onEmptyTap;
 
   /// When set, blocks can be long-pressed and dragged to a new start time.
   final void Function(Map<String, dynamic> role, DateTime newStart)?
@@ -77,6 +84,21 @@ class ScheduleTimeline extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              if (onEmptyTap != null)
+                Positioned(
+                  left: _railWidth,
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapUp: (details) => _handleEmptyTap(
+                      dy: details.localPosition.dy,
+                      dayStart: dayStart,
+                      dayEnd: dayEnd,
+                    ),
+                  ),
+                ),
               ..._buildTicks(context, dayStart: dayStart, dayEnd: dayEnd),
               for (final placement in layout.placements)
                 _buildPlacement(placement, laneAreaWidth, dayStart),
@@ -107,30 +129,32 @@ class ScheduleTimeline extends StatelessWidget {
         left: 0,
         right: 0,
         height: 14,
-        child: Row(
-          children: [
-            SizedBox(
-              width: _railWidth,
-              child: Text(
-                _timeFormat.format(tick),
-                textAlign: TextAlign.right,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: isHour
-                      ? colorScheme.onSurfaceVariant
-                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                  fontWeight: isHour ? FontWeight.w600 : FontWeight.w400,
+        child: IgnorePointer(
+          child: Row(
+            children: [
+              SizedBox(
+                width: _railWidth,
+                child: Text(
+                  _timeFormat.format(tick),
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: isHour
+                        ? colorScheme.onSurfaceVariant
+                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    fontWeight: isHour ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Container(
-                height: 1,
-                color: colorScheme.outlineVariant
-                    .withValues(alpha: isHour ? 0.6 : 0.3),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  color: colorScheme.outlineVariant
+                      .withValues(alpha: isHour ? 0.6 : 0.3),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ));
       tick = tick.add(_tickInterval);
@@ -221,6 +245,22 @@ class ScheduleTimeline extends StatelessWidget {
 
   static double _minutesBetween(final DateTime from, final DateTime to) =>
       to.difference(from).inSeconds / Duration.secondsPerMinute;
+
+  void _handleEmptyTap({
+    required double dy,
+    required DateTime dayStart,
+    required DateTime dayEnd,
+  }) {
+    final onEmptyTap = this.onEmptyTap;
+    if (onEmptyTap == null) return;
+    HapticFeedback.selectionClick();
+    onEmptyTap(ScheduleTimelineLayout.timeAtMinutes(
+      dayStart: dayStart,
+      dayEnd: dayEnd,
+      minutesFromStart: dy / pixelsPerMinute,
+      snapMinutes: snapMinutes,
+    ));
+  }
 }
 
 /// Long-press then drag a block to a new start time.

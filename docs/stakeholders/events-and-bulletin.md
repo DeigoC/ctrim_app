@@ -92,6 +92,8 @@ Items that started before the point you drop into are left alone, so a long back
 
 Adding a role into a **free slot** on the timeline leaves everything else where it is. You are only asked about later items if the new time **overlaps** something already in the running order (not the all-event band). **Keep times** is the usual choice — items can run together — or you can push later items back to make room.
 
+On the Schedule tab, tap an empty time to add an item that starts then. You still choose the length on the form. The first item is added from the edit menu, because an empty schedule has no timeline to tap. Arrange schedule stays for dragging.
+
 After you save a new item, you can add the next one starting at that finish time. The new form keeps that start and clears the title, people, and length, so each slot is filled in on its own. **Done** returns to the schedule. The item you just saved stays either way.
 
 ## Changing the event start

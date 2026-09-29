@@ -22,10 +22,14 @@ class EventProgramPage extends StatefulWidget {
     super.key,
     required this.eventContext,
     this.programEntry,
+    this.initialStart,
   });
 
   final EventContext eventContext;
   final Map<String, dynamic>? programEntry;
+
+  /// Start time for a new item opened from a tap on the timeline.
+  final DateTime? initialStart;
 
   bool get isEditing => programEntry != null;
 
@@ -34,7 +38,11 @@ class EventProgramPage extends StatefulWidget {
 }
 
 class AddEventProgramPage extends EventProgramPage {
-  const AddEventProgramPage({super.key, required super.eventContext});
+  const AddEventProgramPage({
+    super.key,
+    required super.eventContext,
+    super.initialStart,
+  });
 }
 
 class EditEventProgramPage extends EventProgramPage {
@@ -102,6 +110,8 @@ class _EventProgramPageState extends State<EventProgramPage> {
       _tecDetail = TextEditingController();
       _selectedUsers = [];
       _selectedTagIDs = {};
+      _start = widget.initialStart;
+      _followOnStart = widget.initialStart;
     }
   }
 

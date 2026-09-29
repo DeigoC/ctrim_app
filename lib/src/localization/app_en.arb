@@ -2554,6 +2554,10 @@
   "@scheduleEmptyBodyEditor": {
     "description": "Empty schedule message for authors and contributors"
   },
+  "scheduleTapGapToAdd": "Tap an empty time to add an item",
+  "@scheduleTapGapToAdd": {
+    "description": "Hint above the schedule timeline for people who can edit the post"
+  },
   "scheduleEmptyBodyViewer": "The running order for this post has not been shared yet.",
   "@scheduleEmptyBodyViewer": {
     "description": "Empty schedule message for people who cannot edit the post"
