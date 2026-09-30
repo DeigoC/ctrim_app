@@ -223,29 +223,35 @@ class _SelectSchedulePresetPageState extends State<SelectSchedulePresetPage> {
                   });
                 },
               ),
-              if (expanded)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: Column(
-                    children: [
-                      for (final preset in template.schedulePresets)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side:
-                                  BorderSide(color: colorScheme.outlineVariant),
-                            ),
-                            title: Text(preset.name),
-                            subtitle: Text(schedulePresetSubtitle(preset)),
-                            trailing: _presetAvatars(appContext, preset),
-                            onTap: () => _onSelect(template, preset),
-                          ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        child: Column(
+                          children: [
+                            for (final preset in template.schedulePresets)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: ListTile(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    side: BorderSide(
+                                        color: colorScheme.outlineVariant),
+                                  ),
+                                  title: Text(preset.name),
+                                  subtitle: Text(schedulePresetSubtitle(preset)),
+                                  trailing: _presetAvatars(appContext, preset),
+                                  onTap: () => _onSelect(template, preset),
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
-                ),
+                      )
+                    : const SizedBox(width: double.infinity, height: 0),
+              ),
             ],
           ),
         );

@@ -197,7 +197,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Choose a cover from a template pool, or add media below and mark it as key',
+                                  'Nothing is shown on the post card yet',
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurface
@@ -209,11 +209,20 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: _onChooseTemplateCover,
-                          icon: const Icon(Icons.photo_library_outlined,
-                              size: 18),
-                          label: const Text('Choose from template cover pool'),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: _onChooseTemplateCover,
+                            icon: const Icon(Icons.image_outlined, size: 18),
+                            label: const Text('Change cover'),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Key graphic from a template cover pool. To use your own photo, add it below and mark it as key.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
                         ),
                       ],
                     ),
@@ -723,8 +732,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content:
-              Text('Key graphic updated — save the post to keep the change')),
+          content: Text('Cover updated — save the post to keep the change')),
     );
   }
 

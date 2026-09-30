@@ -253,7 +253,7 @@ class EventHead {
         _mediaItem(type: type, src: src, title: title, thumbnail: thumbnail));
   }
 
-  /// Replaces all key media with a single cover item (used by Change cover).
+  /// Replaces all key media with a single cover item (Edit Gallery → Change cover).
   void replaceKeyGraphic({
     required String type,
     required String src,
