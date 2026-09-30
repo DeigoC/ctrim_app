@@ -8,7 +8,7 @@ Definitions for **post**, **interest**, **bookmark**, **template**, and related 
 
 - Scroll and open posts (title, details, media, schedule, related posts)
 - On bulletin cards, a **tall photo** sits along the side next to the title; a **wide photo** fills the bottom of the card. When there are several photos, portraits stay on the side and the rest share a strip along the bottom
-- A post’s tag (for example Sunday Worship) shows as coloured text beside the Upcoming or Recent label. The date and time stay on their own line under the description
+- A post’s tag sits in the same label as Upcoming or Recent, for example **Upcoming • Sunday Worship**, in that label’s colour. The date and time stay on their own line under the description
 - Share a post from its content to send a **link** (`ctrim.app/post/…`). Guests and members who open the link land on that post — they can bookmark the address and come back later
 - Other browseable records work the same way: cell groups, churches, information topics, testimonials, and people profiles each have an address you can share or bookmark
 - On many posts, see **interest** and **attendance** counts

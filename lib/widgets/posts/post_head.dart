@@ -393,54 +393,28 @@ class _PostHeadState extends State<PostHead>
     ColorScheme colorScheme,
     List<PostTag> postTags,
   ) {
+    final Widget? leading = widget.thisHead.hasEventDate
+        ? _buildStatusPill(theme, postTags)
+        : (postTags.isEmpty
+            ? null
+            : _buildPostTagLabel(theme, colorScheme, postTags));
+
     return Row(
       children: [
         if (widget.relationTag != null) ...[
           _buildRelationBadge(theme, colorScheme, widget.relationTag!),
           const SizedBox(width: 8),
         ],
-        // Event Status Badge
-        if (widget.thisHead.hasEventDate) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: widget.thisHead.eventStatusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: widget.thisHead.eventStatusColor.withValues(alpha: 0.3),
-                width: 1,
-              ),
+        if (leading != null)
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: leading,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  widget.thisHead.isUpcoming ? Icons.upcoming : Icons.history,
-                  size: 12,
-                  color: widget.thisHead.eventStatusColor,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  widget.thisHead.eventStatusText,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: widget.thisHead.eventStatusColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (postTags.isNotEmpty) const SizedBox(width: 8),
-        ],
-
-        if (postTags.isNotEmpty)
-          Expanded(child: _buildPostTagLabel(theme, colorScheme, postTags))
+          )
         else
           const Spacer(),
-
         const SizedBox(width: 8),
-
-        // Location & Time Info
         Row(
           children: [
             Icon(
@@ -556,6 +530,52 @@ class _PostHeadState extends State<PostHead>
     );
   }
 
+  Widget _buildStatusPill(ThemeData theme, List<PostTag> postTags) {
+    final statusColor = widget.thisHead.eventStatusColor;
+    final label = theme.textTheme.labelSmall?.copyWith(
+      color: statusColor,
+      fontWeight: FontWeight.w600,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            widget.thisHead.isUpcoming ? Icons.upcoming : Icons.history,
+            size: 12,
+            color: statusColor,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text.rich(
+              TextSpan(
+                style: label,
+                children: [
+                  TextSpan(text: widget.thisHead.eventStatusText),
+                  for (final tag in postTags)
+                    TextSpan(text: ' • ${tag.name}'),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tag names for a post with no event date, so there is no status pill to
+  /// hold them.
   Widget _buildPostTagLabel(
     ThemeData theme,
     ColorScheme colorScheme,
