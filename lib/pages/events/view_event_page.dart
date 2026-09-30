@@ -27,7 +27,6 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 import 'edit_title_subtitle_page.dart';
 import 'post_templates/select_post_template_page.dart';
-import 'select_template_cover_page.dart';
 import 'select_schedule_preset_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
@@ -755,7 +754,6 @@ class _ViewEventPageState extends State<ViewEventPage>
         onArrangeSchedule: _onArrangeSchedule,
         onApplySchedulePreset: _onApplySchedulePresetFromSheet,
         onEditMedia: _onEditMediaClick,
-        onChangeCover: _onChangeCoverFromSheet,
         onManageContributors: _onManageContributorsFromSheet,
         onManageLeadSpeaker: _onManageLeadSpeakerFromSheet,
         onOpenPeopleTab: _onOpenPeopleTabFromSheet,
@@ -928,34 +926,6 @@ class _ViewEventPageState extends State<ViewEventPage>
         _tabController.animateTo(_aboutTabIndex);
       }
     });
-  }
-
-  Future<void> _onChangeCoverFromSheet() async {
-    Navigator.of(context).pop();
-    final selected = await Navigator.push<Map<String, dynamic>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectTemplateCoverPage(
-          preferredTitle: _eventContext.head.title,
-          preferredLocation: _eventContext.head.location,
-        ),
-      ),
-    );
-    if (!mounted || selected == null) return;
-
-    setState(() {
-      _eventContext.head.replaceKeyGraphic(
-        type: selected['type'] ?? 'img',
-        src: selected['src'] ?? '',
-        title: selected['title'] ?? '',
-        thumbnail: selected['thumbnailSrc'] ?? '',
-      );
-      _eventContext.allowSavingOfTheEdit();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Cover updated — save the post to keep the change')),
-    );
   }
 
   void _onAddPost(final String parentID) {

@@ -15,7 +15,6 @@ class PostEditSheet extends StatelessWidget {
     required this.onArrangeSchedule,
     required this.onApplySchedulePreset,
     required this.onEditMedia,
-    required this.onChangeCover,
     required this.onManageContributors,
     required this.onManageLeadSpeaker,
     required this.onOpenPeopleTab,
@@ -34,7 +33,6 @@ class PostEditSheet extends StatelessWidget {
   final VoidCallback onArrangeSchedule;
   final VoidCallback onApplySchedulePreset;
   final VoidCallback onEditMedia;
-  final VoidCallback onChangeCover;
   final VoidCallback onManageContributors;
   final VoidCallback onManageLeadSpeaker;
   final VoidCallback onOpenPeopleTab;
@@ -90,17 +88,10 @@ class PostEditSheet extends StatelessWidget {
               onTap: onApplySchedulePreset,
             ),
             ActionSheetOption(
-              icon: Icons.image_outlined,
-              color: Colors.deepOrange,
-              title: 'Change cover',
-              subtitle: 'Key graphic from a template cover pool',
-              onTap: onChangeCover,
-            ),
-            ActionSheetOption(
               icon: Icons.photo_library_outlined,
               color: Colors.purple,
               title: 'Edit Media',
-              subtitle: 'Manage photos and videos',
+              subtitle: 'Photos, videos, and the cover',
               onTap: onEditMedia,
             ),
           ],
