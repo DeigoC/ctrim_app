@@ -38,6 +38,9 @@ class AppLinks {
   static String churchPastorsPath(String churchId) =>
       '${churchPath(churchId)}/pastors';
 
+  static String churchStatisticsPath(String churchId) =>
+      '${churchPath(churchId)}/statistics';
+
   static String infoPath(String id) => '/info/${_seg(id)}';
 
   static String testimonialPath(String id) => '/testimonials/${_seg(id)}';
@@ -117,6 +120,15 @@ class AppLinks {
   }) {
     final extra = church != null && church.id == churchId ? church : null;
     return context.push<T>(churchPastorsPath(churchId), extra: extra);
+  }
+
+  static Future<T?> openChurchStatistics<T extends Object?>(
+    BuildContext context, {
+    required String churchId,
+    ChurchInfo? church,
+  }) {
+    final extra = church != null && church.id == churchId ? church : null;
+    return context.push<T>(churchStatisticsPath(churchId), extra: extra);
   }
 
   static Future<T?> openInfo<T extends Object?>(

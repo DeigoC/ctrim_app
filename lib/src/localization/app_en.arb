@@ -2102,6 +2102,126 @@
   "@churchHubStatsRetry": {
     "description": "Retry loading church location snapshot"
   },
+  "churchHubSeeStatistics": "See statistics",
+  "@churchHubSeeStatistics": {
+    "description": "Button on the church hub location card that opens location statistics"
+  },
+  "churchLocationStatsTitle": "Statistics",
+  "@churchLocationStatsTitle": {
+    "description": "App bar title for the church location statistics page"
+  },
+  "churchLocationStatsLoading": "Loading statistics…",
+  "@churchLocationStatsLoading": {
+    "description": "Progress message while church location statistics load"
+  },
+  "churchLocationStatsPeopleTitle": "People",
+  "@churchLocationStatsPeopleTitle": {
+    "description": "Section title for people at a church location"
+  },
+  "churchLocationStatsPeopleSubtitle": "Profiles at this location",
+  "@churchLocationStatsPeopleSubtitle": {
+    "description": "Section subtitle for people at a church location"
+  },
+  "churchLocationStatsPeopleEmpty": "No profiles at this location yet.",
+  "@churchLocationStatsPeopleEmpty": {
+    "description": "Empty state when a church location has no profiles"
+  },
+  "churchLocationStatsInMinistry": "In a ministry",
+  "@churchLocationStatsInMinistry": {
+    "description": "Count tile for people at this location who are in a ministry"
+  },
+  "churchLocationStatsInMinistryHint": "At least one ministry",
+  "@churchLocationStatsInMinistryHint": {
+    "description": "Hint under the in-a-ministry count"
+  },
+  "churchLocationStatsNotInMinistry": "Not in a ministry",
+  "@churchLocationStatsNotInMinistry": {
+    "description": "Count tile for people at this location with no ministry"
+  },
+  "churchLocationStatsNotInMinistryHint": "No ministry listed",
+  "@churchLocationStatsNotInMinistryHint": {
+    "description": "Hint under the not-in-a-ministry count"
+  },
+  "churchLocationStatsLeaders": "Leaders",
+  "@churchLocationStatsLeaders": {
+    "description": "Count tile for leaders at this church location"
+  },
+  "churchLocationStatsLeadersHint": "Leader or area admin",
+  "@churchLocationStatsLeadersHint": {
+    "description": "Hint under the leaders count. Area admin counts as a leader."
+  },
+  "churchLocationStatsMinistryHint": "A person in more than one ministry is counted in each.",
+  "@churchLocationStatsMinistryHint": {
+    "description": "Footnote under the ministry counts on location statistics"
+  },
+  "churchLocationStatsMembersListed": "Members listed",
+  "@churchLocationStatsMembersListed": {
+    "description": "Count tile for the sum of cell group member counts at a location"
+  },
+  "churchLocationStatsMembersListedHint": "Across these groups",
+  "@churchLocationStatsMembersListedHint": {
+    "description": "Hint under the members listed count"
+  },
+  "churchLocationStatsAverageSize": "Average size",
+  "@churchLocationStatsAverageSize": {
+    "description": "Count tile for average cell group size at a location"
+  },
+  "churchLocationStatsAverageSizeHint": "Members listed per group",
+  "@churchLocationStatsAverageSizeHint": {
+    "description": "Hint under the average cell group size"
+  },
+  "churchLocationStatsGroupsDoubleCount": "Someone in more than one group is counted in each.",
+  "@churchLocationStatsGroupsDoubleCount": {
+    "description": "Footnote under cell group member totals on location statistics"
+  },
+  "churchLocationStatsMeetings": "Cell group meetings",
+  "@churchLocationStatsMeetings": {
+    "description": "Count tile for posts linked to a cell group"
+  },
+  "churchLocationStatsMeetingsHint": "Posts linked to a group",
+  "@churchLocationStatsMeetingsHint": {
+    "description": "Hint under the cell group meetings count"
+  },
+  "churchLocationStatsOtherPosts": "Other posts",
+  "@churchLocationStatsOtherPosts": {
+    "description": "Count tile for posts not linked to a cell group"
+  },
+  "churchLocationStatsOtherPostsHint": "Not linked to a group",
+  "@churchLocationStatsOtherPostsHint": {
+    "description": "Hint under the other posts count"
+  },
+  "churchLocationStatsAttendance": "Attendance",
+  "@churchLocationStatsAttendance": {
+    "description": "Count tile for total attendance on location posts"
+  },
+  "churchLocationStatsAttendanceHint": "Total on these posts",
+  "@churchLocationStatsAttendanceHint": {
+    "description": "Hint under the attendance total"
+  },
+  "churchLocationStatsAverageAttendance": "Average attendance",
+  "@churchLocationStatsAverageAttendance": {
+    "description": "Count tile for average attendance on location posts"
+  },
+  "churchLocationStatsAverageAttendanceHint": "Per post, including none recorded",
+  "@churchLocationStatsAverageAttendanceHint": {
+    "description": "Hint under the average attendance. Posts with no attendance still count."
+  },
+  "churchLocationStatsInterested": "Interested",
+  "@churchLocationStatsInterested": {
+    "description": "Count tile for total interested count on location posts"
+  },
+  "churchLocationStatsInterestedHint": "Total on these posts",
+  "@churchLocationStatsInterestedHint": {
+    "description": "Hint under the interested total"
+  },
+  "churchLocationStatsNoTag": "No tag",
+  "@churchLocationStatsNoTag": {
+    "description": "Row for posts at this location with no post tag"
+  },
+  "churchLocationStatsPostTagHint": "A post with more than one tag is counted in each.",
+  "@churchLocationStatsPostTagHint": {
+    "description": "Footnote under post tag counts on location statistics"
+  },
   "churchHubAboutTitle": "About",
   "@churchHubAboutTitle": {
     "description": "Section title for the church hub Quill overview"

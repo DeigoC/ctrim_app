@@ -1625,6 +1625,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get churchHubStatsRetry => 'Retry';
 
   @override
+  String get churchHubSeeStatistics => 'See statistics';
+
+  @override
+  String get churchLocationStatsTitle => 'Statistics';
+
+  @override
+  String get churchLocationStatsLoading => 'Loading statistics…';
+
+  @override
+  String get churchLocationStatsPeopleTitle => 'People';
+
+  @override
+  String get churchLocationStatsPeopleSubtitle => 'Profiles at this location';
+
+  @override
+  String get churchLocationStatsPeopleEmpty =>
+      'No profiles at this location yet.';
+
+  @override
+  String get churchLocationStatsInMinistry => 'In a ministry';
+
+  @override
+  String get churchLocationStatsInMinistryHint => 'At least one ministry';
+
+  @override
+  String get churchLocationStatsNotInMinistry => 'Not in a ministry';
+
+  @override
+  String get churchLocationStatsNotInMinistryHint => 'No ministry listed';
+
+  @override
+  String get churchLocationStatsLeaders => 'Leaders';
+
+  @override
+  String get churchLocationStatsLeadersHint => 'Leader or area admin';
+
+  @override
+  String get churchLocationStatsMinistryHint =>
+      'A person in more than one ministry is counted in each.';
+
+  @override
+  String get churchLocationStatsMembersListed => 'Members listed';
+
+  @override
+  String get churchLocationStatsMembersListedHint => 'Across these groups';
+
+  @override
+  String get churchLocationStatsAverageSize => 'Average size';
+
+  @override
+  String get churchLocationStatsAverageSizeHint => 'Members listed per group';
+
+  @override
+  String get churchLocationStatsGroupsDoubleCount =>
+      'Someone in more than one group is counted in each.';
+
+  @override
+  String get churchLocationStatsMeetings => 'Cell group meetings';
+
+  @override
+  String get churchLocationStatsMeetingsHint => 'Posts linked to a group';
+
+  @override
+  String get churchLocationStatsOtherPosts => 'Other posts';
+
+  @override
+  String get churchLocationStatsOtherPostsHint => 'Not linked to a group';
+
+  @override
+  String get churchLocationStatsAttendance => 'Attendance';
+
+  @override
+  String get churchLocationStatsAttendanceHint => 'Total on these posts';
+
+  @override
+  String get churchLocationStatsAverageAttendance => 'Average attendance';
+
+  @override
+  String get churchLocationStatsAverageAttendanceHint =>
+      'Per post, including none recorded';
+
+  @override
+  String get churchLocationStatsInterested => 'Interested';
+
+  @override
+  String get churchLocationStatsInterestedHint => 'Total on these posts';
+
+  @override
+  String get churchLocationStatsNoTag => 'No tag';
+
+  @override
+  String get churchLocationStatsPostTagHint =>
+      'A post with more than one tag is counted in each.';
+
+  @override
   String get churchHubAboutTitle => 'About';
 
   @override
