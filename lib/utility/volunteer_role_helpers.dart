@@ -83,6 +83,21 @@ class VolunteerRoleHelpers {
     return cellGroupLeaders.contains(user);
   }
 
+  /// Network activity on the Cell Groups overview. Same people as [userServes]:
+  /// a ministry, cell-group leadership, Leader, or area admin. Guests and
+  /// signed-in people who do not serve do not see it.
+  static bool canSeeOverviewActivity({
+    required User user,
+    required bool isGuest,
+    required Iterable<CellGroup> catalogue,
+  }) {
+    if (isGuest) return false;
+    return userServes(
+      user: user,
+      cellGroupLeaders: CellGroupLeaderIndex.fromGroups(catalogue),
+    );
+  }
+
   /// Empty [selected] matches everyone. Otherwise the user must have any of
   /// the selected roles (OR within this filter). The Leaders filter includes
   /// area admins.

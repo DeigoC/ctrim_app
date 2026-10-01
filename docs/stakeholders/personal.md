@@ -13,8 +13,8 @@ The page is organised into clear sections so everyday options stay separate from
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell groups** (your groups and upcoming meetings in the next eight weeks) |
 | **For you** | Everyday shortcuts: my posts, **post tags**, profile picture, **share the web app**, and the **product guide** (create account when browsing as a guest; share and the guide stay available) |
-| **People & teams** | **Who's who**, **team rota**, and **team tags**. Team tags stay available to guests; the directory and rota are for signed-in people |
-| **Admin / Leader tools** | Post templates and locations — only when your role allows. Post tags are browsed from **For you**. Team tags are edited from **People & teams** |
+| **People & teams** | **Who's who**, **team rota**, and **Ministry**. Ministry stays available to guests; the directory and rota are for signed-in people |
+| **Admin / Leader tools** | Post templates and locations — only when your role allows. Post tags are browsed from **For you**. Ministries are edited from **People & teams** |
 | **Settings** | Appearance, startup tab (signed in), **full surname for guests** (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
 | **Sign out** | Leave the signed-in session |
 
@@ -27,7 +27,7 @@ The page is organised into clear sections so everyday options stay separate from
 | My Schedule / My Posts | No | Yes (when they have a community profile) |
 | Post tags | No | Yes |
 | Who's who / Team rota | No | Yes (when they have a community profile) |
-| Team tags | Yes (People & teams) | Yes |
+| Ministry | Yes (People & teams) | Yes |
 | Notification preferences | Can enable notifications | Full preference page |
 | Product guide | Yes (For you) | Yes |
 | Full surname on public pages | Sees a first name and surname initial, unless that person has chosen otherwise | Chooses this for their own name under Settings |
@@ -58,7 +58,7 @@ That full schedule is the practical “what am I down for?” view across all yo
 
 ## Team rota
 
-Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots tagged for a team — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your team tags; change the chips to look at another site or department. Tap a post to open it and edit. Guests do not see this page.
+Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots for a ministry — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your ministries; change the chips to look at another site or ministry. Tap a post to open it and edit. Guests do not see this page.
 
 ## Cell groups on Personal
 
@@ -78,15 +78,15 @@ The app keeps a personal list of those posts on your profile. When you open My P
 
 ## People & teams
 
-**Who's who**, **Team rota**, and **Team tags** sit together, separate from account shortcuts.
+**Who's who**, **Team rota**, and **Ministry** sit together, separate from account shortcuts.
 
-- **Team tags** — what each team is for. Open to guests and signed-in people. Tap a team to read its short description and, when one has been added, its main image. Choose a church location to see who leads that team there, who is on the team, photos from that site (open one to swipe through them), and the team's schedule for the past three months and the next three months. Area admins edit the tag from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Tags hidden from guests do not appear in this list for guests.
-- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, team tags, cell-group leaders). Turn Serving off to see everyone. When a location has a cover photo, that photo sits at the top while Who's who is filtered to that place.
+- **Ministry** — what each ministry is for. Open to guests and signed-in people. Tap a ministry to read its short description and, when one has been added, its main image. Choose a church location to see who leads that ministry there, who is in it, photos from that site (open one to swipe through them), and the ministry's schedule for the past three months and the next three months. Area admins edit it from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Ministries hidden from guests do not appear in this list for guests.
+- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, ministries, cell-group leaders). Turn Serving off to see everyone. When a location has a cover photo, that photo sits at the top while Who's who is filtered to that place.
 
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 
 - **Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services** *(leaders)*  
-- **Locations** *(area admins)*. Team and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. A post tag can also have one image address; that image shows on the Post tags list and at the top of the tag. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's who** when that place is selected.  
+- **Locations** *(area admins)*. Ministries and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. A post tag can also have one image address; that image shows on the Post tags list and at the top of the tag. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's who** when that place is selected.  
 
 See [People & roles](people-and-roles.md).
 

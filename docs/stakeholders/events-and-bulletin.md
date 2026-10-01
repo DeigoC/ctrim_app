@@ -74,11 +74,11 @@ Anything happening **at the same time** appears side by side. On a narrow phone 
 
 Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
 
-Tap any item to see its full details: exact times, notes, who is assigned, and any **team tags** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Team tags an area admin has hidden from guests are left off that detail for people who are not signed in.
+Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
 
 ## Guest-visible schedule
 
-Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme. Hiding a **team tag** only hides that department label. It does not hide the schedule line.
+Programme lines can be marked so **guests do not see** staff-only items. Guests still see the public schedule; signed-in organisers see the full programme. Hiding a **ministry** only hides that department label. It does not hide the schedule line.
 
 ## Rearranging the running order
 
@@ -129,15 +129,15 @@ When saving important edits, organisers can write a short **update log**. That n
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **teams** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **ministries** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
 
-A template can hold more than one **schedule preset** — named variants of the running order (different people, team tags, or times) for the same kind of meeting. Duplicate a preset to start Team B from Team A, then edit it. Venue (address / online) stays on the template, not on each preset.
+A template can hold more than one **schedule preset** — named variants of the running order (different people, ministries, or times) for the same kind of meeting. Duplicate a preset to start Team B from Team A, then edit it. Venue (address / online) stays on the template, not on each preset.
 
 When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name. If the template has several schedule presets, pick one after the date; if it has only one, that running order is applied automatically.
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
-**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots tagged for a team on those future dates show on Personal → **Team rota**, so departments can see what they are down for without those posts filling the bulletin.
+**Bulk create** builds many dated posts from one template — useful for a weekly series — without sending a push blast for every new date. When the template has several schedule presets, each date can use a different one, or **Apply schedule to all**. Programme slots for a ministry on those future dates show on Personal → **Team rota**, so departments can see what they are down for without those posts filling the bulletin.
 
 On an existing post, the author or a contributor can **Apply schedule preset** from the edit menu to replace the running order (and start/finish times) with a preset from **any** template. Attendance and expected people stay. Save the post to keep the change; people added or removed from roles are notified the same way as a normal schedule edit.
 
