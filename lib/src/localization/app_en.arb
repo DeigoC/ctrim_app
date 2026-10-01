@@ -88,7 +88,7 @@
   "@volunteersMenuTitle": {
     "description": "Personal home menu item for the people directory"
   },
-  "volunteersMenuSubtitle": "Leaders, teams, and members",
+  "volunteersMenuSubtitle": "Leaders, ministries, and members",
   "@volunteersMenuSubtitle": {
     "description": "Personal home menu subtitle for the people directory"
   },
@@ -184,7 +184,7 @@
   "@teamRota": {
     "description": "Personal home item and page title for the team serving rota"
   },
-  "teamRotaSubtitle": "What your teams are down for",
+  "teamRotaSubtitle": "What your ministries are down for",
   "@teamRotaSubtitle": {
     "description": "Personal home subtitle for the team rota page"
   },
@@ -209,19 +209,19 @@
   "@teamRotaCouldNotLoad": {
     "description": "Error title when the team rota fetch fails"
   },
-  "teamRotaEmptyTitle": "No team slots in this window",
+  "teamRotaEmptyTitle": "No ministry slots in this window",
   "@teamRotaEmptyTitle": {
     "description": "Empty state title when filters yield no tagged programme roles"
   },
-  "teamRotaEmptyBody": "Tagged programme roles for the selected teams will show here, including slots that still need people. Open a post to edit.",
+  "teamRotaEmptyBody": "Programme roles for the selected ministries will show here, including slots that still need people. Open a post to edit.",
   "@teamRotaEmptyBody": {
     "description": "Empty state body when the team rota has no matching slots"
   },
-  "teamRotaEmptyNoTeamsTitle": "Pick a team",
+  "teamRotaEmptyNoTeamsTitle": "Pick a ministry",
   "@teamRotaEmptyNoTeamsTitle": {
     "description": "Empty state title when no team tags are selected"
   },
-  "teamRotaEmptyNoTeamsBody": "Choose one or more team tags to see their upcoming slots. Empty slots still belong to that team.",
+  "teamRotaEmptyNoTeamsBody": "Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.",
   "@teamRotaEmptyNoTeamsBody": {
     "description": "Empty state body when the user has not selected any team tags"
   },
@@ -233,7 +233,7 @@
   "@teamRotaFilterLocation": {
     "description": "Section label for location chips on the team rota"
   },
-  "teamRotaFilterTeams": "Teams",
+  "teamRotaFilterTeams": "Ministry",
   "@teamRotaFilterTeams": {
     "description": "Section label for team-tag chips on the team rota"
   },
@@ -404,35 +404,35 @@
   "@save": {
     "description": "Generic save button label"
   },
-  "userTagsFilterClear": "Clear tags",
+  "userTagsFilterClear": "Clear",
   "@userTagsFilterClear": {
     "description": "Button to clear selected tag filters"
   },
-  "userTagsAssignLabel": "Teams & tags",
+  "userTagsAssignLabel": "Ministry",
   "@userTagsAssignLabel": {
     "description": "Section label for assigning tags to a volunteer"
   },
-  "userTagsScheduleHint": "Which teams this slot belongs to — separate from who is assigned.",
+  "userTagsScheduleHint": "Which ministries this slot belongs to — separate from who is assigned.",
   "@userTagsScheduleHint": {
     "description": "Hint on the programme-role editor that team tags mark slot ownership, not named people"
   },
-  "userTagsNoneAvailable": "No tags defined yet. Area admins can create tags in Admin Tools.",
+  "userTagsNoneAvailable": "No ministries yet. Area admins can add them from Ministry.",
   "@userTagsNoneAvailable": {
     "description": "Message when no user tags exist for assignment"
   },
-  "manageUserTagsTitle": "Manage Tags",
+  "manageUserTagsTitle": "Ministry",
   "@manageUserTagsTitle": {
     "description": "Title for the admin page that manages volunteer tag definitions"
   },
-  "manageUserTagsAdd": "Add tag",
+  "manageUserTagsAdd": "Add ministry",
   "@manageUserTagsAdd": {
     "description": "Action to create a new volunteer tag"
   },
-  "manageUserTagsEmpty": "No team tags yet. Create tags for teams like Worship, Technical, or Usher.",
+  "manageUserTagsEmpty": "No ministries yet. Add ministries like Worship, Technical, or Usher.",
   "@manageUserTagsEmpty": {
     "description": "Empty state on the manage tags page"
   },
-  "manageUserTagsSeedDefaults": "Add starter tags",
+  "manageUserTagsSeedDefaults": "Add starter ministries",
   "@manageUserTagsSeedDefaults": {
     "description": "Button to seed default volunteer tags"
   },
@@ -468,7 +468,7 @@
   "@manageUserTagsDelete": {
     "description": "Delete a tag definition"
   },
-  "manageUserTagsNameLabel": "Tag name",
+  "manageUserTagsNameLabel": "Name",
   "@manageUserTagsNameLabel": {
     "description": "Label for the tag name field"
   },
@@ -501,7 +501,7 @@
       }
     }
   },
-  "manageUserTagsDeleteBlocked": "Cannot delete — {count} people still have this tag. Deactivate it instead.",
+  "manageUserTagsDeleteBlocked": "Cannot delete — {count} people are still in this ministry. Deactivate it instead.",
   "@manageUserTagsDeleteBlocked": {
     "description": "Error when trying to delete a tag that is still assigned",
     "placeholders": {
@@ -510,11 +510,11 @@
       }
     }
   },
-  "manageUserTagsMenuTitle": "Team tags",
+  "manageUserTagsMenuTitle": "Ministry",
   "@manageUserTagsMenuTitle": {
     "description": "Personal home admin menu item for managing tags"
   },
-  "manageUserTagsMenuSubtitle": "Create and edit team labels",
+  "manageUserTagsMenuSubtitle": "Create and edit ministries",
   "@manageUserTagsMenuSubtitle": {
     "description": "Personal home admin menu subtitle for managing tags"
   },
@@ -522,7 +522,7 @@
   "@manageUserTagsVisibleToGuests": {
     "description": "Switch on the team-tag editor so guests can see this label"
   },
-  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label from guests on profiles, schedule details, and the team tags page. People and schedule lines still show.",
+  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.",
   "@manageUserTagsVisibleToGuestsSubtitle": {
     "description": "Explains that hiding a team tag only hides the label"
   },
@@ -542,7 +542,7 @@
   "@manageUserTagsImageUrlHint": {
     "description": "Hint for the team-tag main graphic URL"
   },
-  "manageUserTagsDescriptionHint": "What this team does",
+  "manageUserTagsDescriptionHint": "What this ministry does",
   "@manageUserTagsDescriptionHint": {
     "description": "Hint for the team-tag description field"
   },
@@ -550,23 +550,23 @@
   "@manageUserTagsDescriptionMissing": {
     "description": "Admin list note when a team tag has no description"
   },
-  "userTagsBrowseSubtitle": "What each team is for",
+  "userTagsBrowseSubtitle": "What each ministry is for",
   "@userTagsBrowseSubtitle": {
     "description": "Personal menu subtitle for the public team-tags page"
   },
-  "userTagsBrowseEmpty": "No team tags to show yet.",
+  "userTagsBrowseEmpty": "No ministries to show yet.",
   "@userTagsBrowseEmpty": {
     "description": "Empty state on the team-tags page for people who cannot manage tags"
   },
-  "userTagsLoading": "Loading team tags…",
+  "userTagsLoading": "Loading ministries…",
   "@userTagsLoading": {
     "description": "Loading message on the team-tags page"
   },
-  "userTagsDetailEmpty": "More about this team will be added here.",
+  "userTagsDetailEmpty": "More about this ministry will be added here.",
   "@userTagsDetailEmpty": {
     "description": "Placeholder on a team-tag detail page when there is no description"
   },
-  "userTagsUnavailable": "This team tag is no longer available.",
+  "userTagsUnavailable": "This ministry is no longer available.",
   "@userTagsUnavailable": {
     "description": "Shown when a team tag was removed while its detail page is open"
   },
@@ -582,7 +582,7 @@
   "@userTagDetailHeads": {
     "description": "Section title for department heads at the selected church location"
   },
-  "userTagDetailHeadsSubtitle": "Who leads this team at {location}",
+  "userTagDetailHeadsSubtitle": "Who leads this ministry at {location}",
   "@userTagDetailHeadsSubtitle": {
     "description": "Subtitle under the heads section on a team tag page",
     "placeholders": {
@@ -608,7 +608,7 @@
   "@userTagDetailMembers": {
     "description": "Section title for people who have this team tag at the selected location"
   },
-  "userTagDetailMembersSubtitle": "People on this team at {location}",
+  "userTagDetailMembersSubtitle": "People in this ministry at {location}",
   "@userTagDetailMembersSubtitle": {
     "description": "Subtitle under the members section on a team tag page",
     "placeholders": {
@@ -617,7 +617,7 @@
       }
     }
   },
-  "userTagDetailMembersEmpty": "No one at {location} has this team tag yet.",
+  "userTagDetailMembersEmpty": "No one at {location} is in this ministry yet.",
   "@userTagDetailMembersEmpty": {
     "description": "Empty state when no active people at the location carry the tag",
     "placeholders": {
@@ -665,7 +665,7 @@
       }
     }
   },
-  "userTagDetailPhotosImagesOnly": "Team tag albums only support images.",
+  "userTagDetailPhotosImagesOnly": "Ministry albums only support images.",
   "@userTagDetailPhotosImagesOnly": {
     "description": "Shown when someone tries to add a video to a team tag album"
   },
@@ -710,7 +710,7 @@
       }
     }
   },
-  "userTagDetailScheduleEmptyUpcoming": "No upcoming slots for this team at {location}.",
+  "userTagDetailScheduleEmptyUpcoming": "No upcoming slots for this ministry at {location}.",
   "@userTagDetailScheduleEmptyUpcoming": {
     "description": "Empty state for future team-tag schedule roles",
     "placeholders": {
@@ -719,7 +719,7 @@
       }
     }
   },
-  "userTagDetailScheduleEmptyPast": "No past slots for this team at {location} in this window.",
+  "userTagDetailScheduleEmptyPast": "No past slots for this ministry at {location} in this window.",
   "@userTagDetailScheduleEmptyPast": {
     "description": "Empty state for past team-tag schedule roles",
     "placeholders": {
@@ -736,11 +736,11 @@
   "@userTagDetailScheduleLoadingProgrammes": {
     "description": "Progress message while a team tag page loads programme roles"
   },
-  "userTagDetailScheduleCouldNotLoad": "Could not load this team's schedule",
+  "userTagDetailScheduleCouldNotLoad": "Could not load this ministry's schedule",
   "@userTagDetailScheduleCouldNotLoad": {
     "description": "Error title when the team tag schedule fails to load"
   },
-  "userTagDetailCouldNotSave": "Could not save this team tag. Try again.",
+  "userTagDetailCouldNotSave": "Could not save this ministry. Try again.",
   "@userTagDetailCouldNotSave": {
     "description": "Shown when saving heads or photos on a team tag fails"
   },
@@ -1072,7 +1072,7 @@
   "@manageUserLocationsPhotoFallback": {
     "description": "Title shown for a location photo that has no caption"
   },
-  "volunteersEmptyTags": "No people match the selected tags",
+  "volunteersEmptyTags": "No people match the selected ministries",
   "@volunteersEmptyTags": {
     "description": "Empty state when tag filter returns no people"
   },
@@ -1080,7 +1080,7 @@
   "@selectUsersTitle": {
     "description": "Title for the multi-select people picker page"
   },
-  "selectUsersFilterSheetSubtitle": "Location, team, or who is shown",
+  "selectUsersFilterSheetSubtitle": "Location, ministry, or who is shown",
   "@selectUsersFilterSheetSubtitle": {
     "description": "Subtitle for the people picker refine sheet"
   },
@@ -1259,7 +1259,7 @@
   "@volunteersSortSurname": {
     "description": "Sort people by surname"
   },
-  "volunteersSortTags": "Team",
+  "volunteersSortTags": "Ministry",
   "@volunteersSortTags": {
     "description": "Sort people by primary team tag"
   },
@@ -1279,11 +1279,11 @@
   "@volunteersEmptyRoles": {
     "description": "Empty state when a role filter returns no people"
   },
-  "volunteersFilterTags": "Tags",
+  "volunteersFilterTags": "Ministry",
   "@volunteersFilterTags": {
     "description": "Button that opens the volunteer tag filter sheet"
   },
-  "volunteersFilterTagsCount": "Tags ({count})",
+  "volunteersFilterTagsCount": "Ministry ({count})",
   "@volunteersFilterTagsCount": {
     "description": "Tag filter button when one or more tags are selected",
     "placeholders": {
@@ -1292,11 +1292,11 @@
       }
     }
   },
-  "volunteersFilterTagsSheetTitle": "Filter by tags",
+  "volunteersFilterTagsSheetTitle": "Filter by ministry",
   "@volunteersFilterTagsSheetTitle": {
     "description": "Title for the volunteer tag filter bottom sheet"
   },
-  "volunteersFilterTagsSheetSubtitle": "Show people with any of these team tags",
+  "volunteersFilterTagsSheetSubtitle": "Show people in any of these ministries",
   "@volunteersFilterTagsSheetSubtitle": {
     "description": "Subtitle for the volunteer tag filter bottom sheet"
   },
@@ -1312,7 +1312,7 @@
   "@volunteersFilterSheetTitle": {
     "description": "Title for the people directory filter bottom sheet"
   },
-  "volunteersFilterSheetSubtitle": "Location, sort, role, team, or who is shown",
+  "volunteersFilterSheetSubtitle": "Location, sort, role, ministry, or who is shown",
   "@volunteersFilterSheetSubtitle": {
     "description": "Subtitle for the people directory filter bottom sheet"
   },
@@ -1324,7 +1324,7 @@
   "@volunteersFilterLocationSection": {
     "description": "Section label for location chips in the people directory filter sheet"
   },
-  "volunteersFilterServingSubtitle": "People who serve on teams or lead groups",
+  "volunteersFilterServingSubtitle": "People who serve in a ministry or lead groups",
   "@volunteersFilterServingSubtitle": {
     "description": "Helper under the Serving toggle in people filters"
   },
@@ -1332,7 +1332,7 @@
   "@volunteersFilterRolesSection": {
     "description": "Section label for role filters in the people directory"
   },
-  "volunteersFilterTeamsSection": "Teams",
+  "volunteersFilterTeamsSection": "Ministry",
   "@volunteersFilterTeamsSection": {
     "description": "Section label for team tag filters in the people directory"
   },
@@ -1345,7 +1345,7 @@
       }
     }
   },
-  "volunteersDirectoryIntro": "Browse leaders and team members in the church family.",
+  "volunteersDirectoryIntro": "Browse leaders and ministry members in the church family.",
   "@volunteersDirectoryIntro": {
     "description": "Short intro on the people directory"
   },
@@ -2701,7 +2701,7 @@
   "@notificationSchedulesEditTitle": {
     "description": "Title of the sheet for an existing scheduled notification"
   },
-  "notificationSchedulesEditSubtitle": "One post tag at one location. The next matching post is sent to that site.",
+  "notificationSchedulesEditSubtitle": "One post tag at one location. The next matching post is sent to that site, showing the post title and subtitle.",
   "@notificationSchedulesEditSubtitle": {
     "description": "Subtitle of the scheduled notification editor"
   },

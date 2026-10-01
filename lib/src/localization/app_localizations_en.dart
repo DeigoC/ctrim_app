@@ -2089,7 +2089,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationSchedulesEditSubtitle =>
-      'One post tag at one location. The next matching post is sent to that site.';
+      'One post tag at one location. The next matching post is sent to that site, showing the post title and subtitle.';
 
   @override
   String get notificationSchedulesSave => 'Save';
