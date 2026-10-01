@@ -3709,7 +3709,7 @@ abstract class AppLocalizations {
   /// Subtitle of the scheduled notification editor
   ///
   /// In en, this message translates to:
-  /// **'One post tag at one location. The next matching post is sent to that site.'**
+  /// **'One post tag at one location. The next matching post is sent to that site, showing the post title and subtitle.'**
   String get notificationSchedulesEditSubtitle;
 
   /// Saves a scheduled notification

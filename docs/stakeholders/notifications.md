@@ -42,7 +42,7 @@ Saving edits with an **update log** can notify people who **bookmarked** that po
 
 From Personal → **Admin Tools → Scheduled notifications**, an area admin can keep a list of reminders that go out on their own.
 
-Each reminder watches **one post tag at one location** (for example Sunday Worship in Belfast). When a post with that tag is coming up, it is sent to people who turned on **All {location} updates** for that site.
+Each reminder watches **one post tag at one location** (for example Sunday Worship in Belfast). When a post with that tag is coming up, it is sent to people who turned on **All {location} updates** for that site. The notification shows that post’s title and subtitle.
 
 A reminder can go out:
 

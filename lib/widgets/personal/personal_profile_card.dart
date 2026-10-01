@@ -59,7 +59,7 @@ class PersonalProfileCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create an account to manage your schedule, notifications, and profile.',
+            'Create an account to follow post updates, choose your notifications, and set up your profile. Your schedule appears here once you\'re added to a team or a meeting.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),

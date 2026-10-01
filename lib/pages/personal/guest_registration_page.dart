@@ -60,7 +60,7 @@ class GuestRegistrationPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Creating an account allows you to:',
+                      'Creating an account lets you:',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
@@ -68,19 +68,25 @@ class GuestRegistrationPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _buildBulletPoint(
-                      'Save your preferences and settings',
+                      'Follow updates on posts you care about',
                       theme,
                       colorScheme,
                     ),
                     const SizedBox(height: 8),
                     _buildBulletPoint(
-                      'Receive personalized notifications',
+                      'Choose notification preferences',
                       theme,
                       colorScheme,
                     ),
                     const SizedBox(height: 8),
                     _buildBulletPoint(
-                      'Stay connected with the CTRIM community',
+                      'Set up your profile',
+                      theme,
+                      colorScheme,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildBulletPoint(
+                      'Browse Who\'s who',
                       theme,
                       colorScheme,
                     ),
@@ -102,7 +108,7 @@ class GuestRegistrationPage extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Staff features (creating posts, managing tasks, etc.) are granted by administrators after registration.',
+                              'Your schedule appears once you\'re added to a team or a meeting. Leader tools, such as creating posts, are granted separately.',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSecondaryContainer,
                                 height: 1.4,

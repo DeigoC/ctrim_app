@@ -116,6 +116,16 @@ def coming_up_body(event_at: datetime) -> str:
     return f'Coming up · {format_london(event_at)}'
 
 
+def reminder_body(event: dict) -> str:
+    """Push body: the post subtitle, then when it starts. The time line alone when there is no subtitle."""
+    event_at = as_utc(event.get('event_at'))
+    when = coming_up_body(event_at) if event_at is not None else ''
+    subtitle = str(event.get('subtitle') or '').strip()
+    if subtitle and when:
+        return f'{subtitle}\n{when}'
+    return subtitle or when
+
+
 def trigger_at(schedule: dict, event_at: datetime) -> datetime | None:
     kind = schedule.get('timing_kind')
     event_utc = as_utc(event_at)
@@ -214,7 +224,7 @@ def plan_dispatch(schedules: list[dict], events: list[dict], now: datetime) -> l
             'post_id': event['id'],
             'event_at': event_at,
             'title': title,
-            'body': coming_up_body(event_at),
+            'body': reminder_body(event),
             'topic': topic,
             'image_url': str(event.get('image_url') or ''),
         })
@@ -241,6 +251,7 @@ def normalize_event(doc_id: str, data: dict | None) -> dict:
     return {
         'id': doc_id,
         'title': str(raw.get('Title') or ''),
+        'subtitle': str(raw.get('Subtitle') or ''),
         'location': str(raw.get('Location') or ''),
         'tag_ids': tag_ids,
         'event_at': as_utc(raw.get('EventDate')) if isinstance(raw.get('EventDate'), datetime) else None,

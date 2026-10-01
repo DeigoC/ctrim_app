@@ -148,6 +148,17 @@ class NotificationScheduleTests(unittest.TestCase):
         self.assertEqual(planned[0]['body'], 'Coming up · Sun, Oct 4 · 10:30')
         self.assertEqual(planned[0]['post_id'], 'post-1')
 
+        with_subtitle = plan_dispatch(
+            [_schedule()],
+            [_event(subtitle='  Gather at the hall  ')],
+            DAY_BEFORE,
+        )
+        self.assertEqual(with_subtitle[0]['title'], 'Sunday Worship')
+        self.assertEqual(
+            with_subtitle[0]['body'],
+            'Gather at the hall\nComing up · Sun, Oct 4 · 10:30',
+        )
+
         self.assertEqual(
             plan_dispatch([_schedule(enabled=False)], [_event()], DAY_BEFORE),
             [],
@@ -260,6 +271,7 @@ class RunScheduledNotificationTests(unittest.TestCase):
             events=[
                 _Doc('post-1', {
                     'Title': 'Sunday Worship',
+                    'Subtitle': 'Gather at the hall',
                     'Location': 'Belfast',
                     'TagIDs': ['tag-sun'],
                     'EventDate': SUNDAY,
@@ -272,6 +284,11 @@ class RunScheduledNotificationTests(unittest.TestCase):
         run_scheduled_notifications(db, now=DAY_BEFORE, send=sent.append)
         self.assertEqual(len(sent), 1)
         self.assertEqual(sent[0].topic, 'Belfast')
+        self.assertEqual(sent[0].notification.title, 'Sunday Worship')
+        self.assertEqual(
+            sent[0].notification.body,
+            'Gather at the hall\nComing up · Sun, Oct 4 · 10:30',
+        )
         self.assertEqual(db.schedules.updates[0][0], 's1')
         fields = db.schedules.updates[0][1]
         self.assertEqual(fields['LastSentPostId'], 'post-1')
