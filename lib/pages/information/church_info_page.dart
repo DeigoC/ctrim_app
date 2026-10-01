@@ -245,6 +245,14 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
     }
   }
 
+  Future<void> _openStatistics(final ChurchInfo church) async {
+    await AppLinks.openChurchStatistics(
+      context,
+      churchId: church.id,
+      church: church,
+    );
+  }
+
   Future<void> _openAddPage(final ChurchInfo church) async {
     final changed = await Navigator.push<bool>(
           context,
@@ -444,6 +452,7 @@ class _ChurchInfoPageState extends State<ChurchInfoPage> {
                         onOpenParent:
                             parent == null ? null : () => _openParent(parent),
                         onOpenPastors: () => _openPastors(church),
+                        onOpenStatistics: () => _openStatistics(church),
                         onOpenPage: _openChurchPage,
                         onAddPage: () => _openAddPage(church),
                         onOpenOutreach: _openOutreach,

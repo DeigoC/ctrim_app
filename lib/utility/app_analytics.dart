@@ -233,6 +233,9 @@ class AppAnalytics {
   void logChurchPastors(String churchId) =>
       _screen('church_pastors', {'church_id': churchId});
 
+  void logChurchStatistics(String churchId) =>
+      _screen('church_statistics', {'church_id': churchId});
+
   void logTestimonial(String testimonialId) =>
       _screen('testimonial', {'testimonial_id': testimonialId});
 

@@ -2842,6 +2842,186 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get churchHubStatsRetry;
 
+  /// Button on the church hub location card that opens location statistics
+  ///
+  /// In en, this message translates to:
+  /// **'See statistics'**
+  String get churchHubSeeStatistics;
+
+  /// App bar title for the church location statistics page
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get churchLocationStatsTitle;
+
+  /// Progress message while church location statistics load
+  ///
+  /// In en, this message translates to:
+  /// **'Loading statistics…'**
+  String get churchLocationStatsLoading;
+
+  /// Section title for people at a church location
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get churchLocationStatsPeopleTitle;
+
+  /// Section subtitle for people at a church location
+  ///
+  /// In en, this message translates to:
+  /// **'Profiles at this location'**
+  String get churchLocationStatsPeopleSubtitle;
+
+  /// Empty state when a church location has no profiles
+  ///
+  /// In en, this message translates to:
+  /// **'No profiles at this location yet.'**
+  String get churchLocationStatsPeopleEmpty;
+
+  /// Count tile for people at this location who are in a ministry
+  ///
+  /// In en, this message translates to:
+  /// **'In a ministry'**
+  String get churchLocationStatsInMinistry;
+
+  /// Hint under the in-a-ministry count
+  ///
+  /// In en, this message translates to:
+  /// **'At least one ministry'**
+  String get churchLocationStatsInMinistryHint;
+
+  /// Count tile for people at this location with no ministry
+  ///
+  /// In en, this message translates to:
+  /// **'Not in a ministry'**
+  String get churchLocationStatsNotInMinistry;
+
+  /// Hint under the not-in-a-ministry count
+  ///
+  /// In en, this message translates to:
+  /// **'No ministry listed'**
+  String get churchLocationStatsNotInMinistryHint;
+
+  /// Count tile for leaders at this church location
+  ///
+  /// In en, this message translates to:
+  /// **'Leaders'**
+  String get churchLocationStatsLeaders;
+
+  /// Hint under the leaders count. Area admin counts as a leader.
+  ///
+  /// In en, this message translates to:
+  /// **'Leader or area admin'**
+  String get churchLocationStatsLeadersHint;
+
+  /// Footnote under the ministry counts on location statistics
+  ///
+  /// In en, this message translates to:
+  /// **'A person in more than one ministry is counted in each.'**
+  String get churchLocationStatsMinistryHint;
+
+  /// Count tile for the sum of cell group member counts at a location
+  ///
+  /// In en, this message translates to:
+  /// **'Members listed'**
+  String get churchLocationStatsMembersListed;
+
+  /// Hint under the members listed count
+  ///
+  /// In en, this message translates to:
+  /// **'Across these groups'**
+  String get churchLocationStatsMembersListedHint;
+
+  /// Count tile for average cell group size at a location
+  ///
+  /// In en, this message translates to:
+  /// **'Average size'**
+  String get churchLocationStatsAverageSize;
+
+  /// Hint under the average cell group size
+  ///
+  /// In en, this message translates to:
+  /// **'Members listed per group'**
+  String get churchLocationStatsAverageSizeHint;
+
+  /// Footnote under cell group member totals on location statistics
+  ///
+  /// In en, this message translates to:
+  /// **'Someone in more than one group is counted in each.'**
+  String get churchLocationStatsGroupsDoubleCount;
+
+  /// Count tile for posts linked to a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Cell group meetings'**
+  String get churchLocationStatsMeetings;
+
+  /// Hint under the cell group meetings count
+  ///
+  /// In en, this message translates to:
+  /// **'Posts linked to a group'**
+  String get churchLocationStatsMeetingsHint;
+
+  /// Count tile for posts not linked to a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Other posts'**
+  String get churchLocationStatsOtherPosts;
+
+  /// Hint under the other posts count
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked to a group'**
+  String get churchLocationStatsOtherPostsHint;
+
+  /// Count tile for total attendance on location posts
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get churchLocationStatsAttendance;
+
+  /// Hint under the attendance total
+  ///
+  /// In en, this message translates to:
+  /// **'Total on these posts'**
+  String get churchLocationStatsAttendanceHint;
+
+  /// Count tile for average attendance on location posts
+  ///
+  /// In en, this message translates to:
+  /// **'Average attendance'**
+  String get churchLocationStatsAverageAttendance;
+
+  /// Hint under the average attendance. Posts with no attendance still count.
+  ///
+  /// In en, this message translates to:
+  /// **'Per post, including none recorded'**
+  String get churchLocationStatsAverageAttendanceHint;
+
+  /// Count tile for total interested count on location posts
+  ///
+  /// In en, this message translates to:
+  /// **'Interested'**
+  String get churchLocationStatsInterested;
+
+  /// Hint under the interested total
+  ///
+  /// In en, this message translates to:
+  /// **'Total on these posts'**
+  String get churchLocationStatsInterestedHint;
+
+  /// Row for posts at this location with no post tag
+  ///
+  /// In en, this message translates to:
+  /// **'No tag'**
+  String get churchLocationStatsNoTag;
+
+  /// Footnote under post tag counts on location statistics
+  ///
+  /// In en, this message translates to:
+  /// **'A post with more than one tag is counted in each.'**
+  String get churchLocationStatsPostTagHint;
+
   /// Section title for the church hub Quill overview
   ///
   /// In en, this message translates to:

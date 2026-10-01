@@ -44,6 +44,7 @@ class ChurchHubDashboard extends StatelessWidget {
     this.onOpenParent,
     this.onOpenSocial,
     required this.onOpenPastors,
+    required this.onOpenStatistics,
     required this.onOpenPage,
     required this.onAddPage,
     this.onOpenOutreach,
@@ -67,6 +68,7 @@ class ChurchHubDashboard extends StatelessWidget {
   final VoidCallback? onOpenParent;
   final ValueChanged<ChurchSocialLink>? onOpenSocial;
   final VoidCallback onOpenPastors;
+  final VoidCallback onOpenStatistics;
   final ValueChanged<ChurchPage> onOpenPage;
   final VoidCallback onAddPage;
   final ValueChanged<ChurchInfo>? onOpenOutreach;
@@ -109,6 +111,7 @@ class ChurchHubDashboard extends StatelessWidget {
           stats: stats,
           statsError: statsError,
           onRetryStats: onRetryStats,
+          onOpenStatistics: onOpenStatistics,
         ),
       if (pagesError != null || pages.isNotEmpty || canAddPages)
         _PagesCard(
@@ -606,12 +609,14 @@ class _SnapshotCard extends StatelessWidget {
     required this.stats,
     required this.statsError,
     required this.onRetryStats,
+    required this.onOpenStatistics,
   });
 
   final ChurchInfo church;
   final ChurchLocationStats? stats;
   final Object? statsError;
   final VoidCallback onRetryStats;
+  final VoidCallback onOpenStatistics;
 
   @override
   Widget build(BuildContext context) {
@@ -655,7 +660,10 @@ class _SnapshotCard extends StatelessWidget {
         ),
       );
     } else {
-      content = _SnapshotTiles(stats: stats!);
+      content = _SnapshotTiles(
+        stats: stats!,
+        onOpenStatistics: onOpenStatistics,
+      );
     }
 
     return InfoSectionCard(
@@ -668,9 +676,13 @@ class _SnapshotCard extends StatelessWidget {
 }
 
 class _SnapshotTiles extends StatelessWidget {
-  const _SnapshotTiles({required this.stats});
+  const _SnapshotTiles({
+    required this.stats,
+    required this.onOpenStatistics,
+  });
 
   final ChurchLocationStats stats;
+  final VoidCallback onOpenStatistics;
 
   @override
   Widget build(BuildContext context) {
@@ -732,6 +744,11 @@ class _SnapshotTiles extends StatelessWidget {
           attendancePoints: attendancePoints,
           emptyMessage: l10n.activityTrendEmpty,
           weeklyHint: l10n.activityTrendWeeklyHint,
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: onOpenStatistics,
+          child: Text(l10n.churchHubSeeStatistics),
         ),
       ],
     );

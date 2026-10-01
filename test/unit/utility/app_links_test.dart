@@ -21,6 +21,10 @@ void main() {
         AppLinks.churchPastorsPath('belfast'),
         '/churches/belfast/pastors',
       );
+      expect(
+        AppLinks.churchStatisticsPath('belfast'),
+        '/churches/belfast/statistics',
+      );
       expect(AppLinks.infoPath('core_values'), '/info/core_values');
       expect(AppLinks.testimonialPath('t-1'), '/testimonials/t-1');
       expect(AppLinks.personPath('u-1'), '/people/u-1');

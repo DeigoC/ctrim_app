@@ -3,6 +3,7 @@ import 'package:ctrim_app/models/info/church_social.dart';
 import 'package:ctrim_app/pages/information/church_hub_dashboard.dart';
 import 'package:ctrim_app/src/localization/app_localizations.dart';
 import 'package:ctrim_app/utility/app_context.dart';
+import 'package:ctrim_app/utility/church_location_stats.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -113,12 +114,34 @@ void main() {
       expect(width, closeTo(mapsWidth, 1));
     }
   });
+
+  testWidgets('see statistics appears once location stats have loaded',
+      (tester) async {
+    await _pumpHub(
+      tester,
+      width: 420,
+      socials: const [],
+      location: 'Belfast',
+      stats: const ChurchLocationStats(
+        postCount: 4,
+        cellGroupCount: 2,
+        peopleCount: 12,
+        posts: [],
+        cellGroups: [],
+      ),
+    );
+
+    expect(find.text('See statistics'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpHub(
   WidgetTester tester, {
   required double width,
   required List<ChurchSocialLink> socials,
+  String location = '',
+  ChurchLocationStats? stats,
 }) async {
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
@@ -138,6 +161,7 @@ Future<void> _pumpHub(
     body: const [],
     kind: ChurchKind.outreach,
     address: '8A Princes Drive, BT37 0AZ',
+    location: location,
     socials: socials,
   );
 
@@ -156,7 +180,7 @@ Future<void> _pumpHub(
                 church: church,
                 pages: const [],
                 pagesError: null,
-                stats: null,
+                stats: stats,
                 statsError: null,
                 canAddPages: false,
                 canManageInfo: false,
@@ -164,6 +188,7 @@ Future<void> _pumpHub(
                 onOpenMaps: () {},
                 onOpenSocial: (_) {},
                 onOpenPastors: () {},
+                onOpenStatistics: () {},
                 onOpenPage: (_) {},
                 onAddPage: () {},
                 onRetryPages: () {},

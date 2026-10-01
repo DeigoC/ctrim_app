@@ -10,6 +10,7 @@ import '../pages/cell_groups/cell_group_detail_page.dart';
 import '../pages/events/open_post_page.dart';
 import '../pages/home_page.dart';
 import '../pages/information/church_info_page.dart';
+import '../pages/information/church_location_stats_page.dart';
 import '../pages/information/church_page_info_page.dart';
 import '../pages/information/church_pastors_page.dart';
 import '../pages/information/ctrim_info_page.dart';
@@ -84,6 +85,19 @@ GoRouter createAppRouter() {
                   final church =
                       extra is ChurchInfo && extra.id == id ? extra : null;
                   return ChurchPastorsPage(
+                    documentId: id,
+                    initialChurch: church,
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'statistics',
+                builder: (context, state) {
+                  final id = _routeId(state);
+                  final extra = state.extra;
+                  final church =
+                      extra is ChurchInfo && extra.id == id ? extra : null;
+                  return ChurchLocationStatsPage(
                     documentId: id,
                     initialChurch: church,
                   );
