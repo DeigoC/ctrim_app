@@ -22,7 +22,7 @@
   },
   "volunteersFilterServing": "Serving",
   "@volunteersFilterServing": {
-    "description": "Filter chip for people who serve (leaders, team tags, or cell-group leaders)"
+    "description": "Filter chip for people who serve (leaders, ministries, or cell-group leaders)"
   },
   "volunteersFilterEveryone": "Everyone",
   "@volunteersFilterEveryone": {
@@ -94,7 +94,7 @@
   },
   "peopleAndTeamsSectionTitle": "People & teams",
   "@peopleAndTeamsSectionTitle": {
-    "description": "Personal home section for Who's who, team rota, and team tags"
+    "description": "Personal home section for Who's who, team rota, and ministries"
   },
   "mySchedule": "My Schedule",
   "@mySchedule": {
@@ -219,11 +219,11 @@
   },
   "teamRotaEmptyNoTeamsTitle": "Pick a ministry",
   "@teamRotaEmptyNoTeamsTitle": {
-    "description": "Empty state title when no team tags are selected"
+    "description": "Empty state title when no ministries are selected"
   },
   "teamRotaEmptyNoTeamsBody": "Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.",
   "@teamRotaEmptyNoTeamsBody": {
-    "description": "Empty state body when the user has not selected any team tags"
+    "description": "Empty state body when the user has not selected any ministries"
   },
   "teamRotaUnassigned": "Unassigned",
   "@teamRotaUnassigned": {
@@ -235,7 +235,7 @@
   },
   "teamRotaFilterTeams": "Ministry",
   "@teamRotaFilterTeams": {
-    "description": "Section label for team-tag chips on the team rota"
+    "description": "Section label for ministry chips on the team rota"
   },
   "userProfileLeaderBadge": "Leader",
   "@userProfileLeaderBadge": {
@@ -414,7 +414,7 @@
   },
   "userTagsScheduleHint": "Which ministries this slot belongs to — separate from who is assigned.",
   "@userTagsScheduleHint": {
-    "description": "Hint on the programme-role editor that team tags mark slot ownership, not named people"
+    "description": "Hint on the programme-role editor that ministries mark slot ownership, not named people"
   },
   "userTagsNoneAvailable": "No ministries yet. Area admins can add them from Ministry.",
   "@userTagsNoneAvailable": {
@@ -520,63 +520,63 @@
   },
   "manageUserTagsVisibleToGuests": "Visible to guests",
   "@manageUserTagsVisibleToGuests": {
-    "description": "Switch on the team-tag editor so guests can see this label"
+    "description": "Switch on the ministry editor so guests can see this label"
   },
   "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.",
   "@manageUserTagsVisibleToGuestsSubtitle": {
-    "description": "Explains that hiding a team tag only hides the label"
+    "description": "Explains that hiding a ministry only hides the label"
   },
   "manageUserTagsHiddenFromGuests": "Hidden from guests",
   "@manageUserTagsHiddenFromGuests": {
-    "description": "Status on the team-tag list when guests do not see the label"
+    "description": "Status on the ministry list when guests do not see the label"
   },
   "manageUserTagsDescriptionLabel": "Description",
   "@manageUserTagsDescriptionLabel": {
-    "description": "Label for the team-tag description field"
+    "description": "Label for the ministry description field"
   },
   "manageUserTagsImageUrlLabel": "Image URL",
   "@manageUserTagsImageUrlLabel": {
-    "description": "Label for the team-tag main graphic URL"
+    "description": "Label for the ministry main graphic URL"
   },
   "manageUserTagsImageUrlHint": "https://…",
   "@manageUserTagsImageUrlHint": {
-    "description": "Hint for the team-tag main graphic URL"
+    "description": "Hint for the ministry main graphic URL"
   },
   "manageUserTagsDescriptionHint": "What this ministry does",
   "@manageUserTagsDescriptionHint": {
-    "description": "Hint for the team-tag description field"
+    "description": "Hint for the ministry description field"
   },
   "manageUserTagsDescriptionMissing": "No description yet",
   "@manageUserTagsDescriptionMissing": {
-    "description": "Admin list note when a team tag has no description"
+    "description": "Admin list note when a ministry has no description"
   },
   "userTagsBrowseSubtitle": "What each ministry is for",
   "@userTagsBrowseSubtitle": {
-    "description": "Personal menu subtitle for the public team-tags page"
+    "description": "Personal menu subtitle for the public ministry page"
   },
   "userTagsBrowseEmpty": "No ministries to show yet.",
   "@userTagsBrowseEmpty": {
-    "description": "Empty state on the team-tags page for people who cannot manage tags"
+    "description": "Empty state on the ministry page for people who cannot manage tags"
   },
   "userTagsLoading": "Loading ministries…",
   "@userTagsLoading": {
-    "description": "Loading message on the team-tags page"
+    "description": "Loading message on the ministry page"
   },
   "userTagsDetailEmpty": "More about this ministry will be added here.",
   "@userTagsDetailEmpty": {
-    "description": "Placeholder on a team-tag detail page when there is no description"
+    "description": "Placeholder on a ministry detail page when there is no description"
   },
   "userTagsUnavailable": "This ministry is no longer available.",
   "@userTagsUnavailable": {
-    "description": "Shown when a team tag was removed while its detail page is open"
+    "description": "Shown when a ministry was removed while its detail page is open"
   },
   "userTagDetailLocation": "Location",
   "@userTagDetailLocation": {
-    "description": "Heading above the church-location chips on a team tag page"
+    "description": "Heading above the church-location chips on a ministry page"
   },
   "userTagDetailNoLocations": "Church locations are not set up yet, so heads, members, and photos cannot be shown by site.",
   "@userTagDetailNoLocations": {
-    "description": "Shown on a team tag page when there are no active locations"
+    "description": "Shown on a ministry page when there are no active locations"
   },
   "userTagDetailHeads": "Heads",
   "@userTagDetailHeads": {
@@ -584,7 +584,7 @@
   },
   "userTagDetailHeadsSubtitle": "Who leads this ministry at {location}",
   "@userTagDetailHeadsSubtitle": {
-    "description": "Subtitle under the heads section on a team tag page",
+    "description": "Subtitle under the heads section on a ministry page",
     "placeholders": {
       "location": {
         "type": "String"
@@ -593,7 +593,7 @@
   },
   "userTagDetailHeadsEmpty": "No heads listed for {location} yet.",
   "@userTagDetailHeadsEmpty": {
-    "description": "Empty state when a team tag has no heads at the selected location",
+    "description": "Empty state when a ministry has no heads at the selected location",
     "placeholders": {
       "location": {
         "type": "String"
@@ -606,11 +606,11 @@
   },
   "userTagDetailMembers": "Members",
   "@userTagDetailMembers": {
-    "description": "Section title for people who have this team tag at the selected location"
+    "description": "Section title for people who have this ministry at the selected location"
   },
   "userTagDetailMembersSubtitle": "People in this ministry at {location}",
   "@userTagDetailMembersSubtitle": {
-    "description": "Subtitle under the members section on a team tag page",
+    "description": "Subtitle under the members section on a ministry page",
     "placeholders": {
       "location": {
         "type": "String"
@@ -628,11 +628,11 @@
   },
   "userTagDetailGallery": "Photos",
   "@userTagDetailGallery": {
-    "description": "Section title for the team tag photo album at one location"
+    "description": "Section title for the ministry photo album at one location"
   },
   "userTagDetailGallerySubtitle": "Photos from {location}",
   "@userTagDetailGallerySubtitle": {
-    "description": "Subtitle under the photo album on a team tag page",
+    "description": "Subtitle under the photo album on a ministry page",
     "placeholders": {
       "location": {
         "type": "String"
@@ -641,7 +641,7 @@
   },
   "userTagDetailGalleryEmpty": "No photos for {location} yet.",
   "@userTagDetailGalleryEmpty": {
-    "description": "Empty photo album shown to area admins on a team tag page",
+    "description": "Empty photo album shown to area admins on a ministry page",
     "placeholders": {
       "location": {
         "type": "String"
@@ -650,15 +650,15 @@
   },
   "userTagDetailAddPhoto": "Add photo",
   "@userTagDetailAddPhoto": {
-    "description": "Button to add a photo to a team tag album"
+    "description": "Button to add a photo to a ministry album"
   },
   "userTagDetailRemovePhoto": "Remove photo",
   "@userTagDetailRemovePhoto": {
-    "description": "Title of the confirmation dialog that removes a team tag photo"
+    "description": "Title of the confirmation dialog that removes a ministry photo"
   },
   "userTagDetailRemovePhotoConfirm": "Remove this photo from {location}?",
   "@userTagDetailRemovePhotoConfirm": {
-    "description": "Confirmation body before deleting a team tag photo",
+    "description": "Confirmation body before deleting a ministry photo",
     "placeholders": {
       "location": {
         "type": "String"
@@ -667,11 +667,11 @@
   },
   "userTagDetailPhotosImagesOnly": "Ministry albums only support images.",
   "@userTagDetailPhotosImagesOnly": {
-    "description": "Shown when someone tries to add a video to a team tag album"
+    "description": "Shown when someone tries to add a video to a ministry album"
   },
   "userTagDetailGalleryFull": "This location already has the maximum of {count} photos.",
   "@userTagDetailGalleryFull": {
-    "description": "Shown when a team tag album is at the photo cap",
+    "description": "Shown when a ministry album is at the photo cap",
     "placeholders": {
       "count": {
         "type": "int"
@@ -680,11 +680,11 @@
   },
   "userTagDetailUpcoming": "Upcoming",
   "@userTagDetailUpcoming": {
-    "description": "Section title for future schedule roles of a team tag"
+    "description": "Section title for future schedule roles of a ministry"
   },
   "userTagDetailUpcomingSubtitle": "Next {months} months at {location}",
   "@userTagDetailUpcomingSubtitle": {
-    "description": "Window shown under upcoming team-tag schedule roles",
+    "description": "Window shown under upcoming ministry schedule roles",
     "placeholders": {
       "months": {
         "type": "int"
@@ -696,11 +696,11 @@
   },
   "userTagDetailPast": "Already done",
   "@userTagDetailPast": {
-    "description": "Section title for past schedule roles of a team tag"
+    "description": "Section title for past schedule roles of a ministry"
   },
   "userTagDetailPastSubtitle": "Previous {months} months at {location}",
   "@userTagDetailPastSubtitle": {
-    "description": "Window shown under past team-tag schedule roles",
+    "description": "Window shown under past ministry schedule roles",
     "placeholders": {
       "months": {
         "type": "int"
@@ -712,7 +712,7 @@
   },
   "userTagDetailScheduleEmptyUpcoming": "No upcoming slots for this ministry at {location}.",
   "@userTagDetailScheduleEmptyUpcoming": {
-    "description": "Empty state for future team-tag schedule roles",
+    "description": "Empty state for future ministry schedule roles",
     "placeholders": {
       "location": {
         "type": "String"
@@ -721,7 +721,7 @@
   },
   "userTagDetailScheduleEmptyPast": "No past slots for this ministry at {location} in this window.",
   "@userTagDetailScheduleEmptyPast": {
-    "description": "Empty state for past team-tag schedule roles",
+    "description": "Empty state for past ministry schedule roles",
     "placeholders": {
       "location": {
         "type": "String"
@@ -730,19 +730,19 @@
   },
   "userTagDetailScheduleLoading": "Loading posts…",
   "@userTagDetailScheduleLoading": {
-    "description": "Progress message while a team tag page loads dated posts"
+    "description": "Progress message while a ministry page loads dated posts"
   },
   "userTagDetailScheduleLoadingProgrammes": "Loading programmes…",
   "@userTagDetailScheduleLoadingProgrammes": {
-    "description": "Progress message while a team tag page loads programme roles"
+    "description": "Progress message while a ministry page loads programme roles"
   },
   "userTagDetailScheduleCouldNotLoad": "Could not load this ministry's schedule",
   "@userTagDetailScheduleCouldNotLoad": {
-    "description": "Error title when the team tag schedule fails to load"
+    "description": "Error title when the ministry schedule fails to load"
   },
   "userTagDetailCouldNotSave": "Could not save this ministry. Try again.",
   "@userTagDetailCouldNotSave": {
-    "description": "Shown when saving heads or photos on a team tag fails"
+    "description": "Shown when saving heads or photos on a ministry fails"
   },
   "postTagsFilterClear": "Clear tags",
   "@postTagsFilterClear": {
@@ -1261,7 +1261,7 @@
   },
   "volunteersSortTags": "Ministry",
   "@volunteersSortTags": {
-    "description": "Sort people by primary team tag"
+    "description": "Sort people by primary ministry"
   },
   "volunteersFilterLeaders": "Leaders",
   "@volunteersFilterLeaders": {
@@ -1334,7 +1334,7 @@
   },
   "volunteersFilterTeamsSection": "Ministry",
   "@volunteersFilterTeamsSection": {
-    "description": "Section label for team tag filters in the people directory"
+    "description": "Section label for ministry filters in the people directory"
   },
   "volunteersShowingCount": "{count, plural, =1{1 person} other{{count} people}}",
   "@volunteersShowingCount": {
@@ -1426,13 +1426,62 @@
   "@cellGroupsOverviewImagePlaceholder": {
     "description": "Placeholder label where overview hero image will go"
   },
+  "cellGroupsMeetingLikeTitle": "What a meeting is like",
+  "@cellGroupsMeetingLikeTitle": {
+    "description": "Title of the Cell Groups overview teaching card"
+  },
+  "cellGroupsMeetingLikeBibleTitle": "Bible study",
+  "@cellGroupsMeetingLikeBibleTitle": {
+    "description": "First point on the Cell Groups overview"
+  },
+  "cellGroupsMeetingLikeBibleBody": "Read and talk through Scripture together",
+  "@cellGroupsMeetingLikeBibleBody": {
+    "description": "Body for the Bible study point on the Cell Groups overview"
+  },
+  "cellGroupsMeetingLikeCareTitle": "Care and prayer",
+  "@cellGroupsMeetingLikeCareTitle": {
+    "description": "Second point on the Cell Groups overview"
+  },
+  "cellGroupsMeetingLikeCareBody": "Look after one another and pray",
+  "@cellGroupsMeetingLikeCareBody": {
+    "description": "Body for the care and prayer point on the Cell Groups overview"
+  },
+  "cellGroupsMeetingLikeFellowshipTitle": "Fellowship",
+  "@cellGroupsMeetingLikeFellowshipTitle": {
+    "description": "Third point on the Cell Groups overview"
+  },
+  "cellGroupsMeetingLikeFellowshipBody": "Share life in a small gathering, often in a home",
+  "@cellGroupsMeetingLikeFellowshipBody": {
+    "description": "Body for the fellowship point on the Cell Groups overview"
+  },
+  "cellGroupsFindTitle": "Find a group",
+  "@cellGroupsFindTitle": {
+    "description": "Title of the Cell Groups overview find card"
+  },
+  "cellGroupsFindHint": "Search by name or a postcode such as BT9.",
+  "@cellGroupsFindHint": {
+    "description": "Hint under the browse action on the Cell Groups overview"
+  },
+  "cellGroupsFindBrowse": "Browse groups",
+  "@cellGroupsFindBrowse": {
+    "description": "Button that opens the Groups tab from the Cell Groups overview"
+  },
+  "cellGroupsFindMembershipHeading": "{count, plural, =1{Your group} other{Your groups}}",
+  "@cellGroupsFindMembershipHeading": {
+    "description": "Heading above the signed-in person's cell groups on the overview",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cellGroupsActivityTitle": "Activity",
   "@cellGroupsActivityTitle": {
-    "description": "Title for the Cell Groups overview activity dashboard"
+    "description": "Title for the Cell Groups overview activity card, shown to people who serve"
   },
   "cellGroupsActivitySubtitle": "Meetings linked to cell groups",
   "@cellGroupsActivitySubtitle": {
-    "description": "Subtitle under the activity dashboard title"
+    "description": "Subtitle under the Cell Groups overview activity card"
   },
   "cellGroupsActivityPastMeetings": "Recent meetings",
   "@cellGroupsActivityPastMeetings": {
@@ -1470,13 +1519,13 @@
   "@cellGroupsActivityGroupsMetLabel": {
     "description": "Secondary metric label for distinct groups with a past-window meeting"
   },
-  "cellGroupsActivityAvgAttendanceLabel": "Avg attendance · past 3 weeks",
-  "@cellGroupsActivityAvgAttendanceLabel": {
-    "description": "Secondary metric label for average attendees per past meeting"
-  },
   "cellGroupsActivityPausedGroupsLabel": "Paused groups",
   "@cellGroupsActivityPausedGroupsLabel": {
     "description": "Secondary metric label shown when some groups are paused"
+  },
+  "cellGroupsActivityAvgAttendanceLabel": "Avg attendance · past 3 weeks",
+  "@cellGroupsActivityAvgAttendanceLabel": {
+    "description": "Secondary metric label for average attendees per past meeting"
   },
   "cellGroupsActivityLoadError": "Couldn’t load activity right now.",
   "@cellGroupsActivityLoadError": {
@@ -1512,11 +1561,11 @@
   },
   "cellGroupsActivityTrendTitle": "Meetings over time",
   "@cellGroupsActivityTrendTitle": {
-    "description": "Title for cell groups weekly activity line chart"
+    "description": "Title for the Cell Groups overview weekly activity chart"
   },
   "cellGroupsActivityTrendSubtitle": "Cell group meetings linked on the bulletin",
   "@cellGroupsActivityTrendSubtitle": {
-    "description": "Subtitle for cell groups weekly activity line chart"
+    "description": "Subtitle for the Cell Groups overview weekly activity chart"
   },
   "cellGroupsActivityTrendMetricMeetings": "Meetings",
   "@cellGroupsActivityTrendMetricMeetings": {

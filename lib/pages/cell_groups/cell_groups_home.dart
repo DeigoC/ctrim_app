@@ -218,7 +218,9 @@ class _CellGroupsHomeState extends State<CellGroupsHome> {
       body: TabBarView(
         controller: widget.tabController,
         children: [
-          const CellGroupsOverviewTab(),
+          CellGroupsOverviewTab(
+            onBrowseGroups: () => widget.tabController.animateTo(1),
+          ),
           CellGroupsListTab(
             loading: _loading,
             error: _error,

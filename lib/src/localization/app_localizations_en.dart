@@ -74,7 +74,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersMenuTitle => 'Who\'s who';
 
   @override
-  String get volunteersMenuSubtitle => 'Leaders, teams, and members';
+  String get volunteersMenuSubtitle => 'Leaders, ministries, and members';
 
   @override
   String get peopleAndTeamsSectionTitle => 'People & teams';
@@ -141,7 +141,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRota => 'Team rota';
 
   @override
-  String get teamRotaSubtitle => 'What your teams are down for';
+  String get teamRotaSubtitle => 'What your ministries are down for';
 
   @override
   String teamRotaHorizon(int months) {
@@ -158,18 +158,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaCouldNotLoad => 'Could not load team rota';
 
   @override
-  String get teamRotaEmptyTitle => 'No team slots in this window';
+  String get teamRotaEmptyTitle => 'No ministry slots in this window';
 
   @override
   String get teamRotaEmptyBody =>
-      'Tagged programme roles for the selected teams will show here, including slots that still need people. Open a post to edit.';
+      'Programme roles for the selected ministries will show here, including slots that still need people. Open a post to edit.';
 
   @override
-  String get teamRotaEmptyNoTeamsTitle => 'Pick a team';
+  String get teamRotaEmptyNoTeamsTitle => 'Pick a ministry';
 
   @override
   String get teamRotaEmptyNoTeamsBody =>
-      'Choose one or more team tags to see their upcoming slots. Empty slots still belong to that team.';
+      'Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.';
 
   @override
   String get teamRotaUnassigned => 'Unassigned';
@@ -178,7 +178,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaFilterLocation => 'Location';
 
   @override
-  String get teamRotaFilterTeams => 'Teams';
+  String get teamRotaFilterTeams => 'Ministry';
 
   @override
   String get userProfileLeaderBadge => 'Leader';
@@ -327,31 +327,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
-  String get userTagsFilterClear => 'Clear tags';
+  String get userTagsFilterClear => 'Clear';
 
   @override
-  String get userTagsAssignLabel => 'Teams & tags';
+  String get userTagsAssignLabel => 'Ministry';
 
   @override
   String get userTagsScheduleHint =>
-      'Which teams this slot belongs to — separate from who is assigned.';
+      'Which ministries this slot belongs to — separate from who is assigned.';
 
   @override
   String get userTagsNoneAvailable =>
-      'No tags defined yet. Area admins can create tags in Admin Tools.';
+      'No ministries yet. Area admins can add them from Ministry.';
 
   @override
-  String get manageUserTagsTitle => 'Manage Tags';
+  String get manageUserTagsTitle => 'Ministry';
 
   @override
-  String get manageUserTagsAdd => 'Add tag';
+  String get manageUserTagsAdd => 'Add ministry';
 
   @override
   String get manageUserTagsEmpty =>
-      'No team tags yet. Create tags for teams like Worship, Technical, or Usher.';
+      'No ministries yet. Add ministries like Worship, Technical, or Usher.';
 
   @override
-  String get manageUserTagsSeedDefaults => 'Add starter tags';
+  String get manageUserTagsSeedDefaults => 'Add starter ministries';
 
   @override
   String get manageUserTagsActive => 'Active';
@@ -378,7 +378,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsDelete => 'Delete';
 
   @override
-  String get manageUserTagsNameLabel => 'Tag name';
+  String get manageUserTagsNameLabel => 'Name';
 
   @override
   String get manageUserTagsColorLabel => 'Color (optional)';
@@ -402,21 +402,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String manageUserTagsDeleteBlocked(int count) {
-    return 'Cannot delete — $count people still have this tag. Deactivate it instead.';
+    return 'Cannot delete — $count people are still in this ministry. Deactivate it instead.';
   }
 
   @override
-  String get manageUserTagsMenuTitle => 'Team tags';
+  String get manageUserTagsMenuTitle => 'Ministry';
 
   @override
-  String get manageUserTagsMenuSubtitle => 'Create and edit team labels';
+  String get manageUserTagsMenuSubtitle => 'Create and edit ministries';
 
   @override
   String get manageUserTagsVisibleToGuests => 'Visible to guests';
 
   @override
   String get manageUserTagsVisibleToGuestsSubtitle =>
-      'Turn off to hide this label from guests on profiles, schedule details, and the team tags page. People and schedule lines still show.';
+      'Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.';
 
   @override
   String get manageUserTagsHiddenFromGuests => 'Hidden from guests';
@@ -431,25 +431,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserTagsImageUrlHint => 'https://…';
 
   @override
-  String get manageUserTagsDescriptionHint => 'What this team does';
+  String get manageUserTagsDescriptionHint => 'What this ministry does';
 
   @override
   String get manageUserTagsDescriptionMissing => 'No description yet';
 
   @override
-  String get userTagsBrowseSubtitle => 'What each team is for';
+  String get userTagsBrowseSubtitle => 'What each ministry is for';
 
   @override
-  String get userTagsBrowseEmpty => 'No team tags to show yet.';
+  String get userTagsBrowseEmpty => 'No ministries to show yet.';
 
   @override
-  String get userTagsLoading => 'Loading team tags…';
+  String get userTagsLoading => 'Loading ministries…';
 
   @override
-  String get userTagsDetailEmpty => 'More about this team will be added here.';
+  String get userTagsDetailEmpty =>
+      'More about this ministry will be added here.';
 
   @override
-  String get userTagsUnavailable => 'This team tag is no longer available.';
+  String get userTagsUnavailable => 'This ministry is no longer available.';
 
   @override
   String get userTagDetailLocation => 'Location';
@@ -463,7 +464,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String userTagDetailHeadsSubtitle(String location) {
-    return 'Who leads this team at $location';
+    return 'Who leads this ministry at $location';
   }
 
   @override
@@ -479,12 +480,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String userTagDetailMembersSubtitle(String location) {
-    return 'People on this team at $location';
+    return 'People in this ministry at $location';
   }
 
   @override
   String userTagDetailMembersEmpty(String location) {
-    return 'No one at $location has this team tag yet.';
+    return 'No one at $location is in this ministry yet.';
   }
 
   @override
@@ -513,7 +514,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userTagDetailPhotosImagesOnly =>
-      'Team tag albums only support images.';
+      'Ministry albums only support images.';
 
   @override
   String userTagDetailGalleryFull(int count) {
@@ -538,12 +539,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String userTagDetailScheduleEmptyUpcoming(String location) {
-    return 'No upcoming slots for this team at $location.';
+    return 'No upcoming slots for this ministry at $location.';
   }
 
   @override
   String userTagDetailScheduleEmptyPast(String location) {
-    return 'No past slots for this team at $location in this window.';
+    return 'No past slots for this ministry at $location in this window.';
   }
 
   @override
@@ -554,11 +555,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userTagDetailScheduleCouldNotLoad =>
-      'Could not load this team\'s schedule';
+      'Could not load this ministry\'s schedule';
 
   @override
   String get userTagDetailCouldNotSave =>
-      'Could not save this team tag. Try again.';
+      'Could not save this ministry. Try again.';
 
   @override
   String get postTagsFilterClear => 'Clear tags';
@@ -813,14 +814,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageUserLocationsPhotoFallback => 'Photo';
 
   @override
-  String get volunteersEmptyTags => 'No people match the selected tags';
+  String get volunteersEmptyTags => 'No people match the selected ministries';
 
   @override
   String get selectUsersTitle => 'Select people';
 
   @override
   String get selectUsersFilterSheetSubtitle =>
-      'Location, team, or who is shown';
+      'Location, ministry, or who is shown';
 
   @override
   String get selectUsersDone => 'Done';
@@ -957,7 +958,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersSortSurname => 'Surname';
 
   @override
-  String get volunteersSortTags => 'Team';
+  String get volunteersSortTags => 'Ministry';
 
   @override
   String get volunteersFilterLeaders => 'Leaders';
@@ -972,19 +973,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volunteersEmptyRoles => 'No people match the selected roles';
 
   @override
-  String get volunteersFilterTags => 'Tags';
+  String get volunteersFilterTags => 'Ministry';
 
   @override
   String volunteersFilterTagsCount(int count) {
-    return 'Tags ($count)';
+    return 'Ministry ($count)';
   }
 
   @override
-  String get volunteersFilterTagsSheetTitle => 'Filter by tags';
+  String get volunteersFilterTagsSheetTitle => 'Filter by ministry';
 
   @override
   String get volunteersFilterTagsSheetSubtitle =>
-      'Show people with any of these team tags';
+      'Show people in any of these ministries';
 
   @override
   String get volunteersSortTooltip => 'Sort people';
@@ -997,7 +998,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersFilterSheetSubtitle =>
-      'Location, sort, role, team, or who is shown';
+      'Location, sort, role, ministry, or who is shown';
 
   @override
   String get volunteersFilterShowSection => 'Show';
@@ -1007,13 +1008,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersFilterServingSubtitle =>
-      'People who serve on teams or lead groups';
+      'People who serve in a ministry or lead groups';
 
   @override
   String get volunteersFilterRolesSection => 'Roles';
 
   @override
-  String get volunteersFilterTeamsSection => 'Teams';
+  String get volunteersFilterTeamsSection => 'Ministry';
 
   @override
   String volunteersShowingCount(int count) {
@@ -1028,7 +1029,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get volunteersDirectoryIntro =>
-      'Browse leaders and team members in the church family.';
+      'Browse leaders and ministry members in the church family.';
 
   @override
   String get volunteersClearFilters => 'Clear filters';
@@ -1091,6 +1092,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsOverviewImagePlaceholder => 'Image coming soon';
 
   @override
+  String get cellGroupsMeetingLikeTitle => 'What a meeting is like';
+
+  @override
+  String get cellGroupsMeetingLikeBibleTitle => 'Bible study';
+
+  @override
+  String get cellGroupsMeetingLikeBibleBody =>
+      'Read and talk through Scripture together';
+
+  @override
+  String get cellGroupsMeetingLikeCareTitle => 'Care and prayer';
+
+  @override
+  String get cellGroupsMeetingLikeCareBody => 'Look after one another and pray';
+
+  @override
+  String get cellGroupsMeetingLikeFellowshipTitle => 'Fellowship';
+
+  @override
+  String get cellGroupsMeetingLikeFellowshipBody =>
+      'Share life in a small gathering, often in a home';
+
+  @override
+  String get cellGroupsFindTitle => 'Find a group';
+
+  @override
+  String get cellGroupsFindHint => 'Search by name or a postcode such as BT9.';
+
+  @override
+  String get cellGroupsFindBrowse => 'Browse groups';
+
+  @override
+  String cellGroupsFindMembershipHeading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Your groups',
+      one: 'Your group',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get cellGroupsActivityTitle => 'Activity';
 
   @override
@@ -1125,11 +1169,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Groups that met · past 3 weeks';
 
   @override
-  String get cellGroupsActivityAvgAttendanceLabel =>
-      'Avg attendance · past 3 weeks';
+  String get cellGroupsActivityPausedGroupsLabel => 'Paused groups';
 
   @override
-  String get cellGroupsActivityPausedGroupsLabel => 'Paused groups';
+  String get cellGroupsActivityAvgAttendanceLabel =>
+      'Avg attendance · past 3 weeks';
 
   @override
   String get cellGroupsActivityLoadError => 'Couldn’t load activity right now.';

@@ -118,7 +118,7 @@ abstract class AppLocalizations {
   /// **'All'**
   String get volunteersFilterAll;
 
-  /// Filter chip for people who serve (leaders, team tags, or cell-group leaders)
+  /// Filter chip for people who serve (leaders, ministries, or cell-group leaders)
   ///
   /// In en, this message translates to:
   /// **'Serving'**
@@ -193,10 +193,10 @@ abstract class AppLocalizations {
   /// Personal home menu subtitle for the people directory
   ///
   /// In en, this message translates to:
-  /// **'Leaders, teams, and members'**
+  /// **'Leaders, ministries, and members'**
   String get volunteersMenuSubtitle;
 
-  /// Personal home section for Who's who, team rota, and team tags
+  /// Personal home section for Who's who, team rota, and ministries
   ///
   /// In en, this message translates to:
   /// **'People & teams'**
@@ -307,7 +307,7 @@ abstract class AppLocalizations {
   /// Personal home subtitle for the team rota page
   ///
   /// In en, this message translates to:
-  /// **'What your teams are down for'**
+  /// **'What your ministries are down for'**
   String get teamRotaSubtitle;
 
   /// Date window shown on the team rota page
@@ -337,25 +337,25 @@ abstract class AppLocalizations {
   /// Empty state title when filters yield no tagged programme roles
   ///
   /// In en, this message translates to:
-  /// **'No team slots in this window'**
+  /// **'No ministry slots in this window'**
   String get teamRotaEmptyTitle;
 
   /// Empty state body when the team rota has no matching slots
   ///
   /// In en, this message translates to:
-  /// **'Tagged programme roles for the selected teams will show here, including slots that still need people. Open a post to edit.'**
+  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Open a post to edit.'**
   String get teamRotaEmptyBody;
 
-  /// Empty state title when no team tags are selected
+  /// Empty state title when no ministries are selected
   ///
   /// In en, this message translates to:
-  /// **'Pick a team'**
+  /// **'Pick a ministry'**
   String get teamRotaEmptyNoTeamsTitle;
 
-  /// Empty state body when the user has not selected any team tags
+  /// Empty state body when the user has not selected any ministries
   ///
   /// In en, this message translates to:
-  /// **'Choose one or more team tags to see their upcoming slots. Empty slots still belong to that team.'**
+  /// **'Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.'**
   String get teamRotaEmptyNoTeamsBody;
 
   /// Label when a team rota slot has no people yet
@@ -370,10 +370,10 @@ abstract class AppLocalizations {
   /// **'Location'**
   String get teamRotaFilterLocation;
 
-  /// Section label for team-tag chips on the team rota
+  /// Section label for ministry chips on the team rota
   ///
   /// In en, this message translates to:
-  /// **'Teams'**
+  /// **'Ministry'**
   String get teamRotaFilterTeams;
 
   /// Badge shown when a volunteer can create events
@@ -577,49 +577,49 @@ abstract class AppLocalizations {
   /// Button to clear selected tag filters
   ///
   /// In en, this message translates to:
-  /// **'Clear tags'**
+  /// **'Clear'**
   String get userTagsFilterClear;
 
   /// Section label for assigning tags to a volunteer
   ///
   /// In en, this message translates to:
-  /// **'Teams & tags'**
+  /// **'Ministry'**
   String get userTagsAssignLabel;
 
-  /// Hint on the programme-role editor that team tags mark slot ownership, not named people
+  /// Hint on the programme-role editor that ministries mark slot ownership, not named people
   ///
   /// In en, this message translates to:
-  /// **'Which teams this slot belongs to — separate from who is assigned.'**
+  /// **'Which ministries this slot belongs to — separate from who is assigned.'**
   String get userTagsScheduleHint;
 
   /// Message when no user tags exist for assignment
   ///
   /// In en, this message translates to:
-  /// **'No tags defined yet. Area admins can create tags in Admin Tools.'**
+  /// **'No ministries yet. Area admins can add them from Ministry.'**
   String get userTagsNoneAvailable;
 
   /// Title for the admin page that manages volunteer tag definitions
   ///
   /// In en, this message translates to:
-  /// **'Manage Tags'**
+  /// **'Ministry'**
   String get manageUserTagsTitle;
 
   /// Action to create a new volunteer tag
   ///
   /// In en, this message translates to:
-  /// **'Add tag'**
+  /// **'Add ministry'**
   String get manageUserTagsAdd;
 
   /// Empty state on the manage tags page
   ///
   /// In en, this message translates to:
-  /// **'No team tags yet. Create tags for teams like Worship, Technical, or Usher.'**
+  /// **'No ministries yet. Add ministries like Worship, Technical, or Usher.'**
   String get manageUserTagsEmpty;
 
   /// Button to seed default volunteer tags
   ///
   /// In en, this message translates to:
-  /// **'Add starter tags'**
+  /// **'Add starter ministries'**
   String get manageUserTagsSeedDefaults;
 
   /// Status label for an active tag
@@ -673,7 +673,7 @@ abstract class AppLocalizations {
   /// Label for the tag name field
   ///
   /// In en, this message translates to:
-  /// **'Tag name'**
+  /// **'Name'**
   String get manageUserTagsNameLabel;
 
   /// Label for the optional tag color picker
@@ -715,106 +715,106 @@ abstract class AppLocalizations {
   /// Error when trying to delete a tag that is still assigned
   ///
   /// In en, this message translates to:
-  /// **'Cannot delete — {count} people still have this tag. Deactivate it instead.'**
+  /// **'Cannot delete — {count} people are still in this ministry. Deactivate it instead.'**
   String manageUserTagsDeleteBlocked(int count);
 
   /// Personal home admin menu item for managing tags
   ///
   /// In en, this message translates to:
-  /// **'Team tags'**
+  /// **'Ministry'**
   String get manageUserTagsMenuTitle;
 
   /// Personal home admin menu subtitle for managing tags
   ///
   /// In en, this message translates to:
-  /// **'Create and edit team labels'**
+  /// **'Create and edit ministries'**
   String get manageUserTagsMenuSubtitle;
 
-  /// Switch on the team-tag editor so guests can see this label
+  /// Switch on the ministry editor so guests can see this label
   ///
   /// In en, this message translates to:
   /// **'Visible to guests'**
   String get manageUserTagsVisibleToGuests;
 
-  /// Explains that hiding a team tag only hides the label
+  /// Explains that hiding a ministry only hides the label
   ///
   /// In en, this message translates to:
-  /// **'Turn off to hide this label from guests on profiles, schedule details, and the team tags page. People and schedule lines still show.'**
+  /// **'Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.'**
   String get manageUserTagsVisibleToGuestsSubtitle;
 
-  /// Status on the team-tag list when guests do not see the label
+  /// Status on the ministry list when guests do not see the label
   ///
   /// In en, this message translates to:
   /// **'Hidden from guests'**
   String get manageUserTagsHiddenFromGuests;
 
-  /// Label for the team-tag description field
+  /// Label for the ministry description field
   ///
   /// In en, this message translates to:
   /// **'Description'**
   String get manageUserTagsDescriptionLabel;
 
-  /// Label for the team-tag main graphic URL
+  /// Label for the ministry main graphic URL
   ///
   /// In en, this message translates to:
   /// **'Image URL'**
   String get manageUserTagsImageUrlLabel;
 
-  /// Hint for the team-tag main graphic URL
+  /// Hint for the ministry main graphic URL
   ///
   /// In en, this message translates to:
   /// **'https://…'**
   String get manageUserTagsImageUrlHint;
 
-  /// Hint for the team-tag description field
+  /// Hint for the ministry description field
   ///
   /// In en, this message translates to:
-  /// **'What this team does'**
+  /// **'What this ministry does'**
   String get manageUserTagsDescriptionHint;
 
-  /// Admin list note when a team tag has no description
+  /// Admin list note when a ministry has no description
   ///
   /// In en, this message translates to:
   /// **'No description yet'**
   String get manageUserTagsDescriptionMissing;
 
-  /// Personal menu subtitle for the public team-tags page
+  /// Personal menu subtitle for the public ministry page
   ///
   /// In en, this message translates to:
-  /// **'What each team is for'**
+  /// **'What each ministry is for'**
   String get userTagsBrowseSubtitle;
 
-  /// Empty state on the team-tags page for people who cannot manage tags
+  /// Empty state on the ministry page for people who cannot manage tags
   ///
   /// In en, this message translates to:
-  /// **'No team tags to show yet.'**
+  /// **'No ministries to show yet.'**
   String get userTagsBrowseEmpty;
 
-  /// Loading message on the team-tags page
+  /// Loading message on the ministry page
   ///
   /// In en, this message translates to:
-  /// **'Loading team tags…'**
+  /// **'Loading ministries…'**
   String get userTagsLoading;
 
-  /// Placeholder on a team-tag detail page when there is no description
+  /// Placeholder on a ministry detail page when there is no description
   ///
   /// In en, this message translates to:
-  /// **'More about this team will be added here.'**
+  /// **'More about this ministry will be added here.'**
   String get userTagsDetailEmpty;
 
-  /// Shown when a team tag was removed while its detail page is open
+  /// Shown when a ministry was removed while its detail page is open
   ///
   /// In en, this message translates to:
-  /// **'This team tag is no longer available.'**
+  /// **'This ministry is no longer available.'**
   String get userTagsUnavailable;
 
-  /// Heading above the church-location chips on a team tag page
+  /// Heading above the church-location chips on a ministry page
   ///
   /// In en, this message translates to:
   /// **'Location'**
   String get userTagDetailLocation;
 
-  /// Shown on a team tag page when there are no active locations
+  /// Shown on a ministry page when there are no active locations
   ///
   /// In en, this message translates to:
   /// **'Church locations are not set up yet, so heads, members, and photos cannot be shown by site.'**
@@ -826,13 +826,13 @@ abstract class AppLocalizations {
   /// **'Heads'**
   String get userTagDetailHeads;
 
-  /// Subtitle under the heads section on a team tag page
+  /// Subtitle under the heads section on a ministry page
   ///
   /// In en, this message translates to:
-  /// **'Who leads this team at {location}'**
+  /// **'Who leads this ministry at {location}'**
   String userTagDetailHeadsSubtitle(String location);
 
-  /// Empty state when a team tag has no heads at the selected location
+  /// Empty state when a ministry has no heads at the selected location
   ///
   /// In en, this message translates to:
   /// **'No heads listed for {location} yet.'**
@@ -844,130 +844,130 @@ abstract class AppLocalizations {
   /// **'Choose heads'**
   String get userTagDetailChooseHeads;
 
-  /// Section title for people who have this team tag at the selected location
+  /// Section title for people who have this ministry at the selected location
   ///
   /// In en, this message translates to:
   /// **'Members'**
   String get userTagDetailMembers;
 
-  /// Subtitle under the members section on a team tag page
+  /// Subtitle under the members section on a ministry page
   ///
   /// In en, this message translates to:
-  /// **'People on this team at {location}'**
+  /// **'People in this ministry at {location}'**
   String userTagDetailMembersSubtitle(String location);
 
   /// Empty state when no active people at the location carry the tag
   ///
   /// In en, this message translates to:
-  /// **'No one at {location} has this team tag yet.'**
+  /// **'No one at {location} is in this ministry yet.'**
   String userTagDetailMembersEmpty(String location);
 
-  /// Section title for the team tag photo album at one location
+  /// Section title for the ministry photo album at one location
   ///
   /// In en, this message translates to:
   /// **'Photos'**
   String get userTagDetailGallery;
 
-  /// Subtitle under the photo album on a team tag page
+  /// Subtitle under the photo album on a ministry page
   ///
   /// In en, this message translates to:
   /// **'Photos from {location}'**
   String userTagDetailGallerySubtitle(String location);
 
-  /// Empty photo album shown to area admins on a team tag page
+  /// Empty photo album shown to area admins on a ministry page
   ///
   /// In en, this message translates to:
   /// **'No photos for {location} yet.'**
   String userTagDetailGalleryEmpty(String location);
 
-  /// Button to add a photo to a team tag album
+  /// Button to add a photo to a ministry album
   ///
   /// In en, this message translates to:
   /// **'Add photo'**
   String get userTagDetailAddPhoto;
 
-  /// Title of the confirmation dialog that removes a team tag photo
+  /// Title of the confirmation dialog that removes a ministry photo
   ///
   /// In en, this message translates to:
   /// **'Remove photo'**
   String get userTagDetailRemovePhoto;
 
-  /// Confirmation body before deleting a team tag photo
+  /// Confirmation body before deleting a ministry photo
   ///
   /// In en, this message translates to:
   /// **'Remove this photo from {location}?'**
   String userTagDetailRemovePhotoConfirm(String location);
 
-  /// Shown when someone tries to add a video to a team tag album
+  /// Shown when someone tries to add a video to a ministry album
   ///
   /// In en, this message translates to:
-  /// **'Team tag albums only support images.'**
+  /// **'Ministry albums only support images.'**
   String get userTagDetailPhotosImagesOnly;
 
-  /// Shown when a team tag album is at the photo cap
+  /// Shown when a ministry album is at the photo cap
   ///
   /// In en, this message translates to:
   /// **'This location already has the maximum of {count} photos.'**
   String userTagDetailGalleryFull(int count);
 
-  /// Section title for future schedule roles of a team tag
+  /// Section title for future schedule roles of a ministry
   ///
   /// In en, this message translates to:
   /// **'Upcoming'**
   String get userTagDetailUpcoming;
 
-  /// Window shown under upcoming team-tag schedule roles
+  /// Window shown under upcoming ministry schedule roles
   ///
   /// In en, this message translates to:
   /// **'Next {months} months at {location}'**
   String userTagDetailUpcomingSubtitle(int months, String location);
 
-  /// Section title for past schedule roles of a team tag
+  /// Section title for past schedule roles of a ministry
   ///
   /// In en, this message translates to:
   /// **'Already done'**
   String get userTagDetailPast;
 
-  /// Window shown under past team-tag schedule roles
+  /// Window shown under past ministry schedule roles
   ///
   /// In en, this message translates to:
   /// **'Previous {months} months at {location}'**
   String userTagDetailPastSubtitle(int months, String location);
 
-  /// Empty state for future team-tag schedule roles
+  /// Empty state for future ministry schedule roles
   ///
   /// In en, this message translates to:
-  /// **'No upcoming slots for this team at {location}.'**
+  /// **'No upcoming slots for this ministry at {location}.'**
   String userTagDetailScheduleEmptyUpcoming(String location);
 
-  /// Empty state for past team-tag schedule roles
+  /// Empty state for past ministry schedule roles
   ///
   /// In en, this message translates to:
-  /// **'No past slots for this team at {location} in this window.'**
+  /// **'No past slots for this ministry at {location} in this window.'**
   String userTagDetailScheduleEmptyPast(String location);
 
-  /// Progress message while a team tag page loads dated posts
+  /// Progress message while a ministry page loads dated posts
   ///
   /// In en, this message translates to:
   /// **'Loading posts…'**
   String get userTagDetailScheduleLoading;
 
-  /// Progress message while a team tag page loads programme roles
+  /// Progress message while a ministry page loads programme roles
   ///
   /// In en, this message translates to:
   /// **'Loading programmes…'**
   String get userTagDetailScheduleLoadingProgrammes;
 
-  /// Error title when the team tag schedule fails to load
+  /// Error title when the ministry schedule fails to load
   ///
   /// In en, this message translates to:
-  /// **'Could not load this team\'s schedule'**
+  /// **'Could not load this ministry\'s schedule'**
   String get userTagDetailScheduleCouldNotLoad;
 
-  /// Shown when saving heads or photos on a team tag fails
+  /// Shown when saving heads or photos on a ministry fails
   ///
   /// In en, this message translates to:
-  /// **'Could not save this team tag. Try again.'**
+  /// **'Could not save this ministry. Try again.'**
   String get userTagDetailCouldNotSave;
 
   /// Button to clear selected post tag filters on the bulletin
@@ -1405,7 +1405,7 @@ abstract class AppLocalizations {
   /// Empty state when tag filter returns no people
   ///
   /// In en, this message translates to:
-  /// **'No people match the selected tags'**
+  /// **'No people match the selected ministries'**
   String get volunteersEmptyTags;
 
   /// Title for the multi-select people picker page
@@ -1417,7 +1417,7 @@ abstract class AppLocalizations {
   /// Subtitle for the people picker refine sheet
   ///
   /// In en, this message translates to:
-  /// **'Location, team, or who is shown'**
+  /// **'Location, ministry, or who is shown'**
   String get selectUsersFilterSheetSubtitle;
 
   /// Confirm button on the volunteer picker page
@@ -1660,10 +1660,10 @@ abstract class AppLocalizations {
   /// **'Surname'**
   String get volunteersSortSurname;
 
-  /// Sort people by primary team tag
+  /// Sort people by primary ministry
   ///
   /// In en, this message translates to:
-  /// **'Team'**
+  /// **'Ministry'**
   String get volunteersSortTags;
 
   /// Filter chip to show people with the Leader permission
@@ -1693,25 +1693,25 @@ abstract class AppLocalizations {
   /// Button that opens the volunteer tag filter sheet
   ///
   /// In en, this message translates to:
-  /// **'Tags'**
+  /// **'Ministry'**
   String get volunteersFilterTags;
 
   /// Tag filter button when one or more tags are selected
   ///
   /// In en, this message translates to:
-  /// **'Tags ({count})'**
+  /// **'Ministry ({count})'**
   String volunteersFilterTagsCount(int count);
 
   /// Title for the volunteer tag filter bottom sheet
   ///
   /// In en, this message translates to:
-  /// **'Filter by tags'**
+  /// **'Filter by ministry'**
   String get volunteersFilterTagsSheetTitle;
 
   /// Subtitle for the volunteer tag filter bottom sheet
   ///
   /// In en, this message translates to:
-  /// **'Show people with any of these team tags'**
+  /// **'Show people in any of these ministries'**
   String get volunteersFilterTagsSheetSubtitle;
 
   /// Tooltip for the people directory sort menu in the app bar
@@ -1735,7 +1735,7 @@ abstract class AppLocalizations {
   /// Subtitle for the people directory filter bottom sheet
   ///
   /// In en, this message translates to:
-  /// **'Location, sort, role, team, or who is shown'**
+  /// **'Location, sort, role, ministry, or who is shown'**
   String get volunteersFilterSheetSubtitle;
 
   /// Section label for serving / placeholder toggles in people filters
@@ -1753,7 +1753,7 @@ abstract class AppLocalizations {
   /// Helper under the Serving toggle in people filters
   ///
   /// In en, this message translates to:
-  /// **'People who serve on teams or lead groups'**
+  /// **'People who serve in a ministry or lead groups'**
   String get volunteersFilterServingSubtitle;
 
   /// Section label for role filters in the people directory
@@ -1762,10 +1762,10 @@ abstract class AppLocalizations {
   /// **'Roles'**
   String get volunteersFilterRolesSection;
 
-  /// Section label for team tag filters in the people directory
+  /// Section label for ministry filters in the people directory
   ///
   /// In en, this message translates to:
-  /// **'Teams'**
+  /// **'Ministry'**
   String get volunteersFilterTeamsSection;
 
   /// Count label above the people directory list
@@ -1777,7 +1777,7 @@ abstract class AppLocalizations {
   /// Short intro on the people directory
   ///
   /// In en, this message translates to:
-  /// **'Browse leaders and team members in the church family.'**
+  /// **'Browse leaders and ministry members in the church family.'**
   String get volunteersDirectoryIntro;
 
   /// Resets people directory filters to defaults
@@ -1888,13 +1888,79 @@ abstract class AppLocalizations {
   /// **'Image coming soon'**
   String get cellGroupsOverviewImagePlaceholder;
 
-  /// Title for the Cell Groups overview activity dashboard
+  /// Title of the Cell Groups overview teaching card
+  ///
+  /// In en, this message translates to:
+  /// **'What a meeting is like'**
+  String get cellGroupsMeetingLikeTitle;
+
+  /// First point on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Bible study'**
+  String get cellGroupsMeetingLikeBibleTitle;
+
+  /// Body for the Bible study point on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Read and talk through Scripture together'**
+  String get cellGroupsMeetingLikeBibleBody;
+
+  /// Second point on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Care and prayer'**
+  String get cellGroupsMeetingLikeCareTitle;
+
+  /// Body for the care and prayer point on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Look after one another and pray'**
+  String get cellGroupsMeetingLikeCareBody;
+
+  /// Third point on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Fellowship'**
+  String get cellGroupsMeetingLikeFellowshipTitle;
+
+  /// Body for the fellowship point on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Share life in a small gathering, often in a home'**
+  String get cellGroupsMeetingLikeFellowshipBody;
+
+  /// Title of the Cell Groups overview find card
+  ///
+  /// In en, this message translates to:
+  /// **'Find a group'**
+  String get cellGroupsFindTitle;
+
+  /// Hint under the browse action on the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or a postcode such as BT9.'**
+  String get cellGroupsFindHint;
+
+  /// Button that opens the Groups tab from the Cell Groups overview
+  ///
+  /// In en, this message translates to:
+  /// **'Browse groups'**
+  String get cellGroupsFindBrowse;
+
+  /// Heading above the signed-in person's cell groups on the overview
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Your group} other{Your groups}}'**
+  String cellGroupsFindMembershipHeading(int count);
+
+  /// Title for the Cell Groups overview activity card, shown to people who serve
   ///
   /// In en, this message translates to:
   /// **'Activity'**
   String get cellGroupsActivityTitle;
 
-  /// Subtitle under the activity dashboard title
+  /// Subtitle under the Cell Groups overview activity card
   ///
   /// In en, this message translates to:
   /// **'Meetings linked to cell groups'**
@@ -1954,17 +2020,17 @@ abstract class AppLocalizations {
   /// **'Groups that met · past 3 weeks'**
   String get cellGroupsActivityGroupsMetLabel;
 
-  /// Secondary metric label for average attendees per past meeting
-  ///
-  /// In en, this message translates to:
-  /// **'Avg attendance · past 3 weeks'**
-  String get cellGroupsActivityAvgAttendanceLabel;
-
   /// Secondary metric label shown when some groups are paused
   ///
   /// In en, this message translates to:
   /// **'Paused groups'**
   String get cellGroupsActivityPausedGroupsLabel;
+
+  /// Secondary metric label for average attendees per past meeting
+  ///
+  /// In en, this message translates to:
+  /// **'Avg attendance · past 3 weeks'**
+  String get cellGroupsActivityAvgAttendanceLabel;
 
   /// Error message when activity stats fail to load
   ///
@@ -2014,13 +2080,13 @@ abstract class AppLocalizations {
   /// **'Posts'**
   String get churchHubActivityTrendMetricPosts;
 
-  /// Title for cell groups weekly activity line chart
+  /// Title for the Cell Groups overview weekly activity chart
   ///
   /// In en, this message translates to:
   /// **'Meetings over time'**
   String get cellGroupsActivityTrendTitle;
 
-  /// Subtitle for cell groups weekly activity line chart
+  /// Subtitle for the Cell Groups overview weekly activity chart
   ///
   /// In en, this message translates to:
   /// **'Cell group meetings linked on the bulletin'**

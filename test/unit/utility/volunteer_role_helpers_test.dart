@@ -213,6 +213,52 @@ void main() {
       );
     });
 
+    test('overview activity is hidden from guests and non-serving members', () {
+      final groups = [
+        CellGroup(id: 'a', name: 'Active', leaderUserIds: ['cg1']),
+      ];
+      expect(
+        VolunteerRoleHelpers.canSeeOverviewActivity(
+          user: _user(id: '0'),
+          isGuest: true,
+          catalogue: groups,
+        ),
+        isFalse,
+      );
+      expect(
+        VolunteerRoleHelpers.canSeeOverviewActivity(
+          user: _user(id: 'plain'),
+          isGuest: false,
+          catalogue: groups,
+        ),
+        isFalse,
+      );
+      expect(
+        VolunteerRoleHelpers.canSeeOverviewActivity(
+          user: _user(id: 't1', tagIDs: ['welcome']),
+          isGuest: false,
+          catalogue: groups,
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerRoleHelpers.canSeeOverviewActivity(
+          user: _user(id: 'cg1'),
+          isGuest: false,
+          catalogue: groups,
+        ),
+        isTrue,
+      );
+      expect(
+        VolunteerRoleHelpers.canSeeOverviewActivity(
+          user: _user(id: 'l1', isLeader: true),
+          isGuest: false,
+          catalogue: groups,
+        ),
+        isTrue,
+      );
+    });
+
     test('toggleRole keeps Leader and Admin mutually exclusive', () {
       var selected = <VolunteerRoleKind>{};
       selected = VolunteerRoleHelpers.toggleRole(
