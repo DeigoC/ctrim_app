@@ -1,14 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/db_managers/notification_schedule_db_manager.dart';
+import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/notification_schedule.dart';
 import '../../models/post_tag.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/notifications/notification_device_status.dart';
 import '../../utility/notifications/notification_schedule_planner.dart';
 import '../../utility/notifications/notification_topics.dart';
 import '../../widgets/common/action_sheet.dart';
@@ -30,6 +34,7 @@ class _NotificationSchedulesPageState extends State<NotificationSchedulesPage> {
 
   bool _loading = true;
   bool _started = false;
+  String? _testingScheduleId;
   Object? _error;
   List<NotificationSchedule> _schedules = const [];
   List<EventHead> _heads = const [];
@@ -140,6 +145,74 @@ class _NotificationSchedulesPageState extends State<NotificationSchedulesPage> {
     }
   }
 
+  Future<void> _sendTest(
+    NotificationSchedule schedule,
+    SchedulePreview preview,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final title = preview.head.title.trim();
+    if (title.isEmpty) {
+      DialogManager.showSnackBar(
+        context: context,
+        message: l10n.notificationSchedulesTestFailed,
+        isError: true,
+      );
+      return;
+    }
+
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: l10n.notificationSchedulesTestTitle,
+      content: l10n.notificationSchedulesTestBody(title),
+      confirmText: l10n.notificationSchedulesTest,
+      cancelText: l10n.cancel,
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _testingScheduleId = schedule.id);
+    try {
+      final authId = AuthManager().currentAuthUID;
+      final token = await NotificationDeviceStatusService().currentDeviceToken(
+        webAuthId: kIsWeb && authId.isNotEmpty ? authId : null,
+      );
+      if (!mounted) return;
+      if (token == null || token.isEmpty) {
+        DialogManager.showSnackBar(
+          context: context,
+          message: l10n.notificationSchedulesTestNoToken,
+          isError: true,
+        );
+        return;
+      }
+
+      final result = await CloudFunctionManager().sendMessageToSelectedTokens(
+        tokens: [token],
+        title: title,
+        body: NotificationSchedulePlanner.reminderBody(preview.head),
+        data: {'PostID': preview.head.id},
+      );
+      if (!mounted) return;
+      final ok = result.hasSuccess || result.successCount > 0;
+      DialogManager.showSnackBar(
+        context: context,
+        message: ok
+            ? l10n.notificationSchedulesTestSent
+            : result.feedbackMessage,
+        isError: !ok,
+      );
+    } catch (e, st) {
+      debugPrint('Scheduled notification test failed: $e\n$st');
+      if (!mounted) return;
+      DialogManager.showSnackBar(
+        context: context,
+        message: l10n.notificationSchedulesTestFailed,
+        isError: true,
+      );
+    } finally {
+      if (mounted) setState(() => _testingScheduleId = null);
+    }
+  }
+
   Future<void> _delete(NotificationSchedule schedule) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await DialogManager.showConfirmationDialog(
@@ -235,16 +308,21 @@ class _NotificationSchedulesPageState extends State<NotificationSchedulesPage> {
       itemBuilder: (context, index) {
         final schedule = _schedules[index];
         final tag = appContext.postTagById(schedule.postTagId);
+        final preview = NotificationSchedulePlanner.preview(
+          schedule: schedule,
+          heads: _heads,
+          now: _loadedAt,
+        );
         return _ScheduleCard(
           schedule: schedule,
           tagName: tag?.name ?? l10n.notificationSchedulesUnknownTag,
-          preview: NotificationSchedulePlanner.preview(
-            schedule: schedule,
-            heads: _heads,
-            now: _loadedAt,
-          ),
+          preview: preview,
+          testing: _testingScheduleId == schedule.id,
           onEdit: () => _openEditor(existing: schedule),
           onEnabled: (enabled) => _setEnabled(schedule, enabled),
+          onTest: preview == null
+              ? null
+              : () => _sendTest(schedule, preview),
           onDelete: () => _delete(schedule),
         );
       },
@@ -315,16 +393,20 @@ class _ScheduleCard extends StatelessWidget {
     required this.schedule,
     required this.tagName,
     required this.preview,
+    required this.testing,
     required this.onEdit,
     required this.onEnabled,
+    required this.onTest,
     required this.onDelete,
   });
 
   final NotificationSchedule schedule;
   final String tagName;
   final SchedulePreview? preview;
+  final bool testing;
   final VoidCallback onEdit;
   final ValueChanged<bool> onEnabled;
+  final VoidCallback? onTest;
   final VoidCallback onDelete;
 
   @override
@@ -405,13 +487,31 @@ class _ScheduleCard extends StatelessWidget {
                   ),
                 ),
               ],
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline),
-                  label: Text(l10n.notificationSchedulesDelete),
-                ),
+              Row(
+                children: [
+                  if (onTest != null)
+                    TextButton.icon(
+                      onPressed: testing ? null : onTest,
+                      icon: testing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.notification_important_outlined),
+                      label: Text(
+                        testing
+                            ? l10n.notificationSchedulesTestSending
+                            : l10n.notificationSchedulesTest,
+                      ),
+                    ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(l10n.notificationSchedulesDelete),
+                  ),
+                ],
               ),
             ],
           ),

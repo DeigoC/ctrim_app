@@ -26,6 +26,10 @@ Also in the app and being tested:
 
 When a bulletin **post** or **template** is linked to a cell group, organisers can **Fill from cell group** or **Add from cell group** (in the expected-attendees picker) to seed **expected attendees** from the group’s members. Listed **leaders** are the hosts of those meetings, so they are not added as guests; their profiles still count those meetings as hosted.
 
+### Adding a meeting from the group
+
+An area admin can choose two things on the edit group page: the **parent post** for the current period (for example “Diego’s cell group 2026”) and the **template** that group’s meetings use. Leaders then see **Add meeting** next to Recent meetings. That starts a new post from the template, already filed under that parent. The parent’s title is shown there, so it is clear which period the meeting belongs to. Until both are chosen, only area admins see **Set up meeting posts**.
+
 More on posts: [Events & bulletin](events-and-bulletin.md).
 
 ## Still growing

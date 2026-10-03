@@ -1625,6 +1625,139 @@
   "@cellGroupsMeetingTrailEmpty": {
     "description": "Empty state for CG meeting trail"
   },
+  "cellGroupsAddMeeting": "Add meeting",
+  "@cellGroupsAddMeeting": {
+    "description": "Starts a new meeting post from the cell group page"
+  },
+  "cellGroupsSetupMeetingPosts": "Set up meeting posts",
+  "@cellGroupsSetupMeetingPosts": {
+    "description": "Area-admin action when the group has no parent post or meeting template yet"
+  },
+  "cellGroupsMeetingParentCaption": "Adds a meeting under {title}",
+  "@cellGroupsMeetingParentCaption": {
+    "description": "Caption under Recent meetings naming the period parent",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "cellGroupsMeetingParentMissing": "The parent post for new meetings could not be found.",
+  "@cellGroupsMeetingParentMissing": {
+    "description": "Shown when the stored parent post id no longer exists"
+  },
+  "cellGroupsMeetingParentNotPeriod": "That parent post is no longer a period parent.",
+  "@cellGroupsMeetingParentNotPeriod": {
+    "description": "Shown when the stored parent is no longer marked as a period parent"
+  },
+  "cellGroupsMeetingParentLookupFailed": "The parent post title could not be loaded.",
+  "@cellGroupsMeetingParentLookupFailed": {
+    "description": "Shown when the parent post title fetch fails"
+  },
+  "cellGroupsMeetingLookupFailed": "Could not look this up. Try again.",
+  "@cellGroupsMeetingLookupFailed": {
+    "description": "Shown on the edit form when a stored title cannot be loaded"
+  },
+  "cellGroupsMeetingTemplateMissing": "The meeting template for this group could not be found. An area admin can choose another on the group.",
+  "@cellGroupsMeetingTemplateMissing": {
+    "description": "Alert when Add meeting cannot load the stored template"
+  },
+  "cellGroupsAddMeetingChecking": "Checking the meeting setup…",
+  "@cellGroupsAddMeetingChecking": {
+    "description": "Progress title while verifying parent post and template"
+  },
+  "cellGroupsMeetingPostsTitle": "Meeting posts",
+  "@cellGroupsMeetingPostsTitle": {
+    "description": "Section title on the edit cell group page"
+  },
+  "cellGroupsMeetingPostsHelper": "Leaders can add a meeting from this group's page when both are set.",
+  "@cellGroupsMeetingPostsHelper": {
+    "description": "Explains the parent post and template fields"
+  },
+  "cellGroupsMeetingParentLabel": "Parent post",
+  "@cellGroupsMeetingParentLabel": {
+    "description": "Field label for the current period parent"
+  },
+  "cellGroupsMeetingParentHelper": "New meetings are filed under this period parent.",
+  "@cellGroupsMeetingParentHelper": {
+    "description": "Helper for the parent post field"
+  },
+  "cellGroupsMeetingParentNotSet": "Not set",
+  "@cellGroupsMeetingParentNotSet": {
+    "description": "Empty value for the parent post field"
+  },
+  "cellGroupsMeetingParentInvalidTitle": "Parent post",
+  "@cellGroupsMeetingParentInvalidTitle": {
+    "description": "Alert title when the chosen parent cannot be used"
+  },
+  "cellGroupsMeetingTemplateLabel": "Meeting template",
+  "@cellGroupsMeetingTemplateLabel": {
+    "description": "Field label and picker title for the meeting template"
+  },
+  "cellGroupsMeetingTemplateHelper": "New meetings use this template. Link this group on the template so they also appear when someone starts from the template.",
+  "@cellGroupsMeetingTemplateHelper": {
+    "description": "Helper for the meeting template field"
+  },
+  "cellGroupsMeetingTemplateNotSet": "Not set",
+  "@cellGroupsMeetingTemplateNotSet": {
+    "description": "Empty value for the meeting template field"
+  },
+  "cellGroupsMeetingTemplateInvalidTitle": "Meeting template",
+  "@cellGroupsMeetingTemplateInvalidTitle": {
+    "description": "Alert title when the chosen template cannot be used"
+  },
+  "cellGroupsMeetingTemplateInvalid": "That meeting template could not be found.",
+  "@cellGroupsMeetingTemplateInvalid": {
+    "description": "Alert when the stored or chosen template is missing"
+  },
+  "cellGroupsMeetingLookingUp": "Looking up…",
+  "@cellGroupsMeetingLookingUp": {
+    "description": "Placeholder while a stored parent or template title is loading"
+  },
+  "cellGroupsMeetingTemplateUnlinkedTitle": "Template is not linked to this group",
+  "@cellGroupsMeetingTemplateUnlinkedTitle": {
+    "description": "Confirm title when the template does not list this cell group"
+  },
+  "cellGroupsMeetingTemplateUnlinkedBody": "Meetings added from this group will still show in Recent meetings. Meetings started from the template elsewhere will not, until the template lists this group.",
+  "@cellGroupsMeetingTemplateUnlinkedBody": {
+    "description": "Confirm body when saving a template that does not list this group"
+  },
+  "cellGroupsMeetingTemplateDenied": "Only area admins can choose a meeting template.",
+  "@cellGroupsMeetingTemplateDenied": {
+    "description": "Access denied on the meeting template picker"
+  },
+  "cellGroupsMeetingTemplateLoading": "Loading templates…",
+  "@cellGroupsMeetingTemplateLoading": {
+    "description": "Progress message on the meeting template picker"
+  },
+  "cellGroupsMeetingTemplateLoadFailed": "Could not load templates",
+  "@cellGroupsMeetingTemplateLoadFailed": {
+    "description": "Error title on the meeting template picker"
+  },
+  "cellGroupsMeetingTemplateSearch": "Search templates",
+  "@cellGroupsMeetingTemplateSearch": {
+    "description": "Search hint on the meeting template picker"
+  },
+  "cellGroupsMeetingTemplateClearHint": "New meetings will not use a template",
+  "@cellGroupsMeetingTemplateClearHint": {
+    "description": "Subtitle for clearing the meeting template"
+  },
+  "cellGroupsMeetingTemplateEmpty": "No templates match.",
+  "@cellGroupsMeetingTemplateEmpty": {
+    "description": "Empty search on the meeting template picker"
+  },
+  "cellGroupsMeetingTemplateLinked": "Linked to this group",
+  "@cellGroupsMeetingTemplateLinked": {
+    "description": "Badge when a template already lists this cell group"
+  },
+  "cellGroupsPickerDone": "Done",
+  "@cellGroupsPickerDone": {
+    "description": "Confirms a cell group picker"
+  },
+  "cellGroupsMeetingClear": "Clear",
+  "@cellGroupsMeetingClear": {
+    "description": "Clears the parent post or meeting template"
+  },
   "cellGroupsMemberCount": "{count} members",
   "@cellGroupsMemberCount": {
     "description": "Member count shown to signed-in users",
@@ -2221,6 +2354,38 @@
   "churchLocationStatsPostTagHint": "A post with more than one tag is counted in each.",
   "@churchLocationStatsPostTagHint": {
     "description": "Footnote under post tag counts on location statistics"
+  },
+  "churchLocationStatsPostsSubtitle": "Last 3 months and the coming week",
+  "@churchLocationStatsPostsSubtitle": {
+    "description": "Posts card subtitle. The last 3 months and the 7-day upcoming window are separate."
+  },
+  "churchLocationStatsUpcomingTitle": "Coming up",
+  "@churchLocationStatsUpcomingTitle": {
+    "description": "Heading for posts in the coming week on location statistics"
+  },
+  "churchLocationStatsUpcomingPosts": "Upcoming posts",
+  "@churchLocationStatsUpcomingPosts": {
+    "description": "Count tile for posts in the coming week at this location"
+  },
+  "churchLocationStatsUpcomingPostsHint": "Today + next 6 days",
+  "@churchLocationStatsUpcomingPostsHint": {
+    "description": "Same window as cell-group activity: today and the next 6 days"
+  },
+  "churchLocationStatsUpcomingFootnote": "Not added into the attendance average. A post today is also counted in the last 3 months.",
+  "@churchLocationStatsUpcomingFootnote": {
+    "description": "Explains that upcoming posts stay out of the 90-day attendance average, and that today sits in both windows"
+  },
+  "churchLocationStatsTrendSubtitle": "Last 3 months at this location",
+  "@churchLocationStatsTrendSubtitle": {
+    "description": "Chart subtitle on location statistics so the weekly chart is not read as the coming week"
+  },
+  "churchLocationStatsUniquePeople": "Different people",
+  "@churchLocationStatsUniquePeople": {
+    "description": "Count tile for distinct people across cell groups at this location"
+  },
+  "churchLocationStatsUniquePeopleHint": "Each person once",
+  "@churchLocationStatsUniquePeopleHint": {
+    "description": "Hint under the distinct cell-group people count. Signed-in viewers only."
   },
   "churchHubAboutTitle": "About",
   "@churchHubAboutTitle": {
@@ -3045,6 +3210,39 @@
   "notificationSchedulesOff": "Off",
   "@notificationSchedulesOff": {
     "description": "A scheduled notification is paused"
+  },
+  "notificationSchedulesTest": "Send test to me",
+  "@notificationSchedulesTest": {
+    "description": "Sends a sample of this reminder to the current device only"
+  },
+  "notificationSchedulesTestSending": "Sending…",
+  "@notificationSchedulesTestSending": {
+    "description": "Label while a scheduled-notification test is in flight"
+  },
+  "notificationSchedulesTestTitle": "Send a test to this device?",
+  "@notificationSchedulesTestTitle": {
+    "description": "Confirm before sending a scheduled-notification sample"
+  },
+  "notificationSchedulesTestBody": "This sends “{title}” only to this device. Nobody else is notified, and the reminder still counts as unsent.",
+  "@notificationSchedulesTestBody": {
+    "description": "Explains that a scheduled-notification test stays on this device",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSchedulesTestSent": "Test sent — check for a notification on this device.",
+  "@notificationSchedulesTestSent": {
+    "description": "Success after a scheduled-notification test"
+  },
+  "notificationSchedulesTestNoToken": "No push token on this device. Turn notifications on under Personal → Settings → Push Notifications.",
+  "@notificationSchedulesTestNoToken": {
+    "description": "Shown when a scheduled-notification test has no device token"
+  },
+  "notificationSchedulesTestFailed": "Could not send that test. Try again.",
+  "@notificationSchedulesTestFailed": {
+    "description": "Shown when a scheduled-notification test fails"
   },
   "notificationSchedulesLoading": "Loading reminders",
   "@notificationSchedulesLoading": {

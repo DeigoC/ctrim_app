@@ -212,5 +212,36 @@ void main() {
       final timeOnly = CellGroup(id: '2', name: 'B', meetingTime: '18:00');
       expect(timeOnly.cadenceLabel, '18:00');
     });
+
+    test('meeting setup ids round-trip and blank values stay unset', () {
+      final group = CellGroup(
+        id: '1',
+        name: 'CG',
+        meetingParentPostId: ' parent-1 ',
+        meetingTemplateId: 'template-1',
+      );
+      expect(group.meetingParentPostId, 'parent-1');
+      expect(group.meetingTemplateId, 'template-1');
+      expect(group.hasMeetingPostSetup, isTrue);
+
+      final json = group.toJson();
+      expect(json['MeetingParentPostId'], 'parent-1');
+      expect(json['MeetingTemplateId'], 'template-1');
+
+      final restored = CellGroup.fromMap('1', {
+        'Name': 'CG',
+        'MeetingParentPostId': ' parent-1 ',
+        'MeetingTemplateId': '',
+      });
+      expect(restored.meetingParentPostId, 'parent-1');
+      expect(restored.meetingTemplateId, isNull);
+      expect(restored.hasMeetingPostSetup, isFalse);
+      expect(restored.toJson().containsKey('MeetingTemplateId'), isFalse);
+
+      group.setMeetingParentPostId('  ');
+      group.setMeetingTemplateId(null);
+      expect(group.hasMeetingPostSetup, isFalse);
+      expect(group.toCacheJson().containsKey('MeetingParentPostId'), isFalse);
+    });
   });
 }

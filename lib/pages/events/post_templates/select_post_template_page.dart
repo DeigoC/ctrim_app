@@ -4,20 +4,17 @@ import 'package:provider/provider.dart';
 
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
-import '../../../utility/bulk_post_dates.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
-import '../../../utility/post_template_mapper.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/common/load_progress_body.dart';
 import '../../../widgets/paired_row_list.dart';
 import '../../../widgets/responsive_content.dart';
 import '../../../widgets/role_access_gate.dart';
-import '../../../widgets/posts/schedule_preset_picker.dart';
-import '../add_event_page.dart';
 import '../bulk_create_posts_page.dart';
+import 'start_post_from_template.dart';
 
 class SelectPostTemplatePage extends StatefulWidget {
   const SelectPostTemplatePage({
@@ -762,26 +759,6 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     }).toList();
   }
 
-  Future<DateTime?> _selectDate(
-    final BuildContext context, {
-    final int? preferredDayOfWeek,
-  }) async {
-    final now = DateTime.now();
-    final firstDate = now.subtract(const Duration(days: 30));
-    final lastDate = now.add(const Duration(days: 60));
-    var initialDate = preferredDayOfWeek != null
-        ? nextDateForDayOfWeek(dayOfWeek: preferredDayOfWeek, now: now)
-        : now;
-    if (initialDate.isBefore(firstDate)) initialDate = firstDate;
-    if (initialDate.isAfter(lastDate)) initialDate = lastDate;
-    return showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-    );
-  }
-
   void _onBulkAddPostTap(final PostTemplate template) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -796,47 +773,10 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }
 
   Future<void> _onAddPostTap(final PostTemplate postTemplate) async {
-    final appContext = Provider.of<AppContext>(context, listen: false);
-
-    // Typical start time (schedule) *or* default weekday both mean the post
-    // is dated — prompt so undated schedule templates still get an event date.
-    final shouldPickDate = postTemplate.startTime != null ||
-        postTemplate.defaultDayOfWeek != null ||
-        postTemplate.schedulePresets.any((p) => p.startTime != null);
-    DateTime? selectedDate;
-    if (shouldPickDate) {
-      selectedDate = await _selectDate(
-        context,
-        preferredDayOfWeek: postTemplate.defaultDayOfWeek,
-      );
-      if (selectedDate == null || !mounted) return;
-    }
-
-    SchedulePreset? schedulePreset;
-    if (postTemplate.schedulePresets.length > 1) {
-      schedulePreset = await showSchedulePresetPicker(
-        context: context,
-        presets: postTemplate.schedulePresets,
-        title: 'Schedule preset',
-        subtitle: 'Choose the running order for this post',
-      );
-      if (schedulePreset == null || !mounted) return;
-    }
-
-    final EventContext eventContext =
-        PostTemplateMapper.mapTemplateToEventContext(
+    await startPostFromTemplate(
+      context: context,
       template: postTemplate,
-      currentUserID: appContext.currentUser.id,
       parentID: widget.eventContext.metadata.parentID,
-      allUsers: appContext.allUsers,
-      schedulePreset: schedulePreset,
     );
-
-    if (selectedDate != null) {
-      PostTemplateMapper.adjustEventProgramToDate(eventContext, selectedDate);
-    }
-    if (!mounted) return;
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => AddEventPage(eventContext: eventContext)));
   }
 }

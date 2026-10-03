@@ -60,6 +60,7 @@ class ChurchLocationGroupsSection {
     required this.membersListed,
     required this.averageSize,
     required this.groups,
+    this.uniquePeople,
   });
 
   final int groupCount;
@@ -67,6 +68,10 @@ class ChurchLocationGroupsSection {
   /// Sum of each group's [CellGroup.memberCount]. Someone in two groups
   /// is counted twice.
   final int membersListed;
+
+  /// Distinct linked people on the rosters of these groups. Someone in two
+  /// groups counts once. Null when rosters were not read (guests).
+  final int? uniquePeople;
 
   /// [membersListed] / [groupCount], or null when there are no groups.
   final double? averageSize;
@@ -85,6 +90,30 @@ class ChurchLocationGroupsSection {
   );
 }
 
+/// Posts coming up at one church location.
+///
+/// Same window as cell-group activity: today and the next 6 days. Not
+/// included in [ChurchLocationPostsSection] attendance.
+class ChurchLocationUpcomingPosts {
+  const ChurchLocationUpcomingPosts({
+    required this.postCount,
+    required this.cellGroupMeetingCount,
+    required this.otherPostCount,
+  });
+
+  final int postCount;
+  final int cellGroupMeetingCount;
+  final int otherPostCount;
+
+  bool get isEmpty => postCount == 0;
+
+  static const ChurchLocationUpcomingPosts empty = ChurchLocationUpcomingPosts(
+    postCount: 0,
+    cellGroupMeetingCount: 0,
+    otherPostCount: 0,
+  );
+}
+
 /// Bulletin posts at one church location in the hub's 90-day window.
 class ChurchLocationPostsSection {
   const ChurchLocationPostsSection({
@@ -96,6 +125,7 @@ class ChurchLocationPostsSection {
     required this.interestedTotal,
     required this.tags,
     required this.posts,
+    required this.upcoming,
   });
 
   final int postCount;
@@ -113,11 +143,14 @@ class ChurchLocationPostsSection {
   /// with [ChurchLocationReport.untaggedPostId] covers posts with no active tag.
   final List<ChurchLocationCountRow> tags;
 
-  /// Location-matched posts in the window, newest first. Same list the hub
-  /// chart uses.
+  /// Location-matched posts in the 90-day window, newest first. Same list
+  /// the hub chart uses. Upcoming posts are not included.
   final List<EventHead> posts;
 
-  bool get isEmpty => postCount == 0;
+  /// Location-matched posts in the cell-group upcoming week.
+  final ChurchLocationUpcomingPosts upcoming;
+
+  bool get isEmpty => postCount == 0 && upcoming.isEmpty;
 
   static const ChurchLocationPostsSection empty = ChurchLocationPostsSection(
     postCount: 0,
@@ -128,13 +161,16 @@ class ChurchLocationPostsSection {
     interestedTotal: 0,
     tags: <ChurchLocationCountRow>[],
     posts: <EventHead>[],
+    upcoming: ChurchLocationUpcomingPosts.empty,
   );
 }
 
 /// Breakdown of one church location for the statistics page.
 ///
-/// People, groups, and posts use the same location match as
-/// [ChurchLocationStats]. No extra queries.
+/// People, groups, and the 90-day posts use the same location match as
+/// [ChurchLocationStats]. Upcoming posts are a separate date window and
+/// stay out of attendance. Distinct cell-group people come from roster
+/// ids supplied by the caller; this type does not read Firestore.
 class ChurchLocationReport {
   const ChurchLocationReport({
     required this.people,
@@ -163,17 +199,20 @@ class ChurchLocationReport {
     required List<UserTag> ministries,
     required List<PostTag> postTags,
     required bool viewerIsGuest,
+    List<EventHead> upcomingHeads = const [],
+    Iterable<Iterable<String>>? rosterUserIdsByGroup,
     DateTime? now,
   }) {
     final name = location.trim();
     if (name.isEmpty) return ChurchLocationReport.empty;
 
+    final DateTime clock = now ?? DateTime.now();
     final stats = ChurchLocationStats.compute(
       location: name,
       heads: heads,
       groups: groups,
       users: users,
-      now: now,
+      now: clock,
     );
 
     return ChurchLocationReport(
@@ -183,8 +222,19 @@ class ChurchLocationReport {
         ministries: ministries,
         viewerIsGuest: viewerIsGuest,
       ),
-      cellGroups: _groups(stats.cellGroups),
-      posts: _posts(posts: stats.posts, postTags: postTags),
+      cellGroups: _groups(
+        stats.cellGroups,
+        rosterUserIdsByGroup: rosterUserIdsByGroup,
+      ),
+      posts: _posts(
+        posts: stats.posts,
+        postTags: postTags,
+        upcoming: _upcoming(
+          location: name,
+          heads: upcomingHeads,
+          now: clock,
+        ),
+      ),
     );
   }
 
@@ -252,7 +302,10 @@ class ChurchLocationReport {
     );
   }
 
-  static ChurchLocationGroupsSection _groups(final List<CellGroup> groups) {
+  static ChurchLocationGroupsSection _groups(
+    final List<CellGroup> groups, {
+    Iterable<Iterable<String>>? rosterUserIdsByGroup,
+  }) {
     if (groups.isEmpty) return ChurchLocationGroupsSection.empty;
 
     var members = 0;
@@ -272,14 +325,73 @@ class ChurchLocationReport {
       membersListed: members,
       averageSize: members / groups.length,
       groups: List<ChurchLocationCountRow>.unmodifiable(rows),
+      uniquePeople: rosterUserIdsByGroup == null
+          ? null
+          : _distinctRosterPeople(rosterUserIdsByGroup),
+    );
+  }
+
+  /// Blank ids are ignored. The same id in two groups counts once.
+  static int _distinctRosterPeople(Iterable<Iterable<String>> idsByGroup) {
+    final ids = <String>{};
+    for (final group in idsByGroup) {
+      for (final id in group) {
+        final trimmed = id.trim();
+        if (trimmed.isNotEmpty) ids.add(trimmed);
+      }
+    }
+    return ids.length;
+  }
+
+  static ChurchLocationUpcomingPosts _upcoming({
+    required String location,
+    required List<EventHead> heads,
+    required DateTime now,
+  }) {
+    final start = ChurchLocationStats.upcomingQueryRangeStart(now);
+    final end = ChurchLocationStats.upcomingQueryRangeEndExclusive(now);
+    var count = 0;
+    var meetings = 0;
+    for (final post in heads) {
+      if (post.isPeriodParent) continue;
+      final eventDate = post.eventDate;
+      if (eventDate == null) continue;
+      if (eventDate.isBefore(start) || !eventDate.isBefore(end)) continue;
+      if (!VolunteerLocations.postLocationMatchesFilter(
+        postLocation: post.location,
+        locationFilter: location,
+      )) {
+        continue;
+      }
+      count++;
+      if (post.cellGroupIDs.isNotEmpty) meetings++;
+    }
+    if (count == 0) return ChurchLocationUpcomingPosts.empty;
+    return ChurchLocationUpcomingPosts(
+      postCount: count,
+      cellGroupMeetingCount: meetings,
+      otherPostCount: count - meetings,
     );
   }
 
   static ChurchLocationPostsSection _posts({
     required List<EventHead> posts,
     required List<PostTag> postTags,
+    required ChurchLocationUpcomingPosts upcoming,
   }) {
-    if (posts.isEmpty) return ChurchLocationPostsSection.empty;
+    if (posts.isEmpty) {
+      return ChurchLocationPostsSection(
+        postCount: 0,
+        cellGroupMeetingCount: 0,
+        otherPostCount: 0,
+        attendanceTotal: 0,
+        averageAttendance: null,
+        interestedTotal: 0,
+        tags: const <ChurchLocationCountRow>[],
+        posts: const <EventHead>[],
+        upcoming: upcoming,
+      );
+    }
 
     final active = <PostTag>[];
     for (final tag in postTags) {
@@ -336,6 +448,7 @@ class ChurchLocationReport {
       interestedTotal: interested,
       tags: List<ChurchLocationCountRow>.unmodifiable(rows),
       posts: posts,
+      upcoming: upcoming,
     );
   }
 

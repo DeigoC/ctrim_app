@@ -25,8 +25,17 @@ import 'edit_body_page.dart';
 import 'edit_gallery_page.dart';
 
 class AddEventPage extends StatefulWidget {
-  const AddEventPage({super.key, required this.eventContext});
+  const AddEventPage({
+    super.key,
+    required this.eventContext,
+    this.popParentRouteOnSave = true,
+  });
   final EventContext eventContext;
+
+  /// Also closes the route under this page after a successful save.
+  /// The template picker relies on that. A direct open, such as Add meeting
+  /// on a cell group, sets this false so the group page stays open.
+  final bool popParentRouteOnSave;
 
   @override
   State<AddEventPage> createState() => _AddEventPageState();
@@ -230,8 +239,10 @@ class _AddEventPageState extends State<AddEventPage>
       action: (onProgress) => _savePost(onProgress),
     );
     if (!mounted || !saved) return;
-    Navigator.of(context).pop(); // pop this add page
-    Navigator.of(context).pop(); // pop the template page
+    Navigator.of(context).pop();
+    if (widget.popParentRouteOnSave) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<bool> _confirmSave() async {

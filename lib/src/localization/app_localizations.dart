@@ -2164,6 +2164,198 @@ abstract class AppLocalizations {
   /// **'No linked meeting posts yet.'**
   String get cellGroupsMeetingTrailEmpty;
 
+  /// Starts a new meeting post from the cell group page
+  ///
+  /// In en, this message translates to:
+  /// **'Add meeting'**
+  String get cellGroupsAddMeeting;
+
+  /// Area-admin action when the group has no parent post or meeting template yet
+  ///
+  /// In en, this message translates to:
+  /// **'Set up meeting posts'**
+  String get cellGroupsSetupMeetingPosts;
+
+  /// Caption under Recent meetings naming the period parent
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a meeting under {title}'**
+  String cellGroupsMeetingParentCaption(String title);
+
+  /// Shown when the stored parent post id no longer exists
+  ///
+  /// In en, this message translates to:
+  /// **'The parent post for new meetings could not be found.'**
+  String get cellGroupsMeetingParentMissing;
+
+  /// Shown when the stored parent is no longer marked as a period parent
+  ///
+  /// In en, this message translates to:
+  /// **'That parent post is no longer a period parent.'**
+  String get cellGroupsMeetingParentNotPeriod;
+
+  /// Shown when the parent post title fetch fails
+  ///
+  /// In en, this message translates to:
+  /// **'The parent post title could not be loaded.'**
+  String get cellGroupsMeetingParentLookupFailed;
+
+  /// Shown on the edit form when a stored title cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Could not look this up. Try again.'**
+  String get cellGroupsMeetingLookupFailed;
+
+  /// Alert when Add meeting cannot load the stored template
+  ///
+  /// In en, this message translates to:
+  /// **'The meeting template for this group could not be found. An area admin can choose another on the group.'**
+  String get cellGroupsMeetingTemplateMissing;
+
+  /// Progress title while verifying parent post and template
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the meeting setup…'**
+  String get cellGroupsAddMeetingChecking;
+
+  /// Section title on the edit cell group page
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting posts'**
+  String get cellGroupsMeetingPostsTitle;
+
+  /// Explains the parent post and template fields
+  ///
+  /// In en, this message translates to:
+  /// **'Leaders can add a meeting from this group\'s page when both are set.'**
+  String get cellGroupsMeetingPostsHelper;
+
+  /// Field label for the current period parent
+  ///
+  /// In en, this message translates to:
+  /// **'Parent post'**
+  String get cellGroupsMeetingParentLabel;
+
+  /// Helper for the parent post field
+  ///
+  /// In en, this message translates to:
+  /// **'New meetings are filed under this period parent.'**
+  String get cellGroupsMeetingParentHelper;
+
+  /// Empty value for the parent post field
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get cellGroupsMeetingParentNotSet;
+
+  /// Alert title when the chosen parent cannot be used
+  ///
+  /// In en, this message translates to:
+  /// **'Parent post'**
+  String get cellGroupsMeetingParentInvalidTitle;
+
+  /// Field label and picker title for the meeting template
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting template'**
+  String get cellGroupsMeetingTemplateLabel;
+
+  /// Helper for the meeting template field
+  ///
+  /// In en, this message translates to:
+  /// **'New meetings use this template. Link this group on the template so they also appear when someone starts from the template.'**
+  String get cellGroupsMeetingTemplateHelper;
+
+  /// Empty value for the meeting template field
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get cellGroupsMeetingTemplateNotSet;
+
+  /// Alert title when the chosen template cannot be used
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting template'**
+  String get cellGroupsMeetingTemplateInvalidTitle;
+
+  /// Alert when the stored or chosen template is missing
+  ///
+  /// In en, this message translates to:
+  /// **'That meeting template could not be found.'**
+  String get cellGroupsMeetingTemplateInvalid;
+
+  /// Placeholder while a stored parent or template title is loading
+  ///
+  /// In en, this message translates to:
+  /// **'Looking up…'**
+  String get cellGroupsMeetingLookingUp;
+
+  /// Confirm title when the template does not list this cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Template is not linked to this group'**
+  String get cellGroupsMeetingTemplateUnlinkedTitle;
+
+  /// Confirm body when saving a template that does not list this group
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings added from this group will still show in Recent meetings. Meetings started from the template elsewhere will not, until the template lists this group.'**
+  String get cellGroupsMeetingTemplateUnlinkedBody;
+
+  /// Access denied on the meeting template picker
+  ///
+  /// In en, this message translates to:
+  /// **'Only area admins can choose a meeting template.'**
+  String get cellGroupsMeetingTemplateDenied;
+
+  /// Progress message on the meeting template picker
+  ///
+  /// In en, this message translates to:
+  /// **'Loading templates…'**
+  String get cellGroupsMeetingTemplateLoading;
+
+  /// Error title on the meeting template picker
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load templates'**
+  String get cellGroupsMeetingTemplateLoadFailed;
+
+  /// Search hint on the meeting template picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search templates'**
+  String get cellGroupsMeetingTemplateSearch;
+
+  /// Subtitle for clearing the meeting template
+  ///
+  /// In en, this message translates to:
+  /// **'New meetings will not use a template'**
+  String get cellGroupsMeetingTemplateClearHint;
+
+  /// Empty search on the meeting template picker
+  ///
+  /// In en, this message translates to:
+  /// **'No templates match.'**
+  String get cellGroupsMeetingTemplateEmpty;
+
+  /// Badge when a template already lists this cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to this group'**
+  String get cellGroupsMeetingTemplateLinked;
+
+  /// Confirms a cell group picker
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get cellGroupsPickerDone;
+
+  /// Clears the parent post or meeting template
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get cellGroupsMeetingClear;
+
   /// Member count shown to signed-in users
   ///
   /// In en, this message translates to:
@@ -3021,6 +3213,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A post with more than one tag is counted in each.'**
   String get churchLocationStatsPostTagHint;
+
+  /// Posts card subtitle. The last 3 months and the 7-day upcoming window are separate.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months and the coming week'**
+  String get churchLocationStatsPostsSubtitle;
+
+  /// Heading for posts in the coming week on location statistics
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get churchLocationStatsUpcomingTitle;
+
+  /// Count tile for posts in the coming week at this location
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming posts'**
+  String get churchLocationStatsUpcomingPosts;
+
+  /// Same window as cell-group activity: today and the next 6 days
+  ///
+  /// In en, this message translates to:
+  /// **'Today + next 6 days'**
+  String get churchLocationStatsUpcomingPostsHint;
+
+  /// Explains that upcoming posts stay out of the 90-day attendance average, and that today sits in both windows
+  ///
+  /// In en, this message translates to:
+  /// **'Not added into the attendance average. A post today is also counted in the last 3 months.'**
+  String get churchLocationStatsUpcomingFootnote;
+
+  /// Chart subtitle on location statistics so the weekly chart is not read as the coming week
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months at this location'**
+  String get churchLocationStatsTrendSubtitle;
+
+  /// Count tile for distinct people across cell groups at this location
+  ///
+  /// In en, this message translates to:
+  /// **'Different people'**
+  String get churchLocationStatsUniquePeople;
+
+  /// Hint under the distinct cell-group people count. Signed-in viewers only.
+  ///
+  /// In en, this message translates to:
+  /// **'Each person once'**
+  String get churchLocationStatsUniquePeopleHint;
 
   /// Section title for the church hub Quill overview
   ///
@@ -4155,6 +4395,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Off'**
   String get notificationSchedulesOff;
+
+  /// Sends a sample of this reminder to the current device only
+  ///
+  /// In en, this message translates to:
+  /// **'Send test to me'**
+  String get notificationSchedulesTest;
+
+  /// Label while a scheduled-notification test is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get notificationSchedulesTestSending;
+
+  /// Confirm before sending a scheduled-notification sample
+  ///
+  /// In en, this message translates to:
+  /// **'Send a test to this device?'**
+  String get notificationSchedulesTestTitle;
+
+  /// Explains that a scheduled-notification test stays on this device
+  ///
+  /// In en, this message translates to:
+  /// **'This sends “{title}” only to this device. Nobody else is notified, and the reminder still counts as unsent.'**
+  String notificationSchedulesTestBody(String title);
+
+  /// Success after a scheduled-notification test
+  ///
+  /// In en, this message translates to:
+  /// **'Test sent — check for a notification on this device.'**
+  String get notificationSchedulesTestSent;
+
+  /// Shown when a scheduled-notification test has no device token
+  ///
+  /// In en, this message translates to:
+  /// **'No push token on this device. Turn notifications on under Personal → Settings → Push Notifications.'**
+  String get notificationSchedulesTestNoToken;
+
+  /// Shown when a scheduled-notification test fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send that test. Try again.'**
+  String get notificationSchedulesTestFailed;
 
   /// Progress message while scheduled notifications load
   ///

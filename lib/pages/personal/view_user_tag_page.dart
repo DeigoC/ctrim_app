@@ -47,12 +47,17 @@ class ViewUserTagPage extends StatefulWidget {
     super.key,
     required this.tagId,
     this.onEdit,
+    this.initialLocationId,
   });
 
   final String tagId;
 
   /// Area-admin edit of the catalogue fields. Omitted for guests and other readers.
   final VoidCallback? onEdit;
+
+  /// Location selected on open. The reader's own default is used when this
+  /// is missing or not an active location.
+  final String? initialLocationId;
 
   @override
   State<ViewUserTagPage> createState() => _ViewUserTagPageState();
@@ -94,10 +99,20 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
   void initState() {
     super.initState();
     _appContext = Provider.of<AppContext>(context, listen: false);
-    _locationId = _defaultLocationId(_appContext);
+    _locationId = _resolveLocationId(_appContext);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _loadSchedule();
     });
+  }
+
+  String? _resolveLocationId(AppContext appContext) {
+    final requested = widget.initialLocationId?.trim() ?? '';
+    if (requested.isNotEmpty) {
+      for (final location in _activeLocations(appContext)) {
+        if (location.id == requested) return location.id;
+      }
+    }
+    return _defaultLocationId(appContext);
   }
 
   String? _defaultLocationId(AppContext appContext) {

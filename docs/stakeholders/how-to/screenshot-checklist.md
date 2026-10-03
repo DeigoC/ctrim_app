@@ -106,7 +106,7 @@ Save under `assets/images/`. Skip a row if a **Home** shot already covers it.
 | [ ] | `personal-team-rota.png` | Team rota (location / ministry chips) | Personal |
 | [ ] | `personal-tag-color.png` | Add/edit team or post tag dialog with colour picker | Personal |
 | [ ] | `notifications-settings.png` | Push Notifications: This device + a location switch | Notifications |
-| [ ] | `platforms-phone.png` *(optional)* | App in a phone-width window (~390px) | Platforms |
+| [ ] | `cell-groups-add-meeting.png` *(optional)* | Group page: Add meeting beside Recent meetings, with the parent post title underneath | Cell Groups |
 
 ---
 

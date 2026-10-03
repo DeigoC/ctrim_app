@@ -3,13 +3,17 @@ import 'package:provider/provider.dart';
 
 import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/cell_group_db_manager.dart';
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/post_template_db_manager.dart';
 import '../../firebase/db_managers/user_db_manager.dart';
 import '../../models/cell_group.dart';
 import '../../models/cell_group_roster.dart';
 import '../../models/event/event_head.dart';
+import '../../models/post_template.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/cell_group_meeting_setup.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/gallery_viewer.dart';
 import '../../utility/placeholder_user_permissions.dart';
@@ -26,6 +30,7 @@ import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/user_avatar.dart';
+import '../events/post_templates/start_post_from_template.dart';
 import '../personal/select_users_page.dart';
 import '../view_gallery_page.dart';
 import 'edit_cell_group_page.dart';
@@ -48,6 +53,10 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
   CellGroupRoster? _roster;
   List<EventHead> _trail = const [];
   List<EventHead> _activityMeetings = const [];
+  String? _meetingParentTitle;
+  CellGroupMeetingParentIssue? _meetingParentIssue;
+  bool _meetingParentLookupFailed = false;
+  bool _addingMeeting = false;
 
   /// Resolved profiles for leaders + roster (avoids showing raw numeric user ids).
   Map<String, User> _usersById = const {};
@@ -104,6 +113,27 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         roster: roster,
       );
 
+      String? meetingParentTitle;
+      CellGroupMeetingParentIssue? meetingParentIssue;
+      var meetingParentLookupFailed = false;
+      final canCreatePosts =
+          !appContext.isCurrentUserGuest && appContext.currentUser.isLeader;
+      final parentId = group.meetingParentPostId;
+      if (canCreatePosts && parentId != null) {
+        try {
+          final head = await EventHeadDBManager().fetchHeadIfExists(parentId);
+          meetingParentIssue = CellGroupMeetingSetup.parentIssue(
+            exists: head != null,
+            isPeriodParent: head?.isPeriodParent ?? false,
+          );
+          if (meetingParentIssue == null) {
+            meetingParentTitle = head!.title;
+          }
+        } catch (_) {
+          meetingParentLookupFailed = true;
+        }
+      }
+
       if (!mounted) return;
       appContext.addOrUpdateCellGroup(group);
       setState(() {
@@ -112,6 +142,9 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         _trail = trail;
         _activityMeetings = activityMeetings;
         _usersById = usersById;
+        _meetingParentTitle = meetingParentTitle;
+        _meetingParentIssue = meetingParentIssue;
+        _meetingParentLookupFailed = meetingParentLookupFailed;
         _loading = false;
       });
     } catch (e) {
@@ -425,17 +458,189 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         IconButton(
           icon: const Icon(Icons.edit_outlined),
           tooltip: l10n.cellGroupsEdit,
-          onPressed: () async {
-            final updated = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(
-                builder: (_) => EditCellGroupPage(existing: group),
-              ),
-            );
-            if (updated == true && mounted) _load();
-          },
+          onPressed: () => _openEditor(group),
         ),
     ];
+  }
+
+  Future<void> _openEditor(CellGroup group) async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditCellGroupPage(existing: group),
+      ),
+    );
+    if (updated == true && mounted) _load();
+  }
+
+  Future<void> _addMeeting(CellGroup group) async {
+    if (_addingMeeting) return;
+    final l10n = AppLocalizations.of(context)!;
+    final parentId = group.meetingParentPostId;
+    final templateId = group.meetingTemplateId;
+    if (parentId == null || templateId == null) return;
+
+    setState(() => _addingMeeting = true);
+    try {
+      EventHead? head;
+      PostTemplate? template;
+      final checked = await DialogManager.runWithProgressDialog(
+        context: context,
+        title: l10n.cellGroupsAddMeetingChecking,
+        action: () async {
+          head = await EventHeadDBManager().fetchHeadIfExists(parentId);
+          template = await PostTemplateDBManager().fetchTemplate(templateId);
+        },
+      );
+      if (!mounted || !checked) return;
+
+      final issue = CellGroupMeetingSetup.parentIssue(
+        exists: head != null,
+        isPeriodParent: head?.isPeriodParent ?? false,
+      );
+      setState(() {
+        _meetingParentIssue = issue;
+        _meetingParentLookupFailed = false;
+        _meetingParentTitle = issue == null ? head!.title : null;
+      });
+      if (issue != null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: l10n.cellGroupsMeetingParentInvalidTitle,
+          content: issue == CellGroupMeetingParentIssue.notPeriodParent
+              ? l10n.cellGroupsMeetingParentNotPeriod
+              : l10n.cellGroupsMeetingParentMissing,
+          isError: true,
+        );
+        return;
+      }
+      if (!mounted) return;
+      final resolvedTemplate = template;
+      if (resolvedTemplate == null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: l10n.cellGroupsMeetingTemplateInvalidTitle,
+          content: l10n.cellGroupsMeetingTemplateMissing,
+          isError: true,
+        );
+        return;
+      }
+      final opened = await startPostFromTemplate(
+        context: context,
+        template: resolvedTemplate,
+        parentID: parentId,
+        ensureCellGroupIDs: [group.id],
+        popParentRouteOnSave: false,
+      );
+      if (opened && mounted) await _refreshMeetingTrail(group.id);
+    } finally {
+      if (mounted) setState(() => _addingMeeting = false);
+    }
+  }
+
+  Future<void> _refreshMeetingTrail(String cellGroupId) async {
+    try {
+      final trail =
+          await _db.fetchMeetingTrail(cellGroupId: cellGroupId, limit: 4);
+      if (!mounted) return;
+      setState(() => _trail = trail);
+    } catch (_) {
+      // The new post is saved; pull to refresh if the trail fetch fails.
+    }
+  }
+
+  Widget _buildMeetingsBlock({
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required AppContext appContext,
+    required CellGroup group,
+    required bool isGuest,
+  }) {
+    final canCreatePosts = !isGuest && appContext.currentUser.isLeader;
+    final canAddMeeting = canCreatePosts && group.hasMeetingPostSetup;
+    final canSetupMeetings = appContext.currentUser.canManageCellGroups &&
+        !group.hasMeetingPostSetup;
+    final caption = _meetingCaption(l10n, canAddMeeting);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                l10n.cellGroupsMeetingTrail,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (canAddMeeting)
+              TextButton.icon(
+                onPressed: _addingMeeting ? null : () => _addMeeting(group),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(l10n.cellGroupsAddMeeting),
+              ),
+          ],
+        ),
+        if (canSetupMeetings)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => _openEditor(group),
+              child: Text(l10n.cellGroupsSetupMeetingPosts),
+            ),
+          ),
+        if (caption != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            caption,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: _meetingParentIssue != null || _meetingParentLookupFailed
+                  ? colorScheme.error
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        if (_trail.isEmpty)
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: colorScheme.outlineVariant),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.cellGroupsMeetingTrailEmpty,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )
+        else
+          ..._trail.map((head) => _buildMeetingPostCard(head)),
+      ],
+    );
+  }
+
+  String? _meetingCaption(AppLocalizations l10n, bool canAddMeeting) {
+    if (!canAddMeeting) return null;
+    if (_meetingParentLookupFailed) {
+      return l10n.cellGroupsMeetingParentLookupFailed;
+    }
+    if (_meetingParentIssue == CellGroupMeetingParentIssue.missing) {
+      return l10n.cellGroupsMeetingParentMissing;
+    }
+    if (_meetingParentIssue == CellGroupMeetingParentIssue.notPeriodParent) {
+      return l10n.cellGroupsMeetingParentNotPeriod;
+    }
+    final title = _meetingParentTitle?.trim() ?? '';
+    if (title.isEmpty) return null;
+    return l10n.cellGroupsMeetingParentCaption(title);
   }
 
   Widget _buildDetailSections({
@@ -517,35 +722,13 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
         meetings: _activityMeetings,
       ),
     );
-    final meetingsBlock = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          l10n.cellGroupsMeetingTrail,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        if (_trail.isEmpty)
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: colorScheme.outlineVariant),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.cellGroupsMeetingTrailEmpty,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          )
-        else
-          ..._trail.map((head) => _buildMeetingPostCard(head)),
-      ],
+    final meetingsBlock = _buildMeetingsBlock(
+      l10n: l10n,
+      theme: theme,
+      colorScheme: colorScheme,
+      appContext: appContext,
+      group: group,
+      isGuest: isGuest,
     );
 
     final peopleColumn = <Widget>[
