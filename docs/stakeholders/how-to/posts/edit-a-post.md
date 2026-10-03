@@ -26,7 +26,7 @@ Work through whichever sections apply. Add a screenshot under each heading as yo
 ### Title & details
 
 1. Open **title / details** (or equivalent).  
-2. Update the title, about text, and related fields.  
+2. Update the title, about text, and related fields. If people are already marked as attended, **Add who attended** fills the title with shuffled shortened names (for example John D.) and `+N` when every name will not fit.  
 3. Save.  
 
 ### Schedule & roles

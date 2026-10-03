@@ -1936,6 +1936,18 @@
   "@cellGroupsDistanceUnderPointOne": {
     "description": "Distance label when a cell group is under 0.1 miles away"
   },
+  "cellGroupsEditorWhenWhereTitle": "When and where",
+  "@cellGroupsEditorWhenWhereTitle": {
+    "description": "Card title for location, postcode, weekday, and time on edit cell group"
+  },
+  "cellGroupsUnknownLeader": "Unknown leader",
+  "@cellGroupsUnknownLeader": {
+    "description": "Shown when a cell group leader profile cannot be found"
+  },
+  "cellGroupsRemove": "Remove",
+  "@cellGroupsRemove": {
+    "description": "Tooltip to remove a photo or leader while editing a cell group"
+  },
   "cellGroupsWeekdayLabel": "Meeting weekday",
   "@cellGroupsWeekdayLabel": {
     "description": "Label for usual meeting weekday on create/edit"
@@ -3291,5 +3303,25 @@
   "galleryMediaUnsupported": "This file cannot be shown",
   "@galleryMediaUnsupported": {
     "description": "Shown when a gallery item is neither a photo nor a video"
+  },
+  "postTitleAddAttendees": "Add who attended",
+  "@postTitleAddAttendees": {
+    "description": "Button on an existing post that appends shortened attendee names to the title"
+  },
+  "postTitleAddAttendeesHint": "Shuffles shortened names into the title. People who do not fit are shown as +N.",
+  "@postTitleAddAttendeesHint": {
+    "description": "Hint under Add who attended on the post title editor"
+  },
+  "postTitleAddAttendeesNoNames": "No names to add",
+  "@postTitleAddAttendeesNoNames": {
+    "description": "Shown when the attended list has no usable names for the title"
+  },
+  "postTitleAddAttendeesNeedTitle": "Enter a title first",
+  "@postTitleAddAttendeesNeedTitle": {
+    "description": "Shown when Add who attended is used before the title is filled in"
+  },
+  "postTitleAddAttendeesTooLong": "Title is already too long to add names",
+  "@postTitleAddAttendeesTooLong": {
+    "description": "Shown when the post title has no room for a shortened attendee name"
   }
 }

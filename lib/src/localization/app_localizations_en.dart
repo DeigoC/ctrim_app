@@ -1506,6 +1506,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsDistanceUnderPointOne => '< 0.1 miles';
 
   @override
+  String get cellGroupsEditorWhenWhereTitle => 'When and where';
+
+  @override
+  String get cellGroupsUnknownLeader => 'Unknown leader';
+
+  @override
+  String get cellGroupsRemove => 'Remove';
+
+  @override
   String get cellGroupsWeekdayLabel => 'Meeting weekday';
 
   @override
@@ -2555,4 +2564,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get galleryMediaUnsupported => 'This file cannot be shown';
+
+  @override
+  String get postTitleAddAttendees => 'Add who attended';
+
+  @override
+  String get postTitleAddAttendeesHint =>
+      'Shuffles shortened names into the title. People who do not fit are shown as +N.';
+
+  @override
+  String get postTitleAddAttendeesNoNames => 'No names to add';
+
+  @override
+  String get postTitleAddAttendeesNeedTitle => 'Enter a title first';
+
+  @override
+  String get postTitleAddAttendeesTooLong =>
+      'Title is already too long to add names';
 }

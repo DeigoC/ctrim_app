@@ -110,6 +110,28 @@ void main() {
       expect(visible.map((e) => e.id), ['fresh', 'older']);
     });
 
+    test('undated can include period parents that have no date', () {
+      final visible = apply(
+        [
+          head(
+            id: 'term',
+            isPeriodParent: true,
+            recentDate: DateTime(2026, 8, 22),
+          ),
+          head(
+            id: 'dated-term',
+            isPeriodParent: true,
+            eventDate: DateTime(2026, 9, 1),
+          ),
+          head(id: 'note', recentDate: DateTime(2026, 8, 1)),
+        ],
+        timeFilter: BulletinTimeFilter.undated,
+        excludePeriodParents: false,
+        sort: BulletinSort.recentDate,
+      );
+      expect(visible.map((e) => e.id), ['term', 'note']);
+    });
+
     test('bookmarks, location, and tags compose', () {
       final visible = apply(
         [

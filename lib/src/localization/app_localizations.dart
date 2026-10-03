@@ -2608,6 +2608,24 @@ abstract class AppLocalizations {
   /// **'< 0.1 miles'**
   String get cellGroupsDistanceUnderPointOne;
 
+  /// Card title for location, postcode, weekday, and time on edit cell group
+  ///
+  /// In en, this message translates to:
+  /// **'When and where'**
+  String get cellGroupsEditorWhenWhereTitle;
+
+  /// Shown when a cell group leader profile cannot be found
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown leader'**
+  String get cellGroupsUnknownLeader;
+
+  /// Tooltip to remove a photo or leader while editing a cell group
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get cellGroupsRemove;
+
   /// Label for usual meeting weekday on create/edit
   ///
   /// In en, this message translates to:
@@ -4497,6 +4515,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This file cannot be shown'**
   String get galleryMediaUnsupported;
+
+  /// Button on an existing post that appends shortened attendee names to the title
+  ///
+  /// In en, this message translates to:
+  /// **'Add who attended'**
+  String get postTitleAddAttendees;
+
+  /// Hint under Add who attended on the post title editor
+  ///
+  /// In en, this message translates to:
+  /// **'Shuffles shortened names into the title. People who do not fit are shown as +N.'**
+  String get postTitleAddAttendeesHint;
+
+  /// Shown when the attended list has no usable names for the title
+  ///
+  /// In en, this message translates to:
+  /// **'No names to add'**
+  String get postTitleAddAttendeesNoNames;
+
+  /// Shown when Add who attended is used before the title is filled in
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title first'**
+  String get postTitleAddAttendeesNeedTitle;
+
+  /// Shown when the post title has no room for a shortened attendee name
+  ///
+  /// In en, this message translates to:
+  /// **'Title is already too long to add names'**
+  String get postTitleAddAttendeesTooLong;
 }
 
 class _AppLocalizationsDelegate
