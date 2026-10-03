@@ -50,7 +50,7 @@ A reminder can go out:
 - the morning of the event, at a time you choose
 - a set number of hours before the start
 
-The list shows the next matching post, when it will send, and whether the last send worked. A reminder can be turned off or deleted. If the morning time is later than that post’s start, that post is skipped.
+The list shows the next matching post, when it will send, and whether the last send worked. **Send test to me** delivers that next post’s reminder to this device only. It does not notify the location, and it does not count as the real send. A reminder can be turned off or deleted. If the morning time is later than that post’s start, that post is skipped.
 
 ## Web first
 

@@ -34,6 +34,7 @@ class CellGroup {
   String? _keyGraphicSrc;
   String? _postcode;
   double? _latitude, _longitude;
+  String? _meetingParentPostId, _meetingTemplateId;
   DateTime? _createdAt, _updatedAt;
 
   static const int maxMediaItems = 8;
@@ -54,6 +55,8 @@ class CellGroup {
     String? postcode,
     double? latitude,
     double? longitude,
+    String? meetingParentPostId,
+    String? meetingTemplateId,
     String createdByUserID = '',
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -73,6 +76,8 @@ class CellGroup {
     _createdByUserID = createdByUserID;
     _createdAt = createdAt;
     _updatedAt = updatedAt;
+    _meetingParentPostId = _optionalId(meetingParentPostId);
+    _meetingTemplateId = _optionalId(meetingTemplateId);
     _applyPostcodeGeo(
         postcode: postcode, latitude: latitude, longitude: longitude);
     _syncKeyGraphicWithMedia();
@@ -92,6 +97,8 @@ class CellGroup {
         _meetingWeekday = (data['MeetingWeekday'] as num?)?.toInt(),
         _meetingTime = (data['MeetingTime'] as String?) ?? '',
         _createdByUserID = (data['CreatedByUserID'] as String?) ?? '',
+        _meetingParentPostId = _optionalId(data['MeetingParentPostId']),
+        _meetingTemplateId = _optionalId(data['MeetingTemplateId']),
         _createdAt = _parseTimestamp(data['CreatedAt']),
         _updatedAt = _parseTimestamp(data['UpdatedAt']) {
     _applyPostcodeGeo(
@@ -113,6 +120,12 @@ class CellGroup {
     if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
     if (raw is num) return DateTime.fromMillisecondsSinceEpoch(raw.toInt());
     return null;
+  }
+
+  static String? _optionalId(final dynamic raw) {
+    if (raw is! String) return null;
+    final trimmed = raw.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   static double? _parseDouble(final dynamic raw) {
@@ -172,6 +185,9 @@ class CellGroup {
       if (_postcode != null) 'Postcode': _postcode,
       if (_latitude != null) 'Latitude': _latitude,
       if (_longitude != null) 'Longitude': _longitude,
+      if (_meetingParentPostId != null)
+        'MeetingParentPostId': _meetingParentPostId,
+      if (_meetingTemplateId != null) 'MeetingTemplateId': _meetingTemplateId,
       if (_createdAt != null) 'CreatedAt': Timestamp.fromDate(_createdAt!),
       if (_updatedAt != null) 'UpdatedAt': Timestamp.fromDate(_updatedAt!),
     };
@@ -192,6 +208,12 @@ class CellGroup {
   String? get postcode => _postcode;
   double? get latitude => _latitude;
   double? get longitude => _longitude;
+
+  /// Current period-parent post new meetings are filed under.
+  String? get meetingParentPostId => _meetingParentPostId;
+
+  /// Template used by Add meeting on the group page.
+  String? get meetingTemplateId => _meetingTemplateId;
   String get createdByUserID => _createdByUserID;
   DateTime? get createdAt => _createdAt;
   DateTime? get updatedAt => _updatedAt;
@@ -202,6 +224,10 @@ class CellGroup {
   bool get hasKeyGraphic =>
       _keyGraphicSrc != null && _keyGraphicSrc!.isNotEmpty;
   bool get hasCoordinates => _latitude != null && _longitude != null;
+
+  /// Both ids needed before leaders can add a meeting from this group.
+  bool get hasMeetingPostSetup =>
+      _meetingParentPostId != null && _meetingTemplateId != null;
 
   bool isLeaderUser(final String userId) =>
       userId.isNotEmpty && _leaderUserIds.contains(userId);
@@ -261,6 +287,12 @@ class CellGroup {
   }
 
   void clearPostcodeGeo() => _applyPostcodeGeo();
+
+  void setMeetingParentPostId(final String? id) =>
+      _meetingParentPostId = _optionalId(id);
+
+  void setMeetingTemplateId(final String? id) =>
+      _meetingTemplateId = _optionalId(id);
 
   void setMemberCount(final int count) => _memberCount = count < 0 ? 0 : count;
   void setUpdatedAt(final DateTime value) => _updatedAt = value;

@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/cell_group_db_manager.dart';
+import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/db_managers/post_template_db_manager.dart';
 import '../../models/cell_group.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/volunteer_locations.dart';
+import '../../utility/cell_group_meeting_setup.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/event_context.dart';
@@ -18,7 +21,9 @@ import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
 import '../../widgets/user_avatar.dart';
 import '../events/add_media_file_page.dart';
+import '../events/select_period_parent_page.dart';
 import '../personal/select_users_page.dart';
+import 'select_meeting_template_page.dart';
 
 /// Area-admin create / edit for a cell group profile + leadership.
 class EditCellGroupPage extends StatefulWidget {
@@ -43,6 +48,15 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   late List<String> _leaderUserIds;
   late List<Map<String, dynamic>> _media;
   String? _keyGraphicSrc;
+  String? _meetingParentPostId;
+  String? _meetingParentTitle;
+  CellGroupMeetingParentIssue? _meetingParentIssue;
+  String? _meetingTemplateId;
+  String? _meetingTemplateTitle;
+  bool _meetingTemplateMissing = false;
+  bool _meetingParentLookupFailed = false;
+  bool _meetingTemplateLookupFailed = false;
+  bool _resolvingMeetingSetup = false;
   bool _saving = false;
   bool _isSaved = false;
   bool _allowPop = false;
@@ -57,6 +71,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   late final List<String> _initialLeaderUserIds;
   late final List<String> _initialMediaSrcs;
   late final String? _initialKeyGraphicSrc;
+  late final String? _initialMeetingParentPostId;
+  late final String? _initialMeetingTemplateId;
 
   bool get _isEditing => widget.existing != null;
 
@@ -93,6 +109,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             .toList() ??
         [];
     _initialKeyGraphicSrc = existing?.keyGraphicSrc;
+    _initialMeetingParentPostId = existing?.meetingParentPostId;
+    _initialMeetingTemplateId = existing?.meetingTemplateId;
 
     _nameController = TextEditingController(text: _initialName);
     _summaryController = TextEditingController(text: _initialSummary);
@@ -105,6 +123,14 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     _media =
         existing?.media.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
     _keyGraphicSrc = _initialKeyGraphicSrc;
+    _meetingParentPostId = _initialMeetingParentPostId;
+    _meetingTemplateId = _initialMeetingTemplateId;
+    if (_meetingParentPostId != null || _meetingTemplateId != null) {
+      _resolvingMeetingSetup = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resolveMeetingLabels();
+      });
+    }
   }
 
   bool _hasUnsavedChanges() {
@@ -117,6 +143,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     if (_weekday != _initialWeekday) return true;
     if (!_sameIdLists(_leaderUserIds, _initialLeaderUserIds)) return true;
     if (_keyGraphicSrc != _initialKeyGraphicSrc) return true;
+    if (_meetingParentPostId != _initialMeetingParentPostId) return true;
+    if (_meetingTemplateId != _initialMeetingTemplateId) return true;
     final currentSrcs = _media
         .map((e) => (e['src'] as String?) ?? '')
         .where((s) => s.isNotEmpty)
@@ -311,6 +339,53 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
                       helperMaxLines: 2,
                       border: const OutlineInputBorder(),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    l10n.cellGroupsMeetingPostsTitle,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.cellGroupsMeetingPostsHelper,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _MeetingSetupField(
+                    label: l10n.cellGroupsMeetingParentLabel,
+                    helper: l10n.cellGroupsMeetingParentHelper,
+                    value: _parentFieldValue(l10n),
+                    valueIsError: _meetingParentIssue != null ||
+                        _meetingParentLookupFailed,
+                    onPick: _pickParent,
+                    onClear: _meetingParentPostId == null
+                        ? null
+                        : () => setState(() {
+                              _meetingParentPostId = null;
+                              _meetingParentTitle = null;
+                              _meetingParentIssue = null;
+                              _meetingParentLookupFailed = false;
+                            }),
+                  ),
+                  const SizedBox(height: 16),
+                  _MeetingSetupField(
+                    label: l10n.cellGroupsMeetingTemplateLabel,
+                    helper: l10n.cellGroupsMeetingTemplateHelper,
+                    value: _templateFieldValue(l10n),
+                    valueIsError:
+                        _meetingTemplateMissing || _meetingTemplateLookupFailed,
+                    onPick: _pickTemplate,
+                    onClear: _meetingTemplateId == null
+                        ? null
+                        : () => setState(() {
+                              _meetingTemplateId = null;
+                              _meetingTemplateTitle = null;
+                              _meetingTemplateMissing = false;
+                              _meetingTemplateLookupFailed = false;
+                            }),
                   ),
                   const SizedBox(height: 16),
                   InputDecorator(
@@ -531,6 +606,279 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     });
   }
 
+  String _parentFieldValue(AppLocalizations l10n) {
+    if (_meetingParentIssue == CellGroupMeetingParentIssue.missing) {
+      return l10n.cellGroupsMeetingParentMissing;
+    }
+    if (_meetingParentIssue == CellGroupMeetingParentIssue.notPeriodParent) {
+      return l10n.cellGroupsMeetingParentNotPeriod;
+    }
+    if (_meetingParentLookupFailed) {
+      return l10n.cellGroupsMeetingLookupFailed;
+    }
+    if (_meetingParentTitle != null && _meetingParentTitle!.isNotEmpty) {
+      return _meetingParentTitle!;
+    }
+    if (_resolvingMeetingSetup && _meetingParentPostId != null) {
+      return l10n.cellGroupsMeetingLookingUp;
+    }
+    return l10n.cellGroupsMeetingParentNotSet;
+  }
+
+  String _templateFieldValue(AppLocalizations l10n) {
+    if (_meetingTemplateMissing) return l10n.cellGroupsMeetingTemplateInvalid;
+    if (_meetingTemplateLookupFailed) {
+      return l10n.cellGroupsMeetingLookupFailed;
+    }
+    if (_meetingTemplateTitle != null && _meetingTemplateTitle!.isNotEmpty) {
+      return _meetingTemplateTitle!;
+    }
+    if (_resolvingMeetingSetup && _meetingTemplateId != null) {
+      return l10n.cellGroupsMeetingLookingUp;
+    }
+    return l10n.cellGroupsMeetingTemplateNotSet;
+  }
+
+  Future<void> _resolveMeetingLabels() async {
+    final parentId = _meetingParentPostId;
+    final templateId = _meetingTemplateId;
+    String? parentTitle;
+    CellGroupMeetingParentIssue? parentIssue;
+    String? templateTitle;
+    var templateMissing = false;
+    try {
+      if (parentId != null) {
+        final head = await EventHeadDBManager().fetchHeadIfExists(parentId);
+        parentIssue = CellGroupMeetingSetup.parentIssue(
+          exists: head != null,
+          isPeriodParent: head?.isPeriodParent ?? false,
+        );
+        if (parentIssue == null) parentTitle = head!.title;
+      }
+      if (templateId != null) {
+        final template =
+            await PostTemplateDBManager().fetchTemplate(templateId);
+        if (template == null) {
+          templateMissing = true;
+        } else {
+          templateTitle = template.title;
+        }
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _resolvingMeetingSetup = false;
+        _meetingParentLookupFailed = _meetingParentPostId != null;
+        _meetingTemplateLookupFailed = _meetingTemplateId != null;
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _meetingParentTitle = parentTitle;
+      _meetingParentIssue = parentIssue;
+      _meetingTemplateTitle = templateTitle;
+      _meetingTemplateMissing = templateMissing;
+      _meetingParentLookupFailed = false;
+      _meetingTemplateLookupFailed = false;
+      _resolvingMeetingSetup = false;
+    });
+  }
+
+  Future<void> _pickParent() async {
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectPeriodParentPage(
+          currentParentID: _meetingParentPostId,
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+    if (result.isEmpty) {
+      setState(() {
+        _meetingParentPostId = null;
+        _meetingParentTitle = null;
+        _meetingParentIssue = null;
+        _meetingParentLookupFailed = false;
+      });
+      return;
+    }
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final head = await EventHeadDBManager().fetchHeadIfExists(result);
+      if (!mounted) return;
+      final issue = CellGroupMeetingSetup.parentIssue(
+        exists: head != null,
+        isPeriodParent: head?.isPeriodParent ?? false,
+      );
+      if (issue != null || head == null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: l10n.cellGroupsMeetingParentInvalidTitle,
+          content: issue == CellGroupMeetingParentIssue.notPeriodParent
+              ? l10n.cellGroupsMeetingParentNotPeriod
+              : l10n.cellGroupsMeetingParentMissing,
+          isError: true,
+        );
+        return;
+      }
+      setState(() {
+        _meetingParentPostId = head.id;
+        _meetingParentTitle = head.title;
+        _meetingParentIssue = null;
+        _meetingParentLookupFailed = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.cellGroupsMeetingParentInvalidTitle,
+        content: l10n.cellGroupsMeetingParentLookupFailed,
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _pickTemplate() async {
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectMeetingTemplatePage(
+          currentTemplateId: _meetingTemplateId,
+          cellGroupId: widget.existing?.id,
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+    if (result.isEmpty) {
+      setState(() {
+        _meetingTemplateId = null;
+        _meetingTemplateTitle = null;
+        _meetingTemplateMissing = false;
+        _meetingTemplateLookupFailed = false;
+      });
+      return;
+    }
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final template = await PostTemplateDBManager().fetchTemplate(result);
+      if (!mounted) return;
+      if (template == null) {
+        await DialogManager.showAlertDialog(
+          context: context,
+          title: l10n.cellGroupsMeetingTemplateInvalidTitle,
+          content: l10n.cellGroupsMeetingTemplateInvalid,
+          isError: true,
+        );
+        return;
+      }
+      setState(() {
+        _meetingTemplateId = template.id;
+        _meetingTemplateTitle = template.title;
+        _meetingTemplateMissing = false;
+        _meetingTemplateLookupFailed = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.cellGroupsMeetingTemplateInvalidTitle,
+        content: l10n.cellGroupsMeetingTemplateInvalid,
+        isError: true,
+      );
+    }
+  }
+
+  /// Re-checks the stored ids and, when editing, asks before keeping a template
+  /// that does not list this group. Returns false when save should stop.
+  Future<bool> _confirmMeetingSetup(AppLocalizations l10n) async {
+    final parentId = _meetingParentPostId;
+    final templateId = _meetingTemplateId;
+    if (parentId == null && templateId == null) return true;
+
+    var parentOk = true;
+    var templateOk = true;
+    var templateLinksGroup = true;
+    String? parentTitle;
+    String? templateTitle;
+    CellGroupMeetingParentIssue? parentIssue;
+    try {
+      if (parentId != null) {
+        final head = await EventHeadDBManager().fetchHeadIfExists(parentId);
+        parentIssue = CellGroupMeetingSetup.parentIssue(
+          exists: head != null,
+          isPeriodParent: head?.isPeriodParent ?? false,
+        );
+        parentOk = parentIssue == null;
+        if (parentOk) parentTitle = head!.title;
+      }
+      if (templateId != null) {
+        final template =
+            await PostTemplateDBManager().fetchTemplate(templateId);
+        if (template == null) {
+          templateOk = false;
+        } else {
+          templateTitle = template.title;
+          final groupId = widget.existing?.id ?? '';
+          templateLinksGroup = groupId.isEmpty ||
+              CellGroupMeetingSetup.templateIncludesGroup(
+                template.cellGroupIDs,
+                groupId,
+              );
+        }
+      }
+    } catch (_) {
+      if (!mounted) return false;
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.cellGroupsMeetingParentInvalidTitle,
+        content: l10n.cellGroupsMeetingParentLookupFailed,
+        isError: true,
+      );
+      return false;
+    }
+    if (!mounted) return false;
+    setState(() {
+      _meetingParentTitle = parentTitle;
+      _meetingParentIssue = parentIssue;
+      _meetingTemplateTitle = templateTitle;
+      _meetingTemplateMissing = !templateOk && templateId != null;
+      _meetingParentLookupFailed = false;
+      _meetingTemplateLookupFailed = false;
+    });
+    if (!parentOk) {
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.cellGroupsMeetingParentInvalidTitle,
+        content: parentIssue == CellGroupMeetingParentIssue.notPeriodParent
+            ? l10n.cellGroupsMeetingParentNotPeriod
+            : l10n.cellGroupsMeetingParentMissing,
+        isError: true,
+      );
+      return false;
+    }
+    if (!templateOk) {
+      await DialogManager.showAlertDialog(
+        context: context,
+        title: l10n.cellGroupsMeetingTemplateInvalidTitle,
+        content: l10n.cellGroupsMeetingTemplateInvalid,
+        isError: true,
+      );
+      return false;
+    }
+    if (!templateLinksGroup) {
+      final proceed = await DialogManager.showConfirmationDialog(
+        context: context,
+        title: l10n.cellGroupsMeetingTemplateUnlinkedTitle,
+        content: l10n.cellGroupsMeetingTemplateUnlinkedBody,
+        confirmText: l10n.save,
+      );
+      if (!proceed || !mounted) return false;
+    }
+    return true;
+  }
+
   Future<void> _pickLeaders() async {
     final result = await Navigator.push<List<String>>(
       context,
@@ -608,6 +956,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
       }
     }
 
+    if (!await _confirmMeetingSetup(l10n) || !mounted) return;
+
     setState(() => _saving = true);
     final ok = await DialogManager.runWithProgressDialog(
       context: context,
@@ -625,6 +975,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
           group.setLeaders(userIds: _leaderUserIds, authIds: authIds);
           group.setMedia(mediaCopy);
           group.setKeyGraphicSrc(keySrc);
+          group.setMeetingParentPostId(_meetingParentPostId);
+          group.setMeetingTemplateId(_meetingTemplateId);
           if (postcode == null) {
             group.clearPostcodeGeo();
           } else {
@@ -656,6 +1008,8 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             postcode: postcode,
             latitude: latitude,
             longitude: longitude,
+            meetingParentPostId: _meetingParentPostId,
+            meetingTemplateId: _meetingTemplateId,
             createdByUserID: appContext.currentUser.id,
           );
           appContext.addOrUpdateCellGroup(created);
@@ -698,5 +1052,60 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     final options = _locationOptions();
     if (options.contains(_location)) return _location;
     return options.isNotEmpty ? options.first : _location;
+  }
+}
+
+class _MeetingSetupField extends StatelessWidget {
+  const _MeetingSetupField({
+    required this.label,
+    required this.helper,
+    required this.value,
+    required this.valueIsError,
+    required this.onPick,
+    this.onClear,
+  });
+
+  final String label;
+  final String helper;
+  final String value;
+  final bool valueIsError;
+  final VoidCallback onPick;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onPick,
+      borderRadius: BorderRadius.circular(4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          helperText: helper,
+          helperMaxLines: 4,
+          border: const OutlineInputBorder(),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: valueIsError ? colorScheme.error : null,
+                ),
+              ),
+            ),
+            if (onClear != null)
+              IconButton(
+                tooltip: l10n.cellGroupsMeetingClear,
+                icon: const Icon(Icons.close),
+                onPressed: onClear,
+              ),
+            Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+          ],
+        ),
+      ),
+    );
   }
 }

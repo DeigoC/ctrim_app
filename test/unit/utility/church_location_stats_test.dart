@@ -1,6 +1,7 @@
 import 'package:ctrim_app/models/cell_group.dart';
 import 'package:ctrim_app/models/event/event_head.dart';
 import 'package:ctrim_app/models/user.dart';
+import 'package:ctrim_app/utility/cell_group_activity_stats.dart';
 import 'package:ctrim_app/utility/church_location_stats.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -124,6 +125,21 @@ void main() {
       expect(
         ChurchLocationStats.queryRangeEndExclusive(now),
         DateTime(2026, 8, 23),
+      );
+    });
+
+    test('upcoming window matches cell-group activity', () {
+      expect(
+        ChurchLocationStats.upcomingQueryRangeStart(now),
+        CellGroupActivityStats.upcomingWindowStart(now),
+      );
+      expect(
+        ChurchLocationStats.upcomingQueryRangeEndExclusive(now),
+        CellGroupActivityStats.upcomingWindowEndExclusive(now),
+      );
+      expect(
+        ChurchLocationStats.upcomingQueryRangeEndExclusive(now),
+        DateTime(2026, 8, 29),
       );
     });
   });

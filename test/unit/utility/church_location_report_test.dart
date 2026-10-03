@@ -234,6 +234,7 @@ void main() {
 
       expect(report.cellGroups.groupCount, 3);
       expect(report.cellGroups.membersListed, 22);
+      expect(report.cellGroups.uniquePeople, isNull);
       expect(report.cellGroups.averageSize, 22 / 3);
       expect(
         report.cellGroups.groups.map((row) => (row.id, row.count)),
@@ -316,6 +317,101 @@ void main() {
         'retired-tag',
         'online',
       ]);
+      expect(report.posts.upcoming.postCount, 0);
+    });
+
+    test('counts a person on two group rosters once', () {
+      final report = ChurchLocationReport.compute(
+        location: 'Belfast',
+        users: const [],
+        groups: [
+          CellGroup(
+              id: 'a', name: 'North', location: 'Belfast', memberCount: 2),
+          CellGroup(
+              id: 'b', name: 'South', location: 'Belfast', memberCount: 2),
+        ],
+        heads: const [],
+        ministries: const [],
+        postTags: const [],
+        viewerIsGuest: false,
+        rosterUserIdsByGroup: const [
+          ['ada', 'ben', ''],
+          ['ben', '  ', 'cio'],
+        ],
+        now: now,
+      );
+
+      expect(report.cellGroups.membersListed, 4);
+      expect(report.cellGroups.uniquePeople, 3);
+    });
+
+    test('upcoming posts stay out of the attendance average', () {
+      final today = post(
+        id: 'today',
+        eventDate: DateTime(2026, 8, 22, 11),
+        attendance: 4,
+        cellGroupIDs: ['cg'],
+      );
+      final past = post(
+        id: 'past',
+        eventDate: DateTime(2026, 8, 1),
+        attendance: 6,
+      );
+      final soon = post(
+        id: 'soon',
+        eventDate: DateTime(2026, 8, 25),
+        attendance: 100,
+        cellGroupIDs: ['cg'],
+      );
+
+      final report = ChurchLocationReport.compute(
+        location: 'Belfast',
+        users: const [],
+        groups: const [],
+        heads: [
+          today,
+          past,
+          soon,
+          post(
+            id: 'series',
+            eventDate: DateTime(2026, 8, 24),
+            isPeriodParent: true,
+            attendance: 50,
+          ),
+        ],
+        upcomingHeads: [
+          today,
+          soon,
+          post(
+            id: 'too-far',
+            eventDate: DateTime(2026, 8, 29),
+            attendance: 9,
+          ),
+          post(
+            id: 'elsewhere',
+            eventDate: DateTime(2026, 8, 24),
+            location: 'Portadown',
+            attendance: 3,
+          ),
+          post(
+            id: 'series-upcoming',
+            eventDate: DateTime(2026, 8, 24),
+            isPeriodParent: true,
+          ),
+        ],
+        ministries: const [],
+        postTags: const [],
+        viewerIsGuest: true,
+        now: now,
+      );
+
+      expect(report.posts.postCount, 2);
+      expect(report.posts.attendanceTotal, 10);
+      expect(report.posts.averageAttendance, 5);
+      expect(report.posts.posts.map((head) => head.id), ['today', 'past']);
+      expect(report.posts.upcoming.postCount, 2);
+      expect(report.posts.upcoming.cellGroupMeetingCount, 2);
+      expect(report.posts.upcoming.otherPostCount, 0);
     });
   });
 }

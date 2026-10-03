@@ -13,6 +13,7 @@ void main() {
   EventHead head({
     String id = 'post-1',
     String title = 'Sunday Worship',
+    String subtitle = '',
     String location = 'Belfast',
     List<String> tagIDs = const ['tag-sun'],
     DateTime? eventDate,
@@ -21,6 +22,7 @@ void main() {
     final created = EventHead(
       id: id,
       title: title,
+      subtitle: subtitle,
       location: location,
       tagIDs: tagIDs,
       isPeriodParent: periodParent,
@@ -75,6 +77,23 @@ void main() {
       expect(
         NotificationSchedulePlanner.comingUpBody(winterSunday),
         'Coming up · Sun, Nov 1 · 10:30',
+      );
+    });
+
+    test('reminder body puts the subtitle above the start time', () {
+      final withSubtitle = head(
+        subtitle: '  Gather at the hall  ',
+        eventDate: sundayMorning,
+      );
+      expect(
+        NotificationSchedulePlanner.reminderBody(withSubtitle),
+        'Gather at the hall\nComing up · Sun, Oct 4 · 10:30',
+      );
+      expect(
+        NotificationSchedulePlanner.reminderBody(
+          head(eventDate: sundayMorning),
+        ),
+        'Coming up · Sun, Oct 4 · 10:30',
       );
     });
 

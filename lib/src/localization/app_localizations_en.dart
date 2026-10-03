@@ -1249,6 +1249,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cellGroupsMeetingTrailEmpty => 'No linked meeting posts yet.';
 
   @override
+  String get cellGroupsAddMeeting => 'Add meeting';
+
+  @override
+  String get cellGroupsSetupMeetingPosts => 'Set up meeting posts';
+
+  @override
+  String cellGroupsMeetingParentCaption(String title) {
+    return 'Adds a meeting under $title';
+  }
+
+  @override
+  String get cellGroupsMeetingParentMissing =>
+      'The parent post for new meetings could not be found.';
+
+  @override
+  String get cellGroupsMeetingParentNotPeriod =>
+      'That parent post is no longer a period parent.';
+
+  @override
+  String get cellGroupsMeetingParentLookupFailed =>
+      'The parent post title could not be loaded.';
+
+  @override
+  String get cellGroupsMeetingLookupFailed =>
+      'Could not look this up. Try again.';
+
+  @override
+  String get cellGroupsMeetingTemplateMissing =>
+      'The meeting template for this group could not be found. An area admin can choose another on the group.';
+
+  @override
+  String get cellGroupsAddMeetingChecking => 'Checking the meeting setup…';
+
+  @override
+  String get cellGroupsMeetingPostsTitle => 'Meeting posts';
+
+  @override
+  String get cellGroupsMeetingPostsHelper =>
+      'Leaders can add a meeting from this group\'s page when both are set.';
+
+  @override
+  String get cellGroupsMeetingParentLabel => 'Parent post';
+
+  @override
+  String get cellGroupsMeetingParentHelper =>
+      'New meetings are filed under this period parent.';
+
+  @override
+  String get cellGroupsMeetingParentNotSet => 'Not set';
+
+  @override
+  String get cellGroupsMeetingParentInvalidTitle => 'Parent post';
+
+  @override
+  String get cellGroupsMeetingTemplateLabel => 'Meeting template';
+
+  @override
+  String get cellGroupsMeetingTemplateHelper =>
+      'New meetings use this template. Link this group on the template so they also appear when someone starts from the template.';
+
+  @override
+  String get cellGroupsMeetingTemplateNotSet => 'Not set';
+
+  @override
+  String get cellGroupsMeetingTemplateInvalidTitle => 'Meeting template';
+
+  @override
+  String get cellGroupsMeetingTemplateInvalid =>
+      'That meeting template could not be found.';
+
+  @override
+  String get cellGroupsMeetingLookingUp => 'Looking up…';
+
+  @override
+  String get cellGroupsMeetingTemplateUnlinkedTitle =>
+      'Template is not linked to this group';
+
+  @override
+  String get cellGroupsMeetingTemplateUnlinkedBody =>
+      'Meetings added from this group will still show in Recent meetings. Meetings started from the template elsewhere will not, until the template lists this group.';
+
+  @override
+  String get cellGroupsMeetingTemplateDenied =>
+      'Only area admins can choose a meeting template.';
+
+  @override
+  String get cellGroupsMeetingTemplateLoading => 'Loading templates…';
+
+  @override
+  String get cellGroupsMeetingTemplateLoadFailed => 'Could not load templates';
+
+  @override
+  String get cellGroupsMeetingTemplateSearch => 'Search templates';
+
+  @override
+  String get cellGroupsMeetingTemplateClearHint =>
+      'New meetings will not use a template';
+
+  @override
+  String get cellGroupsMeetingTemplateEmpty => 'No templates match.';
+
+  @override
+  String get cellGroupsMeetingTemplateLinked => 'Linked to this group';
+
+  @override
+  String get cellGroupsPickerDone => 'Done';
+
+  @override
+  String get cellGroupsMeetingClear => 'Clear';
+
+  @override
   String cellGroupsMemberCount(int count) {
     return '$count members';
   }
@@ -1718,6 +1829,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get churchLocationStatsPostTagHint =>
       'A post with more than one tag is counted in each.';
+
+  @override
+  String get churchLocationStatsPostsSubtitle =>
+      'Last 3 months and the coming week';
+
+  @override
+  String get churchLocationStatsUpcomingTitle => 'Coming up';
+
+  @override
+  String get churchLocationStatsUpcomingPosts => 'Upcoming posts';
+
+  @override
+  String get churchLocationStatsUpcomingPostsHint => 'Today + next 6 days';
+
+  @override
+  String get churchLocationStatsUpcomingFootnote =>
+      'Not added into the attendance average. A post today is also counted in the last 3 months.';
+
+  @override
+  String get churchLocationStatsTrendSubtitle =>
+      'Last 3 months at this location';
+
+  @override
+  String get churchLocationStatsUniquePeople => 'Different people';
+
+  @override
+  String get churchLocationStatsUniquePeopleHint => 'Each person once';
 
   @override
   String get churchHubAboutTitle => 'About';
@@ -2359,6 +2497,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationSchedulesOff => 'Off';
+
+  @override
+  String get notificationSchedulesTest => 'Send test to me';
+
+  @override
+  String get notificationSchedulesTestSending => 'Sending…';
+
+  @override
+  String get notificationSchedulesTestTitle => 'Send a test to this device?';
+
+  @override
+  String notificationSchedulesTestBody(String title) {
+    return 'This sends “$title” only to this device. Nobody else is notified, and the reminder still counts as unsent.';
+  }
+
+  @override
+  String get notificationSchedulesTestSent =>
+      'Test sent — check for a notification on this device.';
+
+  @override
+  String get notificationSchedulesTestNoToken =>
+      'No push token on this device. Turn notifications on under Personal → Settings → Push Notifications.';
+
+  @override
+  String get notificationSchedulesTestFailed =>
+      'Could not send that test. Try again.';
 
   @override
   String get notificationSchedulesLoading => 'Loading reminders';

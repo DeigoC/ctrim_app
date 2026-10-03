@@ -9,11 +9,14 @@ import '../../utility/activity_time_series.dart';
 import '../../utility/app_context.dart';
 import '../../utility/app_links.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
+import '../../utility/cell_group_roster_cache.dart';
+import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/church_location_report.dart';
 import '../../utility/church_location_stats.dart';
 import '../../utility/info_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
+import '../personal/view_user_tag_page.dart';
 import '../../widgets/common/activity_trend_section.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/information/info_section_card.dart';
@@ -47,6 +50,11 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
 
   ChurchInfo? _church;
   List<EventHead>? _heads;
+  List<EventHead>? _upcomingHeads;
+
+  /// Linked user ids per cell group at this location. Null when rosters
+  /// were not read (guests, or the read failed).
+  List<List<String>>? _rosterUserIdsByGroup;
   DateTime? _asOf;
   bool _loadingChurch = true;
   bool _loggedScreen = false;
@@ -87,6 +95,8 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
           _church = church;
           _loadingChurch = false;
           _heads = const [];
+          _upcomingHeads = const [];
+          _rosterUserIdsByGroup = null;
           _asOf = DateTime.now();
           _statsError = null;
         });
@@ -100,13 +110,27 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
       });
 
       final clock = DateTime.now();
-      final heads = await _eventHeads.fetchHeadsWithEventDateInRange(
+      final headsFuture = _eventHeads.fetchHeadsWithEventDateInRange(
         startInclusive: ChurchLocationStats.queryRangeStart(clock),
         endExclusive: ChurchLocationStats.queryRangeEndExclusive(clock),
       );
+      final upcomingFuture = _eventHeads.fetchHeadsWithEventDateInRange(
+        startInclusive: ChurchLocationStats.upcomingQueryRangeStart(clock),
+        endExclusive: ChurchLocationStats.upcomingQueryRangeEndExclusive(clock),
+      );
+      final rosterFuture = _rosterIdsAtLocation(
+        appContext: appContext,
+        location: church.location,
+        now: clock,
+      );
+      final heads = await headsFuture;
+      final upcoming = await upcomingFuture;
+      final rosterIds = await rosterFuture;
       if (!mounted) return;
       setState(() {
         _heads = heads;
+        _upcomingHeads = upcoming;
+        _rosterUserIdsByGroup = rosterIds;
         _asOf = clock;
         _statsError = null;
       });
@@ -133,13 +157,54 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
     await _load(forceRefresh: true);
   }
 
+  /// Signed-in roster ids for groups at [location]. Guests skip the read
+  /// (rosters are not public). A failed read leaves the count unset.
+  Future<List<List<String>>?> _rosterIdsAtLocation({
+    required AppContext appContext,
+    required String location,
+    required DateTime now,
+  }) async {
+    if (appContext.isCurrentUserGuest) return null;
+    try {
+      final groupIds = ChurchLocationStats.compute(
+        location: location,
+        heads: const [],
+        groups: appContext.allCellGroups,
+        users: const [],
+        now: now,
+      ).cellGroups.map((group) => group.id).toList();
+      await CellGroupRosterHelpers.fetchActiveLinkedUserIds(groupIds);
+      final byGroup = <List<String>>[];
+      for (final id in groupIds) {
+        final roster = CellGroupRosterCache.rosterFor(id);
+        final ids = <String>[];
+        if (roster != null) {
+          for (final member in roster.members) {
+            if (member.isLinkedUser && member.isActive) {
+              ids.add(member.userId);
+            }
+          }
+        }
+        byGroup.add(ids);
+      }
+      return byGroup;
+    } catch (e, st) {
+      debugPrint(
+        'Could not load cell group rosters for location statistics: $e\n$st',
+      );
+      return null;
+    }
+  }
+
   ChurchLocationReport? _report() {
     final church = _church;
     final heads = _heads;
+    final upcoming = _upcomingHeads;
     final asOf = _asOf;
     if (church == null ||
         !church.hasLocation ||
         heads == null ||
+        upcoming == null ||
         asOf == null ||
         _statsError != null) {
       return null;
@@ -150,11 +215,23 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
       users: appContext.allUsers,
       groups: appContext.allCellGroups,
       heads: heads,
+      upcomingHeads: upcoming,
+      rosterUserIdsByGroup: _rosterUserIdsByGroup,
       ministries: appContext.allTags,
       postTags: appContext.allPostTags,
       viewerIsGuest: appContext.isCurrentUserGuest,
       now: asOf,
     );
+  }
+
+  String? _locationIdFor(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return null;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    for (final location in appContext.allLocations) {
+      if (location.isActive && location.name == trimmed) return location.id;
+    }
+    return null;
   }
 
   @override
@@ -242,6 +319,7 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
                         church: church,
                         report: report,
                         asOf: _asOf,
+                        locationId: _locationIdFor(church.location),
                       ),
                     ),
                   ),
@@ -259,11 +337,13 @@ class _StatsBody extends StatelessWidget {
     required this.church,
     required this.report,
     required this.asOf,
+    required this.locationId,
   });
 
   final ChurchInfo church;
   final ChurchLocationReport? report;
   final DateTime? asOf;
+  final String? locationId;
 
   @override
   Widget build(BuildContext context) {
@@ -281,7 +361,10 @@ class _StatsBody extends StatelessWidget {
     }
 
     final cards = <Widget>[
-      _PeopleCard(section: report!.people),
+      _PeopleCard(
+        section: report!.people,
+        locationId: locationId,
+      ),
       _GroupsCard(section: report!.cellGroups),
       _PostsCard(section: report!.posts, asOf: asOf ?? DateTime.now()),
     ];
@@ -317,9 +400,13 @@ class _StatsBody extends StatelessWidget {
 }
 
 class _PeopleCard extends StatelessWidget {
-  const _PeopleCard({required this.section});
+  const _PeopleCard({
+    required this.section,
+    required this.locationId,
+  });
 
   final ChurchLocationPeopleSection section;
+  final String? locationId;
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +450,20 @@ class _PeopleCard extends StatelessWidget {
                 _StatGrid(tiles: tiles, wideColumns: 2, narrowColumns: 2),
                 if (section.ministries.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _CountRows(rows: section.ministries),
+                  _CountRows(
+                    rows: section.ministries,
+                    onOpen: (row) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => ViewUserTagPage(
+                            tagId: row.id,
+                            initialLocationId: locationId,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 8),
                   _Footnote(l10n.churchLocationStatsMinistryHint),
                 ],
@@ -382,6 +482,34 @@ class _GroupsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final average = section.averageSize;
+    final uniquePeople = section.uniquePeople;
+    final tiles = <Widget>[
+      _StatTile(
+        icon: Icons.groups_outlined,
+        value: '${section.groupCount}',
+        label: l10n.churchHubCellGroupsLabel,
+        hint: l10n.churchHubCellGroupsHint,
+      ),
+      _StatTile(
+        icon: Icons.people_outline,
+        value: '${section.membersListed}',
+        label: l10n.churchLocationStatsMembersListed,
+        hint: l10n.churchLocationStatsMembersListedHint,
+      ),
+      if (uniquePeople != null)
+        _StatTile(
+          icon: Icons.person_outline,
+          value: '$uniquePeople',
+          label: l10n.churchLocationStatsUniquePeople,
+          hint: l10n.churchLocationStatsUniquePeopleHint,
+        ),
+      _StatTile(
+        icon: Icons.pie_chart_outline,
+        value: average == null ? '—' : _formatAverage(average),
+        label: l10n.churchLocationStatsAverageSize,
+        hint: l10n.churchLocationStatsAverageSizeHint,
+      ),
+    ];
 
     return InfoSectionCard(
       icon: Icons.groups_outlined,
@@ -393,28 +521,9 @@ class _GroupsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _StatGrid(
-                  tiles: [
-                    _StatTile(
-                      icon: Icons.groups_outlined,
-                      value: '${section.groupCount}',
-                      label: l10n.churchHubCellGroupsLabel,
-                      hint: l10n.churchHubCellGroupsHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.people_outline,
-                      value: '${section.membersListed}',
-                      label: l10n.churchLocationStatsMembersListed,
-                      hint: l10n.churchLocationStatsMembersListedHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.pie_chart_outline,
-                      value: average == null ? '—' : _formatAverage(average),
-                      label: l10n.churchLocationStatsAverageSize,
-                      hint: l10n.churchLocationStatsAverageSizeHint,
-                    ),
-                  ],
-                  wideColumns: 3,
-                  narrowColumns: 1,
+                  tiles: tiles,
+                  wideColumns: uniquePeople == null ? 3 : 2,
+                  narrowColumns: uniquePeople == null ? 1 : 2,
                 ),
                 if (section.groups.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -441,7 +550,140 @@ class _PostsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final hasPast = section.postCount > 0;
+    final upcoming = section.upcoming;
+
+    return InfoSectionCard(
+      icon: Icons.event_note_outlined,
+      title: l10n.churchHubPostsLabel,
+      subtitle: l10n.churchLocationStatsPostsSubtitle,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasPast)
+            _PastPosts(section: section)
+          else
+            _EmptyLine(l10n.churchHubNoRecentPosts),
+          const SizedBox(height: 20),
+          Text(
+            l10n.churchLocationStatsUpcomingTitle,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _StatGrid(
+            tiles: [
+              _StatTile(
+                icon: Icons.upcoming_outlined,
+                value: '${upcoming.postCount}',
+                label: l10n.churchLocationStatsUpcomingPosts,
+                hint: l10n.churchLocationStatsUpcomingPostsHint,
+              ),
+              _StatTile(
+                icon: Icons.groups_outlined,
+                value: '${upcoming.cellGroupMeetingCount}',
+                label: l10n.churchLocationStatsMeetings,
+                hint: l10n.churchLocationStatsMeetingsHint,
+              ),
+              _StatTile(
+                icon: Icons.article_outlined,
+                value: '${upcoming.otherPostCount}',
+                label: l10n.churchLocationStatsOtherPosts,
+                hint: l10n.churchLocationStatsOtherPostsHint,
+              ),
+            ],
+            wideColumns: 3,
+            narrowColumns: 1,
+          ),
+          const SizedBox(height: 8),
+          _Footnote(l10n.churchLocationStatsUpcomingFootnote),
+          if (hasPast) ...[
+            const SizedBox(height: 20),
+            _PastTrend(section: section, asOf: asOf),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PastPosts extends StatelessWidget {
+  const _PastPosts({required this.section});
+
+  final ChurchLocationPostsSection section;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final average = section.averageAttendance;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _StatGrid(
+          tiles: [
+            _StatTile(
+              icon: Icons.event_note_outlined,
+              value: '${section.postCount}',
+              label: l10n.churchHubPostsLabel,
+              hint: l10n.churchHubPostsHint,
+            ),
+            _StatTile(
+              icon: Icons.groups_outlined,
+              value: '${section.cellGroupMeetingCount}',
+              label: l10n.churchLocationStatsMeetings,
+              hint: l10n.churchLocationStatsMeetingsHint,
+            ),
+            _StatTile(
+              icon: Icons.article_outlined,
+              value: '${section.otherPostCount}',
+              label: l10n.churchLocationStatsOtherPosts,
+              hint: l10n.churchLocationStatsOtherPostsHint,
+            ),
+            _StatTile(
+              icon: Icons.how_to_reg_outlined,
+              value: '${section.attendanceTotal}',
+              label: l10n.churchLocationStatsAttendance,
+              hint: l10n.churchLocationStatsAttendanceHint,
+            ),
+            _StatTile(
+              icon: Icons.show_chart,
+              value: average == null ? '—' : _formatAverage(average),
+              label: l10n.churchLocationStatsAverageAttendance,
+              hint: l10n.churchLocationStatsAverageAttendanceHint,
+            ),
+            _StatTile(
+              icon: Icons.favorite_border,
+              value: '${section.interestedTotal}',
+              label: l10n.churchLocationStatsInterested,
+              hint: l10n.churchLocationStatsInterestedHint,
+            ),
+          ],
+          wideColumns: 3,
+          narrowColumns: 2,
+        ),
+        if (section.tags.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _CountRows(rows: section.tags),
+          const SizedBox(height: 8),
+          _Footnote(l10n.churchLocationStatsPostTagHint),
+        ],
+      ],
+    );
+  }
+}
+
+class _PastTrend extends StatelessWidget {
+  const _PastTrend({required this.section, required this.asOf});
+
+  final ChurchLocationPostsSection section;
+  final DateTime asOf;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final chartStart = ChurchLocationStats.queryRangeStart(asOf);
     final chartEnd = ChurchLocationStats.queryRangeEndExclusive(asOf);
     final countPoints = ActivityTimeSeries.fromPosts(
@@ -457,75 +699,14 @@ class _PostsCard extends StatelessWidget {
       endExclusive: chartEnd,
     );
 
-    return InfoSectionCard(
-      icon: Icons.event_note_outlined,
-      title: l10n.churchHubPostsLabel,
-      subtitle: l10n.churchHubPostsHint,
-      content: section.isEmpty
-          ? _EmptyLine(l10n.churchHubNoRecentPosts)
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _StatGrid(
-                  tiles: [
-                    _StatTile(
-                      icon: Icons.event_note_outlined,
-                      value: '${section.postCount}',
-                      label: l10n.churchHubPostsLabel,
-                      hint: l10n.churchHubPostsHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.groups_outlined,
-                      value: '${section.cellGroupMeetingCount}',
-                      label: l10n.churchLocationStatsMeetings,
-                      hint: l10n.churchLocationStatsMeetingsHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.article_outlined,
-                      value: '${section.otherPostCount}',
-                      label: l10n.churchLocationStatsOtherPosts,
-                      hint: l10n.churchLocationStatsOtherPostsHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.how_to_reg_outlined,
-                      value: '${section.attendanceTotal}',
-                      label: l10n.churchLocationStatsAttendance,
-                      hint: l10n.churchLocationStatsAttendanceHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.show_chart,
-                      value: average == null ? '—' : _formatAverage(average),
-                      label: l10n.churchLocationStatsAverageAttendance,
-                      hint: l10n.churchLocationStatsAverageAttendanceHint,
-                    ),
-                    _StatTile(
-                      icon: Icons.favorite_border,
-                      value: '${section.interestedTotal}',
-                      label: l10n.churchLocationStatsInterested,
-                      hint: l10n.churchLocationStatsInterestedHint,
-                    ),
-                  ],
-                  wideColumns: 3,
-                  narrowColumns: 2,
-                ),
-                if (section.tags.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _CountRows(rows: section.tags),
-                  const SizedBox(height: 8),
-                  _Footnote(l10n.churchLocationStatsPostTagHint),
-                ],
-                const SizedBox(height: 20),
-                ActivityTrendSection(
-                  title: l10n.churchHubActivityTrendTitle,
-                  subtitle: l10n.churchHubActivityTrendSubtitle,
-                  countLabel: l10n.churchHubActivityTrendMetricPosts,
-                  countPoints: countPoints,
-                  attendancePoints: attendancePoints,
-                  emptyMessage: l10n.activityTrendEmpty,
-                  weeklyHint: l10n.activityTrendWeeklyHint,
-                ),
-              ],
-            ),
+    return ActivityTrendSection(
+      title: l10n.churchHubActivityTrendTitle,
+      subtitle: l10n.churchLocationStatsTrendSubtitle,
+      countLabel: l10n.churchHubActivityTrendMetricPosts,
+      countPoints: countPoints,
+      attendancePoints: attendancePoints,
+      emptyMessage: l10n.activityTrendEmpty,
+      weeklyHint: l10n.activityTrendWeeklyHint,
     );
   }
 }

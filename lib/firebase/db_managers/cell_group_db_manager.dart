@@ -50,6 +50,8 @@ class CellGroupDBManager {
     String? postcode,
     double? latitude,
     double? longitude,
+    String? meetingParentPostId,
+    String? meetingTemplateId,
     required String createdByUserID,
   }) async {
     final id = await IDTrackerDBManager().getAndIncrementCellGroupID();
@@ -70,6 +72,8 @@ class CellGroupDBManager {
       postcode: postcode,
       latitude: latitude,
       longitude: longitude,
+      meetingParentPostId: meetingParentPostId,
+      meetingTemplateId: meetingTemplateId,
       createdByUserID: createdByUserID,
       createdAt: now,
       updatedAt: now,
@@ -87,6 +91,12 @@ class CellGroupDBManager {
       data['Postcode'] = FieldValue.delete();
       data['Latitude'] = FieldValue.delete();
       data['Longitude'] = FieldValue.delete();
+    }
+    if (group.meetingParentPostId == null) {
+      data['MeetingParentPostId'] = FieldValue.delete();
+    }
+    if (group.meetingTemplateId == null) {
+      data['MeetingTemplateId'] = FieldValue.delete();
     }
     await _ref.doc(group.id).update(data);
     await DirectoryCatalogStore().upsertCellGroup(group);

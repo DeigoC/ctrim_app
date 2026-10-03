@@ -2,6 +2,7 @@ import '../models/cell_group.dart';
 import '../models/event/event_head.dart';
 import '../models/user.dart';
 import 'catalog/volunteer_locations.dart';
+import 'cell_group_activity_stats.dart';
 
 /// Rolling window for church-hub bulletin activity.
 class ChurchLocationWindows {
@@ -53,6 +54,15 @@ class ChurchLocationStats {
   /// Exclusive end — local midnight tomorrow, so all of today is included.
   static DateTime queryRangeEndExclusive(final DateTime now) =>
       dayStart(now).add(const Duration(days: 1));
+
+  /// Upcoming window shared with cell-group activity: local today through
+  /// the next 6 days ([CellGroupActivityWindows.upcomingDays]).
+  static DateTime upcomingQueryRangeStart(final DateTime now) =>
+      CellGroupActivityStats.upcomingWindowStart(now);
+
+  /// Exclusive end of [upcomingQueryRangeStart].
+  static DateTime upcomingQueryRangeEndExclusive(final DateTime now) =>
+      CellGroupActivityStats.upcomingWindowEndExclusive(now);
 
   factory ChurchLocationStats.compute({
     required String location,

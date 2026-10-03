@@ -37,6 +37,16 @@ class NotificationSchedulePlanner {
   static String comingUpBody(DateTime eventDate) =>
       'Coming up · ${LondonTime.format(eventDate)}';
 
+  /// Push body for a scheduled reminder. Matches `reminder_body` in
+  /// `functions/notification_schedule.py`: subtitle, then the start time.
+  static String reminderBody(EventHead head) {
+    final eventDate = head.eventDate;
+    final when = eventDate == null ? '' : comingUpBody(eventDate);
+    final subtitle = head.subtitle.trim();
+    if (subtitle.isNotEmpty && when.isNotEmpty) return '$subtitle\n$when';
+    return subtitle.isNotEmpty ? subtitle : when;
+  }
+
   static String formatWhen(DateTime instant) => LondonTime.format(instant);
 
   /// Trigger instant, or null when this timing cannot fire for [eventDate].
