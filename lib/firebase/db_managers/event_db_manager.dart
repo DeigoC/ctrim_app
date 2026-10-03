@@ -23,8 +23,9 @@ class EventHeadDBManager {
       : _idTracker = idTracker ?? IDTrackerDBManager();
 
   /// Recent edits plus dated windows so Upcoming/Past are not limited to
-  /// the 40 most recently updated heads. Single-field `EventDate` range
-  /// queries — no composite index.
+  /// the 40 most recently updated heads. Undated posts are not in those
+  /// dated windows — [fetchUndatedHeads] is the No date top-up.
+  /// Single-field `EventDate` range queries — no composite index.
   static const int bulletinRecentLimit = 40;
   static const int bulletinDatedLimit = 40;
 
@@ -114,6 +115,18 @@ class EventHeadDBManager {
   Future<void> updateHead(final EventHead head) async {
     await _ref.doc(head.id).update(head.toJson());
     await _idTracker.tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
+  }
+
+  /// Newest heads with no [EventHead.eventDate], including undated period
+  /// parents. Equality on `EventDate` plus `orderBy RecentDate` uses the
+  /// composite index in `firestore.indexes.json`.
+  Future<List<EventHead>> fetchUndatedHeads({int limit = 40}) async {
+    final snapshot = await _ref
+        .where('EventDate', isNull: true)
+        .orderBy('RecentDate', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
   }
 
   /// Heads marked as period/season parents (`IsPeriodParent`).

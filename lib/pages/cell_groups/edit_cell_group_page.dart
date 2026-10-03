@@ -13,17 +13,22 @@ import '../../utility/cell_group_meeting_setup.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/event_context.dart';
-import '../../utility/network_image_helper.dart';
+import '../../utility/responsive_layout.dart';
 import '../../utility/uk_postcode_lookup.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
+import '../../widgets/information/info_section_card.dart';
+import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/role_access_gate.dart';
+import '../../widgets/two_column_masonry.dart';
 import '../../widgets/user_avatar.dart';
 import '../events/add_media_file_page.dart';
 import '../events/select_period_parent_page.dart';
 import '../personal/select_users_page.dart';
 import 'select_meeting_template_page.dart';
+
+part 'edit_cell_group_form.dart';
 
 /// Area-admin create / edit for a cell group profile + leadership.
 class EditCellGroupPage extends StatefulWidget {
@@ -173,7 +178,15 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final wide = ResponsiveLayout.isWideScreenOf(context);
+    final sections = <Widget>[
+      _whenWhereCard(l10n),
+      _meetingCard(l10n),
+      _statusCard(l10n),
+      _photosCard(l10n),
+      _leadersCard(l10n),
+    ];
 
     return RoleAccessGate(
       allow: (user) => user.canManageCellGroups,
@@ -194,12 +207,19 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
         },
         child: Scaffold(
           appBar: AppBar(
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
             title:
                 Text(_isEditing ? l10n.cellGroupsEdit : l10n.cellGroupsCreate),
             actions: [
-              TextButton(
-                onPressed: _saving ? null : _save,
-                child: Text(l10n.save),
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Center(
+                  child: FilledButton.tonal(
+                    onPressed: _saving ? null : _save,
+                    child: Text(l10n.save),
+                  ),
+                ),
               ),
             ],
           ),
@@ -210,264 +230,33 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
                 children: [
-                  TextFormField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsNameLabel,
-                      hintText: l10n.cellGroupsNameHint,
-                      helperText: l10n.cellGroupsNameHelper,
-                      helperMaxLines: 2,
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? l10n.cellGroupsNameRequired
-                        : null,
-                  ),
+                  _aboutCard(l10n),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _summaryController,
-                    minLines: 6,
-                    maxLines: null,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsSummaryLabel,
-                      hintText: l10n.cellGroupsSummaryHint,
-                      helperText: l10n.cellGroupsSummaryHelper,
-                      helperMaxLines: 2,
-                      alignLabelWithHint: true,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsLocationLabel,
-                      helperText: l10n.cellGroupsLocationHelper,
-                      helperMaxLines: 2,
-                      border: const OutlineInputBorder(),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _locationDropdownValue(),
-                        items: _locationOptions()
-                            .map((location) => DropdownMenuItem<String>(
-                                  value: location,
-                                  child: Text(location),
-                                ))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _location = v);
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _postcodeController,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsPostcodeLabel,
-                      hintText: l10n.cellGroupsPostcodeHint,
-                      helperText: l10n.cellGroupsPostcodeHelper,
-                      helperMaxLines: 3,
-                      errorText: _postcodeLookupError,
-                      border: const OutlineInputBorder(),
-                    ),
-                    onChanged: (_) {
-                      if (_postcodeLookupError != null) {
-                        setState(() => _postcodeLookupError = null);
-                      }
-                    },
-                    validator: (v) {
-                      final raw = v?.trim() ?? '';
-                      if (raw.isEmpty) return null;
-                      if (UkPostcodeLookup.classify(raw) ==
-                          UkPostcodeKind.none) {
-                        return l10n.cellGroupsPostcodeInvalid;
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsWeekdayLabel,
-                      helperText: l10n.cellGroupsWeekdayHelper,
-                      helperMaxLines: 2,
-                      border: const OutlineInputBorder(),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int?>(
-                        isExpanded: true,
-                        value: _weekday,
-                        items: [
-                          DropdownMenuItem(
-                              value: null,
-                              child: Text(l10n.cellGroupsWeekdayNotSet)),
-                          const DropdownMenuItem(
-                              value: DateTime.monday, child: Text('Monday')),
-                          const DropdownMenuItem(
-                              value: DateTime.tuesday, child: Text('Tuesday')),
-                          const DropdownMenuItem(
-                              value: DateTime.wednesday,
-                              child: Text('Wednesday')),
-                          const DropdownMenuItem(
-                              value: DateTime.thursday,
-                              child: Text('Thursday')),
-                          const DropdownMenuItem(
-                              value: DateTime.friday, child: Text('Friday')),
-                          const DropdownMenuItem(
-                              value: DateTime.saturday,
-                              child: Text('Saturday')),
-                          const DropdownMenuItem(
-                              value: DateTime.sunday, child: Text('Sunday')),
-                        ],
-                        onChanged: (v) => setState(() => _weekday = v),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _timeController,
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsTimeLabel,
-                      hintText: l10n.cellGroupsTimeHint,
-                      helperText: l10n.cellGroupsTimeHelper,
-                      helperMaxLines: 2,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    l10n.cellGroupsMeetingPostsTitle,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.cellGroupsMeetingPostsHelper,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _MeetingSetupField(
-                    label: l10n.cellGroupsMeetingParentLabel,
-                    helper: l10n.cellGroupsMeetingParentHelper,
-                    value: _parentFieldValue(l10n),
-                    valueIsError: _meetingParentIssue != null ||
-                        _meetingParentLookupFailed,
-                    onPick: _pickParent,
-                    onClear: _meetingParentPostId == null
-                        ? null
-                        : () => setState(() {
-                              _meetingParentPostId = null;
-                              _meetingParentTitle = null;
-                              _meetingParentIssue = null;
-                              _meetingParentLookupFailed = false;
-                            }),
-                  ),
-                  const SizedBox(height: 16),
-                  _MeetingSetupField(
-                    label: l10n.cellGroupsMeetingTemplateLabel,
-                    helper: l10n.cellGroupsMeetingTemplateHelper,
-                    value: _templateFieldValue(l10n),
-                    valueIsError:
-                        _meetingTemplateMissing || _meetingTemplateLookupFailed,
-                    onPick: _pickTemplate,
-                    onClear: _meetingTemplateId == null
-                        ? null
-                        : () => setState(() {
-                              _meetingTemplateId = null;
-                              _meetingTemplateTitle = null;
-                              _meetingTemplateMissing = false;
-                              _meetingTemplateLookupFailed = false;
-                            }),
-                  ),
-                  const SizedBox(height: 16),
-                  InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: l10n.cellGroupsStatusLabel,
-                      helperText: l10n.cellGroupsStatusHelper,
-                      helperMaxLines: 3,
-                      border: const OutlineInputBorder(),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _status,
-                        items: [
-                          DropdownMenuItem(
-                              value: CellGroupStatus.active,
-                              child: Text(l10n.cellGroupsStatusActive)),
-                          DropdownMenuItem(
-                              value: CellGroupStatus.paused,
-                              child: Text(l10n.cellGroupsStatusPaused)),
-                          DropdownMenuItem(
-                              value: CellGroupStatus.archived,
-                              child: Text(l10n.cellGroupsStatusArchived)),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) setState(() => _status = v);
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    l10n.cellGroupsPhotosTitle,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.cellGroupsPhotosHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_media.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        l10n.cellGroupsPhotosEmpty,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    )
+                  if (wide)
+                    TwoColumnMasonry(children: sections)
                   else
-                    ..._media.map(_buildMediaTile),
-                  if (_media.length < CellGroup.maxMediaItems)
-                    OutlinedButton.icon(
-                      onPressed: _addPhoto,
-                      icon: const Icon(Icons.add_photo_alternate_outlined),
-                      label: Text(l10n.cellGroupsAddPhoto),
+                    for (var i = 0; i < sections.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 16),
+                      sections[i],
+                    ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: _saving ? null : _save,
+                      child: _saving
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : Text(l10n.save),
                     ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.cellGroupsLeadersLabel,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.cellGroupsLeadersHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _pickLeaders,
-                    icon: const Icon(Icons.person_add_alt),
-                    label: Text(l10n.cellGroupsChooseLeaders),
-                  ),
-                  ..._leaderUserIds.map(_buildLeaderTile),
                 ],
               ),
             ),
@@ -477,92 +266,368 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     );
   }
 
-  Widget _buildLeaderTile(String uid) {
-    final user = _userById(uid);
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: user != null
-          ? MyUserAvatar(user, radius: 20)
-          : CircleAvatar(
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              child:
-                  Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
-            ),
-      title: Text(user?.fullname ?? 'Unknown leader'),
-      trailing: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () => setState(() => _leaderUserIds.remove(uid)),
+  Widget _editorCard({
+    required IconData icon,
+    required String title,
+    String subtitle = '',
+    required List<Widget> children,
+  }) {
+    return InfoSectionCard(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
       ),
     );
   }
 
-  Widget _buildMediaTile(Map<String, dynamic> item) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final src = (item['src'] as String?) ?? '';
-    final isCover = src.isNotEmpty && src == _keyGraphicSrc;
-    final title = (item['title'] as String?)?.trim();
+  Widget _aboutCard(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final nameField = TextFormField(
+      controller: _nameController,
+      textCapitalization: TextCapitalization.words,
+      decoration: _cellGroupFieldDecoration(
+        colorScheme,
+        label: l10n.cellGroupsNameLabel,
+        hintText: l10n.cellGroupsNameHint,
+        helperText: l10n.cellGroupsNameHelper,
+        prefixIcon: Icons.badge_outlined,
+      ),
+      validator: (v) =>
+          (v == null || v.trim().isEmpty) ? l10n.cellGroupsNameRequired : null,
+    );
+    final summaryField = TextFormField(
+      controller: _summaryController,
+      minLines: 4,
+      maxLines: null,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: _cellGroupFieldDecoration(
+        colorScheme,
+        label: l10n.cellGroupsSummaryLabel,
+        hintText: l10n.cellGroupsSummaryHint,
+        helperText: l10n.cellGroupsSummaryHelper,
+        alignLabelWithHint: true,
+        prefixIcon: Icons.notes_outlined,
+      ),
+    );
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 0,
-      color: colorScheme.surfaceContainerHighest,
-      child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: SizedBox(
-            width: 56,
-            height: 56,
-            child: src.isEmpty
-                ? ColoredBox(
-                    color: colorScheme.surfaceContainerHigh,
-                    child: Icon(Icons.image_outlined,
-                        color: colorScheme.onSurfaceVariant),
-                  )
-                : Image.network(
-                    NetworkImageHelper.getImageUrl(src),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => ColoredBox(
-                      color: colorScheme.surfaceContainerHigh,
-                      child: Icon(Icons.broken_image_outlined,
-                          color: colorScheme.onSurfaceVariant),
-                    ),
-                  ),
+    return _editorCard(
+      icon: Icons.info_outline,
+      title: l10n.cellGroupsAboutTitle,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final sideBySide = constraints.maxWidth >= 640;
+            if (!sideBySide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  nameField,
+                  const SizedBox(height: 12),
+                  summaryField,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 2, child: nameField),
+                const SizedBox(width: 12),
+                Expanded(flex: 3, child: summaryField),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _whenWhereCard(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return _editorCard(
+      icon: Icons.place_outlined,
+      title: l10n.cellGroupsEditorWhenWhereTitle,
+      children: [
+        _pairWhenWide(
+          _locationField(l10n, colorScheme),
+          _postcodeField(l10n, colorScheme),
+        ),
+        const SizedBox(height: 12),
+        _pairWhenWide(
+          _weekdayField(l10n, colorScheme),
+          _timeField(l10n, colorScheme),
+        ),
+      ],
+    );
+  }
+
+  Widget _locationField(AppLocalizations l10n, ColorScheme colorScheme) {
+    return InputDecorator(
+      decoration: _cellGroupFieldDecoration(
+        colorScheme,
+        label: l10n.cellGroupsLocationLabel,
+        helperText: l10n.cellGroupsLocationHelper,
+        prefixIcon: Icons.location_on_outlined,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          borderRadius: BorderRadius.circular(16),
+          value: _locationDropdownValue(),
+          items: _locationOptions()
+              .map((location) => DropdownMenuItem<String>(
+                    value: location,
+                    child: Text(location),
+                  ))
+              .toList(),
+          onChanged: (v) {
+            if (v == null) return;
+            setState(() => _location = v);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _postcodeField(AppLocalizations l10n, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: _postcodeController,
+      textCapitalization: TextCapitalization.characters,
+      decoration: _cellGroupFieldDecoration(
+        colorScheme,
+        label: l10n.cellGroupsPostcodeLabel,
+        hintText: l10n.cellGroupsPostcodeHint,
+        helperText: l10n.cellGroupsPostcodeHelper,
+        helperMaxLines: 3,
+        errorText: _postcodeLookupError,
+        prefixIcon: Icons.markunread_mailbox_outlined,
+      ),
+      onChanged: (_) {
+        if (_postcodeLookupError != null) {
+          setState(() => _postcodeLookupError = null);
+        }
+      },
+      validator: (v) {
+        final raw = v?.trim() ?? '';
+        if (raw.isEmpty) return null;
+        if (UkPostcodeLookup.classify(raw) == UkPostcodeKind.none) {
+          return l10n.cellGroupsPostcodeInvalid;
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _weekdayField(AppLocalizations l10n, ColorScheme colorScheme) {
+    return InputDecorator(
+      decoration: _cellGroupFieldDecoration(
+        colorScheme,
+        label: l10n.cellGroupsWeekdayLabel,
+        helperText: l10n.cellGroupsWeekdayHelper,
+        prefixIcon: Icons.calendar_today_outlined,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          isExpanded: true,
+          borderRadius: BorderRadius.circular(16),
+          value: _weekday,
+          items: [
+            DropdownMenuItem(
+                value: null, child: Text(l10n.cellGroupsWeekdayNotSet)),
+            const DropdownMenuItem(
+                value: DateTime.monday, child: Text('Monday')),
+            const DropdownMenuItem(
+                value: DateTime.tuesday, child: Text('Tuesday')),
+            const DropdownMenuItem(
+                value: DateTime.wednesday, child: Text('Wednesday')),
+            const DropdownMenuItem(
+                value: DateTime.thursday, child: Text('Thursday')),
+            const DropdownMenuItem(
+                value: DateTime.friday, child: Text('Friday')),
+            const DropdownMenuItem(
+                value: DateTime.saturday, child: Text('Saturday')),
+            const DropdownMenuItem(
+                value: DateTime.sunday, child: Text('Sunday')),
+          ],
+          onChanged: (v) => setState(() => _weekday = v),
+        ),
+      ),
+    );
+  }
+
+  Widget _timeField(AppLocalizations l10n, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: _timeController,
+      decoration: _cellGroupFieldDecoration(
+        colorScheme,
+        label: l10n.cellGroupsTimeLabel,
+        hintText: l10n.cellGroupsTimeHint,
+        helperText: l10n.cellGroupsTimeHelper,
+        prefixIcon: Icons.schedule_outlined,
+      ),
+    );
+  }
+
+  Widget _meetingCard(AppLocalizations l10n) {
+    return _editorCard(
+      icon: Icons.post_add_outlined,
+      title: l10n.cellGroupsMeetingPostsTitle,
+      subtitle: l10n.cellGroupsMeetingPostsHelper,
+      children: [
+        _MeetingSetupField(
+          label: l10n.cellGroupsMeetingParentLabel,
+          helper: l10n.cellGroupsMeetingParentHelper,
+          prefixIcon: Icons.account_tree_outlined,
+          value: _parentFieldValue(l10n),
+          valueIsError:
+              _meetingParentIssue != null || _meetingParentLookupFailed,
+          onPick: _pickParent,
+          onClear: _meetingParentPostId == null
+              ? null
+              : () => setState(() {
+                    _meetingParentPostId = null;
+                    _meetingParentTitle = null;
+                    _meetingParentIssue = null;
+                    _meetingParentLookupFailed = false;
+                  }),
+        ),
+        const SizedBox(height: 12),
+        _MeetingSetupField(
+          label: l10n.cellGroupsMeetingTemplateLabel,
+          helper: l10n.cellGroupsMeetingTemplateHelper,
+          prefixIcon: Icons.article_outlined,
+          value: _templateFieldValue(l10n),
+          valueIsError: _meetingTemplateMissing || _meetingTemplateLookupFailed,
+          onPick: _pickTemplate,
+          onClear: _meetingTemplateId == null
+              ? null
+              : () => setState(() {
+                    _meetingTemplateId = null;
+                    _meetingTemplateTitle = null;
+                    _meetingTemplateMissing = false;
+                    _meetingTemplateLookupFailed = false;
+                  }),
+        ),
+      ],
+    );
+  }
+
+  Widget _statusCard(AppLocalizations l10n) {
+    return _editorCard(
+      icon: Icons.flag_outlined,
+      title: l10n.cellGroupsStatusLabel,
+      subtitle: l10n.cellGroupsStatusHelper,
+      children: [
+        SegmentedButton<String>(
+          showSelectedIcon: false,
+          expandedInsets: EdgeInsets.zero,
+          segments: [
+            ButtonSegment(
+              value: CellGroupStatus.active,
+              label: Text(l10n.cellGroupsStatusActive),
+            ),
+            ButtonSegment(
+              value: CellGroupStatus.paused,
+              label: Text(l10n.cellGroupsStatusPaused),
+            ),
+            ButtonSegment(
+              value: CellGroupStatus.archived,
+              label: Text(l10n.cellGroupsStatusArchived),
+            ),
+          ],
+          selected: {_status},
+          onSelectionChanged: (next) {
+            if (next.isEmpty) return;
+            setState(() => _status = next.first);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _photosCard(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    return _editorCard(
+      icon: Icons.photo_library_outlined,
+      title: l10n.cellGroupsPhotosTitle,
+      subtitle: l10n.cellGroupsPhotosHint,
+      children: [
+        if (_media.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              l10n.cellGroupsPhotosEmpty,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-        ),
-        title: Text(
-          (title != null && title.isNotEmpty)
-              ? title
-              : (isCover ? l10n.cellGroupsCoverPhoto : 'Image'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          isCover ? l10n.cellGroupsCoverPhoto : l10n.cellGroupsSetAsCover,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: isCover ? colorScheme.primary : colorScheme.onSurfaceVariant,
-            fontWeight: isCover ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-        onTap: src.isEmpty
-            ? null
-            : () => setState(() {
-                  _keyGraphicSrc = isCover ? null : src;
-                }),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, size: 20),
-          color: colorScheme.error,
-          tooltip: 'Remove',
-          onPressed: () => setState(() {
+        _CellGroupPhotoGrid(
+          media: _media,
+          keyGraphicSrc: _keyGraphicSrc,
+          canAdd: _media.length < CellGroup.maxMediaItems,
+          onAdd: _addPhoto,
+          onToggleCover: (src) => setState(() {
+            _keyGraphicSrc = _keyGraphicSrc == src ? null : src;
+          }),
+          onRemove: (src) => setState(() {
             _media.removeWhere((e) => e['src'] == src);
             if (_keyGraphicSrc == src) _keyGraphicSrc = null;
           }),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _leadersCard(AppLocalizations l10n) {
+    return _editorCard(
+      icon: Icons.groups_outlined,
+      title: l10n.cellGroupsLeadersLabel,
+      subtitle: l10n.cellGroupsLeadersHint,
+      children: [
+        OutlinedButton.icon(
+          onPressed: _pickLeaders,
+          icon: const Icon(Icons.person_add_alt),
+          label: Text(l10n.cellGroupsChooseLeaders),
+        ),
+        if (_leaderUserIds.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _CellGroupLeaderWrap(
+            userIds: _leaderUserIds,
+            userById: _userById,
+            onRemove: (uid) => setState(() => _leaderUserIds.remove(uid)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Puts [leading] and [trailing] on one row once the card is wide enough
+  /// for two fields. Narrow cards keep them stacked.
+  Widget _pairWhenWide(Widget leading, Widget trailing) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 400) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              leading,
+              const SizedBox(height: 12),
+              trailing,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: leading),
+            const SizedBox(width: 12),
+            Expanded(child: trailing),
+          ],
+        );
+      },
     );
   }
 
@@ -1030,11 +1095,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
   }
 
   User? _userById(String id) {
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    for (final u in appContext.allUsers) {
-      if (u.id == id) return u;
-    }
-    return null;
+    return Provider.of<AppContext>(context, listen: false).userById(id);
   }
 
   List<String> _locationOptions() {
@@ -1052,60 +1113,5 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
     final options = _locationOptions();
     if (options.contains(_location)) return _location;
     return options.isNotEmpty ? options.first : _location;
-  }
-}
-
-class _MeetingSetupField extends StatelessWidget {
-  const _MeetingSetupField({
-    required this.label,
-    required this.helper,
-    required this.value,
-    required this.valueIsError,
-    required this.onPick,
-    this.onClear,
-  });
-
-  final String label;
-  final String helper;
-  final String value;
-  final bool valueIsError;
-  final VoidCallback onPick;
-  final VoidCallback? onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onPick,
-      borderRadius: BorderRadius.circular(4),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          helperText: helper,
-          helperMaxLines: 4,
-          border: const OutlineInputBorder(),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: valueIsError ? colorScheme.error : null,
-                ),
-              ),
-            ),
-            if (onClear != null)
-              IconButton(
-                tooltip: l10n.cellGroupsMeetingClear,
-                icon: const Icon(Icons.close),
-                onPressed: onClear,
-              ),
-            Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
-          ],
-        ),
-      ),
-    );
   }
 }

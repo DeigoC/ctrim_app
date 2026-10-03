@@ -38,7 +38,7 @@ Dated posts from the **past week** show a **Recent** label. Older dated posts sh
 | **All posts** | No date cut-off |
 | **Upcoming** | Events still happening or coming up |
 | **Past** | Events that have already started |
-| **No date** | Posts without an event date (they do not appear under Upcoming or Past) |
+| **No date** | Posts without an event date, including period parents that have no date (they do not appear under Upcoming or Past). If that list is only a handful of posts, the app loads one more batch of the most recently updated undated posts — not every undated post ever made |
 | **Bookmarks** | Only posts you bookmarked — can sit alongside Upcoming, Past, or No date |
 
 You can also filter by **location** and **post tags** (for example Sunday Worship or Midweek). The list usually starts on your own location; tap **All** to see every site. Active sort and filters appear as a “Showing: …” banner — tap the banner to clear them. Your last sort, date filter, and bookmark toggle are remembered next time.
@@ -115,7 +115,7 @@ People with **Leader** access can create posts (usually by picking a **template*
 
 The **author** of a post, plus anyone listed as a **contributor** on that post, can edit it — for example:
 
-- Title, about text, and details  
+- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. The create screen and templates do not offer this.  
 - Media (photos / video)  
 - Schedule and role assignments  
 - Who is attending / who is expected (including **Fill from cell group** when the post is linked to a cell group)  

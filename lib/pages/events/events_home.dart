@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../utility/app_context.dart';
 import '../../utility/bulletin_listing.dart';
+import '../../utility/bulletin_undated_top_up.dart';
 import '../../utility/event_heads_repository.dart';
 import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
@@ -35,6 +37,10 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
   late BulletinSort _sort;
   late BulletinTimeFilter _timeFilter;
   late bool _bookmarksOnly;
+  List<EventHead> _undatedSnippet = const [];
+  bool _undatedSnippetLoaded = false;
+  bool _undatedSnippetLoading = false;
+  int _undatedRequest = 0;
 
   @override
   void initState() {
@@ -52,6 +58,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _logListingChange();
+      _maybeTopUpUndated();
       if (!_appContext.sharedPref.hasSeenBulletinDialog) {
         _showBulletinFirstTimeDialog();
       }
@@ -66,6 +73,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
       bookmarkedIds: _appContext.sharedPref.bookmarkedPosts.toSet(),
       selectedTagIDs: _selectedPostTagIDs,
       locationFilter: _locationFilter,
+      excludePeriodParents: _timeFilter != BulletinTimeFilter.undated,
       now: DateTime.now(),
     );
   }
@@ -97,7 +105,12 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     final appContext = _appContext;
     final query = _listingQuery();
     final heads = BulletinListing.apply(
-      heads: appContext.eventHeads,
+      heads: BulletinUndatedTopUp.merge(
+        sessionHeads: appContext.eventHeads,
+        snippet: _timeFilter == BulletinTimeFilter.undated
+            ? _undatedSnippet
+            : const [],
+      ),
       query: query,
     );
     final int itemCount = heads.length;
@@ -234,7 +247,9 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                   vertical: 8,
                 ),
                 sliver: itemCount == 0
-                    ? _buildEmptyState(colorScheme, theme, l10n)
+                    ? (_undatedSnippetLoading
+                        ? _buildTopUpPlaceholder(colorScheme)
+                        : _buildEmptyState(colorScheme, theme, l10n))
                     : isWideScreen
                         ? SliverToBoxAdapter(
                             child: _buildWidePostRows(colorScheme, heads),
@@ -391,6 +406,17 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
     );
   }
 
+  Widget _buildTopUpPlaceholder(ColorScheme colorScheme) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Center(
+          child: CircularProgressIndicator(color: colorScheme.primary),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState(
     ColorScheme colorScheme,
     ThemeData theme,
@@ -481,15 +507,18 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
             setState(() => _timeFilter = filter);
             _persistListingPrefs();
             _logListingChange();
+            _maybeTopUpUndated();
           },
           onBookmarksOnlyChanged: (value) {
             setState(() => _bookmarksOnly = value);
             _persistListingPrefs();
             _logListingChange();
+            _maybeTopUpUndated();
           },
           onLocationChanged: (location) {
             setState(() => _locationFilter = location);
             _logListingChange();
+            _maybeTopUpUndated();
           },
           onTagSelectionChanged: (selected) {
             setState(() {
@@ -498,6 +527,7 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                 ..addAll(selected);
             });
             _logListingChange();
+            _maybeTopUpUndated();
           },
         ),
       ),
@@ -540,8 +570,63 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
 
   Future<void> _refreshPosts() async {
     final heads = await EventHeadsRepository().fetchEventHeads();
+    if (!mounted) return;
     setState(() {
       _appContext.setRefreshedHeads(heads);
+      _undatedRequest++;
+      _undatedSnippet = const [];
+      _undatedSnippetLoaded = false;
+      _undatedSnippetLoading = false;
+    });
+    _maybeTopUpUndated();
+  }
+
+  void _maybeTopUpUndated() {
+    final query = _listingQuery();
+    final visible = BulletinListing.apply(
+      heads: _appContext.eventHeads,
+      query: query,
+    );
+    if (!BulletinUndatedTopUp.needsSnippet(
+      timeFilter: query.timeFilter,
+      filteredCount: visible.length,
+      alreadyFetched: _undatedSnippetLoaded || _undatedSnippetLoading,
+    )) {
+      return;
+    }
+    _loadUndatedSnippet();
+  }
+
+  /// One extra batch for No date. Kept on this page so the main feed and the
+  /// events cache stay the session window.
+  Future<void> _loadUndatedSnippet() async {
+    final request = ++_undatedRequest;
+    setState(() => _undatedSnippetLoading = true);
+    final manager = EventHeadDBManager();
+    final snippet = <EventHead>[];
+    try {
+      snippet.addAll(
+        await manager.fetchUndatedHeads(
+          limit: BulletinUndatedTopUp.snippetLimit,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Bulletin undated top-up failed: $e');
+    }
+    try {
+      snippet.addAll(
+        await manager.fetchPeriodParentHeads(
+          limit: BulletinUndatedTopUp.snippetLimit,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Bulletin period-parent top-up failed: $e');
+    }
+    if (!mounted || request != _undatedRequest) return;
+    setState(() {
+      _undatedSnippet = snippet;
+      _undatedSnippetLoaded = true;
+      _undatedSnippetLoading = false;
     });
   }
 }

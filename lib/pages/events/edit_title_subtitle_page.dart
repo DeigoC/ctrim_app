@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../firebase/db_managers/event_db_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/user.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/parent_link.dart';
 import '../../utility/placeholder_user_permissions.dart';
+import '../../utility/post_title_attendees.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/catalog/cell_group_picker.dart';
 import '../../widgets/catalog/post_tag_picker.dart';
@@ -46,6 +51,26 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
     _tecSubtitle = TextEditingController(text: _originalSubtitle);
     _tecTitle = TextEditingController(text: _originalTitle);
     super.initState();
+    if (!widget.eventContext.hasLoadedAttendance &&
+        widget.eventContext.id.isNotEmpty) {
+      unawaited(_loadAttendanceForTitle());
+    }
+  }
+
+  Future<void> _loadAttendanceForTitle() async {
+    try {
+      final attendance =
+          await EventSupplementalDBManager(widget.eventContext.id)
+              .fetchAttendance();
+      if (!mounted) return;
+      widget.eventContext.setFetchedAttendance(
+        attendance,
+        forceReplace: !widget.eventContext.isAttendanceDirty,
+      );
+      setState(() {});
+    } catch (error) {
+      debugPrint('Could not load attendance for the title: $error');
+    }
   }
 
   @override
@@ -129,7 +154,47 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
         appContext.currentUser.isAreaAdmin;
   }
 
+  bool get _hasAttendees {
+    final attendance = widget.eventContext.attendance;
+    return attendance != null && attendance.attendees.isNotEmpty;
+  }
+
+  void _appendAttendeesToTitle() {
+    final l10n = AppLocalizations.of(context)!;
+    final attendance = widget.eventContext.attendance;
+    if (attendance == null || attendance.attendees.isEmpty) return;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    final names = PostTitleAttendees.shortenedNames(
+      attendance.attendees,
+      appContext.userById,
+    );
+    if (names.isEmpty) {
+      _showTitleSnack(l10n.postTitleAddAttendeesNoNames);
+      return;
+    }
+    if (_tecTitle.text.trim().isEmpty) {
+      _showTitleSnack(l10n.postTitleAddAttendeesNeedTitle);
+      return;
+    }
+    final next = PostTitleAttendees.appendToTitle(
+      title: _tecTitle.text,
+      shortenedNames: names,
+    );
+    if (next == null) {
+      _showTitleSnack(l10n.postTitleAddAttendeesTooLong);
+      return;
+    }
+    _tecTitle.text = next;
+  }
+
+  void _showTitleSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
     final appContext = Provider.of<AppContext>(context);
     final double gutter = ResponsiveLayout.horizontalGutter(
         MediaQuery.sizeOf(context).width,
@@ -146,7 +211,7 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
             children: [
               TextField(
                 controller: _tecTitle,
-                maxLength: 64,
+                maxLength: PostTitleAttendees.maxLength,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Title',
@@ -155,6 +220,22 @@ class _EditHeadDetailsPageState extends State<EditHeadDetailsPage> {
                   prefixIcon: Icon(Icons.short_text),
                 ),
               ),
+              if (_hasAttendees) ...[
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: _appendAttendeesToTitle,
+                    icon: const Icon(Icons.group_outlined, size: 18),
+                    label: Text(l10n.postTitleAddAttendees),
+                  ),
+                ),
+                Text(
+                  l10n.postTitleAddAttendeesHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
               const SizedBox(height: 12),
               TextField(
                 controller: _tecSubtitle,

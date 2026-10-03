@@ -53,7 +53,7 @@ Save under `assets/images/`.
 | Done | Filename | What to show |
 |------|----------|--------------|
 | [ ] | `edit-post-00-actions.png` | Post actions / edit menu |
-| [ ] | `edit-post-01-title-details.png` | Title & details editor |
+| [ ] | `edit-post-01-title-details.png` | Title & details editor, including **Add who attended** when the post has an attended list |
 | [ ] | `edit-post-02-schedule.png` | Schedule tab (day timeline) |
 | [ ] | `edit-post-02b-move-schedule.png` | Start-time change asking to move the schedule or keep current times |
 | [ ] | `edit-post-03-media.png` | Media tab / editor |
