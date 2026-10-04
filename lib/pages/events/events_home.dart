@@ -154,6 +154,9 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
 
           return CustomScrollView(
             controller: widget.scrollController,
+            // Pull-to-refresh + floating snap app bars fight upward scroll on
+            // mobile web; keep the bar floating without snap/extra expand.
+            physics: const AlwaysScrollableScrollPhysics(),
             key: const PageStorageKey<String>('events_page'),
             slivers: [
               SliverAppBar(
@@ -176,8 +179,6 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                 ),
                 centerTitle: false,
                 floating: true,
-                snap: true,
-                expandedHeight: 100,
                 backgroundColor: colorScheme.surface,
                 surfaceTintColor: colorScheme.surfaceTint,
                 actions: [

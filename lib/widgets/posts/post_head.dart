@@ -49,6 +49,9 @@ class _PostHeadState extends State<PostHead>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   final Map<String, Size> _mediaSizes = <String, Size>{};
+  bool _layoutUpdatePending = false;
+  VoidCallback? _scrollIdleListener;
+  ScrollPosition? _scrollIdlePosition;
 
   @override
   void initState() {
@@ -79,8 +82,19 @@ class _PostHeadState extends State<PostHead>
 
   @override
   void dispose() {
+    _clearScrollIdleListener();
     _animationController.dispose();
     super.dispose();
+  }
+
+  void _clearScrollIdleListener() {
+    if (_scrollIdleListener != null && _scrollIdlePosition != null) {
+      _scrollIdlePosition!.isScrollingNotifier
+          .removeListener(_scrollIdleListener!);
+    }
+    _scrollIdleListener = null;
+    _scrollIdlePosition = null;
+    _layoutUpdatePending = false;
   }
 
   List<PostTag> _visiblePostTags(BuildContext context) {
@@ -102,21 +116,27 @@ class _PostHeadState extends State<PostHead>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: GestureDetector(
-            onTapDown: (_) {
-              HapticFeedback.lightImpact();
-              _animationController.forward();
-            },
-            onTapUp: (_) {
-              _animationController.reverse();
-              _onHeadTap(context);
-            },
-            onTapCancel: () {
-              _animationController.reverse();
-            },
-            child: Material(
-              elevation: 4,
-              shadowColor: colorScheme.shadow.withValues(alpha: 0.15),
+          child: Material(
+            elevation: 4,
+            shadowColor: colorScheme.shadow.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(16),
+            // InkWell yields to the parent scroll view; the old onTapDown/
+            // onTapUp GestureDetector could stall upward flings on mobile web.
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _onHeadTap(context);
+              },
+              onHighlightChanged: (highlighted) {
+                if (highlighted) {
+                  _animationController.forward();
+                } else {
+                  _animationController.reverse();
+                }
+              },
+              // Keep press feedback on the scale animation only.
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 decoration: BoxDecoration(
@@ -706,8 +726,30 @@ class _PostHeadState extends State<PostHead>
       }
     }
     if (changed && mounted) {
-      setState(() {});
+      _scheduleLayoutUpdate();
     }
+  }
+
+  /// Apply media-driven layout changes when the parent list is idle so card
+  /// height jumps do not clamp / stall upward scrolling on mobile web.
+  void _scheduleLayoutUpdate() {
+    if (!mounted) return;
+    final position = Scrollable.maybeOf(context)?.position;
+    if (position == null || !position.isScrollingNotifier.value) {
+      _clearScrollIdleListener();
+      setState(() {});
+      return;
+    }
+    if (_layoutUpdatePending) return;
+    _layoutUpdatePending = true;
+    _scrollIdlePosition = position;
+    _scrollIdleListener = () {
+      if (!position.isScrollingNotifier.value) {
+        _clearScrollIdleListener();
+        if (mounted) setState(() {});
+      }
+    };
+    position.isScrollingNotifier.addListener(_scrollIdleListener!);
   }
 
   String _timeAgo(DateTime dateTime) {
