@@ -28,6 +28,7 @@ class AddEventHeadMeta extends StatefulWidget {
     required this.eventContext,
     this.showNotificationControls = true,
     this.showPastAttendancePicker = false,
+    this.allowSelfAsContributor = false,
   });
   final TextEditingController tecTitle, tecSubtitle;
   final EventContext eventContext;
@@ -38,6 +39,11 @@ class AddEventHeadMeta extends StatefulWidget {
 
   /// When true, a past event date shows who-attended selection on this draft.
   final bool showPastAttendancePicker;
+
+  /// When true (template editor), the signed-in user can be chosen as a
+  /// contributor. Templates reuse [EventContext.adding], which sets the editor
+  /// as author, and posts normally exclude the author from contributors.
+  final bool allowSelfAsContributor;
 
   @override
   State<AddEventHeadMeta> createState() => _AddEventHeadMetaState();
@@ -1084,7 +1090,10 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
         builder: (_) => SelectUsersPage(
           selectedUIDs:
               List<String>.from(widget.eventContext.metadata.contributorUIDs),
-          excludedUIDs: [widget.eventContext.metadata.authorUID],
+          excludedUIDs: widget.allowSelfAsContributor
+              ? const <String>[]
+              : [widget.eventContext.metadata.authorUID],
+          includeCurrentUser: widget.allowSelfAsContributor,
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
           preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(

@@ -453,6 +453,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
           onRequiredFieldChange: (_) => setState(() {}),
           eventContext: widget.eventContext,
           showNotificationControls: false,
+          allowSelfAsContributor: true,
         ),
         const Divider(height: 32),
         _buildCategoryCard(),
