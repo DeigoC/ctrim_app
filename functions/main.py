@@ -3,7 +3,12 @@
 from firebase_functions import firestore_fn, https_fn, options, scheduler_fn
 from firebase_admin import firestore, initialize_app, messaging
 
-from fcm_payload import fcm_image_url, is_valid_fcm_topic, looks_like_image_error
+from fcm_payload import (
+    fcm_image_url,
+    is_valid_fcm_topic,
+    looks_like_image_error,
+    web_click_link,
+)
 from notification_schedule import run_scheduled_notifications
 from topic_message import apns_android_configs, build_topic_message
 from user_role_sync import (
