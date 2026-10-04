@@ -195,14 +195,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
             const SizedBox(height: 16),
             _buildFilters(l10n, theme),
             const SizedBox(height: 24),
-            if (_selectedTagIDs.isEmpty)
-              _buildEmptyState(
-                theme,
-                icon: Icons.sell_outlined,
-                title: l10n.teamRotaEmptyNoTeamsTitle,
-                body: l10n.teamRotaEmptyNoTeamsBody,
-              )
-            else if (groups.isEmpty)
+            if (groups.isEmpty)
               _buildEmptyState(
                 theme,
                 icon: Icons.event_note,

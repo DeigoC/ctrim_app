@@ -213,17 +213,9 @@
   "@teamRotaEmptyTitle": {
     "description": "Empty state title when filters yield no tagged programme roles"
   },
-  "teamRotaEmptyBody": "Programme roles for the selected ministries will show here, including slots that still need people. Open a post to edit.",
+  "teamRotaEmptyBody": "Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.",
   "@teamRotaEmptyBody": {
     "description": "Empty state body when the team rota has no matching slots"
-  },
-  "teamRotaEmptyNoTeamsTitle": "Pick a ministry",
-  "@teamRotaEmptyNoTeamsTitle": {
-    "description": "Empty state title when no ministries are selected"
-  },
-  "teamRotaEmptyNoTeamsBody": "Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.",
-  "@teamRotaEmptyNoTeamsBody": {
-    "description": "Empty state body when the user has not selected any ministries"
   },
   "teamRotaUnassigned": "Unassigned",
   "@teamRotaUnassigned": {

@@ -343,20 +343,8 @@ abstract class AppLocalizations {
   /// Empty state body when the team rota has no matching slots
   ///
   /// In en, this message translates to:
-  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Open a post to edit.'**
+  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.'**
   String get teamRotaEmptyBody;
-
-  /// Empty state title when no ministries are selected
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a ministry'**
-  String get teamRotaEmptyNoTeamsTitle;
-
-  /// Empty state body when the user has not selected any ministries
-  ///
-  /// In en, this message translates to:
-  /// **'Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.'**
-  String get teamRotaEmptyNoTeamsBody;
 
   /// Label when a team rota slot has no people yet
   ///

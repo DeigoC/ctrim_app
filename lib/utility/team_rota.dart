@@ -32,8 +32,9 @@ class TeamRotaMonthGroup {
 /// Filter and group dated posts into a team rota.
 ///
 /// Join is role [EventProgram.tagIDsOf] vs selected team-tag IDs — not the
-/// assignee's personal tags. Untagged roles are omitted. Empty `uids` still
-/// belong to the team.
+/// assignee's personal tags. Untagged roles are omitted. Empty [selectedTagIDs]
+/// means no ministry filter (all tagged roles). Empty `uids` still belong to
+/// the team.
 class TeamRotaQuery {
   TeamRotaQuery._();
 
@@ -67,13 +68,16 @@ class TeamRotaQuery {
   }
 
   /// True when the role is owned by any of [selectedTagIDs].
+  ///
+  /// An empty [selectedTagIDs] matches every tagged role (no ministry filter).
+  /// Roles with no ministry tags are always omitted.
   static bool roleMatchesTeamTags({
     required Map<String, dynamic> role,
     required Set<String> selectedTagIDs,
   }) {
-    if (selectedTagIDs.isEmpty) return false;
     final tags = EventProgram.tagIDsOf(role);
     if (tags.isEmpty) return false;
+    if (selectedTagIDs.isEmpty) return true;
     return tags.any(selectedTagIDs.contains);
   }
 
@@ -82,8 +86,6 @@ class TeamRotaQuery {
     required Set<String> selectedTagIDs,
     required String locationFilter,
   }) {
-    if (selectedTagIDs.isEmpty) return const [];
-
     final result = <TeamRotaPost>[];
     for (final post in posts) {
       if (!headMatchesLocation(
