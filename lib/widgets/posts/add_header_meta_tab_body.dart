@@ -797,12 +797,14 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _buildExpectedAttendeesSection(appContext, theme, colorScheme),
+                // Past-dated create drafts only need who attended; expected people
+                // are for upcoming meetings / templates.
                 if (widget.showPastAttendancePicker &&
-                    widget.eventContext.head.isRecent) ...[
-                  const SizedBox(height: 12),
-                  _buildAttendedSection(appContext, theme, colorScheme),
-                ],
+                    widget.eventContext.head.isRecent)
+                  _buildAttendedSection(appContext, theme, colorScheme)
+                else
+                  _buildExpectedAttendeesSection(
+                      appContext, theme, colorScheme),
                 if (widget.showNotificationControls) ...[
                   const Divider(height: 32),
                   ..._buildNotificationControls(appContext),

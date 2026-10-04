@@ -123,7 +123,8 @@ void main() {
 
     test('fully filled draft reduces suggestion count', () {
       final context = EventContext.adding(currentUserID: 'author-1');
-      context.head.setEventDate(DateTime(2026, 8, 24, 10));
+      final eventDate = DateTime.now().add(const Duration(days: 7));
+      context.head.setEventDate(eventDate);
       context.applyTagIDs(['tag-1']);
       context.applyCellGroupIDs(['cg-1']);
       context.head
@@ -131,21 +132,14 @@ void main() {
       context.head.addMediaItem(type: 'img', src: 'cover.jpg', title: 'Cover');
       context.applyContributorUIDs(['editor-1']);
       context.applyExpectedAttendeeUserIDs(['member-1']);
-      context.applyDraftAttendees([
-        AttendeeEntry.user(
-          userId: 'member-1',
-          displayName: 'Member',
-          addedBy: 'author-1',
-        ),
-      ]);
       context.media.addMediaFile(
           {'type': 'img', 'src': 'gallery.jpg', 'title': 'Photo'});
       context.program.addRole(
         uids: const ['user-a'],
         title: 'Welcome',
         detail: '',
-        start: DateTime(2026, 8, 24, 10),
-        end: DateTime(2026, 8, 24, 10, 15),
+        start: eventDate,
+        end: eventDate.add(const Duration(minutes: 15)),
         forGuests: true,
         id: 2,
       );
@@ -210,6 +204,11 @@ void main() {
         subtitle: 'January',
         allTags: const [],
       );
+      expect(
+        empty.items.any(
+            (item) => item.kind == PostDraftReviewKind.expectedAttendees),
+        isFalse,
+      );
       final missing = empty.items
           .firstWhere((item) => item.kind == PostDraftReviewKind.attended);
       expect(missing.status, PostDraftReviewStatus.suggestion);
@@ -234,7 +233,7 @@ void main() {
       expect(attended.subtitle, '1 attended');
     });
 
-    test('upcoming drafts omit who attended', () {
+    test('upcoming drafts omit who attended and keep expected attendees', () {
       final context = EventContext.adding(currentUserID: 'author-1');
       context.head.setEventDate(DateTime.now().add(const Duration(days: 7)));
 
@@ -248,6 +247,11 @@ void main() {
       expect(
         review.items.any((item) => item.kind == PostDraftReviewKind.attended),
         isFalse,
+      );
+      expect(
+        review.items.any(
+            (item) => item.kind == PostDraftReviewKind.expectedAttendees),
+        isTrue,
       );
     });
   });
