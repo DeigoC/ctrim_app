@@ -155,6 +155,35 @@ void main() {
       expect(context.head.eventDate, isNull);
     });
 
+    test('maps template contributors except the creating author', () {
+      final map = baseLocalMap();
+      map['Contributors'] = <String>['author-1', 'helper-2', 'helper-3'];
+      final template = PostTemplate.fromMap(true, 'with-contrib', map);
+
+      final context = PostTemplateMapper.mapTemplateToEventContext(
+        template: template,
+        currentUserID: 'author-1',
+      );
+
+      expect(context.metadata.contributorUIDs, ['helper-2', 'helper-3']);
+      expect(context.contributorAdditionUIDs, ['helper-2', 'helper-3']);
+    });
+
+    test('keeps the template contributor when someone else creates the post',
+        () {
+      final map = baseLocalMap();
+      map['Contributors'] = <String>['listed-self', 'helper-2'];
+      final template = PostTemplate.fromMap(true, 'with-self', map);
+
+      final context = PostTemplateMapper.mapTemplateToEventContext(
+        template: template,
+        currentUserID: 'other-author',
+      );
+
+      expect(context.metadata.contributorUIDs, ['listed-self', 'helper-2']);
+      expect(context.contributorAdditionUIDs, ['listed-self', 'helper-2']);
+    });
+
     test('override tracks role add/remove and does not touch expected people',
         () {
       final context = EventContext.adding(currentUserID: 'author-1');

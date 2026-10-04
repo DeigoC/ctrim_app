@@ -72,9 +72,14 @@ class PostTemplateMapper {
         locationName: template.location,
       ),
     );
-    eventContext.metadata.contributorUIDs.addAll(template.contributors);
-    if (template.contributors.isNotEmpty) {
-      eventContext.contributorAdditionUIDs.addAll(template.contributors);
+    // Keep the creating author out of contributors — they already own the post.
+    // Template editors may still list themselves so other creators inherit them.
+    final templateContributors = template.contributors
+        .where((uid) => uid.isNotEmpty && uid != currentUserID)
+        .toList();
+    eventContext.metadata.contributorUIDs.addAll(templateContributors);
+    if (templateContributors.isNotEmpty) {
+      eventContext.contributorAdditionUIDs.addAll(templateContributors);
     }
     if (template.leadSpeakerUID != null &&
         template.leadSpeakerUID!.isNotEmpty) {
