@@ -125,8 +125,10 @@ PostDraftReview buildPostDraftReview({
     _leadSpeakerItem(head.hasLeadSpeaker, head.leadSpeakerName),
     _postTagsItem(head.tagIDs.length),
     _cellGroupsItem(head.cellGroupIDs.length),
-    _expectedAttendeesItem(eventContext.expectedAttendeeUserIDs.length),
-    if (head.isRecent) _attendedItem(eventContext.draftAttendees.length),
+    if (head.isRecent)
+      _attendedItem(eventContext.draftAttendees.length)
+    else
+      _expectedAttendeesItem(eventContext.expectedAttendeeUserIDs.length),
     _contributorsItem(eventContext.metadata.contributorUIDs.length),
     _mediaGalleryItem(eventContext.media.allMedia.length),
     _broadcastNotifyItem(
