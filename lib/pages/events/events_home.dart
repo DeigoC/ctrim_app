@@ -168,11 +168,14 @@ class _ViewEventsHomeState extends State<ViewEventsHome> {
                       size: 28,
                     ),
                     const SizedBox(width: 12),
-                    Text(
-                      'Bulletin',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+                    Flexible(
+                      child: Text(
+                        'Bulletin',
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ],
