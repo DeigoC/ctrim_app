@@ -1,5 +1,14 @@
 # Deploy Cloud Functions to production when function code merges to main.
 # PRs run unit tests only (.github/workflows/unit-tests.yml); this job deploys after merge.
+#
+# Project prerequisites (must be enabled by a GCP owner — the deploy SA cannot
+# enable APIs itself):
+#   - cloudfunctions.googleapis.com
+#   - cloudbuild.googleapis.com
+#   - artifactregistry.googleapis.com
+#   - cloudscheduler.googleapis.com  (needed by dispatch_scheduled_notifications)
+#   - run.googleapis.com / eventarc.googleapis.com (Gen2 / Firestore triggers)
+# Blaze billing is required for scheduled functions and Gen2 builds.
 
 name: Deploy Cloud Functions on merge
 
