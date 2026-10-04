@@ -58,7 +58,7 @@ That full schedule is the practical “what am I down for?” view across all yo
 
 ## Team rota
 
-Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots for a ministry — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your ministries; change the chips to look at another site or ministry. Tap a post to open it and edit. Guests do not see this page.
+Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots for a ministry — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your ministries; clear the ministry chips to see every tagged slot, or select chips to narrow to those ministries. Change the location chips to look at another site. Tap a post to open it and edit. Guests do not see this page.
 
 ## Cell groups on Personal
 

@@ -162,14 +162,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamRotaEmptyBody =>
-      'Programme roles for the selected ministries will show here, including slots that still need people. Open a post to edit.';
-
-  @override
-  String get teamRotaEmptyNoTeamsTitle => 'Pick a ministry';
-
-  @override
-  String get teamRotaEmptyNoTeamsBody =>
-      'Choose one or more ministries to see their upcoming slots. Empty slots still belong to that ministry.';
+      'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.';
 
   @override
   String get teamRotaUnassigned => 'Unassigned';

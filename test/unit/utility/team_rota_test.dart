@@ -110,20 +110,38 @@ void main() {
       expect(posts.single.roles.map((r) => r['title']), ['Worship']);
     });
 
-    test('empty selected tags yields no posts', () {
-      expect(
-        TeamRotaQuery.matchingPosts(
-          posts: [
-            (
-              head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
-              program: programWith([worshipSlot]),
-            ),
-          ],
-          selectedTagIDs: const {},
-          locationFilter: VolunteerLocations.all,
-        ),
-        isEmpty,
+    test('empty selected tags shows all tagged roles', () {
+      final posts = TeamRotaQuery.matchingPosts(
+        posts: [
+          (
+            head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
+            program: programWith([untaggedAssigned, worshipSlot, techSlot]),
+          ),
+        ],
+        selectedTagIDs: const {},
+        locationFilter: VolunteerLocations.all,
       );
+
+      expect(posts, hasLength(1));
+      expect(
+        posts.single.roles.map((r) => r['title']),
+        ['Sound', 'Worship'],
+      );
+    });
+
+    test('selected tags narrow to matching ministries only', () {
+      final posts = TeamRotaQuery.matchingPosts(
+        posts: [
+          (
+            head: head(id: 'p1', eventDate: DateTime(2026, 9, 20)),
+            program: programWith([worshipSlot, techSlot]),
+          ),
+        ],
+        selectedTagIDs: {'worship'},
+        locationFilter: VolunteerLocations.all,
+      );
+
+      expect(posts.single.roles.map((r) => r['title']), ['Worship']);
     });
 
     test('filters by location and skips period parents', () {
