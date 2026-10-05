@@ -15,8 +15,18 @@ void main() {
       test('creates from a map with media entries', () {
         final map = {
           'Media': [
-            {'src': 'photo.jpg', 'type': 'img', 'title': 'Photo 1', 'thumbnailSrc': null},
-            {'src': 'clip.mp4', 'type': 'video', 'title': 'Clip 1', 'thumbnailSrc': 'thumb.jpg'},
+            {
+              'src': 'photo.jpg',
+              'type': 'img',
+              'title': 'Photo 1',
+              'thumbnailSrc': null
+            },
+            {
+              'src': 'clip.mp4',
+              'type': 'video',
+              'title': 'Clip 1',
+              'thumbnailSrc': 'thumb.jpg'
+            },
           ]
         };
 
@@ -37,7 +47,12 @@ void main() {
     group('toJson', () {
       test('serialises media list under "Media" key', () {
         final media = EventMedia();
-        media.addMediaFile({'src': 'img.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile({
+          'src': 'img.jpg',
+          'type': 'img',
+          'title': '',
+          'thumbnailSrc': null
+        });
 
         final json = media.toJson() as Map<String, dynamic>;
 
@@ -49,7 +64,8 @@ void main() {
     group('addMediaFile', () {
       test('appends a single file', () {
         final media = EventMedia();
-        media.addMediaFile({'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile(
+            {'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
 
         expect(media.allMedia.length, 1);
         expect(media.allMedia.first['src'], 'a.jpg');
@@ -71,7 +87,12 @@ void main() {
     group('removeMediaFile', () {
       test('removes matching entry by reference', () {
         final media = EventMedia();
-        final file = {'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null};
+        final file = {
+          'src': 'a.jpg',
+          'type': 'img',
+          'title': '',
+          'thumbnailSrc': null
+        };
         media.addMediaFile(file);
         media.removeMediaFile(file);
 
@@ -79,11 +100,49 @@ void main() {
       });
     });
 
+    group('moveMediaFile', () {
+      test('moves an entry to a new index', () {
+        final media = EventMedia();
+        media.addMediaFile(
+            {'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile(
+            {'src': 'b.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile(
+            {'src': 'c.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+
+        media.moveMediaFile(2, 0);
+
+        expect(
+          media.allMedia.map((entry) => entry['src']),
+          ['c.jpg', 'a.jpg', 'b.jpg'],
+        );
+      });
+
+      test('ignores a no-op or out-of-range index', () {
+        final media = EventMedia();
+        media.addMediaFile(
+            {'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile(
+            {'src': 'b.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+
+        media.moveMediaFile(1, 1);
+        media.moveMediaFile(-1, 0);
+        media.moveMediaFile(0, 3);
+
+        expect(
+          media.allMedia.map((entry) => entry['src']),
+          ['a.jpg', 'b.jpg'],
+        );
+      });
+    });
+
     group('clearAllMedia', () {
       test('removes all media entries', () {
         final media = EventMedia();
-        media.addMediaFile({'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
-        media.addMediaFile({'src': 'b.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile(
+            {'src': 'a.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
+        media.addMediaFile(
+            {'src': 'b.jpg', 'type': 'img', 'title': '', 'thumbnailSrc': null});
         media.clearAllMedia();
 
         expect(media.allMedia, isEmpty);

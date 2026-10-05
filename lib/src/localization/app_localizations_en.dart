@@ -2221,6 +2221,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharePostTooltip => 'Share';
 
   @override
+  String get sharePostSheetTitle => 'Share post';
+
+  @override
+  String get sharePostSheetSubtitle => 'Send the link, or the write-up';
+
+  @override
+  String get sharePostLinkTitle => 'Share link';
+
+  @override
+  String get sharePostLinkSubtitle => 'The address for this post';
+
+  @override
+  String get sharePostWriteUpTitle => 'Share the write-up';
+
+  @override
+  String get sharePostWriteUpSubtitle => 'Title, link, and the About text';
+
+  @override
+  String get sharePostLinkCopied => 'Link copied';
+
+  @override
+  String get sharePostCopyDialogTitle => 'Share post';
+
+  @override
+  String get sharePostCopyDialogMessage =>
+      'Your browser may not support native sharing but you can still copy the content to your clipboard:';
+
+  @override
+  String get sharePostCopied => 'Copied to clipboard!';
+
+  @override
+  String get sharePostCopyAction => 'Copy';
+
+  @override
+  String get sharePostExtractFailed => 'Unable to extract post content';
+
+  @override
   String get openPersonPageTitle => 'Profile';
 
   @override

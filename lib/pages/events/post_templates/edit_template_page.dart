@@ -68,7 +68,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
   late final List<String> _initialExpectedAttendeeUserIDs;
   late final List<String> _initialContributorUIDs;
   late final String _initialLocation;
-  late final String? _initialLeadSpeakerUID;
+  late final List<String> _initialLeadSpeakerUIDs;
   late final bool _initialIsPeriodParent;
   late bool _defaultNotifyLocation;
   late final bool _initialDefaultNotifyLocation;
@@ -115,7 +115,8 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     _initialContributorUIDs =
         List<String>.from(widget.oldTemplate.contributors);
     _initialLocation = widget.oldTemplate.location;
-    _initialLeadSpeakerUID = widget.oldTemplate.leadSpeakerUID;
+    _initialLeadSpeakerUIDs =
+        List<String>.from(widget.oldTemplate.leadSpeakerUIDs);
     _initialIsPeriodParent = widget.oldTemplate.isPeriodParent;
     _category = widget.oldTemplate.category;
     _initialCategory = _category;
@@ -168,8 +169,12 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       return true;
     }
     if (widget.eventContext.head.location != _initialLocation) return true;
-    if (widget.eventContext.metadata.leadSpeakerUID != _initialLeadSpeakerUID)
+    if (!_sameStringLists(
+      widget.eventContext.metadata.leadSpeakerUIDs,
+      _initialLeadSpeakerUIDs,
+    )) {
       return true;
+    }
     if (widget.eventContext.metadata.isPeriodParent != _initialIsPeriodParent)
       return true;
     if (_category != _initialCategory) return true;
@@ -1027,7 +1032,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
     ];
   }
 
-  /// Template AppBar preview: fixed head media → cover pool → lead speaker.
+  /// Template AppBar preview: fixed head media → cover pool → first speaker.
   String? _previewKeyGraphicSrc() {
     final fromHead = _firstImageSrc(widget.eventContext.head.media);
     if (fromHead != null) return fromHead;
@@ -1198,6 +1203,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       'ExpectedAttendeeUserIDs': widget.eventContext.expectedAttendeeUserIDs,
       'Contributors': widget.eventContext.metadata.contributorUIDs,
       'LeadSpeakerUID': widget.eventContext.metadata.leadSpeakerUID,
+      'LeadSpeakerUIDs': widget.eventContext.metadata.leadSpeakerUIDs,
       'IsPeriodParent': widget.eventContext.metadata.isPeriodParent,
       'Subtitles': _subtitles,
       'AllDay': widget.eventContext.program.allDay,

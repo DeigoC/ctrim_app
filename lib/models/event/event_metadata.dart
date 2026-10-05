@@ -1,15 +1,20 @@
 import 'dart:collection';
 
+import 'lead_speaker.dart';
+
 class EventMetadata {
   late final String _authorUID;
   late final List<String> _contributorUIDs;
   late String _lastUID;
   late String? _parentID;
   late final List<String> _childrenIDs, _topics, _tagIDs, _cellGroupIDs;
-  String? _leadSpeakerUID;
+  List<String> _leadSpeakerUIDs = [];
   bool _isPeriodParent = false;
 
-  EventMetadata({required String authorUID, final String? parentID, bool isPeriodParent = false}) {
+  EventMetadata(
+      {required String authorUID,
+      final String? parentID,
+      bool isPeriodParent = false}) {
     _authorUID = authorUID;
     _lastUID = authorUID;
     _parentID = parentID;
@@ -30,7 +35,10 @@ class EventMetadata {
         _topics = List<String>.from(data['Topics'] ?? []),
         _tagIDs = List<String>.from(data['TagIDs'] ?? []),
         _cellGroupIDs = List<String>.from(data['CellGroupIDs'] ?? []),
-        _leadSpeakerUID = data['LeadSpeakerUID'] as String?,
+        _leadSpeakerUIDs = LeadSpeakerSnapshot.uidsFromFields(
+          data['LeadSpeakerUIDs'],
+          data['LeadSpeakerUID'],
+        ),
         _isPeriodParent = data['IsPeriodParent'] == true;
 
   Map<String, Object?> toJson() {
@@ -43,7 +51,8 @@ class EventMetadata {
       'Topics': _topics,
       'TagIDs': _tagIDs,
       'CellGroupIDs': _cellGroupIDs,
-      'LeadSpeakerUID': _leadSpeakerUID,
+      'LeadSpeakerUID': leadSpeakerUID,
+      'LeadSpeakerUIDs': List<String>.from(_leadSpeakerUIDs),
       'IsPeriodParent': _isPeriodParent,
     };
   }
@@ -51,9 +60,11 @@ class EventMetadata {
   String get lastUID => _lastUID;
   String get authorUID => _authorUID;
   String? get parentID => _parentID;
-  String? get leadSpeakerUID => _leadSpeakerUID;
+  String? get leadSpeakerUID =>
+      _leadSpeakerUIDs.isEmpty ? null : _leadSpeakerUIDs.first;
+  List<String> get leadSpeakerUIDs => UnmodifiableListView(_leadSpeakerUIDs);
   bool get isPeriodParent => _isPeriodParent;
-  bool get hasLeadSpeaker => _leadSpeakerUID != null && _leadSpeakerUID!.isNotEmpty;
+  bool get hasLeadSpeaker => _leadSpeakerUIDs.isNotEmpty;
   bool get hasChildren => _childrenIDs.isNotEmpty;
   bool get hasParent => _parentID != null && _parentID!.isNotEmpty;
 
@@ -92,8 +103,20 @@ class EventMetadata {
   void clearCellGroupIDs() => _cellGroupIDs.clear();
 
   void setLastUID(final String newLastUID) => _lastUID = newLastUID;
-  void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
-  void clearLeadSpeakerUID() => _leadSpeakerUID = null;
+  void setLeadSpeakerUIDs(final List<String> uids) {
+    _leadSpeakerUIDs = LeadSpeakerSnapshot.normalizeUids(uids);
+  }
+
+  /// Replaces the list with one uid, or clears it when [uid] is empty.
+  void setLeadSpeakerUID(final String? uid) {
+    if (uid == null || uid.isEmpty) {
+      clearLeadSpeakerUID();
+      return;
+    }
+    setLeadSpeakerUIDs([uid]);
+  }
+
+  void clearLeadSpeakerUID() => _leadSpeakerUIDs = [];
 
   void setParentID(final String? parentID) =>
       _parentID = (parentID == null || parentID.isEmpty) ? null : parentID;

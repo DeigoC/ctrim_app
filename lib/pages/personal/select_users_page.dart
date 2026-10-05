@@ -58,8 +58,8 @@ class SelectUsersPage extends StatefulWidget {
   final bool allowTaskCheck;
   final String? title;
 
-  /// When set, selection is capped (e.g. `1` for lead speaker). Selecting
-  /// beyond the limit replaces the oldest selection.
+  /// When set, selection is capped (speakers use 3). A further tap drops the
+  /// earliest selection so the rest keep their order.
   final int? maxSelection;
 
   /// When true (and the signed-in user passes the create gate), a failed search
@@ -774,10 +774,8 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
 
   void _showFilterSheet(AppContext appContext) {
     final l10n = AppLocalizations.of(context)!;
-    final activeTags =
-        appContext.allTags.where((tag) => tag.isActive).toList();
-    final showShowSection =
-        widget.preferServing || widget.includePlaceholders;
+    final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
+    final showShowSection = widget.preferServing || widget.includePlaceholders;
 
     HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
@@ -936,8 +934,10 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         return;
       }
       final max = widget.maxSelection;
-      if (max != null && _selectedUIDs.length >= max) {
-        _selectedUIDs.clear();
+      if (max != null &&
+          _selectedUIDs.length >= max &&
+          _selectedUIDs.isNotEmpty) {
+        _selectedUIDs.remove(_selectedUIDs.first);
       }
       _selectedUIDs.add(uid);
     });

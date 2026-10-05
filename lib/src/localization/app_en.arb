@@ -2850,7 +2850,55 @@
   },
   "sharePostTooltip": "Share",
   "@sharePostTooltip": {
-    "description": "Tooltip for the share control on a post body"
+    "description": "Tooltip for the share control on an open post"
+  },
+  "sharePostSheetTitle": "Share post",
+  "@sharePostSheetTitle": {
+    "description": "Title of the sheet that shares an open post"
+  },
+  "sharePostSheetSubtitle": "Send the link, or the write-up",
+  "@sharePostSheetSubtitle": {
+    "description": "Subtitle of the open-post share sheet"
+  },
+  "sharePostLinkTitle": "Share link",
+  "@sharePostLinkTitle": {
+    "description": "Action that shares only the post address"
+  },
+  "sharePostLinkSubtitle": "The address for this post",
+  "@sharePostLinkSubtitle": {
+    "description": "Explains that Share link sends the permalink"
+  },
+  "sharePostWriteUpTitle": "Share the write-up",
+  "@sharePostWriteUpTitle": {
+    "description": "Action that shares the About text of a post"
+  },
+  "sharePostWriteUpSubtitle": "Title, link, and the About text",
+  "@sharePostWriteUpSubtitle": {
+    "description": "Explains what the write-up share includes"
+  },
+  "sharePostLinkCopied": "Link copied",
+  "@sharePostLinkCopied": {
+    "description": "Confirmation after the post address is copied"
+  },
+  "sharePostCopyDialogTitle": "Share post",
+  "@sharePostCopyDialogTitle": {
+    "description": "Title of the dialog that copies a post write-up"
+  },
+  "sharePostCopyDialogMessage": "Your browser may not support native sharing but you can still copy the content to your clipboard:",
+  "@sharePostCopyDialogMessage": {
+    "description": "Explains the clipboard fallback when sharing a write-up"
+  },
+  "sharePostCopied": "Copied to clipboard!",
+  "@sharePostCopied": {
+    "description": "Confirmation after a post write-up is copied"
+  },
+  "sharePostCopyAction": "Copy",
+  "@sharePostCopyAction": {
+    "description": "Button that copies the post write-up"
+  },
+  "sharePostExtractFailed": "Unable to extract post content",
+  "@sharePostExtractFailed": {
+    "description": "Fallback text when the About body cannot be turned into plain text"
   },
   "openPersonPageTitle": "Profile",
   "@openPersonPageTitle": {

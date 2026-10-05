@@ -6,6 +6,7 @@ import '../firebase/db_managers/id_tracker.dart';
 import '../models/event/event_attendance.dart';
 import '../models/event/event_body.dart';
 import '../models/event/event_head.dart';
+import '../models/event/lead_speaker.dart';
 import '../models/event/event_log.dart';
 import '../models/event/event_media.dart';
 import '../models/event/event_metadata.dart';
@@ -211,13 +212,7 @@ class EventContext {
       buildAttendanceForNewPost(expectedUserIds: const [], now: now)
           .attendeeCount,
     );
-    if (_head.hasLeadSpeaker) {
-      headToUpload.setLeadSpeaker(
-        uid: _head.leadSpeakerUID,
-        imgSrc: _head.leadSpeakerImgSrc,
-        name: _head.leadSpeakerName,
-      );
-    }
+    headToUpload.setLeadSpeakers(_head.leadSpeakers);
     for (final mediaEntry in _head.media) {
       headToUpload.addMediaItem(
           src: mediaEntry['src']!,
@@ -550,6 +545,7 @@ class EventContext {
     result += '\n${_metadata.topics}';
     result += '\n${_metadata.leadSpeakerUID ?? 'null'}';
     result += '\n${_metadata.isPeriodParent ? '1' : '0'}';
+    result += '\n${_metadata.leadSpeakerUIDs}';
     result += '\n----META_END----';
 
     return result;
@@ -639,6 +635,15 @@ class EventContext {
         if (!rawPeriod.contains('----META_END----')) {
           _metadata.setIsPeriodParent(rawPeriod == '1');
           _head.setIsPeriodParent(_metadata.isPeriodParent);
+        }
+      }
+      if (lines.length > metadataStartIndex + 9) {
+        final String rawSpeakers = lines.elementAt(metadataStartIndex + 9);
+        if (!rawSpeakers.contains('----META_END----')) {
+          final uids = _getListFromData(rawSpeakers);
+          if (uids.isNotEmpty) {
+            _metadata.setLeadSpeakerUIDs(uids);
+          }
         }
       }
     }
@@ -815,41 +820,51 @@ class EventContext {
     }
   }
 
-  /// Sets or clears the lead speaker on metadata + head denormalized portrait fields.
+  /// Sets or clears speakers on metadata and the head portrait fields.
+  ///
+  /// Order is kept. The first person is the cover photo.
+  void applyLeadSpeakers(final List<LeadSpeakerSnapshot> speakers) {
+    final normalized = LeadSpeakerSnapshot.normalize(speakers);
+    _metadata
+        .setLeadSpeakerUIDs(normalized.map((speaker) => speaker.uid).toList());
+    _head.setLeadSpeakers(normalized);
+  }
+
+  /// Sets or clears a single speaker. Extra speakers are removed.
   void applyLeadSpeaker({
     required String? uid,
     String? imgSrc,
     String? name,
   }) {
     if (uid == null || uid.isEmpty) {
-      _metadata.clearLeadSpeakerUID();
-      _head.clearLeadSpeaker();
+      applyLeadSpeakers(const []);
       return;
     }
-    _metadata.setLeadSpeakerUID(uid);
-    _head.setLeadSpeaker(
-      uid: uid,
-      imgSrc: (imgSrc != null && imgSrc.isNotEmpty) ? imgSrc : null,
-      name: (name != null && name.isNotEmpty) ? name : null,
-    );
+    applyLeadSpeakers([
+      LeadSpeakerSnapshot(uid: uid, imgSrc: imgSrc, name: name),
+    ]);
   }
 
-  /// Resolves [metadata.leadSpeakerUID] against [users] into head portrait fields.
+  /// Resolves [metadata.leadSpeakerUIDs] against [users] into head portraits.
   void syncLeadSpeakerHeadFromUsers(Iterable<User> users) {
-    final uid = _metadata.leadSpeakerUID;
-    if (uid == null || uid.isEmpty) {
-      _head.clearLeadSpeaker();
-      return;
-    }
-    for (final user in users) {
-      if (user.id == uid) {
-        applyLeadSpeaker(uid: uid, imgSrc: user.imgSrc, name: user.fullname);
-        return;
+    final byId = <String, User>{for (final user in users) user.id: user};
+    final previous = <String, LeadSpeakerSnapshot>{
+      for (final speaker in _head.leadSpeakers) speaker.uid: speaker,
+    };
+    final next = <LeadSpeakerSnapshot>[];
+    for (final uid in _metadata.leadSpeakerUIDs) {
+      final user = byId[uid];
+      if (user != null) {
+        next.add(LeadSpeakerSnapshot(
+          uid: user.id,
+          imgSrc: user.imgSrc,
+          name: user.fullname,
+        ));
+      } else {
+        next.add(previous[uid] ?? LeadSpeakerSnapshot(uid: uid));
       }
     }
-    // Keep UID even if user list does not contain them yet.
-    _head.setLeadSpeaker(
-        uid: uid, imgSrc: _head.leadSpeakerImgSrc, name: _head.leadSpeakerName);
+    _head.setLeadSpeakers(next);
   }
 
   // template subtitles

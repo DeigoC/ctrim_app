@@ -63,7 +63,7 @@ class PostEditSheet extends StatelessWidget {
               icon: Icons.title,
               color: Colors.indigo,
               title: 'Edit title & details',
-              subtitle: 'Title, subtitle, and lead speaker',
+              subtitle: 'Title, subtitle, and speakers',
               onTap: onEditTitle,
             ),
             ActionSheetOption(
@@ -102,8 +102,8 @@ class PostEditSheet extends StatelessWidget {
             ActionSheetOption(
               icon: Icons.record_voice_over_outlined,
               color: Colors.deepPurple,
-              title: 'Lead speaker',
-              subtitle: 'Person sharing the message (card portrait)',
+              title: 'Speakers',
+              subtitle: 'Up to 3. The first is the cover photo',
               onTap: onManageLeadSpeaker,
             ),
             ActionSheetOption(

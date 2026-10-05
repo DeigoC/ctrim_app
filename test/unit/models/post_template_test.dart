@@ -108,6 +108,20 @@ void main() {
         final template = PostTemplate.fromMap(true, 'tpl-speaker', map);
 
         expect(template.leadSpeakerUID, 'speaker-1');
+        expect(template.leadSpeakerUIDs, ['speaker-1']);
+      });
+
+      test('prefers LeadSpeakerUIDs over the legacy uid', () {
+        final map = baseLocalMap();
+        map['LeadSpeakerUID'] = 'legacy';
+        map['LeadSpeakerUIDs'] = ['ada', 'ben', 'ada', 'cara', 'dan'];
+        final template = PostTemplate.fromMap(true, 'tpl-speakers', map);
+
+        expect(template.leadSpeakerUIDs, ['ada', 'ben', 'cara']);
+        expect(template.leadSpeakerUID, 'ada');
+        expect(
+            template.toJson(true)['LeadSpeakerUIDs'], ['ada', 'ben', 'cara']);
+        expect(template.toJson(true)['LeadSpeakerUID'], 'ada');
       });
 
       test('defaults IsPeriodParent to false and reads true', () {

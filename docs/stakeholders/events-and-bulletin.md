@@ -8,8 +8,9 @@ Definitions for **post**, **interest**, **bookmark**, **template**, and related 
 
 - Scroll and open posts (title, details, media, schedule, related posts)
 - On bulletin cards, a **tall photo** sits along the side next to the title; a **wide photo** fills the bottom of the card. When there are several photos, portraits stay on the side and the rest share a strip along the bottom
+- When a post has no photos, the card shows the **speakers** (up to three) with their photos and names. The first speaker’s photo is also the picture at the top of the post
 - A post’s tag sits in the same label as Upcoming or Recent, for example **Upcoming • Sunday Worship**, in that label’s colour. The date and time stay on their own line under the description
-- Share a post from its content to send a **link** (`ctrim.app/post/…`). Guests and members who open the link land on that post — they can bookmark the address and come back later
+- **Share** (top of an open post, on every tab) sends the post’s **link** (`ctrim.app/post/…`), or the **write-up** (the title, the link, and the About text). On a phone this opens the usual share menu. When that menu is not available, the link is copied so you can paste it. Guests and members who open the link land on that post
 - Other browseable records work the same way: cell groups, churches, information topics, testimonials, and people profiles each have an address you can share or bookmark
 - On many posts, see **interest** and **attendance** counts
 - When signed in: mark **interest** (“follow updates” for that post) and see who else is interested
@@ -52,7 +53,7 @@ Opening a post shows tabs when that content exists:
 | **About** | Title, details, and main description |
 | **People** | Interest, expected attendees, and attendance |
 | **Schedule** | Programme / roles and times (guests may see a filtered view — see below) |
-| **Media** | Photos and video |
+| **Media** | Photos and video, in the order set on the post. The first image is the cover |
 | **Related** | Linked parent, sibling, or child posts |
 
 Tap a photo or video to open it. Pinch a photo to look closer, swipe sideways for the next item, and swipe down to close. Video playback includes pause, a timeline, and a loop control.
@@ -115,7 +116,8 @@ People with **Leader** access can create posts (usually by picking a **template*
 
 The **author** of a post, plus anyone listed as a **contributor** on that post, can edit it — for example:
 
-- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. The create screen and templates do not offer this.  
+- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. The create screen and templates do not offer this.
+- **Speakers**, up to three, in sermon order. The first person’s photo is the cover when the post has no pictures. On Title & details, move someone earlier or later to change who that cover is. Templates can store the same list.  
 - Media (photos / video)  
 - Schedule and role assignments  
 - Who is attending / who is expected (including **Fill from cell group** when the post is linked to a cell group)  

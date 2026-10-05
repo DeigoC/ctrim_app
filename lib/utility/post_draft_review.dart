@@ -1,4 +1,6 @@
+import '../models/event/event_head.dart';
 import '../models/event/event_program.dart';
+import '../models/event/lead_speaker.dart';
 import '../models/post_tag.dart';
 import 'notifications/broadcast_audience.dart';
 import 'event_context.dart';
@@ -122,7 +124,7 @@ PostDraftReview buildPostDraftReview({
     _eventDateItem(head.eventDate, program),
     _scheduleRolesItem(program),
     _coverImageItem(head.getKeyGraphic()),
-    _leadSpeakerItem(head.hasLeadSpeaker, head.leadSpeakerName),
+    _leadSpeakerItem(head),
     _postTagsItem(head.tagIDs.length),
     _cellGroupsItem(head.cellGroupIDs.length),
     if (head.isRecent)
@@ -232,22 +234,25 @@ PostDraftReviewItem _coverImageItem(String? keyGraphic) {
   );
 }
 
-PostDraftReviewItem _leadSpeakerItem(bool hasLeadSpeaker, String? name) {
-  if (!hasLeadSpeaker) {
+PostDraftReviewItem _leadSpeakerItem(EventHead head) {
+  if (!head.hasLeadSpeaker) {
     return const PostDraftReviewItem(
       kind: PostDraftReviewKind.leadSpeaker,
       status: PostDraftReviewStatus.suggestion,
-      title: 'Lead speaker',
+      title: 'Speakers',
       subtitle: 'Not set',
       tab: PostDraftReviewTab.header,
     );
   }
 
+  final joined = LeadSpeakerSnapshot.joinNames(
+    head.leadSpeakers.map((speaker) => speaker.name),
+  );
   return PostDraftReviewItem(
     kind: PostDraftReviewKind.leadSpeaker,
     status: PostDraftReviewStatus.ready,
-    title: 'Lead speaker',
-    subtitle: name?.trim().isNotEmpty == true ? name!.trim() : 'Set',
+    title: head.leadSpeakers.length > 1 ? 'Speakers' : 'Lead speaker',
+    subtitle: joined ?? 'Set',
     tab: PostDraftReviewTab.header,
   );
 }

@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'event/event_program.dart';
+import 'event/lead_speaker.dart';
 
 /// Hardcoded grouping for post templates (Services vs Cell Groups).
 enum PostTemplateCategory {
@@ -195,7 +196,7 @@ class PostTemplate {
       _headMediaPool,
       _bodyMediaPool;
   late List<Map<String, dynamic>> _logs;
-  String? _leadSpeakerUID;
+  List<String> _leadSpeakerUIDs = [];
   bool _isPeriodParent = false;
 
   // * Event Program related
@@ -229,7 +230,10 @@ class PostTemplate {
         : <String>[];
     _location = data['Location'];
     _category = PostTemplateCategory.fromFirestore(data['Category']);
-    _leadSpeakerUID = data['LeadSpeakerUID'] as String?;
+    _leadSpeakerUIDs = LeadSpeakerSnapshot.uidsFromFields(
+      data['LeadSpeakerUIDs'],
+      data['LeadSpeakerUID'],
+    );
     _isPeriodParent = data['IsPeriodParent'] == true;
 
     // body
@@ -283,7 +287,8 @@ class PostTemplate {
       'CellGroupIDs': _cellGroupIDs,
       'ExpectedAttendeeUserIDs': _expectedAttendeeUserIDs,
       'Contributors': _contributorUIDs,
-      'LeadSpeakerUID': _leadSpeakerUID,
+      'LeadSpeakerUID': leadSpeakerUID,
+      'LeadSpeakerUIDs': List<String>.from(_leadSpeakerUIDs),
       'IsPeriodParent': _isPeriodParent,
       'Subtitles': _subtitles,
       'AllDay': _allDay,
@@ -344,7 +349,9 @@ class PostTemplate {
   List<String> get expectedAttendeeUserIDs =>
       UnmodifiableListView(_expectedAttendeeUserIDs);
   List<String> get subtitles => _subtitles;
-  String? get leadSpeakerUID => _leadSpeakerUID;
+  String? get leadSpeakerUID =>
+      _leadSpeakerUIDs.isEmpty ? null : _leadSpeakerUIDs.first;
+  List<String> get leadSpeakerUIDs => UnmodifiableListView(_leadSpeakerUIDs);
   bool get isPeriodParent => _isPeriodParent;
 
   /// Change history entries: `{uid, log, ts}` — newest first after [addLog].
@@ -387,7 +394,18 @@ class PostTemplate {
   void setOnline(final bool newState) => _online = newState;
   void setMapLink(final String mapLink) => _mapLink = mapLink;
   void setAddress(final String address) => _address = address;
-  void setLeadSpeakerUID(final String? uid) => _leadSpeakerUID = uid;
+  void setLeadSpeakerUIDs(final List<String> uids) {
+    _leadSpeakerUIDs = LeadSpeakerSnapshot.normalizeUids(uids);
+  }
+
+  void setLeadSpeakerUID(final String? uid) {
+    if (uid == null || uid.isEmpty) {
+      _leadSpeakerUIDs = [];
+      return;
+    }
+    setLeadSpeakerUIDs([uid]);
+  }
+
   void setIsPeriodParent(final bool value) => _isPeriodParent = value;
   void setCategory(final PostTemplateCategory value) => _category = value;
 

@@ -105,7 +105,7 @@ Role filters (in **Refine & sort**, on top of Serving or All):
 
 Each person shows at most one of **Admin** or **Leader** from their profile permissions (Admin is the higher badge). **CG Leader** can appear alongside either — it is not a separate switch on the person.
 
-When organisers pick people for **programme roles**, lead speaker, contributors, pastors, or cell-group leaders, the picker also starts on serving people (turn Serving off there too if you need someone else). Attendance, expected attendees, and cell members still list everyone.
+When organisers pick people for **programme roles**, speakers, contributors, pastors, or cell-group leaders, the picker also starts on serving people (turn Serving off there too if you need someone else). Attendance, expected attendees, and cell members still list everyone.
 
 Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
 

@@ -3934,11 +3934,83 @@ abstract class AppLocalizations {
   /// **'Could not load post'**
   String get openPostLoadErrorTitle;
 
-  /// Tooltip for the share control on a post body
+  /// Tooltip for the share control on an open post
   ///
   /// In en, this message translates to:
   /// **'Share'**
   String get sharePostTooltip;
+
+  /// Title of the sheet that shares an open post
+  ///
+  /// In en, this message translates to:
+  /// **'Share post'**
+  String get sharePostSheetTitle;
+
+  /// Subtitle of the open-post share sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Send the link, or the write-up'**
+  String get sharePostSheetSubtitle;
+
+  /// Action that shares only the post address
+  ///
+  /// In en, this message translates to:
+  /// **'Share link'**
+  String get sharePostLinkTitle;
+
+  /// Explains that Share link sends the permalink
+  ///
+  /// In en, this message translates to:
+  /// **'The address for this post'**
+  String get sharePostLinkSubtitle;
+
+  /// Action that shares the About text of a post
+  ///
+  /// In en, this message translates to:
+  /// **'Share the write-up'**
+  String get sharePostWriteUpTitle;
+
+  /// Explains what the write-up share includes
+  ///
+  /// In en, this message translates to:
+  /// **'Title, link, and the About text'**
+  String get sharePostWriteUpSubtitle;
+
+  /// Confirmation after the post address is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get sharePostLinkCopied;
+
+  /// Title of the dialog that copies a post write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Share post'**
+  String get sharePostCopyDialogTitle;
+
+  /// Explains the clipboard fallback when sharing a write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Your browser may not support native sharing but you can still copy the content to your clipboard:'**
+  String get sharePostCopyDialogMessage;
+
+  /// Confirmation after a post write-up is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard!'**
+  String get sharePostCopied;
+
+  /// Button that copies the post write-up
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get sharePostCopyAction;
+
+  /// Fallback text when the About body cannot be turned into plain text
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to extract post content'**
+  String get sharePostExtractFailed;
 
   /// App bar title while resolving a person permalink
   ///

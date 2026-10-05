@@ -40,7 +40,7 @@ See [Reading the schedule](../../events-and-bulletin.md#reading-the-schedule) an
 ### Media
 
 1. Open **media**.  
-2. Add, reorder, or replace images/video. Pasting a link checks it straight away. A new image or video is marked as key media while fewer than four are set (those show on the post card). The first image stays the cover; you can still change it.  
+2. Add, reorder, or replace images and video. In **Key media**, use **Earlier**, **Later**, and **Make cover** (on a phone you can also drag the handle). The first image is the cover on the post card. **Post media** uses the same arrows, and a drag handle on a phone; that order is the gallery on the Media tab. Pasting a link checks it straight away. A new image or video is marked as key media while fewer than four are set.  
 3. Save.  
 
 ### People on the post

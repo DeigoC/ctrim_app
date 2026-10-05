@@ -5,16 +5,19 @@ import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/event/lead_speaker.dart';
 import '../../models/post_template.dart';
+import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/notifications/notification_topics.dart';
-import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/post_template_mapper.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/event_log_dialog.dart';
+import '../../widgets/posts/lead_speaker_field.dart';
 import '../../widgets/posts/post_edit_sheet.dart';
+import '../../widgets/posts/post_share_sheet.dart';
 import '../../widgets/posts/post_metadata_section.dart';
 import '../../widgets/posts/view_attendance_tab.dart';
 import '../../widgets/posts/view_event_media_tab.dart';
@@ -30,7 +33,6 @@ import 'post_templates/select_post_template_page.dart';
 import 'select_schedule_preset_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
-import '../personal/select_users_page.dart';
 import '../../utility/responsive_layout.dart';
 import 'view_event_local_store.dart';
 import 'view_event_notify_helpers.dart';
@@ -60,9 +62,7 @@ class _ViewEventPageState extends State<ViewEventPage>
   late String _originalTitle, _originalSubtitle;
   late final String _currentUID;
   late DateTime? _originalEventDate;
-  late String? _originalLeadSpeakerUID,
-      _originalLeadSpeakerImgSrc,
-      _originalLeadSpeakerName;
+  late List<LeadSpeakerSnapshot> _originalLeadSpeakers;
   late int _originalAttendeeCount;
 
   final List<Widget> _appBarTabs = [
@@ -83,6 +83,8 @@ class _ViewEventPageState extends State<ViewEventPage>
   String _loadStatusMessage = 'Checking saved copy…';
   int _loadCompletedSteps = 0;
   int _loadTotalSteps = 1;
+
+  final GlobalKey _shareButtonKey = GlobalKey();
 
   int _aboutTabIndex = 0;
   int _peopleTabIndex = 1;
@@ -142,9 +144,8 @@ class _ViewEventPageState extends State<ViewEventPage>
     _originalTitle = widget.eventHead.title;
     _originalSubtitle = widget.eventHead.subtitle;
     _originalEventDate = widget.eventHead.eventDate;
-    _originalLeadSpeakerUID = widget.eventHead.leadSpeakerUID;
-    _originalLeadSpeakerImgSrc = widget.eventHead.leadSpeakerImgSrc;
-    _originalLeadSpeakerName = widget.eventHead.leadSpeakerName;
+    _originalLeadSpeakers =
+        List<LeadSpeakerSnapshot>.from(widget.eventHead.leadSpeakers);
     _originalAttendeeCount = widget.eventHead.attendeeCount;
   }
 
@@ -163,19 +164,12 @@ class _ViewEventPageState extends State<ViewEventPage>
       widget.eventHead.setTitle(_originalTitle);
       widget.eventHead.setSubtitle(_originalSubtitle);
       widget.eventHead.setEventDate(_originalEventDate);
-      widget.eventHead.setLeadSpeaker(
-        uid: _originalLeadSpeakerUID,
-        imgSrc: _originalLeadSpeakerImgSrc,
-        name: _originalLeadSpeakerName,
-      );
+      widget.eventHead.setLeadSpeakers(_originalLeadSpeakers);
       widget.eventHead.setAttendeeCount(_originalAttendeeCount);
       if (_haveFetchedPost) {
-        if (_originalLeadSpeakerUID == null ||
-            _originalLeadSpeakerUID!.isEmpty) {
-          _eventContext.metadata.clearLeadSpeakerUID();
-        } else {
-          _eventContext.metadata.setLeadSpeakerUID(_originalLeadSpeakerUID);
-        }
+        _eventContext.metadata.setLeadSpeakerUIDs(
+          _originalLeadSpeakers.map((speaker) => speaker.uid).toList(),
+        );
       }
     }
     super.dispose();
@@ -563,13 +557,28 @@ class _ViewEventPageState extends State<ViewEventPage>
     return tabs;
   }
 
-  List<Widget>? _buildAppBarActions() {
+  List<Widget> _buildAppBarActions() {
+    final l10n = AppLocalizations.of(context)!;
     final bool canEdit = _eventContext.isUserAuthor(_currentUID) ||
         _eventContext.isUserContributor(_currentUID);
-    if (!canEdit) return null;
-
     final colorScheme = Theme.of(context).colorScheme;
-    final actions = <Widget>[];
+    final actions = <Widget>[
+      IconButton.filledTonal(
+        key: _shareButtonKey,
+        tooltip: l10n.sharePostTooltip,
+        onPressed: _showShareSheet,
+        icon: const Icon(Icons.share, size: 20),
+        style: IconButton.styleFrom(
+          backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.8),
+          foregroundColor: colorScheme.onPrimaryContainer,
+        ),
+      ),
+    ];
+
+    if (!canEdit) {
+      actions.add(const SizedBox(width: 4));
+      return actions;
+    }
 
     if (_canSaveEditing) {
       actions.add(
@@ -735,6 +744,19 @@ class _ViewEventPageState extends State<ViewEventPage>
             }));
   }
 
+  void _showShareSheet() {
+    final box =
+        _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    final origin = box != null && box.hasSize
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
+    showPostShareSheet(
+      context: context,
+      eventContext: _eventContext,
+      sharePositionOrigin: origin,
+    );
+  }
+
   void _showSettings() {
     final appContext = Provider.of<AppContext>(context, listen: false);
     showModalBottomSheet(
@@ -782,37 +804,11 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   Future<void> _onManageLeadSpeakerFromSheet() async {
     Navigator.of(context).pop();
-    final appContext = Provider.of<AppContext>(context, listen: false);
-    final currentUid = _eventContext.metadata.leadSpeakerUID ??
-        _eventContext.head.leadSpeakerUID;
-    final result = await Navigator.push<List<String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectUsersPage(
-          selectedUIDs: currentUid == null ? <String>[] : [currentUid],
-          includeCurrentUser: true,
-          maxSelection: 1,
-          title: 'Select lead speaker',
-          preferServing: true,
-          allowCreatePlaceholder: canCreatePlaceholderUser(
-            actor: appContext.currentUser,
-            postAuthorUid: _eventContext.metadata.authorUID,
-          ),
-          postIdForPlaceholderCreate: _eventContext.id,
-        ),
-      ),
+    final applied = await pickLeadSpeakers(
+      context: context,
+      eventContext: _eventContext,
     );
-    if (result == null || !mounted) return;
-
-    if (result.isEmpty) {
-      _eventContext.applyLeadSpeaker(uid: null);
-    } else {
-      final user = appContext.userById(result.first);
-      if (user != null) {
-        _eventContext.applyLeadSpeaker(
-            uid: user.id, imgSrc: user.imgSrc, name: user.fullname);
-      }
-    }
+    if (!applied || !mounted) return;
     _eventContext.allowSavingOfTheEdit();
     setState(() {});
   }

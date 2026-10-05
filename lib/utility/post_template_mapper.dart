@@ -81,9 +81,8 @@ class PostTemplateMapper {
     if (templateContributors.isNotEmpty) {
       eventContext.contributorAdditionUIDs.addAll(templateContributors);
     }
-    if (template.leadSpeakerUID != null &&
-        template.leadSpeakerUID!.isNotEmpty) {
-      eventContext.metadata.setLeadSpeakerUID(template.leadSpeakerUID);
+    if (template.leadSpeakerUIDs.isNotEmpty) {
+      eventContext.metadata.setLeadSpeakerUIDs(template.leadSpeakerUIDs);
       eventContext.syncLeadSpeakerHeadFromUsers(allUsers);
     }
     eventContext.applyIsPeriodParent(template.isPeriodParent);

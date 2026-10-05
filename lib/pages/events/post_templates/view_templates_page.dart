@@ -570,9 +570,8 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     eventContext.applyExpectedAttendeeUserIDs(
         List<String>.from(postTemplate.expectedAttendeeUserIDs));
     eventContext.metadata.contributorUIDs.addAll(postTemplate.contributors);
-    if (postTemplate.leadSpeakerUID != null &&
-        postTemplate.leadSpeakerUID!.isNotEmpty) {
-      eventContext.metadata.setLeadSpeakerUID(postTemplate.leadSpeakerUID);
+    if (postTemplate.leadSpeakerUIDs.isNotEmpty) {
+      eventContext.metadata.setLeadSpeakerUIDs(postTemplate.leadSpeakerUIDs);
       eventContext.syncLeadSpeakerHeadFromUsers(_appContext.allUsers);
     }
     eventContext.applyIsPeriodParent(postTemplate.isPeriodParent);

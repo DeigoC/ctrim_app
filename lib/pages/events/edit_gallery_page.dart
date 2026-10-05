@@ -144,29 +144,25 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                         ),
                         if (widget.eventContext.head.media.isNotEmpty) ...[
                           const SizedBox(height: 16),
-                          if (ResponsiveLayout.isWideScreenOf(context))
-                            PairedRowList(
-                              itemCount: widget.eventContext.head.media.length,
-                              runSpacing: 12,
-                              itemBuilder: (_, index) => _buildMediaBox(
-                                  widget.eventContext.head.media[index], true),
-                            )
-                          else
-                            ...widget.eventContext.head.media
-                                .asMap()
-                                .entries
-                                .map(
-                                  (entry) => Padding(
-                                    padding: EdgeInsets.only(
-                                        bottom: entry.key <
-                                                widget.eventContext.head.media
-                                                        .length -
-                                                    1
-                                            ? 12
-                                            : 0),
-                                    child: _buildMediaBox(entry.value, true),
-                                  ),
-                                ),
+                          if (widget.eventContext.head.media.length >= 2) ...[
+                            Text(
+                              _reorderHint(
+                                canDrag:
+                                    !ResponsiveLayout.isWideScreenOf(context),
+                                detail:
+                                    'The first image is the cover on the post card.',
+                              ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          _buildMediaCollection(
+                            items: widget.eventContext.head.media,
+                            isKey: true,
+                          ),
                         ] else ...[
                           const SizedBox(height: 16),
                           Container(
@@ -314,6 +310,21 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             ),
                           ],
                         ),
+                        if (widget.eventContext.media.allMedia.length >= 2) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _reorderHint(
+                              canDrag:
+                                  !ResponsiveLayout.isWideScreenOf(context),
+                              detail:
+                                  'This is the order people see in the gallery.',
+                            ),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -366,24 +377,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           else
             SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: webHorizontalPadding),
-              sliver: ResponsiveLayout.isWideScreenOf(context)
-                  ? SliverToBoxAdapter(
-                      child: PairedRowList(
-                        itemCount: widget.eventContext.media.allMedia.length,
-                        runSpacing: 12,
-                        itemBuilder: (_, index) => _buildMediaBox(
-                            widget.eventContext.media.allMedia[index], false),
-                      ),
-                    )
-                  : SliverList.separated(
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemCount: widget.eventContext.media.allMedia.length,
-                      itemBuilder: (_, index) {
-                        final Map<String, dynamic> thisEntry =
-                            widget.eventContext.media.allMedia[index];
-                        return _buildMediaBox(thisEntry, false);
-                      },
-                    ),
+              sliver: SliverToBoxAdapter(
+                child: _buildMediaCollection(
+                  items: widget.eventContext.media.allMedia,
+                  isKey: false,
+                ),
+              ),
             ),
           const SliverToBoxAdapter(
             child: SizedBox(height: 32),
@@ -393,8 +392,175 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     );
   }
 
+  String _reorderHint({required bool canDrag, required String detail}) {
+    final String gesture = canDrag
+        ? 'Drag the handle or use the arrows to change the order.'
+        : 'Use the arrows to change the order.';
+    return '$gesture $detail';
+  }
+
+  Widget _buildMediaCollection({
+    required List<Map<String, dynamic>> items,
+    required bool isKey,
+  }) {
+    final bool wide = ResponsiveLayout.isWideScreenOf(context);
+    if (items.length >= 2 && !wide) {
+      return ReorderableListView.builder(
+        shrinkWrap: true,
+        primary: false,
+        physics: const NeverScrollableScrollPhysics(),
+        buildDefaultDragHandles: false,
+        padding: EdgeInsets.zero,
+        itemCount: items.length,
+        onReorder: (oldIndex, newIndex) =>
+            _onReorderList(isKey, oldIndex, newIndex),
+        proxyDecorator: (child, index, animation) {
+          return Material(
+            elevation: 6,
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            child: child,
+          );
+        },
+        itemBuilder: (context, index) {
+          return Padding(
+            key: ObjectKey(items[index]),
+            padding: EdgeInsets.only(bottom: index < items.length - 1 ? 12 : 0),
+            child: _buildMediaBox(
+              items[index],
+              isKey,
+              index: index,
+              enableDrag: true,
+            ),
+          );
+        },
+      );
+    }
+
+    if (wide) {
+      return PairedRowList(
+        itemCount: items.length,
+        runSpacing: 12,
+        itemBuilder: (_, index) => _buildMediaBox(
+          items[index],
+          isKey,
+          index: index,
+          enableDrag: false,
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < items.length; index++)
+          Padding(
+            padding: EdgeInsets.only(bottom: index < items.length - 1 ? 12 : 0),
+            child: _buildMediaBox(
+              items[index],
+              isKey,
+              index: index,
+              enableDrag: false,
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _mediaKindLabel(
+    Map<String, dynamic> entry, {
+    required int index,
+    required int count,
+    required bool isCover,
+  }) {
+    if (isCover) return 'Cover';
+    final String kind = entry['type'] == 'vid' ? 'Video' : 'Image';
+    if (count < 2) return kind;
+    return '${index + 1} · $kind';
+  }
+
+  Widget _buildOrderIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+  }) {
+    return IconButton(
+      icon: Icon(icon, size: 20),
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        minimumSize: const Size(32, 32),
+        padding: const EdgeInsets.all(4),
+      ),
+    );
+  }
+
+  Widget _buildKeyReorderActions(
+    Map<String, dynamic> entry,
+    int index,
+    int count,
+  ) {
+    final bool isImage = entry['type'] == 'img';
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (index > 0)
+          OutlinedButton.icon(
+            onPressed: () =>
+                _reorderMedia(isKey: true, from: index, to: index - 1),
+            icon: const Icon(Icons.arrow_upward, size: 18),
+            label: const Text('Earlier'),
+          ),
+        if (index < count - 1)
+          OutlinedButton.icon(
+            onPressed: () =>
+                _reorderMedia(isKey: true, from: index, to: index + 1),
+            icon: const Icon(Icons.arrow_downward, size: 18),
+            label: const Text('Later'),
+          ),
+        if (isImage && index != 0)
+          FilledButton.tonalIcon(
+            onPressed: () => _reorderMedia(isKey: true, from: index, to: 0),
+            icon: const Icon(Icons.photo_outlined, size: 18),
+            label: const Text('Make cover'),
+          ),
+      ],
+    );
+  }
+
+  void _reorderMedia({
+    required bool isKey,
+    required int from,
+    required int to,
+  }) {
+    setState(() {
+      if (isKey) {
+        widget.eventContext.head.moveMediaItem(from, to);
+      } else {
+        widget.eventContext.media.moveMediaFile(from, to);
+      }
+    });
+    widget.eventContext.allowSavingOfTheEdit();
+  }
+
+  void _onReorderList(bool isKey, int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    if (oldIndex == newIndex) return;
+    _reorderMedia(isKey: isKey, from: oldIndex, to: newIndex);
+  }
+
   Widget _buildMediaBox(
-      final Map<String, dynamic> thisEntry, final bool isKey) {
+    final Map<String, dynamic> thisEntry,
+    final bool isKey, {
+    required int index,
+    required bool enableDrag,
+  }) {
+    final int count = isKey
+        ? widget.eventContext.head.media.length
+        : widget.eventContext.media.allMedia.length;
+    final bool isCover = isKey &&
+        thisEntry['type'] == 'img' &&
+        thisEntry['src'] == widget.eventContext.head.getKeyGraphic();
     final bool isPartOfHead =
         !isKey && widget.eventContext.head.containsMediaItem(thisEntry['src']!);
 
@@ -470,7 +636,12 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        thisEntry['type'] == 'vid' ? 'Video' : 'Image',
+                        _mediaKindLabel(
+                          thisEntry,
+                          index: index,
+                          count: count,
+                          isCover: isCover,
+                        ),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -490,6 +661,23 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
               children: [
                 Row(
                   children: [
+                    if (enableDrag)
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: Tooltip(
+                          message: 'Drag to reorder',
+                          child: SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: Icon(
+                              Icons.drag_handle,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
                     if (isPartOfHead || isKey)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -510,7 +698,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Key Media',
+                              isCover ? 'Cover' : 'Key Media',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -523,6 +711,30 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                         ),
                       ),
                     const Spacer(),
+                    if (!isKey && count >= 2) ...[
+                      _buildOrderIconButton(
+                        icon: Icons.arrow_upward,
+                        tooltip: 'Move earlier',
+                        onPressed: index == 0
+                            ? null
+                            : () => _reorderMedia(
+                                  isKey: false,
+                                  from: index,
+                                  to: index - 1,
+                                ),
+                      ),
+                      _buildOrderIconButton(
+                        icon: Icons.arrow_downward,
+                        tooltip: 'Move later',
+                        onPressed: index >= count - 1
+                            ? null
+                            : () => _reorderMedia(
+                                  isKey: false,
+                                  from: index,
+                                  to: index + 1,
+                                ),
+                      ),
+                    ],
                     // Quick caption edit
                     IconButton(
                       icon: Icon(
@@ -580,6 +792,10 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                         ),
                   ),
                 ),
+                if (isKey && count >= 2) ...[
+                  const SizedBox(height: 12),
+                  _buildKeyReorderActions(thisEntry, index, count),
+                ],
               ],
             ),
           ),
@@ -741,10 +957,21 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     return head.hasRoomForKeyMedia && !head.containsMediaItem(src);
   }
 
+  bool _srcOrderMatches(
+    List<String> original,
+    List<Map<String, dynamic>> current,
+  ) {
+    if (original.length != current.length) return false;
+    for (var i = 0; i < original.length; i++) {
+      if (original[i] != current[i]['src']) return false;
+    }
+    return true;
+  }
+
   void _shouldBeAbleToSave() {
-    if (_originalGallerySrcs.length !=
-            widget.eventContext.media.allMedia.length ||
-        _originalHeadSrcs.length != widget.eventContext.head.media.length) {
+    if (!_srcOrderMatches(
+            _originalGallerySrcs, widget.eventContext.media.allMedia) ||
+        !_srcOrderMatches(_originalHeadSrcs, widget.eventContext.head.media)) {
       widget.eventContext.allowSavingOfTheEdit();
       return;
     }
@@ -858,7 +1085,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
       title: 'Key Media',
       content:
           'Key media are the most important images and videos for your event.\n\n'
-          '• First image becomes the event thumbnail\n'
+          '• The first image is the cover and the post-card thumbnail\n'
+          '• Drag the handle, or use Earlier and Later, to change the order\n'
           '• Displayed prominently in event previews\n'
           '• Maximum of ${EventHead.maxKeyMediaItems} key media items\n'
           '• New gallery items are added here while there is room\n'
@@ -875,7 +1103,7 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           '• Add captions to describe your media\n'
           '• New items are marked as key media while there is room\n'
           '• Videos can have custom thumbnails\n'
-          '• Organize your media gallery',
+          '• Drag the handle, or use the arrows, to set the gallery order',
     );
   }
 
