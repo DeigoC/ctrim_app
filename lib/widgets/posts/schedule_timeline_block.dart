@@ -63,6 +63,8 @@ class ScheduleTimelineBlock extends StatelessWidget {
     final Color mutedForeground = selected
         ? colorScheme.onPrimary.withValues(alpha: 0.85)
         : colorScheme.onSurfaceVariant;
+    final motionDuration =
+        dragging ? Duration.zero : const Duration(milliseconds: 200);
 
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
@@ -76,6 +78,7 @@ class ScheduleTimelineBlock extends StatelessWidget {
     return Material(
       color: background,
       elevation: dragging ? 6 : 0,
+      animationDuration: motionDuration,
       clipBehavior: Clip.antiAlias,
       shape: shape,
       child: InkWell(
@@ -97,6 +100,7 @@ class ScheduleTimelineBlock extends StatelessWidget {
                 fit: fit,
                 foreground: foreground,
                 mutedForeground: mutedForeground,
+                motionDuration: motionDuration,
               ),
             ),
           ),
@@ -110,16 +114,43 @@ class ScheduleTimelineBlock extends StatelessWidget {
     required ScheduleBlockLayout fit,
     required Color foreground,
     required Color mutedForeground,
+    required Duration motionDuration,
   }) {
-    final titleText = Text(
-      title,
+    final titleStyle = (theme.textTheme.labelLarge ?? const TextStyle())
+        .copyWith(color: foreground, fontWeight: FontWeight.w600);
+    final mutedStyle = (theme.textTheme.labelSmall ?? const TextStyle())
+        .copyWith(color: mutedForeground);
+    final titleText = AnimatedDefaultTextStyle(
+      duration: motionDuration,
+      style: titleStyle,
       maxLines: fit.twoLineTitle ? 2 : 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.labelLarge?.copyWith(
-        color: foreground,
-        fontWeight: FontWeight.w600,
-      ),
+      child: Text(title),
     );
+
+    Widget staffIcon() {
+      return TweenAnimationBuilder<Color?>(
+        tween: ColorTween(end: mutedForeground),
+        duration: motionDuration,
+        builder: (context, value, _) {
+          return Icon(
+            Icons.visibility_off_outlined,
+            size: 12,
+            color: value ?? mutedForeground,
+          );
+        },
+      );
+    }
+
+    Widget timeText(String label) {
+      return AnimatedDefaultTextStyle(
+        duration: motionDuration,
+        style: mutedStyle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        child: Text(label),
+      );
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -128,19 +159,10 @@ class ScheduleTimelineBlock extends StatelessWidget {
           return Row(
             children: [
               if (staffOnly) ...[
-                Icon(
-                  Icons.visibility_off_outlined,
-                  size: 12,
-                  color: mutedForeground,
-                ),
+                staffIcon(),
                 const SizedBox(width: 4),
               ],
-              Text(
-                _timeFormat.format(start),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: mutedForeground,
-                ),
-              ),
+              timeText(_timeFormat.format(start)),
               const SizedBox(width: 6),
               Expanded(child: titleText),
               if (fit.avatars == ScheduleBlockAvatars.inline) ...[
@@ -170,11 +192,7 @@ class ScheduleTimelineBlock extends StatelessWidget {
             Row(
               children: [
                 if (staffOnly) ...[
-                  Icon(
-                    Icons.visibility_off_outlined,
-                    size: 12,
-                    color: mutedForeground,
-                  ),
+                  staffIcon(),
                   const SizedBox(width: 4),
                 ],
                 Expanded(child: titleText),
@@ -196,21 +214,9 @@ class ScheduleTimelineBlock extends StatelessWidget {
                 ],
               ],
             ),
-            if (fit.showSubtitle)
-              Text(
-                subtitle.trim(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: mutedForeground,
-                ),
-              ),
-            Text(
+            if (fit.showSubtitle) timeText(subtitle.trim()),
+            timeText(
               '${_timeFormat.format(start)} - ${_timeFormat.format(end)}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style:
-                  theme.textTheme.labelSmall?.copyWith(color: mutedForeground),
             ),
             if (fit.avatars == ScheduleBlockAvatars.bottom) ...[
               const Spacer(),

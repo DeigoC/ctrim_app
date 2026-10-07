@@ -22,7 +22,8 @@ class SelectTemplateCoverPage extends StatefulWidget {
   final String? preferredLocation;
 
   @override
-  State<SelectTemplateCoverPage> createState() => _SelectTemplateCoverPageState();
+  State<SelectTemplateCoverPage> createState() =>
+      _SelectTemplateCoverPageState();
 }
 
 class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
@@ -62,13 +63,14 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
       );
       if (!mounted) return;
 
-      final withPools = templates.where((t) => t.keyGraphicPool.isNotEmpty).toList()
-        ..sort((a, b) {
-          final aScore = _relevanceScore(a);
-          final bScore = _relevanceScore(b);
-          if (aScore != bScore) return bScore.compareTo(aScore);
-          return a.title.compareTo(b.title);
-        });
+      final withPools =
+          templates.where((t) => t.keyGraphicPool.isNotEmpty).toList()
+            ..sort((a, b) {
+              final aScore = _relevanceScore(a);
+              final bScore = _relevanceScore(b);
+              if (aScore != bScore) return bScore.compareTo(aScore);
+              return a.title.compareTo(b.title);
+            });
 
       setState(() {
         _templates = withPools;
@@ -92,7 +94,11 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
     if (preferredTitle != null && preferredTitle.isNotEmpty) {
       final title = template.title.trim();
       if (title.isNotEmpty) {
-        if (preferredTitle == title || preferredTitle.startsWith('$title ') || preferredTitle.startsWith('$title–') || preferredTitle.startsWith('$title –') || preferredTitle.startsWith('$title -')) {
+        if (preferredTitle == title ||
+            preferredTitle.startsWith('$title ') ||
+            preferredTitle.startsWith('$title–') ||
+            preferredTitle.startsWith('$title –') ||
+            preferredTitle.startsWith('$title -')) {
           score += 10;
         } else if (preferredTitle.toLowerCase().contains(title.toLowerCase())) {
           score += 4;
@@ -102,7 +108,8 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
     final preferredLocation = widget.preferredLocation?.trim();
     if (preferredLocation != null &&
         preferredLocation.isNotEmpty &&
-        template.location.trim().toLowerCase() == preferredLocation.toLowerCase()) {
+        template.location.trim().toLowerCase() ==
+            preferredLocation.toLowerCase()) {
       score += 2;
     }
     return score;
@@ -115,8 +122,9 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final horizontalPadding =
-        ResponsiveLayout.horizontalGutter(MediaQuery.sizeOf(context).width, narrowPadding: 16);
+    final horizontalPadding = ResponsiveLayout.horizontalGutter(
+        MediaQuery.sizeOf(context).width,
+        narrowPadding: 16);
 
     return Scaffold(
       appBar: AppBar(
@@ -154,14 +162,18 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
           child: Text(
             'No templates have a cover image pool yet.\nAdd covers under Edit Template → Media → Cover Image Pool.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ),
       );
     }
 
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 24),
+      padding:
+          EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 24),
       itemCount: _templates.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
@@ -169,7 +181,10 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               'Pick a cover from a template pool. Suggested matches for this post are listed first.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           );
         }
@@ -185,7 +200,8 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ListTile(
-                title: Text(template.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                title: Text(template.title,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text(
                   [
                     if (suggested) 'Suggested for this post',
@@ -193,30 +209,37 @@ class _SelectTemplateCoverPageState extends State<SelectTemplateCoverPage> {
                     if (template.location.isNotEmpty) template.location,
                   ].join(' · '),
                 ),
-                trailing: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+                trailing:
+                    Icon(expanded ? Icons.expand_less : Icons.expand_more),
                 onTap: () {
                   setState(() {
                     _expandedTemplateId = expanded ? null : template.id;
                   });
                 },
               ),
-              if (expanded)
-                SizedBox(
-                  height: 112,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    itemCount: template.keyGraphicPool.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, poolIndex) {
-                      final item = template.keyGraphicPool[poolIndex];
-                      return _CoverTile(
-                        item: item,
-                        onTap: () => _onSelect(item),
-                      );
-                    },
-                  ),
-                ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? SizedBox(
+                        height: 112,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          itemCount: template.keyGraphicPool.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (_, poolIndex) {
+                            final item = template.keyGraphicPool[poolIndex];
+                            return _CoverTile(
+                              item: item,
+                              onTap: () => _onSelect(item),
+                            );
+                          },
+                        ),
+                      )
+                    : const SizedBox(width: double.infinity),
+              ),
             ],
           ),
         );
@@ -238,8 +261,9 @@ class _CoverTile extends StatelessWidget {
     final thumbnailSrc = item['thumbnailSrc'] as String?;
     final src = (item['src'] as String?) ?? '';
     final displaySrc = (isVideo ? thumbnailSrc : src)?.trim();
-    final imageUrl =
-        displaySrc != null && displaySrc.isNotEmpty ? NetworkImageHelper.getImageUrl(displaySrc) : null;
+    final imageUrl = displaySrc != null && displaySrc.isNotEmpty
+        ? NetworkImageHelper.getImageUrl(displaySrc)
+        : null;
 
     return InkWell(
       onTap: onTap,
@@ -275,7 +299,8 @@ class _CoverTile extends StatelessWidget {
                 const Positioned(
                   right: 6,
                   bottom: 6,
-                  child: Icon(Icons.play_circle_fill, color: Colors.white, size: 22),
+                  child: Icon(Icons.play_circle_fill,
+                      color: Colors.white, size: 22),
                 ),
             ],
           ),

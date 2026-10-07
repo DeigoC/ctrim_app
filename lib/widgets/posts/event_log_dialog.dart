@@ -64,17 +64,6 @@ class _EventLogDialogState extends State<EventLogDialog> {
   }
 
   Future<void> _saveClick(String log) async {
-    final confirmation = await DialogManager.showConfirmationDialog(
-        context: context,
-        title: 'Confirm save?',
-        content:
-            'This note will be sent to everyone who bookmarked this post. Continue?',
-        confirmText: 'Save',
-        cancelText: 'Cancel',
-        icon: Icons.notifications_active_outlined);
-
-    if (!confirmation || !mounted) return;
-
     final saved = await DialogManager.runWithSteppedProgressDialog(
       context: context,
       title: 'Uploading Changes',

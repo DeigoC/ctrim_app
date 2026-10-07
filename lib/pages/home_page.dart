@@ -183,7 +183,7 @@ class _HomePageState extends State<HomePage>
           return Scaffold(
             body: useRail
                 ? _buildWideBody(nestCtrimSections: nestCtrimSections)
-                : _buildSelectedBody(),
+                : _buildFadingBody(),
             floatingActionButton:
                 _selectedIndex == 0 ? const _AddPostFab() : null,
             bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(),
@@ -226,7 +226,7 @@ class _HomePageState extends State<HomePage>
           width: nestCtrimSections ? _labeledRailWidth : _iconRailWidth,
         ),
         const VerticalDivider(width: 1),
-        Expanded(child: _buildSelectedBody()),
+        Expanded(child: _buildFadingBody()),
       ],
     );
   }
@@ -311,6 +311,25 @@ class _HomePageState extends State<HomePage>
             ),
           )
           .toList(),
+    );
+  }
+
+  Widget _buildFadingBody() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<int>(_selectedIndex),
+        child: _buildSelectedBody(),
+      ),
     );
   }
 
@@ -789,25 +808,48 @@ class _ShellNavRail extends StatelessWidget {
       ];
     }
 
+    final sectionButtons = group == null
+        ? const <Widget>[]
+        : [
+            for (var section = 0; section < group.sections.length; section++)
+              _RailButton(
+                icon: Icon(group.sections[section].icon),
+                label: group.sections[section].label,
+                selected: group.selectedSection == section,
+                showLabel: true,
+                indented: true,
+                onTap: () => group.onSectionSelected(section),
+              ),
+          ];
+
     return [
-      _RailButton(
-        icon: icon,
-        label: dest.label,
-        selected: selected,
-        showLabel: nestSections,
-        tooltip: nestSections ? '' : dest.label,
-        onTap: () => onDestinationSelected(index),
-      ),
-      if (showChildren)
-        for (var section = 0; section < group.sections.length; section++)
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           _RailButton(
-            icon: Icon(group.sections[section].icon),
-            label: group.sections[section].label,
-            selected: group.selectedSection == section,
-            showLabel: true,
-            indented: true,
-            onTap: () => group.onSectionSelected(section),
+            icon: icon,
+            label: dest.label,
+            selected: selected,
+            showLabel: nestSections,
+            tooltip: nestSections ? '' : dest.label,
+            onTap: () => onDestinationSelected(index),
           ),
+          if (group != null)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: showChildren
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: sectionButtons,
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
+        ],
+      ),
     ];
   }
 }

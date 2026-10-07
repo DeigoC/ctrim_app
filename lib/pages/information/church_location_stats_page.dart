@@ -414,25 +414,25 @@ class _PeopleCard extends StatelessWidget {
     final tiles = [
       _StatTile(
         icon: Icons.people_outline,
-        value: '${section.profileCount}',
+        value: section.profileCount,
         label: l10n.churchHubPeopleLabel,
         hint: l10n.churchHubPeopleHint,
       ),
       _StatTile(
         icon: Icons.badge_outlined,
-        value: '${section.inMinistryCount}',
+        value: section.inMinistryCount,
         label: l10n.churchLocationStatsInMinistry,
         hint: l10n.churchLocationStatsInMinistryHint,
       ),
       _StatTile(
         icon: Icons.person_outline,
-        value: '${section.notInMinistryCount}',
+        value: section.notInMinistryCount,
         label: l10n.churchLocationStatsNotInMinistry,
         hint: l10n.churchLocationStatsNotInMinistryHint,
       ),
       _StatTile(
         icon: Icons.verified_outlined,
-        value: '${section.leaderCount}',
+        value: section.leaderCount,
         label: l10n.churchLocationStatsLeaders,
         hint: l10n.churchLocationStatsLeadersHint,
       ),
@@ -486,26 +486,27 @@ class _GroupsCard extends StatelessWidget {
     final tiles = <Widget>[
       _StatTile(
         icon: Icons.groups_outlined,
-        value: '${section.groupCount}',
+        value: section.groupCount,
         label: l10n.churchHubCellGroupsLabel,
         hint: l10n.churchHubCellGroupsHint,
       ),
       _StatTile(
         icon: Icons.people_outline,
-        value: '${section.membersListed}',
+        value: section.membersListed,
         label: l10n.churchLocationStatsMembersListed,
         hint: l10n.churchLocationStatsMembersListedHint,
       ),
       if (uniquePeople != null)
         _StatTile(
           icon: Icons.person_outline,
-          value: '$uniquePeople',
+          value: uniquePeople,
           label: l10n.churchLocationStatsUniquePeople,
           hint: l10n.churchLocationStatsUniquePeopleHint,
         ),
       _StatTile(
         icon: Icons.pie_chart_outline,
-        value: average == null ? '—' : _formatAverage(average),
+        value: average,
+        format: _formatAverage,
         label: l10n.churchLocationStatsAverageSize,
         hint: l10n.churchLocationStatsAverageSizeHint,
       ),
@@ -577,19 +578,19 @@ class _PostsCard extends StatelessWidget {
             tiles: [
               _StatTile(
                 icon: Icons.upcoming_outlined,
-                value: '${upcoming.postCount}',
+                value: upcoming.postCount,
                 label: l10n.churchLocationStatsUpcomingPosts,
                 hint: l10n.churchLocationStatsUpcomingPostsHint,
               ),
               _StatTile(
                 icon: Icons.groups_outlined,
-                value: '${upcoming.cellGroupMeetingCount}',
+                value: upcoming.cellGroupMeetingCount,
                 label: l10n.churchLocationStatsMeetings,
                 hint: l10n.churchLocationStatsMeetingsHint,
               ),
               _StatTile(
                 icon: Icons.article_outlined,
-                value: '${upcoming.otherPostCount}',
+                value: upcoming.otherPostCount,
                 label: l10n.churchLocationStatsOtherPosts,
                 hint: l10n.churchLocationStatsOtherPostsHint,
               ),
@@ -626,37 +627,38 @@ class _PastPosts extends StatelessWidget {
           tiles: [
             _StatTile(
               icon: Icons.event_note_outlined,
-              value: '${section.postCount}',
+              value: section.postCount,
               label: l10n.churchHubPostsLabel,
               hint: l10n.churchHubPostsHint,
             ),
             _StatTile(
               icon: Icons.groups_outlined,
-              value: '${section.cellGroupMeetingCount}',
+              value: section.cellGroupMeetingCount,
               label: l10n.churchLocationStatsMeetings,
               hint: l10n.churchLocationStatsMeetingsHint,
             ),
             _StatTile(
               icon: Icons.article_outlined,
-              value: '${section.otherPostCount}',
+              value: section.otherPostCount,
               label: l10n.churchLocationStatsOtherPosts,
               hint: l10n.churchLocationStatsOtherPostsHint,
             ),
             _StatTile(
               icon: Icons.how_to_reg_outlined,
-              value: '${section.attendanceTotal}',
+              value: section.attendanceTotal,
               label: l10n.churchLocationStatsAttendance,
               hint: l10n.churchLocationStatsAttendanceHint,
             ),
             _StatTile(
               icon: Icons.show_chart,
-              value: average == null ? '—' : _formatAverage(average),
+              value: average,
+              format: _formatAverage,
               label: l10n.churchLocationStatsAverageAttendance,
               hint: l10n.churchLocationStatsAverageAttendanceHint,
             ),
             _StatTile(
               icon: Icons.favorite_border,
-              value: '${section.interestedTotal}',
+              value: section.interestedTotal,
               label: l10n.churchLocationStatsInterested,
               hint: l10n.churchLocationStatsInterestedHint,
             ),
@@ -766,17 +768,22 @@ class _StatTile extends StatelessWidget {
     required this.value,
     required this.label,
     required this.hint,
+    this.format,
   });
 
   final IconData icon;
-  final String value;
+  final num? value;
   final String label;
   final String hint;
+  final String Function(num value)? format;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final valueStyle = theme.textTheme.headlineSmall?.copyWith(
+      fontWeight: FontWeight.bold,
+    );
 
     return Container(
       width: double.infinity,
@@ -792,11 +799,10 @@ class _StatTile extends StatelessWidget {
         children: [
           Icon(icon, color: colorScheme.primary, size: 24),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          _CountUpValue(
+            value: value,
+            style: valueStyle,
+            format: format ?? _formatStatCount,
           ),
           const SizedBox(height: 4),
           Text(
@@ -945,7 +951,38 @@ class _Footnote extends StatelessWidget {
   }
 }
 
-String _formatAverage(final double value) {
-  if (value == value.roundToDouble()) return value.round().toString();
-  return value.toStringAsFixed(1);
+String _formatStatCount(num value) => value.round().toString();
+
+String _formatAverage(num value) {
+  final asDouble = value.toDouble();
+  if (asDouble == asDouble.roundToDouble()) return asDouble.round().toString();
+  return asDouble.toStringAsFixed(1);
+}
+
+class _CountUpValue extends StatelessWidget {
+  const _CountUpValue({
+    required this.value,
+    required this.style,
+    required this.format,
+  });
+
+  final num? value;
+  final TextStyle? style;
+  final String Function(num value) format;
+
+  @override
+  Widget build(BuildContext context) {
+    final target = value;
+    if (target == null) {
+      return Text('—', style: style);
+    }
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: target.toDouble()),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOutCubic,
+      builder: (context, animated, _) {
+        return Text(format(animated), style: style);
+      },
+    );
+  }
 }

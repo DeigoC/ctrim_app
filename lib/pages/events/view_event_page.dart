@@ -425,10 +425,19 @@ class _ViewEventPageState extends State<ViewEventPage>
           Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: metaChildren),
-          if (_canSaveEditing) ...[
-            const SizedBox(height: 8),
-            _buildUnsavedChangesBanner(theme, colorScheme),
-          ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _canSaveEditing
+                ? Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildUnsavedChangesBanner(theme, colorScheme),
+                    ],
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
           const SizedBox(height: 8),
           TabBar(
               labelColor: colorScheme.primary,
@@ -484,9 +493,19 @@ class _ViewEventPageState extends State<ViewEventPage>
         appContext.sharedPref.bookmarkedPosts.contains(_eventContext.id);
     return IconButton.filled(
         onPressed: () => _bookmarkClick(appContext, bookmarked),
-        icon: bookmarked
-            ? const Icon(Icons.bookmark)
-            : const Icon(Icons.bookmark_border));
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: animation, child: child),
+            );
+          },
+          child: Icon(
+            bookmarked ? Icons.bookmark : Icons.bookmark_border,
+            key: ValueKey<bool>(bookmarked),
+          ),
+        ));
   }
 
   Widget _buildTitle() {
