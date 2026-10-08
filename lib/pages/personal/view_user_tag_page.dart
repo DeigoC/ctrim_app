@@ -266,7 +266,7 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tag?.name ?? l10n.manageUserTagsMenuTitle),
+        title: Text(tag?.name ?? l10n.manageUserTagsTitle),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         actions: [

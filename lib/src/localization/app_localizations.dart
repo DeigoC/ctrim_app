@@ -100,6 +100,42 @@ abstract class AppLocalizations {
   /// **'CTRIM App'**
   String get appTitle;
 
+  /// Title on the opening progress screen
+  ///
+  /// In en, this message translates to:
+  /// **'CTRIM'**
+  String get startupTitle;
+
+  /// Status shown when the app first opens, before a load step finishes
+  ///
+  /// In en, this message translates to:
+  /// **'Opening CTRIM…'**
+  String get startupOpening;
+
+  /// Startup progress after churches, groups, and related catalogues finish loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading churches and groups…'**
+  String get startupCatalogs;
+
+  /// Startup progress after bulletin posts finish loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading the bulletin…'**
+  String get startupPosts;
+
+  /// Startup progress after the people directory finishes loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading people…'**
+  String get startupPeople;
+
+  /// Startup progress while stored credentials sign the user in
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in…'**
+  String get startupSigningIn;
+
   /// Title for the people directory when showing all locations
   ///
   /// In en, this message translates to:
@@ -187,7 +223,7 @@ abstract class AppLocalizations {
   /// Personal home menu item for the people directory
   ///
   /// In en, this message translates to:
-  /// **'Who\'s who'**
+  /// **'Who\'s Who'**
   String get volunteersMenuTitle;
 
   /// Personal home menu subtitle for the people directory
@@ -196,10 +232,10 @@ abstract class AppLocalizations {
   /// **'Leaders, ministries, and members'**
   String get volunteersMenuSubtitle;
 
-  /// Personal home section for Who's who, team rota, and ministries
+  /// Personal home section for Who's Who, team rota, and ministries
   ///
   /// In en, this message translates to:
-  /// **'People & teams'**
+  /// **'People & Teams'**
   String get peopleAndTeamsSectionTitle;
 
   /// Personal home menu item for the current user's schedule
@@ -223,19 +259,19 @@ abstract class AppLocalizations {
   /// Opens the full schedule page from Personal home
   ///
   /// In en, this message translates to:
-  /// **'View full schedule'**
+  /// **'View Full Schedule'**
   String get personalScheduleViewFull;
 
   /// Opens full schedule when more than three upcoming posts
   ///
   /// In en, this message translates to:
-  /// **'View all {count} upcoming'**
+  /// **'View All {count} Upcoming'**
   String personalScheduleViewAll(int count);
 
   /// Title for Personal home cell groups dashboard card
   ///
   /// In en, this message translates to:
-  /// **'Cell groups'**
+  /// **'Cell Groups'**
   String get personalCellGroupsTitle;
 
   /// Subtitle for Personal home cell groups dashboard card
@@ -253,7 +289,7 @@ abstract class AppLocalizations {
   /// CTA on Personal home to open the Cell Groups section
   ///
   /// In en, this message translates to:
-  /// **'Browse cell groups'**
+  /// **'Browse Cell Groups'**
   String get personalCellGroupsBrowse;
 
   /// Message when member has groups but no upcoming CG meetings
@@ -301,7 +337,7 @@ abstract class AppLocalizations {
   /// Personal home item and page title for the team serving rota
   ///
   /// In en, this message translates to:
-  /// **'Team rota'**
+  /// **'Ministry Schedule'**
   String get teamRota;
 
   /// Personal home subtitle for the team rota page
@@ -331,7 +367,7 @@ abstract class AppLocalizations {
   /// Error title when the team rota fetch fails
   ///
   /// In en, this message translates to:
-  /// **'Could not load team rota'**
+  /// **'Could not load ministry schedule'**
   String get teamRotaCouldNotLoad;
 
   /// Empty state title when filters yield no tagged programme roles
@@ -373,7 +409,7 @@ abstract class AppLocalizations {
   /// Title of the team rota filter bottom sheet
   ///
   /// In en, this message translates to:
-  /// **'Filter rota'**
+  /// **'Filter schedule'**
   String get teamRotaFilterSheetTitle;
 
   /// Subtitle of the team rota filter bottom sheet
@@ -703,7 +739,7 @@ abstract class AppLocalizations {
   /// Message when no user tags exist for assignment
   ///
   /// In en, this message translates to:
-  /// **'No ministries yet. Area admins can add them from Ministry.'**
+  /// **'No ministries yet. Area admins can add them from View Ministries.'**
   String get userTagsNoneAvailable;
 
   /// Title for the admin page that manages volunteer tag definitions
@@ -829,7 +865,7 @@ abstract class AppLocalizations {
   /// Personal home admin menu item for managing tags
   ///
   /// In en, this message translates to:
-  /// **'Ministry'**
+  /// **'View Ministries'**
   String get manageUserTagsMenuTitle;
 
   /// Personal home admin menu subtitle for managing tags
@@ -847,7 +883,7 @@ abstract class AppLocalizations {
   /// Explains that hiding a ministry only hides the label
   ///
   /// In en, this message translates to:
-  /// **'Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.'**
+  /// **'Turn off to hide this label from guests on profiles, schedule details, and View Ministries. People and schedule lines still show.'**
   String get manageUserTagsVisibleToGuestsSubtitle;
 
   /// Status on the ministry list when guests do not see the label
@@ -1129,7 +1165,7 @@ abstract class AppLocalizations {
   /// Title for the signed-in page that lists post content tags
   ///
   /// In en, this message translates to:
-  /// **'Post tags'**
+  /// **'Post Tags'**
   String get managePostTagsTitle;
 
   /// Action to create a new post content tag
@@ -1255,7 +1291,7 @@ abstract class AppLocalizations {
   /// Personal home menu item for the post tags page
   ///
   /// In en, this message translates to:
-  /// **'Post tags'**
+  /// **'Post Tags'**
   String get managePostTagsMenuTitle;
 
   /// Personal home menu subtitle for the post tags page
@@ -1465,7 +1501,7 @@ abstract class AppLocalizations {
   /// Hint under the location photos section
   ///
   /// In en, this message translates to:
-  /// **'Add photos for this place. The cover appears on the locations list and at the top of Who\'s who when this location is selected.'**
+  /// **'Add photos for this place. The cover appears on the locations list and at the top of Who\'s Who when this location is selected.'**
   String get manageUserLocationsPhotosHint;
 
   /// Empty state for a location photo gallery
@@ -4309,7 +4345,7 @@ abstract class AppLocalizations {
   /// Setting that lets people who are not signed in see this person's full surname
   ///
   /// In en, this message translates to:
-  /// **'Full surname for guests'**
+  /// **'Full Surname for Guests'**
   String get showFullSurnameToGuestsTitle;
 
   /// Explains the guest surname setting. Off shows a first name and initial.
@@ -4345,7 +4381,7 @@ abstract class AppLocalizations {
   /// Personal admin menu item for repeating post reminders
   ///
   /// In en, this message translates to:
-  /// **'Scheduled notifications'**
+  /// **'Scheduled Notifications'**
   String get notificationSchedulesMenuTitle;
 
   /// Personal admin menu subtitle for scheduled notifications
@@ -4357,7 +4393,7 @@ abstract class AppLocalizations {
   /// Title of the scheduled notifications hub
   ///
   /// In en, this message translates to:
-  /// **'Scheduled notifications'**
+  /// **'Scheduled Notifications'**
   String get notificationSchedulesTitle;
 
   /// Empty state title on the scheduled notifications hub

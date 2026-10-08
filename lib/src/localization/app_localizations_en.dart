@@ -12,6 +12,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'CTRIM App';
 
   @override
+  String get startupTitle => 'CTRIM';
+
+  @override
+  String get startupOpening => 'Opening CTRIM…';
+
+  @override
+  String get startupCatalogs => 'Loading churches and groups…';
+
+  @override
+  String get startupPosts => 'Loading the bulletin…';
+
+  @override
+  String get startupPeople => 'Loading people…';
+
+  @override
+  String get startupSigningIn => 'Signing in…';
+
+  @override
   String get volunteersTitle => 'People';
 
   @override
@@ -71,13 +89,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerUser => 'Register person';
 
   @override
-  String get volunteersMenuTitle => 'Who\'s who';
+  String get volunteersMenuTitle => 'Who\'s Who';
 
   @override
   String get volunteersMenuSubtitle => 'Leaders, ministries, and members';
 
   @override
-  String get peopleAndTeamsSectionTitle => 'People & teams';
+  String get peopleAndTeamsSectionTitle => 'People & Teams';
 
   @override
   String get mySchedule => 'My Schedule';
@@ -89,15 +107,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalScheduleEmpty => 'No upcoming tasks assigned for now.';
 
   @override
-  String get personalScheduleViewFull => 'View full schedule';
+  String get personalScheduleViewFull => 'View Full Schedule';
 
   @override
   String personalScheduleViewAll(int count) {
-    return 'View all $count upcoming';
+    return 'View All $count Upcoming';
   }
 
   @override
-  String get personalCellGroupsTitle => 'Cell groups';
+  String get personalCellGroupsTitle => 'Cell Groups';
 
   @override
   String get personalCellGroupsSubtitle => 'Your groups and upcoming meetings';
@@ -107,7 +125,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You are not in a cell group yet. Browse groups to find one that fits you.';
 
   @override
-  String get personalCellGroupsBrowse => 'Browse cell groups';
+  String get personalCellGroupsBrowse => 'Browse Cell Groups';
 
   @override
   String get personalCellGroupsNoUpcoming =>
@@ -138,7 +156,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalScheduleUntitledEvent => 'Untitled event';
 
   @override
-  String get teamRota => 'Team rota';
+  String get teamRota => 'Ministry Schedule';
 
   @override
   String get teamRotaSubtitle => 'What your ministries are down for';
@@ -155,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaLoadingProgrammes => 'Loading programmes…';
 
   @override
-  String get teamRotaCouldNotLoad => 'Could not load team rota';
+  String get teamRotaCouldNotLoad => 'Could not load ministry schedule';
 
   @override
   String get teamRotaEmptyTitle => 'No ministry slots in this window';
@@ -177,7 +195,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaFilterTooltip => 'Filter';
 
   @override
-  String get teamRotaFilterSheetTitle => 'Filter rota';
+  String get teamRotaFilterSheetTitle => 'Filter schedule';
 
   @override
   String get teamRotaFilterSheetSubtitle => 'Choose a location and ministries';
@@ -413,7 +431,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userTagsNoneAvailable =>
-      'No ministries yet. Area admins can add them from Ministry.';
+      'No ministries yet. Area admins can add them from View Ministries.';
 
   @override
   String get manageUserTagsTitle => 'Ministry';
@@ -481,7 +499,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get manageUserTagsMenuTitle => 'Ministry';
+  String get manageUserTagsMenuTitle => 'View Ministries';
 
   @override
   String get manageUserTagsMenuSubtitle => 'Create and edit ministries';
@@ -491,7 +509,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserTagsVisibleToGuestsSubtitle =>
-      'Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.';
+      'Turn off to hide this label from guests on profiles, schedule details, and View Ministries. People and schedule lines still show.';
 
   @override
   String get manageUserTagsHiddenFromGuests => 'Hidden from guests';
@@ -662,7 +680,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTagsNotifiableFilter => 'Notification streams';
 
   @override
-  String get managePostTagsTitle => 'Post tags';
+  String get managePostTagsTitle => 'Post Tags';
 
   @override
   String get managePostTagsAdd => 'Add tag';
@@ -733,7 +751,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get managePostTagsMenuTitle => 'Post tags';
+  String get managePostTagsMenuTitle => 'Post Tags';
 
   @override
   String get managePostTagsMenuSubtitle => 'Events and attendance by location';
@@ -864,7 +882,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageUserLocationsPhotosHint =>
-      'Add photos for this place. The cover appears on the locations list and at the top of Who\'s who when this location is selected.';
+      'Add photos for this place. The cover appears on the locations list and at the top of Who\'s Who when this location is selected.';
 
   @override
   String get manageUserLocationsPhotosEmpty => 'No photos yet.';
@@ -2439,7 +2457,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press an item and drag it. Everything else keeps its time, so items can run at the same time.';
 
   @override
-  String get showFullSurnameToGuestsTitle => 'Full surname for guests';
+  String get showFullSurnameToGuestsTitle => 'Full Surname for Guests';
 
   @override
   String get showFullSurnameToGuestsSubtitle =>
@@ -2461,13 +2479,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notificationSchedulesMenuTitle => 'Scheduled notifications';
+  String get notificationSchedulesMenuTitle => 'Scheduled Notifications';
 
   @override
   String get notificationSchedulesMenuSubtitle => 'Reminders from tagged posts';
 
   @override
-  String get notificationSchedulesTitle => 'Scheduled notifications';
+  String get notificationSchedulesTitle => 'Scheduled Notifications';
 
   @override
   String get notificationSchedulesEmptyTitle => 'No reminders yet';

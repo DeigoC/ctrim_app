@@ -60,7 +60,7 @@ Welcome — this site explains what the **CTRIM Community** app is for, who it s
 
     ---
 
-    Profile, schedule, team rota, and settings
+    Profile, schedule, ministry schedule, and settings
 
     [:octicons-arrow-right-24: Personal](personal.md)
 

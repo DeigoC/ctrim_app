@@ -3,6 +3,30 @@
   "@appTitle": {
     "description": "The work in progress app for the CTRIM Church"
   },
+  "startupTitle": "CTRIM",
+  "@startupTitle": {
+    "description": "Title on the opening progress screen"
+  },
+  "startupOpening": "Opening CTRIM…",
+  "@startupOpening": {
+    "description": "Status shown when the app first opens, before a load step finishes"
+  },
+  "startupCatalogs": "Loading churches and groups…",
+  "@startupCatalogs": {
+    "description": "Startup progress after churches, groups, and related catalogues finish loading"
+  },
+  "startupPosts": "Loading the bulletin…",
+  "@startupPosts": {
+    "description": "Startup progress after bulletin posts finish loading"
+  },
+  "startupPeople": "Loading people…",
+  "@startupPeople": {
+    "description": "Startup progress after the people directory finishes loading"
+  },
+  "startupSigningIn": "Signing in…",
+  "@startupSigningIn": {
+    "description": "Startup progress while stored credentials sign the user in"
+  },
   "volunteersTitle": "People",
   "@volunteersTitle": {
     "description": "Title for the people directory when showing all locations"
@@ -84,7 +108,7 @@
   "@registerUser": {
     "description": "FAB label for registering a new person"
   },
-  "volunteersMenuTitle": "Who's who",
+  "volunteersMenuTitle": "Who's Who",
   "@volunteersMenuTitle": {
     "description": "Personal home menu item for the people directory"
   },
@@ -92,9 +116,9 @@
   "@volunteersMenuSubtitle": {
     "description": "Personal home menu subtitle for the people directory"
   },
-  "peopleAndTeamsSectionTitle": "People & teams",
+  "peopleAndTeamsSectionTitle": "People & Teams",
   "@peopleAndTeamsSectionTitle": {
-    "description": "Personal home section for Who's who, team rota, and ministries"
+    "description": "Personal home section for Who's Who, team rota, and ministries"
   },
   "mySchedule": "My Schedule",
   "@mySchedule": {
@@ -108,11 +132,11 @@
   "@personalScheduleEmpty": {
     "description": "Empty state on Personal home schedule dashboard card"
   },
-  "personalScheduleViewFull": "View full schedule",
+  "personalScheduleViewFull": "View Full Schedule",
   "@personalScheduleViewFull": {
     "description": "Opens the full schedule page from Personal home"
   },
-  "personalScheduleViewAll": "View all {count} upcoming",
+  "personalScheduleViewAll": "View All {count} Upcoming",
   "@personalScheduleViewAll": {
     "description": "Opens full schedule when more than three upcoming posts",
     "placeholders": {
@@ -121,7 +145,7 @@
       }
     }
   },
-  "personalCellGroupsTitle": "Cell groups",
+  "personalCellGroupsTitle": "Cell Groups",
   "@personalCellGroupsTitle": {
     "description": "Title for Personal home cell groups dashboard card"
   },
@@ -133,7 +157,7 @@
   "@personalCellGroupsEmpty": {
     "description": "Encouraging empty state when user belongs to no cell groups"
   },
-  "personalCellGroupsBrowse": "Browse cell groups",
+  "personalCellGroupsBrowse": "Browse Cell Groups",
   "@personalCellGroupsBrowse": {
     "description": "CTA on Personal home to open the Cell Groups section"
   },
@@ -180,7 +204,7 @@
   "@personalScheduleUntitledEvent": {
     "description": "Fallback title when event head is missing on schedule preview"
   },
-  "teamRota": "Team rota",
+  "teamRota": "Ministry Schedule",
   "@teamRota": {
     "description": "Personal home item and page title for the team serving rota"
   },
@@ -205,7 +229,7 @@
   "@teamRotaLoadingProgrammes": {
     "description": "Progress message while fetching post programmes for the team rota"
   },
-  "teamRotaCouldNotLoad": "Could not load team rota",
+  "teamRotaCouldNotLoad": "Could not load ministry schedule",
   "@teamRotaCouldNotLoad": {
     "description": "Error title when the team rota fetch fails"
   },
@@ -233,7 +257,7 @@
   "@teamRotaFilterTooltip": {
     "description": "App bar button that opens the team rota location and ministry sheet"
   },
-  "teamRotaFilterSheetTitle": "Filter rota",
+  "teamRotaFilterSheetTitle": "Filter schedule",
   "@teamRotaFilterSheetTitle": {
     "description": "Title of the team rota filter bottom sheet"
   },
@@ -512,7 +536,7 @@
   "@userTagsScheduleHint": {
     "description": "Hint on the programme-role editor that ministries mark slot ownership, not named people"
   },
-  "userTagsNoneAvailable": "No ministries yet. Area admins can add them from Ministry.",
+  "userTagsNoneAvailable": "No ministries yet. Area admins can add them from View Ministries.",
   "@userTagsNoneAvailable": {
     "description": "Message when no user tags exist for assignment"
   },
@@ -606,7 +630,7 @@
       }
     }
   },
-  "manageUserTagsMenuTitle": "Ministry",
+  "manageUserTagsMenuTitle": "View Ministries",
   "@manageUserTagsMenuTitle": {
     "description": "Personal home admin menu item for managing tags"
   },
@@ -618,7 +642,7 @@
   "@manageUserTagsVisibleToGuests": {
     "description": "Switch on the ministry editor so guests can see this label"
   },
-  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label from guests on profiles, schedule details, and the Ministry page. People and schedule lines still show.",
+  "manageUserTagsVisibleToGuestsSubtitle": "Turn off to hide this label from guests on profiles, schedule details, and View Ministries. People and schedule lines still show.",
   "@manageUserTagsVisibleToGuestsSubtitle": {
     "description": "Explains that hiding a ministry only hides the label"
   },
@@ -872,7 +896,7 @@
   "@postTagsNotifiableFilter": {
     "description": "Filter chip to show only post tags that drive push streams"
   },
-  "managePostTagsTitle": "Post tags",
+  "managePostTagsTitle": "Post Tags",
   "@managePostTagsTitle": {
     "description": "Title for the signed-in page that lists post content tags"
   },
@@ -971,7 +995,7 @@
       }
     }
   },
-  "managePostTagsMenuTitle": "Post tags",
+  "managePostTagsMenuTitle": "Post Tags",
   "@managePostTagsMenuTitle": {
     "description": "Personal home menu item for the post tags page"
   },
@@ -1136,7 +1160,7 @@
   "@manageUserLocationsPhotos": {
     "description": "Menu item and section title for a location photo gallery"
   },
-  "manageUserLocationsPhotosHint": "Add photos for this place. The cover appears on the locations list and at the top of Who's who when this location is selected.",
+  "manageUserLocationsPhotosHint": "Add photos for this place. The cover appears on the locations list and at the top of Who's Who when this location is selected.",
   "@manageUserLocationsPhotosHint": {
     "description": "Hint under the location photos section"
   },
@@ -3130,7 +3154,7 @@
   "@scheduleArrangeParallelHint": {
     "description": "Helper text for parallel drag mode"
   },
-  "showFullSurnameToGuestsTitle": "Full surname for guests",
+  "showFullSurnameToGuestsTitle": "Full Surname for Guests",
   "@showFullSurnameToGuestsTitle": {
     "description": "Setting that lets people who are not signed in see this person's full surname"
   },
@@ -3159,7 +3183,7 @@
       }
     }
   },
-  "notificationSchedulesMenuTitle": "Scheduled notifications",
+  "notificationSchedulesMenuTitle": "Scheduled Notifications",
   "@notificationSchedulesMenuTitle": {
     "description": "Personal admin menu item for repeating post reminders"
   },
@@ -3167,7 +3191,7 @@
   "@notificationSchedulesMenuSubtitle": {
     "description": "Personal admin menu subtitle for scheduled notifications"
   },
-  "notificationSchedulesTitle": "Scheduled notifications",
+  "notificationSchedulesTitle": "Scheduled Notifications",
   "@notificationSchedulesTitle": {
     "description": "Title of the scheduled notifications hub"
   },

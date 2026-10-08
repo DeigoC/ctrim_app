@@ -169,7 +169,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ],
         const SizedBox(height: 24),
         PersonalActionSection(
-          title: 'For you',
+          title: 'For You',
           actions: _forYouActions(appContext, colorScheme),
           wide: false,
         ),
@@ -220,7 +220,7 @@ class _PersonalHomeState extends State<PersonalHome> {
         ],
         const SizedBox(height: 28),
         PersonalActionSection(
-          title: 'For you',
+          title: 'For You',
           actions: _forYouActions(appContext, colorScheme),
           wide: true,
           gridColumns: actionColumns,
@@ -322,7 +322,7 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
       PersonalAction(
         icon: Icons.menu_book_rounded,
-        title: 'Product guide',
+        title: 'Product Guide',
         subtitle: 'How the app works — open to everyone',
         onTap: () => launchUrlString(PersonalSettingsSection.productGuideUrl),
         iconColor: colorScheme.primary,
@@ -361,7 +361,7 @@ class _PersonalHomeState extends State<PersonalHome> {
       ),
       PersonalAction(
         icon: Icons.account_circle_outlined,
-        title: 'Profile picture',
+        title: 'Profile Picture',
         subtitle: 'Update your photo URL',
         onTap: _onUserProfileClick,
         iconColor: colorScheme.primary,

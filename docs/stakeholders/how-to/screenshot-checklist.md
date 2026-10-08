@@ -30,7 +30,7 @@ Save under `assets/images/`.
 | [ ] | `home-bulletin.png` | Bulletin tab with a few post cards | Events & bulletin |
 | [ ] | `home-information.png` | CTRIM tab — Churches list or a church hub | Information |
 | [ ] | `home-cell-groups.png` | Cell Groups → Groups catalogue | Cell Groups |
-| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For you, People & teams | Personal |
+| [ ] | `home-personal.png` | Personal signed in: profile, dashboard cards, For You, People & Teams | Personal |
 
 ---
 
@@ -86,7 +86,7 @@ Save under `assets/images/`.
 
 | Done | Filename | What to show |
 |------|----------|--------------|
-| [ ] | `people-01-directory-filters.png` | Who's who with Serving and location filters (cover photo at the top when that location has one) |
+| [ ] | `people-01-directory-filters.png` | Who's Who with Serving and location filters (cover photo at the top when that location has one) |
 | [ ] | `people-02-register-form.png` | Register / add person form |
 | [ ] | `people-03-placeholder-picker.png` | People picker: Placeholders in the Refine sheet, or Create placeholder |
 | [ ] | `people-register-list.gif` *(optional)* | Register someone → they appear in the list |
@@ -103,10 +103,11 @@ Save under `assets/images/`. Skip a row if a **Home** shot already covers it.
 | [ ] | `events-schedule-timeline.png` | Schedule tab with overlapping items if you have one | Events & bulletin |
 | [ ] | `events-arrange-schedule.png` *(optional)* | Arrange schedule drag mode | Events & bulletin |
 | [ ] | `personal-my-schedule.png` | Full My Schedule list | Personal |
-| [ ] | `personal-team-rota.png` | Team rota: gap count, Needs people in the filter sheet, or Assign people on a slot | Personal |
+| [ ] | `personal-team-rota.png` | Ministry Schedule: gap count, Needs people in the filter sheet, or Assign people on a slot | Personal |
 | [ ] | `personal-tag-color.png` | Add/edit team or post tag dialog with colour picker | Personal |
 | [ ] | `notifications-settings.png` | Push Notifications: This device + a location switch | Notifications |
 | [ ] | `cell-groups-add-meeting.png` *(optional)* | Group page: Add meeting beside Recent meetings, with the parent post title underneath | Cell Groups |
+| [ ] | `startup-progress.png` | Opening screen: logo, progress bar, and a step such as “Loading the bulletin…” | Platforms |
 
 ---
 

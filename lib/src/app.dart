@@ -4,6 +4,8 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:go_router/go_router.dart';
 
 import '../utility/responsive_layout.dart';
+import '../utility/startup_load.dart';
+import '../widgets/startup_screen.dart';
 import 'app_router.dart';
 import 'localization/app_localizations.dart';
 import 'settings/settings_controller.dart';
@@ -12,9 +14,11 @@ class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.settingsController,
+    required this.loadStartup,
   });
 
   final SettingsController settingsController;
+  final Future<void> Function(StartupProgressReporter onProgress) loadStartup;
 
   static ThemeData _themeFor({Brightness? brightness}) {
     final base = brightness == null
@@ -70,6 +74,7 @@ class _MyAppState extends State<MyApp> {
           themeMode: widget.settingsController.themeMode,
           builder: (context, child) {
             final theme = Theme.of(context);
+            final l10n = AppLocalizations.of(context)!;
             return Theme(
               data: theme.copyWith(
                 bottomSheetTheme: theme.bottomSheetTheme.copyWith(
@@ -77,11 +82,31 @@ class _MyAppState extends State<MyApp> {
                       ResponsiveLayout.bottomSheetConstraintsOf(context),
                 ),
               ),
-              child: child ?? const SizedBox.shrink(),
+              child: StartupGate(
+                title: l10n.startupTitle,
+                messageFor: (step) => _startupStepMessage(l10n, step),
+                loadStartup: widget.loadStartup,
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
         );
       },
     );
+  }
+}
+
+String _startupStepMessage(AppLocalizations l10n, StartupLoadStep step) {
+  switch (step) {
+    case StartupLoadStep.opening:
+      return l10n.startupOpening;
+    case StartupLoadStep.catalogs:
+      return l10n.startupCatalogs;
+    case StartupLoadStep.posts:
+      return l10n.startupPosts;
+    case StartupLoadStep.people:
+      return l10n.startupPeople;
+    case StartupLoadStep.signingIn:
+      return l10n.startupSigningIn;
   }
 }

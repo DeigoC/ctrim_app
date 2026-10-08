@@ -8,13 +8,13 @@ CTRIM Community is built to run on phone and browser. **Right now the focus is t
 - Optional **add to home screen** / install so it behaves more like an installed app  
 - Privacy and terms links are available  
 - Push notifications work via the browser; members should check **This device** under notification settings  
-- **Product guide** (this site) is available to everyone from Personal → **For you**  
+- **Product Guide** (this site) is available to everyone from Personal → **For You**  
 
 Web is where most current development and testing effort goes.
 
 ## Share & add to home screen
 
-From Personal → **For you → Share Web App** you can:
+From Personal → **For You → Share Web App** you can:
 
 1. **Share** or **copy** the web app link for someone else  
 2. **Install** the app when your browser offers it, or follow **Add to Home Screen** steps (especially on iPhone Safari: Share → Add to Home Screen)  
@@ -32,7 +32,8 @@ On web, the app may also gently suggest adding to the home screen once. Opening 
 | Primary experience today | Web app (browser / home-screen) |
 | Push notifications | Especially important to set up correctly on web — see [Notifications](notifications.md) |
 | Guest browsing | Works without an account; richer features need sign-in |
-| Product guide | Available to guests and signed-in people |
+| Opening the app | A short progress screen while churches, groups, the bulletin, and people load. Guests and signed-in people both see it, then the page they opened |
+| Product Guide | Available to guests and signed-in people |
 
 ## Related pages
 

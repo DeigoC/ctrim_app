@@ -12,7 +12,7 @@ Short definitions of **guest**, **community profile**, **placeholder**, **Leader
 |-----|----------------|
 | **Guest** | Browse bulletin, information, and public cell-group cards without signing in |
 | **Signed-in person** | Interest (“follow updates”), notification preferences, and richer personal options once they have an account |
-| **Community profile** | Appear in the People directory; My Schedule, My Posts, Team rota, and assignments when organisers involve them |
+| **Community profile** | Appear in the People directory; My Schedule, My Posts, Ministry Schedule, and assignments when organisers involve them |
 | **Serving** | Shown by default in the directory: Leader or Admin, a ministry, or cell-group leadership |
 | **Placeholder** | An organiser-created name in the directory **before** that person has signed in — for attendance, cell groups, and programmes |
 | **Leader** | Create posts and templates; register / add people they work with; edit the Information (CTRIM) section |
@@ -40,8 +40,8 @@ These are not five separate “apps” — they stack:
 | See interest / attendance **counts** on posts | Yes | Yes | Yes | Yes | Yes |
 | Mark interest (“follow updates”) and see who is interested | — | Yes | Yes | Yes | Yes |
 | Richer people / member details on posts and groups | — | Yes | Yes | Yes | Yes |
-| My Schedule / My Posts / Team rota | — | When they have a profile & assignments | Yes | Yes | Yes |
-| Who's who (Personal → People & teams) | — | Yes* | Yes | Yes | Yes |
+| My Schedule / My Posts / Ministry Schedule | — | When they have a profile & assignments | Yes | Yes | Yes |
+| Who's Who (Personal → People & Teams) | — | Yes* | Yes | Yes | Yes |
 | Recent activity on a profile (last few lines) | — | Yes* | Yes | Yes | Yes |
 | Full activity list for a person | — | — | — | — | Yes |
 | Create posts / use post templates | — | — | — | Yes | Yes |
@@ -71,7 +71,7 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Area admin
 
-**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, ministries and locations (a cover photo and gallery for the place itself), cell groups, and extra pages on a church hub. Ministries and post tags get a colour when added (you can change or clear it). Each ministry can also have a **short description** of what it is for, and one **main image**. Each church location has its own **heads** and its own **photos**. Opening a ministry shows, for the site you pick, those heads, the people in it there, and that ministry's schedule for the past three months and the next three months. Area admins choose the heads and photos for each location. From **Team rota**, a ministry head can assign people to upcoming slots tagged for a ministry they head at that church, and an area admin can assign people on any tagged slot. The slot’s time and title stay on the post. A **ministry** can be hidden from **guests**: the label drops off profiles, the People directory, schedule details, and the public Ministry list. The person still appears, and a schedule line stays unless that line itself is marked hidden from guests. Signed-in people still see the ministry. Controls will continue to be gated by area assignment as that model lands fully.
+**Area admin** is a step above **Leader**: every area admin is a Leader, and also looks after admin work scoped to the **area(s)** they are assigned to. That includes registering and editing people in that scope, ministries and locations (a cover photo and gallery for the place itself), cell groups, and extra pages on a church hub. Ministries and post tags get a colour when added (you can change or clear it). Each ministry can also have a **short description** of what it is for, and one **main image**. Each church location has its own **heads** and its own **photos**. Opening a ministry shows, for the site you pick, those heads, the people in it there, and that ministry's schedule for the past three months and the next three months. Area admins choose the heads and photos for each location. From **Ministry Schedule**, a ministry head can assign people to upcoming slots tagged for a ministry they head at that church, and an area admin can assign people on any tagged slot. The slot’s time and title stay on the post. A **ministry** can be hidden from **guests**: the label drops off profiles, the People directory, schedule details, and **View Ministries**. The person still appears, and a schedule line stays unless that line itself is marked hidden from guests. Signed-in people still see the ministry. Controls will continue to be gated by area assignment as that model lands fully.
 
 ## Site admin *(planned)*
 
@@ -79,11 +79,11 @@ They are not a catch-all for every admin control; area-scoped settings (tags, lo
 
 ## Names guests see
 
-On a profile link, a ministry list, pastors, a schedule role, or the speaker on a bulletin card, people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full surname for guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
+On a profile link, a ministry list, pastors, a schedule role, or the speaker on a bulletin card, people who are not signed in see a first name and the first letter of the surname (for example Adam B.). That person can turn on **Full Surname for Guests** in Personal settings, and an area admin can set the same choice when editing their profile. Signed-in people still see full names.
 
 ## People directory
 
-**Who's who** (from Personal → People & teams) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**. When that location has a cover photo, the photo appears at the top of the list and scrolls away with the names. It is shown while that place is selected and hidden on **All**.
+**Who's Who** (from Personal → People & Teams) is a searchable list of community profiles. It opens on your location (for example Belfast, Portadown, North Coast) and on people who **serve**. When that location has a cover photo, the photo appears at the top of the list and scrolls away with the names. It is shown while that place is selected and hidden on **All**.
 
 Use **Refine & sort** (tune icon in the app bar) to change **location**, **Serving**, role filters, ministries, sort order, and **Placeholders**. The app bar title still reflects your chosen location (for example **Belfast People**). When sorted by surname, names are grouped **A–Z** by last name. Each row shows a photo, name, location, and at most one role badge plus one ministry — open a profile for the full picture. Opening a profile updates the address so you can share or bookmark it; hidden, archived, and placeholder profiles are not reachable from a public link.
 
