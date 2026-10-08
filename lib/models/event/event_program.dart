@@ -304,6 +304,21 @@ class EventProgram {
     }
   }
 
+  /// Replaces assignees on the role with [roleId]. Other fields stay.
+  ///
+  /// Returns false when no role has that id.
+  bool replaceRoleAssignees({
+    required int roleId,
+    required List<String> uids,
+  }) {
+    for (final role in _roles) {
+      if (role['id'] != roleId) continue;
+      role['uids'] = List<String>.from(uids);
+      return true;
+    }
+    return false;
+  }
+
   /// Updates one role's timing. When [shiftFollowing] is true, roles that started
   /// at or after the previous end are shifted by (newEnd - oldEnd), preserving gaps.
   void updateRoleTiming({

@@ -58,7 +58,7 @@ That full schedule is the practical “what am I down for?” view across all yo
 
 ## Team rota
 
-Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots for a ministry — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location and your ministries; clear the ministry chips to see every tagged slot, or select chips to narrow to those ministries. Change the location chips to look at another site. Tap a post to open it and edit. Guests do not see this page.
+Signed-in people also get **Team rota** (under **People & teams**). It looks ahead **three months** at programme slots for a ministry — including empty slots that still need people — without mixing those future posts into the bulletin. It opens on your location, the ministries you belong to, and any ministry you head there. Those choices stay behind the **Filter** button, with a “Showing: …” line while a location, ministry, or **Needs people** filter is on. **Clear ministries** drops the ministry selection so every tagged slot shows. When slots still need people, a count sits under the three-month line, and **Needs people** keeps only those empty slots. A post with more than five matching slots shows the first four, with **Show more** for the rest. Tap the post title to open it. Tap a slot to see the time, the note, and who is on it. If you are on that slot, the row says **You**. When one ministry and one location are selected, that ministry’s heads are listed above the posts. A ministry head can **Assign people** on a slot tagged for a ministry they head at that church, until the slot has started. Area admins can assign people on any tagged slot the same way. A slot tagged for more than one ministry asks first, because the people list is shared. Guests do not see this page.
 
 ## Cell groups on Personal
 
@@ -81,7 +81,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 **Who's who**, **Team rota**, and **Ministry** sit together, separate from account shortcuts.
 
 - **Ministry** — what each ministry is for. Open to guests and signed-in people. Tap a ministry to read its short description and, when one has been added, its main image. Choose a church location to see who leads that ministry there, who is in it, photos from that site (open one to swipe through them), and the ministry's schedule for the past three months and the next three months. Area admins edit it from the same page (add, reorder, hide from guests, set the image URL) and, for each location, choose the heads and add or remove photos. Ministries hidden from guests do not appear in this list for guests.
-- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, ministries, cell-group leaders). Turn Serving off to see everyone. When a location has a cover photo, that photo sits at the top while Who's who is filtered to that place.
+- **Who's who** — searchable list of people for signed-in people; opens on **Serving** (leaders, ministries, cell-group leaders). Turn Serving off to see everyone. When a location has a cover photo, that photo sits at the top of the list and scrolls away with the names while Who's who is filtered to that place.
 
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 

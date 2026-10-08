@@ -346,73 +346,21 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                     ),
                   ),
                 ),
-              if (locationCover != null)
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    filterHorizontalPadding,
-                    8,
-                    filterHorizontalPadding,
-                    4,
-                  ),
-                  child: UserTagGraphic(
-                    imageUrl: locationCover,
-                    height: MediaQuery.sizeOf(context).height * 0.33,
-                  ),
-                ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  filterHorizontalPadding,
-                  0,
-                  filterHorizontalPadding,
-                  4,
-                ),
-                child: Text(
-                  l10n.volunteersDirectoryIntro,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ),
-              _buildListHeader(
-                l10n: l10n,
-                count: listUsers.length,
-                horizontalPadding: filterHorizontalPadding,
-                appContext: appContext,
-              ),
-              if (_hasNonDefaultFilters(appContext))
-                _buildActiveFiltersBanner(
-                  l10n: l10n,
-                  horizontalPadding: filterHorizontalPadding,
-                  appContext: appContext,
-                ),
-              if (showingUnfilteredSearchFallback)
-                _buildUnfilteredSearchBanner(
-                  l10n: l10n,
-                  count: unfilteredSearchMatches.length,
-                  horizontalPadding: filterHorizontalPadding,
-                ),
               Expanded(
-                child: listUsers.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding + 16),
-                          child: Text(
-                            _emptyMessage(l10n),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )
-                    : _buildSectionedUserList(
-                        users: listUsers,
-                        allTags: appContext.allTags,
-                        cellGroupLeaders: cellGroupLeaders,
-                        appContext: appContext,
-                        horizontalPadding: horizontalPadding,
-                        isWide: isWide,
-                        l10n: l10n,
-                      ),
+                child: _buildSectionedUserList(
+                  users: listUsers,
+                  allTags: appContext.allTags,
+                  cellGroupLeaders: cellGroupLeaders,
+                  appContext: appContext,
+                  horizontalPadding: horizontalPadding,
+                  headerPadding: filterHorizontalPadding,
+                  isWide: isWide,
+                  l10n: l10n,
+                  locationCover: locationCover,
+                  showingUnfilteredSearchFallback:
+                      showingUnfilteredSearchFallback,
+                  unfilteredMatchCount: unfilteredSearchMatches.length,
+                ),
               ),
             ],
           ));
@@ -639,42 +587,123 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     required CellGroupLeaderIndex cellGroupLeaders,
     required AppContext appContext,
     required double horizontalPadding,
+    required double headerPadding,
     required bool isWide,
     required AppLocalizations l10n,
+    required String? locationCover,
+    required bool showingUnfilteredSearchFallback,
+    required int unfilteredMatchCount,
   }) {
-    final sections = _useLetterSections
-        ? PeopleDirectorySections.bySurnameLetter(users)
-        : [
-            PeopleDirectorySection(letter: '', users: users),
-          ];
+    final sections = users.isEmpty
+        ? const <PeopleDirectorySection>[]
+        : _useLetterSections
+            ? PeopleDirectorySections.bySurnameLetter(users)
+            : [
+                PeopleDirectorySection(letter: '', users: users),
+              ];
 
     return CustomScrollView(
       slivers: [
-        for (final section in sections) ...[
-          if (_useLetterSections)
-            SliverToBoxAdapter(
-              child: _buildLetterHeader(
-                section.letter,
-                horizontalPadding: horizontalPadding,
+        if (locationCover != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(headerPadding, 8, headerPadding, 4),
+              child: UserTagGraphic(
+                imageUrl: locationCover,
+                height: MediaQuery.sizeOf(context).height * 0.33,
               ),
             ),
-          if (isWide)
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                0,
-                horizontalPadding,
-                0,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 420,
-                  mainAxisExtent: 92,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 8,
+          ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(headerPadding, 0, headerPadding, 4),
+            child: Text(
+              l10n.volunteersDirectoryIntro,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _buildListHeader(
+            l10n: l10n,
+            count: users.length,
+            horizontalPadding: headerPadding,
+            appContext: appContext,
+          ),
+        ),
+        if (_hasNonDefaultFilters(appContext))
+          SliverToBoxAdapter(
+            child: _buildActiveFiltersBanner(
+              l10n: l10n,
+              horizontalPadding: headerPadding,
+              appContext: appContext,
+            ),
+          ),
+        if (showingUnfilteredSearchFallback)
+          SliverToBoxAdapter(
+            child: _buildUnfilteredSearchBanner(
+              l10n: l10n,
+              count: unfilteredMatchCount,
+              horizontalPadding: headerPadding,
+            ),
+          ),
+        if (users.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: horizontalPadding + 16),
+                child: Text(
+                  _emptyMessage(l10n),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
                 ),
+              ),
+            ),
+          )
+        else ...[
+          for (final section in sections) ...[
+            if (_useLetterSections)
+              SliverToBoxAdapter(
+                child: _buildLetterHeader(
+                  section.letter,
+                  horizontalPadding: horizontalPadding,
+                ),
+              ),
+            if (isWide)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  0,
+                  horizontalPadding,
+                  0,
+                ),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 420,
+                    mainAxisExtent: 92,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 8,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildUserGridCard(
+                      user: section.users[index],
+                      allTags: allTags,
+                      cellGroupLeaders: cellGroupLeaders,
+                      appContext: appContext,
+                      l10n: l10n,
+                    ),
+                    childCount: section.users.length,
+                  ),
+                ),
+              )
+            else
+              SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildUserGridCard(
+                  (context, index) => _buildUserListTile(
                     user: section.users[index],
                     allTags: allTags,
                     cellGroupLeaders: cellGroupLeaders,
@@ -684,22 +713,9 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                   childCount: section.users.length,
                 ),
               ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildUserListTile(
-                  user: section.users[index],
-                  allTags: allTags,
-                  cellGroupLeaders: cellGroupLeaders,
-                  appContext: appContext,
-                  l10n: l10n,
-                ),
-                childCount: section.users.length,
-              ),
-            ),
+          ],
+          const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
         ],
-        const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
       ],
     );
   }

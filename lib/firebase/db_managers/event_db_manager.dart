@@ -211,6 +211,27 @@ class EventSupplementalDBManager {
     await _colRef.doc('program').update(program.toJson());
   }
 
+  /// Replaces assignees on one programme role and leaves every other field.
+  ///
+  /// Returns the programme after the write, or null when the document or
+  /// role is missing.
+  Future<EventProgram?> updateRoleAssignees({
+    required int roleId,
+    required List<String> uids,
+  }) async {
+    final ref = _colRef.doc('program');
+    return FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data();
+      if (!snap.exists || data is! Map) return null;
+      final program = EventProgram.fromMap(Map<String, dynamic>.from(data));
+      final updated = program.replaceRoleAssignees(roleId: roleId, uids: uids);
+      if (!updated) return null;
+      tx.update(ref, program.toJson());
+      return program;
+    });
+  }
+
   // * Supplemental - MetaData
 
   Future<EventMetadata> fetchMetadata() async {

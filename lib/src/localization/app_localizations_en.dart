@@ -162,7 +162,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamRotaEmptyBody =>
-      'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.';
+      'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Tap a slot to see who is on it.';
 
   @override
   String get teamRotaUnassigned => 'Unassigned';
@@ -172,6 +172,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamRotaFilterTeams => 'Ministry';
+
+  @override
+  String get teamRotaFilterTooltip => 'Filter';
+
+  @override
+  String get teamRotaFilterSheetTitle => 'Filter rota';
+
+  @override
+  String get teamRotaFilterSheetSubtitle => 'Choose a location and ministries';
+
+  @override
+  String get teamRotaClearMinistries => 'Clear ministries';
+
+  @override
+  String get teamRotaChangeFilter => 'Change filter';
+
+  @override
+  String teamRotaShowMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more',
+      one: '1 more',
+    );
+    return 'Show $_temp0';
+  }
+
+  @override
+  String get teamRotaShowFewer => 'Show less';
+
+  @override
+  String teamRotaGaps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slots still need people',
+      one: '1 slot still needs people',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get teamRotaFilterShow => 'Show';
+
+  @override
+  String get teamRotaNeedsPeople => 'Needs people';
+
+  @override
+  String get teamRotaNeedsPeopleSubtitle =>
+      'Only slots that still need someone';
+
+  @override
+  String get teamRotaYou => 'You';
+
+  @override
+  String get teamRotaAssignPeople => 'Assign people';
+
+  @override
+  String get teamRotaSharedSlotTitle => 'This slot is shared';
+
+  @override
+  String teamRotaSharedSlotBody(String ministries) {
+    return 'This slot is tagged for $ministries. Saving updates the people for every ministry on it.';
+  }
+
+  @override
+  String get teamRotaSharedSlotBodyGeneric =>
+      'This slot belongs to more than one ministry. Saving updates the people for every ministry on it.';
+
+  @override
+  String get teamRotaSavingAssignees => 'Saving lineup';
+
+  @override
+  String get teamRotaCouldNotSave => 'Could not save the lineup';
+
+  @override
+  String get teamRotaRoleMissing => 'That slot is no longer on the post.';
+
+  @override
+  String teamRotaMinistryHeads(String ministry) {
+    return '$ministry heads';
+  }
 
   @override
   String get userProfileLeaderBadge => 'Leader';
@@ -2530,12 +2612,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationSchedulesNeedLocation =>
       'Add a location before creating a reminder.';
-
-  @override
-  String get notificationSchedulesOn => 'On';
-
-  @override
-  String get notificationSchedulesOff => 'Off';
 
   @override
   String get notificationSchedulesTest => 'Send test to me';

@@ -22,6 +22,7 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     required this.assignedUsers,
     required this.canEdit,
     required this.onEdit,
+    this.editLabel,
     this.onClose,
   });
 
@@ -29,6 +30,9 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
   final List<User> assignedUsers;
   final bool canEdit;
   final VoidCallback onEdit;
+
+  /// Button label when [canEdit] is true. Defaults to the full task editor.
+  final String? editLabel;
 
   /// Shown as a close affordance when the detail lives in a side pane.
   final VoidCallback? onClose;
@@ -148,7 +152,7 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
             child: FilledButton.tonalIcon(
               onPressed: onEdit,
               icon: const Icon(Icons.edit, size: 18),
-              label: Text(l10n.scheduleEditTask),
+              label: Text(editLabel ?? l10n.scheduleEditTask),
             ),
           ),
         const SizedBox(height: 8),
@@ -176,6 +180,7 @@ Future<void> showScheduleRoleDetailSheet({
   required List<User> assignedUsers,
   required bool canEdit,
   required VoidCallback onEdit,
+  String? editLabel,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -195,6 +200,7 @@ Future<void> showScheduleRoleDetailSheet({
           role: role,
           assignedUsers: assignedUsers,
           canEdit: canEdit,
+          editLabel: editLabel,
           onEdit: onEdit,
         ),
       ),

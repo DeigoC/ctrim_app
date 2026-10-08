@@ -343,7 +343,7 @@ abstract class AppLocalizations {
   /// Empty state body when the team rota has no matching slots
   ///
   /// In en, this message translates to:
-  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.'**
+  /// **'Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Tap a slot to see who is on it.'**
   String get teamRotaEmptyBody;
 
   /// Label when a team rota slot has no people yet
@@ -363,6 +363,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ministry'**
   String get teamRotaFilterTeams;
+
+  /// App bar button that opens the team rota location and ministry sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get teamRotaFilterTooltip;
+
+  /// Title of the team rota filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Filter rota'**
+  String get teamRotaFilterSheetTitle;
+
+  /// Subtitle of the team rota filter bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a location and ministries'**
+  String get teamRotaFilterSheetSubtitle;
+
+  /// Clears every selected ministry on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Clear ministries'**
+  String get teamRotaClearMinistries;
+
+  /// Empty-state button that opens the team rota filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Change filter'**
+  String get teamRotaChangeFilter;
+
+  /// Expands the remaining programme slots on a team rota post card
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count, plural, =1{1 more} other{{count} more}}'**
+  String teamRotaShowMore(int count);
+
+  /// Collapses a team rota post card back to its preview slots
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get teamRotaShowFewer;
+
+  /// Count of empty programme slots in the current team rota filters
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slot still needs people} other{{count} slots still need people}}'**
+  String teamRotaGaps(int count);
+
+  /// Section label in the team rota filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get teamRotaFilterShow;
+
+  /// Filter that keeps only empty programme slots on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Needs people'**
+  String get teamRotaNeedsPeople;
+
+  /// Explains the Needs people filter on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'Only slots that still need someone'**
+  String get teamRotaNeedsPeopleSubtitle;
+
+  /// Marks a team rota slot the signed-in person is assigned to
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get teamRotaYou;
+
+  /// Opens the people picker for one team rota slot
+  ///
+  /// In en, this message translates to:
+  /// **'Assign people'**
+  String get teamRotaAssignPeople;
+
+  /// Confirms before editing people on a slot tagged for more than one ministry
+  ///
+  /// In en, this message translates to:
+  /// **'This slot is shared'**
+  String get teamRotaSharedSlotTitle;
+
+  /// Names the ministries that share one programme slot
+  ///
+  /// In en, this message translates to:
+  /// **'This slot is tagged for {ministries}. Saving updates the people for every ministry on it.'**
+  String teamRotaSharedSlotBody(String ministries);
+
+  /// Shared-slot confirmation when ministry names are unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'This slot belongs to more than one ministry. Saving updates the people for every ministry on it.'**
+  String get teamRotaSharedSlotBodyGeneric;
+
+  /// Progress title while team rota assignments are saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saving lineup'**
+  String get teamRotaSavingAssignees;
+
+  /// Error title when a team rota assignment fails to save
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the lineup'**
+  String get teamRotaCouldNotSave;
+
+  /// Shown when the programme role disappeared before the lineup was saved
+  ///
+  /// In en, this message translates to:
+  /// **'That slot is no longer on the post.'**
+  String get teamRotaRoleMissing;
+
+  /// Heading for the people who lead the one ministry selected on the team rota
+  ///
+  /// In en, this message translates to:
+  /// **'{ministry} heads'**
+  String teamRotaMinistryHeads(String ministry);
 
   /// Badge shown when a volunteer can create events
   ///
@@ -4461,18 +4581,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a location before creating a reminder.'**
   String get notificationSchedulesNeedLocation;
-
-  /// A scheduled notification is enabled
-  ///
-  /// In en, this message translates to:
-  /// **'On'**
-  String get notificationSchedulesOn;
-
-  /// A scheduled notification is paused
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get notificationSchedulesOff;
 
   /// Sends a sample of this reminder to the current device only
   ///

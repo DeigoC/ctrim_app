@@ -661,6 +661,35 @@ void main() {
       });
     });
 
+    group('replaceRoleAssignees', () {
+      test('replaces uids and leaves the rest of the role', () {
+        final program = EventProgram();
+        program.addRole(
+          uids: ['a'],
+          title: 'Sound',
+          start: DateTime(2026, 9, 20, 9),
+          end: DateTime(2026, 9, 20, 10),
+          id: 7,
+          detail: 'Desk',
+          tagIDs: ['tech'],
+        );
+
+        expect(
+          program.replaceRoleAssignees(roleId: 7, uids: ['b', 'c']),
+          isTrue,
+        );
+        final role = program.roles.single;
+        expect(role['uids'], ['b', 'c']);
+        expect(role['title'], 'Sound');
+        expect(role['detail'], 'Desk');
+        expect(EventProgram.tagIDsOf(role), ['tech']);
+        expect(
+          program.replaceRoleAssignees(roleId: 8, uids: ['z']),
+          isFalse,
+        );
+      });
+    });
+
     group('toString', () {
       test('includes finish time when set', () {
         final program = EventProgram();

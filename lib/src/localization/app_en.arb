@@ -213,7 +213,7 @@
   "@teamRotaEmptyTitle": {
     "description": "Empty state title when filters yield no tagged programme roles"
   },
-  "teamRotaEmptyBody": "Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Open a post to edit.",
+  "teamRotaEmptyBody": "Programme roles for the selected ministries will show here, including slots that still need people. Clear the ministry filters to see every tagged slot. Tap a slot to see who is on it.",
   "@teamRotaEmptyBody": {
     "description": "Empty state body when the team rota has no matching slots"
   },
@@ -228,6 +228,110 @@
   "teamRotaFilterTeams": "Ministry",
   "@teamRotaFilterTeams": {
     "description": "Section label for ministry chips on the team rota"
+  },
+  "teamRotaFilterTooltip": "Filter",
+  "@teamRotaFilterTooltip": {
+    "description": "App bar button that opens the team rota location and ministry sheet"
+  },
+  "teamRotaFilterSheetTitle": "Filter rota",
+  "@teamRotaFilterSheetTitle": {
+    "description": "Title of the team rota filter bottom sheet"
+  },
+  "teamRotaFilterSheetSubtitle": "Choose a location and ministries",
+  "@teamRotaFilterSheetSubtitle": {
+    "description": "Subtitle of the team rota filter bottom sheet"
+  },
+  "teamRotaClearMinistries": "Clear ministries",
+  "@teamRotaClearMinistries": {
+    "description": "Clears every selected ministry on the team rota"
+  },
+  "teamRotaChangeFilter": "Change filter",
+  "@teamRotaChangeFilter": {
+    "description": "Empty-state button that opens the team rota filter sheet"
+  },
+  "teamRotaShowMore": "Show {count, plural, =1{1 more} other{{count} more}}",
+  "@teamRotaShowMore": {
+    "description": "Expands the remaining programme slots on a team rota post card",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "6"
+      }
+    }
+  },
+  "teamRotaShowFewer": "Show less",
+  "@teamRotaShowFewer": {
+    "description": "Collapses a team rota post card back to its preview slots"
+  },
+  "teamRotaGaps": "{count, plural, =1{1 slot still needs people} other{{count} slots still need people}}",
+  "@teamRotaGaps": {
+    "description": "Count of empty programme slots in the current team rota filters",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "teamRotaFilterShow": "Show",
+  "@teamRotaFilterShow": {
+    "description": "Section label in the team rota filter sheet"
+  },
+  "teamRotaNeedsPeople": "Needs people",
+  "@teamRotaNeedsPeople": {
+    "description": "Filter that keeps only empty programme slots on the team rota"
+  },
+  "teamRotaNeedsPeopleSubtitle": "Only slots that still need someone",
+  "@teamRotaNeedsPeopleSubtitle": {
+    "description": "Explains the Needs people filter on the team rota"
+  },
+  "teamRotaYou": "You",
+  "@teamRotaYou": {
+    "description": "Marks a team rota slot the signed-in person is assigned to"
+  },
+  "teamRotaAssignPeople": "Assign people",
+  "@teamRotaAssignPeople": {
+    "description": "Opens the people picker for one team rota slot"
+  },
+  "teamRotaSharedSlotTitle": "This slot is shared",
+  "@teamRotaSharedSlotTitle": {
+    "description": "Confirms before editing people on a slot tagged for more than one ministry"
+  },
+  "teamRotaSharedSlotBody": "This slot is tagged for {ministries}. Saving updates the people for every ministry on it.",
+  "@teamRotaSharedSlotBody": {
+    "description": "Names the ministries that share one programme slot",
+    "placeholders": {
+      "ministries": {
+        "type": "String",
+        "example": "Worship, Media"
+      }
+    }
+  },
+  "teamRotaSharedSlotBodyGeneric": "This slot belongs to more than one ministry. Saving updates the people for every ministry on it.",
+  "@teamRotaSharedSlotBodyGeneric": {
+    "description": "Shared-slot confirmation when ministry names are unavailable"
+  },
+  "teamRotaSavingAssignees": "Saving lineup",
+  "@teamRotaSavingAssignees": {
+    "description": "Progress title while team rota assignments are saved"
+  },
+  "teamRotaCouldNotSave": "Could not save the lineup",
+  "@teamRotaCouldNotSave": {
+    "description": "Error title when a team rota assignment fails to save"
+  },
+  "teamRotaRoleMissing": "That slot is no longer on the post.",
+  "@teamRotaRoleMissing": {
+    "description": "Shown when the programme role disappeared before the lineup was saved"
+  },
+  "teamRotaMinistryHeads": "{ministry} heads",
+  "@teamRotaMinistryHeads": {
+    "description": "Heading for the people who lead the one ministry selected on the team rota",
+    "placeholders": {
+      "ministry": {
+        "type": "String",
+        "example": "Worship"
+      }
+    }
   },
   "userProfileLeaderBadge": "Leader",
   "@userProfileLeaderBadge": {
@@ -3254,14 +3358,6 @@
   "notificationSchedulesNeedLocation": "Add a location before creating a reminder.",
   "@notificationSchedulesNeedLocation": {
     "description": "Shown when there are no locations to attach a reminder to"
-  },
-  "notificationSchedulesOn": "On",
-  "@notificationSchedulesOn": {
-    "description": "A scheduled notification is enabled"
-  },
-  "notificationSchedulesOff": "Off",
-  "@notificationSchedulesOff": {
-    "description": "A scheduled notification is paused"
   },
   "notificationSchedulesTest": "Send test to me",
   "@notificationSchedulesTest": {

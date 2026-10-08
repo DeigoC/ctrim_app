@@ -50,6 +50,8 @@ class SelectUsersPage extends StatefulWidget {
     this.cellGroupIdForPlaceholderCreate,
     this.allowCellGroupBulkSelect = false,
     this.lockedLocation,
+    this.initialLocation,
+    this.initialTagIDs = const [],
   });
 
   final List<String> selectedUIDs;
@@ -89,6 +91,13 @@ class SelectUsersPage extends StatefulWidget {
   /// location name (for example choosing department heads for one church site).
   final String? lockedLocation;
 
+  /// Starting location when [lockedLocation] is unset. The refine sheet can
+  /// still move off it.
+  final String? initialLocation;
+
+  /// Ministries selected when the picker opens. The refine sheet can clear them.
+  final List<String> initialTagIDs;
+
   @override
   State<SelectUsersPage> createState() => _SelectUsersPageState();
 }
@@ -109,9 +118,16 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   void initState() {
     super.initState();
     _selectedUIDs = Set<String>.from(widget.selectedUIDs);
+    _selectedTagIDs = {
+      for (final id in widget.initialTagIDs)
+        if (id.trim().isNotEmpty) id.trim(),
+    };
     final locked = widget.lockedLocation?.trim() ?? '';
+    final seededLocation = widget.initialLocation?.trim() ?? '';
     if (locked.isNotEmpty) {
       _locationFilter = locked;
+    } else if (seededLocation.isNotEmpty) {
+      _locationFilter = seededLocation;
     } else {
       final appContext = Provider.of<AppContext>(context, listen: false);
       final assignable =
