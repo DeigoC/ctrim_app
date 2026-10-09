@@ -24,6 +24,14 @@ class PersonalSettingsSection extends StatefulWidget {
 
   static const String productGuideUrl = 'https://deigoc.github.io/ctrim_app/';
 
+  /// Signed-in Product Guide: the short start for people who serve or lead.
+  static const String productGuideServersUrl =
+      'https://deigoc.github.io/ctrim_app/servers-and-leaders/';
+
+  static String productGuideUrlFor({required bool signedIn}) {
+    return signedIn ? productGuideServersUrl : productGuideUrl;
+  }
+
   final AppContext appContext;
   final bool wide;
   final int gridColumns;

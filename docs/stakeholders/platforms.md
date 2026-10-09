@@ -8,7 +8,7 @@ CTRIM Community is built to run on phone and browser. **Right now the focus is t
 - Optional **add to home screen** / install so it behaves more like an installed app  
 - Privacy and terms links are available  
 - Push notifications work via the browser; members should check **This device** under notification settings  
-- **Product Guide** (this site) is available to everyone from Personal → **For You**  
+- **Product Guide** (this site) is available to everyone from Personal → **For You**. Guests open the home page. Signed-in people open [For servers & leaders](servers-and-leaders.md)  
 
 Web is where most current development and testing effort goes.
 
@@ -33,7 +33,8 @@ On web, the app may also gently suggest adding to the home screen once. Opening 
 | Push notifications | Especially important to set up correctly on web — see [Notifications](notifications.md) |
 | Guest browsing | Works without an account; richer features need sign-in |
 | Opening the app | A short progress screen while churches, groups, the bulletin, and people load. Guests and signed-in people both see it, then the page they opened |
-| Product Guide | Available to guests and signed-in people |
+| Section links | The address follows the main section: Bulletin, CTRIM, Cell Groups, or Personal. A link such as `ctrim.app/personal` opens that section. The plain site address still uses the startup tab in Personal settings |
+| Product Guide | Guests open this site’s home. Signed-in people open [For servers & leaders](servers-and-leaders.md) |
 
 ## Related pages
 

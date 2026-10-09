@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
@@ -280,6 +281,17 @@ class _EditUserPageState extends State<EditUserPage> {
     );
   }
 
+  Future<void> _copyEmail(String email) async {
+    await Clipboard.setData(ClipboardData(text: email));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.editUserEmailCopied),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Widget _buildEmailField() {
     return FutureBuilder<String?>(
       future: _emailFuture,
@@ -295,6 +307,10 @@ class _EditUserPageState extends State<EditUserPage> {
         } else {
           display = snap.data!;
         }
+
+        final email = snap.data;
+        final hasEmail = email != null && email.isNotEmpty;
+        final l10n = AppLocalizations.of(context)!;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -315,9 +331,7 @@ class _EditUserPageState extends State<EditUserPage> {
               child: Text(
                 display,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: snap.hasData &&
-                              snap.data != null &&
-                              snap.data!.isNotEmpty
+                      color: hasEmail
                           ? colorScheme.onSurface
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -328,6 +342,12 @@ class _EditUserPageState extends State<EditUserPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (email != null && email.isNotEmpty)
+                  OutlinedButton.icon(
+                    onPressed: () => _copyEmail(email),
+                    icon: const Icon(Icons.copy_outlined),
+                    label: Text(l10n.editUserCopyEmail),
+                  ),
                 if (_canLinkAuth)
                   OutlinedButton.icon(
                     onPressed: _onLinkAccountClick,

@@ -271,5 +271,49 @@ void main() {
       expect(applied['start'], isNull);
       expect(applied['tagIDs'], ['media']);
     });
+
+    test('the template editor keeps a whole-event role with only a start', () {
+      final callTime = DateTime(2026, 1, 4, 9, 15);
+      final map = baseLocalMap(schedulePresets: [
+        {
+          'id': 'media',
+          'name': 'Media',
+          'startTime': DateTime(2026, 1, 4, 10).millisecondsSinceEpoch,
+          'finishTime': DateTime(2026, 1, 4, 12).millisecondsSinceEpoch,
+          'roles': [
+            {
+              'uids': <String>['jane'],
+              'detail': '',
+              'title': 'Technical Media',
+              'start': callTime.millisecondsSinceEpoch,
+              'end': null,
+              'for_guests': true,
+              'id': 7,
+              'tagIDs': <String>['media'],
+              'standing': true,
+            },
+          ],
+        },
+      ]);
+      final template = PostTemplate.fromMap(true, 'standing', map);
+      final context = EventContext.adding(currentUserID: 'author-1');
+
+      PostTemplateMapper.loadTemplateRolesForEditing(context, template);
+
+      final loaded = context.program.roles.single;
+      expect(loaded['standing'], isTrue);
+      expect(loaded['start'], callTime);
+      expect(loaded['end'], isNull);
+      expect(loaded['id'], 7);
+
+      final captured = PostTemplateMapper.captureProgramAsPreset(
+        existing: template.schedulePresets.first,
+        eventContext: context,
+      );
+      final roundTrip = SchedulePreset.fromMap(true, captured.toJson(true));
+      expect(roundTrip.roles.single['standing'], isTrue);
+      expect(roundTrip.roles.single['start'], callTime);
+      expect(roundTrip.roles.single['end'], isNull);
+    });
   });
 }

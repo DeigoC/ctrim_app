@@ -22,18 +22,31 @@ String _routeId(GoRouterState state, [String key = 'id']) {
   return Uri.decodeComponent(state.pathParameters[key] ?? '');
 }
 
-GoRouter createAppRouter() {
+GoRouter createAppRouter({int Function()? preferredHomeTab}) {
+  int homeTab() =>
+      AppLinks.clampHomeTab(preferredHomeTab?.call() ?? AppLinks.ctrimTab);
+
   // push/replace leave the address bar unchanged unless this is set.
   // Permalink opens use context.push, and those paths are real routes.
   GoRouter.optionURLReflectsImperativeAPIs = true;
   return GoRouter(
     initialLocation: '/',
     restorationScopeId: 'router',
-    redirect: (context, state) => AppLinks.redirectFromUri(state.uri),
+    redirect: (context, state) => AppLinks.redirectLocation(
+      state.uri,
+      preferredHomeTab: homeTab(),
+    ),
     routes: [
       GoRoute(
+        // No builder: a page here would sit under the tab route and run a
+        // second HomePage. `/` redirects to the startup tab before paint.
         path: '/',
-        builder: (context, state) => const HomePage(),
+        redirect: (context, state) {
+          if (state.uri.path == '/' || state.uri.path.isEmpty) {
+            return AppLinks.homeTabPath(homeTab());
+          }
+          return null;
+        },
         routes: [
           GoRoute(
             path: 'post/:id',
@@ -134,6 +147,22 @@ GoRouter createAppRouter() {
               final extra = state.extra;
               final user = extra is User && extra.id == id ? extra : null;
               return OpenPersonPage(userId: id, initialUser: user);
+            },
+          ),
+          // Last so record routes win. One route keeps a stable page key
+          // (`/:homeTab`) across Bulletin, CTRIM, Cell Groups, and Personal.
+          GoRoute(
+            path: ':homeTab',
+            redirect: (context, state) => AppLinks.redirectHomeTabSegment(
+              state.pathParameters['homeTab'] ?? '',
+              preferredHomeTab: homeTab(),
+            ),
+            builder: (context, state) {
+              final index = AppLinks.homeTabIndexForSegment(
+                    state.pathParameters['homeTab'] ?? '',
+                  ) ??
+                  homeTab();
+              return HomePage(tabIndex: index);
             },
           ),
         ],

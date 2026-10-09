@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../firebase/auth_manager.dart';
@@ -11,6 +12,7 @@ import '../firebase/db_managers/everyone_db_manager.dart';
 import '../firebase/db_managers/user_db_manager.dart';
 import '../firebase/messaging_manager.dart';
 import '../utility/app_context.dart';
+import '../utility/app_links.dart';
 import '../utility/dialog_manager.dart';
 import '../utility/placeholder_user_permissions.dart';
 import '../src/localization/app_localizations.dart';
@@ -597,9 +599,16 @@ class _WelcomePageState extends State<WelcomePage>
 
     if (!mounted || !ready) return;
     debugPrint('opened home page here');
-    Navigator.of(context).pop(); // pop this page
-    Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const HomePage()));
+    final navigator = Navigator.of(context);
+    final router = GoRouter.of(context);
+    final tabIndex = AppLinks.clampHomeTab(
+      _appContext.sharedPref.preferredStartupTab,
+    );
+    navigator.pop();
+    router.go(AppLinks.homeTabPath(tabIndex));
+    navigator.push(
+      MaterialPageRoute(builder: (_) => HomePage(tabIndex: tabIndex)),
+    );
   }
 
   Future<void> _fetchEssentialData() async {

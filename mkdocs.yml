@@ -83,6 +83,7 @@ not_in_nav: |
 
 nav:
   - Home: index.md
+  - For servers & leaders: servers-and-leaders.md
   - Product overview: overview.md
   - Key concepts: key-concepts.md
   - Features:

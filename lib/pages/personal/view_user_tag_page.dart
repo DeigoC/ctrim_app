@@ -18,6 +18,7 @@ import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/gallery_viewer.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/team_rota.dart';
 import '../../utility/user_activity_messages.dart';
 import '../../utility/user_activity_recorder.dart';
@@ -848,13 +849,16 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     ThemeData theme,
   ) {
     final colorScheme = theme.colorScheme;
-    final start = role['start'] as DateTime?;
-    final end = role['end'] as DateTime?;
-    final timeLabel = start != null && end != null
-        ? '${_timeFormat.format(start)} – ${_timeFormat.format(end)}'
-        : EventProgram.isStanding(role)
-            ? l10n.scheduleWholeEventLabel
-            : null;
+    final timeLabel = ScheduleRoleTimes.label(
+      start: role['start'] as DateTime?,
+      end: role['end'] as DateTime?,
+      standing: EventProgram.isStanding(role),
+      wholeEvent: l10n.scheduleWholeEventLabel,
+      formatTime: _timeFormat.format,
+      startsAt: l10n.scheduleStartsAt,
+      range: (start, end) =>
+          '${_timeFormat.format(start)} – ${_timeFormat.format(end)}',
+    );
     final assigned = _assignedUsers(role);
 
     return Column(

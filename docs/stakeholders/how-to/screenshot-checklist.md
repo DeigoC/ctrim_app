@@ -105,6 +105,7 @@ Save under `assets/images/`. Skip a row if a **Home** shot already covers it.
 | [ ] | `personal-my-schedule.png` | Full My Schedule list | Personal |
 | [ ] | `personal-team-rota.png` | Ministry Schedule: gap count, Needs people in the filter sheet, or Assign people on a slot | Personal |
 | [ ] | `personal-tag-color.png` | Add/edit team or post tag dialog with colour picker | Personal |
+| [ ] | `personal-post-tag.png` | A post tag: past totals, weekly chart, a location row, and recent posts | Personal |
 | [ ] | `notifications-settings.png` | Push Notifications: This device + a location switch | Notifications |
 | [ ] | `cell-groups-add-meeting.png` *(optional)* | Group page: Add meeting beside Recent meetings, with the parent post title underneath | Cell Groups |
 | [ ] | `startup-progress.png` | Opening screen: logo, progress bar, and a step such as “Loading the bulletin…” | Platforms |

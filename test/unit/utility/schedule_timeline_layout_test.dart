@@ -231,6 +231,28 @@ void main() {
       expect(layout.untimedRoles, isEmpty);
     });
 
+    test('a standing role with only a start stays in the band', () {
+      final arrival = DateTime(2026, 6, 14, 9, 0);
+      final media = role(id: 2, title: 'Media', start: arrival)
+        ..['standing'] = true;
+
+      final layout = ScheduleTimelineLayout.build(roles: [
+        role(
+          id: 1,
+          title: 'Welcome',
+          start: DateTime(2026, 6, 14, 10, 0),
+          end: DateTime(2026, 6, 14, 10, 15),
+        ),
+        media,
+      ]);
+
+      expect(layout.coverageRoles, hasLength(1));
+      expect(layout.coverageRoles.single.start, arrival);
+      expect(layout.coverageRoles.single.end, isNull);
+      expect(layout.placements.map((final p) => p.roleId), [1]);
+      expect(layout.untimedRoles, isEmpty);
+    });
+
     test('a standing role is not a busy slot on the canvas', () {
       final media = role(
         id: 1,

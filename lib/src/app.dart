@@ -15,10 +15,12 @@ class MyApp extends StatefulWidget {
     super.key,
     required this.settingsController,
     required this.loadStartup,
+    required this.preferredHomeTab,
   });
 
   final SettingsController settingsController;
   final Future<void> Function(StartupProgressReporter onProgress) loadStartup;
+  final int Function() preferredHomeTab;
 
   static ThemeData _themeFor({Brightness? brightness}) {
     final base = brightness == null
@@ -48,7 +50,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late final GoRouter _router = createAppRouter();
+  late final GoRouter _router = createAppRouter(
+    preferredHomeTab: widget.preferredHomeTab,
+  );
 
   @override
   Widget build(BuildContext context) {

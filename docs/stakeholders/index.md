@@ -8,13 +8,23 @@ hide:
 
 Welcome — this site explains what the **CTRIM Community** app is for, who it serves, and what it can do today. No technical background needed.
 
+If you serve on a team or lead a ministry, start with [For servers & leaders](servers-and-leaders.md). The cards below are the fuller picture.
+
 <div class="grid cards" markdown>
 
--   :material-compass-outline: __Start here__
+-   :material-hand-wave: __For servers & leaders__
 
     ---
 
-    Pitch, audiences, and what the app is (and isn’t)
+    A short start: the bulletin, your schedule, ministries, and post tags
+
+    [:octicons-arrow-right-24: Start here](servers-and-leaders.md)
+
+-   :material-compass-outline: __Product overview__
+
+    ---
+
+    Pitch, audiences, and what the app is for
 
     [:octicons-arrow-right-24: Product overview](overview.md)
 

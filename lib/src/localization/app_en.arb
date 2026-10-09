@@ -999,9 +999,17 @@
   "@managePostTagsMenuTitle": {
     "description": "Personal home menu item for the post tags page"
   },
-  "managePostTagsMenuSubtitle": "Events and attendance by location",
+  "managePostTagsMenuSubtitle": "Attendance and recent posts",
   "@managePostTagsMenuSubtitle": {
     "description": "Personal home menu subtitle for the post tags page"
+  },
+  "managePostTagsDescriptionLabel": "Description",
+  "@managePostTagsDescriptionLabel": {
+    "description": "Label for the short post tag description"
+  },
+  "managePostTagsDescriptionHint": "What these posts are for",
+  "@managePostTagsDescriptionHint": {
+    "description": "Hint for the short post tag description"
   },
   "managePostTagsImageUrlLabel": "Image URL",
   "@managePostTagsImageUrlLabel": {
@@ -1027,9 +1035,177 @@
   "@postTagDetailStatsTitle": {
     "description": "Section title for post tag event and attendance totals"
   },
-  "postTagDetailStatsSubtitle": "Past 2 months and the next 3 weeks",
+  "postTagDetailStatsSubtitle": "Already held, and what's still ahead",
   "@postTagDetailStatsSubtitle": {
     "description": "Window shown under post tag location totals"
+  },
+  "postTagDetailDescriptionEmpty": "More about this tag will be added here.",
+  "@postTagDetailDescriptionEmpty": {
+    "description": "Placeholder when a post tag has no description"
+  },
+  "postTagDetailLocation": "Location",
+  "@postTagDetailLocation": {
+    "description": "Heading above the location chips on a post tag"
+  },
+  "postTagDetailAllLocations": "All",
+  "@postTagDetailAllLocations": {
+    "description": "Chip that clears the location filter on a post tag"
+  },
+  "postTagDetailProgressTitle": "So far",
+  "@postTagDetailProgressTitle": {
+    "description": "Section title for past post tag totals"
+  },
+  "postTagDetailProgressSubtitle": "Past 2 months",
+  "@postTagDetailProgressSubtitle": {
+    "description": "Window for past post tag totals across every location"
+  },
+  "postTagDetailProgressSubtitleAt": "Past 2 months at {location}",
+  "@postTagDetailProgressSubtitleAt": {
+    "description": "Window for past post tag totals at one location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "postTagDetailProgressFootnote": "Today and the next 3 weeks are listed under Coming up, and are not part of these totals.",
+  "@postTagDetailProgressFootnote": {
+    "description": "Explains that upcoming posts are left out of the past totals"
+  },
+  "postTagDetailEventsLabel": "Events",
+  "@postTagDetailEventsLabel": {
+    "description": "Stat tile for how many tagged posts have already been held"
+  },
+  "postTagDetailEventsHint": "Already held",
+  "@postTagDetailEventsHint": {
+    "description": "Hint under the events stat on a post tag"
+  },
+  "postTagDetailAttendedLabel": "Attended",
+  "@postTagDetailAttendedLabel": {
+    "description": "Stat tile for attendance on a post tag"
+  },
+  "postTagDetailAttendedHint": "Total on these posts",
+  "@postTagDetailAttendedHint": {
+    "description": "Hint under the attendance stat on a post tag"
+  },
+  "postTagDetailAverageLabel": "Average",
+  "@postTagDetailAverageLabel": {
+    "description": "Stat tile for average attendance on a post tag"
+  },
+  "postTagDetailAverageHint": "Per event, including none recorded",
+  "@postTagDetailAverageHint": {
+    "description": "Hint under the average attendance stat on a post tag"
+  },
+  "postTagDetailAverageShort": "avg {value}",
+  "@postTagDetailAverageShort": {
+    "description": "Compact average attendance on a location row",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "postTagDetailInterestedLabel": "Interested",
+  "@postTagDetailInterestedLabel": {
+    "description": "Stat tile for interest on a post tag"
+  },
+  "postTagDetailInterestedHint": "Total on these posts",
+  "@postTagDetailInterestedHint": {
+    "description": "Hint under the interested stat on a post tag"
+  },
+  "postTagDetailComingUp": "{count, plural, =1{1 coming up} other{{count} coming up}}",
+  "@postTagDetailComingUp": {
+    "description": "Upcoming post count on a location row",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postTagDetailTrendSubtitle": "Weekly posts with this tag",
+  "@postTagDetailTrendSubtitle": {
+    "description": "Subtitle for the weekly chart on a post tag"
+  },
+  "postTagDetailTrendWeeklyHint": "Weekly · past 2 months",
+  "@postTagDetailTrendWeeklyHint": {
+    "description": "Caption under the weekly chart on a post tag"
+  },
+  "postTagDetailUpcomingTitle": "Coming up",
+  "@postTagDetailUpcomingTitle": {
+    "description": "Section title for upcoming posts with this tag"
+  },
+  "postTagDetailUpcomingSubtitle": "Next 3 weeks",
+  "@postTagDetailUpcomingSubtitle": {
+    "description": "Window for upcoming posts with this tag"
+  },
+  "postTagDetailUpcomingSubtitleAt": "Next 3 weeks at {location}",
+  "@postTagDetailUpcomingSubtitleAt": {
+    "description": "Window for upcoming posts with this tag at one location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "postTagDetailUpcomingEmpty": "Nothing dated with this tag in the next 3 weeks.",
+  "@postTagDetailUpcomingEmpty": {
+    "description": "Empty state when a post tag has no upcoming posts"
+  },
+  "postTagDetailRecentTitle": "Recent posts",
+  "@postTagDetailRecentTitle": {
+    "description": "Section title for past posts with this tag"
+  },
+  "postTagDetailRecentSubtitle": "Past 2 months",
+  "@postTagDetailRecentSubtitle": {
+    "description": "Window for recent posts with this tag"
+  },
+  "postTagDetailRecentSubtitleAt": "Past 2 months at {location}",
+  "@postTagDetailRecentSubtitleAt": {
+    "description": "Window for recent posts with this tag at one location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "postTagDetailRecentEmpty": "No dated posts with this tag in the past 2 months.",
+  "@postTagDetailRecentEmpty": {
+    "description": "Empty state when a post tag has no past posts"
+  },
+  "postTagDetailAndMore": "And {count} more",
+  "@postTagDetailAndMore": {
+    "description": "How many posts or speakers are hidden below the preview",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postTagDetailSpeakersTitle": "Speakers",
+  "@postTagDetailSpeakersTitle": {
+    "description": "Section title for people who spoke at posts with this tag"
+  },
+  "postTagDetailSpeakersSubtitle": "From the past 2 months",
+  "@postTagDetailSpeakersSubtitle": {
+    "description": "Window for speakers on a post tag"
+  },
+  "postTagDetailSpeakersSubtitleAt": "From the past 2 months at {location}",
+  "@postTagDetailSpeakersSubtitleAt": {
+    "description": "Window for speakers on a post tag at one location",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "postTagDetailSpeakerPosts": "{count, plural, =1{1 post} other{{count} posts}}",
+  "@postTagDetailSpeakerPosts": {
+    "description": "How many recent posts a speaker appeared on",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "postTagDetailEmpty": "No dated posts with this tag in this window.",
   "@postTagDetailEmpty": {
@@ -1338,6 +1514,14 @@
   "volunteersStatusHelper": "Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.",
   "@volunteersStatusHelper": {
     "description": "Helper text under profile status on edit user"
+  },
+  "editUserCopyEmail": "Copy email",
+  "@editUserCopyEmail": {
+    "description": "Button that copies the linked account email on edit user"
+  },
+  "editUserEmailCopied": "Email copied",
+  "@editUserEmailCopied": {
+    "description": "Confirmation after copying a user's email on edit user"
   },
   "volunteersStatusConfirmTitle": "Change profile status?",
   "@volunteersStatusConfirmTitle": {
@@ -3068,10 +3252,6 @@
   "@scheduleEmptyBodyEditor": {
     "description": "Empty schedule message for authors and contributors"
   },
-  "scheduleTapGapToAdd": "Tap an empty time to add an item",
-  "@scheduleTapGapToAdd": {
-    "description": "Hint above the schedule timeline for people who can edit the post"
-  },
   "scheduleEmptyBodyViewer": "The running order for this post has not been shared yet.",
   "@scheduleEmptyBodyViewer": {
     "description": "Empty schedule message for people who cannot edit the post"
@@ -3080,21 +3260,34 @@
   "@scheduleWholeEventLabel": {
     "description": "A schedule role that covers the post rather than one timed slot. Also the time line when that role has no call time."
   },
-  "scheduleWholeEventHint": "On for this post, not one turn in the running order. A call time is optional.",
+  "scheduleWholeEventHint": "On for this post, not one turn in the running order. Leave both times empty, or set a start and leave the finish empty.",
   "@scheduleWholeEventHint": {
     "description": "Explains the Whole event switch on the schedule role editor"
   },
   "scheduleCallTimeLabel": "Call time",
   "@scheduleCallTimeLabel": {
-    "description": "Optional start time for a whole-event schedule role"
+    "description": "Optional expected start for a whole-event schedule role"
   },
   "scheduleCallTimeFinishLabel": "Finish",
   "@scheduleCallTimeFinishLabel": {
-    "description": "Optional end time for a whole-event schedule role"
+    "description": "Optional finish for a whole-event schedule role. Leave empty when the duty runs to the end of the post."
   },
-  "scheduleClearCallTime": "Clear call time",
-  "@scheduleClearCallTime": {
-    "description": "Removes the optional call time from a whole-event schedule role"
+  "scheduleClearTime": "Clear time",
+  "@scheduleClearTime": {
+    "description": "Clears the start or finish on a schedule role"
+  },
+  "scheduleTimeOptional": "Optional",
+  "@scheduleTimeOptional": {
+    "description": "Empty optional schedule time on a whole-event role"
+  },
+  "scheduleStartsAt": "From {time}",
+  "@scheduleStartsAt": {
+    "description": "Whole-event schedule role that has a start and no finish",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "scheduleUseAssignees": "Use {title}",
   "@scheduleUseAssignees": {

@@ -8,6 +8,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/team_rota.dart';
 import '../catalog/user_tag_chip.dart';
 import '../my_avatar_stack.dart';
@@ -202,13 +203,16 @@ class TeamRotaPostCard extends StatelessWidget {
   ) {
     final colorScheme = theme.colorScheme;
     final appContext = context.read<AppContext>();
-    final start = role['start'] as DateTime?;
-    final end = role['end'] as DateTime?;
-    final timeLabel = start != null && end != null
-        ? '${_timeFormat.format(start)} – ${_timeFormat.format(end)}'
-        : EventProgram.isStanding(role)
-            ? l10n.scheduleWholeEventLabel
-            : null;
+    final timeLabel = ScheduleRoleTimes.label(
+      start: role['start'] as DateTime?,
+      end: role['end'] as DateTime?,
+      standing: EventProgram.isStanding(role),
+      wholeEvent: l10n.scheduleWholeEventLabel,
+      formatTime: _timeFormat.format,
+      startsAt: l10n.scheduleStartsAt,
+      range: (start, end) =>
+          '${_timeFormat.format(start)} – ${_timeFormat.format(end)}',
+    );
     final assigned = _assignedUsers(appContext, role);
     final tags = UserTagHelpers.resolveTags(
       tagIDs: EventProgram.tagIDsOf(role),

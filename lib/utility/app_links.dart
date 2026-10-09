@@ -17,6 +17,22 @@ class AppLinks {
 
   static const String webOrigin = 'https://ctrim.app';
 
+  /// Main shell tabs, in home-page order (Bulletin, CTRIM, Cell Groups, Personal).
+  ///
+  /// One route (`/:homeTab`) owns all four so the page key stays stable and
+  /// the shell keeps its scroll position when the address changes.
+  static const int bulletinTab = 0;
+  static const int ctrimTab = 1;
+  static const int cellGroupsTab = 2;
+  static const int personalTab = 3;
+
+  static const List<String> homeTabSegments = <String>[
+    'bulletin',
+    'ctrim',
+    'cell-groups',
+    'personal',
+  ];
+
   static const Map<String, String> _legacyInfoIds = {
     'assets/info/ctrim_info/core_values.json': 'core_values',
     'assets/info/ctrim_info/4xd.json': '4xd',
@@ -47,6 +63,30 @@ class AppLinks {
 
   static String personPath(String id) => '/people/${_seg(id)}';
 
+  /// Keeps a stored startup-tab index inside the four shell tabs.
+  static int clampHomeTab(int index) {
+    if (index < 0 || index >= homeTabSegments.length) return ctrimTab;
+    return index;
+  }
+
+  static String homeTabPath(int index) =>
+      '/${homeTabSegments[clampHomeTab(index)]}';
+
+  static int? homeTabIndexForSegment(String segment) {
+    final index = homeTabSegments.indexOf(segment);
+    return index < 0 ? null : index;
+  }
+
+  /// Index when [path] is exactly one shell tab, otherwise null.
+  ///
+  /// Record links such as `/cell-groups/:id` stay null so they are not
+  /// treated as the Cell Groups tab.
+  static int? homeTabIndexForPath(String path) {
+    final uri = path.startsWith('/') ? Uri(path: path) : Uri.parse(path);
+    if (uri.pathSegments.length != 1) return null;
+    return homeTabIndexForSegment(uri.pathSegments.first);
+  }
+
   static String postUrl(String id) => '$webOrigin${postPath(id)}';
 
   static String cellGroupUrl(String id) => '$webOrigin${cellGroupPath(id)}';
@@ -75,6 +115,28 @@ class AppLinks {
       return infoPath(infoDocumentIdFromPayload(infoPage));
     }
     return null;
+  }
+
+  /// Legacy query redirects, then `/` to the saved startup tab.
+  ///
+  /// A section address such as `/personal` is left alone so a shared link
+  /// wins over the startup tab.
+  static String? redirectLocation(Uri uri, {required int preferredHomeTab}) {
+    final legacy = redirectFromUri(uri);
+    if (legacy != null) return legacy;
+    if (uri.path == '/' || uri.path.isEmpty) {
+      return homeTabPath(preferredHomeTab);
+    }
+    return null;
+  }
+
+  /// Sends an unknown `/:homeTab` segment to the startup tab.
+  static String? redirectHomeTabSegment(
+    String segment, {
+    required int preferredHomeTab,
+  }) {
+    if (homeTabIndexForSegment(segment) != null) return null;
+    return homeTabPath(preferredHomeTab);
   }
 
   static Future<T?> openPost<T extends Object?>(

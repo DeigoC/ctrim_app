@@ -12,6 +12,7 @@ void main() {
       expect(tag.color, isNull);
       expect(tag.streamKind, isNull);
       expect(tag.imageUrl, isNull);
+      expect(tag.description, isNull);
       expect(tag.isNotifiable, false);
       expect(tag.displayOrder, 0);
       expect(tag.isActive, true);
@@ -59,7 +60,32 @@ void main() {
       expect(json['IsActive'], true);
       expect(json.containsKey('Color'), false);
       expect(json.containsKey('StreamKind'), false);
+      expect(json['Description'], '');
       expect(json['ImageUrl'], '');
+    });
+
+    test('description trims blanks and round-trips in json', () {
+      final tag = PostTag(
+        id: 't1',
+        name: 'Youth',
+        description: '  Sunday evening for teenagers  ',
+      );
+
+      expect(tag.description, 'Sunday evening for teenagers');
+      expect(tag.toJson()['Description'], 'Sunday evening for teenagers');
+
+      tag.setDescription('   ');
+      expect(tag.description, isNull);
+      expect(tag.toJson()['Description'], '');
+    });
+
+    test('fromMap treats a blank Description as unset', () {
+      final tag = PostTag.fromMap('abc', {
+        'Name': 'Youth',
+        'Description': '  ',
+      });
+
+      expect(tag.description, isNull);
     });
 
     test('toJson writes a cover and clears it as an empty string', () {

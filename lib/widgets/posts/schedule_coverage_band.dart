@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/event/event_program.dart';
 import '../../models/user.dart';
 import '../../src/localization/app_localizations.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import '../my_avatar_stack.dart';
 
@@ -89,10 +91,15 @@ class ScheduleCoverageBand extends StatelessWidget {
     final ScheduleCoverageRole coverage,
     final AppLocalizations l10n,
   ) {
-    final start = coverage.start;
-    final end = coverage.end;
-    if (start == null || end == null) return l10n.scheduleWholeEventLabel;
-    return '${_timeFormat.format(start)} - ${_timeFormat.format(end)}';
+    return ScheduleRoleTimes.label(
+          start: coverage.start,
+          end: coverage.end,
+          standing: EventProgram.isStanding(coverage.role),
+          wholeEvent: l10n.scheduleWholeEventLabel,
+          formatTime: _timeFormat.format,
+          startsAt: l10n.scheduleStartsAt,
+        ) ??
+        l10n.scheduleWholeEventLabel;
   }
 
   Widget _buildEntry(

@@ -754,7 +754,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get managePostTagsMenuTitle => 'Post Tags';
 
   @override
-  String get managePostTagsMenuSubtitle => 'Events and attendance by location';
+  String get managePostTagsMenuSubtitle => 'Attendance and recent posts';
+
+  @override
+  String get managePostTagsDescriptionLabel => 'Description';
+
+  @override
+  String get managePostTagsDescriptionHint => 'What these posts are for';
 
   @override
   String get managePostTagsImageUrlLabel => 'Image URL';
@@ -775,7 +781,136 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTagDetailStatsTitle => 'By location';
 
   @override
-  String get postTagDetailStatsSubtitle => 'Past 2 months and the next 3 weeks';
+  String get postTagDetailStatsSubtitle =>
+      'Already held, and what\'s still ahead';
+
+  @override
+  String get postTagDetailDescriptionEmpty =>
+      'More about this tag will be added here.';
+
+  @override
+  String get postTagDetailLocation => 'Location';
+
+  @override
+  String get postTagDetailAllLocations => 'All';
+
+  @override
+  String get postTagDetailProgressTitle => 'So far';
+
+  @override
+  String get postTagDetailProgressSubtitle => 'Past 2 months';
+
+  @override
+  String postTagDetailProgressSubtitleAt(String location) {
+    return 'Past 2 months at $location';
+  }
+
+  @override
+  String get postTagDetailProgressFootnote =>
+      'Today and the next 3 weeks are listed under Coming up, and are not part of these totals.';
+
+  @override
+  String get postTagDetailEventsLabel => 'Events';
+
+  @override
+  String get postTagDetailEventsHint => 'Already held';
+
+  @override
+  String get postTagDetailAttendedLabel => 'Attended';
+
+  @override
+  String get postTagDetailAttendedHint => 'Total on these posts';
+
+  @override
+  String get postTagDetailAverageLabel => 'Average';
+
+  @override
+  String get postTagDetailAverageHint => 'Per event, including none recorded';
+
+  @override
+  String postTagDetailAverageShort(String value) {
+    return 'avg $value';
+  }
+
+  @override
+  String get postTagDetailInterestedLabel => 'Interested';
+
+  @override
+  String get postTagDetailInterestedHint => 'Total on these posts';
+
+  @override
+  String postTagDetailComingUp(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count coming up',
+      one: '1 coming up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get postTagDetailTrendSubtitle => 'Weekly posts with this tag';
+
+  @override
+  String get postTagDetailTrendWeeklyHint => 'Weekly · past 2 months';
+
+  @override
+  String get postTagDetailUpcomingTitle => 'Coming up';
+
+  @override
+  String get postTagDetailUpcomingSubtitle => 'Next 3 weeks';
+
+  @override
+  String postTagDetailUpcomingSubtitleAt(String location) {
+    return 'Next 3 weeks at $location';
+  }
+
+  @override
+  String get postTagDetailUpcomingEmpty =>
+      'Nothing dated with this tag in the next 3 weeks.';
+
+  @override
+  String get postTagDetailRecentTitle => 'Recent posts';
+
+  @override
+  String get postTagDetailRecentSubtitle => 'Past 2 months';
+
+  @override
+  String postTagDetailRecentSubtitleAt(String location) {
+    return 'Past 2 months at $location';
+  }
+
+  @override
+  String get postTagDetailRecentEmpty =>
+      'No dated posts with this tag in the past 2 months.';
+
+  @override
+  String postTagDetailAndMore(int count) {
+    return 'And $count more';
+  }
+
+  @override
+  String get postTagDetailSpeakersTitle => 'Speakers';
+
+  @override
+  String get postTagDetailSpeakersSubtitle => 'From the past 2 months';
+
+  @override
+  String postTagDetailSpeakersSubtitleAt(String location) {
+    return 'From the past 2 months at $location';
+  }
+
+  @override
+  String postTagDetailSpeakerPosts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts',
+      one: '1 post',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get postTagDetailEmpty =>
@@ -1015,6 +1150,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get volunteersStatusHelper =>
       'Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.';
+
+  @override
+  String get editUserCopyEmail => 'Copy email';
+
+  @override
+  String get editUserEmailCopied => 'Email copied';
 
   @override
   String get volunteersStatusConfirmTitle => 'Change profile status?';
@@ -2390,9 +2531,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add schedule items from the edit menu and they will appear here on the timeline.';
 
   @override
-  String get scheduleTapGapToAdd => 'Tap an empty time to add an item';
-
-  @override
   String get scheduleEmptyBodyViewer =>
       'The running order for this post has not been shared yet.';
 
@@ -2401,7 +2539,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduleWholeEventHint =>
-      'On for this post, not one turn in the running order. A call time is optional.';
+      'On for this post, not one turn in the running order. Leave both times empty, or set a start and leave the finish empty.';
 
   @override
   String get scheduleCallTimeLabel => 'Call time';
@@ -2410,7 +2548,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduleCallTimeFinishLabel => 'Finish';
 
   @override
-  String get scheduleClearCallTime => 'Clear call time';
+  String get scheduleClearTime => 'Clear time';
+
+  @override
+  String get scheduleTimeOptional => 'Optional';
+
+  @override
+  String scheduleStartsAt(String time) {
+    return 'From $time';
+  }
 
   @override
   String scheduleUseAssignees(String title) {

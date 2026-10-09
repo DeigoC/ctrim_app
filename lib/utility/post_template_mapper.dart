@@ -140,6 +140,33 @@ class PostTemplateMapper {
     );
   }
 
+  /// Copies the template's schedule lines into the editor.
+  ///
+  /// Role ids stay put. A whole-event role keeps its flag, including one that
+  /// has a start and no finish.
+  static void loadTemplateRolesForEditing(
+    EventContext eventContext,
+    PostTemplate template,
+  ) {
+    eventContext.program.clearRoles();
+    for (final role in template.roles) {
+      eventContext.program.addRole(
+        detail: (role['detail'] as String?) ?? '',
+        uids: List<String>.from(role['uids'] ?? const []),
+        title: (role['title'] as String?) ?? '',
+        start: role['start'] as DateTime?,
+        end: role['end'] as DateTime?,
+        id: role['id'] is int
+            ? role['id'] as int
+            : DateTime.now().millisecondsSinceEpoch,
+        forGuests:
+            role['for_guests'] is bool ? role['for_guests'] as bool : true,
+        tagIDs: EventProgram.tagIDsOf(role),
+        standing: EventProgram.isStanding(role),
+      );
+    }
+  }
+
   /// Loads a preset into the template editor without minting new role ids.
   static void loadSchedulePresetForEditing(
     EventContext eventContext,

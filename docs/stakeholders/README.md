@@ -29,6 +29,7 @@ Open http://127.0.0.1:8000 — only files under this folder are published (`docs
 | Doc | Status | Purpose |
 |-----|--------|---------|
 | [index.md](index.md) | Current | Site home |
+| [servers-and-leaders.md](servers-and-leaders.md) | Current | Short start for people who serve or lead a ministry |
 | [overview.md](overview.md) | Current | Product overview |
 | [key-concepts.md](key-concepts.md) | Current | Glossary (post, serving, interest, …) |
 | [events-and-bulletin.md](events-and-bulletin.md) | Current | Events & bulletin (filters, bookmarks, related) |

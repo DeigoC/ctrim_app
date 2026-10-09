@@ -1297,8 +1297,20 @@ abstract class AppLocalizations {
   /// Personal home menu subtitle for the post tags page
   ///
   /// In en, this message translates to:
-  /// **'Events and attendance by location'**
+  /// **'Attendance and recent posts'**
   String get managePostTagsMenuSubtitle;
+
+  /// Label for the short post tag description
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get managePostTagsDescriptionLabel;
+
+  /// Hint for the short post tag description
+  ///
+  /// In en, this message translates to:
+  /// **'What these posts are for'**
+  String get managePostTagsDescriptionHint;
 
   /// Label for the post tag cover image URL
   ///
@@ -1339,8 +1351,200 @@ abstract class AppLocalizations {
   /// Window shown under post tag location totals
   ///
   /// In en, this message translates to:
-  /// **'Past 2 months and the next 3 weeks'**
+  /// **'Already held, and what\'s still ahead'**
   String get postTagDetailStatsSubtitle;
+
+  /// Placeholder when a post tag has no description
+  ///
+  /// In en, this message translates to:
+  /// **'More about this tag will be added here.'**
+  String get postTagDetailDescriptionEmpty;
+
+  /// Heading above the location chips on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get postTagDetailLocation;
+
+  /// Chip that clears the location filter on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get postTagDetailAllLocations;
+
+  /// Section title for past post tag totals
+  ///
+  /// In en, this message translates to:
+  /// **'So far'**
+  String get postTagDetailProgressTitle;
+
+  /// Window for past post tag totals across every location
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months'**
+  String get postTagDetailProgressSubtitle;
+
+  /// Window for past post tag totals at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months at {location}'**
+  String postTagDetailProgressSubtitleAt(String location);
+
+  /// Explains that upcoming posts are left out of the past totals
+  ///
+  /// In en, this message translates to:
+  /// **'Today and the next 3 weeks are listed under Coming up, and are not part of these totals.'**
+  String get postTagDetailProgressFootnote;
+
+  /// Stat tile for how many tagged posts have already been held
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get postTagDetailEventsLabel;
+
+  /// Hint under the events stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Already held'**
+  String get postTagDetailEventsHint;
+
+  /// Stat tile for attendance on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get postTagDetailAttendedLabel;
+
+  /// Hint under the attendance stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Total on these posts'**
+  String get postTagDetailAttendedHint;
+
+  /// Stat tile for average attendance on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get postTagDetailAverageLabel;
+
+  /// Hint under the average attendance stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Per event, including none recorded'**
+  String get postTagDetailAverageHint;
+
+  /// Compact average attendance on a location row
+  ///
+  /// In en, this message translates to:
+  /// **'avg {value}'**
+  String postTagDetailAverageShort(String value);
+
+  /// Stat tile for interest on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Interested'**
+  String get postTagDetailInterestedLabel;
+
+  /// Hint under the interested stat on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Total on these posts'**
+  String get postTagDetailInterestedHint;
+
+  /// Upcoming post count on a location row
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 coming up} other{{count} coming up}}'**
+  String postTagDetailComingUp(int count);
+
+  /// Subtitle for the weekly chart on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly posts with this tag'**
+  String get postTagDetailTrendSubtitle;
+
+  /// Caption under the weekly chart on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly · past 2 months'**
+  String get postTagDetailTrendWeeklyHint;
+
+  /// Section title for upcoming posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get postTagDetailUpcomingTitle;
+
+  /// Window for upcoming posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Next 3 weeks'**
+  String get postTagDetailUpcomingSubtitle;
+
+  /// Window for upcoming posts with this tag at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Next 3 weeks at {location}'**
+  String postTagDetailUpcomingSubtitleAt(String location);
+
+  /// Empty state when a post tag has no upcoming posts
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing dated with this tag in the next 3 weeks.'**
+  String get postTagDetailUpcomingEmpty;
+
+  /// Section title for past posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Recent posts'**
+  String get postTagDetailRecentTitle;
+
+  /// Window for recent posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months'**
+  String get postTagDetailRecentSubtitle;
+
+  /// Window for recent posts with this tag at one location
+  ///
+  /// In en, this message translates to:
+  /// **'Past 2 months at {location}'**
+  String postTagDetailRecentSubtitleAt(String location);
+
+  /// Empty state when a post tag has no past posts
+  ///
+  /// In en, this message translates to:
+  /// **'No dated posts with this tag in the past 2 months.'**
+  String get postTagDetailRecentEmpty;
+
+  /// How many posts or speakers are hidden below the preview
+  ///
+  /// In en, this message translates to:
+  /// **'And {count} more'**
+  String postTagDetailAndMore(int count);
+
+  /// Section title for people who spoke at posts with this tag
+  ///
+  /// In en, this message translates to:
+  /// **'Speakers'**
+  String get postTagDetailSpeakersTitle;
+
+  /// Window for speakers on a post tag
+  ///
+  /// In en, this message translates to:
+  /// **'From the past 2 months'**
+  String get postTagDetailSpeakersSubtitle;
+
+  /// Window for speakers on a post tag at one location
+  ///
+  /// In en, this message translates to:
+  /// **'From the past 2 months at {location}'**
+  String postTagDetailSpeakersSubtitleAt(String location);
+
+  /// How many recent posts a speaker appeared on
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post} other{{count} posts}}'**
+  String postTagDetailSpeakerPosts(int count);
 
   /// Empty state when a post tag has no dated posts in the activity window
   ///
@@ -1743,6 +1947,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hidden and archived profiles stay out of People and new assignments. Past events still show their name. They cannot sign in.'**
   String get volunteersStatusHelper;
+
+  /// Button that copies the linked account email on edit user
+  ///
+  /// In en, this message translates to:
+  /// **'Copy email'**
+  String get editUserCopyEmail;
+
+  /// Confirmation after copying a user's email on edit user
+  ///
+  /// In en, this message translates to:
+  /// **'Email copied'**
+  String get editUserEmailCopied;
 
   /// Title when an admin sets a volunteer to hidden or archived
   ///
@@ -4228,12 +4444,6 @@ abstract class AppLocalizations {
   /// **'Add schedule items from the edit menu and they will appear here on the timeline.'**
   String get scheduleEmptyBodyEditor;
 
-  /// Hint above the schedule timeline for people who can edit the post
-  ///
-  /// In en, this message translates to:
-  /// **'Tap an empty time to add an item'**
-  String get scheduleTapGapToAdd;
-
   /// Empty schedule message for people who cannot edit the post
   ///
   /// In en, this message translates to:
@@ -4249,26 +4459,38 @@ abstract class AppLocalizations {
   /// Explains the Whole event switch on the schedule role editor
   ///
   /// In en, this message translates to:
-  /// **'On for this post, not one turn in the running order. A call time is optional.'**
+  /// **'On for this post, not one turn in the running order. Leave both times empty, or set a start and leave the finish empty.'**
   String get scheduleWholeEventHint;
 
-  /// Optional start time for a whole-event schedule role
+  /// Optional expected start for a whole-event schedule role
   ///
   /// In en, this message translates to:
   /// **'Call time'**
   String get scheduleCallTimeLabel;
 
-  /// Optional end time for a whole-event schedule role
+  /// Optional finish for a whole-event schedule role. Leave empty when the duty runs to the end of the post.
   ///
   /// In en, this message translates to:
   /// **'Finish'**
   String get scheduleCallTimeFinishLabel;
 
-  /// Removes the optional call time from a whole-event schedule role
+  /// Clears the start or finish on a schedule role
   ///
   /// In en, this message translates to:
-  /// **'Clear call time'**
-  String get scheduleClearCallTime;
+  /// **'Clear time'**
+  String get scheduleClearTime;
+
+  /// Empty optional schedule time on a whole-event role
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get scheduleTimeOptional;
+
+  /// Whole-event schedule role that has a start and no finish
+  ///
+  /// In en, this message translates to:
+  /// **'From {time}'**
+  String scheduleStartsAt(String time);
 
   /// Adds the people already assigned to another schedule line that shares a ministry
   ///

@@ -17,6 +17,7 @@ import '../../utility/responsive_layout.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/schedule_assignee_suggestions.dart';
 import '../../utility/schedule_member_picker_seed.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/schedule_timeline_layout.dart';
 
 /// Add or edit a program role. Pass [programEntry] when editing an existing item.
@@ -219,8 +220,10 @@ class _EventProgramPageState extends State<EventProgramPage> {
                               ? l10n.scheduleCallTimeLabel
                               : 'Start Time',
                           time: _start,
-                          isRequired: !_isEditing && !_standing,
+                          isRequired: !_standing,
+                          optional: _standing,
                           onTap: _onStartTimeTap,
+                          onClear: _start == null ? null : _clearStart,
                           icon: Icons.play_arrow,
                         ),
                       ),
@@ -231,28 +234,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
                               ? l10n.scheduleCallTimeFinishLabel
                               : 'End Time',
                           time: _end,
-                          isRequired: !_isEditing && !_standing,
+                          isRequired: !_standing,
+                          optional: _standing,
                           onTap: _start == null ? null : _onEndTimeTap,
+                          onClear: _end == null ? null : _clearEnd,
                           icon: Icons.stop,
                           isEnabled: _start != null,
                         ),
                       ),
                     ],
                   ),
-                  if (_standing && (_start != null || _end != null))
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _start = null;
-                            _end = null;
-                          });
-                          _onFieldsChanged();
-                        },
-                        child: Text(l10n.scheduleClearCallTime),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -507,97 +498,131 @@ class _EventProgramPageState extends State<EventProgramPage> {
     required String label,
     required DateTime? time,
     required bool isRequired,
+    required bool optional,
     required VoidCallback? onTap,
+    required VoidCallback? onClear,
     required IconData icon,
     bool isEnabled = true,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final bool hasTime = time != null;
     final bool showWarning = isRequired && !hasTime;
+    final bool showClear = hasTime && onClear != null;
 
-    return GestureDetector(
-      onTap: isEnabled ? onTap : null,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: showWarning
-                ? Colors.amber
-                : isEnabled
-                    ? Theme.of(context).colorScheme.outline
-                    : Theme.of(context)
-                        .colorScheme
-                        .outline
-                        .withValues(alpha: 0.5),
-            width: showWarning ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          color: isEnabled
-              ? Theme.of(context).colorScheme.surface
-              : Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: isEnabled
-                      ? (showWarning
-                          ? Colors.amber
-                          : Theme.of(context).colorScheme.primary)
-                      : Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label + (isRequired ? '*' : ''),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isEnabled
-                        ? Theme.of(context)
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: isEnabled ? onTap : null,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(12, 12, showClear ? 28 : 12, 12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: showWarning
+                    ? Colors.amber
+                    : isEnabled
+                        ? Theme.of(context).colorScheme.outline
+                        : Theme.of(context)
                             .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7)
+                            .outline
+                            .withValues(alpha: 0.5),
+                width: showWarning ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: isEnabled
+                  ? Theme.of(context).colorScheme.surface
+                  : Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withValues(alpha: 0.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: 16,
+                      color: isEnabled
+                          ? (showWarning
+                              ? Colors.amber
+                              : Theme.of(context).colorScheme.primary)
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        label + (isRequired ? '*' : ''),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isEnabled
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.7)
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (showWarning) ...[
+                      const SizedBox(width: 4),
+                      const Icon(Icons.warning_amber,
+                          size: 14, color: Colors.amber),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasTime
+                      ? _timeFormat.format(time)
+                      : (optional ? l10n.scheduleTimeOptional : 'Tap to set'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isEnabled
+                        ? (hasTime
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7))
                         : Theme.of(context)
                             .colorScheme
                             .onSurface
                             .withValues(alpha: 0.5),
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (showWarning) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.warning_amber,
-                      size: 14, color: Colors.amber),
-                ],
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              hasTime ? _timeFormat.format(time) : 'Tap to set',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isEnabled
-                    ? (hasTime
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7))
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.5),
+          ),
+        ),
+        if (showClear)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              tooltip: l10n.scheduleClearTime,
+              onPressed: onClear,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: Icon(
+                Icons.close,
+                size: 18,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
@@ -659,14 +684,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
     }
   }
 
-  /// Both times, or neither when the role covers the whole event.
-  bool get _timesAreValid {
-    final hasStart = _start != null;
-    final hasEnd = _end != null;
-    if (hasStart != hasEnd) return false;
-    if (!hasStart) return _standing;
-    return true;
-  }
+  /// Both times for a running-order line. Whole event may omit the finish.
+  bool get _timesAreValid => ScheduleRoleTimes.areSavable(
+        start: _start,
+        end: _end,
+        standing: _standing,
+      );
 
   void _updateCanSaveForAdd() {
     final canSave = _tecTitle.text.trim().isNotEmpty && _timesAreValid;
@@ -693,24 +716,28 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   bool _timesMatch(final Map<String, dynamic> role) {
-    final originalStart = role['start'] as DateTime?;
-    final originalEnd = role['end'] as DateTime?;
-    if (_start == null &&
-        _end == null &&
-        originalStart == null &&
-        originalEnd == null) {
-      return true;
-    }
-    if (_start == null ||
-        _end == null ||
-        originalStart == null ||
-        originalEnd == null) {
-      return false;
-    }
-    return _start!.hour == originalStart.hour &&
-        _start!.minute == originalStart.minute &&
-        _end!.hour == originalEnd.hour &&
-        _end!.minute == originalEnd.minute;
+    return ScheduleRoleTimes.sameClock(
+          _start,
+          role['start'] as DateTime?,
+        ) &&
+        ScheduleRoleTimes.sameClock(
+          _end,
+          role['end'] as DateTime?,
+        );
+  }
+
+  /// Clearing the start also clears the finish, which cannot stand alone.
+  void _clearStart() {
+    setState(() {
+      _start = null;
+      _end = null;
+    });
+    _onFieldsChanged();
+  }
+
+  void _clearEnd() {
+    setState(() => _end = null);
+    _onFieldsChanged();
   }
 
   List<ScheduleAssigneeSuggestion> get _assigneeSuggestions {
@@ -779,12 +806,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _end = _start!.add(duration);
       });
       _onFieldsChanged();
-    } else {
-      setState(() {
-        _start = newStart;
-      });
-      _onEndTimeTap();
+      return;
     }
+
+    setState(() => _start = newStart);
+    _onFieldsChanged();
+    if (!_standing) _onEndTimeTap();
   }
 
   Future<void> _onEndTimeTap() async {

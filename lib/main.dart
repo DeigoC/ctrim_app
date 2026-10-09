@@ -109,6 +109,7 @@ void main() async {
     ],
     child: MyApp(
       settingsController: settingsController,
+      preferredHomeTab: () => guestContext.sharedPref.preferredStartupTab,
       loadStartup: (onProgress) async {
         // App Check on web debug needs a moment before the first Firestore read.
         if (kIsWeb && kDebugMode) {

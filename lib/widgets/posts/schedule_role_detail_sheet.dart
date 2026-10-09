@@ -8,6 +8,7 @@ import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/schedule_assignee_suggestions.dart';
+import '../../utility/schedule_role_times.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/responsive_layout.dart';
 import '../catalog/user_tag_chip.dart';
@@ -195,14 +196,18 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     final DateTime? end,
     final bool standing,
   ) {
-    if (start != null && end != null) {
-      final range = '${_timeFormat.format(start)} - ${_timeFormat.format(end)}'
-          ' | ${_durationLabel(end.difference(start))}';
-      if (!standing) return range;
-      return '${l10n.scheduleWholeEventLabel} · $range';
-    }
-    if (standing) return l10n.scheduleWholeEventLabel;
-    return null;
+    return ScheduleRoleTimes.label(
+      start: start,
+      end: end,
+      standing: standing,
+      wholeEvent: l10n.scheduleWholeEventLabel,
+      formatTime: _timeFormat.format,
+      startsAt: l10n.scheduleStartsAt,
+      prefixWholeEvent: true,
+      range: (start, end) =>
+          '${_timeFormat.format(start)} - ${_timeFormat.format(end)}'
+          ' | ${_durationLabel(end.difference(start))}',
+    );
   }
 
   static String _durationLabel(final Duration difference) {

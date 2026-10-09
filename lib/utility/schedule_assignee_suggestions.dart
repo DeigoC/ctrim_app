@@ -16,12 +16,13 @@ class ScheduleAssigneeSuggestion {
   final List<String> uids;
 }
 
-/// One-tap reuse of the whole-event people who share a ministry.
+/// One-tap reuse of whole-event people on a matching line.
 ///
 /// A suggestion is an All event role — declared standing, or a long line the
-/// timeline already lifts into that band — with overlapping `tagIDs` and at
-/// least one person. An earlier timed slot is not a source. The lists are
-/// not linked: applying copies people in, and later edits stay put.
+/// timeline already lifts into that band — that shares a ministry, or that
+/// also has no ministry when this line has none. It needs at least one person.
+/// An earlier timed slot is not a source. The lists are not linked: applying
+/// copies people in, and later edits stay put.
 class ScheduleAssigneeSuggestions {
   ScheduleAssigneeSuggestions._();
 
@@ -30,8 +31,6 @@ class ScheduleAssigneeSuggestions {
     required List<Map<String, dynamic>> roles,
   }) {
     final targetTags = EventProgram.tagIDsOf(role).toSet();
-    if (targetTags.isEmpty) return const [];
-
     final targetId = role['id'];
     final targetUids = _uidsOf(role).toSet();
     final sources = ScheduleTimelineLayout.build(roles: roles).coverageRoles;
@@ -40,8 +39,9 @@ class ScheduleAssigneeSuggestions {
     for (final coverage in sources) {
       final other = coverage.role;
       if (other['id'] == targetId) continue;
-      final otherTags = EventProgram.tagIDsOf(other);
-      if (!otherTags.any(targetTags.contains)) continue;
+      if (!_matchesMinistries(targetTags, EventProgram.tagIDsOf(other))) {
+        continue;
+      }
 
       final uids = _uidsOf(other);
       if (uids.isEmpty) continue;
@@ -77,6 +77,15 @@ class ScheduleAssigneeSuggestions {
       result.add(id);
     }
     return result;
+  }
+
+  /// Shared ministry, or both lines have none.
+  static bool _matchesMinistries(
+    final Set<String> targetTags,
+    final List<String> otherTags,
+  ) {
+    if (targetTags.isEmpty) return otherTags.isEmpty;
+    return otherTags.any(targetTags.contains);
   }
 
   static List<String> _uidsOf(final Map<String, dynamic> role) {

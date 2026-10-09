@@ -105,6 +105,36 @@ def build_expected_attendee_entry(
     }
 
 
+def resolve_role_window(
+    role: dict[str, Any],
+    head_data: dict[str, Any] | None,
+    program_data: dict[str, Any] | None,
+) -> tuple[int, int] | None:
+    """Clock window for one program role, or None when it should not sync.
+
+    A role with both times uses those times. A whole-event role with only a
+    start runs from that call time to the event finish. A whole-event role
+    with no clock time uses the event window. A running-order role needs both.
+    """
+    start = role.get('start')
+    end = role.get('end')
+    standing = role.get('standing') is True
+    if start is not None and end is not None:
+        return timestamp_to_millis(start), timestamp_to_millis(end)
+    if not standing:
+        return None
+
+    window = resolve_event_window(head_data, program_data)
+    if start is None:
+        return window
+
+    start_mil = timestamp_to_millis(start)
+    default_end = start_mil + int(_DEFAULT_EVENT_DURATION.total_seconds() * 1000)
+    if window is None or window[1] <= start_mil:
+        return start_mil, default_end
+    return start_mil, window[1]
+
+
 def build_desired_roles(
     post_id: str,
     program_data: dict[str, Any] | None,
@@ -118,22 +148,13 @@ def build_desired_roles(
 
     if program_data:
         for role in program_data.get('Roles') or []:
-            start = role.get('start')
-            end = role.get('end')
             role_id = role.get('id')
-            standing = role.get('standing') is True
             if role_id is None:
                 continue
-            if start is not None and end is not None:
-                start_mil = timestamp_to_millis(start)
-                end_mil = timestamp_to_millis(end)
-            elif standing:
-                window = resolve_event_window(head_data, program_data)
-                if window is None:
-                    continue
-                start_mil, end_mil = window
-            else:
+            window = resolve_role_window(role, head_data, program_data)
+            if window is None:
                 continue
+            start_mil, end_mil = window
 
             entry = {
                 'postID': post_id,

@@ -12,7 +12,7 @@ The page is organised into clear sections so everyday options stay separate from
 |---------|----------------|
 | **Profile** (or guest welcome) | Greeting, location, and photo — the visual “you are here” for signed-in people |
 | **Dashboard cards** *(signed in)* | **My Schedule** preview (up to three upcoming posts) and **Cell Groups** (your groups and upcoming meetings in the next eight weeks) |
-| **For You** | Everyday shortcuts: my posts, **Post Tags**, **Profile Picture**, **Share Web App**, and the **Product Guide** (create account when browsing as a guest; share and the guide stay available) |
+| **For You** | Everyday shortcuts: my posts, **Post Tags**, **Profile Picture**, **Share Web App**, and the **Product Guide** (create account when browsing as a guest; share and the guide stay available). Guests open this site’s home. Signed-in people open [For servers & leaders](servers-and-leaders.md) |
 | **People & Teams** | **Who's Who**, **Ministry Schedule**, and **View Ministries**. View Ministries stays available to guests; the directory and Ministry Schedule are for signed-in people |
 | **Admin / Leader tools** | Post templates and locations — only when your role allows. Post Tags are browsed from **For You**. Ministries are edited from **People & Teams** |
 | **Settings** | Appearance, startup tab (signed in), **full surname for guests** (signed in), **push notifications**, slide deck utils, privacy/terms, account deletion |
@@ -29,7 +29,7 @@ The page is organised into clear sections so everyday options stay separate from
 | Who's Who / Ministry Schedule | No | Yes (when they have a community profile) |
 | View Ministries | Yes (People & Teams) | Yes |
 | Notification preferences | Can enable notifications | Full preference page |
-| Product Guide | Yes (For You) | Yes |
+| Product Guide | Yes (For You) — this site’s home | Yes — [For servers & leaders](servers-and-leaders.md) |
 | Full surname on public pages | Sees a first name and surname initial, unless that person has chosen otherwise | Chooses this for their own name under Settings |
 | Create account / Sign in | Offered under **For You** | Profile header and account options |
 
@@ -46,7 +46,7 @@ Creating an account does **not** automatically grant Leader or Area admin tools,
 Signed-in people see a profile header (including profile picture where set). From **For You** they can change their profile picture. From **Settings** they can also:
 
 - Request account deletion *(web)*  
-- Choose which main tab opens on startup  
+- Choose which main tab opens on startup (the plain site address). A link to a section, such as Personal or the bulletin, still opens that section  
 - Change appearance (light / dark / match device)  
 - Manage **push notifications** for this device and each location
 
@@ -74,7 +74,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 
 ## Post Tags
 
-**Post Tags** (under **For You**) is for signed-in people. Each tag can have one main image. Tap a tag to see, for each church location, how many dated posts used that label in the past two months and the next three weeks, and how many people attended. Locations with nothing in that window are left off the list. Area admins add, edit, reorder, and remove tags, and set the image address. Guests can still filter the bulletin by these labels; they do not open this page.
+**Post Tags** (under **For You**) is for signed-in people. Each tag can have a short description and one main image. Tap a tag to see how those events are going: totals for the past two months (events already held, people who attended, the average, and how many marked interested), a weekly chart, and the same numbers by church location. Tap a location to focus the page on that site. Below that are the posts themselves — what is coming up in the next three weeks, and recent ones from the past two months — plus who has been speaking. A post happening today counts as coming up, not in the past totals. Locations with nothing in that window are left off the list. Area admins add, edit, reorder, and remove tags, and set the description and image address. Guests can still filter the bulletin by these labels; they do not open this page.
 
 ## People & Teams
 
@@ -86,7 +86,7 @@ The app keeps a personal list of those posts on your profile. When you open My P
 **Admin / Leader tools** stay for catalogues that are still editor lists:
 
 - **Post Templates** — reusable event blueprints, grouped as **Cell Groups** or **Services** *(leaders)*  
-- **Locations** *(area admins)*. Ministries and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. A post tag can also have one image address; that image shows on the Post Tags list and at the top of the tag. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's Who** when that place is selected.  
+- **Locations** *(area admins)*. Ministries and post tags get a colour when you add them (a free palette colour, so they don’t all match). You can change it or clear it; typing a hex code is optional. A post tag can also have a short description and one image address; that image shows on the Post Tags list and at the top of the tag. Each location can have photos; choose one as the cover. That cover shows on the locations list and at the top of **Who's Who** when that place is selected.  
 
 See [People & roles](people-and-roles.md).
 

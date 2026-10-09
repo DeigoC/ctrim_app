@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 
 import '../../../firebase/db_managers/post_template_db_manager.dart';
 import '../../../models/post_template.dart';
-import '../../../models/event/event_program.dart';
 import '../../../utility/app_context.dart';
 import '../../../utility/dialog_manager.dart';
 import '../../../utility/event_context.dart';
 import '../../../utility/cache/local_data_manager.dart';
 import '../../../utility/notifications/notification_topics.dart';
 import '../../../utility/post_template_loader.dart';
+import '../../../utility/post_template_mapper.dart';
 import '../../../utility/responsive_layout.dart';
 import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
@@ -545,21 +545,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     }
     eventContext.applyIsPeriodParent(postTemplate.isPeriodParent);
 
-    for (final role in postTemplate.roles) {
-      eventContext.program.addRole(
-        detail: role['detail'] ?? '',
-        uids: List<String>.from(role['uids'] ?? const []),
-        title: role['title'] ?? '',
-        start: role['start'],
-        end: role['end'],
-        id: role['id'] is int
-            ? role['id'] as int
-            : DateTime.now().millisecondsSinceEpoch,
-        forGuests:
-            role['for_guests'] is bool ? role['for_guests'] as bool : true,
-        tagIDs: EventProgram.tagIDsOf(role),
-      );
-    }
+    PostTemplateMapper.loadTemplateRolesForEditing(eventContext, postTemplate);
     eventContext.program.setAddress(postTemplate.address);
     eventContext.program.setAllDay(postTemplate.allDay);
     eventContext.program.setMapLink(postTemplate.mapLink);

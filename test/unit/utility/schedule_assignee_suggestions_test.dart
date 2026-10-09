@@ -86,6 +86,59 @@ void main() {
       expect(suggestions.map((s) => s.sourceTitle), ['Worship team']);
     });
 
+    test('an untagged item suggests an untagged whole-event line', () {
+      final hosts = role(
+        id: 6,
+        title: 'Hosts',
+        uids: ['lee'],
+        standing: true,
+      );
+      final welcome = role(
+        id: 7,
+        title: 'Welcome',
+        start: DateTime(2026, 6, 14, 10, 0),
+      );
+
+      final suggestions = ScheduleAssigneeSuggestions.forRole(
+        role: welcome,
+        roles: [...roles, hosts, welcome],
+      );
+
+      expect(suggestions.map((s) => s.sourceTitle), ['Hosts']);
+      expect(suggestions.single.uids, ['lee']);
+    });
+
+    test('an untagged item does not suggest a tagged whole-event line', () {
+      final welcome = role(
+        id: 7,
+        title: 'Welcome',
+        start: DateTime(2026, 6, 14, 10, 0),
+      );
+
+      final suggestions = ScheduleAssigneeSuggestions.forRole(
+        role: welcome,
+        roles: [...roles, welcome],
+      );
+
+      expect(suggestions, isEmpty);
+    });
+
+    test('a tagged item does not suggest an untagged whole-event line', () {
+      final hosts = role(
+        id: 6,
+        title: 'Hosts',
+        uids: ['lee'],
+        standing: true,
+      );
+
+      final suggestions = ScheduleAssigneeSuggestions.forRole(
+        role: video,
+        roles: [...roles, hosts],
+      );
+
+      expect(suggestions.map((s) => s.sourceTitle), ['Technical Media']);
+    });
+
     test('does not suggest itself or a line with no shared ministry', () {
       final suggestions = ScheduleAssigneeSuggestions.forRole(
         role: media,

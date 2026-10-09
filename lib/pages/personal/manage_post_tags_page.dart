@@ -233,6 +233,10 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
       takenColors: Provider.of<AppContext>(context, listen: false)
           .allPostTags
           .map((tag) => tag.color),
+      descriptionLabel: l10n.managePostTagsDescriptionLabel,
+      descriptionHint: l10n.managePostTagsDescriptionHint,
+      initialDescription: existing?.description,
+      descriptionMaxLength: PostTag.descriptionMaxLength,
       imageUrlLabel: l10n.managePostTagsImageUrlLabel,
       imageUrlHint: l10n.managePostTagsImageUrlHint,
       initialImageUrl: existing?.imageUrl,
@@ -246,6 +250,7 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
         existing.setName(result.name);
         existing.setColor(result.color);
         existing.setStreamKind(null);
+        existing.setDescription(result.description);
         existing.setImageUrl(_storedImageUrl(result.imageUrl));
         await _tagDBManager.updateTag(existing);
         appContext.addOrUpdatePostTag(existing);
@@ -264,6 +269,7 @@ class _ManagePostTagsPageState extends State<ManagePostTagsPage> {
         final tag = await _tagDBManager.createTag(
           name: result.name,
           color: result.color,
+          description: result.description,
           imageUrl: _storedImageUrl(result.imageUrl),
           displayOrder: nextOrder,
         );

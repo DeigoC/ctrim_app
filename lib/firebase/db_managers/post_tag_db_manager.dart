@@ -29,6 +29,7 @@ class PostTagDBManager {
     required String name,
     String? color,
     String? streamKind,
+    String? description,
     String? imageUrl,
     required int displayOrder,
   }) async {
@@ -38,6 +39,7 @@ class PostTagDBManager {
       name: name,
       color: color,
       streamKind: streamKind,
+      description: description,
       imageUrl: imageUrl,
       displayOrder: displayOrder,
     );

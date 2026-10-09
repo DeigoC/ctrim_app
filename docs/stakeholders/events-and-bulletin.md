@@ -73,9 +73,9 @@ The Schedule tab shows the running order as a **timeline of the day** rather tha
 
 Anything happening **at the same time** appears side by side. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
 
-Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with who is assigned. Mark a role **Whole event** when you add it, so those jobs do not need a padded start and finish just to leave the running order. A call time is optional: an early setup can still read as 09:00, and a role with no clock time reads as Whole event. Longer jobs that were saved before this still appear in the band.
+Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with who is assigned. Mark a role **Whole event** when you add it, so those jobs do not need a padded start and finish just to leave the running order. Each time can be cleared. Leave both empty and the role reads as Whole event. Set only a start when you know when people should arrive and the duty runs on to the end of the post — that reads as from 09:00. Add a finish only when the duty itself stops at a set time. Longer jobs that were saved before this still appear in the band.
 
-On a later item that shares a ministry, **Use Technical Media** adds the people already set for the whole event. An earlier timed item, such as opening worship, is not offered. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
+On a later item that shares a ministry, **Use Technical Media** adds the people already set for the whole event. The same offer appears when neither line has a ministry: an untagged whole-event team can be applied to other items that also have no ministry. An earlier timed item, such as opening worship, is not offered. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
 
 Choosing people for an item that already has one or more ministries opens the list filtered to those ministries and that post’s location. You can still change those filters.
 

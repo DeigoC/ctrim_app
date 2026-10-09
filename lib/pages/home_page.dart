@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -31,7 +32,10 @@ import 'information/information_home.dart';
 import 'personal/personal_home.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.tabIndex});
+
+  /// Shell tab from the address (`AppLinks.bulletinTab` … `personalTab`).
+  final int tabIndex;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -74,8 +78,9 @@ class _HomePageState extends State<HomePage>
     _appContext = Provider.of<AppContext>(context, listen: false);
     WidgetsBinding.instance.addObserver(this);
 
-    // Set startup tab based on user preference (default to 1 = Information home)
-    _selectedIndex = _appContext.sharedPref.preferredStartupTab;
+    // The address is the source of truth. `/` already redirected to the
+    // startup tab before this page was built.
+    _selectedIndex = widget.tabIndex;
 
     _informationTabController = TabController(
       length: InformationHome.sections.length,
@@ -155,6 +160,16 @@ class _HomePageState extends State<HomePage>
   void didChangeAppLifecycleState(final AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       DirectoryCacheCoordinator.instance.revalidate(app: _appContext);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Browser back/forward and a shared link update the route, not setState.
+    if (widget.tabIndex != _selectedIndex) {
+      _selectedIndex = widget.tabIndex;
+      _logShellScreen();
     }
   }
 
@@ -280,12 +295,14 @@ class _HomePageState extends State<HomePage>
     required TabController controller,
   }) {
     if (_selectedIndex != destinationIndex) {
-      setState(() => _selectedIndex = destinationIndex);
+      _showHomeTab(destinationIndex, log: false);
     }
+    if (!mounted) return;
     if (controller.index != section) {
       controller.animateTo(section);
+    } else {
+      _logShellScreen();
     }
-    _logShellScreen();
   }
 
   Widget _buildBottomNavigationBar() {
@@ -355,21 +372,27 @@ class _HomePageState extends State<HomePage>
     }
     return PersonalHome(
       appContext: _appContext,
-      onBrowseCellGroups: () {
-        setState(() => _selectedIndex = 2);
-        _logShellScreen();
-      },
+      onBrowseCellGroups: () => _showHomeTab(AppLinks.cellGroupsTab),
     );
   }
 
   // * Logic
 
+  void _showHomeTab(int index, {bool log = true}) {
+    if (index == _selectedIndex) return;
+    final path = AppLinks.homeTabPath(index);
+    final router = GoRouter.of(context);
+    if (router.state.uri.path != path) {
+      router.go(path);
+    }
+    if (!mounted) return;
+    setState(() => _selectedIndex = index);
+    if (log) _logShellScreen();
+  }
+
   void _onNavigationItemTap(int index) {
     if (index != _selectedIndex) {
-      setState(() {
-        _selectedIndex = index;
-      });
-      _logShellScreen();
+      _showHomeTab(index);
     } else {
       // scroll page to top
       if (index == 0) {

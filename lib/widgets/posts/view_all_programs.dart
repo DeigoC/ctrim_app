@@ -190,16 +190,6 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms>
               selectedRoleId: isWide ? _selectedRoleId : null,
             ),
           ),
-        if (_canEditPostProgram() && layout.dayStart != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Text(
-              AppLocalizations.of(context)!.scheduleTapGapToAdd,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
         body,
         if (layout.untimedRoles.isNotEmpty)
           _buildUntimedRoles(layout.untimedRoles),

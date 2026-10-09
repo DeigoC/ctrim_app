@@ -4,6 +4,8 @@
 
 These pages walk through common tasks in the **web app**. They sit alongside the [feature overviews](../overview.md); use overviews for “what exists,” and how-tos for “how do I do it.”
 
+If you serve or lead, start with [For servers & leaders](../servers-and-leaders.md) before these task guides.
+
 ## Guides
 
 ### Posts

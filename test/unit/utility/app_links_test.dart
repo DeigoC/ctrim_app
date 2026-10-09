@@ -83,7 +83,7 @@ void main() {
 
     test('returns null when there is no known query', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/bulletin')),
         isNull,
       );
     });
@@ -108,6 +108,75 @@ void main() {
       expect(
         AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/?postId=a b')),
         '/post/a%20b',
+      );
+    });
+  });
+
+  group('AppLinks home tabs', () {
+    test('builds a path for each main section', () {
+      expect(AppLinks.homeTabPath(AppLinks.bulletinTab), '/bulletin');
+      expect(AppLinks.homeTabPath(AppLinks.ctrimTab), '/ctrim');
+      expect(AppLinks.homeTabPath(AppLinks.cellGroupsTab), '/cell-groups');
+      expect(AppLinks.homeTabPath(AppLinks.personalTab), '/personal');
+    });
+
+    test('clamps an unknown startup tab to CTRIM', () {
+      expect(AppLinks.homeTabPath(99), '/ctrim');
+      expect(AppLinks.clampHomeTab(-1), AppLinks.ctrimTab);
+    });
+
+    test('reads a section path and ignores record links', () {
+      expect(AppLinks.homeTabIndexForPath('/personal'), AppLinks.personalTab);
+      expect(
+        AppLinks.homeTabIndexForPath('/cell-groups'),
+        AppLinks.cellGroupsTab,
+      );
+      expect(AppLinks.homeTabIndexForPath('/cell-groups/cg-1'), isNull);
+      expect(AppLinks.homeTabIndexForPath('/post/post-42'), isNull);
+      expect(AppLinks.homeTabIndexForPath('/'), isNull);
+    });
+
+    test('sends / to the startup tab and leaves a section link', () {
+      expect(
+        AppLinks.redirectLocation(
+          Uri.parse('https://ctrim.app/'),
+          preferredHomeTab: AppLinks.personalTab,
+        ),
+        '/personal',
+      );
+      expect(
+        AppLinks.redirectLocation(
+          Uri.parse('https://ctrim.app/bulletin'),
+          preferredHomeTab: AppLinks.ctrimTab,
+        ),
+        isNull,
+      );
+    });
+
+    test('still prefers a legacy post query over the startup tab', () {
+      expect(
+        AppLinks.redirectLocation(
+          Uri.parse('https://ctrim.app/?postId=post-42'),
+          preferredHomeTab: AppLinks.personalTab,
+        ),
+        '/post/post-42',
+      );
+    });
+
+    test('sends an unknown section segment to the startup tab', () {
+      expect(
+        AppLinks.redirectHomeTabSegment(
+          'personal',
+          preferredHomeTab: AppLinks.bulletinTab,
+        ),
+        isNull,
+      );
+      expect(
+        AppLinks.redirectHomeTabSegment(
+          'nope',
+          preferredHomeTab: AppLinks.cellGroupsTab,
+        ),
+        '/cell-groups',
       );
     });
   });

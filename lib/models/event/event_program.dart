@@ -22,7 +22,8 @@ class EventProgram {
   // id - DateTime creation (DateTime.now().millisecondsSinceEpoch) int of the role
   // tagIDs - team/department user-tag IDs that own the slot (may be empty)
   // standing - true when the role covers the whole event (times optional)
-  // ! NOTE: start is optional, but if it exists then end must also be a thing
+  // A standing role may have no times, a start only, or both.
+  // A running-order role needs both times. An end without a start is invalid.
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
   DateTime? _finishTime;
@@ -166,7 +167,7 @@ class EventProgram {
   /// True when the role is declared as covering the whole event.
   ///
   /// Missing or false stays a normal running-order line. A standing role may
-  /// still carry a call time, or have no start and end at all.
+  /// have no clock time, an expected start with no finish, or both.
   static bool isStanding(final Map<String, dynamic> role) =>
       role['standing'] == true;
 

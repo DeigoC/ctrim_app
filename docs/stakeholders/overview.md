@@ -17,6 +17,8 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | Stakeholders (this site) | A clear picture of capabilities and priorities — no technical background needed |
 | Anyone curious | Browse as a guest; product guide and [open source on GitHub](https://github.com/DeigoC/ctrim_app) |
 
+People who serve or lead a ministry can start with **[For servers & leaders](servers-and-leaders.md)** — the bulletin, the schedule, ministries, and post tags, before the rest of the app.
+
 ## Main areas of the app
 
 | Area | What it is | More detail |
@@ -25,6 +27,8 @@ CTRIM Community is a **web-first** community app (also usable on phones in the b
 | **CTRIM** (Information) | About, church location hubs, testimonials, longer info pages | [Information](information.md) |
 | **Cell Groups** | Small groups — in development and testing | [Cell Groups](cell-groups.md) |
 | **Personal** | Sign-in, profile, schedule, notifications, people directory | [Personal](personal.md) |
+
+The address bar follows the section you are in: `ctrim.app/bulletin`, `ctrim.app/ctrim`, `ctrim.app/cell-groups`, and `ctrim.app/personal`. Opening the plain site address still uses the startup tab from Personal settings.
 
 **Glossary:** [Key concepts](key-concepts.md) — post, serving, interest, bookmark, and other terms.
 

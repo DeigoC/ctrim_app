@@ -323,8 +323,14 @@ class _PersonalHomeState extends State<PersonalHome> {
       PersonalAction(
         icon: Icons.menu_book_rounded,
         title: 'Product Guide',
-        subtitle: 'How the app works — open to everyone',
-        onTap: () => launchUrlString(PersonalSettingsSection.productGuideUrl),
+        subtitle: appContext.isCurrentUserGuest
+            ? 'How the app works — open to everyone'
+            : 'A short start if you serve or lead',
+        onTap: () => launchUrlString(
+          PersonalSettingsSection.productGuideUrlFor(
+            signedIn: !appContext.isCurrentUserGuest,
+          ),
+        ),
         iconColor: colorScheme.primary,
       ),
     ];
