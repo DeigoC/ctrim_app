@@ -5,6 +5,8 @@
 /// an end cannot be positioned and are returned separately.
 library;
 
+import '../models/event/event_program.dart';
+
 /// One role positioned on the timeline canvas.
 class ScheduleTimelinePlacement {
   const ScheduleTimelinePlacement({
@@ -48,13 +50,15 @@ class ScheduleTimelinePlacement {
 class ScheduleCoverageRole {
   const ScheduleCoverageRole({
     required this.role,
-    required this.start,
-    required this.end,
+    this.start,
+    this.end,
   });
 
   final Map<String, dynamic> role;
-  final DateTime start;
-  final DateTime end;
+
+  /// Call time when the standing role has one. Null means the whole event.
+  final DateTime? start;
+  final DateTime? end;
 
   int get roleId => role['id'] as int;
 }
@@ -202,12 +206,23 @@ class ScheduleTimelineLayout {
   }) {
     final cap = laneCap < 1 ? 1 : laneCap;
     final untimed = <Map<String, dynamic>>[];
+    final standing = <ScheduleCoverageRole>[];
     final timed =
         <({Map<String, dynamic> role, DateTime start, DateTime end})>[];
 
     for (final role in roles) {
       final start = role['start'] as DateTime?;
       final end = role['end'] as DateTime?;
+      if (EventProgram.isStanding(role)) {
+        standing.add(ScheduleCoverageRole(
+          role: role,
+          start: start,
+          end: end == null
+              ? null
+              : (start != null && end.isBefore(start) ? start : end),
+        ));
+        continue;
+      }
       if (start == null || end == null) {
         untimed.add(role);
         continue;
@@ -217,17 +232,21 @@ class ScheduleTimelineLayout {
     }
 
     if (timed.isEmpty) {
+      standing.sort(_compareCoverage);
       return ScheduleTimelineLayout(
         placements: const [],
         overflows: const [],
-        coverageRoles: const [],
+        coverageRoles: standing,
         untimedRoles: untimed,
         dayStart: null,
         dayEnd: null,
       );
     }
 
-    final coverage = _extractCoverageRoles(timed);
+    final coverage = <ScheduleCoverageRole>[
+      ...standing,
+      ..._extractCoverageRoles(timed),
+    ]..sort(_compareCoverage);
 
     timed.sort((final a, final b) {
       final byStart = a.start.compareTo(b.start);
@@ -325,12 +344,25 @@ class ScheduleTimelineLayout {
       timed.removeAt(index);
     }
 
-    coverage.sort((final a, final b) {
-      final byStart = a.start.compareTo(b.start);
-      if (byStart != 0) return byStart;
-      return b.end.compareTo(a.end);
-    });
+    coverage.sort(_compareCoverage);
     return coverage;
+  }
+
+  /// Declared whole-event roles with no call time come first, then earliest.
+  static int _compareCoverage(
+    final ScheduleCoverageRole a,
+    final ScheduleCoverageRole b,
+  ) {
+    final aStart = a.start;
+    final bStart = b.start;
+    if (aStart == null && bStart == null) return 0;
+    if (aStart == null) return -1;
+    if (bStart == null) return 1;
+    final byStart = aStart.compareTo(bStart);
+    if (byStart != 0) return byStart;
+    final aEnd = a.end ?? aStart;
+    final bEnd = b.end ?? bStart;
+    return bEnd.compareTo(aEnd);
   }
 
   /// How many other roles run at the same time as the one at [index].

@@ -205,6 +205,58 @@ void main() {
       expect(layout.dayStart, DateTime(2026, 6, 14, 10, 0));
     });
 
+    test('a short or untimed standing role is in the band', () {
+      final short = role(
+        id: 2,
+        title: 'Media',
+        start: DateTime(2026, 6, 14, 10, 0),
+        end: DateTime(2026, 6, 14, 10, 10),
+      )..['standing'] = true;
+      final untimed = role(id: 3, title: 'Sunday School')..['standing'] = true;
+
+      final layout = ScheduleTimelineLayout.build(roles: [
+        role(
+          id: 1,
+          title: 'Welcome',
+          start: DateTime(2026, 6, 14, 10, 0),
+          end: DateTime(2026, 6, 14, 10, 15),
+        ),
+        short,
+        untimed,
+      ]);
+
+      expect(layout.coverageRoles.map((final c) => c.roleId), [3, 2]);
+      expect(layout.coverageRoles.first.start, isNull);
+      expect(layout.placements.map((final p) => p.roleId), [1]);
+      expect(layout.untimedRoles, isEmpty);
+    });
+
+    test('a standing role is not a busy slot on the canvas', () {
+      final media = role(
+        id: 1,
+        title: 'Media',
+        start: DateTime(2026, 6, 14, 10, 0),
+        end: DateTime(2026, 6, 14, 12, 0),
+      )..['standing'] = true;
+      final layout = ScheduleTimelineLayout.build(roles: [
+        media,
+        role(
+          id: 2,
+          title: 'Welcome',
+          start: DateTime(2026, 6, 14, 10, 0),
+          end: DateTime(2026, 6, 14, 10, 15),
+        ),
+      ]);
+
+      expect(
+        layout.overlapsCanvasInterval(
+          DateTime(2026, 6, 14, 10, 30),
+          DateTime(2026, 6, 14, 10, 45),
+        ),
+        isFalse,
+      );
+    });
+
     test('two duty roles free a crowded running order on a phone', () {
       final layout = ScheduleTimelineLayout.build(
         roles: [

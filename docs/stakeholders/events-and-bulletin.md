@@ -73,7 +73,9 @@ The Schedule tab shows the running order as a **timeline of the day** rather tha
 
 Anything happening **at the same time** appears side by side. On a narrow phone screen, if more items overlap than will fit, a small **“+2 parallel”** marker opens the rest.
 
-Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with their times and who is assigned. They used to be drawn as full-height blocks, which filled the screen and pushed the actual running order out of view. Keeping them in the band means the timeline shows what is happening and when, while the standing jobs stay visible at a glance. Their real times are unchanged, so an early setup call still reads as, say, 09:00 even when the service starts at 10:00.
+Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with who is assigned. Mark a role **Whole event** when you add it, so those jobs do not need a padded start and finish just to leave the running order. A call time is optional: an early setup can still read as 09:00, and a role with no clock time reads as Whole event. Longer jobs that were saved before this still appear in the band.
+
+On a later item that shares a ministry, **Use Technical Media** (or whichever line already has those people) adds them to that item. Opening worship and the closing song work the same way when they share a ministry. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
 
 Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
 

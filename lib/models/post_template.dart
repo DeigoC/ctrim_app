@@ -127,6 +127,7 @@ class SchedulePreset {
         'for_guests': entry['for_guests'],
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
         'tagIDs': EventProgram.tagIDsOf(entry),
+        'standing': EventProgram.isStanding(entry),
       });
     }
     return result;
@@ -146,6 +147,7 @@ class SchedulePreset {
         'for_guests': entry['for_guests'],
         'id': entry['id'],
         'tagIDs': EventProgram.tagIDsOf(entry),
+        'standing': EventProgram.isStanding(entry),
       });
     }
     return result;
@@ -161,6 +163,7 @@ class SchedulePreset {
       'for_guests': role['for_guests'],
       'id': role['id'],
       'tagIDs': EventProgram.tagIDsOf(role),
+      'standing': EventProgram.isStanding(role),
     };
   }
 

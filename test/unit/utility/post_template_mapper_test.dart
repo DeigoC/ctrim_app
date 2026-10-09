@@ -233,5 +233,43 @@ void main() {
       );
       expect(context.program.finishTime, DateTime(2026, 1, 4, 12));
     });
+
+    test('applying a preset keeps a standing role', () {
+      final map = baseLocalMap(schedulePresets: [
+        {
+          'id': 'media',
+          'name': 'Media',
+          'startTime': DateTime(2026, 1, 4, 10).millisecondsSinceEpoch,
+          'finishTime': DateTime(2026, 1, 4, 12).millisecondsSinceEpoch,
+          'roles': [
+            {
+              'uids': <String>['jane'],
+              'detail': '',
+              'title': 'Technical Media',
+              'start': null,
+              'end': null,
+              'for_guests': true,
+              'id': 7,
+              'tagIDs': <String>['media'],
+              'standing': true,
+            },
+          ],
+        },
+      ]);
+      final template = PostTemplate.fromMap(true, 'standing', map);
+      final context = EventContext.adding(currentUserID: 'author-1');
+
+      PostTemplateMapper.applySchedulePreset(
+        context,
+        template.presetById('media'),
+        applyEventWindow: false,
+        mintNewRoleIds: false,
+      );
+
+      final applied = context.program.roles.single;
+      expect(applied['standing'], isTrue);
+      expect(applied['start'], isNull);
+      expect(applied['tagIDs'], ['media']);
+    });
   });
 }

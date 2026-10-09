@@ -3076,6 +3076,35 @@
   "@scheduleEmptyBodyViewer": {
     "description": "Empty schedule message for people who cannot edit the post"
   },
+  "scheduleWholeEventLabel": "Whole event",
+  "@scheduleWholeEventLabel": {
+    "description": "A schedule role that covers the post rather than one timed slot. Also the time line when that role has no call time."
+  },
+  "scheduleWholeEventHint": "On for this post, not one turn in the running order. A call time is optional.",
+  "@scheduleWholeEventHint": {
+    "description": "Explains the Whole event switch on the schedule role editor"
+  },
+  "scheduleCallTimeLabel": "Call time",
+  "@scheduleCallTimeLabel": {
+    "description": "Optional start time for a whole-event schedule role"
+  },
+  "scheduleCallTimeFinishLabel": "Finish",
+  "@scheduleCallTimeFinishLabel": {
+    "description": "Optional end time for a whole-event schedule role"
+  },
+  "scheduleClearCallTime": "Clear call time",
+  "@scheduleClearCallTime": {
+    "description": "Removes the optional call time from a whole-event schedule role"
+  },
+  "scheduleUseAssignees": "Use {title}",
+  "@scheduleUseAssignees": {
+    "description": "Adds the people already assigned to another schedule line that shares a ministry",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "scheduleAllEventSectionTitle": "All event",
   "@scheduleAllEventSectionTitle": {
     "description": "Heading for roles that run for most of the event rather than a slot in the running order"

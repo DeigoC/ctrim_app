@@ -44,6 +44,42 @@ class UserRoleSyncTests(unittest.TestCase):
             int(datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc).timestamp() * 1000),
         )
 
+    def test_untimed_standing_role_uses_the_event_window(self):
+        event_date = datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc)
+        finish = datetime(2024, 6, 15, 12, 45, tzinfo=timezone.utc)
+        program = {
+            'FinishTime': finish,
+            'Roles': [
+                {
+                    'uids': ['jane'],
+                    'title': 'Technical Media',
+                    'start': None,
+                    'end': None,
+                    'id': 42,
+                    'standing': True,
+                },
+                {
+                    'uids': ['sam'],
+                    'title': 'Untitled',
+                    'start': None,
+                    'end': None,
+                    'id': 43,
+                },
+            ],
+        }
+
+        desired = build_desired_roles(
+            'post-1',
+            program,
+            head_data={'EventDate': event_date},
+        )
+
+        self.assertEqual(set(desired.keys()), {'jane'})
+        entry = desired['jane'][0]
+        self.assertEqual(entry['startMil'], timestamp_to_millis(event_date))
+        self.assertEqual(entry['endMil'], timestamp_to_millis(finish))
+        self.assertEqual(entry['title'], 'Technical Media')
+
     def test_build_desired_roles_adds_expected_attendees_without_program_role(self):
         event_date = datetime(2024, 6, 15, 19, 30, tzinfo=timezone.utc)
         finish = datetime(2024, 6, 15, 21, 0, tzinfo=timezone.utc)

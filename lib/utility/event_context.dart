@@ -508,7 +508,7 @@ class EventContext {
           '\n${role['end'] != null ? (role['end'] as DateTime).millisecondsSinceEpoch.toString() : 'null'}';
       result += '\n${role['for_guests'] == true ? '1' : '0'}';
       result +=
-          '\n${EventProgram.encodeRoleIdLine(role['id'] as int, EventProgram.tagIDsOf(role))}';
+          '\n${EventProgram.encodeRoleIdLine(role['id'] as int, EventProgram.tagIDsOf(role), standing: EventProgram.isStanding(role))}';
     }
     result += '\n----PROGRAM_ROLES_END----';
 
@@ -700,7 +700,8 @@ class EventContext {
               : null,
           forGuests: roleDataSet[5] == '1' ? true : false,
           id: parsedId.id,
-          tagIDs: parsedId.tagIDs);
+          tagIDs: parsedId.tagIDs,
+          standing: parsedId.standing);
     }
   }
 

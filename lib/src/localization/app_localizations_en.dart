@@ -2397,6 +2397,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'The running order for this post has not been shared yet.';
 
   @override
+  String get scheduleWholeEventLabel => 'Whole event';
+
+  @override
+  String get scheduleWholeEventHint =>
+      'On for this post, not one turn in the running order. A call time is optional.';
+
+  @override
+  String get scheduleCallTimeLabel => 'Call time';
+
+  @override
+  String get scheduleCallTimeFinishLabel => 'Finish';
+
+  @override
+  String get scheduleClearCallTime => 'Clear call time';
+
+  @override
+  String scheduleUseAssignees(String title) {
+    return 'Use $title';
+  }
+
+  @override
   String get scheduleAllEventSectionTitle => 'All event';
 
   @override

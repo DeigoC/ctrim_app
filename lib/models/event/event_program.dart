@@ -12,7 +12,7 @@ enum ProgramShiftMode {
 }
 
 class EventProgram {
-  // * a role is made of 8 fields
+  // * a role is made of these fields
   // uids - list of users assigned by their IDs
   // title - short title of the role
   // detail (optional) - more text to describe the role
@@ -21,6 +21,7 @@ class EventProgram {
   // for_guests - bool to signigfy whether to show to guests or not
   // id - DateTime creation (DateTime.now().millisecondsSinceEpoch) int of the role
   // tagIDs - team/department user-tag IDs that own the slot (may be empty)
+  // standing - true when the role covers the whole event (times optional)
   // ! NOTE: start is optional, but if it exists then end must also be a thing
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
@@ -56,6 +57,7 @@ class EventProgram {
         'for_guests': entry['for_guests'],
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
         'tagIDs': tagIDsOf(entry),
+        'standing': isStanding(entry),
       });
     }
     ensureUniqueRoleIds();
@@ -90,6 +92,7 @@ class EventProgram {
         'for_guests': entry['for_guests'],
         'id': entry['id'],
         'tagIDs': tagIDsOf(entry),
+        'standing': isStanding(entry),
       });
     }
 
@@ -145,7 +148,8 @@ class EventProgram {
       bool forGuests = true,
       int priority = 1,
       String detail = '',
-      List<String> tagIDs = const []}) {
+      List<String> tagIDs = const [],
+      bool standing = false}) {
     _roles.add(<String, dynamic>{
       'uids': uids,
       'detail': detail,
@@ -155,8 +159,16 @@ class EventProgram {
       'for_guests': forGuests,
       'id': id,
       'tagIDs': List<String>.from(tagIDs),
+      'standing': standing,
     });
   }
+
+  /// True when the role is declared as covering the whole event.
+  ///
+  /// Missing or false stays a normal running-order line. A standing role may
+  /// still carry a call time, or have no start and end at all.
+  static bool isStanding(final Map<String, dynamic> role) =>
+      role['standing'] == true;
 
   /// Team-tag IDs on a role map. Missing / malformed values become `[]`.
   static List<String> tagIDsOf(final Map<String, dynamic> role) {
@@ -168,25 +180,41 @@ class EventProgram {
     return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
   }
 
-  /// Local-draft id line: `id` or `id|tag1,tag2` (keeps the 7-line role chunk).
-  static String encodeRoleIdLine(final int id, final List<String> tagIDs) {
-    if (tagIDs.isEmpty) return '$id';
-    return '$id|${tagIDs.join(',')}';
+  /// Local-draft id line, still one line of the 7-line role chunk.
+  ///
+  /// `id`, `id|tag1,tag2`, or with a second pipe when standing:
+  /// `id|tag1,tag2|1` and `id||1`. A single pipe is only tags, so a ministry
+  /// id of `1` is not the standing flag.
+  static String encodeRoleIdLine(
+    final int id,
+    final List<String> tagIDs, {
+    bool standing = false,
+  }) {
+    if (!standing) {
+      if (tagIDs.isEmpty) return '$id';
+      return '$id|${tagIDs.join(',')}';
+    }
+    return '$id|${tagIDs.join(',')}|1';
   }
 
-  static ({int id, List<String> tagIDs}) parseRoleIdLine(final String raw) {
+  static ({int id, List<String> tagIDs, bool standing}) parseRoleIdLine(
+      final String raw) {
     final pipe = raw.indexOf('|');
     if (pipe < 0) {
-      return (id: int.parse(raw), tagIDs: const <String>[]);
+      return (id: int.parse(raw), tagIDs: const <String>[], standing: false);
     }
     final id = int.parse(raw.substring(0, pipe));
-    final tagsPart = raw.substring(pipe + 1);
+    final rest = raw.substring(pipe + 1);
+    final second = rest.indexOf('|');
+    final tagsPart = second < 0 ? rest : rest.substring(0, second);
+    final standing = second >= 0 && rest.substring(second + 1) == '1';
     if (tagsPart.isEmpty) {
-      return (id: id, tagIDs: const <String>[]);
+      return (id: id, tagIDs: const <String>[], standing: standing);
     }
     return (
       id: id,
       tagIDs: tagsPart.split(',').where((tagId) => tagId.isNotEmpty).toList(),
+      standing: standing,
     );
   }
 
@@ -230,6 +258,7 @@ class EventProgram {
   /// Roles whose start is at or after [threshold], optionally excluding one role.
   int countRolesStartingAtOrAfter(DateTime threshold, {int? excludeRoleId}) {
     return _roles.where((role) {
+      if (isStanding(role)) return false;
       if (excludeRoleId != null && role['id'] == excludeRoleId) return false;
       final start = role['start'] as DateTime?;
       return start != null && !start.isBefore(threshold);
@@ -241,6 +270,7 @@ class EventProgram {
       {int? excludeRoleId}) {
     if (delta == Duration.zero) return;
     for (final role in _roles) {
+      if (isStanding(role)) continue;
       if (excludeRoleId != null && role['id'] == excludeRoleId) continue;
       final start = role['start'] as DateTime?;
       final end = role['end'] as DateTime?;
@@ -393,6 +423,7 @@ class EventProgram {
 
     final following = _roles.where((entry) {
       if (entry['id'] == roleId) return false;
+      if (isStanding(entry)) return false;
       final start = entry['start'] as DateTime?;
       return start != null &&
           entry['end'] != null &&

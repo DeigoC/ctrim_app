@@ -4240,6 +4240,42 @@ abstract class AppLocalizations {
   /// **'The running order for this post has not been shared yet.'**
   String get scheduleEmptyBodyViewer;
 
+  /// A schedule role that covers the post rather than one timed slot. Also the time line when that role has no call time.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole event'**
+  String get scheduleWholeEventLabel;
+
+  /// Explains the Whole event switch on the schedule role editor
+  ///
+  /// In en, this message translates to:
+  /// **'On for this post, not one turn in the running order. A call time is optional.'**
+  String get scheduleWholeEventHint;
+
+  /// Optional start time for a whole-event schedule role
+  ///
+  /// In en, this message translates to:
+  /// **'Call time'**
+  String get scheduleCallTimeLabel;
+
+  /// Optional end time for a whole-event schedule role
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get scheduleCallTimeFinishLabel;
+
+  /// Removes the optional call time from a whole-event schedule role
+  ///
+  /// In en, this message translates to:
+  /// **'Clear call time'**
+  String get scheduleClearCallTime;
+
+  /// Adds the people already assigned to another schedule line that shares a ministry
+  ///
+  /// In en, this message translates to:
+  /// **'Use {title}'**
+  String scheduleUseAssignees(String title);
+
   /// Heading for roles that run for most of the event rather than a slot in the running order
   ///
   /// In en, this message translates to:

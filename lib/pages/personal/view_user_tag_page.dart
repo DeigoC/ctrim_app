@@ -852,7 +852,9 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
     final end = role['end'] as DateTime?;
     final timeLabel = start != null && end != null
         ? '${_timeFormat.format(start)} – ${_timeFormat.format(end)}'
-        : null;
+        : EventProgram.isStanding(role)
+            ? l10n.scheduleWholeEventLabel
+            : null;
     final assigned = _assignedUsers(role);
 
     return Column(

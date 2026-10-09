@@ -121,14 +121,25 @@ def build_desired_roles(
             start = role.get('start')
             end = role.get('end')
             role_id = role.get('id')
-            if start is None or end is None or role_id is None:
+            standing = role.get('standing') is True
+            if role_id is None:
+                continue
+            if start is not None and end is not None:
+                start_mil = timestamp_to_millis(start)
+                end_mil = timestamp_to_millis(end)
+            elif standing:
+                window = resolve_event_window(head_data, program_data)
+                if window is None:
+                    continue
+                start_mil, end_mil = window
+            else:
                 continue
 
             entry = {
                 'postID': post_id,
                 'id': int(role_id),
-                'startMil': timestamp_to_millis(start),
-                'endMil': timestamp_to_millis(end),
+                'startMil': start_mil,
+                'endMil': end_mil,
                 'title': str(role.get('title') or ''),
             }
 

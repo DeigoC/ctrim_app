@@ -12,6 +12,7 @@ import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_assignee_suggestions.dart';
 import '../../utility/schedule_timeline_layout.dart';
 import '../common/action_sheet.dart';
 import 'schedule_coverage_band.dart';
@@ -200,6 +201,10 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
           role: role,
           assignedUsers: _usersForRole(role),
           canEdit: _canEditRole(role),
+          suggestions: _suggestionsFor(role),
+          onUseAssignees: _canEditRole(role)
+              ? (suggestion) => _applySuggestion(role, suggestion)
+              : null,
           onEdit: () => _openEditProgramPage(role),
           onClose: () => setState(() => _selectedRoleId = null),
         ),
@@ -402,6 +407,11 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       role: role,
       assignedUsers: _usersForRole(role),
       canEdit: _canEditRole(role),
+      allRoles: widget.eventContext.program.roles,
+      usersForRole: _usersForRole,
+      onUseAssignees: _canEditRole(role)
+          ? (suggestion) => _applySuggestion(role, suggestion)
+          : null,
       onEdit: () {
         Navigator.of(context).pop();
         _openEditProgramPage(role);
@@ -508,6 +518,39 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms> {
       setState(() {});
       widget.onProgramChanged();
     });
+  }
+
+  List<ScheduleAssigneeSuggestion> _suggestionsFor(
+    final Map<String, dynamic> role,
+  ) {
+    if (!_canEditRole(role)) return const [];
+    return ScheduleAssigneeSuggestions.forRole(
+      role: role,
+      roles: widget.eventContext.program.roles,
+    );
+  }
+
+  void _applySuggestion(
+    final Map<String, dynamic> role,
+    final ScheduleAssigneeSuggestion suggestion,
+  ) {
+    final current = List<String>.from(role['uids'] as List? ?? const []);
+    final next = ScheduleAssigneeSuggestions.unionAssignees(
+      current: current,
+      adding: suggestion.uids,
+    );
+    final added = next.where((id) => !current.contains(id)).toList();
+    final roleId = role['id'] as int;
+    widget.eventContext.program.replaceRoleAssignees(
+      roleId: roleId,
+      uids: next,
+    );
+    if (added.isNotEmpty) {
+      widget.eventContext.addRoleAdditionNotification(added, roleId);
+    }
+    widget.eventContext.allowSavingOfTheEdit();
+    setState(() {});
+    widget.onProgramChanged();
   }
 
   void _openEditProgramPage(final Map<String, dynamic> programEntry) {

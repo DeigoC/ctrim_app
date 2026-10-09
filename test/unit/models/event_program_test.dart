@@ -185,6 +185,48 @@ void main() {
         final tagged = EventProgram.parseRoleIdLine('10|worship,tech');
         expect(tagged.id, 10);
         expect(tagged.tagIDs, ['worship', 'tech']);
+        expect(tagged.standing, isFalse);
+      });
+
+      test('standing round-trips and a ministry id of 1 is not the flag', () {
+        expect(EventProgram.isStanding({'title': 'Host'}), isFalse);
+
+        final program = EventProgram();
+        program.addRole(
+          uids: ['user-1'],
+          title: 'Technical Media',
+          start: null,
+          end: null,
+          id: 5,
+          tagIDs: ['media'],
+          standing: true,
+        );
+        expect(EventProgram.isStanding(program.roles.single), isTrue);
+
+        final restored = EventProgram.fromMap(program.toJson());
+        expect(EventProgram.isStanding(restored.roles.single), isTrue);
+        expect(restored.roles.single['start'], isNull);
+
+        expect(
+          EventProgram.encodeRoleIdLine(10, const ['1'], standing: true),
+          '10|1|1',
+        );
+        expect(
+          EventProgram.encodeRoleIdLine(10, const [], standing: true),
+          '10||1',
+        );
+
+        final ministry = EventProgram.parseRoleIdLine('10|1');
+        expect(ministry.tagIDs, ['1']);
+        expect(ministry.standing, isFalse);
+
+        final standing = EventProgram.parseRoleIdLine('10|worship,tech|1');
+        expect(standing.tagIDs, ['worship', 'tech']);
+        expect(standing.standing, isTrue);
+
+        final bare = EventProgram.parseRoleIdLine('10||1');
+        expect(bare.tagIDs, isEmpty);
+        expect(bare.standing, isTrue);
       });
 
       test('removeRole removes matching role by id', () {
@@ -338,6 +380,30 @@ void main() {
               excludeRoleId: 1),
           2,
         );
+      });
+
+      test('updateRoleTiming with shiftFollowing leaves a standing role', () {
+        final program = buildSequentialProgram();
+        program.addRole(
+          uids: ['u1'],
+          title: 'Technical Media',
+          start: DateTime(2024, 6, 15, 10, 20),
+          end: DateTime(2024, 6, 15, 12, 0),
+          id: 4,
+          standing: true,
+        );
+
+        program.updateRoleTiming(
+          roleId: 1,
+          newStart: DateTime(2024, 6, 15, 10, 0),
+          newEnd: DateTime(2024, 6, 15, 10, 25),
+          shiftFollowing: true,
+        );
+
+        final media = program.roles.firstWhere((role) => role['id'] == 4);
+        expect(media['start'], DateTime(2024, 6, 15, 10, 20));
+        final worship = program.roles.firstWhere((role) => role['id'] == 2);
+        expect(worship['start'], DateTime(2024, 6, 15, 10, 25));
       });
 
       test('updateRoleTiming with shiftFollowing pushes later items', () {
@@ -571,6 +637,48 @@ void main() {
               program.roles.firstWhere((role) => role['id'] == 4);
           expect(fellowship['start'], DateTime(2024, 6, 15, 13, 0));
           expect(fellowship['end'], DateTime(2024, 6, 15, 14, 0));
+        });
+
+        test('cascade does not move a standing role', () {
+          final program = buildSequentialProgram();
+          program.addRole(
+            uids: ['u1'],
+            title: 'Technical Media',
+            start: DateTime(2024, 6, 15, 10, 0),
+            end: DateTime(2024, 6, 15, 12, 0),
+            id: 4,
+            standing: true,
+          );
+
+          program.moveRoleToStart(
+            roleId: 3,
+            newStart: DateTime(2024, 6, 15, 10, 0),
+            mode: ProgramShiftMode.cascade,
+          );
+
+          final media = program.roles.firstWhere((role) => role['id'] == 4);
+          expect(media['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(media['end'], DateTime(2024, 6, 15, 12, 0));
+          final welcome = program.roles.firstWhere((role) => role['id'] == 1);
+          expect(welcome['start'], isNot(DateTime(2024, 6, 15, 10, 0)));
+        });
+
+        test('shiftAllTimedRoles still moves a standing role that has times',
+            () {
+          final program = EventProgram();
+          program.addRole(
+            uids: [],
+            title: 'Technical Media',
+            start: DateTime(2024, 6, 15, 9, 0),
+            end: DateTime(2024, 6, 15, 12, 0),
+            id: 1,
+            standing: true,
+          );
+
+          program.shiftAllTimedRoles(const Duration(hours: 1));
+
+          expect(program.roles.single['start'], DateTime(2024, 6, 15, 10, 0));
+          expect(program.roles.single['end'], DateTime(2024, 6, 15, 13, 0));
         });
 
         test('cascade leaves a long role that started earlier in place', () {

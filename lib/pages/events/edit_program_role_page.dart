@@ -14,6 +14,7 @@ import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/schedule_duration_picker.dart';
 import '../../widgets/schedule_start_picker.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/schedule_assignee_suggestions.dart';
 import '../../utility/schedule_timeline_layout.dart';
 
 /// Add or edit a program role. Pass [programEntry] when editing an existing item.
@@ -65,6 +66,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
 
   DateTime? _start;
   DateTime? _end;
+  bool _standing = false;
 
   /// Start time offered for a follow-on item. Set only after the user chooses
   /// to add the next item; null on a fresh add or while editing.
@@ -98,6 +100,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
       _forGuests = entry['for_guests'];
       _start = entry['start'];
       _end = entry['end'];
+      _standing = EventProgram.isStanding(entry);
       _tecDetail = TextEditingController(text: entry['detail']);
       _tecTitle = TextEditingController(text: entry['title']);
       _selectedUsers = List<String>.from(entry['uids']);
@@ -131,6 +134,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _followOnStart != null &&
         _start == _followOnStart &&
         _end == null &&
+        !_standing &&
         _forGuests &&
         _tecTitle.text.trim().isEmpty &&
         _tecDetail.text.trim().isEmpty &&
@@ -163,6 +167,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
     final double webHorizontalPadding = ResponsiveLayout.horizontalGutter(
         MediaQuery.sizeOf(context).width,
         narrowPadding: 16);
@@ -195,14 +200,24 @@ class _EventProgramPageState extends State<EventProgramPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _standing,
+                    onChanged: _onStandingChange,
+                    title: Text(l10n.scheduleWholeEventLabel),
+                    subtitle: Text(l10n.scheduleWholeEventHint),
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: _buildTimeSelector(
-                          label: 'Start Time',
+                          label: _standing
+                              ? l10n.scheduleCallTimeLabel
+                              : 'Start Time',
                           time: _start,
-                          isRequired: !_isEditing,
+                          isRequired: !_isEditing && !_standing,
                           onTap: _onStartTimeTap,
                           icon: Icons.play_arrow,
                         ),
@@ -210,9 +225,11 @@ class _EventProgramPageState extends State<EventProgramPage> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildTimeSelector(
-                          label: 'End Time',
+                          label: _standing
+                              ? l10n.scheduleCallTimeFinishLabel
+                              : 'End Time',
                           time: _end,
-                          isRequired: !_isEditing,
+                          isRequired: !_isEditing && !_standing,
                           onTap: _start == null ? null : _onEndTimeTap,
                           icon: Icons.stop,
                           isEnabled: _start != null,
@@ -220,6 +237,20 @@ class _EventProgramPageState extends State<EventProgramPage> {
                       ),
                     ],
                   ),
+                  if (_standing && (_start != null || _end != null))
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _start = null;
+                            _end = null;
+                          });
+                          _onFieldsChanged();
+                        },
+                        child: Text(l10n.scheduleClearCallTime),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -374,6 +405,21 @@ class _EventProgramPageState extends State<EventProgramPage> {
                             },
                             child: const Text('Clear'),
                           ),
+                        ],
+                        if (_assigneeSuggestions.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          for (final suggestion in _assigneeSuggestions) ...[
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: FilledButton.tonalIcon(
+                                onPressed: () => _useSuggestion(suggestion),
+                                icon: const Icon(Icons.group_add),
+                                label: Text(l10n.scheduleUseAssignees(
+                                    suggestion.sourceTitle)),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ],
                         const SizedBox(height: 12),
                         FilledButton.icon(
@@ -603,56 +649,90 @@ class _EventProgramPageState extends State<EventProgramPage> {
     }
   }
 
+  /// Both times, or neither when the role covers the whole event.
+  bool get _timesAreValid {
+    final hasStart = _start != null;
+    final hasEnd = _end != null;
+    if (hasStart != hasEnd) return false;
+    if (!hasStart) return _standing;
+    return true;
+  }
+
   void _updateCanSaveForAdd() {
-    if (_tecTitle.text.trim().isEmpty ||
-        _start == null ||
-        _end == null && _canSave) {
-      setState(() {
-        _canSave = false;
-      });
-    } else if (_tecTitle.text.trim().isNotEmpty &&
-        _start != null &&
-        _end != null &&
-        !_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    }
+    final canSave = _tecTitle.text.trim().isNotEmpty && _timesAreValid;
+    if (canSave == _canSave) return;
+    setState(() => _canSave = canSave);
   }
 
   void _updateCanSaveForEdit() {
     final role = _canonicalRole();
-    if (_canSave &&
-        (_areTimesTheSame() &&
-            _tecDetail.text.trim().compareTo(role['detail'] as String) == 0 &&
-            (_tecTitle.text.trim().compareTo(role['title'] as String) == 0 ||
-                _tecTitle.text.trim().isEmpty)) &&
+    final unchanged = _timesMatch(role) &&
+        _tecDetail.text.trim().compareTo(role['detail'] as String) == 0 &&
+        _tecTitle.text.trim().compareTo(role['title'] as String) == 0 &&
         _forGuests == role['for_guests'] &&
         _selectedUsers
                 .toString()
                 .compareTo((role['uids'] as List<String>).toString()) ==
             0 &&
-        _sameTagIDs(EventProgram.tagIDsOf(role), _tagIDsToSave())) {
-      setState(() {
-        _canSave = false;
-      });
-    } else if (!_canSave) {
-      setState(() {
-        _canSave = true;
-      });
-    }
+        _sameTagIDs(EventProgram.tagIDsOf(role), _tagIDsToSave()) &&
+        _standing == EventProgram.isStanding(role);
+    final canSave =
+        !unchanged && _tecTitle.text.trim().isNotEmpty && _timesAreValid;
+    if (canSave == _canSave) return;
+    setState(() => _canSave = canSave);
   }
 
-  bool _areTimesTheSame() {
-    final role = _canonicalRole();
-    final originalStart = role['start'] as DateTime;
-    final originalEnd = role['end'] as DateTime;
-    return _start != null &&
-        _end != null &&
-        _start!.hour.compareTo(originalStart.hour) == 0 &&
-        _start!.minute.compareTo(originalStart.minute) == 0 &&
-        _end!.hour.compareTo(originalEnd.hour) == 0 &&
-        _end!.minute.compareTo(originalEnd.minute) == 0;
+  bool _timesMatch(final Map<String, dynamic> role) {
+    final originalStart = role['start'] as DateTime?;
+    final originalEnd = role['end'] as DateTime?;
+    if (_start == null &&
+        _end == null &&
+        originalStart == null &&
+        originalEnd == null) {
+      return true;
+    }
+    if (_start == null ||
+        _end == null ||
+        originalStart == null ||
+        originalEnd == null) {
+      return false;
+    }
+    return _start!.hour == originalStart.hour &&
+        _start!.minute == originalStart.minute &&
+        _end!.hour == originalEnd.hour &&
+        _end!.minute == originalEnd.minute;
+  }
+
+  List<ScheduleAssigneeSuggestion> get _assigneeSuggestions {
+    final draftId = _isEditing ? _canonicalRole()['id'] as int : -1;
+    return ScheduleAssigneeSuggestions.forRole(
+      role: {
+        'id': draftId,
+        'uids': _selectedUsers,
+        'tagIDs': _tagIDsToSave(),
+        'standing': _standing,
+        'start': _start,
+      },
+      roles: widget.eventContext.program.roles,
+    );
+  }
+
+  void _useSuggestion(final ScheduleAssigneeSuggestion suggestion) {
+    final next = ScheduleAssigneeSuggestions.unionAssignees(
+      current: _selectedUsers,
+      adding: suggestion.uids,
+    );
+    setState(() {
+      _selectedUsers
+        ..clear()
+        ..addAll(next);
+    });
+    _onFieldsChanged();
+  }
+
+  void _onStandingChange(final bool value) {
+    setState(() => _standing = value);
+    _onFieldsChanged();
   }
 
   List<String> _tagIDsToSave() {
@@ -717,17 +797,29 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Future<void> _saveAdd() async {
-    final bool? shiftFollowing = await _resolveShiftFollowing(
-      start: _start!,
-      end: _end!,
-      shiftThreshold: _start!,
-    );
-    if (shiftFollowing == null || !mounted) return;
+    var shiftFollowing = false;
+    if (_start != null && _end != null) {
+      final bool? choice = await _resolveShiftFollowing(
+        start: _start!,
+        end: _end!,
+        shiftThreshold: _start!,
+      );
+      if (choice == null || !mounted) return;
+      shiftFollowing = choice;
+    } else {
+      final bool confirmed = await _confirmSaveDetails();
+      if (!confirmed || !mounted) return;
+    }
 
-    final DateTime savedEnd = _end!;
+    final DateTime? savedEnd = _end;
     _addProgramRoleToEventContext(shiftFollowing: shiftFollowing);
     widget.eventContext.allowSavingOfTheEdit();
     _isSaved = true;
+
+    if (savedEnd == null || !mounted) {
+      _popRouteAfterAllowing();
+      return;
+    }
 
     final bool addNext = await DialogManager.askAddNextScheduleItem(
       context: context,
@@ -751,6 +843,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
     setState(() {
       _start = start;
       _end = null;
+      _standing = false;
       _forGuests = true;
       _canSave = false;
       _isSaved = false;
@@ -776,11 +869,13 @@ class _EventProgramPageState extends State<EventProgramPage> {
       widget.eventContext.addRoleAdditionNotification(_selectedUsers, id);
     }
 
-    widget.eventContext.program.applyInsertShift(
-      start: _start!,
-      end: _end!,
-      shiftFollowing: shiftFollowing,
-    );
+    if (_start != null && _end != null) {
+      widget.eventContext.program.applyInsertShift(
+        start: _start!,
+        end: _end!,
+        shiftFollowing: shiftFollowing,
+      );
+    }
     widget.eventContext.program.addRole(
         uids: _selectedUsers,
         title: _tecTitle.text.trim(),
@@ -790,6 +885,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         forGuests: _forGuests,
         priority: 1,
         tagIDs: _tagIDsToSave(),
+        standing: _standing,
         id: id);
     widget.eventContext.program.orderProgramsByStartTime();
   }
@@ -797,12 +893,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
   Future<void> _saveEdit() async {
     final role = _canonicalRole();
     bool shiftFollowing = false;
-    if (!_areTimesTheSame()) {
-      final DateTime oldEnd = role['end'] as DateTime;
+    if (!_timesMatch(role) && _start != null && _end != null) {
+      final DateTime? oldEnd = role['end'] as DateTime?;
       final bool? choice = await _resolveShiftFollowing(
         start: _start!,
         end: _end!,
-        shiftThreshold: oldEnd,
+        shiftThreshold: oldEnd ?? _start!,
         excludeRoleId: role['id'] as int,
       );
       if (choice == null || !mounted) return;
@@ -877,6 +973,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
     role['for_guests'] = _forGuests;
     role['priority'] = 1;
     role['tagIDs'] = _tagIDsToSave();
+    role['standing'] = _standing;
 
     if (_start != null && _end != null) {
       final oldEnd = role['end'] as DateTime?;

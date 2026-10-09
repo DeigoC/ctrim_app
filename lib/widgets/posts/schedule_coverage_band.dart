@@ -85,12 +85,23 @@ class ScheduleCoverageBand extends StatelessWidget {
     );
   }
 
+  String _timeLabel(
+    final ScheduleCoverageRole coverage,
+    final AppLocalizations l10n,
+  ) {
+    final start = coverage.start;
+    final end = coverage.end;
+    if (start == null || end == null) return l10n.scheduleWholeEventLabel;
+    return '${_timeFormat.format(start)} - ${_timeFormat.format(end)}';
+  }
+
   Widget _buildEntry(
     final BuildContext context,
     final ScheduleCoverageRole coverage,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final role = coverage.role;
     final staffOnly = role['for_guests'] == false;
     final selected =
@@ -157,7 +168,7 @@ class ScheduleCoverageBand extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      '${_timeFormat.format(coverage.start)} - ${_timeFormat.format(coverage.end)}',
+                      _timeLabel(coverage, l10n),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelSmall
