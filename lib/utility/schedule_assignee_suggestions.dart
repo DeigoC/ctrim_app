@@ -1,4 +1,5 @@
 import '../models/event/event_program.dart';
+import 'schedule_timeline_layout.dart';
 
 /// People already on another line of this post who share a ministry.
 class ScheduleAssigneeSuggestion {
@@ -15,11 +16,11 @@ class ScheduleAssigneeSuggestion {
   final List<String> uids;
 }
 
-/// One-tap reuse of people who share a ministry on the same post.
+/// One-tap reuse of the whole-event people who share a ministry.
 ///
-/// A suggestion is another line with overlapping `tagIDs` and at least one
-/// person. Standing roles always qualify. A timed line qualifies only when
-/// the target is not standing and that line starts earlier. The lists are
+/// A suggestion is an All event role — declared standing, or a long line the
+/// timeline already lifts into that band — with overlapping `tagIDs` and at
+/// least one person. An earlier timed slot is not a source. The lists are
 /// not linked: applying copies people in, and later edits stay put.
 class ScheduleAssigneeSuggestions {
   ScheduleAssigneeSuggestions._();
@@ -33,13 +34,11 @@ class ScheduleAssigneeSuggestions {
 
     final targetId = role['id'];
     final targetUids = _uidsOf(role).toSet();
-    final targetStanding = EventProgram.isStanding(role);
-    final targetStart = role['start'] as DateTime?;
+    final sources = ScheduleTimelineLayout.build(roles: roles).coverageRoles;
 
-    final standing = <_Candidate>[];
-    final earlier = <_Candidate>[];
-
-    for (final other in roles) {
+    final candidates = <_Candidate>[];
+    for (final coverage in sources) {
+      final other = coverage.role;
       if (other['id'] == targetId) continue;
       final otherTags = EventProgram.tagIDsOf(other);
       if (!otherTags.any(targetTags.contains)) continue;
@@ -48,41 +47,22 @@ class ScheduleAssigneeSuggestions {
       if (uids.isEmpty) continue;
       if (uids.every(targetUids.contains)) continue;
 
-      final candidate = _Candidate(
+      candidates.add(_Candidate(
         roleId: other['id'] as int,
         title: (other['title'] as String?) ?? '',
         uids: uids,
         start: other['start'] as DateTime?,
-      );
-
-      if (EventProgram.isStanding(other)) {
-        standing.add(candidate);
-        continue;
-      }
-      if (targetStanding) continue;
-      final otherStart = candidate.start;
-      if (targetStart == null ||
-          otherStart == null ||
-          !otherStart.isBefore(targetStart)) {
-        continue;
-      }
-      earlier.add(candidate);
+      ));
     }
 
-    standing.sort((a, b) {
-      final byStart = _compareStart(a.start, b.start);
-      if (byStart != 0) return byStart;
-      return a.title.compareTo(b.title);
-    });
-    earlier.sort((a, b) {
+    candidates.sort((a, b) {
       final byStart = _compareStart(a.start, b.start);
       if (byStart != 0) return byStart;
       return a.title.compareTo(b.title);
     });
 
     return [
-      for (final candidate in standing) candidate.toSuggestion(),
-      for (final candidate in earlier) candidate.toSuggestion(),
+      for (final candidate in candidates) candidate.toSuggestion(),
     ];
   }
 

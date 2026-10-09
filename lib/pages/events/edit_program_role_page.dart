@@ -14,7 +14,9 @@ import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/schedule_duration_picker.dart';
 import '../../widgets/schedule_start_picker.dart';
 import '../../utility/responsive_layout.dart';
+import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/schedule_assignee_suggestions.dart';
+import '../../utility/schedule_member_picker_seed.dart';
 import '../../utility/schedule_timeline_layout.dart';
 
 /// Add or edit a program role. Pass [programEntry] when editing an existing item.
@@ -600,6 +602,12 @@ class _EventProgramPageState extends State<EventProgramPage> {
   }
 
   Future<void> _onManageMembersTap() async {
+    final seed = ScheduleMemberPickerSeed.forRole(
+      tagIDs: _selectedTagIDs,
+      postLocation: widget.eventContext.head.location,
+      assignableLocations:
+          VolunteerLocations.assignableFrom(_appContext.allLocations),
+    );
     final result = await Navigator.push<List<String>>(
       context,
       MaterialPageRoute(
@@ -613,6 +621,8 @@ class _EventProgramPageState extends State<EventProgramPage> {
             postAuthorUid: widget.eventContext.metadata.authorUID,
           ),
           postIdForPlaceholderCreate: widget.eventContext.id,
+          initialLocation: seed.location,
+          initialTagIDs: seed.tagIDs,
         ),
       ),
     );

@@ -40,7 +40,7 @@ Save under `assets/images/`.
 
 | Done | Filename | What to show |
 |------|----------|--------------|
-| [ ] | `create-post-01-templates.png` | Template picker (Cell Groups / Services, location filter if visible) |
+| [ ] | `create-post-01-templates.png` | Template picker with Cell Groups and Services closed, then one kind open |
 | [ ] | `create-post-02-date-confirm.png` | Date (and other template fields) plus create confirm |
 | [ ] | `create-post-flow.gif` *(optional)* | Pick template → set date → create |
 

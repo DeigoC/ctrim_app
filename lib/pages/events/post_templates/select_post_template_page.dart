@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 import '../../../models/post_template.dart';
 import '../../../utility/app_context.dart';
@@ -11,6 +10,7 @@ import '../../../utility/responsive_layout.dart';
 import '../../../widgets/app_search_bar.dart';
 import '../../../widgets/common/load_progress_body.dart';
 import '../../../widgets/paired_row_list.dart';
+import '../../../widgets/posts/template_category_section.dart';
 import '../../../widgets/responsive_content.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../bulk_create_posts_page.dart';
@@ -40,6 +40,8 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   String _searchQuery = '';
   String _selectedLocation = 'All';
   List<PostTemplate> _allTemplates = [];
+  final Set<PostTemplateCategory> _expandedCategories = {};
+  String _filterExpandKey = '|All';
 
   bool _loading = true;
   Object? _loadError;
@@ -386,70 +388,21 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isServices = category == PostTemplateCategory.service;
+    final expanded = _expandedCategories.contains(category);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    isServices ? Icons.event_outlined : Icons.groups_outlined,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category.label,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isServices
-                            ? 'Sunday services and similar programmes'
-                            : 'Cell group meetings',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (templates.isEmpty)
-              Text(
-                'No ${category.label.toLowerCase()} templates.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              )
-            else
-              _buildSectionTiles(templates, isWide),
-          ],
-        ),
-      ),
+    return TemplateCategorySection(
+      category: category,
+      templateCount: templates.length,
+      expanded: expanded,
+      onToggle: () => _toggleCategory(category),
+      child: templates.isEmpty
+          ? Text(
+              'No ${category.label.toLowerCase()} templates.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            )
+          : _buildSectionTiles(templates, isWide),
     );
   }
 
@@ -706,12 +659,14 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
   void _onSearchChanged(String query) {
     setState(() {
       _searchQuery = query;
+      _expandCategoriesMatchingFilters();
     });
   }
 
   void _onLocationChanged(String location) {
     setState(() {
       _selectedLocation = location;
+      _expandCategoriesMatchingFilters();
     });
   }
 
@@ -720,7 +675,36 @@ class _SelectPostTemplatePageState extends State<SelectPostTemplatePage> {
     setState(() {
       _searchQuery = '';
       _selectedLocation = 'All';
+      _expandCategoriesMatchingFilters();
     });
+  }
+
+  void _toggleCategory(final PostTemplateCategory category) {
+    setState(() {
+      if (_expandedCategories.contains(category)) {
+        _expandedCategories.remove(category);
+      } else {
+        _expandedCategories.add(category);
+      }
+    });
+  }
+
+  /// Opens a kind that has matches when search or location changes.
+  ///
+  /// Clearing the filters leaves whatever the user opened.
+  void _expandCategoriesMatchingFilters() {
+    final key = '$_searchQuery|$_selectedLocation';
+    if (key == _filterExpandKey) return;
+    _filterExpandKey = key;
+    if (_searchQuery.isEmpty && _selectedLocation == 'All') return;
+
+    final filtered = _getFilteredTemplates(_allTemplates);
+    for (final category in PostTemplateCategory.displayOrder) {
+      final hasMatch = filtered.any(
+        (template) => template.id != 'blank' && template.category == category,
+      );
+      if (hasMatch) _expandedCategories.add(category);
+    }
   }
 
   List<String> _getAvailableLocations() {

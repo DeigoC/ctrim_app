@@ -59,14 +59,31 @@ void main() {
       expect(suggestions.single.uids, ['jane', 'sam']);
     });
 
-    test('a later timed item suggests an earlier one with the same ministry',
-        () {
+    test('a later timed item does not suggest an earlier timed line', () {
       final suggestions = ScheduleAssigneeSuggestions.forRole(
         role: closing,
         roles: roles,
       );
 
-      expect(suggestions.map((s) => s.sourceTitle), ['Praise and Worship']);
+      expect(suggestions, isEmpty);
+    });
+
+    test('a later item suggests the whole-event team, not the earlier slot',
+        () {
+      final standingWorship = role(
+        id: 5,
+        title: 'Worship team',
+        uids: ['ada', 'ben'],
+        tagIDs: ['worship'],
+        standing: true,
+      );
+
+      final suggestions = ScheduleAssigneeSuggestions.forRole(
+        role: closing,
+        roles: [...roles, standingWorship],
+      );
+
+      expect(suggestions.map((s) => s.sourceTitle), ['Worship team']);
     });
 
     test('does not suggest itself or a line with no shared ministry', () {

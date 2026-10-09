@@ -15,6 +15,7 @@ import '../../../utility/user_activity_messages.dart';
 import '../../../utility/user_activity_recorder.dart';
 import '../../../widgets/common/load_progress_body.dart';
 import '../../../widgets/paired_row_list.dart';
+import '../../../widgets/posts/template_category_section.dart';
 import '../../../widgets/role_access_gate.dart';
 import '../../../widgets/common/app_dialog.dart';
 import 'edit_template_page.dart';
@@ -32,6 +33,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   bool _loading = true;
   Object? _loadError;
   List<PostTemplate> _templates = const [];
+  final Set<PostTemplateCategory> _expandedCategories = {};
   String _loadStatusMessage = 'Checking local cache…';
   int _loadCompletedSteps = 0;
   int _loadTotalSteps = 4;
@@ -199,81 +201,46 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isServices = category == PostTemplateCategory.service;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    isServices ? Icons.event_outlined : Icons.groups_outlined,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category.label,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isServices
-                            ? 'Sunday services and similar programmes'
-                            : 'Cell group meetings',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (templates.isEmpty)
-              Text(
-                'No ${category.label.toLowerCase()} templates yet.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              )
-            else
-              _buildSectionTiles(templates, isWide),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    _onCreateTemplateTap(initialCategory: category),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text('Add ${category.label} template'),
+    return TemplateCategorySection(
+      category: category,
+      templateCount: templates.length,
+      expanded: _expandedCategories.contains(category),
+      onToggle: () => _toggleCategory(category),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (templates.isEmpty)
+            Text(
+              'No ${category.label.toLowerCase()} templates yet.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
+            )
+          else
+            _buildSectionTiles(templates, isWide),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () => _onCreateTemplateTap(initialCategory: category),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text('Add ${category.label} template'),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  void _toggleCategory(final PostTemplateCategory category) {
+    setState(() {
+      if (_expandedCategories.contains(category)) {
+        _expandedCategories.remove(category);
+      } else {
+        _expandedCategories.add(category);
+      }
+    });
   }
 
   Widget _buildSectionTiles(List<PostTemplate> templates, bool isWide) {
@@ -438,6 +405,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
 
     if (!mounted || !created || createdTemplate == null) return;
+    _expandedCategories.add(createdTemplate!.category);
     await _loadTemplates();
     if (!mounted) return;
     await _openEditTemplate(createdTemplate!);
@@ -489,6 +457,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
     );
 
     if (!mounted || !created || duplicated == null) return;
+    _expandedCategories.add(duplicated!.category);
     await _loadTemplates();
     if (!mounted) return;
     await _openEditTemplate(duplicated!);

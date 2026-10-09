@@ -75,7 +75,9 @@ Anything happening **at the same time** appears side by side. On a narrow phone 
 
 Roles that cover the **whole event** — sound, media, stewarding, the people on duty from setup to clear-up — are listed in a compact **All event** band above the timeline, with who is assigned. Mark a role **Whole event** when you add it, so those jobs do not need a padded start and finish just to leave the running order. A call time is optional: an early setup can still read as 09:00, and a role with no clock time reads as Whole event. Longer jobs that were saved before this still appear in the band.
 
-On a later item that shares a ministry, **Use Technical Media** (or whichever line already has those people) adds them to that item. Opening worship and the closing song work the same way when they share a ministry. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
+On a later item that shares a ministry, **Use Technical Media** adds the people already set for the whole event. An earlier timed item, such as opening worship, is not offered. You can still add or remove someone afterwards. Changing the whole-event team does not change items you have already filled.
+
+Choosing people for an item that already has one or more ministries opens the list filtered to those ministries and that post’s location. You can still change those filters.
 
 Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
 
@@ -133,11 +135,11 @@ When saving important edits, organisers can write a short **update log**. That n
 
 ## Templates & recurring programmes
 
-**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **ministries** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Existing templates sit under **Services** until a leader moves them.
+**Templates** are reusable blueprints for a kind of event (title pattern, location, tags, cover images, programme roles including which **ministries** own each slot, expected attendees, and similar). Leaders manage them from Personal → **Post Templates**. Templates are grouped into **Cell Groups** and **Services** (the same kind of sections used in CTRIM Information). Both kinds start as closed cards; open the kind you want to edit or to add a template. Existing templates sit under **Services** until a leader moves them.
 
 A template can hold more than one **schedule preset** — named variants of the running order (different people, ministries, or times) for the same kind of meeting. Duplicate a preset to start Team B from Team A, then edit it. Venue (address / online) stays on the template, not on each preset.
 
-When **choosing a template** to create a post, browse by **Cell Groups** / **Services**, and filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name. If the template has several schedule presets, pick one after the date; if it has only one, that running order is applied automatically.
+When **choosing a template** to create a post, **Cell Groups** and **Services** start as closed cards. Open the kind you want, then pick a template. You can still filter or search by **location** (Belfast, Portadown, North Coast, and so on) alongside the template name. A search or location filter opens any kind that has a match. If the template has several schedule presets, pick one after the date; if it has only one, that running order is applied automatically.
 
 When **creating or editing a template**, leaders set its **category** (Services or Cell Groups) and can set a **default broadcast audience**: whether new posts from that template should pre-select **All {location} updates** (using the location on the template’s Schedule tab). Organisers can still change notify settings when publishing each post.
 
