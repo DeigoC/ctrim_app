@@ -9,6 +9,7 @@ import '../../widgets/media/video_media_slot.dart';
 import '../../widgets/common/app_dialog.dart';
 import '../../widgets/paired_row_list.dart';
 import 'add_media_file_page.dart';
+import 'bulk_add_media_page.dart';
 import 'select_template_cover_page.dart';
 import '../../utility/responsive_layout.dart';
 
@@ -310,6 +311,16 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _onBulkAddMediaTap,
+                            icon: const Icon(Icons.create_new_folder_outlined,
+                                size: 18),
+                            label: const Text('Bulk add from Drive folder'),
+                          ),
+                        ),
                         if (widget.eventContext.media.allMedia.length >= 2) ...[
                           const SizedBox(height: 12),
                           Text(
@@ -363,7 +374,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Add an image or video from a URL (Google Drive links work too).',
+                        'Add an image or video from a URL, or bulk-add from a '
+                        'public Google Drive folder.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurface.withValues(alpha: 0.5),
@@ -921,6 +933,19 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                   initialIsVideo: initialIsVideo,
                 ))).then((_) {
       setState(() {});
+    });
+  }
+
+  void _onBulkAddMediaTap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BulkAddMediaPage(eventContext: widget.eventContext),
+      ),
+    ).then((_) {
+      if (!mounted) return;
+      setState(() {});
+      _shouldBeAbleToSave();
     });
   }
 
