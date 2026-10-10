@@ -34,6 +34,7 @@ On web, the app may also gently suggest adding to the home screen once. Opening 
 | Guest browsing | Works without an account; richer features need sign-in |
 | Opening the app | A short progress screen while churches, groups, the bulletin, and people load. Guests and signed-in people both see it, then the page they opened |
 | Section links | The address follows the main section: Bulletin, CTRIM, Cell Groups, or Personal. A link such as `ctrim.app/personal` opens that section. The plain site address still uses the startup tab in Personal settings |
+| Shared links | When a post, church, group, topic, testimonial, or profile is the first page, **Home** in the top corner opens its section. An extra church page, pastors, or statistics still goes back to that church first. Opening the same page from inside the app keeps Back |
 | Product Guide | Guests open this site’s home. Signed-in people open [For servers & leaders](servers-and-leaders.md) |
 
 ## Related pages

@@ -22,6 +22,7 @@ import '../../utility/app_links.dart';
 import '../../utility/user_cell_group_attendance.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
@@ -204,6 +205,7 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: PermalinkAppBarLeading.homeOrNull(context),
         title: Text(_displayName()),
         actions: [
           if (canEdit)

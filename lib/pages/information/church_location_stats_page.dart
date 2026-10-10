@@ -18,6 +18,7 @@ import '../../utility/cache/refresh_cooldown.dart';
 import '../../utility/responsive_layout.dart';
 import '../personal/view_user_tag_page.dart';
 import '../../widgets/common/activity_trend_section.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/information/info_section_card.dart';
 import '../../widgets/two_column_masonry.dart';
@@ -252,6 +253,7 @@ class _ChurchLocationStatsPageState extends State<ChurchLocationStatsPage> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
+        leading: PermalinkAppBarLeading.homeOrNull(context),
         title: Text(l10n.churchLocationStatsTitle),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,

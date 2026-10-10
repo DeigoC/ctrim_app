@@ -2872,4 +2872,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get postTitleAddAttendeesTooLong =>
       'Title is already too long to add names';
+
+  @override
+  String get permalinkGoHome => 'Home';
 }

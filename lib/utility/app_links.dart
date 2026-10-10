@@ -72,6 +72,37 @@ class AppLinks {
   static String homeTabPath(int index) =>
       '/${homeTabSegments[clampHomeTab(index)]}';
 
+  /// Where a permalink goes when it is the first page and cannot pop.
+  ///
+  /// A post opens the bulletin, a cell group opens Cell Groups, a church,
+  /// topic, or testimonial opens CTRIM, and a person opens Personal. A nested
+  /// church page (pastors, statistics, or an extra page) steps up to that
+  /// church. The shell itself is already home.
+  static String upPath(String path) {
+    final uri = Uri.parse(path);
+    final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
+    final parts = segments.toList();
+    if (parts.isEmpty) return homeTabPath(ctrimTab);
+    switch (parts.first) {
+      case 'post':
+        return homeTabPath(bulletinTab);
+      case 'cell-groups':
+        return parts.length >= 2
+            ? homeTabPath(cellGroupsTab)
+            : homeTabPath(ctrimTab);
+      case 'people':
+        return homeTabPath(personalTab);
+      case 'churches':
+        if (parts.length >= 3) return churchPath(parts[1]);
+        return homeTabPath(ctrimTab);
+      case 'info':
+      case 'testimonials':
+        return homeTabPath(ctrimTab);
+      default:
+        return homeTabPath(ctrimTab);
+    }
+  }
+
   static int? homeTabIndexForSegment(String segment) {
     final index = homeTabSegments.indexOf(segment);
     return index < 0 ? null : index;

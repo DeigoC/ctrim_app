@@ -163,6 +163,31 @@ void main() {
       );
     });
 
+    test('steps a root permalink up to its section', () {
+      expect(AppLinks.upPath('/post/post-42'), '/bulletin');
+      expect(AppLinks.upPath('/cell-groups/cg-1'), '/cell-groups');
+      expect(AppLinks.upPath('/churches/belfast'), '/ctrim');
+      expect(AppLinks.upPath('/info/core_values'), '/ctrim');
+      expect(AppLinks.upPath('/testimonials/t-1'), '/ctrim');
+      expect(AppLinks.upPath('/people/u-1'), '/personal');
+    });
+
+    test('steps a nested church page up to that church', () {
+      expect(
+        AppLinks.upPath('/churches/belfast/pages/getting-here'),
+        '/churches/belfast',
+      );
+      expect(AppLinks.upPath('/churches/belfast/pastors'), '/churches/belfast');
+      expect(
+        AppLinks.upPath('/churches/belfast/statistics'),
+        '/churches/belfast',
+      );
+      expect(
+        AppLinks.upPath('/churches/north%20coast/pastors'),
+        '/churches/north%20coast',
+      );
+    });
+
     test('sends an unknown section segment to the startup tab', () {
       expect(
         AppLinks.redirectHomeTabSegment(

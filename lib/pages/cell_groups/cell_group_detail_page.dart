@@ -26,6 +26,7 @@ import '../../utility/cell_group_roster_cache.dart';
 import '../../widgets/cell_groups/cell_group_activity_panel.dart';
 import '../../widgets/maps/area_map.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/posts/post_head.dart';
 import '../../widgets/responsive_content.dart';
@@ -358,7 +359,10 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.cellGroupsSectionTitle)),
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(l10n.cellGroupsSectionTitle),
+        ),
         body: const LoadProgressBody(
           message: 'Loading group…',
           completedSteps: 0,
@@ -368,7 +372,10 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
     }
     if (_error != null || _group == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.cellGroupsSectionTitle)),
+        appBar: AppBar(
+          leading: PermalinkAppBarLeading.homeOrNull(context),
+          title: Text(l10n.cellGroupsSectionTitle),
+        ),
         body: LoadProgressBody(
           message: 'Loading group…',
           completedSteps: 0,
@@ -402,6 +409,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           slivers: [
             SliverAppBar(
               pinned: true,
+              leading: PermalinkAppBarLeading.homeOrNull(context),
               expandedHeight: heroHeight,
               title: Text(group.name),
               flexibleSpace: (hasKeyGraphic && keySrc != null)

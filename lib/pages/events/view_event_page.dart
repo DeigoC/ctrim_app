@@ -34,6 +34,7 @@ import 'select_schedule_preset_page.dart';
 import 'send_broadcast_notification_page.dart';
 import 'view_meta_logs_page.dart';
 import '../../utility/responsive_layout.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import 'view_event_local_store.dart';
 import 'view_event_notify_helpers.dart';
 
@@ -98,6 +99,12 @@ class _ViewEventPageState extends State<ViewEventPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Navigator.of(context).pop();
     });
+  }
+
+  /// A shared link has no page underneath. Confirm before leaving unsaved edits.
+  Future<bool> _confirmLeaveToHome() async {
+    if (!_canSaveEditing) return true;
+    return DialogManager.discardChanges(context: context);
   }
 
   @override
@@ -193,6 +200,10 @@ class _ViewEventPageState extends State<ViewEventPage>
         appBar: _showCoverShell
             ? null
             : AppBar(
+                leading: PermalinkAppBarLeading.homeOrNull(
+                  context,
+                  onLeave: _confirmLeaveToHome,
+                ),
                 title: Text(
                   widget.eventHead.title,
                   maxLines: 1,
@@ -229,8 +240,12 @@ class _ViewEventPageState extends State<ViewEventPage>
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close Page'),
+                  onPressed: () => PermalinkAppBarLeading.leave(context),
+                  child: Text(
+                    PermalinkAppBarLeading.isRootPermalink(context)
+                        ? AppLocalizations.of(context)!.permalinkGoHome
+                        : 'Close Page',
+                  ),
                 ),
               ],
             ),
@@ -374,6 +389,10 @@ class _ViewEventPageState extends State<ViewEventPage>
     final header = <Widget>[
       SliverAppBar(
           key: ValueKey('post_cover_bar_${widget.eventHead.id}'),
+          leading: PermalinkAppBarLeading.homeOrNull(
+            context,
+            onLeave: _confirmLeaveToHome,
+          ),
           expandedHeight: keyGraphic != null
               ? MediaQuery.of(context).size.height * 0.33
               : null,

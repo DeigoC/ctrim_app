@@ -9,6 +9,7 @@ import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/cell_group_roster_cache.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import 'view_user_profile_page.dart';
 
 /// Resolves a person id from the route then shows [ViewUserProfilePage].
@@ -154,7 +155,10 @@ class _OpenPersonPageState extends State<OpenPersonPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.openPersonPageTitle)),
+      appBar: AppBar(
+        leading: PermalinkAppBarLeading.homeOrNull(context),
+        title: Text(l10n.openPersonPageTitle),
+      ),
       body: LoadProgressBody(
         message: l10n.openPersonLoading,
         completedSteps: _loading ? 0 : 1,

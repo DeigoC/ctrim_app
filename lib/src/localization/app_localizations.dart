@@ -5007,6 +5007,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Title is already too long to add names'**
   String get postTitleAddAttendeesTooLong;
+
+  /// App bar control that opens the main section when a shared link is the first page
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get permalinkGoHome;
 }
 
 class _AppLocalizationsDelegate

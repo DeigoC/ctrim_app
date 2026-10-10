@@ -6,6 +6,7 @@ import '../../models/event/event_head.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../widgets/common/load_progress_body.dart';
+import '../../widgets/common/permalink_app_bar_leading.dart';
 import 'view_event_page.dart';
 
 /// Resolves a post id from the route (session, extra, or fetch) then shows
@@ -122,7 +123,10 @@ class _OpenPostPageState extends State<OpenPostPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.openPostPageTitle)),
+      appBar: AppBar(
+        leading: PermalinkAppBarLeading.homeOrNull(context),
+        title: Text(l10n.openPostPageTitle),
+      ),
       body: LoadProgressBody(
         message: l10n.openPostLoading,
         completedSteps: _loading ? 0 : 1,

@@ -3705,5 +3705,9 @@
   "postTitleAddAttendeesTooLong": "Title is already too long to add names",
   "@postTitleAddAttendeesTooLong": {
     "description": "Shown when the post title has no room for a shortened attendee name"
+  },
+  "permalinkGoHome": "Home",
+  "@permalinkGoHome": {
+    "description": "App bar control that opens the main section when a shared link is the first page"
   }
 }
