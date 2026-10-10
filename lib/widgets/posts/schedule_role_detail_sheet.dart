@@ -25,6 +25,8 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
     required this.canEdit,
     required this.onEdit,
     this.editLabel,
+    this.claimLabel,
+    this.onClaim,
     this.onClose,
     this.suggestions = const [],
     this.onUseAssignees,
@@ -37,6 +39,10 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
 
   /// Button label when [canEdit] is true. Defaults to the full task editor.
   final String? editLabel;
+
+  /// Adds or removes the signed-in person. Null hides that button.
+  final String? claimLabel;
+  final VoidCallback? onClaim;
 
   /// Shown as a close affordance when the detail lives in a side pane.
   final VoidCallback? onClose;
@@ -176,6 +182,15 @@ class ScheduleRoleDetailSheet extends StatelessWidget {
               ],
             ),
           ),
+        if (onClaim != null && claimLabel != null)
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, canEdit ? 0 : 8),
+            child: FilledButton.icon(
+              onPressed: onClaim,
+              icon: const Icon(Icons.person_outline, size: 18),
+              label: Text(claimLabel!),
+            ),
+          ),
         if (canEdit)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -231,6 +246,8 @@ Future<void> showScheduleRoleDetailSheet({
   required bool canEdit,
   required VoidCallback onEdit,
   String? editLabel,
+  String? claimLabel,
+  VoidCallback? onClaim,
   void Function(ScheduleAssigneeSuggestion suggestion)? onUseAssignees,
   List<Map<String, dynamic>> allRoles = const [],
   List<User> Function(Map<String, dynamic> role)? usersForRole,
@@ -263,6 +280,8 @@ Future<void> showScheduleRoleDetailSheet({
               assignedUsers: liveUsers,
               canEdit: canEdit,
               editLabel: editLabel,
+              claimLabel: claimLabel,
+              onClaim: onClaim,
               suggestions: liveSuggestions,
               onUseAssignees: onUseAssignees == null
                   ? null

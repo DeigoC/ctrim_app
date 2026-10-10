@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
+import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/event/event_program.dart';
 import '../../models/user.dart';
@@ -14,18 +15,24 @@ import '../../utility/app_links.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/dialog_manager.dart';
+import '../../utility/event_heads_repository.dart';
 import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/team_rota.dart';
+import '../../utility/user_activity_messages.dart';
+import '../../utility/user_activity_recorder.dart';
 import '../../widgets/catalog/colored_chip.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/common/action_sheet.dart';
 import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/paired_row_list.dart';
+import '../../widgets/personal/team_rota_gaps_card.dart';
 import '../../widgets/personal/team_rota_post_card.dart';
 import '../../widgets/posts/schedule_role_detail_sheet.dart';
 import '../../widgets/user_avatar.dart';
 import 'select_users_page.dart';
+
+enum _MinistryScope { mine, all }
 
 /// Signed-in serving view: tagged programme slots over the next few months.
 class ViewTeamRotaPage extends StatefulWidget {
@@ -201,12 +208,13 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
   Widget _buildLoadedBody(AppLocalizations l10n) {
     final theme = Theme.of(context);
     final matching = _matchingPosts();
-    final gapCount = TeamRotaQuery.unassignedRoleCount(matching);
     final visible =
         _needsPeople ? TeamRotaQuery.postsNeedingPeople(matching) : matching;
     final groups = TeamRotaQuery.groupByMonth(visible);
     final isWide = ResponsiveLayout.isWideScreenOf(context);
     final headsStrip = _buildHeadsStrip(l10n);
+    final mine = _myMinistryIds();
+    final gaps = TeamRotaQuery.firstGaps(matching);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -227,14 +235,15 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (gapCount > 0) ...[
-              const SizedBox(height: 8),
-              Text(
-                l10n.teamRotaGaps(gapCount),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+            if (mine.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildMinistryScope(l10n, mine),
+            ],
+            if (matching.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              TeamRotaGapsCard(
+                gaps: gaps,
+                onGapTap: (gap) => _onRoleTap(gap.post, gap.role),
               ),
             ],
             const SizedBox(height: 16),
@@ -304,7 +313,6 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     if (parts.isEmpty) return const SizedBox.shrink();
 
     final accent = Theme.of(context).colorScheme.primary;
-    final canClearMinistries = _selectedTagIDs.isNotEmpty;
 
     return Material(
       color: accent.withValues(alpha: 0.1),
@@ -348,15 +356,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
                 ),
               ),
             ),
-            if (canClearMinistries)
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: l10n.teamRotaClearMinistries,
-                onPressed: _clearMinistries,
-                icon: Icon(Icons.close, size: 16, color: accent),
-              )
-            else
-              const SizedBox(width: 8),
+            const SizedBox(width: 8),
           ],
         ),
       ),
@@ -521,6 +521,68 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     }
   }
 
+  Set<String> _myMinistryIds() {
+    return TeamRotaQuery.openingMinistryIds(
+      user: _appContext.currentUser,
+      allTags: _appContext.allTags,
+      locationId: VolunteerLocations.idForName(
+            locations: _appContext.allLocations,
+            name: _locationFilter,
+          ) ??
+          '',
+    );
+  }
+
+  bool _selectionMatches(Set<String> other) {
+    return _selectedTagIDs.length == other.length &&
+        _selectedTagIDs.containsAll(other);
+  }
+
+  Set<_MinistryScope> _ministryScopeSelection(Set<String> mine) {
+    if (_selectedTagIDs.isEmpty) return {_MinistryScope.all};
+    if (_selectionMatches(mine)) return {_MinistryScope.mine};
+    return const {};
+  }
+
+  Widget _buildMinistryScope(AppLocalizations l10n, Set<String> mine) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SegmentedButton<_MinistryScope>(
+        showSelectedIcon: false,
+        emptySelectionAllowed: true,
+        segments: [
+          ButtonSegment(
+            value: _MinistryScope.mine,
+            label: Text(l10n.teamRotaMine),
+          ),
+          ButtonSegment(
+            value: _MinistryScope.all,
+            label: Text(l10n.teamRotaAll),
+          ),
+        ],
+        selected: _ministryScopeSelection(mine),
+        onSelectionChanged: (next) {
+          if (next.isEmpty) return;
+          if (next.first == _MinistryScope.mine) {
+            _selectMyMinistries(mine);
+          } else {
+            _clearMinistries();
+          }
+        },
+      ),
+    );
+  }
+
+  void _selectMyMinistries(Set<String> mine) {
+    if (mine.isEmpty || _selectionMatches(mine)) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedTagIDs
+        ..clear()
+        ..addAll(mine);
+    });
+  }
+
   void _clearMinistries() {
     if (_selectedTagIDs.isEmpty) return;
     HapticFeedback.selectionClick();
@@ -653,8 +715,10 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
 
   Future<void> _onRoleTap(TeamRotaPost post, Map<String, dynamic> role) async {
     final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final actor = _appContext.currentUser;
     final canAssign = TeamRotaQuery.canAssignRole(
-      actor: _appContext.currentUser,
+      actor: actor,
       role: role,
       eventDate: post.head.eventDate,
       locationId: VolunteerLocations.idForName(
@@ -662,8 +726,15 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
         name: post.head.location,
       ),
       allTags: _appContext.allTags,
-      now: DateTime.now(),
+      now: now,
     );
+    final canClaim = TeamRotaQuery.canClaimRole(
+      actor: actor,
+      role: role,
+      eventDate: post.head.eventDate,
+      now: now,
+    );
+    final onIt = TeamRotaQuery.isAssignedTo(role, actor.id);
     if (!mounted) return;
     await showScheduleRoleDetailSheet(
       context: context,
@@ -675,7 +746,37 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
         Navigator.of(context).pop();
         _assignPeople(post, role);
       },
+      claimLabel:
+          canClaim ? (onIt ? l10n.teamRotaRelease : l10n.teamRotaClaim) : null,
+      onClaim: canClaim
+          ? () {
+              Navigator.of(context).pop();
+              _claimOrRelease(post, role, release: onIt);
+            }
+          : null,
     );
+  }
+
+  Future<bool> _confirmSharedSlot(
+    Map<String, dynamic> role,
+    String confirmText,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final tagIds = EventProgram.tagIDsOf(role);
+    if (tagIds.length <= 1) return true;
+    final names = UserTagHelpers.resolveTags(
+      tagIDs: tagIds,
+      allTags: _appContext.allTags,
+    ).map((tag) => tag.name).join(', ');
+    final confirmed = await DialogManager.showConfirmationDialog(
+      context: context,
+      title: l10n.teamRotaSharedSlotTitle,
+      content: names.isEmpty
+          ? l10n.teamRotaSharedSlotBodyGeneric
+          : l10n.teamRotaSharedSlotBody(names),
+      confirmText: confirmText,
+    );
+    return confirmed && mounted;
   }
 
   Future<void> _assignPeople(
@@ -683,22 +784,8 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     Map<String, dynamic> role,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final tagIds = EventProgram.tagIDsOf(role);
-    if (tagIds.length > 1) {
-      final names = UserTagHelpers.resolveTags(
-        tagIDs: tagIds,
-        allTags: _appContext.allTags,
-      ).map((tag) => tag.name).join(', ');
-      final confirmed = await DialogManager.showConfirmationDialog(
-        context: context,
-        title: l10n.teamRotaSharedSlotTitle,
-        content: names.isEmpty
-            ? l10n.teamRotaSharedSlotBodyGeneric
-            : l10n.teamRotaSharedSlotBody(names),
-        confirmText: l10n.teamRotaAssignPeople,
-      );
-      if (!confirmed || !mounted) return;
-    }
+    if (!await _confirmSharedSlot(role, l10n.teamRotaAssignPeople)) return;
+    if (!mounted) return;
 
     final location =
         VolunteerLocations.normalizePostLocation(post.head.location);
@@ -714,12 +801,41 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
             actor: _appContext.currentUser,
           ),
           initialLocation: location.isEmpty ? null : location,
-          initialTagIDs: tagIds,
+          initialTagIDs: EventProgram.tagIDsOf(role),
         ),
       ),
     );
     if (result == null || !mounted) return;
-    if (TeamRotaQuery.sameAssigneeIds(TeamRotaQuery.uidsOf(role), result)) {
+    await _saveRoleAssignees(post, role, result);
+  }
+
+  Future<void> _claimOrRelease(
+    TeamRotaPost post,
+    Map<String, dynamic> role, {
+    required bool release,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirm = release ? l10n.teamRotaRelease : l10n.teamRotaClaim;
+    if (!await _confirmSharedSlot(role, confirm)) return;
+    if (!mounted) return;
+
+    final uid = _appContext.currentUser.id;
+    final next = List<String>.from(TeamRotaQuery.uidsOf(role));
+    if (release) {
+      next.remove(uid);
+    } else if (!next.contains(uid)) {
+      next.add(uid);
+    }
+    await _saveRoleAssignees(post, role, next);
+  }
+
+  Future<void> _saveRoleAssignees(
+    TeamRotaPost post,
+    Map<String, dynamic> role,
+    List<String> uids,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (TeamRotaQuery.sameAssigneeIds(TeamRotaQuery.uidsOf(role), uids)) {
       return;
     }
     final roleId = role['id'];
@@ -730,15 +846,65 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
       title: l10n.teamRotaSavingAssignees,
       errorTitle: l10n.teamRotaCouldNotSave,
       action: () async {
-        final program = await EventSupplementalDBManager(post.head.id)
-            .updateRoleAssignees(roleId: roleId, uids: result);
-        if (program == null) {
+        final editorUid = _appContext.currentUser.id;
+        final now = DateTime.now();
+        final written =
+            await EventSupplementalDBManager(post.head.id).updateRoleAssignees(
+          roleId: roleId,
+          uids: uids,
+          editorUid: editorUid,
+          now: now,
+        );
+        if (written == null) {
           throw Exception(l10n.teamRotaRoleMissing);
         }
-        _programs[post.head.id] = program;
+        _programs[post.head.id] = written.program;
+        final log = written.log;
+        if (log == null) return;
+        await _afterAssigneesSaved(
+          head: post.head,
+          log: log,
+          editorUid: editorUid,
+          now: now,
+          removedUids: written.removedUids,
+        );
       },
     );
     if (saved && mounted) setState(() {});
+  }
+
+  /// Follow-ups the post editor also runs after a save. All fail soft: the
+  /// lineup is already written.
+  Future<void> _afterAssigneesSaved({
+    required EventHead head,
+    required String log,
+    required String editorUid,
+    required DateTime now,
+    required List<String> removedUids,
+  }) async {
+    head.setRecentDate(now);
+    if (_appContext.headById(head.id) != null) {
+      _appContext.addOrUpdatePostHead(head);
+      try {
+        await persistEventHeadsLocalCache(List.of(_appContext.eventHeads));
+      } catch (e) {
+        debugPrint('Could not persist event heads after rota save: $e');
+      }
+    }
+    await Future.wait([
+      UserActivityRecorder().record(
+        actorUserId: editorUid,
+        log: UserActivityMessages.updatedMinistrySchedule,
+        documentId: head.id,
+        title: head.title,
+        note: log,
+      ),
+      if (head.eventDate != null)
+        CloudFunctionManager().syncUserRolesForPost(
+          postId: head.id,
+          removedUserIds: removedUids,
+        ),
+    ]);
   }
 
   List<User> _assignedUsers(Map<String, dynamic> role) {

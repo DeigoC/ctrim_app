@@ -287,16 +287,6 @@
   "@teamRotaShowFewer": {
     "description": "Collapses a team rota post card back to its preview slots"
   },
-  "teamRotaGaps": "{count, plural, =1{1 slot still needs people} other{{count} slots still need people}}",
-  "@teamRotaGaps": {
-    "description": "Count of empty programme slots in the current team rota filters",
-    "placeholders": {
-      "count": {
-        "type": "int",
-        "example": "4"
-      }
-    }
-  },
   "teamRotaFilterShow": "Show",
   "@teamRotaFilterShow": {
     "description": "Section label in the team rota filter sheet"
@@ -312,6 +302,40 @@
   "teamRotaYou": "You",
   "@teamRotaYou": {
     "description": "Marks a team rota slot the signed-in person is assigned to"
+  },
+  "teamRotaCardGaps": "{count, plural, =1{1 needs people} other{{count} need people}}",
+  "@teamRotaCardGaps": {
+    "description": "How many empty slots one ministry-schedule event still has",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "teamRotaYoureServing": "You're serving",
+  "@teamRotaYoureServing": {
+    "description": "Marks a ministry-schedule event the signed-in person is on"
+  },
+  "teamRotaGapsCovered": "Every slot in this view has someone",
+  "@teamRotaGapsCovered": {
+    "description": "Needs people card when the current ministry-schedule filters have no empty slots"
+  },
+  "teamRotaMine": "Mine",
+  "@teamRotaMine": {
+    "description": "Restores the ministry schedule to the signed-in person's ministries"
+  },
+  "teamRotaAll": "All",
+  "@teamRotaAll": {
+    "description": "Clears the ministry filter so every tagged slot at the current location shows"
+  },
+  "teamRotaClaim": "I'll do this",
+  "@teamRotaClaim": {
+    "description": "Adds the signed-in person to a ministry-schedule slot they belong to"
+  },
+  "teamRotaRelease": "Take me off",
+  "@teamRotaRelease": {
+    "description": "Removes the signed-in person from a ministry-schedule slot"
   },
   "teamRotaAssignPeople": "Assign people",
   "@teamRotaAssignPeople": {

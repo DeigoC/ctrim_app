@@ -31,6 +31,17 @@ class TeamRotaMonthGroup {
   DateTime get monthDate => DateTime(year, month);
 }
 
+/// One empty programme slot on the ministry schedule index.
+class TeamRotaGap {
+  const TeamRotaGap({
+    required this.post,
+    required this.role,
+  });
+
+  final TeamRotaPost post;
+  final Map<String, dynamic> role;
+}
+
 /// Filter and group dated posts into a team rota.
 ///
 /// Join is role [EventProgram.tagIDsOf] vs selected team-tag IDs — not the
@@ -150,14 +161,67 @@ class TeamRotaQuery {
     return false;
   }
 
+  /// A member of one of the slot's ministries may add or remove themselves
+  /// until the slot starts. Heading the ministry, or being an area admin,
+  /// does not qualify on its own.
+  static bool canClaimRole({
+    required User actor,
+    required Map<String, dynamic> role,
+    required DateTime? eventDate,
+    required DateTime now,
+  }) {
+    if (roleHasStarted(role: role, eventDate: eventDate, now: now)) {
+      return false;
+    }
+    final tagIds = EventProgram.tagIDsOf(role);
+    if (tagIds.isEmpty) return false;
+    return actor.hasAnyTag(tagIds);
+  }
+
+  /// Empty slots on one post, including roles hidden behind Show more.
+  static int unassignedCount(final TeamRotaPost post) {
+    var count = 0;
+    for (final role in post.roles) {
+      if (uidsOf(role).isEmpty) count++;
+    }
+    return count;
+  }
+
+  /// True when [uid] is on any matching role, including ones behind Show more.
+  static bool viewerIsServing(final TeamRotaPost post, final String uid) {
+    for (final role in post.roles) {
+      if (isAssignedTo(role, uid)) return true;
+    }
+    return false;
+  }
+
   static int unassignedRoleCount(final List<TeamRotaPost> posts) {
     var count = 0;
     for (final post in posts) {
-      for (final role in post.roles) {
-        if (uidsOf(role).isEmpty) count++;
-      }
+      count += unassignedCount(post);
     }
     return count;
+  }
+
+  /// How many empty slots the Needs people index lists.
+  static const int gapIndexLimit = 5;
+
+  /// Soonest empty slots, in post date order then role start order.
+  ///
+  /// [posts] is already ordered by [matchingPosts]. Stops at [limit].
+  static List<TeamRotaGap> firstGaps(
+    final List<TeamRotaPost> posts, {
+    int limit = gapIndexLimit,
+  }) {
+    final gaps = <TeamRotaGap>[];
+    for (final post in posts) {
+      for (final role in post.roles) {
+        if (uidsOf(role).isNotEmpty) continue;
+        gaps.add(TeamRotaGap(post: post, role: role));
+        if (gaps.length >= limit) return gaps;
+      }
+    }
+    return gaps;
   }
 
   /// Keeps posts that still have an empty slot, and only those empty slots.

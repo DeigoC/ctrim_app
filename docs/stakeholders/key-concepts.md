@@ -49,7 +49,7 @@ Short definitions for terms used across this guide. For who can do what, see [Pe
 | **Ministry** | A department on a person and on programme slots (Worship, Technical, and similar), with an optional short description and one main image. Anyone can open **View Ministries** under Personal → **People & Teams**. Area admins can hide the label from **guests**. The person and the schedule line still show. |
 | **Programme** / **schedule** | Timed roles and items on a post (who does what, when). Organisers can mark a line with **ministries** (which departments own it). Some lines can be hidden from **guests**. |
 | **My Schedule** | Personal list of programme roles assigned to **you**, plus posts where you are an **expected attendee**. Far-ahead assignments stay here even when the post is not on the bulletin yet. |
-| **Ministry Schedule** | Personal view of upcoming programme slots for a **ministry** (including empty slots), over the next few months. Location and ministry filters open from the **Filter** button. |
+| **Ministry Schedule** | Personal view of upcoming programme slots for a **ministry** (including empty slots), over the next few months. **Mine** and **All** switch your ministries and every tagged slot. Location and a custom ministry mix open from the **Filter** button. |
 | **My Posts** | Shortcut to posts where you are **author** or **contributor** — matched against the bulletin posts loaded in the session, not the full archive. |
 | **Related posts** | Parent, sibling, or child links between posts (a series, term, or meeting group). Shown on the post’s **Related** tab when present. |
 | **Period parent** | A post marked as a container for a term or season; other meeting posts can attach underneath it. |

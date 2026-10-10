@@ -103,7 +103,7 @@ Save under `assets/images/`. Skip a row if a **Home** shot already covers it.
 | [ ] | `events-schedule-timeline.png` | Schedule tab with overlapping items if you have one | Events & bulletin |
 | [ ] | `events-arrange-schedule.png` *(optional)* | Arrange schedule drag mode | Events & bulletin |
 | [ ] | `personal-my-schedule.png` | Full My Schedule list | Personal |
-| [ ] | `personal-team-rota.png` | Ministry Schedule: gap count, Needs people in the filter sheet, or Assign people on a slot | Personal |
+| [ ] | `personal-team-rota.png` | Ministry Schedule: Needs people card, Mine/All, a slot that needs people, or I'll do this | Personal |
 | [ ] | `personal-tag-color.png` | Add/edit team or post tag dialog with colour picker | Personal |
 | [ ] | `personal-post-tag.png` | A post tag: past totals, weekly chart, a location row, and recent posts | Personal |
 | [ ] | `notifications-settings.png` | Push Notifications: This device + a location switch | Notifications |

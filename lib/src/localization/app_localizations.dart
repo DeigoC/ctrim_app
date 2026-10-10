@@ -442,12 +442,6 @@ abstract class AppLocalizations {
   /// **'Show less'**
   String get teamRotaShowFewer;
 
-  /// Count of empty programme slots in the current team rota filters
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 slot still needs people} other{{count} slots still need people}}'**
-  String teamRotaGaps(int count);
-
   /// Section label in the team rota filter sheet
   ///
   /// In en, this message translates to:
@@ -471,6 +465,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You'**
   String get teamRotaYou;
+
+  /// How many empty slots one ministry-schedule event still has
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 needs people} other{{count} need people}}'**
+  String teamRotaCardGaps(int count);
+
+  /// Marks a ministry-schedule event the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re serving'**
+  String get teamRotaYoureServing;
+
+  /// Needs people card when the current ministry-schedule filters have no empty slots
+  ///
+  /// In en, this message translates to:
+  /// **'Every slot in this view has someone'**
+  String get teamRotaGapsCovered;
+
+  /// Restores the ministry schedule to the signed-in person's ministries
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get teamRotaMine;
+
+  /// Clears the ministry filter so every tagged slot at the current location shows
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get teamRotaAll;
+
+  /// Adds the signed-in person to a ministry-schedule slot they belong to
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll do this'**
+  String get teamRotaClaim;
+
+  /// Removes the signed-in person from a ministry-schedule slot
+  ///
+  /// In en, this message translates to:
+  /// **'Take me off'**
+  String get teamRotaRelease;
 
   /// Opens the people picker for one team rota slot
   ///

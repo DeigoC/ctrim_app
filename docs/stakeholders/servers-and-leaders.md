@@ -34,7 +34,7 @@ When you want a bit more:
 
 Do the three steps above. Then open **Ministry Schedule** (Personal → **People & Teams**).
 
-It looks ahead at slots for a ministry, including slots that still need someone. It opens on your location and the ministries you belong to or head. If you head that ministry at that church, you can **assign people** on an upcoming slot from there. The time and the title of the slot stay on the post.
+It looks ahead at slots for a ministry, including slots that still need someone. It opens on your location and the ministries you belong to or head. **Mine** and **All** switch between those ministries and every tagged slot at the church. A **Needs people** card lists the next empty slots. If you belong to the ministry on a slot, you can put yourself on it or take yourself off. If you head that ministry at that church, you can **assign people** on an upcoming slot from there. The time and the title of the slot stay on the post.
 
 When the running order itself needs to change — a new item, a different time, who is on one event — that lives on the **post**. Open the post from the bulletin or from Ministry Schedule.
 

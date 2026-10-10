@@ -49,6 +49,7 @@ class UserActivitySubjects {
     UserActivityMessages.createdBulletinPost: UserActivityKind.post,
     UserActivityMessages.editedBulletinPost: UserActivityKind.post,
     UserActivityMessages.updatedPostInterest: UserActivityKind.post,
+    UserActivityMessages.updatedMinistrySchedule: UserActivityKind.post,
     UserActivityMessages.registeredVolunteer: UserActivityKind.person,
     UserActivityMessages.editedVolunteerProfile: UserActivityKind.person,
     UserActivityMessages.updatedProfilePhoto: UserActivityKind.person,

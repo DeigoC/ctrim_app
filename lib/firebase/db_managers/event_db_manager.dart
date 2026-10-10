@@ -8,6 +8,7 @@ import '../../models/event/event_log.dart';
 import '../../models/event/event_media.dart';
 import '../../models/event/event_metadata.dart';
 import '../../models/event/event_program.dart';
+import '../../utility/schedule_assignment_log.dart';
 import 'id_tracker.dart';
 
 class EventHeadDBManager {
@@ -213,23 +214,89 @@ class EventSupplementalDBManager {
 
   /// Replaces assignees on one programme role and leaves every other field.
   ///
-  /// Returns the programme after the write, or null when the document or
-  /// role is missing.
-  Future<EventProgram?> updateRoleAssignees({
+  /// When the people change, the same write adds a [ScheduleAssignmentLog]
+  /// line to the post's logs, sets `LastUID` to [editorUid], and moves the
+  /// head's `RecentDate` to [now] — an opened post is cached against that
+  /// date, so without it the post keeps showing the old programme.
+  ///
+  /// Returns null when the document or role is missing. [log] is null and
+  /// only the programme is written when the server already had these people.
+  Future<
+      ({
+        EventProgram program,
+        String? log,
+        List<String> removedUids,
+      })?> updateRoleAssignees({
     required int roleId,
     required List<String> uids,
+    required String editorUid,
+    required DateTime now,
   }) async {
-    final ref = _colRef.doc('program');
-    return FirebaseFirestore.instance.runTransaction((tx) async {
-      final snap = await tx.get(ref);
+    final firestore = FirebaseFirestore.instance;
+    final programRef = _colRef.doc('program');
+    final logsRef = _colRef.doc('logs');
+    final metadataRef = _colRef.doc('metadata');
+    final headRef = firestore.collection('events').doc(_postId);
+
+    final result = await firestore.runTransaction((tx) async {
+      final snap = await tx.get(programRef);
       final data = snap.data();
       if (!snap.exists || data is! Map) return null;
+      final logsSnap = await tx.get(logsRef);
+      final metadataSnap = await tx.get(metadataRef);
+
       final program = EventProgram.fromMap(Map<String, dynamic>.from(data));
-      final updated = program.replaceRoleAssignees(roleId: roleId, uids: uids);
-      if (!updated) return null;
-      tx.update(ref, program.toJson());
-      return program;
+      Map<String, dynamic>? role;
+      for (final entry in program.roles) {
+        if (entry['id'] == roleId) role = entry;
+      }
+      if (role == null) return null;
+      final before = _uidsOf(role);
+      program.replaceRoleAssignees(roleId: roleId, uids: uids);
+      tx.update(programRef, program.toJson());
+
+      final log = ScheduleAssignmentLog.describe(
+        role: role,
+        wholeEvent: ScheduleAssignmentLog.isWholeEventRole(
+          program: program,
+          roleId: roleId,
+        ),
+        before: before,
+        after: uids,
+      );
+      if (log == null) {
+        return (program: program, log: null, removedUids: const <String>[]);
+      }
+
+      final logsData = logsSnap.data();
+      final EventLog eventLog;
+      if (logsSnap.exists && logsData is Map) {
+        eventLog = EventLog.fromMap(Map<String, dynamic>.from(logsData));
+        eventLog.addLog(log: log, uid: editorUid, ts: now);
+      } else {
+        eventLog = EventLog({'uid': editorUid, 'log': log, 'ts': now});
+      }
+      tx.set(logsRef, eventLog.toJson());
+      if (metadataSnap.exists) {
+        tx.update(metadataRef, {'LastUID': editorUid});
+      }
+      tx.update(headRef, {'RecentDate': Timestamp.fromDate(now)});
+
+      final kept = uids.toSet();
+      return (
+        program: program,
+        log: log,
+        removedUids: before.where((id) => !kept.contains(id)).toList(),
+      );
     });
+    if (result?.log != null) await _touchEventsLastUpdate();
+    return result;
+  }
+
+  static List<String> _uidsOf(final Map<String, dynamic> role) {
+    final raw = role['uids'];
+    if (raw is! List) return const [];
+    return raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
   }
 
   // * Supplemental - MetaData

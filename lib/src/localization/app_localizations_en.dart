@@ -221,17 +221,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaShowFewer => 'Show less';
 
   @override
-  String teamRotaGaps(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count slots still need people',
-      one: '1 slot still needs people',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get teamRotaFilterShow => 'Show';
 
   @override
@@ -243,6 +232,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamRotaYou => 'You';
+
+  @override
+  String teamRotaCardGaps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count need people',
+      one: '1 needs people',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get teamRotaYoureServing => 'You\'re serving';
+
+  @override
+  String get teamRotaGapsCovered => 'Every slot in this view has someone';
+
+  @override
+  String get teamRotaMine => 'Mine';
+
+  @override
+  String get teamRotaAll => 'All';
+
+  @override
+  String get teamRotaClaim => 'I\'ll do this';
+
+  @override
+  String get teamRotaRelease => 'Take me off';
 
   @override
   String get teamRotaAssignPeople => 'Assign people';

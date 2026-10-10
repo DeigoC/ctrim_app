@@ -45,6 +45,8 @@ class TeamRotaPostCard extends StatelessWidget {
         : l10n.personalScheduleDateTbc;
     final canCollapse =
         post.roles.length > TeamRotaQuery.collapseAfterRoleCount;
+    final gapCount = TeamRotaQuery.unassignedCount(post);
+    final serving = TeamRotaQuery.viewerIsServing(post, currentUserId);
 
     return Material(
       color: Colors.transparent,
@@ -104,6 +106,33 @@ class TeamRotaPostCard extends StatelessWidget {
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
+                                ),
+                              ],
+                              if (gapCount > 0 || serving) ...[
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 12,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (gapCount > 0)
+                                      Text(
+                                        l10n.teamRotaCardGaps(gapCount),
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                          color: colorScheme.error,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    if (serving)
+                                      Text(
+                                        l10n.teamRotaYoureServing,
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                          color: colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ],
@@ -264,10 +293,19 @@ class TeamRotaPostCard extends StatelessWidget {
                   borderWidth: 1.2,
                 )
               else
-                Text(
-                  l10n.teamRotaUnassigned,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    l10n.teamRotaUnassigned,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],

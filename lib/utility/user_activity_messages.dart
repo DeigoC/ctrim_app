@@ -3,6 +3,7 @@ class UserActivityMessages {
   static const createdBulletinPost = 'Created a bulletin post';
   static const editedBulletinPost = 'Edited a bulletin post';
   static const updatedPostInterest = 'Updated post interest';
+  static const updatedMinistrySchedule = 'Updated a ministry schedule';
 
   static const registeredVolunteer = 'Registered a person';
   static const editedVolunteerProfile = 'Edited a profile';
