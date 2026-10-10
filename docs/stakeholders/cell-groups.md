@@ -28,7 +28,7 @@ When a bulletin **post** or **template** is linked to a cell group, organisers c
 
 ### Adding a meeting from the group
 
-An area admin can choose two things on the edit group page: the **parent post** for the current period (for example “Diego’s cell group 2026”) and the **template** that group’s meetings use. Leaders then see **Add meeting** next to Recent meetings. That starts a new post from the template, already filed under that parent. The parent’s title is shown there, so it is clear which period the meeting belongs to. Until both are chosen, only area admins see **Set up meeting posts**.
+An area admin can choose two things on the edit group page: the **parent post** for the current period (for example “Diego’s cell group 2026”) and the **template** that group’s meetings use. Leaders then see **Add meeting** next to Recent meetings. That starts a new post from the template, already filed under that parent. The parent’s title is shown there, so it is clear which period the meeting belongs to. Until both are chosen, only area admins see **Set up meeting posts**. If the meeting date is already in the past and you mark who attended, and you leave the title as the template’s title, saving adds those shortened names to the title. A title you edit yourself is kept as written.
 
 More on posts: [Events & bulletin](events-and-bulletin.md).
 

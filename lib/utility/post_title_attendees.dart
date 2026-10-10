@@ -51,6 +51,29 @@ class PostTitleAttendees {
     return '$forename $initials.';
   }
 
+  /// Title written when a new cell-group post is saved.
+  ///
+  /// When [title] still matches [defaultTitle] and the post is linked to a
+  /// cell group, appends [shortenedNames]. A custom title, a post with no
+  /// cell group, or an empty name list is returned unchanged. Pass only the
+  /// people who will be stored as attended.
+  static String resolveNewCellGroupTitle({
+    required String title,
+    required String defaultTitle,
+    required bool linkedToCellGroup,
+    required List<String> shortenedNames,
+    Random? random,
+  }) {
+    final typed = title.trim();
+    if (!linkedToCellGroup || typed != defaultTitle.trim()) return typed;
+    return appendToTitle(
+          title: typed,
+          shortenedNames: shortenedNames,
+          random: random,
+        ) ??
+        typed;
+  }
+
   /// Shuffles [shortenedNames], then fits a prefix into the title.
   static String? appendToTitle({
     required String title,

@@ -120,7 +120,7 @@ People with **Leader** access can create posts (usually by picking a **template*
 
 The **author** of a post, plus anyone listed as a **contributor** on that post, can edit it — for example:
 
-- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. The create screen and templates do not offer this.
+- Title, about text, and details. On a saved post, **Title & details** includes **Add who attended** when people are already marked attended. It keeps the title and adds shuffled shortened names from that list (for example `w/ John D., Mary S. +3`), staying within the title length. The same group does not always show the same names first. When you **create** a cell group post, leave the title as the template’s title, and mark who attended, saving does that fill for you. A title you have changed stays as you wrote it. Templates do not offer this button.
 - **Speakers**, up to three, in sermon order. The first person’s photo is the cover when the post has no pictures. On Title & details, move someone earlier or later to change who that cover is. Templates can store the same list.  
 - Media (photos / video)  
 - Schedule and role assignments  

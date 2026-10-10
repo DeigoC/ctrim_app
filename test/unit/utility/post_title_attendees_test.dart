@@ -172,6 +172,75 @@ void main() {
     });
   });
 
+  group('PostTitleAttendees.resolveNewCellGroupTitle', () {
+    const names = ['Ann A.', 'Bob B.'];
+
+    test('appends attendees when the cell-group title is still the default',
+        () {
+      final title = PostTitleAttendees.resolveNewCellGroupTitle(
+        title: "Diego's Cell group",
+        defaultTitle: "Diego's Cell group",
+        linkedToCellGroup: true,
+        shortenedNames: names,
+        random: Random(1),
+      );
+
+      expect(title, startsWith("Diego's Cell group w/ "));
+      expect(title, contains('Ann A.'));
+      expect(title, contains('Bob B.'));
+    });
+
+    test('leaves a title the organiser has edited', () {
+      expect(
+        PostTitleAttendees.resolveNewCellGroupTitle(
+          title: 'Tuesday night',
+          defaultTitle: "Diego's Cell group",
+          linkedToCellGroup: true,
+          shortenedNames: names,
+          random: Random(1),
+        ),
+        'Tuesday night',
+      );
+    });
+
+    test('leaves a post that is not linked to a cell group', () {
+      expect(
+        PostTitleAttendees.resolveNewCellGroupTitle(
+          title: 'Sunday Service',
+          defaultTitle: 'Sunday Service',
+          linkedToCellGroup: false,
+          shortenedNames: names,
+          random: Random(1),
+        ),
+        'Sunday Service',
+      );
+    });
+
+    test('leaves the default title when nobody attended', () {
+      expect(
+        PostTitleAttendees.resolveNewCellGroupTitle(
+          title: "Diego's Cell group",
+          defaultTitle: "Diego's Cell group",
+          linkedToCellGroup: true,
+          shortenedNames: const [],
+        ),
+        "Diego's Cell group",
+      );
+    });
+
+    test('treats surrounding whitespace as the same default title', () {
+      final title = PostTitleAttendees.resolveNewCellGroupTitle(
+        title: "  Diego's Cell group  ",
+        defaultTitle: "Diego's Cell group",
+        linkedToCellGroup: true,
+        shortenedNames: const ['Ann A.'],
+        random: Random(1),
+      );
+
+      expect(title, "Diego's Cell group w/ Ann A.");
+    });
+  });
+
   group('PostTitleAttendees.appendToTitle', () {
     test('shuffles with the given random before fitting', () {
       const names = [
