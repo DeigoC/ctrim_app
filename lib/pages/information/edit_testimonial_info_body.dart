@@ -127,6 +127,7 @@ class _EditTestimonialInfoBodyState extends State<EditTestimonialInfoBody>
           ? UserActivityMessages.createdTestimonial
           : UserActivityMessages.editedTestimonial,
       documentId: testimonial.id,
+      title: testimonial.name,
     );
   }
 
@@ -137,6 +138,7 @@ class _EditTestimonialInfoBodyState extends State<EditTestimonialInfoBody>
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.deletedTestimonial,
       documentId: widget.info!.id,
+      title: widget.info!.name,
     );
   }
 }

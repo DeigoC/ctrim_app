@@ -357,6 +357,7 @@ class _EditProfilePicturePageState extends State<EditProfilePicturePage> {
           actorUserId: _appContext.currentUser.id,
           log: UserActivityMessages.updatedProfilePhoto,
           documentId: _appContext.currentUser.id,
+          title: _appContext.currentUser.fullname,
         );
       },
     );

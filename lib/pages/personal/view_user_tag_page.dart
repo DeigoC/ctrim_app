@@ -1013,6 +1013,7 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
         actorUserId: appContext.currentUser.id,
         log: UserActivityMessages.editedUserTag,
         documentId: tag.id,
+        title: tag.name,
       );
     } catch (e, st) {
       debugPrint('Could not save team tag ${tag.id}: $e\n$st');

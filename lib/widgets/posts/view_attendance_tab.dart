@@ -592,6 +592,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           actorUserId: userId,
           log: UserActivityMessages.updatedPostInterest,
           documentId: widget.eventContext.id,
+          title: widget.eventContext.head.title,
         );
 
         onProgress(
@@ -637,6 +638,7 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
           actorUserId: actorId,
           log: UserActivityMessages.updatedPostInterest,
           documentId: widget.eventContext.id,
+          title: widget.eventContext.head.title,
         );
       },
     );

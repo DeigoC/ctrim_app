@@ -1239,6 +1239,7 @@ class _EditTemplatePageState extends State<EditTemplatePage>
       actorUserId: _appContext.currentUser.id,
       log: UserActivityMessages.editedPostTemplate,
       documentId: updatedTemplate.id,
+      title: updatedTemplate.title,
     );
 
     // Upsert locally — do not clear the whole box (would wipe other templates).

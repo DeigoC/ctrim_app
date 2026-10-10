@@ -241,6 +241,7 @@ class EventContext {
       actorUserId: uid,
       log: UserActivityMessages.createdBulletinPost,
       documentId: newID,
+      title: title,
     );
     return newID;
   }
@@ -301,6 +302,8 @@ class EventContext {
       actorUserId: uid,
       log: UserActivityMessages.editedBulletinPost,
       documentId: id,
+      title: _head.title,
+      note: log,
     );
   }
 

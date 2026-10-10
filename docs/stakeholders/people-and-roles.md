@@ -107,7 +107,7 @@ Each person shows at most one of **Admin** or **Leader** from their profile perm
 
 When organisers pick people for **programme roles**, speakers, contributors, pastors, or cell-group leaders, the picker also starts on serving people (turn Serving off there too if you need someone else). Attendance, expected attendees, and cell members still list everyone.
 
-Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list, including which record was changed.
+Opening someone’s profile also shows their **recent activity** — a short list of the last few things they saved in the app (for example creating a bulletin post, editing a profile, or adding a church page). Anyone who can open the profile can see those last few lines. **Area admins** can open the full activity list. Each line names what was changed (the post title, the person, the church page, and so on), and a post edit also shows the short update the editor wrote. Tap a line to open that post, profile, or page; anything since deleted stays listed but no longer opens. Guests see a person's name the same way they do elsewhere, surname initial only.
 
 The profile also lists up to three **recent contributor posts** (from the bulletin posts already loaded). Tap a post to open it. **View posts** still opens the full list of posts they author or contribute to.
 

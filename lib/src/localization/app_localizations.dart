@@ -700,12 +700,6 @@ abstract class AppLocalizations {
   /// **'Only area admins can view the full activity log.'**
   String get userActivityDenied;
 
-  /// Subtitle showing the Firestore document ID for paper trailing
-  ///
-  /// In en, this message translates to:
-  /// **'Record {id}'**
-  String userActivityDocumentId(String id);
-
   /// Generic cancel button label
   ///
   /// In en, this message translates to:

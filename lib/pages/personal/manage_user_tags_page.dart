@@ -251,6 +251,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.editedUserTag,
           documentId: existing.id,
+          title: existing.name,
         );
       } else {
         final nextOrder = appContext.allTags.isEmpty
@@ -272,6 +273,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.createdUserTag,
           documentId: tag.id,
+          title: tag.name,
         );
       }
     } finally {
@@ -324,6 +326,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
             Provider.of<AppContext>(context, listen: false).currentUser.id,
         log: UserActivityMessages.deletedUserTag,
         documentId: tag.id,
+        title: tag.name,
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -366,6 +369,7 @@ class _ManageUserTagsPageState extends State<ManageUserTagsPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.createdUserTag,
           documentId: tag.id,
+          title: tag.name,
         );
       }
     } finally {

@@ -1057,6 +1057,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             actorUserId: appContext.currentUser.id,
             log: UserActivityMessages.editedCellGroup,
             documentId: group.id,
+            title: group.name,
           );
         } else {
           final created = await db.createGroup(
@@ -1082,6 +1083,7 @@ class _EditCellGroupPageState extends State<EditCellGroupPage> {
             actorUserId: appContext.currentUser.id,
             log: UserActivityMessages.createdCellGroup,
             documentId: created.id,
+            title: created.name,
           );
         }
       },

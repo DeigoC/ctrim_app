@@ -264,6 +264,7 @@ class _EditUserLocationMediaPageState extends State<EditUserLocationMediaPage> {
         actorUserId: appContext.currentUser.id,
         log: UserActivityMessages.editedLocation,
         documentId: location.id,
+        title: location.name,
       );
       _isSaved = true;
       _popRouteAfterAllowing();

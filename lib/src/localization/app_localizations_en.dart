@@ -409,11 +409,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only area admins can view the full activity log.';
 
   @override
-  String userActivityDocumentId(String id) {
-    return 'Record $id';
-  }
-
-  @override
   String get cancel => 'Cancel';
 
   @override

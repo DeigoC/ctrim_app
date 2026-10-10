@@ -400,6 +400,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           actorUserId: _appContext.currentUser.id,
           log: UserActivityMessages.createdPostTemplate,
           documentId: result.id,
+          title: createdTemplate!.title,
         );
       },
     );
@@ -452,6 +453,7 @@ class _ViewTemplatesPageState extends State<ViewTemplatesPage> {
           actorUserId: _appContext.currentUser.id,
           log: UserActivityMessages.createdPostTemplate,
           documentId: result.id,
+          title: duplicated!.title,
         );
       },
     );

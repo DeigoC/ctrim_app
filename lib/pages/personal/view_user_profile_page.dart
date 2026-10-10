@@ -19,6 +19,8 @@ import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/cell_group_roster_cache.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/app_links.dart';
+import '../../utility/user_activity_lookups.dart';
+import '../../utility/user_activity_subjects.dart';
 import '../../utility/user_cell_group_attendance.dart';
 import '../../utility/volunteer_role_helpers.dart';
 import '../../widgets/common/load_progress_body.dart';
@@ -26,6 +28,7 @@ import '../../widgets/common/permalink_app_bar_leading.dart';
 import '../../widgets/my_avatar_stack.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
+import '../../widgets/personal/user_activity_tile.dart';
 import '../../widgets/personal/user_contributor_posts_preview.dart';
 import '../../widgets/volunteer_role_badge.dart';
 import '../view_gallery_page.dart';
@@ -66,6 +69,8 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
   List<CellGroup> _cellGroups = const [];
   UserCellGroupAttendanceSummary? _cellGroupAttendance;
   Object? _postsError;
+  List<UserActivitySubject> _activitySubjects = const [];
+  UserActivityLookupData _activityLookupData = UserActivityLookupData.empty;
 
   @override
   void initState() {
@@ -117,7 +122,22 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
       });
 
       _user.setActivity(await _userDBManager.fetchActivity(_user.id));
+      final activityPreview =
+          _user.activity?.preview ?? const <UserActivityRecord>[];
+      final activityLookups = await UserActivityLookupLoader.load(
+        records: activityPreview,
+        appContext: _appContext,
+      );
       if (!mounted) return;
+      _activityLookupData = activityLookups;
+      _activitySubjects = [
+        for (final record in activityPreview)
+          UserActivitySubjects.resolve(
+            record,
+            lookups: activityLookups.lookups,
+            guest: _appContext.isCurrentUserGuest,
+          ),
+      ];
 
       setState(() {
         _completedSteps = 3;
@@ -720,14 +740,19 @@ class _ViewUserProfilePageState extends State<ViewUserProfilePage> {
     }
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           for (var i = 0; i < preview.length; i++) ...[
             if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-            ListTile(
-              leading: Icon(Icons.history, color: colorScheme.primary),
-              title: Text(preview[i].log),
-              subtitle: Text(_activityDateFormat.format(preview[i].ts)),
+            UserActivityTile(
+              record: preview[i],
+              subject: i < _activitySubjects.length
+                  ? _activitySubjects[i]
+                  : UserActivitySubjects.resolve(preview[i],
+                      guest: _appContext.isCurrentUserGuest),
+              dateLabel: _activityDateFormat.format(preview[i].ts),
+              lookupData: _activityLookupData,
             ),
           ],
         ],

@@ -507,15 +507,6 @@
   "@userActivityDenied": {
     "description": "Access denied copy on the full activity page"
   },
-  "userActivityDocumentId": "Record {id}",
-  "@userActivityDocumentId": {
-    "description": "Subtitle showing the Firestore document ID for paper trailing",
-    "placeholders": {
-      "id": {
-        "type": "String"
-      }
-    }
-  },
   "cancel": "Cancel",
   "@cancel": {
     "description": "Generic cancel button label"

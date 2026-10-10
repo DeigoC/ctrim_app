@@ -1153,6 +1153,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.registeredVolunteer,
           documentId: user.id,
+          title: user.fullname,
         );
         setState(() {
           final max = widget.maxSelection;

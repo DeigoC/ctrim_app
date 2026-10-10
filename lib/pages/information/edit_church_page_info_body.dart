@@ -126,6 +126,8 @@ class _EditChurchPageInfoBodyState extends State<EditChurchPageInfoBody>
           ? UserActivityMessages.createdChurchPage
           : UserActivityMessages.editedChurchPage,
       documentId: page.id,
+      title: page.title,
+      parentId: parentChurchId,
     );
   }
 
@@ -140,6 +142,8 @@ class _EditChurchPageInfoBodyState extends State<EditChurchPageInfoBody>
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.deletedChurchPage,
       documentId: widget.info!.id,
+      title: widget.info!.title,
+      parentId: parentChurchId,
     );
   }
 }

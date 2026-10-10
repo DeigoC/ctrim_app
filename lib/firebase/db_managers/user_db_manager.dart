@@ -204,6 +204,9 @@ class UserDBManager {
     required String actorUserId,
     required String log,
     required String documentId,
+    String title = '',
+    String note = '',
+    String parentId = '',
   }) async {
     if (actorUserId.isEmpty || actorUserId == '0') return;
     final activityRef = _activityRef(actorUserId);
@@ -212,7 +215,14 @@ class UserDBManager {
       final existing = snap.exists && snap.data() != null
           ? UserActivityLog.fromMap(snap.data()!)
           : UserActivityLog();
-      existing.add(log: log, documentId: documentId, ts: DateTime.now());
+      existing.add(
+        log: log,
+        documentId: documentId,
+        ts: DateTime.now(),
+        title: title,
+        note: note,
+        parentId: parentId,
+      );
       txn.set(activityRef, existing.toJson());
     });
   }

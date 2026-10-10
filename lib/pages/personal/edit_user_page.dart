@@ -803,6 +803,7 @@ class _EditUserPageState extends State<EditUserPage> {
           actorUserId: actorUserId,
           log: UserActivityMessages.linkedVolunteerAccount,
           documentId: updated.id,
+          title: updated.fullname,
         );
       },
     );
@@ -854,6 +855,7 @@ class _EditUserPageState extends State<EditUserPage> {
           actorUserId: actorUserId,
           log: UserActivityMessages.unlinkedVolunteerAccount,
           documentId: updated.id,
+          title: updated.fullname,
         );
       },
     );
@@ -1016,6 +1018,7 @@ class _EditUserPageState extends State<EditUserPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.editedVolunteerProfile,
           documentId: userToSave.id,
+          title: userToSave.fullname,
         );
 
         setState(() {

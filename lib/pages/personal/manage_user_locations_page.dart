@@ -158,6 +158,7 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.editedLocation,
           documentId: existing.id,
+          title: existing.name,
         );
       } else {
         final nextOrder = appContext.allLocations.isEmpty
@@ -175,6 +176,7 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.createdLocation,
           documentId: location.id,
+          title: location.name,
         );
       }
     } finally {
@@ -231,6 +233,7 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
             Provider.of<AppContext>(context, listen: false).currentUser.id,
         log: UserActivityMessages.deletedLocation,
         documentId: location.id,
+        title: location.name,
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -271,6 +274,7 @@ class _ManageUserLocationsPageState extends State<ManageUserLocationsPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.createdLocation,
           documentId: location.id,
+          title: location.name,
         );
       }
     } finally {

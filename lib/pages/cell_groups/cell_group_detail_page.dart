@@ -334,6 +334,7 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
           actorUserId: appContext.currentUser.id,
           log: UserActivityMessages.updatedCellMembers,
           documentId: group.id,
+          title: group.name,
         );
       },
     );

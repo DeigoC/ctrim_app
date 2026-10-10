@@ -1534,6 +1534,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       actorUserId: appContext.currentUser.id,
       log: log,
       documentId: church.id,
+      title: church.title,
     );
   }
 
@@ -1549,6 +1550,7 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
       actorUserId: appContext.currentUser.id,
       log: UserActivityMessages.deletedChurchRecord,
       documentId: id,
+      title: widget.info!.title,
     );
   }
 }
