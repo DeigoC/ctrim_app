@@ -424,19 +424,25 @@ class _TagCard extends StatelessWidget {
         side: BorderSide(color: colorScheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onOpen,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (tag.imageUrl != null)
-              UserTagGraphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (tag.imageUrl != null)
+            UserTagGraphic(
+              imageUrl: tag.imageUrl,
+              height: UserTagGraphic.cardHeight,
+              borderRadius: 0,
+              heroTag: UserTagGraphic.coverHeroTag(tag.id),
+              onTap: () => UserTagGraphic.openCoverViewer(
+                context,
+                tagId: tag.id,
+                tagName: tag.name,
                 imageUrl: tag.imageUrl,
-                height: 140,
-                borderRadius: 0,
-                heroTag: 'user_tag_cover_${tag.id}',
               ),
-            Padding(
+            ),
+          InkWell(
+            onTap: onOpen,
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,8 +533,8 @@ class _TagCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
