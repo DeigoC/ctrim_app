@@ -52,7 +52,8 @@ void main() {
       ),
     );
 
-    expect(find.byType(SizedBox), findsOneWidget);
-    expect(tester.getSize(find.byType(SizedBox)), Size.zero);
+    final graphic = find.byType(UserTagGraphic);
+    expect(graphic, findsOneWidget);
+    expect(tester.getSize(graphic), Size.zero);
   });
 }

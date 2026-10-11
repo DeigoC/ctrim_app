@@ -385,6 +385,12 @@ abstract final class CachedImageLoader {
     if (bytes.isEmpty) return;
     _memoryBytes[cacheKeyFor(imageUrl)] = bytes;
   }
+
+  /// Test helper so widget tests can paint a cover without network I/O.
+  @visibleForTesting
+  static void debugRememberBytes(final String imageUrl, final Uint8List bytes) {
+    _remember(imageUrl, bytes);
+  }
 }
 
 class TimeoutException implements Exception {
