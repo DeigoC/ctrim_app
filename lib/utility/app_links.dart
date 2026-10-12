@@ -15,7 +15,7 @@ import '../models/user.dart';
 class AppLinks {
   AppLinks._();
 
-  static const String webOrigin = 'https://ctrim.app';
+  static const String webOrigin = 'https://ctrim.org';
 
   /// Main shell tabs, in home-page order (Bulletin, CTRIM, Cell Groups, Personal).
   ///

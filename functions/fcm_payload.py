@@ -13,7 +13,7 @@ _DRIVE_HOST_HINTS = (
     'drive.usercontent.google.com',
 )
 # Same origin as ShareWebAppPage.webAppLink — FCM web click fallback.
-_WEB_APP_ORIGIN = 'https://ctrim.app'
+_WEB_APP_ORIGIN = 'https://ctrim.org'
 
 
 def is_valid_fcm_topic(topic: str) -> bool:

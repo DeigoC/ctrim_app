@@ -304,7 +304,7 @@ class _ShareWebAppPageState extends State<ShareWebAppPage> {
                 context,
                 '1',
                 'Open the link',
-                'Visit https://ctrim.app in Chrome, Edge, or Safari.',
+                'Visit ${AppLinks.webOrigin} in Chrome, Edge, or Safari.',
               ),
               const SizedBox(height: 12),
               _buildInstructionStep(

@@ -31,20 +31,20 @@ void main() {
     });
 
     test('uses the public web origin', () {
-      expect(AppLinks.postUrl('post-42'), 'https://ctrim.app/post/post-42');
+      expect(AppLinks.postUrl('post-42'), 'https://ctrim.org/post/post-42');
       expect(
         AppLinks.cellGroupUrl('cg-1'),
-        'https://ctrim.app/cell-groups/cg-1',
+        'https://ctrim.org/cell-groups/cg-1',
       );
       expect(
-          AppLinks.churchUrl('belfast'), 'https://ctrim.app/churches/belfast');
+          AppLinks.churchUrl('belfast'), 'https://ctrim.org/churches/belfast');
       expect(AppLinks.infoUrl('core_values'),
-          'https://ctrim.app/info/core_values');
+          'https://ctrim.org/info/core_values');
       expect(
         AppLinks.testimonialUrl('t-1'),
-        'https://ctrim.app/testimonials/t-1',
+        'https://ctrim.org/testimonials/t-1',
       );
-      expect(AppLinks.personUrl('u-1'), 'https://ctrim.app/people/u-1');
+      expect(AppLinks.personUrl('u-1'), 'https://ctrim.org/people/u-1');
     });
   });
 
@@ -63,7 +63,7 @@ void main() {
     test('maps postId query to /post/:id', () {
       expect(
         AppLinks.redirectFromUri(
-            Uri.parse('https://ctrim.app/?postId=post-42')),
+            Uri.parse('https://ctrim.org/?postId=post-42')),
         '/post/post-42',
       );
     });
@@ -71,19 +71,19 @@ void main() {
     test('maps infoPage query to /info/:id', () {
       expect(
         AppLinks.redirectFromUri(
-            Uri.parse('https://ctrim.app/?infoPage=core_values')),
+            Uri.parse('https://ctrim.org/?infoPage=core_values')),
         '/info/core_values',
       );
       expect(
         AppLinks.redirectFromUri(Uri.parse(
-            'https://ctrim.app/?infoPage=assets/info/ctrim_info/4xd.json')),
+            'https://ctrim.org/?infoPage=assets/info/ctrim_info/4xd.json')),
         '/info/4xd',
       );
     });
 
     test('returns null when there is no known query', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/bulletin')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.org/bulletin')),
         isNull,
       );
     });
@@ -91,7 +91,7 @@ void main() {
     test('prefers postId when both query params are present', () {
       expect(
         AppLinks.redirectFromUri(
-          Uri.parse('https://ctrim.app/?postId=p1&infoPage=core_values'),
+          Uri.parse('https://ctrim.org/?postId=p1&infoPage=core_values'),
         ),
         '/post/p1',
       );
@@ -99,14 +99,14 @@ void main() {
 
     test('ignores empty postId', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/?postId=')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.org/?postId=')),
         isNull,
       );
     });
 
     test('encodes ids in the redirected path', () {
       expect(
-        AppLinks.redirectFromUri(Uri.parse('https://ctrim.app/?postId=a b')),
+        AppLinks.redirectFromUri(Uri.parse('https://ctrim.org/?postId=a b')),
         '/post/a%20b',
       );
     });
@@ -139,14 +139,14 @@ void main() {
     test('sends / to the startup tab and leaves a section link', () {
       expect(
         AppLinks.redirectLocation(
-          Uri.parse('https://ctrim.app/'),
+          Uri.parse('https://ctrim.org/'),
           preferredHomeTab: AppLinks.personalTab,
         ),
         '/personal',
       );
       expect(
         AppLinks.redirectLocation(
-          Uri.parse('https://ctrim.app/bulletin'),
+          Uri.parse('https://ctrim.org/bulletin'),
           preferredHomeTab: AppLinks.ctrimTab,
         ),
         isNull,
@@ -156,7 +156,7 @@ void main() {
     test('still prefers a legacy post query over the startup tab', () {
       expect(
         AppLinks.redirectLocation(
-          Uri.parse('https://ctrim.app/?postId=post-42'),
+          Uri.parse('https://ctrim.org/?postId=post-42'),
           preferredHomeTab: AppLinks.personalTab,
         ),
         '/post/post-42',

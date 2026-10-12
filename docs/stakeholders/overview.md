@@ -28,7 +28,7 @@ People who serve or lead a ministry can start with **[For servers & leaders](ser
 | **Cell Groups** | Small groups — in development and testing | [Cell Groups](cell-groups.md) |
 | **Personal** | Sign-in, profile, schedule, notifications, people directory | [Personal](personal.md) |
 
-The address bar follows the section you are in: `ctrim.app/bulletin`, `ctrim.app/ctrim`, `ctrim.app/cell-groups`, and `ctrim.app/personal`. Opening the plain site address still uses the startup tab from Personal settings.
+The address bar follows the section you are in: `ctrim.org/bulletin`, `ctrim.org/ctrim`, `ctrim.org/cell-groups`, and `ctrim.org/personal`. Opening the plain site address still uses the startup tab from Personal settings.
 
 **Glossary:** [Key concepts](key-concepts.md) — post, serving, interest, bookmark, and other terms.
 

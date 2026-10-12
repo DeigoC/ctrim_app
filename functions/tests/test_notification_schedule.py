@@ -192,7 +192,7 @@ class NotificationScheduleTests(unittest.TestCase):
         self.assertEqual(calls[0].data['PostID'], 'post-1')
         self.assertEqual(
             calls[0].webpush.fcm_options.link,
-            'https://ctrim.app/post/post-1',
+            'https://ctrim.org/post/post-1',
         )
         self.assertEqual(calls[0].android.notification.image, 'https://example.com/cover.png')
         self.assertIsNone(calls[1].android.notification)

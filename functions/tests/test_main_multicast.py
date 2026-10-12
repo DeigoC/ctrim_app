@@ -20,7 +20,7 @@ class MainMulticastTests(unittest.TestCase):
         self.assertEqual(msg.notification.title, 'Hello')
         self.assertEqual(
             msg.webpush.fcm_options.link,
-            'https://ctrim.app/post/post-99',
+            'https://ctrim.org/post/post-99',
         )
 
 

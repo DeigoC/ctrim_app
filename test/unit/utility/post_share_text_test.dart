@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('PostShareText', () {
     test('link is the public post address', () {
-      expect(PostShareText.link('abc'), 'https://ctrim.app/post/abc');
+      expect(PostShareText.link('abc'), 'https://ctrim.org/post/abc');
     });
 
     test('write-up starts with the title and link, then the plain text', () {
@@ -18,7 +18,7 @@ void main() {
 
       expect(
         text,
-        'Sunday\nhttps://ctrim.app/post/abc\n---\n\nWelcome everyone',
+        'Sunday\nhttps://ctrim.org/post/abc\n---\n\nWelcome everyone',
       );
     });
 
@@ -48,7 +48,7 @@ void main() {
       );
 
       expect(text, contains('failed'));
-      expect(text, startsWith('Sunday\nhttps://ctrim.app/post/abc\n---'));
+      expect(text, startsWith('Sunday\nhttps://ctrim.org/post/abc\n---'));
     });
   });
 }
