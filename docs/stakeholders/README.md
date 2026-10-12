@@ -4,7 +4,7 @@ Audience-facing docs for CTRIM Community (`ctrim_app`): what the product is, who
 
 ## Published site
 
-These files are built with **MkDocs Material** and deployed to **GitHub Pages** on push to `main` (when this folder or `mkdocs.yml` changes).
+These files are built with **MkDocs Material** and deployed to **GitHub Pages** on push to `main` or a `*_development*` branch (when this folder or `mkdocs.yml` changes). The last push wins, whichever branch it came from.
 
 | | |
 |--|--|
@@ -71,5 +71,6 @@ After the workflow has run once on `main`:
 1. Repo **Settings → Pages**
 2. **Source:** GitHub Actions
 3. Confirm the deploy succeeded under **Actions**
+4. **Settings → Environments → github-pages → Deployment branches:** add `*_development*` next to `main`, or development pushes fail with "not allowed to deploy to github-pages"
 
 Private repos need a plan that includes GitHub Pages.

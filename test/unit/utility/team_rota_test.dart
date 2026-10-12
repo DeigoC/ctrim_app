@@ -375,7 +375,7 @@ void main() {
       );
     });
 
-    test('a member who is not a head cannot assign', () {
+    test('a member of the ministry can assign the slot', () {
       expect(
         TeamRotaQuery.canAssignRole(
           actor: person(id: 'member', tagIDs: ['worship']),
@@ -390,6 +390,34 @@ void main() {
               },
             ),
           ],
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a member of another ministry cannot assign the slot', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'member', tagIDs: ['welcome']),
+          role: slot(id: 1, tagIDs: ['worship'], start: later),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship'), ministry(id: 'welcome')],
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a started slot is locked for a ministry member', () {
+      expect(
+        TeamRotaQuery.canAssignRole(
+          actor: person(id: 'member', tagIDs: ['worship']),
+          role: slot(id: 1, tagIDs: ['worship'], start: earlier),
+          eventDate: eventDay,
+          locationId: 'belfast',
+          allTags: [ministry(id: 'worship')],
           now: now,
         ),
         isFalse,

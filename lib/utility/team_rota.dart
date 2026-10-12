@@ -137,9 +137,10 @@ class TeamRotaQuery {
     return day.isBefore(today);
   }
 
-  /// Area admins may assign any tagged slot. A ministry head may assign a
-  /// slot tagged with a ministry they head at [locationId]. Everyone else
-  /// is read-only. A started slot is locked for both.
+  /// Area admins may assign any tagged slot. A member of one of the slot's
+  /// ministries may assign it, lead or not. A ministry head may assign a slot
+  /// they head at [locationId] even when they are not a member. A started
+  /// slot is locked. A slot with no ministry is locked.
   static bool canAssignRole({
     required User actor,
     required Map<String, dynamic> role,
@@ -154,6 +155,7 @@ class TeamRotaQuery {
     final tagIds = EventProgram.tagIDsOf(role);
     if (tagIds.isEmpty) return false;
     if (actor.isAreaAdmin) return true;
+    if (actor.hasAnyTag(tagIds)) return true;
     final siteId = locationId?.trim() ?? '';
     if (siteId.isEmpty) return false;
     for (final tagId in tagIds) {
