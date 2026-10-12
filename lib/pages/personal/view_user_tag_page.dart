@@ -328,8 +328,14 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
         if (tag.imageUrl != null) ...[
           UserTagGraphic(
             imageUrl: tag.imageUrl,
-            height: 200,
-            heroTag: 'user_tag_cover_${tag.id}',
+            height: UserTagGraphic.detailHeight,
+            heroTag: UserTagGraphic.coverHeroTag(tag.id),
+            onTap: () => UserTagGraphic.openCoverViewer(
+              context,
+              tagId: tag.id,
+              tagName: tag.name,
+              imageUrl: tag.imageUrl,
+            ),
           ),
           const SizedBox(height: 16),
         ],
