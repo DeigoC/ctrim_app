@@ -484,6 +484,54 @@ abstract class AppLocalizations {
   /// **'You\'re serving'**
   String get teamRotaYoureServing;
 
+  /// Names the one schedule slot the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {role}'**
+  String teamRotaYoureOnOne(String role);
+
+  /// Names the two schedule slots the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {first} and {second}'**
+  String teamRotaYoureOnTwo(String first, String second);
+
+  /// Names the three schedule slots the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {first}, {second}, and {third}'**
+  String teamRotaYoureOnThree(String first, String second, String third);
+
+  /// Names the first two schedule slots and how many more the signed-in person is on
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {first}, {second}, and {extra} more'**
+  String teamRotaYoureOnMore(String first, String second, int extra);
+
+  /// Heading for people covering a stretch of the event on the whole-schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'On duty'**
+  String get teamRotaOnDuty;
+
+  /// Heading for the timed sequence on the whole-schedule page
+  ///
+  /// In en, this message translates to:
+  /// **'Running order'**
+  String get teamRotaRunningOrder;
+
+  /// A running-order slot uses the same people as an on-duty role
+  ///
+  /// In en, this message translates to:
+  /// **'Same as {title}'**
+  String teamRotaSameAs(String title);
+
+  /// How many people are on a schedule slot when the faces are abbreviated
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}}'**
+  String teamRotaPeopleCount(int count);
+
   /// Needs people card when the current ministry-schedule filters have no empty slots
   ///
   /// In en, this message translates to:

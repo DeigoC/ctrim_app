@@ -55,7 +55,7 @@ class TeamRotaPostCard extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 6),
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -174,8 +174,7 @@ class TeamRotaPostCard extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: TextButton.icon(
         style: TextButton.styleFrom(
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.only(top: 6),
+          padding: const EdgeInsets.fromLTRB(0, 14, 8, 4),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           alignment: Alignment.centerLeft,

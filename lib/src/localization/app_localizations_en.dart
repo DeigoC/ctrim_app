@@ -243,6 +243,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaYoureServing => 'You\'re serving';
 
   @override
+  String teamRotaYoureOnOne(String role) {
+    return 'You\'re on $role';
+  }
+
+  @override
+  String teamRotaYoureOnTwo(String first, String second) {
+    return 'You\'re on $first and $second';
+  }
+
+  @override
+  String teamRotaYoureOnThree(String first, String second, String third) {
+    return 'You\'re on $first, $second, and $third';
+  }
+
+  @override
+  String teamRotaYoureOnMore(String first, String second, int extra) {
+    return 'You\'re on $first, $second, and $extra more';
+  }
+
+  @override
+  String get teamRotaOnDuty => 'On duty';
+
+  @override
+  String get teamRotaRunningOrder => 'Running order';
+
+  @override
+  String teamRotaSameAs(String title) {
+    return 'Same as $title';
+  }
+
+  @override
+  String teamRotaPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get teamRotaGapsCovered => 'Every slot in this view has someone';
 
   @override

@@ -315,6 +315,84 @@
   "@teamRotaYoureServing": {
     "description": "Marks a ministry-schedule event the signed-in person is on"
   },
+  "teamRotaYoureOnOne": "You're on {role}",
+  "@teamRotaYoureOnOne": {
+    "description": "Names the one schedule slot the signed-in person is on",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "teamRotaYoureOnTwo": "You're on {first} and {second}",
+  "@teamRotaYoureOnTwo": {
+    "description": "Names the two schedule slots the signed-in person is on",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "teamRotaYoureOnThree": "You're on {first}, {second}, and {third}",
+  "@teamRotaYoureOnThree": {
+    "description": "Names the three schedule slots the signed-in person is on",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      },
+      "third": {
+        "type": "String"
+      }
+    }
+  },
+  "teamRotaYoureOnMore": "You're on {first}, {second}, and {extra} more",
+  "@teamRotaYoureOnMore": {
+    "description": "Names the first two schedule slots and how many more the signed-in person is on",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      },
+      "extra": {
+        "type": "int"
+      }
+    }
+  },
+  "teamRotaOnDuty": "On duty",
+  "@teamRotaOnDuty": {
+    "description": "Heading for people covering a stretch of the event on the whole-schedule page"
+  },
+  "teamRotaRunningOrder": "Running order",
+  "@teamRotaRunningOrder": {
+    "description": "Heading for the timed sequence on the whole-schedule page"
+  },
+  "teamRotaSameAs": "Same as {title}",
+  "@teamRotaSameAs": {
+    "description": "A running-order slot uses the same people as an on-duty role",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "teamRotaPeopleCount": "{count, plural, =1{1 person} other{{count} people}}",
+  "@teamRotaPeopleCount": {
+    "description": "How many people are on a schedule slot when the faces are abbreviated",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "14"
+      }
+    }
+  },
   "teamRotaGapsCovered": "Every slot in this view has someone",
   "@teamRotaGapsCovered": {
     "description": "Needs people card when the current ministry-schedule filters have no empty slots"
