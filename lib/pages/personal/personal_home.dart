@@ -9,6 +9,7 @@ import '../../models/event/event_head.dart';
 import '../../models/user_role_assignment.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/app_links.dart';
 import '../../utility/user_schedule_service.dart';
 import '../../utility/notifications/notification_permission_prompt.dart';
 import '../../utility/notifications/notification_subscription_service.dart';
@@ -311,8 +312,16 @@ class _PersonalHomeState extends State<PersonalHome> {
 
   List<PersonalAction> _forYouActions(
       AppContext appContext, ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
     final actions = <PersonalAction>[];
     final shareAndGuide = [
+      PersonalAction(
+        icon: Icons.volunteer_activism_outlined,
+        title: l10n.donationsTitle,
+        subtitle: l10n.donationsMenuSubtitle,
+        onTap: () => AppLinks.openDonations(context),
+        iconColor: colorScheme.primary,
+      ),
       PersonalAction(
         icon: Icons.share_rounded,
         title: 'Share Web App',
@@ -349,7 +358,6 @@ class _PersonalHomeState extends State<PersonalHome> {
       return actions;
     }
 
-    final l10n = AppLocalizations.of(context)!;
     actions.addAll([
       PersonalAction(
         icon: Icons.article_rounded,

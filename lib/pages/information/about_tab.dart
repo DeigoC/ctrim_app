@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../src/localization/app_localizations.dart';
+import '../../utility/app_links.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/media/cached_image_widget.dart';
 import '../../widgets/information/info_section_card.dart';
@@ -258,6 +260,8 @@ class InformationAboutTab extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  _buildGivingCard(context),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -265,6 +269,23 @@ class InformationAboutTab extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildGivingCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return InfoSectionCard(
+      icon: Icons.volunteer_activism_outlined,
+      title: l10n.donationsTitle,
+      subtitle: l10n.donationsMenuSubtitle,
+      content: Align(
+        alignment: Alignment.centerLeft,
+        child: FilledButton.tonalIcon(
+          onPressed: () => AppLinks.openDonations(context),
+          icon: const Icon(Icons.account_balance_outlined),
+          label: Text(l10n.donationsOpen),
+        ),
+      ),
     );
   }
 

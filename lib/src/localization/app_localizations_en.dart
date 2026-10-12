@@ -207,18 +207,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamRotaChangeFilter => 'Change filter';
 
   @override
-  String teamRotaShowMore(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count more',
-      one: '1 more',
-    );
-    return 'Show $_temp0';
-  }
+  String get teamRotaViewSchedule => 'View schedule';
 
   @override
-  String get teamRotaShowFewer => 'Show less';
+  String get teamRotaOpenPost => 'Open post';
+
+  @override
+  String get teamRotaNoOneAssigned => 'No one assigned';
 
   @override
   String get teamRotaFilterShow => 'Show';
@@ -2888,4 +2883,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get permalinkGoHome => 'Home';
+
+  @override
+  String get donationsTitle => 'Donations';
+
+  @override
+  String get donationsMenuSubtitle => 'Give by bank transfer';
+
+  @override
+  String get donationsOpen => 'How to give';
+
+  @override
+  String get donationsIntroTitle => 'Support CTRIM';
+
+  @override
+  String get donationsIntroBody =>
+      'Gifts are made by bank transfer. Use the account details below.';
+
+  @override
+  String get donationsBankTitle => 'Bank transfer';
+
+  @override
+  String get donationsBankSubtitle => 'Send a gift from your bank';
+
+  @override
+  String get donationsBankPending =>
+      'Bank transfer details will be listed here.';
+
+  @override
+  String get donationsAccountName => 'Account name';
+
+  @override
+  String get donationsSortCode => 'Sort code';
+
+  @override
+  String get donationsAccountNumber => 'Account number';
+
+  @override
+  String get donationsReference => 'Payment reference';
+
+  @override
+  String get donationsCopy => 'Copy';
+
+  @override
+  String get donationsCopyAll => 'Copy bank details';
+
+  @override
+  String get donationsCopied => 'Copied';
+
+  @override
+  String get donationsNotesTitle => 'Notes';
+
+  @override
+  String get donationsNotesSubtitle => 'Before you send a gift';
 }

@@ -21,6 +21,10 @@ An **outreach** is a baby church that still belongs to a parent church. Leaders 
 
 A church hub can also have extra **pages** for details that belong to that church (for example getting here or Sunday service). Anyone can read them; only **area admins** can add or change those extra pages. Leaders can still edit the church overview, location, maps, and outreaches.
 
+## Donations
+
+**Donations** is its own page, opened from **About** on this tab and from **For You** on Personal. It lists the church bank-transfer details (account name, sort code, account number, and what to write as the payment reference) and any notes that go with a gift. Each detail can be copied, or the whole set at once. The address is `ctrim.org/donations`. If that link is the first page open, **Home** returns to the CTRIM section. The app does not take card payments.
+
 ## Who can edit
 
 **Leaders** (including **area admins**, and later **site admins**) can add and edit church overviews, testimonials, and CTRIM information pages.

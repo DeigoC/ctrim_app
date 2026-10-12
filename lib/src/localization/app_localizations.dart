@@ -430,17 +430,23 @@ abstract class AppLocalizations {
   /// **'Change filter'**
   String get teamRotaChangeFilter;
 
-  /// Expands the remaining programme slots on a team rota post card
+  /// Opens every programme line for one ministry-schedule event
   ///
   /// In en, this message translates to:
-  /// **'Show {count, plural, =1{1 more} other{{count} more}}'**
-  String teamRotaShowMore(int count);
+  /// **'View schedule'**
+  String get teamRotaViewSchedule;
 
-  /// Collapses a team rota post card back to its preview slots
+  /// App bar action on the event schedule page that opens the post
   ///
   /// In en, this message translates to:
-  /// **'Show less'**
-  String get teamRotaShowFewer;
+  /// **'Open post'**
+  String get teamRotaOpenPost;
+
+  /// Muted label on a schedule line that is outside the ministry filter and has no people
+  ///
+  /// In en, this message translates to:
+  /// **'No one assigned'**
+  String get teamRotaNoOneAssigned;
 
   /// Section label in the team rota filter sheet
   ///
@@ -5043,6 +5049,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Home'**
   String get permalinkGoHome;
+
+  /// Title of the donations page and the menu item that opens it
+  ///
+  /// In en, this message translates to:
+  /// **'Donations'**
+  String get donationsTitle;
+
+  /// Subtitle on the Personal and About shortcuts to the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Give by bank transfer'**
+  String get donationsMenuSubtitle;
+
+  /// Button on the About tab that opens the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'How to give'**
+  String get donationsOpen;
+
+  /// Heading on the donations page intro
+  ///
+  /// In en, this message translates to:
+  /// **'Support CTRIM'**
+  String get donationsIntroTitle;
+
+  /// Intro paragraph on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Gifts are made by bank transfer. Use the account details below.'**
+  String get donationsIntroBody;
+
+  /// Heading of the bank-details card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get donationsBankTitle;
+
+  /// Subtitle of the bank-details card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Send a gift from your bank'**
+  String get donationsBankSubtitle;
+
+  /// Shown on the donations page when no account details have been added yet
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer details will be listed here.'**
+  String get donationsBankPending;
+
+  /// Label for the donation account name
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get donationsAccountName;
+
+  /// Label for the donation sort code
+  ///
+  /// In en, this message translates to:
+  /// **'Sort code'**
+  String get donationsSortCode;
+
+  /// Label for the donation account number
+  ///
+  /// In en, this message translates to:
+  /// **'Account number'**
+  String get donationsAccountNumber;
+
+  /// Label for the reference a donor should use
+  ///
+  /// In en, this message translates to:
+  /// **'Payment reference'**
+  String get donationsReference;
+
+  /// Tooltip on a button that copies one bank detail
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get donationsCopy;
+
+  /// Button that copies every bank detail
+  ///
+  /// In en, this message translates to:
+  /// **'Copy bank details'**
+  String get donationsCopyAll;
+
+  /// Confirmation after a bank detail is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get donationsCopied;
+
+  /// Heading of the notes card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get donationsNotesTitle;
+
+  /// Subtitle of the notes card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Before you send a gift'**
+  String get donationsNotesSubtitle;
 }
 
 class _AppLocalizationsDelegate

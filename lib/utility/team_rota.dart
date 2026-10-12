@@ -53,20 +53,24 @@ class TeamRotaQuery {
 
   static const int defaultHorizonMonths = 3;
 
-  /// Roles a card shows before it offers to expand.
+  /// Roles a card shows before **View schedule**.
   static const int previewRoleCount = 4;
 
-  /// Cards with this many roles or fewer stay fully open.
+  /// Cards with this many roles or fewer show every matching line.
   static const int collapseAfterRoleCount = 5;
 
-  /// How many roles to paint. Lists longer than [collapseAfterRoleCount]
-  /// show [previewRoleCount] until the card is expanded.
-  static int visibleRoleCount({
-    required int total,
-    required bool expanded,
-  }) {
-    if (expanded || total <= collapseAfterRoleCount) return total;
+  /// How many matching roles a card paints. Longer lists show
+  /// [previewRoleCount]; the rest open on the event schedule page.
+  static int visibleRoleCount(int total) {
+    if (total <= collapseAfterRoleCount) return total;
     return previewRoleCount;
+  }
+
+  /// Every programme line, earliest start first. Lines with no ministry stay in.
+  static List<Map<String, dynamic>> rolesInStartOrder(EventProgram program) {
+    final roles = List<Map<String, dynamic>>.from(program.roles);
+    roles.sort(_compareRoleStart);
+    return roles;
   }
 
   static DateTime rangeStart(final DateTime now) =>
@@ -178,7 +182,7 @@ class TeamRotaQuery {
     return actor.hasAnyTag(tagIds);
   }
 
-  /// Empty slots on one post, including roles hidden behind Show more.
+  /// Empty slots on one post, including roles past the card preview.
   static int unassignedCount(final TeamRotaPost post) {
     var count = 0;
     for (final role in post.roles) {
@@ -187,7 +191,7 @@ class TeamRotaQuery {
     return count;
   }
 
-  /// True when [uid] is on any matching role, including ones behind Show more.
+  /// True when [uid] is on any matching role, including ones past the card preview.
   static bool viewerIsServing(final TeamRotaPost post, final String uid) {
     for (final role in post.roles) {
       if (isAssignedTo(role, uid)) return true;

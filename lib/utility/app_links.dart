@@ -63,6 +63,8 @@ class AppLinks {
 
   static String personPath(String id) => '/people/${_seg(id)}';
 
+  static const String donationsPath = '/donations';
+
   /// Keeps a stored startup-tab index inside the four shell tabs.
   static int clampHomeTab(int index) {
     if (index < 0 || index >= homeTabSegments.length) return ctrimTab;
@@ -97,6 +99,7 @@ class AppLinks {
         return homeTabPath(ctrimTab);
       case 'info':
       case 'testimonials':
+      case 'donations':
         return homeTabPath(ctrimTab);
       default:
         return homeTabPath(ctrimTab);
@@ -129,6 +132,8 @@ class AppLinks {
   static String testimonialUrl(String id) => '$webOrigin${testimonialPath(id)}';
 
   static String personUrl(String id) => '$webOrigin${personPath(id)}';
+
+  static String donationsUrl() => '$webOrigin$donationsPath';
 
   /// Maps legacy JSON asset paths (and current document ids) to `/info/:id`.
   static String infoDocumentIdFromPayload(String rawValue) {
@@ -242,6 +247,10 @@ class AppLinks {
     final extra =
         testimonial != null && testimonial.id == id ? testimonial : null;
     return context.push<T>(testimonialPath(id), extra: extra);
+  }
+
+  static Future<T?> openDonations<T extends Object?>(BuildContext context) {
+    return context.push<T>(donationsPath);
   }
 
   static Future<T?> openPerson<T extends Object?>(

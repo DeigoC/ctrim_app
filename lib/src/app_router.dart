@@ -7,6 +7,7 @@ import '../models/info/ctrim_info.dart';
 import '../models/info/testimonial_info.dart';
 import '../models/user.dart';
 import '../pages/cell_groups/cell_group_detail_page.dart';
+import '../pages/donations/donations_page.dart';
 import '../pages/events/open_post_page.dart';
 import '../pages/home_page.dart';
 import '../pages/information/church_info_page.dart';
@@ -139,6 +140,10 @@ GoRouter createAppRouter({int Function()? preferredHomeTab}) {
                 initialInfo: testimonial,
               );
             },
+          ),
+          GoRoute(
+            path: 'donations',
+            builder: (context, state) => const DonationsPage(),
           ),
           GoRoute(
             path: 'people/:id',

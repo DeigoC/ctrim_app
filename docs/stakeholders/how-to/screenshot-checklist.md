@@ -108,6 +108,7 @@ Save under `assets/images/`. Skip a row if a **Home** shot already covers it.
 | [ ] | `personal-post-tag.png` | A post tag: past totals, weekly chart, a location row, and recent posts | Personal |
 | [ ] | `notifications-settings.png` | Push Notifications: This device + a location switch | Notifications |
 | [ ] | `cell-groups-add-meeting.png` *(optional)* | Group page: Add meeting beside Recent meetings, with the parent post title underneath | Cell Groups |
+| [ ] | `donations-bank-transfer.png` | Donations page: bank details and notes | Information |
 | [ ] | `startup-progress.png` | Opening screen: logo, progress bar, and a step such as “Loading the bulletin…” | Platforms |
 
 ---

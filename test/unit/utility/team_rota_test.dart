@@ -231,18 +231,27 @@ void main() {
     });
 
     test('visibleRoleCount keeps short lists open and previews long ones', () {
+      expect(TeamRotaQuery.visibleRoleCount(5), 5);
       expect(
-        TeamRotaQuery.visibleRoleCount(total: 5, expanded: false),
-        5,
-      );
-      expect(
-        TeamRotaQuery.visibleRoleCount(total: 6, expanded: false),
+        TeamRotaQuery.visibleRoleCount(6),
         TeamRotaQuery.previewRoleCount,
       );
-      expect(
-        TeamRotaQuery.visibleRoleCount(total: 12, expanded: true),
-        12,
-      );
+    });
+
+    test('rolesInStartOrder keeps untagged lines and sorts by start', () {
+      final untimed = <String, dynamic>{
+        'uids': <String>[],
+        'title': 'Notices',
+        'start': null,
+        'end': null,
+        'id': 4,
+        'tagIDs': <String>[],
+      };
+      final titles = TeamRotaQuery.rolesInStartOrder(
+        programWith([worshipSlot, untimed, untaggedAssigned, techSlot]),
+      ).map((role) => role['title']);
+
+      expect(titles, ['Sound', 'Worship', 'Host', 'Notices']);
     });
 
     User person({

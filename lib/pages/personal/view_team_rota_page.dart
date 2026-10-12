@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../firebase/db_managers/event_db_manager.dart';
-import '../../firebase/functions_manager.dart';
 import '../../models/event/event_head.dart';
 import '../../models/event/event_program.dart';
 import '../../models/user.dart';
@@ -15,12 +14,8 @@ import '../../utility/app_links.dart';
 import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/catalog/volunteer_locations.dart';
 import '../../utility/dialog_manager.dart';
-import '../../utility/event_heads_repository.dart';
-import '../../utility/placeholder_user_permissions.dart';
 import '../../utility/responsive_layout.dart';
 import '../../utility/team_rota.dart';
-import '../../utility/user_activity_messages.dart';
-import '../../utility/user_activity_recorder.dart';
 import '../../widgets/catalog/colored_chip.dart';
 import '../../widgets/catalog/user_tag_chip.dart';
 import '../../widgets/common/action_sheet.dart';
@@ -28,9 +23,9 @@ import '../../widgets/common/load_progress_body.dart';
 import '../../widgets/paired_row_list.dart';
 import '../../widgets/personal/team_rota_gaps_card.dart';
 import '../../widgets/personal/team_rota_post_card.dart';
-import '../../widgets/posts/schedule_role_detail_sheet.dart';
 import '../../widgets/user_avatar.dart';
-import 'select_users_page.dart';
+import 'team_rota_role_actions.dart';
+import 'view_team_rota_schedule_page.dart';
 
 enum _MinistryScope { mine, all }
 
@@ -50,7 +45,6 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
   late String _locationFilter;
   late Set<String> _selectedTagIDs;
   bool _needsPeople = false;
-  final Set<String> _expandedPostIds = {};
 
   List<EventHead> _rangeHeads = [];
   final Map<String, EventProgram?> _programs = {};
@@ -679,8 +673,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     Widget card(TeamRotaPost post) {
       return TeamRotaPostCard(
         post: post,
-        expanded: _expandedPostIds.contains(post.head.id),
-        onToggleExpanded: () => _togglePostRoles(post.head.id),
+        onViewSchedule: () => _openSchedule(post),
         onOpenPost: () => _openPost(post.head),
         onRoleTap: (role) => _onRoleTap(post, role),
       );
@@ -703,217 +696,34 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
     );
   }
 
-  void _togglePostRoles(String postId) {
-    setState(() {
-      if (_expandedPostIds.contains(postId)) {
-        _expandedPostIds.remove(postId);
-      } else {
-        _expandedPostIds.add(postId);
-      }
-    });
-  }
-
-  Future<void> _onRoleTap(TeamRotaPost post, Map<String, dynamic> role) async {
-    final l10n = AppLocalizations.of(context)!;
-    final now = DateTime.now();
-    final actor = _appContext.currentUser;
-    final canAssign = TeamRotaQuery.canAssignRole(
-      actor: actor,
-      role: role,
-      eventDate: post.head.eventDate,
-      locationId: VolunteerLocations.idForName(
-        locations: _appContext.allLocations,
-        name: post.head.location,
-      ),
-      allTags: _appContext.allTags,
-      now: now,
-    );
-    final canClaim = TeamRotaQuery.canClaimRole(
-      actor: actor,
-      role: role,
-      eventDate: post.head.eventDate,
-      now: now,
-    );
-    final onIt = TeamRotaQuery.isAssignedTo(role, actor.id);
-    if (!mounted) return;
-    await showScheduleRoleDetailSheet(
-      context: context,
-      role: role,
-      assignedUsers: _assignedUsers(role),
-      canEdit: canAssign,
-      editLabel: l10n.teamRotaAssignPeople,
-      onEdit: () {
-        Navigator.of(context).pop();
-        _assignPeople(post, role);
-      },
-      claimLabel:
-          canClaim ? (onIt ? l10n.teamRotaRelease : l10n.teamRotaClaim) : null,
-      onClaim: canClaim
-          ? () {
-              Navigator.of(context).pop();
-              _claimOrRelease(post, role, release: onIt);
-            }
-          : null,
-    );
-  }
-
-  Future<bool> _confirmSharedSlot(
-    Map<String, dynamic> role,
-    String confirmText,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final tagIds = EventProgram.tagIDsOf(role);
-    if (tagIds.length <= 1) return true;
-    final names = UserTagHelpers.resolveTags(
-      tagIDs: tagIds,
-      allTags: _appContext.allTags,
-    ).map((tag) => tag.name).join(', ');
-    final confirmed = await DialogManager.showConfirmationDialog(
-      context: context,
-      title: l10n.teamRotaSharedSlotTitle,
-      content: names.isEmpty
-          ? l10n.teamRotaSharedSlotBodyGeneric
-          : l10n.teamRotaSharedSlotBody(names),
-      confirmText: confirmText,
-    );
-    return confirmed && mounted;
-  }
-
-  Future<void> _assignPeople(
-    TeamRotaPost post,
-    Map<String, dynamic> role,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    if (!await _confirmSharedSlot(role, l10n.teamRotaAssignPeople)) return;
-    if (!mounted) return;
-
-    final location =
-        VolunteerLocations.normalizePostLocation(post.head.location);
-    final result = await Navigator.push<List<String>>(
+  void _openSchedule(TeamRotaPost post) {
+    final program = _programs[post.head.id];
+    if (program == null) return;
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SelectUsersPage(
-          selectedUIDs: TeamRotaQuery.uidsOf(role),
-          includeCurrentUser: true,
-          preferServing: true,
-          title: l10n.teamRotaAssignPeople,
-          allowCreatePlaceholder: canCreatePlaceholderUser(
-            actor: _appContext.currentUser,
-          ),
-          initialLocation: location.isEmpty ? null : location,
-          initialTagIDs: EventProgram.tagIDsOf(role),
-        ),
-      ),
-    );
-    if (result == null || !mounted) return;
-    await _saveRoleAssignees(post, role, result);
-  }
-
-  Future<void> _claimOrRelease(
-    TeamRotaPost post,
-    Map<String, dynamic> role, {
-    required bool release,
-  }) async {
-    final l10n = AppLocalizations.of(context)!;
-    final confirm = release ? l10n.teamRotaRelease : l10n.teamRotaClaim;
-    if (!await _confirmSharedSlot(role, confirm)) return;
-    if (!mounted) return;
-
-    final uid = _appContext.currentUser.id;
-    final next = List<String>.from(TeamRotaQuery.uidsOf(role));
-    if (release) {
-      next.remove(uid);
-    } else if (!next.contains(uid)) {
-      next.add(uid);
-    }
-    await _saveRoleAssignees(post, role, next);
-  }
-
-  Future<void> _saveRoleAssignees(
-    TeamRotaPost post,
-    Map<String, dynamic> role,
-    List<String> uids,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    if (TeamRotaQuery.sameAssigneeIds(TeamRotaQuery.uidsOf(role), uids)) {
-      return;
-    }
-    final roleId = role['id'];
-    if (roleId is! int) return;
-
-    final saved = await DialogManager.runWithProgressDialog(
-      context: context,
-      title: l10n.teamRotaSavingAssignees,
-      errorTitle: l10n.teamRotaCouldNotSave,
-      action: () async {
-        final editorUid = _appContext.currentUser.id;
-        final now = DateTime.now();
-        final written =
-            await EventSupplementalDBManager(post.head.id).updateRoleAssignees(
-          roleId: roleId,
-          uids: uids,
-          editorUid: editorUid,
-          now: now,
-        );
-        if (written == null) {
-          throw Exception(l10n.teamRotaRoleMissing);
-        }
-        _programs[post.head.id] = written.program;
-        final log = written.log;
-        if (log == null) return;
-        await _afterAssigneesSaved(
+        builder: (_) => ViewTeamRotaSchedulePage(
           head: post.head,
-          log: log,
-          editorUid: editorUid,
-          now: now,
-          removedUids: written.removedUids,
-        );
-      },
-    );
-    if (saved && mounted) setState(() {});
-  }
-
-  /// Follow-ups the post editor also runs after a save. All fail soft: the
-  /// lineup is already written.
-  Future<void> _afterAssigneesSaved({
-    required EventHead head,
-    required String log,
-    required String editorUid,
-    required DateTime now,
-    required List<String> removedUids,
-  }) async {
-    head.setRecentDate(now);
-    if (_appContext.headById(head.id) != null) {
-      _appContext.addOrUpdatePostHead(head);
-      try {
-        await persistEventHeadsLocalCache(List.of(_appContext.eventHeads));
-      } catch (e) {
-        debugPrint('Could not persist event heads after rota save: $e');
-      }
-    }
-    await Future.wait([
-      UserActivityRecorder().record(
-        actorUserId: editorUid,
-        log: UserActivityMessages.updatedMinistrySchedule,
-        documentId: head.id,
-        title: head.title,
-        note: log,
-      ),
-      if (head.eventDate != null)
-        CloudFunctionManager().syncUserRolesForPost(
-          postId: head.id,
-          removedUserIds: removedUids,
+          program: program,
+          selectedTagIDs: Set<String>.from(_selectedTagIDs),
+          onProgramUpdated: (updated) {
+            _programs[post.head.id] = updated;
+            if (mounted) setState(() {});
+          },
         ),
-    ]);
+      ),
+    );
   }
 
-  List<User> _assignedUsers(Map<String, dynamic> role) {
-    final users = <User>[];
-    for (final id in TeamRotaQuery.uidsOf(role)) {
-      final user = _appContext.userById(id);
-      if (user != null) users.add(user);
-    }
-    return users;
+  Future<void> _onRoleTap(TeamRotaPost post, Map<String, dynamic> role) {
+    return TeamRotaRoleActions(
+      context: context,
+      appContext: _appContext,
+      onProgramUpdated: (postId, program) {
+        _programs[postId] = program;
+        if (mounted) setState(() {});
+      },
+    ).openRole(head: post.head, role: role);
   }
 
   Widget _buildEmptyState(

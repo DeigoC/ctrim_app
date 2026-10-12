@@ -170,6 +170,7 @@ void main() {
       expect(AppLinks.upPath('/info/core_values'), '/ctrim');
       expect(AppLinks.upPath('/testimonials/t-1'), '/ctrim');
       expect(AppLinks.upPath('/people/u-1'), '/personal');
+      expect(AppLinks.upPath('/donations'), '/ctrim');
     });
 
     test('steps a nested church page up to that church', () {

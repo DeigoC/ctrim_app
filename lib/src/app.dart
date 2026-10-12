@@ -60,7 +60,7 @@ class _MyAppState extends State<MyApp> {
       animation: widget.settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp.router(
-          title: 'CTRIM App',
+          title: 'CTRIM',
           restorationScopeId: 'app',
           routerConfig: _router,
           localizationsDelegates: const [

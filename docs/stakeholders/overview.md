@@ -37,7 +37,7 @@ Supporting topics: [People & roles](people-and-roles.md) · [Notifications](noti
 ## What it’s not
 
 - Not the **worship team** song and setlist app — that is a separate product  
-- Not a full church management system (giving, membership CRM, and similar)  
+- Not a full church management system (membership records, card payments, and similar). The app does show how to give by bank transfer on **Donations**  
 - Not prioritising native App Store / Play Store releases right now — see [Platforms](platforms.md)
 
 ## Priorities

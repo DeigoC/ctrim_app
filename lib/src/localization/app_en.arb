@@ -273,19 +273,17 @@
   "@teamRotaChangeFilter": {
     "description": "Empty-state button that opens the team rota filter sheet"
   },
-  "teamRotaShowMore": "Show {count, plural, =1{1 more} other{{count} more}}",
-  "@teamRotaShowMore": {
-    "description": "Expands the remaining programme slots on a team rota post card",
-    "placeholders": {
-      "count": {
-        "type": "int",
-        "example": "6"
-      }
-    }
+  "teamRotaViewSchedule": "View schedule",
+  "@teamRotaViewSchedule": {
+    "description": "Opens every programme line for one ministry-schedule event"
   },
-  "teamRotaShowFewer": "Show less",
-  "@teamRotaShowFewer": {
-    "description": "Collapses a team rota post card back to its preview slots"
+  "teamRotaOpenPost": "Open post",
+  "@teamRotaOpenPost": {
+    "description": "App bar action on the event schedule page that opens the post"
+  },
+  "teamRotaNoOneAssigned": "No one assigned",
+  "@teamRotaNoOneAssigned": {
+    "description": "Muted label on a schedule line that is outside the ministry filter and has no people"
   },
   "teamRotaFilterShow": "Show",
   "@teamRotaFilterShow": {
@@ -3724,5 +3722,73 @@
   "permalinkGoHome": "Home",
   "@permalinkGoHome": {
     "description": "App bar control that opens the main section when a shared link is the first page"
+  },
+  "donationsTitle": "Donations",
+  "@donationsTitle": {
+    "description": "Title of the donations page and the menu item that opens it"
+  },
+  "donationsMenuSubtitle": "Give by bank transfer",
+  "@donationsMenuSubtitle": {
+    "description": "Subtitle on the Personal and About shortcuts to the donations page"
+  },
+  "donationsOpen": "How to give",
+  "@donationsOpen": {
+    "description": "Button on the About tab that opens the donations page"
+  },
+  "donationsIntroTitle": "Support CTRIM",
+  "@donationsIntroTitle": {
+    "description": "Heading on the donations page intro"
+  },
+  "donationsIntroBody": "Gifts are made by bank transfer. Use the account details below.",
+  "@donationsIntroBody": {
+    "description": "Intro paragraph on the donations page"
+  },
+  "donationsBankTitle": "Bank transfer",
+  "@donationsBankTitle": {
+    "description": "Heading of the bank-details card on the donations page"
+  },
+  "donationsBankSubtitle": "Send a gift from your bank",
+  "@donationsBankSubtitle": {
+    "description": "Subtitle of the bank-details card on the donations page"
+  },
+  "donationsBankPending": "Bank transfer details will be listed here.",
+  "@donationsBankPending": {
+    "description": "Shown on the donations page when no account details have been added yet"
+  },
+  "donationsAccountName": "Account name",
+  "@donationsAccountName": {
+    "description": "Label for the donation account name"
+  },
+  "donationsSortCode": "Sort code",
+  "@donationsSortCode": {
+    "description": "Label for the donation sort code"
+  },
+  "donationsAccountNumber": "Account number",
+  "@donationsAccountNumber": {
+    "description": "Label for the donation account number"
+  },
+  "donationsReference": "Payment reference",
+  "@donationsReference": {
+    "description": "Label for the reference a donor should use"
+  },
+  "donationsCopy": "Copy",
+  "@donationsCopy": {
+    "description": "Tooltip on a button that copies one bank detail"
+  },
+  "donationsCopyAll": "Copy bank details",
+  "@donationsCopyAll": {
+    "description": "Button that copies every bank detail"
+  },
+  "donationsCopied": "Copied",
+  "@donationsCopied": {
+    "description": "Confirmation after a bank detail is copied"
+  },
+  "donationsNotesTitle": "Notes",
+  "@donationsNotesTitle": {
+    "description": "Heading of the notes card on the donations page"
+  },
+  "donationsNotesSubtitle": "Before you send a gift",
+  "@donationsNotesSubtitle": {
+    "description": "Subtitle of the notes card on the donations page"
   }
 }
