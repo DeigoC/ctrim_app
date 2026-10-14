@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../firebase/db_managers/shared_media_folders_db_manager.dart';
+import '../../models/shared_media_folders.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/drive_folder_listing.dart';
 import '../../utility/event_context.dart';
@@ -9,6 +14,14 @@ import '../../utility/network_image_helper.dart';
 import '../../utility/responsive_layout.dart';
 import '../../widgets/common/app_dialog.dart';
 import 'add_media_drive_helpers.dart';
+import 'edit_shared_media_folders_page.dart';
+
+/// Which add-media method [BulkAddMediaPage] opens on.
+enum BulkAddMediaTab {
+  thisMonth,
+  driveFolder,
+  pasteUrls,
+}
 
 /// Max image size used by [AddMediaFilePage] (1.5 MB).
 const int _maxImageSizeKB = 1536;
@@ -19,12 +32,27 @@ class BulkAddMediaPage extends StatefulWidget {
     super.key,
     required this.eventContext,
     this.listing,
+    this.initialTab = BulkAddMediaTab.thisMonth,
+    this.folders,
+    this.loadFolders,
+    this.canEditFolders = false,
   });
 
   final EventContext eventContext;
 
   /// Optional override for tests / custom listing backends.
   final DriveFolderListing? listing;
+
+  final BulkAddMediaTab initialTab;
+
+  /// When set, the month tab uses this instead of reading Firestore.
+  final SharedMediaFolders? folders;
+
+  /// Override for the settings fetch. Ignored when [folders] is set.
+  final Future<SharedMediaFolders> Function()? loadFolders;
+
+  /// Area admins can set the shared month folders.
+  final bool canEditFolders;
 
   @override
   State<BulkAddMediaPage> createState() => _BulkAddMediaPageState();
@@ -43,17 +71,34 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
   List<DriveFolderEntry> _folderEntries = const [];
   final Set<String> _selectedIds = {};
 
+  SharedMediaFolders? _folders;
+  bool _loadingSettings = false;
+  String? _settingsError;
+  bool _showingPrevious = false;
+  bool _loadingMonth = false;
+  String? _monthError;
+  List<DriveFolderEntry> _monthEntries = const [];
+  final Set<String> _selectedMonthIds = {};
+  int _monthListGeneration = 0;
+
   List<_BulkUrlCandidate> _urlCandidates = const [];
   final Set<int> _selectedUrlIndexes = {};
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: BulkAddMediaTab.values.length,
+      vsync: this,
+      initialIndex: widget.initialTab.index,
+    );
+    _tabController.addListener(_onBulkTabChanged);
+    unawaited(_bootstrapMonthFolder());
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onBulkTabChanged);
     _tabController.dispose();
     _folderController.dispose();
     _urlsController.dispose();
@@ -67,6 +112,171 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
       for (final item in widget.eventContext.head.media)
         if (item['src'] is String) item['src'] as String,
     };
+  }
+
+  SharedMediaFolder? get _activeMonthFolder {
+    final folders = _folders;
+    if (folders == null) return null;
+    return _showingPrevious ? folders.previous : folders.current;
+  }
+
+  void _onBulkTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index != BulkAddMediaTab.thisMonth.index) return;
+    final folder = _activeMonthFolder;
+    if (folder == null || _loadingMonth || _loadingSettings) return;
+    if (_monthEntries.isNotEmpty || _monthError != null) return;
+    unawaited(_listMonthFolder(folder.folderId));
+  }
+
+  Future<void> _bootstrapMonthFolder() async {
+    await Future<void>.value();
+    if (!mounted) return;
+
+    if (widget.folders != null) {
+      _folders = widget.folders;
+    } else {
+      setState(() {
+        _loadingSettings = true;
+        _settingsError = null;
+      });
+      try {
+        final load = widget.loadFolders ?? SharedMediaFoldersDBManager().fetch;
+        final folders = await load();
+        if (!mounted) return;
+        _folders = folders;
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _loadingSettings = false;
+          _settingsError = 'Could not load the shared folder.';
+        });
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _loadingSettings = false);
+
+    if (_tabController.index != BulkAddMediaTab.thisMonth.index) return;
+    final folder = _activeMonthFolder;
+    if (folder == null) return;
+    await _listMonthFolder(folder.folderId);
+  }
+
+  Future<void> _listMonthFolder(String folderId) async {
+    final generation = ++_monthListGeneration;
+    setState(() {
+      _loadingMonth = true;
+      _monthError = null;
+      _monthEntries = const [];
+      _selectedMonthIds.clear();
+    });
+
+    try {
+      final entries = await _listing.listPublicFolder(folderId);
+      if (!mounted || generation != _monthListGeneration) return;
+      final media = entries.where((e) => e.isImportableMedia).toList();
+      setState(() {
+        _monthEntries = entries;
+        _selectedMonthIds.addAll(
+          media
+              .where((e) => !_existingSrcs.contains(e.directMediaUrl))
+              .map((e) => e.id),
+        );
+        _loadingMonth = false;
+      });
+    } on DriveFolderListingException catch (e) {
+      if (!mounted || generation != _monthListGeneration) return;
+      setState(() {
+        _monthError = e.message;
+        _loadingMonth = false;
+      });
+    } catch (e) {
+      if (!mounted || generation != _monthListGeneration) return;
+      setState(() {
+        _monthError = 'Could not read the folder: $e';
+        _loadingMonth = false;
+      });
+    }
+  }
+
+  void _onShowPreviousMonth(bool previous) {
+    if (previous == _showingPrevious || _importing) return;
+    setState(() => _showingPrevious = previous);
+    final folder = _activeMonthFolder;
+    if (folder == null) {
+      setState(() {
+        _monthListGeneration++;
+        _monthEntries = const [];
+        _selectedMonthIds.clear();
+        _monthError = null;
+        _loadingMonth = false;
+      });
+      return;
+    }
+    unawaited(_listMonthFolder(folder.folderId));
+  }
+
+  Future<void> _openActiveMonthInDrive() async {
+    final url = _activeMonthFolder?.openUrl;
+    if (url == null) return;
+    await launchUrlString(url, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _onEditSharedFolders() async {
+    final saved = await Navigator.push<SharedMediaFolders>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditSharedMediaFoldersPage(
+          initial: _folders ?? SharedMediaFolders.empty,
+        ),
+      ),
+    );
+    if (!mounted || saved == null) return;
+    setState(() {
+      _folders = saved;
+      if (saved.previous == null) _showingPrevious = false;
+    });
+    final folder = _activeMonthFolder;
+    if (folder == null) {
+      setState(() {
+        _monthListGeneration++;
+        _monthEntries = const [];
+        _selectedMonthIds.clear();
+        _monthError = null;
+        _loadingMonth = false;
+      });
+      return;
+    }
+    await _listMonthFolder(folder.folderId);
+  }
+
+  String _monthChipLabel({required bool previous}) {
+    final folders = _folders;
+    if (folders == null) return previous ? 'Last month' : 'This month';
+    final slot = previous ? folders.previous : folders.current;
+    if (slot != null) {
+      return slot.displayLabel(previous ? 'Last month' : 'This month');
+    }
+    final stored = previous ? folders.previousLabel : folders.currentLabel;
+    final trimmed = stored.trim();
+    if (trimmed.isNotEmpty) return trimmed;
+    return previous ? 'Last month' : 'This month';
+  }
+
+  Future<void> _onImportSelectedMonthEntries() async {
+    final selected = _monthEntries
+        .where((e) => _selectedMonthIds.contains(e.id) && e.isImportableMedia)
+        .toList();
+    await _importMediaMaps([
+      for (final entry in selected)
+        {
+          'title': entry.name,
+          'src': entry.directMediaUrl,
+          'type': entry.mediaType,
+        },
+    ]);
   }
 
   @override
@@ -84,7 +294,10 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
         backgroundColor: colorScheme.surface,
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           tabs: const [
+            Tab(text: 'This month'),
             Tab(text: 'Drive folder'),
             Tab(text: 'Paste URLs'),
           ],
@@ -100,6 +313,7 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
       body: TabBarView(
         controller: _tabController,
         children: [
+          _buildMonthTab(gutter),
           _buildFolderTab(gutter),
           _buildUrlsTab(gutter),
         ],
@@ -194,7 +408,21 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
                   ],
                 ),
                 const SizedBox(height: 8),
-                ...mediaEntries.map(_buildFolderEntryTile),
+                ...mediaEntries.map(
+                  (entry) => _buildFolderEntryTile(
+                    entry,
+                    selected: _selectedIds.contains(entry.id),
+                    onSelected: (value) {
+                      setState(() {
+                        if (value) {
+                          _selectedIds.add(entry.id);
+                        } else {
+                          _selectedIds.remove(entry.id);
+                        }
+                      });
+                    },
+                  ),
+                ),
               ] else if (_folderEntries.isNotEmpty && !_loadingFolder) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -220,10 +448,13 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
     );
   }
 
-  Widget _buildFolderEntryTile(DriveFolderEntry entry) {
+  Widget _buildFolderEntryTile(
+    DriveFolderEntry entry, {
+    required bool selected,
+    required ValueChanged<bool> onSelected,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     final alreadyAdded = _existingSrcs.contains(entry.directMediaUrl);
-    final selected = _selectedIds.contains(entry.id);
 
     return Card(
       elevation: 0,
@@ -236,15 +467,7 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
         value: selected,
         onChanged: alreadyAdded || _importing
             ? null
-            : (value) {
-                setState(() {
-                  if (value == true) {
-                    _selectedIds.add(entry.id);
-                  } else {
-                    _selectedIds.remove(entry.id);
-                  }
-                });
-              },
+            : (value) => onSelected(value ?? false),
         secondary: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: entry.isImage
@@ -282,6 +505,210 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
               : (entry.mimeType.isEmpty ? entry.mediaType : entry.mimeType),
         ),
       ),
+    );
+  }
+
+  Widget _buildMonthTab(double gutter) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final folders = _folders;
+    final active = _activeMonthFolder;
+    final mediaEntries =
+        _monthEntries.where((e) => e.isImportableMedia).toList();
+    final showMonthSwitch = folders?.previous != null;
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 16),
+            children: [
+              Text(
+                'Loose photos in the shared month folder. Pick the ones that '
+                'belong on this post.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (showMonthSwitch) ...[
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SegmentedButton<bool>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment<bool>(
+                        value: false,
+                        label: Text(_monthChipLabel(previous: false)),
+                      ),
+                      ButtonSegment<bool>(
+                        value: true,
+                        label: Text(_monthChipLabel(previous: true)),
+                      ),
+                    ],
+                    selected: {_showingPrevious},
+                    onSelectionChanged: _importing
+                        ? null
+                        : (selection) => _onShowPreviousMonth(selection.first),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                'Photos inside an event folder are added with Bulk add from a folder.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (active != null || widget.canEditFolders) ...[
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    if (active != null)
+                      TextButton.icon(
+                        onPressed: _openActiveMonthInDrive,
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: const Text('Open in Google Drive'),
+                      ),
+                    if (widget.canEditFolders && active != null)
+                      TextButton.icon(
+                        onPressed: _importing ? null : _onEditSharedFolders,
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Edit folders'),
+                      ),
+                  ],
+                ),
+              ],
+              if (_loadingSettings) ...[
+                const SizedBox(height: 24),
+                const Center(child: CircularProgressIndicator()),
+              ] else if (_settingsError != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _settingsError!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.tonal(
+                    onPressed: _bootstrapMonthFolder,
+                    child: const Text('Retry'),
+                  ),
+                ),
+              ] else if (active == null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _showingPrevious
+                      ? 'Last month’s folder isn’t set.'
+                      : 'This month’s shared folder isn’t set yet. An area '
+                          'admin can add the Google Drive link.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (widget.canEditFolders) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.tonalIcon(
+                      onPressed: _onEditSharedFolders,
+                      icon: const Icon(Icons.create_new_folder_outlined,
+                          size: 18),
+                      label: const Text('Set folder'),
+                    ),
+                  ),
+                ],
+              ] else if (_loadingMonth) ...[
+                const SizedBox(height: 24),
+                const Center(child: CircularProgressIndicator()),
+              ] else if (_monthError != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _monthError!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.tonal(
+                    onPressed: () {
+                      final folder = _activeMonthFolder;
+                      if (folder == null) return;
+                      unawaited(_listMonthFolder(folder.folderId));
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ),
+              ] else if (mediaEntries.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  children: [
+                    Text(
+                      '${_selectedMonthIds.length} of ${mediaEntries.length} selected',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedMonthIds
+                            ..clear()
+                            ..addAll(mediaEntries.map((e) => e.id));
+                        });
+                      },
+                      child: const Text('Select all'),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(_selectedMonthIds.clear),
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...mediaEntries.map(
+                  (entry) => _buildFolderEntryTile(
+                    entry,
+                    selected: _selectedMonthIds.contains(entry.id),
+                    onSelected: (value) {
+                      setState(() {
+                        if (value) {
+                          _selectedMonthIds.add(entry.id);
+                        } else {
+                          _selectedMonthIds.remove(entry.id);
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ] else if (_monthEntries.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'That folder has ${_monthEntries.length} item(s), but none '
+                  'look like images or videos. Nested folders are not imported.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (mediaEntries.isNotEmpty)
+          _buildBottomBar(
+            enabled: _selectedMonthIds.isNotEmpty && !_importing,
+            label: _importing
+                ? 'Adding…'
+                : 'Add ${_selectedMonthIds.length} to gallery',
+            onPressed: _onImportSelectedMonthEntries,
+          ),
+      ],
     );
   }
 
@@ -516,8 +943,8 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
     for (final part in rawParts) {
       if (!isTestableMediaUrl(part)) continue;
       final src = sanitiseMediaUrl(part);
-      final looksVideo = mediaNameLooksLikeVideo(part) ||
-          mediaNameLooksLikeVideo(src);
+      final looksVideo =
+          mediaNameLooksLikeVideo(part) || mediaNameLooksLikeVideo(src);
       candidates.add(_BulkUrlCandidate(src: src, isVideo: looksVideo));
     }
 
@@ -677,7 +1104,11 @@ class _BulkAddMediaPageState extends State<BulkAddMediaPage>
       context: context,
       icon: Icons.help_outline,
       title: 'Bulk add media',
-      content: 'Drive folder\n'
+      content: 'This month\n'
+          '1. Loose photos in the shared month folder are listed for you\n'
+          '2. Switch to last month when that folder is set\n'
+          '3. Photos inside an event folder use the Drive folder tab\n\n'
+          'Drive folder\n'
           '1. Put images (or videos) in a Google Drive folder\n'
           '2. Share the folder as “Anyone with the link” (Viewer)\n'
           '3. Paste the folder link here and tap List files\n'

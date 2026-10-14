@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/event/event_head.dart';
+import '../../utility/app_context.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/event_context.dart';
 import '../../utility/cache/local_data_manager.dart';
@@ -288,6 +290,30 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                           ],
                         ),
                         const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () => _onBulkAddMediaTap(
+                              initialTab: BulkAddMediaTab.thisMonth,
+                            ),
+                            icon: const Icon(Icons.photo_library_outlined,
+                                size: 18),
+                            label: const Text('Choose from this month'),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _onBulkAddMediaTap(
+                              initialTab: BulkAddMediaTab.driveFolder,
+                            ),
+                            icon: const Icon(Icons.create_new_folder_outlined,
+                                size: 18),
+                            label: const Text('Bulk add from a folder'),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Expanded(
@@ -310,16 +336,6 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: _onBulkAddMediaTap,
-                            icon: const Icon(Icons.create_new_folder_outlined,
-                                size: 18),
-                            label: const Text('Bulk add from Drive folder'),
-                          ),
                         ),
                         if (widget.eventContext.media.allMedia.length >= 2) ...[
                           const SizedBox(height: 12),
@@ -374,8 +390,8 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Add an image or video from a URL, or bulk-add from a '
-                        'public Google Drive folder.',
+                        'Choose photos from this month’s shared folder, bulk-add '
+                        'an event folder, or add one image or video from a URL.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurface.withValues(alpha: 0.5),
@@ -936,11 +952,19 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
     });
   }
 
-  void _onBulkAddMediaTap() {
+  void _onBulkAddMediaTap({
+    BulkAddMediaTab initialTab = BulkAddMediaTab.driveFolder,
+  }) {
+    final canEditFolders =
+        Provider.of<AppContext>(context, listen: false).currentUser.isAreaAdmin;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BulkAddMediaPage(eventContext: widget.eventContext),
+        builder: (_) => BulkAddMediaPage(
+          eventContext: widget.eventContext,
+          initialTab: initialTab,
+          canEditFolders: canEditFolders,
+        ),
       ),
     ).then((_) {
       if (!mounted) return;
@@ -1128,7 +1152,10 @@ class _EditGalleryPageState extends State<EditGalleryPage> {
           '• Add captions to describe your media\n'
           '• New items are marked as key media while there is room\n'
           '• Videos can have custom thumbnails\n'
-          '• Drag the handle, or use the arrows, to set the gallery order',
+          '• Drag the handle, or use the arrows, to set the gallery order\n'
+          '• Choose from this month lists loose photos in the shared folder\n'
+          '• Bulk add from a folder is for an event folder link\n'
+          '• Add image or Add video is for a single link',
     );
   }
 

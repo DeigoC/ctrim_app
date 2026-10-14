@@ -40,7 +40,7 @@ See [Reading the schedule](../../events-and-bulletin.md#reading-the-schedule) an
 ### Media
 
 1. Open **media**.  
-2. Add, reorder, or replace images and video. In **Key media**, use **Earlier**, **Later**, and **Make cover** (on a phone you can also drag the handle). The first image is the cover on the post card. **Post media** uses the same arrows, and a drag handle on a phone; that order is the gallery on the Media tab. Pasting a link checks it straight away. A new image or video is marked as key media while fewer than four are set. To add many photos at once, use **Bulk add from Drive folder**: share a Google Drive folder as **Anyone with the link**, paste the folder link, pick the files, then add them (or paste many individual URLs on the **Paste URLs** tab).  
+2. Add, reorder, or replace images and video. In **Key media**, use **Earlier**, **Later**, and **Make cover** (on a phone you can also drag the handle). The first image is the cover on the post card. **Post media** uses the same arrows, and a drag handle on a phone; that order is the gallery on the Media tab. A new image or video is marked as key media while fewer than four are set. **Choose from this month** lists the loose photos in the shared folder for this month, and you can switch to last month. Photos kept inside an event folder are not in that list — use **Bulk add from a folder**, paste that event folder’s link, and pick the files. **Add image** or **Add video** is for a single link, and pasting a link checks it straight away. An area admin sets the shared folder for this month and for last month. Starting a new month keeps only those two; anything older stays in Google Drive but is no longer offered in the app.  
 3. Save.  
 
 ### People on the post

@@ -789,8 +789,6 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
                     const SizedBox(height: 12),
                     photosCard,
                   ],
-                  const SizedBox(height: 12),
-                  activityCard,
                   const SizedBox(height: 20),
                   meetingsBlock,
                 ],
@@ -801,7 +799,11 @@ class _CellGroupDetailPageState extends State<CellGroupDetailPage> {
               flex: 4,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: peopleColumn,
+                children: [
+                  ...peopleColumn,
+                  const SizedBox(height: 12),
+                  activityCard,
+                ],
               ),
             ),
           ],
