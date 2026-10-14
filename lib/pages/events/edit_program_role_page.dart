@@ -74,7 +74,11 @@ class _EventProgramPageState extends State<EventProgramPage> {
   /// Start time offered for a follow-on item. Set only after the user chooses
   /// to add the next item; null on a fresh add or while editing.
   DateTime? _followOnStart;
-  bool _canSave = false, _forGuests = true, _isSaved = false, _allowPop = false;
+  bool _canSave = false,
+      _forGuests = true,
+      _requiresPeople = true,
+      _isSaved = false,
+      _allowPop = false;
 
   bool get _isEditing => widget.isEditing;
 
@@ -101,6 +105,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
     final entry = widget.programEntry;
     if (entry != null) {
       _forGuests = entry['for_guests'];
+      _requiresPeople = EventProgram.requiresPeople(entry);
       _start = entry['start'];
       _end = entry['end'];
       _standing = EventProgram.isStanding(entry);
@@ -139,6 +144,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _end == null &&
         !_standing &&
         _forGuests &&
+        _requiresPeople &&
         _tecTitle.text.trim().isEmpty &&
         _tecDetail.text.trim().isEmpty &&
         _selectedUsers.isEmpty &&
@@ -462,6 +468,16 @@ class _EventProgramPageState extends State<EventProgramPage> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
+                  SwitchListTile(
+                    value: _requiresPeople,
+                    onChanged: _onRequiresPeopleChange,
+                    title: Text(l10n.scheduleNeedsNamedPerson),
+                    subtitle: Text(l10n.scheduleNeedsNamedPersonHint),
+                    secondary: Icon(
+                      _requiresPeople ? Icons.person : Icons.groups,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -676,6 +692,11 @@ class _EventProgramPageState extends State<EventProgramPage> {
     if (_isEditing) _onFieldsChanged();
   }
 
+  void _onRequiresPeopleChange(final bool newState) {
+    setState(() => _requiresPeople = newState);
+    _onFieldsChanged();
+  }
+
   void _onFieldsChanged() {
     if (_isEditing) {
       _updateCanSaveForEdit();
@@ -703,6 +724,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         _tecDetail.text.trim().compareTo(role['detail'] as String) == 0 &&
         _tecTitle.text.trim().compareTo(role['title'] as String) == 0 &&
         _forGuests == role['for_guests'] &&
+        _requiresPeople == EventProgram.requiresPeople(role) &&
         _selectedUsers
                 .toString()
                 .compareTo((role['uids'] as List<String>).toString()) ==
@@ -882,6 +904,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
       _end = null;
       _standing = false;
       _forGuests = true;
+      _requiresPeople = true;
       _canSave = false;
       _isSaved = false;
       _allowPop = false;
@@ -923,6 +946,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
         priority: 1,
         tagIDs: _tagIDsToSave(),
         standing: _standing,
+        requiresPeople: _requiresPeople,
         id: id);
     widget.eventContext.program.orderProgramsByStartTime();
   }
@@ -1008,6 +1032,7 @@ class _EventProgramPageState extends State<EventProgramPage> {
     role['detail'] = _tecDetail.text.trim();
     role['title'] = _tecTitle.text.trim();
     role['for_guests'] = _forGuests;
+    role['requiresPeople'] = _requiresPeople;
     role['priority'] = 1;
     role['tagIDs'] = _tagIDsToSave();
     role['standing'] = _standing;

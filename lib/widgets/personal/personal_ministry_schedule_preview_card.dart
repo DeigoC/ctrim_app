@@ -3,22 +3,18 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/event/event_program.dart';
-import '../../models/user.dart';
-import '../../pages/personal/team_rota_role_actions.dart';
 import '../../pages/personal/view_team_rota_page.dart';
 import '../../pages/personal/view_team_rota_schedule_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
+import '../../utility/catalog/user_tag_helpers.dart';
 import '../../utility/ministry_schedule_preview.dart';
-import '../../utility/responsive_layout.dart';
 import '../../utility/team_rota.dart';
 import '../information/info_section_card.dart';
-import '../my_avatar_stack.dart';
 
-/// Personal home card for the next ministry services.
+/// Personal home card: one square per ministry, across the dashboard width.
 ///
-/// Wide windows place this under My Schedule and Cell Groups, full width.
-/// A row opens that event's schedule. The button opens the month list.
+/// A square opens that ministry's next service. The button opens the month list.
 class PersonalMinistrySchedulePreviewCard extends StatefulWidget {
   const PersonalMinistrySchedulePreviewCard({
     super.key,
@@ -159,7 +155,15 @@ class _PersonalMinistrySchedulePreviewCardState
       );
     }
     final snapshot = _snapshot;
-    if (snapshot == null || snapshot.posts.isEmpty) {
+    final ministries = snapshot == null
+        ? const <MinistryScheduleMinistry>[]
+        : MinistrySchedulePreview.ministryStates(
+            posts: snapshot.posts,
+            allTags: widget.appContext.allTags,
+            selectedTagIDs: snapshot.selectedTagIDs,
+            viewerId: widget.appContext.currentUser.id,
+          );
+    if (ministries.isEmpty) {
       return Text(
         l10n.personalMinistryScheduleEmpty,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -167,44 +171,10 @@ class _PersonalMinistrySchedulePreviewCardState
             ),
       );
     }
-    final gap = snapshot.firstGap;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (gap != null) ...[
-          _NeedsPeopleLine(
-            label: l10n.personalMinistryNeedsPeopleLine(
-              gap.role['title'] as String? ?? '',
-              gap.post.head.title,
-            ),
-            onTap: () => _openGap(gap),
-          ),
-          const SizedBox(height: 12),
-        ],
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < snapshot.posts.length; i++)
-                _ServiceRow(
-                  post: snapshot.posts[i],
-                  showDivider: i > 0,
-                  dateLabel: _dateLabel(l10n, snapshot.posts[i]),
-                  showFaces: ResponsiveLayout.isWideScreenOf(context),
-                  users: _assignees(snapshot.posts[i]),
-                  onTap: () => _openSchedule(snapshot.posts[i]),
-                ),
-            ],
-          ),
-        ),
-      ],
+    return _MinistryGrid(
+      ministries: ministries,
+      dateLabel: (ministry) => _dateLabel(l10n, ministry),
+      onOpen: _openMinistry,
     );
   }
 
@@ -226,19 +196,11 @@ class _PersonalMinistrySchedulePreviewCardState
     );
   }
 
-  String _dateLabel(AppLocalizations l10n, TeamRotaPost post) {
-    final date = post.head.eventDate;
+  String? _dateLabel(AppLocalizations l10n, MinistryScheduleMinistry ministry) {
+    final date = ministry.nextPost?.head.eventDate;
+    if (ministry.nextPost == null) return null;
     if (date == null) return l10n.personalScheduleDateTbc;
     return _eventDateFormat.format(date);
-  }
-
-  List<User> _assignees(TeamRotaPost post) {
-    final users = <User>[];
-    for (final id in MinistrySchedulePreview.assigneeIds(post)) {
-      final user = widget.appContext.userById(id);
-      if (user != null) users.add(user);
-    }
-    return users;
   }
 
   Future<void> _openFullSchedule() async {
@@ -249,216 +211,205 @@ class _PersonalMinistrySchedulePreviewCardState
     if (mounted) _load(silent: true);
   }
 
-  void _openSchedule(TeamRotaPost post) {
+  void _openMinistry(MinistryScheduleMinistry ministry) {
+    final post = ministry.nextPost;
+    if (post == null) return;
     final program = _snapshot?.programs[post.head.id];
-    final tagIDs = _snapshot?.selectedTagIDs;
-    if (program == null || tagIDs == null) return;
+    if (program == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ViewTeamRotaSchedulePage(
           head: post.head,
           program: program,
-          selectedTagIDs: Set<String>.from(tagIDs),
+          selectedTagIDs: {ministry.tagId},
           onProgramUpdated: (updated) => _applyProgram(post.head.id, updated),
         ),
       ),
     );
   }
-
-  Future<void> _openGap(TeamRotaGap gap) {
-    return TeamRotaRoleActions(
-      context: context,
-      appContext: widget.appContext,
-      onProgramUpdated: _applyProgram,
-    ).openRole(head: gap.post.head, role: gap.role);
-  }
 }
 
-class _NeedsPeopleLine extends StatelessWidget {
-  const _NeedsPeopleLine({
-    required this.label,
-    required this.onTap,
+int _ministryColumnCount(double width) {
+  final count = (width / 156).floor();
+  if (count < 2) return 2;
+  if (count > 8) return 8;
+  return count;
+}
+
+class _MinistryGrid extends StatelessWidget {
+  const _MinistryGrid({
+    required this.ministries,
+    required this.dateLabel,
+    required this.onOpen,
   });
 
-  final String label;
-  final VoidCallback onTap;
+  final List<MinistryScheduleMinistry> ministries;
+  final String? Function(MinistryScheduleMinistry ministry) dateLabel;
+  final ValueChanged<MinistryScheduleMinistry> onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Material(
-      color: colorScheme.errorContainer.withValues(alpha: 0.35),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colorScheme.error,
-                    fontWeight: FontWeight.w600,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = _ministryColumnCount(constraints.maxWidth);
+        final tileWidth = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+        final minHeight = tileWidth.clamp(120.0, 156.0);
+        final rows = <Widget>[];
+        for (var i = 0; i < ministries.length; i += columns) {
+          final end =
+              i + columns > ministries.length ? ministries.length : i + columns;
+          final slice = ministries.sublist(i, end);
+          if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
+          rows.add(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var j = 0; j < columns; j++) ...[
+                  if (j > 0) const SizedBox(width: 12),
+                  Expanded(
+                    child: j < slice.length
+                        ? _MinistrySquare(
+                            ministry: slice[j],
+                            dateLabel: dateLabel(slice[j]),
+                            minHeight: minHeight,
+                            onTap: slice[j].nextPost == null
+                                ? null
+                                : () => onOpen(slice[j]),
+                          )
+                        : const SizedBox.shrink(),
                   ),
-                ),
-              ),
-              Icon(Icons.chevron_right, color: colorScheme.error),
-            ],
-          ),
-        ),
-      ),
+                ],
+              ],
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: rows,
+        );
+      },
     );
   }
 }
 
-class _ServiceRow extends StatelessWidget {
-  const _ServiceRow({
-    required this.post,
-    required this.showDivider,
+class _MinistrySquare extends StatelessWidget {
+  const _MinistrySquare({
+    required this.ministry,
     required this.dateLabel,
-    required this.showFaces,
-    required this.users,
+    required this.minHeight,
     required this.onTap,
   });
 
-  final TeamRotaPost post;
-  final bool showDivider;
-  final String dateLabel;
-  final bool showFaces;
-  final List<User> users;
-  final VoidCallback onTap;
+  final MinistryScheduleMinistry ministry;
+  final String? dateLabel;
+  final double minHeight;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final currentUserId = context.select((AppContext c) => c.currentUser.id);
-    final gapCount = TeamRotaQuery.unassignedCount(post);
-    final serving = TeamRotaQuery.viewerIsServing(post, currentUserId);
+    final accent =
+        UserTagHelpers.parseColor(ministry.colorHex) ?? colorScheme.primary;
+    final open = ministry.openSlots > 0;
+    final serving = ministry.viewerIsServing;
+    final borderColor = open
+        ? colorScheme.error.withValues(alpha: 0.45)
+        : serving
+            ? colorScheme.primary.withValues(alpha: 0.45)
+            : colorScheme.outlineVariant;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showDivider) const Divider(height: 1, indent: 16, endIndent: 16),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dateLabel,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          post.head.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+    return Material(
+      color: colorScheme.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: minHeight),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(height: 6, color: accent),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ministry.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  if (showFaces && users.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    MyAvatarStack(
-                      users: users,
-                      height: 28,
-                      width: (28.0 * users.length.clamp(1, 4)).clamp(28, 88),
-                      borderWidth: 1.2,
-                    ),
+                    const SizedBox(height: 10),
+                    if (open)
+                      Text(
+                        l10n.teamRotaCardGaps(ministry.openSlots),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    else if (ministry.nextPost == null)
+                      Text(
+                        l10n.personalMinistryScheduleQuiet,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    else if (!serving)
+                      Text(
+                        l10n.personalMinistryScheduleCovered,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    if (serving) ...[
+                      if (open) const SizedBox(height: 2),
+                      Text(
+                        l10n.teamRotaYoureServing,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    if (dateLabel != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        dateLabel!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
-                  const SizedBox(width: 8),
-                  _Status(
-                    gapCount: gapCount,
-                    serving: serving,
-                    gapsLabel: l10n.teamRotaCardGaps(gapCount),
-                    servingLabel: l10n.teamRotaYoureServing,
-                    coveredLabel: l10n.personalMinistryScheduleCovered,
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _Status extends StatelessWidget {
-  const _Status({
-    required this.gapCount,
-    required this.serving,
-    required this.gapsLabel,
-    required this.servingLabel,
-    required this.coveredLabel,
-  });
-
-  final int gapCount;
-  final bool serving;
-  final String gapsLabel;
-  final String servingLabel;
-  final String coveredLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final style = theme.textTheme.labelMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (gapCount > 0)
-          Text(
-            gapsLabel,
-            textAlign: TextAlign.end,
-            style: style?.copyWith(color: colorScheme.error),
-          ),
-        if (gapCount > 0 && serving) const SizedBox(height: 2),
-        if (serving)
-          Text(
-            servingLabel,
-            textAlign: TextAlign.end,
-            style: style?.copyWith(color: colorScheme.primary),
-          ),
-        if (gapCount == 0 && !serving)
-          Text(
-            coveredLabel,
-            textAlign: TextAlign.end,
-            style: style?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-      ],
+      ),
     );
   }
 }

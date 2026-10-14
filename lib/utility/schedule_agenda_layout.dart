@@ -239,7 +239,7 @@ class ScheduleAgendaLayout {
   /// that [include] accepts.
   int? firstGapRoleId(final bool Function(Map<String, dynamic> role) include) {
     bool gap(final Map<String, dynamic> role) =>
-        TeamRotaQuery.uidsOf(role).isEmpty && include(role);
+        TeamRotaQuery.isVacancy(role) && include(role);
 
     for (final duty in duties) {
       if (gap(duty.role)) return duty.roleId;

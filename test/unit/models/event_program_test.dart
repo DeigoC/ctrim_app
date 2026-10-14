@@ -227,6 +227,80 @@ void main() {
         final bare = EventProgram.parseRoleIdLine('10||1');
         expect(bare.tagIDs, isEmpty);
         expect(bare.standing, isTrue);
+        expect(bare.requiresPeople, isTrue);
+      });
+
+      test('requiresPeople stays true unless the line says false', () {
+        expect(EventProgram.requiresPeople({'title': 'Host'}), isTrue);
+        expect(
+          EventProgram.requiresPeople({'requiresPeople': false}),
+          isFalse,
+        );
+
+        final program = EventProgram();
+        program.addRole(
+          uids: [],
+          title: 'Welcome',
+          start: null,
+          end: null,
+          id: 8,
+          tagIDs: ['welcome'],
+          requiresPeople: false,
+        );
+        expect(EventProgram.requiresPeople(program.roles.single), isFalse);
+
+        final restored = EventProgram.fromMap(program.toJson());
+        expect(EventProgram.requiresPeople(restored.roles.single), isFalse);
+
+        final missing = EventProgram.fromMap({
+          'AllDay': false,
+          'Online': false,
+          'Address': 'x',
+          'MapLink': 'y',
+          'Roles': [
+            {
+              'uids': <String>[],
+              'detail': '',
+              'title': 'Host',
+              'start': null,
+              'end': null,
+              'for_guests': true,
+              'id': 1,
+            }
+          ],
+        });
+        expect(EventProgram.requiresPeople(missing.roles.single), isTrue);
+
+        expect(
+          EventProgram.encodeRoleIdLine(
+            10,
+            const ['welcome'],
+            requiresPeople: false,
+          ),
+          '10|welcome|0|0',
+        );
+        expect(
+          EventProgram.encodeRoleIdLine(
+            10,
+            const ['welcome'],
+            standing: true,
+            requiresPeople: false,
+          ),
+          '10|welcome|1|0',
+        );
+
+        final optional = EventProgram.parseRoleIdLine('10|welcome|0|0');
+        expect(optional.tagIDs, ['welcome']);
+        expect(optional.standing, isFalse);
+        expect(optional.requiresPeople, isFalse);
+
+        final standingOptional = EventProgram.parseRoleIdLine('10|welcome|1|0');
+        expect(standingOptional.standing, isTrue);
+        expect(standingOptional.requiresPeople, isFalse);
+
+        final legacy = EventProgram.parseRoleIdLine('10|worship,tech|1');
+        expect(legacy.standing, isTrue);
+        expect(legacy.requiresPeople, isTrue);
       });
 
       test('removeRole removes matching role by id', () {

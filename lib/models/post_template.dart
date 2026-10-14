@@ -128,6 +128,7 @@ class SchedulePreset {
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
         'tagIDs': EventProgram.tagIDsOf(entry),
         'standing': EventProgram.isStanding(entry),
+        'requiresPeople': EventProgram.requiresPeople(entry),
       });
     }
     return result;
@@ -148,6 +149,7 @@ class SchedulePreset {
         'id': entry['id'],
         'tagIDs': EventProgram.tagIDsOf(entry),
         'standing': EventProgram.isStanding(entry),
+        'requiresPeople': EventProgram.requiresPeople(entry),
       });
     }
     return result;
@@ -164,6 +166,7 @@ class SchedulePreset {
       'id': role['id'],
       'tagIDs': EventProgram.tagIDsOf(role),
       'standing': EventProgram.isStanding(role),
+      'requiresPeople': EventProgram.requiresPeople(role),
     };
   }
 

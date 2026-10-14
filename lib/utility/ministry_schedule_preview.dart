@@ -7,10 +7,34 @@ import '../models/user_tag.dart';
 import 'catalog/volunteer_locations.dart';
 import 'team_rota.dart';
 
+/// One ministry on the Personal home dashboard.
+class MinistryScheduleMinistry {
+  const MinistryScheduleMinistry({
+    required this.tagId,
+    required this.name,
+    required this.colorHex,
+    required this.openSlots,
+    required this.viewerIsServing,
+    required this.nextPost,
+  });
+
+  final String tagId;
+  final String name;
+  final String? colorHex;
+  final int openSlots;
+
+  /// True when [viewerId] passed to [MinistrySchedulePreview.ministryStates]
+  /// is on a slot for this ministry.
+  final bool viewerIsServing;
+
+  /// Soonest loaded service that has a slot for this ministry.
+  final TeamRotaPost? nextPost;
+}
+
 /// Personal home glance at Ministry Schedule.
 ///
 /// The month list stays on the Ministry Schedule page. This snapshot is the
-/// next few services for the ministries that page opens on.
+/// services read for the ministry squares, for the ministries that page opens on.
 class MinistrySchedulePreviewSnapshot {
   const MinistrySchedulePreviewSnapshot({
     required this.posts,
@@ -33,11 +57,8 @@ class MinistrySchedulePreviewSnapshot {
   bool get hasOpenSlot => TeamRotaQuery.unassignedRoleCount(posts) > 0;
 }
 
-/// Which services the Personal card shows, and how it loads them.
+/// Which services the Personal card reads, and how each ministry sums them.
 abstract final class MinistrySchedulePreview {
-  /// Rows on the card.
-  static const int visiblePostCount = 3;
-
   /// Programme reads on Personal before stopping. Later posts stay on the
   /// full Ministry Schedule page.
   static const int programmeReadCap = 8;
@@ -61,13 +82,83 @@ abstract final class MinistrySchedulePreview {
     return matched.sublist(0, cap);
   }
 
-  /// First [limit] posts. [posts] is already in date order.
-  static List<TeamRotaPost> visiblePosts(
-    List<TeamRotaPost> posts, {
-    int limit = visiblePostCount,
+  /// One square per ministry.
+  ///
+  /// When [selectedTagIDs] is set, every active ministry in that set appears,
+  /// including ones with nothing in [posts]. An empty set uses the ministries
+  /// that actually have a slot on those posts. Ministries that still need
+  /// people come first.
+  static List<MinistryScheduleMinistry> ministryStates({
+    required List<TeamRotaPost> posts,
+    required List<UserTag> allTags,
+    required Set<String> selectedTagIDs,
+    required String viewerId,
   }) {
-    if (posts.length <= limit) return posts;
-    return posts.sublist(0, limit);
+    final tagsById = {for (final tag in allTags) tag.id: tag};
+    final ids = <String>[];
+    if (selectedTagIDs.isNotEmpty) {
+      final selected = [
+        for (final tag in allTags)
+          if (tag.isActive && selectedTagIDs.contains(tag.id)) tag,
+      ]..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+      ids.addAll(selected.map((tag) => tag.id));
+    } else {
+      final seen = <String>{};
+      for (final post in posts) {
+        for (final role in post.roles) {
+          for (final id in EventProgram.tagIDsOf(role)) {
+            final tag = tagsById[id];
+            if (tag == null || !tag.isActive) continue;
+            if (seen.add(id)) ids.add(id);
+          }
+        }
+      }
+    }
+
+    final states = <MinistryScheduleMinistry>[];
+    for (final id in ids) {
+      final tag = tagsById[id];
+      if (tag == null || !tag.isActive) continue;
+      var open = 0;
+      var serving = false;
+      TeamRotaPost? next;
+      for (final post in posts) {
+        var onPost = false;
+        for (final role in post.roles) {
+          if (!EventProgram.tagIDsOf(role).contains(id)) continue;
+          onPost = true;
+          if (TeamRotaQuery.isVacancy(role)) {
+            open++;
+          } else if (TeamRotaQuery.isAssignedTo(role, viewerId)) {
+            serving = true;
+          }
+        }
+        if (onPost && next == null) next = post;
+      }
+      states.add(MinistryScheduleMinistry(
+        tagId: id,
+        name: tag.name,
+        colorHex: tag.color,
+        openSlots: open,
+        viewerIsServing: serving,
+        nextPost: next,
+      ));
+    }
+
+    states.sort((a, b) {
+      final byRank = _rank(a).compareTo(_rank(b));
+      if (byRank != 0) return byRank;
+      if (a.openSlots != b.openSlots) return b.openSlots.compareTo(a.openSlots);
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+    return states;
+  }
+
+  static int _rank(MinistryScheduleMinistry ministry) {
+    if (ministry.openSlots > 0) return 0;
+    if (ministry.viewerIsServing) return 1;
+    if (ministry.nextPost != null) return 2;
+    return 3;
   }
 
   /// People on this post's ministry slots, first appearance first.
@@ -136,7 +227,7 @@ abstract final class MinistrySchedulePreview {
           : await EventSupplementalDBManager(head.id).fetchProgramIfExists();
       if (program != null) programs[head.id] = program;
     }));
-    final matching = TeamRotaQuery.matchingPosts(
+    final posts = TeamRotaQuery.matchingPosts(
       posts: [
         for (final head in candidates)
           if (programs.containsKey(head.id))
@@ -145,7 +236,6 @@ abstract final class MinistrySchedulePreview {
       selectedTagIDs: selectedTagIDs,
       locationFilter: locationFilter,
     );
-    final posts = visiblePosts(matching);
     return MinistrySchedulePreviewSnapshot(
       posts: posts,
       programs: {

@@ -24,6 +24,8 @@ class EventProgram {
   // standing - true when the role covers the whole event (times optional)
   // A standing role may have no times, a start only, or both.
   // A running-order role needs both times. An end without a start is invalid.
+  // requiresPeople - false when a named person is optional (shared responsibility).
+  // Missing stays true so older posts still count as vacancies.
   final List<Map<String, dynamic>> _roles = List.empty(growable: true);
 
   DateTime? _finishTime;
@@ -59,6 +61,7 @@ class EventProgram {
         'id': entry['id'] ?? DateTime.now().millisecondsSinceEpoch,
         'tagIDs': tagIDsOf(entry),
         'standing': isStanding(entry),
+        'requiresPeople': requiresPeople(entry),
       });
     }
     ensureUniqueRoleIds();
@@ -94,6 +97,7 @@ class EventProgram {
         'id': entry['id'],
         'tagIDs': tagIDsOf(entry),
         'standing': isStanding(entry),
+        'requiresPeople': requiresPeople(entry),
       });
     }
 
@@ -150,7 +154,8 @@ class EventProgram {
       int priority = 1,
       String detail = '',
       List<String> tagIDs = const [],
-      bool standing = false}) {
+      bool standing = false,
+      bool requiresPeople = true}) {
     _roles.add(<String, dynamic>{
       'uids': uids,
       'detail': detail,
@@ -161,6 +166,7 @@ class EventProgram {
       'id': id,
       'tagIDs': List<String>.from(tagIDs),
       'standing': standing,
+      'requiresPeople': requiresPeople,
     });
   }
 
@@ -170,6 +176,12 @@ class EventProgram {
   /// have no clock time, an expected start with no finish, or both.
   static bool isStanding(final Map<String, dynamic> role) =>
       role['standing'] == true;
+
+  /// False only when the line explicitly does not need a named person.
+  ///
+  /// Missing values stay required so older posts still count as vacancies.
+  static bool requiresPeople(final Map<String, dynamic> role) =>
+      role['requiresPeople'] != false;
 
   /// Team-tag IDs on a role map. Missing / malformed values become `[]`.
   static List<String> tagIDsOf(final Map<String, dynamic> role) {
@@ -185,12 +197,17 @@ class EventProgram {
   ///
   /// `id`, `id|tag1,tag2`, or with a second pipe when standing:
   /// `id|tag1,tag2|1` and `id||1`. A single pipe is only tags, so a ministry
-  /// id of `1` is not the standing flag.
+  /// id of `1` is not the standing flag. When a named person is optional, a
+  /// fourth field is `0`: `id|tag1,tag2|0|0` and `id|tag1,tag2|1|0`.
   static String encodeRoleIdLine(
     final int id,
     final List<String> tagIDs, {
     bool standing = false,
+    bool requiresPeople = true,
   }) {
+    if (!requiresPeople) {
+      return '$id|${tagIDs.join(',')}|${standing ? 1 : 0}|0';
+    }
     if (!standing) {
       if (tagIDs.isEmpty) return '$id';
       return '$id|${tagIDs.join(',')}';
@@ -198,24 +215,33 @@ class EventProgram {
     return '$id|${tagIDs.join(',')}|1';
   }
 
-  static ({int id, List<String> tagIDs, bool standing}) parseRoleIdLine(
-      final String raw) {
+  static ({int id, List<String> tagIDs, bool standing, bool requiresPeople})
+      parseRoleIdLine(final String raw) {
     final pipe = raw.indexOf('|');
     if (pipe < 0) {
-      return (id: int.parse(raw), tagIDs: const <String>[], standing: false);
+      return (
+        id: int.parse(raw),
+        tagIDs: const <String>[],
+        standing: false,
+        requiresPeople: true,
+      );
     }
     final id = int.parse(raw.substring(0, pipe));
     final rest = raw.substring(pipe + 1);
     final second = rest.indexOf('|');
     final tagsPart = second < 0 ? rest : rest.substring(0, second);
-    final standing = second >= 0 && rest.substring(second + 1) == '1';
-    if (tagsPart.isEmpty) {
-      return (id: id, tagIDs: const <String>[], standing: standing);
-    }
+    final flags = second < 0 ? '' : rest.substring(second + 1);
+    final third = flags.indexOf('|');
+    final standingPart = third < 0 ? flags : flags.substring(0, third);
+    final peoplePart = third < 0 ? '' : flags.substring(third + 1);
+    final tagIDs = tagsPart.isEmpty
+        ? const <String>[]
+        : tagsPart.split(',').where((tagId) => tagId.isNotEmpty).toList();
     return (
       id: id,
-      tagIDs: tagsPart.split(',').where((tagId) => tagId.isNotEmpty).toList(),
-      standing: standing,
+      tagIDs: tagIDs,
+      standing: standingPart == '1',
+      requiresPeople: peoplePart != '0',
     );
   }
 

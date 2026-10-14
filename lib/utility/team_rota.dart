@@ -47,7 +47,9 @@ class TeamRotaGap {
 /// Join is role [EventProgram.tagIDsOf] vs selected team-tag IDs — not the
 /// assignee's personal tags. Untagged roles are omitted. Empty [selectedTagIDs]
 /// means no ministry filter (all tagged roles). Empty `uids` still belong to
-/// the team.
+/// the team when the line [EventProgram.requiresPeople]. A line that does not
+/// is a shared responsibility: it stays out of the list and out of gap counts
+/// unless [matchingPosts] is asked to include them.
 class TeamRotaQuery {
   TeamRotaQuery._();
 
@@ -102,6 +104,21 @@ class TeamRotaQuery {
     return uidsOf(role).contains(uid);
   }
 
+  /// Empty slot that still needs a named person.
+  static bool isVacancy(final Map<String, dynamic> role) =>
+      uidsOf(role).isEmpty && EventProgram.requiresPeople(role);
+
+  /// Ministry-owned line that does not need a named person.
+  static bool isSharedResponsibility(final Map<String, dynamic> role) =>
+      !EventProgram.requiresPeople(role) &&
+      EventProgram.tagIDsOf(role).isNotEmpty;
+
+  /// Empty optional line with no ministry: the morning shows the title only.
+  static bool hidesAssigneeLine(final Map<String, dynamic> role) =>
+      uidsOf(role).isEmpty &&
+      !EventProgram.requiresPeople(role) &&
+      EventProgram.tagIDsOf(role).isEmpty;
+
   /// Ministries selected when the rota opens: the user's own active ministries,
   /// plus active ministries they head at [locationId].
   static Set<String> openingMinistryIds({
@@ -149,6 +166,7 @@ class TeamRotaQuery {
     required List<UserTag> allTags,
     required DateTime now,
   }) {
+    if (!EventProgram.requiresPeople(role)) return false;
     if (roleHasStarted(role: role, eventDate: eventDate, now: now)) {
       return false;
     }
@@ -176,6 +194,7 @@ class TeamRotaQuery {
     required DateTime? eventDate,
     required DateTime now,
   }) {
+    if (!EventProgram.requiresPeople(role)) return false;
     if (roleHasStarted(role: role, eventDate: eventDate, now: now)) {
       return false;
     }
@@ -188,7 +207,7 @@ class TeamRotaQuery {
   static int unassignedCount(final TeamRotaPost post) {
     var count = 0;
     for (final role in post.roles) {
-      if (uidsOf(role).isEmpty) count++;
+      if (isVacancy(role)) count++;
     }
     return count;
   }
@@ -222,7 +241,7 @@ class TeamRotaQuery {
     final gaps = <TeamRotaGap>[];
     for (final post in posts) {
       for (final role in post.roles) {
-        if (uidsOf(role).isNotEmpty) continue;
+        if (!isVacancy(role)) continue;
         gaps.add(TeamRotaGap(post: post, role: role));
         if (gaps.length >= limit) return gaps;
       }
@@ -234,7 +253,7 @@ class TeamRotaQuery {
   static List<TeamRotaPost> postsNeedingPeople(final List<TeamRotaPost> posts) {
     final result = <TeamRotaPost>[];
     for (final post in posts) {
-      final gaps = post.roles.where((role) => uidsOf(role).isEmpty).toList();
+      final gaps = post.roles.where(isVacancy).toList();
       if (gaps.isEmpty) continue;
       result.add(TeamRotaPost(head: post.head, roles: gaps));
     }
@@ -270,6 +289,7 @@ class TeamRotaQuery {
     required List<({EventHead head, EventProgram program})> posts,
     required Set<String> selectedTagIDs,
     required String locationFilter,
+    bool includeSharedResponsibilities = false,
   }) {
     final result = <TeamRotaPost>[];
     for (final post in posts) {
@@ -280,10 +300,13 @@ class TeamRotaQuery {
         continue;
       }
       final roles = post.program.roles
-          .where((role) => roleMatchesTeamTags(
+          .where((role) =>
+              roleMatchesTeamTags(
                 role: role,
                 selectedTagIDs: selectedTagIDs,
-              ))
+              ) &&
+              (includeSharedResponsibilities ||
+                  EventProgram.requiresPeople(role)))
           .toList()
         ..sort(_compareRoleStart);
       if (roles.isEmpty) continue;

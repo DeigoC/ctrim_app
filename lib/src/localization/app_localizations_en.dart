@@ -124,12 +124,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalMinistryScheduleCovered => 'Covered';
 
   @override
-  String get personalMinistryScheduleRetry => 'Try again';
+  String get personalMinistryScheduleQuiet => 'Nothing soon';
 
   @override
-  String personalMinistryNeedsPeopleLine(String role, String event) {
-    return 'Needs people · $role · $event';
-  }
+  String get personalMinistryScheduleRetry => 'Try again';
 
   @override
   String get personalCellGroupsTitle => 'Cell Groups';
@@ -241,6 +239,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get teamRotaNeedsPeopleSubtitle =>
       'Only slots that still need someone';
+
+  @override
+  String get teamRotaSharedResponsibilities => 'Shared responsibilities';
+
+  @override
+  String get teamRotaSharedResponsibilitiesSubtitle =>
+      'Ministry slots that do not need a named person';
+
+  @override
+  String get teamRotaSharedResponsibility => 'Shared responsibility';
+
+  @override
+  String get scheduleNeedsNamedPerson => 'Needs a named person';
+
+  @override
+  String get scheduleNeedsNamedPersonHint =>
+      'Turn off when Ministry Schedule should not ask anyone to fill this slot';
 
   @override
   String get teamRotaYou => 'You';

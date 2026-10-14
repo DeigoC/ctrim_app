@@ -280,23 +280,23 @@ abstract class AppLocalizations {
   /// **'No ministry slots coming up.'**
   String get personalMinistryScheduleEmpty;
 
-  /// A previewed service whose ministry slots all have someone, and the viewer is not on it
+  /// A ministry square whose slots all have someone, and the viewer is not on it
   ///
   /// In en, this message translates to:
   /// **'Covered'**
   String get personalMinistryScheduleCovered;
+
+  /// A ministry square with no slots in the Personal home lookahead
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing soon'**
+  String get personalMinistryScheduleQuiet;
 
   /// Retries loading the Personal Ministry Schedule card
   ///
   /// In en, this message translates to:
   /// **'Try again'**
   String get personalMinistryScheduleRetry;
-
-  /// Next empty slot on the Personal Ministry Schedule card
-  ///
-  /// In en, this message translates to:
-  /// **'Needs people · {role} · {event}'**
-  String personalMinistryNeedsPeopleLine(String role, String event);
 
   /// Title for Personal home cell groups dashboard card
   ///
@@ -495,6 +495,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only slots that still need someone'**
   String get teamRotaNeedsPeopleSubtitle;
+
+  /// Filter that includes ministry slots which do not need a named person
+  ///
+  /// In en, this message translates to:
+  /// **'Shared responsibilities'**
+  String get teamRotaSharedResponsibilities;
+
+  /// Explains the Shared responsibilities filter on Ministry Schedule
+  ///
+  /// In en, this message translates to:
+  /// **'Ministry slots that do not need a named person'**
+  String get teamRotaSharedResponsibilitiesSubtitle;
+
+  /// Quiet label on an empty ministry slot that does not need a named person
+  ///
+  /// In en, this message translates to:
+  /// **'Shared responsibility'**
+  String get teamRotaSharedResponsibility;
+
+  /// Schedule editor switch, on when the slot is a vacancy until someone is named
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a named person'**
+  String get scheduleNeedsNamedPerson;
+
+  /// Explains the Needs a named person switch on a schedule item
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off when Ministry Schedule should not ask anyone to fill this slot'**
+  String get scheduleNeedsNamedPersonHint;
 
   /// Marks a team rota slot the signed-in person is assigned to
   ///

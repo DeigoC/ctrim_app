@@ -163,6 +163,7 @@ class PostTemplateMapper {
             role['for_guests'] is bool ? role['for_guests'] as bool : true,
         tagIDs: EventProgram.tagIDsOf(role),
         standing: EventProgram.isStanding(role),
+        requiresPeople: EventProgram.requiresPeople(role),
       );
     }
   }
@@ -231,6 +232,7 @@ class PostTemplateMapper {
               role['for_guests'] is bool ? role['for_guests'] as bool : true,
           tagIDs: EventProgram.tagIDsOf(role),
           standing: EventProgram.isStanding(role),
+          requiresPeople: EventProgram.requiresPeople(role),
           id: roleId);
 
       if (roleUids.isNotEmpty) {

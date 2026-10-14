@@ -45,6 +45,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
   late String _locationFilter;
   late Set<String> _selectedTagIDs;
   bool _needsPeople = false;
+  bool _showSharedResponsibilities = false;
 
   List<EventHead> _rangeHeads = [];
   final Map<String, EventProgram?> _programs = {};
@@ -152,6 +153,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
       posts: posts,
       selectedTagIDs: _selectedTagIDs,
       locationFilter: _locationFilter,
+      includeSharedResponsibilities: _showSharedResponsibilities,
     );
   }
 
@@ -279,6 +281,7 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
 
   bool get _showsFilterBanner =>
       _needsPeople ||
+      _showSharedResponsibilities ||
       _locationFilter != VolunteerLocations.all ||
       _selectedTagIDs.isNotEmpty;
 
@@ -299,6 +302,9 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
       );
     }
     if (_needsPeople) parts.add(l10n.teamRotaNeedsPeople);
+    if (_showSharedResponsibilities) {
+      parts.add(l10n.teamRotaSharedResponsibilities);
+    }
     return parts;
   }
 
@@ -457,6 +463,16 @@ class _ViewTeamRotaPageState extends State<ViewTeamRotaPage> {
                   onChanged: (value) {
                     HapticFeedback.selectionClick();
                     refreshSheet(() => _needsPeople = value);
+                  },
+                ),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  title: Text(l10n.teamRotaSharedResponsibilities),
+                  subtitle: Text(l10n.teamRotaSharedResponsibilitiesSubtitle),
+                  value: _showSharedResponsibilities,
+                  onChanged: (value) {
+                    HapticFeedback.selectionClick();
+                    refreshSheet(() => _showSharedResponsibilities = value);
                   },
                 ),
               ],

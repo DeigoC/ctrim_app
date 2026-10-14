@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ctrim_app/models/event/event_head.dart';
+import 'package:ctrim_app/models/user_tag.dart';
 import 'package:ctrim_app/utility/catalog/volunteer_locations.dart';
 import 'package:ctrim_app/utility/ministry_schedule_preview.dart';
 import 'package:ctrim_app/utility/team_rota.dart';
@@ -79,15 +80,84 @@ void main() {
       expect(reads.last.id, 'd8');
     });
 
-    test('the card shows the first three services', () {
-      final posts = [
-        for (var i = 0; i < 5; i++)
-          post(id: 'p$i', roles: const [], title: 'Service $i'),
-      ];
+    UserTag tag(String id, String name, {int order = 0}) {
+      return UserTag(id: id, name: name, displayOrder: order, color: '#3D6B9E');
+    }
 
-      final visible = MinistrySchedulePreview.visiblePosts(posts);
+    test('each ministry is a square, and open ones come first', () {
+      final soon = post(
+        id: 'soon',
+        title: 'Sunday',
+        roles: [
+          {
+            'uids': <String>[],
+            'title': 'Welcome',
+            'tagIDs': ['welcome'],
+          },
+          {
+            'uids': ['me'],
+            'title': 'Worship',
+            'tagIDs': ['worship'],
+          },
+        ],
+      );
+      final later = TeamRotaPost(
+        head: head(
+          id: 'later',
+          title: 'Next week',
+          eventDate: DateTime(2026, 10, 25),
+        ),
+        roles: [
+          {
+            'uids': ['me', 'other'],
+            'title': 'Sound',
+            'tagIDs': ['worship', 'tech'],
+          },
+        ],
+      );
 
-      expect(visible.map((p) => p.head.id), ['p0', 'p1', 'p2']);
+      final states = MinistrySchedulePreview.ministryStates(
+        posts: [soon, later],
+        allTags: [
+          tag('worship', 'Worship', order: 2),
+          tag('welcome', 'Welcome', order: 0),
+          tag('tech', 'Tech', order: 1),
+          tag('host', 'Host', order: 3),
+        ],
+        selectedTagIDs: {'worship', 'welcome', 'host'},
+        viewerId: 'me',
+      );
+
+      expect(states.map((m) => m.name), ['Welcome', 'Worship', 'Host']);
+      expect(states[0].openSlots, 1);
+      expect(states[0].viewerIsServing, isFalse);
+      expect(states[0].nextPost?.head.id, 'soon');
+      expect(states[1].openSlots, 0);
+      expect(states[1].viewerIsServing, isTrue);
+      expect(states[1].nextPost?.head.id, 'soon');
+      expect(states[2].nextPost, isNull);
+    });
+
+    test('a shared slot counts for every ministry on it', () {
+      final service = post(
+        id: 'p1',
+        roles: [
+          {
+            'uids': <String>[],
+            'title': 'Desk',
+            'tagIDs': ['welcome', 'host'],
+          },
+        ],
+      );
+
+      final states = MinistrySchedulePreview.ministryStates(
+        posts: [service],
+        allTags: [tag('welcome', 'Welcome'), tag('host', 'Host')],
+        selectedTagIDs: {'welcome', 'host'},
+        viewerId: 'me',
+      );
+
+      expect(states.every((m) => m.openSlots == 1), isTrue);
     });
 
     test('assignee ids follow role order and skip repeats', () {

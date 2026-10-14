@@ -155,25 +155,15 @@
   },
   "personalMinistryScheduleCovered": "Covered",
   "@personalMinistryScheduleCovered": {
-    "description": "A previewed service whose ministry slots all have someone, and the viewer is not on it"
+    "description": "A ministry square whose slots all have someone, and the viewer is not on it"
+  },
+  "personalMinistryScheduleQuiet": "Nothing soon",
+  "@personalMinistryScheduleQuiet": {
+    "description": "A ministry square with no slots in the Personal home lookahead"
   },
   "personalMinistryScheduleRetry": "Try again",
   "@personalMinistryScheduleRetry": {
     "description": "Retries loading the Personal Ministry Schedule card"
-  },
-  "personalMinistryNeedsPeopleLine": "Needs people · {role} · {event}",
-  "@personalMinistryNeedsPeopleLine": {
-    "description": "Next empty slot on the Personal Ministry Schedule card",
-    "placeholders": {
-      "role": {
-        "type": "String",
-        "example": "Welcome"
-      },
-      "event": {
-        "type": "String",
-        "example": "Sunday Worship"
-      }
-    }
   },
   "personalCellGroupsTitle": "Cell Groups",
   "@personalCellGroupsTitle": {
@@ -326,6 +316,26 @@
   "teamRotaNeedsPeopleSubtitle": "Only slots that still need someone",
   "@teamRotaNeedsPeopleSubtitle": {
     "description": "Explains the Needs people filter on the team rota"
+  },
+  "teamRotaSharedResponsibilities": "Shared responsibilities",
+  "@teamRotaSharedResponsibilities": {
+    "description": "Filter that includes ministry slots which do not need a named person"
+  },
+  "teamRotaSharedResponsibilitiesSubtitle": "Ministry slots that do not need a named person",
+  "@teamRotaSharedResponsibilitiesSubtitle": {
+    "description": "Explains the Shared responsibilities filter on Ministry Schedule"
+  },
+  "teamRotaSharedResponsibility": "Shared responsibility",
+  "@teamRotaSharedResponsibility": {
+    "description": "Quiet label on an empty ministry slot that does not need a named person"
+  },
+  "scheduleNeedsNamedPerson": "Needs a named person",
+  "@scheduleNeedsNamedPerson": {
+    "description": "Schedule editor switch, on when the slot is a vacancy until someone is named"
+  },
+  "scheduleNeedsNamedPersonHint": "Turn off when Ministry Schedule should not ask anyone to fill this slot",
+  "@scheduleNeedsNamedPersonHint": {
+    "description": "Explains the Needs a named person switch on a schedule item"
   },
   "teamRotaYou": "You",
   "@teamRotaYou": {

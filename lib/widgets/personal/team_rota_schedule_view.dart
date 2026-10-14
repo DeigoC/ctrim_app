@@ -268,7 +268,7 @@ class _TeamRotaScheduleViewState extends State<TeamRotaScheduleView> {
                     agenda.untimedRoles[i],
                     currentUserId,
                   ),
-                  empty: TeamRotaQuery.uidsOf(agenda.untimedRoles[i]).isEmpty,
+                  empty: TeamRotaQuery.isVacancy(agenda.untimedRoles[i]),
                   emphasizeEmpty: TeamRotaQuery.roleMatchesTeamTags(
                     role: agenda.untimedRoles[i],
                     selectedTagIDs: widget.selectedTagIDs,
@@ -590,7 +590,7 @@ class _DutyCard extends StatelessWidget {
     return _RoleCard(
       key: gapKey,
       yours: TeamRotaQuery.isAssignedTo(role, currentUserId),
-      empty: TeamRotaQuery.uidsOf(role).isEmpty,
+      empty: TeamRotaQuery.isVacancy(role),
       emphasizeEmpty: emphasizeEmpty,
       onTap: onTap,
       child: Column(
@@ -617,12 +617,14 @@ class _DutyCard extends StatelessWidget {
             const SizedBox(height: 6),
             UserTagChipLine(tags: tags),
           ],
-          const SizedBox(height: 8),
-          _Assignees(
-            role: role,
-            avatarSize: 40,
-            emphasizeEmpty: emphasizeEmpty,
-          ),
+          if (!TeamRotaQuery.hidesAssigneeLine(role)) ...[
+            const SizedBox(height: 8),
+            _Assignees(
+              role: role,
+              avatarSize: 40,
+              emphasizeEmpty: emphasizeEmpty,
+            ),
+          ],
         ],
       ),
     );
@@ -729,7 +731,7 @@ class _TurnCard extends StatelessWidget {
     return _RoleCard(
       key: gapKey,
       yours: yours,
-      empty: TeamRotaQuery.uidsOf(role).isEmpty,
+      empty: TeamRotaQuery.isVacancy(role),
       emphasizeEmpty: emphasizeEmpty,
       onTap: onTap,
       child: _TurnBody(
@@ -790,6 +792,7 @@ class _TurnBody extends StatelessWidget {
         ],
       ],
     );
+    if (TeamRotaQuery.hidesAssigneeLine(role)) return text;
     final people = _Assignees(
       role: role,
       avatarSize: 36,
@@ -931,6 +934,14 @@ class _Assignees extends StatelessWidget {
 
     final assignedCount = TeamRotaQuery.uidsOf(role).length;
     if (assignedCount == 0) {
+      if (TeamRotaQuery.isSharedResponsibility(role)) {
+        return Text(
+          l10n.teamRotaSharedResponsibility,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        );
+      }
       if (!emphasizeEmpty) {
         return Text(
           l10n.teamRotaNoOneAssigned,

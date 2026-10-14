@@ -58,7 +58,9 @@ class TeamRotaRoleRow extends StatelessWidget {
       allTags: appContext.allTags,
     );
     final youAreOnIt = TeamRotaQuery.isAssignedTo(role, currentUserId);
-    final people = _buildPeople(l10n, theme, assigned);
+    final people = TeamRotaQuery.hidesAssigneeLine(role)
+        ? null
+        : _buildPeople(l10n, theme, assigned);
 
     final title = Text(
       role['title'] as String? ?? '',
@@ -100,8 +102,10 @@ class TeamRotaRoleRow extends StatelessWidget {
                   const SizedBox(width: 8),
                   _youLabel(l10n, colorScheme, theme),
                 ],
-                const SizedBox(width: 8),
-                people,
+                if (people != null) ...[
+                  const SizedBox(width: 8),
+                  people,
+                ],
               ],
             )
           : Column(
@@ -123,8 +127,10 @@ class TeamRotaRoleRow extends StatelessWidget {
                       const SizedBox(width: 8),
                       _youLabel(l10n, colorScheme, theme),
                     ],
-                    const SizedBox(width: 8),
-                    people,
+                    if (people != null) ...[
+                      const SizedBox(width: 8),
+                      people,
+                    ],
                   ],
                 ),
                 if (tags.isNotEmpty) ...[
@@ -163,7 +169,16 @@ class TeamRotaRoleRow extends StatelessWidget {
         borderWidth: 1.2,
       );
     }
+    if (TeamRotaQuery.hidesAssigneeLine(role)) return const SizedBox.shrink();
     final colorScheme = theme.colorScheme;
+    if (TeamRotaQuery.isSharedResponsibility(role)) {
+      return Text(
+        l10n.teamRotaSharedResponsibility,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
     if (!emphasizeGap) {
       return Text(
         l10n.teamRotaNoOneAssigned,
