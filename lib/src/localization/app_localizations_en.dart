@@ -115,6 +115,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get personalMinistryScheduleView => 'View ministry schedule';
+
+  @override
+  String get personalMinistryScheduleEmpty => 'No ministry slots coming up.';
+
+  @override
+  String get personalMinistryScheduleCovered => 'Covered';
+
+  @override
+  String get personalMinistryScheduleRetry => 'Try again';
+
+  @override
+  String personalMinistryNeedsPeopleLine(String role, String event) {
+    return 'Needs people · $role · $event';
+  }
+
+  @override
   String get personalCellGroupsTitle => 'Cell Groups';
 
   @override

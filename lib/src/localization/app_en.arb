@@ -145,6 +145,36 @@
       }
     }
   },
+  "personalMinistryScheduleView": "View ministry schedule",
+  "@personalMinistryScheduleView": {
+    "description": "Opens the full Ministry Schedule from the Personal dashboard card"
+  },
+  "personalMinistryScheduleEmpty": "No ministry slots coming up.",
+  "@personalMinistryScheduleEmpty": {
+    "description": "Personal Ministry Schedule card when the next services have no slots for the person's ministries"
+  },
+  "personalMinistryScheduleCovered": "Covered",
+  "@personalMinistryScheduleCovered": {
+    "description": "A previewed service whose ministry slots all have someone, and the viewer is not on it"
+  },
+  "personalMinistryScheduleRetry": "Try again",
+  "@personalMinistryScheduleRetry": {
+    "description": "Retries loading the Personal Ministry Schedule card"
+  },
+  "personalMinistryNeedsPeopleLine": "Needs people · {role} · {event}",
+  "@personalMinistryNeedsPeopleLine": {
+    "description": "Next empty slot on the Personal Ministry Schedule card",
+    "placeholders": {
+      "role": {
+        "type": "String",
+        "example": "Welcome"
+      },
+      "event": {
+        "type": "String",
+        "example": "Sunday Worship"
+      }
+    }
+  },
   "personalCellGroupsTitle": "Cell Groups",
   "@personalCellGroupsTitle": {
     "description": "Title for Personal home cell groups dashboard card"

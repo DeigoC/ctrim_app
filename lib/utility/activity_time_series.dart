@@ -19,7 +19,10 @@ enum ActivityTimeSeriesMetric {
   attendance,
 }
 
-/// Buckets [EventHead.eventDate] into ISO weeks (Monday start) with zero-fill.
+/// Buckets [EventHead.eventDate] into ISO weeks (Monday start).
+///
+/// Empty weeks inside the window stay at 0, including a finished week after
+/// the last count. An unfinished final week is omitted while it is still 0.
 class ActivityTimeSeries {
   const ActivityTimeSeries._();
 
@@ -168,6 +171,23 @@ class ActivityTimeSeries {
       result.add(TimeSeriesPoint(weekStart: week, value: buckets[week] ?? 0));
       week = week.add(const Duration(days: 7));
     }
-    return result;
+    return _omitOpenEmptyWeek(result, endExclusive);
+  }
+
+  /// Drops a trailing 0 when [endExclusive] is still inside that week.
+  ///
+  /// The next Monday is the first moment the week has finished. A finished
+  /// week stays, including a real 0. An open week that already has a value
+  /// stays.
+  static List<TimeSeriesPoint> _omitOpenEmptyWeek(
+    final List<TimeSeriesPoint> points,
+    final DateTime endExclusive,
+  ) {
+    if (points.isEmpty) return points;
+    final last = points.last;
+    if (last.value != 0) return points;
+    final nextWeek = last.weekStart.add(const Duration(days: 7));
+    if (!endExclusive.isBefore(nextWeek)) return points;
+    return points.sublist(0, points.length - 1);
   }
 }

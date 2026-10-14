@@ -268,6 +268,36 @@ abstract class AppLocalizations {
   /// **'View All {count} Upcoming'**
   String personalScheduleViewAll(int count);
 
+  /// Opens the full Ministry Schedule from the Personal dashboard card
+  ///
+  /// In en, this message translates to:
+  /// **'View ministry schedule'**
+  String get personalMinistryScheduleView;
+
+  /// Personal Ministry Schedule card when the next services have no slots for the person's ministries
+  ///
+  /// In en, this message translates to:
+  /// **'No ministry slots coming up.'**
+  String get personalMinistryScheduleEmpty;
+
+  /// A previewed service whose ministry slots all have someone, and the viewer is not on it
+  ///
+  /// In en, this message translates to:
+  /// **'Covered'**
+  String get personalMinistryScheduleCovered;
+
+  /// Retries loading the Personal Ministry Schedule card
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get personalMinistryScheduleRetry;
+
+  /// Next empty slot on the Personal Ministry Schedule card
+  ///
+  /// In en, this message translates to:
+  /// **'Needs people · {role} · {event}'**
+  String personalMinistryNeedsPeopleLine(String role, String event);
+
   /// Title for Personal home cell groups dashboard card
   ///
   /// In en, this message translates to:

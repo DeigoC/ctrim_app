@@ -22,6 +22,7 @@ import '../../widgets/personal/personal_admin_section.dart';
 import '../../widgets/personal/personal_logout_section.dart';
 import '../../widgets/personal/personal_profile_card.dart';
 import '../../widgets/personal/personal_cell_groups_preview_card.dart';
+import '../../widgets/personal/personal_ministry_schedule_preview_card.dart';
 import '../../widgets/personal/personal_schedule_preview_card.dart';
 import '../../widgets/personal/personal_settings_section.dart';
 import '../../widgets/two_column_masonry.dart';
@@ -293,10 +294,20 @@ class _PersonalHomeState extends State<PersonalHome> {
       appContext: appContext,
       onBrowseCellGroups: widget.onBrowseCellGroups,
     );
+    final ministryCard = PersonalMinistrySchedulePreviewCard(
+      appContext: appContext,
+    );
 
     if (wide) {
-      return TwoColumnMasonry(
-        children: [scheduleCard, cellGroupsCard],
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TwoColumnMasonry(
+            children: [scheduleCard, cellGroupsCard],
+          ),
+          const SizedBox(height: 16),
+          ministryCard,
+        ],
       );
     }
 
@@ -306,6 +317,8 @@ class _PersonalHomeState extends State<PersonalHome> {
         scheduleCard,
         const SizedBox(height: 16),
         cellGroupsCard,
+        const SizedBox(height: 16),
+        ministryCard,
       ],
     );
   }
