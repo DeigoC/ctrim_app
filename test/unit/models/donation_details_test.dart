@@ -59,8 +59,27 @@ void main() {
       });
 
       test('omits every bank row when the account is still empty', () {
-        expect(DonationDetails.published.hasBankDetails, isFalse);
-        expect(DonationDetails.published.bankLines, isEmpty);
+        const details = DonationDetails(
+          id: 'general',
+          accountName: '',
+          sortCode: '',
+          accountNumber: '',
+        );
+
+        expect(details.hasBankDetails, isFalse);
+        expect(details.bankLines, isEmpty);
+      });
+
+      test('published shows the sort code and account number', () {
+        expect(DonationDetails.published.hasBankDetails, isTrue);
+        expect(
+          DonationDetails.published.bankLines
+              .map((line) => (line.field, line.value)),
+          [
+            (DonationBankField.sortCode, '40-20-55'),
+            (DonationBankField.accountNumber, '70017647'),
+          ],
+        );
         expect(DonationDetails.published.notes, isNotEmpty);
       });
     });

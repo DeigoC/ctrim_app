@@ -42,8 +42,8 @@ class DonationDetails {
   static const DonationDetails published = DonationDetails(
     id: 'general',
     accountName: '',
-    sortCode: '',
-    accountNumber: '',
+    sortCode: '402055',
+    accountNumber: '70017647',
     reference: '',
     notes: [
       'Please use your name as the payment reference.',

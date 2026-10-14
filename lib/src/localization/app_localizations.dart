@@ -5128,6 +5128,24 @@ abstract class AppLocalizations {
   /// **'Gifts are made by bank transfer. Use the account details below.'**
   String get donationsIntroBody;
 
+  /// Title of the verse card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Scripture'**
+  String get donationsVerseTitle;
+
+  /// Bible reference for the verse card on the donations page
+  ///
+  /// In en, this message translates to:
+  /// **'Malachi 3:10 (NIV)'**
+  String get donationsVerseReference;
+
+  /// Verse body for the donations page scripture card
+  ///
+  /// In en, this message translates to:
+  /// **'“Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this,” says the Lord Almighty, “and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it.”'**
+  String get donationsVerseBody;
+
   /// Heading of the bank-details card on the donations page
   ///
   /// In en, this message translates to:

@@ -46,6 +46,32 @@ class DonationsPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             InfoSectionCard(
+              icon: Icons.menu_book,
+              title: l10n.donationsVerseTitle,
+              subtitle: l10n.donationsVerseReference,
+              content: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  l10n.donationsVerseBody,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            InfoSectionCard(
               icon: Icons.account_balance_outlined,
               title: l10n.donationsBankTitle,
               subtitle: l10n.donationsBankSubtitle,

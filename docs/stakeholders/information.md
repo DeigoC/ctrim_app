@@ -23,7 +23,7 @@ A church hub can also have extra **pages** for details that belong to that churc
 
 ## Donations
 
-**Donations** is its own page, opened from **About** on this tab and from **For You** on Personal. It lists the church bank-transfer details (account name, sort code, account number, and what to write as the payment reference) and any notes that go with a gift. Each detail can be copied, or the whole set at once. The address is `ctrim.org/donations`. If that link is the first page open, **Home** returns to the CTRIM section. The app does not take card payments.
+**Donations** is its own page, opened from **About** on this tab and from **For You** on Personal. It lists the church bank-transfer details (account name, sort code, account number, and what to write as the payment reference) and any notes that go with a gift. Malachi 3:10 sits above the bank details. Each detail can be copied, or the whole set at once. The address is `ctrim.org/donations`. If that link is the first page open, **Home** returns to the CTRIM section. The app does not take card payments.
 
 ## Who can edit
 

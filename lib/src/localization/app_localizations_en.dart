@@ -2943,6 +2943,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Gifts are made by bank transfer. Use the account details below.';
 
   @override
+  String get donationsVerseTitle => 'Scripture';
+
+  @override
+  String get donationsVerseReference => 'Malachi 3:10 (NIV)';
+
+  @override
+  String get donationsVerseBody =>
+      '“Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this,” says the Lord Almighty, “and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it.”';
+
+  @override
   String get donationsBankTitle => 'Bank transfer';
 
   @override
