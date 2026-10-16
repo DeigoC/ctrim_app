@@ -52,7 +52,7 @@ See [Reading the schedule](../../events-and-bulletin.md#reading-the-schedule) an
 ### Interest & attendance
 
 1. Open the **People** tab on the post.  
-2. Manage **expected** people and **attendance** (author and **contributors** can edit).  
+2. Manage **expected** people and **attendance** (author and **contributors** can edit). A long list folds on a phone at nine people, and at about eighteen on a wide screen; **+ more** opens it.  
 3. If the post is linked to a **cell group**, use **Fill from cell group** or **Add from cell group** (in the picker) to seed expected attendees when helpful.  
 4. See who marked **interest** (“follow updates”) if needed.  
 5. Tap **Save** on the post (same as other edits) and add a short **update log** (bookmarkers can be notified).  

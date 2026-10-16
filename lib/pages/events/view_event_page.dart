@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +7,7 @@ import '../../firebase/auth_manager.dart';
 import '../../firebase/db_managers/event_db_manager.dart';
 import '../../firebase/messaging_manager.dart';
 import '../../models/event/event_head.dart';
+import '../../models/event/event_log.dart';
 import '../../models/event/lead_speaker.dart';
 import '../../models/post_template.dart';
 import '../../src/localization/app_localizations.dart';
@@ -37,6 +40,7 @@ import '../../utility/responsive_layout.dart';
 import '../../widgets/common/permalink_app_bar_leading.dart';
 import 'view_event_local_store.dart';
 import 'view_event_notify_helpers.dart';
+import 'view_event_remote_load.dart';
 
 class ViewEventPage extends StatefulWidget {
   const ViewEventPage({
@@ -77,6 +81,7 @@ class _ViewEventPageState extends State<ViewEventPage>
   bool _openFlightDone = false;
   Animation<double>? _routeAnimation;
   bool _allowPop = false;
+  bool _showPeopleTab = false;
   bool _showScheduleTab = false;
   bool _showMediaTab = false;
   bool _showRelatedTab = false;
@@ -85,14 +90,15 @@ class _ViewEventPageState extends State<ViewEventPage>
   int _loadCompletedSteps = 0;
   int _loadTotalSteps = 1;
 
+  /// Completes when the deferred activity-log fetch finishes (or null if unused).
+  Future<void>? _logsLoadFuture;
+
   final GlobalKey _shareButtonKey = GlobalKey();
 
   int _aboutTabIndex = 0;
-  int _peopleTabIndex = 1;
+  int? _peopleTabIndex;
   int? _scheduleTabIndex;
   int? _mediaTabIndex;
-
-  static const int _remoteFetchStepCount = 5;
 
   void _popRouteAfterAllowing() {
     setState(() => _allowPop = true);
@@ -333,13 +339,30 @@ class _ViewEventPageState extends State<ViewEventPage>
       Provider.of<AppContext>(context, listen: false)
           .setMetadata(_eventContext.id, _eventContext.metadata);
       _figureOutTabs();
-      writeCachedPostData(_eventContext, trackPost: true);
       _checkToUnbookForContributor();
       setState(() => _haveFetchedPost = true);
+      unawaited(_cachePostWhenLogsReady());
     } catch (e, stack) {
       debugPrint('Something went wrong loading the post: $e\n$stack');
       if (!mounted) return;
       setState(() => _loadError = e);
+    }
+  }
+
+  /// Waits for the deferred log fetch so Change History / save cache stay complete.
+  Future<void> _ensureLogsLoaded() async {
+    final pending = _logsLoadFuture;
+    if (pending == null) return;
+    await pending;
+  }
+
+  Future<void> _cachePostWhenLogsReady() async {
+    try {
+      await _ensureLogsLoaded();
+      if (!mounted) return;
+      await writeCachedPostData(_eventContext, trackPost: true);
+    } catch (e, stack) {
+      debugPrint('Could not cache post after logs load: $e\n$stack');
     }
   }
 
@@ -573,11 +596,13 @@ class _ViewEventPageState extends State<ViewEventPage>
         updateBody: _updateWholePostBody,
         currentUID: _currentUID,
       ),
-      ViewAttendanceTab(
+    ];
+    if (_showPeopleTab) {
+      tabs.add(ViewAttendanceTab(
         eventContext: _eventContext,
         onChanged: _updateWholePostBody,
-      ),
-    ];
+      ));
+    }
     if (_showScheduleTab) {
       tabs.add(ViewAllPrograms(
         key: ValueKey(_eventContext.program.scheduleLayoutSignature),
@@ -655,46 +680,46 @@ class _ViewEventPageState extends State<ViewEventPage>
   Future<void> _fetchEssentialPostData() async {
     final EventSupplementalDBManager dbManager =
         EventSupplementalDBManager(widget.eventHead.id);
-    const total = _remoteFetchStepCount;
 
-    _updateLoadProgress(completed: 0, total: total, message: 'Loading media…');
-    final media = await dbManager.fetchMedia();
-
-    _updateLoadProgress(
-        completed: 1, total: total, message: 'Loading details…');
-    final meta = await dbManager.fetchMetadata();
-
-    _updateLoadProgress(
-        completed: 2, total: total, message: 'Loading schedule…');
-    final program = await dbManager.fetchProgram();
-
-    _updateLoadProgress(
-        completed: 3, total: total, message: 'Loading activity log…');
-    final logs = await dbManager.fetchLog();
-
-    _updateLoadProgress(
-        completed: 4, total: total, message: 'Loading post content…');
-    final body = await dbManager.fetchBody();
-
-    _updateLoadProgress(completed: 5, total: total, message: 'Finishing…');
+    _updateLoadProgress(completed: 0, total: 1, message: 'Loading post…');
+    final essentials = await fetchPostEssentialsParallel(
+      media: dbManager.fetchMedia(),
+      metadata: dbManager.fetchMetadata(),
+      program: dbManager.fetchProgram(),
+      body: dbManager.fetchBody(),
+    );
 
     _eventContext = EventContext.viewing(
         eventHead: widget.eventHead, currentUID: _currentUID);
-    _eventContext.setFetchedMedia(media);
-    _eventContext.setFetchedMetadata(meta);
-    _eventContext.setFetchedProgram(program);
-    _eventContext.setFetchedLogs(logs);
-    _eventContext.setFetchedBody(body);
+    _eventContext.setFetchedMedia(essentials.media);
+    _eventContext.setFetchedMetadata(essentials.metadata);
+    _eventContext.setFetchedProgram(essentials.program);
+    _eventContext.setFetchedBody(essentials.body);
+    // Placeholder so .log is safe until the background fetch finishes.
+    _eventContext.setFetchedLogs(EventLog.fromMap(const {'Logs': <dynamic>[]}));
+
+    _logsLoadFuture = () async {
+      try {
+        final logs = await dbManager.fetchLog();
+        _eventContext.setFetchedLogs(logs);
+      } catch (e, stack) {
+        // Keep the empty placeholder; Save / About still work.
+        debugPrint('Deferred post log fetch failed: $e\n$stack');
+      }
+    }();
   }
 
   void _figureOutTabs() {
+    final appContext = Provider.of<AppContext>(context, listen: false);
     final bool isAuthor =
         _eventContext.metadata.authorUID.compareTo(_currentUID) == 0;
     final bool isContributor =
         _eventContext.metadata.contributorUIDs.contains(_currentUID);
-    final bool isLeader =
-        Provider.of<AppContext>(context, listen: false).currentUser.isLeader;
+    final bool isLeader = appContext.currentUser.isLeader;
 
+    // Guests browse About / Schedule / Media / Related without a People tab
+    // (that tab only prompted sign-in). Signed-in people keep interest + lists.
+    _showPeopleTab = !appContext.isCurrentUserGuest;
     _showScheduleTab = _eventContext.head.eventDate != null || isAuthor;
     _showMediaTab =
         _eventContext.media.allMedia.isNotEmpty || isAuthor || isContributor;
@@ -710,10 +735,13 @@ class _ViewEventPageState extends State<ViewEventPage>
     _aboutTabIndex = length;
     length++;
 
-    _peopleTabIndex = length;
-    _appBarTabs
-        .add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
-    length++;
+    _peopleTabIndex = null;
+    if (_showPeopleTab) {
+      _peopleTabIndex = length;
+      _appBarTabs
+          .add(const Tab(icon: Icon(Icons.groups_outlined), text: 'People'));
+      length++;
+    }
 
     _scheduleTabIndex = null;
     if (_showScheduleTab) {
@@ -767,7 +795,9 @@ class _ViewEventPageState extends State<ViewEventPage>
     });
   }
 
-  void _updateClick() {
+  Future<void> _updateClick() async {
+    await _ensureLogsLoaded();
+    if (!mounted) return;
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -831,8 +861,10 @@ class _ViewEventPageState extends State<ViewEventPage>
     _onTitleTap();
   }
 
-  void _onManageContributorsFromSheet() {
+  Future<void> _onManageContributorsFromSheet() async {
     Navigator.of(context).pop();
+    await _ensureLogsLoaded();
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -853,7 +885,8 @@ class _ViewEventPageState extends State<ViewEventPage>
 
   void _onOpenPeopleTabFromSheet() {
     Navigator.of(context).pop();
-    _tabController.animateTo(_peopleTabIndex);
+    final peopleIndex = _peopleTabIndex;
+    if (peopleIndex != null) _tabController.animateTo(peopleIndex);
   }
 
   void _onEditBodyClick() {

@@ -10,6 +10,7 @@ import '../../models/user.dart';
 import '../../pages/personal/guest_registration_page.dart';
 import '../../pages/personal/select_users_page.dart';
 import '../../utility/app_context.dart';
+import '../../utility/attendance_list_preview.dart';
 import '../../utility/attendance_name_order.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
@@ -22,6 +23,7 @@ import '../../utility/user_activity_recorder.dart';
 import '../common/load_progress_body.dart';
 import '../two_column_masonry.dart';
 import '../user_avatar.dart';
+import 'attendance_people_preview.dart';
 
 /// People tab: interested (self-serve) + expected checklist + attendees (author/contributor).
 class ViewAttendanceTab extends StatefulWidget {
@@ -46,6 +48,8 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
   bool _loading = true;
   bool _busy = false;
   Object? _loadError;
+  bool _expectedExpanded = false;
+  bool _attendeesExpanded = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -196,15 +200,42 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                     ),
                   )
                 else
-                  for (final userId in expectedUserIds)
-                    _buildExpectedTile(
-                      theme,
-                      colorScheme,
+                  AttendancePeoplePreview(
+                    names: [
+                      for (final userId in expectedUserIds)
+                        _displayNameForUserId(appContext, userId),
+                    ],
+                    overviewUsers: _usersForIds(
                       appContext,
-                      userId,
-                      checked: attendance.hasUserAttendee(userId),
-                      canManage: canManage,
+                      expectedUserIds
+                          .take(AttendanceListPreview.namePreviewCount(
+                            isWide: isWide,
+                          ))
+                          .toList(),
                     ),
+                    tiles: [
+                      for (final userId in expectedUserIds)
+                        _buildExpectedTile(
+                          theme,
+                          colorScheme,
+                          appContext,
+                          userId,
+                          checked: attendance.hasUserAttendee(userId),
+                          canManage: canManage,
+                        ),
+                    ],
+                    isWide: isWide,
+                    expanded: _expectedExpanded,
+                    onToggle: () => setState(
+                      () => _expectedExpanded = !_expectedExpanded,
+                    ),
+                    overviewDetail: _expectedOverview(
+                      marked: expectedUserIds
+                          .where(attendance.hasUserAttendee)
+                          .length,
+                      total: expectedUserIds.length,
+                    ),
+                  ),
                 if (canManage) ...[
                   const SizedBox(height: 8),
                   Wrap(
@@ -244,12 +275,29 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
                     icon: const Icon(Icons.person_add_alt_1),
                   )
                 : null,
-            child: Column(
-              children: [
+            child: AttendancePeoplePreview(
+              names: [for (final entry in attendees) entry.displayName],
+              overviewUsers: _usersForAttendees(
+                appContext,
+                attendees
+                    .take(
+                        AttendanceListPreview.namePreviewCount(isWide: isWide))
+                    .toList(),
+              ),
+              tiles: [
                 for (final entry in attendees)
-                  _buildAttendeeTile(theme, colorScheme, appContext, entry,
-                      canManage: canManage),
+                  _buildAttendeeTile(
+                    theme,
+                    colorScheme,
+                    appContext,
+                    entry,
+                    canManage: canManage,
+                  ),
               ],
+              isWide: isWide,
+              expanded: _attendeesExpanded,
+              onToggle: () =>
+                  setState(() => _attendeesExpanded = !_attendeesExpanded),
             ),
           )
         : null;
@@ -285,6 +333,31 @@ class _ViewAttendanceTabState extends State<ViewAttendanceTab>
         ],
       ],
     );
+  }
+
+  String _expectedOverview({required int marked, required int total}) {
+    final markedWord = widget.eventContext.head.isRecent
+        ? 'marked attended'
+        : 'marked attending';
+    return '$marked of $total $markedWord';
+  }
+
+  List<User> _usersForIds(AppContext appContext, List<String> userIds) {
+    return [
+      for (final userId in userIds)
+        if (appContext.userById(userId) case final User user) user,
+    ];
+  }
+
+  List<User> _usersForAttendees(
+    AppContext appContext,
+    List<AttendeeEntry> attendees,
+  ) {
+    return [
+      for (final entry in attendees)
+        if (entry.isUser && entry.userId != null)
+          if (appContext.userById(entry.userId!) case final User user) user,
+    ];
   }
 
   bool _isAlreadyAttending(EventAttendance attendance, InterestedEntry entry) {
