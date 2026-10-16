@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -148,6 +149,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms>
         selectedRoleId: isWide ? _selectedRoleId : null,
         usersForRole: _usersForRole,
         onRoleTap: (role) => _onRoleTap(role, isWide),
+        onRoleLongPress: _canEditPostProgram() ? _onRoleLongPress : null,
         onOverflowTap: _showOverflowRoles,
         onEmptyTap: _canEditPostProgram() ? _onAddScheduleAt : null,
       ),
@@ -187,6 +189,7 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms>
               coverageRoles: layout.coverageRoles,
               usersForRole: _usersForRole,
               onRoleTap: (role) => _onRoleTap(role, isWide),
+              onRoleLongPress: _canEditPostProgram() ? _onRoleLongPress : null,
               selectedRoleId: isWide ? _selectedRoleId : null,
             ),
           ),
@@ -333,6 +336,8 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms>
             leading: const Icon(Icons.help_outline),
             title: Text(role['title'] as String),
             onTap: () => _onRoleTap(role, false),
+            onLongPress:
+                _canEditPostProgram() ? () => _onRoleLongPress(role) : null,
           ),
       ],
     );
@@ -462,6 +467,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms>
     _detailPaneController.forward();
   }
 
+  void _onRoleLongPress(final Map<String, dynamic> role) {
+    if (!_canEditRole(role)) return;
+    HapticFeedback.mediumImpact();
+    _openEditProgramPage(role);
+  }
+
   void _onRoleTap(final Map<String, dynamic> role, final bool isWide) {
     final int roleId = role['id'] as int;
     if (isWide) {
@@ -516,6 +527,12 @@ class _ViewAllProgramsPageState extends State<ViewAllPrograms>
                   Navigator.of(sheetContext).pop();
                   _onRoleTap(role, false);
                 },
+                onLongPress: _canEditPostProgram()
+                    ? () {
+                        Navigator.of(sheetContext).pop();
+                        _onRoleLongPress(role);
+                      }
+                    : null,
               ),
           ],
         ),

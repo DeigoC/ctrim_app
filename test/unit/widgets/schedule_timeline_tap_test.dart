@@ -41,6 +41,7 @@ void main() {
     WidgetTester tester, {
     required void Function(DateTime start) onEmptyTap,
     required void Function(Map<String, dynamic> role) onRoleTap,
+    void Function(Map<String, dynamic> role)? onRoleLongPress,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -53,6 +54,7 @@ void main() {
                 layout: layout,
                 usersForRole: (_) => const <User>[],
                 onRoleTap: onRoleTap,
+                onRoleLongPress: onRoleLongPress,
                 onEmptyTap: onEmptyTap,
               ),
             ),
@@ -89,6 +91,43 @@ void main() {
     );
 
     await tester.tap(find.text('Welcome'));
+    await tester.pump();
+
+    expect(opened, 'Welcome');
+    expect(tapped, isNull);
+  });
+
+  testWidgets('a long press on a block opens that item for editing',
+      (tester) async {
+    DateTime? tapped;
+    var roleTaps = 0;
+    String? edited;
+    await pumpTimeline(
+      tester,
+      onEmptyTap: (start) => tapped = start,
+      onRoleTap: (_) => roleTaps++,
+      onRoleLongPress: (role) => edited = role['title'] as String,
+    );
+
+    await tester.longPress(find.text('Welcome'));
+    await tester.pump();
+
+    expect(edited, 'Welcome');
+    expect(roleTaps, 0);
+    expect(tapped, isNull);
+  });
+
+  testWidgets('a long press opens the item when editing is unavailable',
+      (tester) async {
+    DateTime? tapped;
+    String? opened;
+    await pumpTimeline(
+      tester,
+      onEmptyTap: (start) => tapped = start,
+      onRoleTap: (role) => opened = role['title'] as String,
+    );
+
+    await tester.longPress(find.text('Welcome'));
     await tester.pump();
 
     expect(opened, 'Welcome');

@@ -22,6 +22,7 @@ class ScheduleTimelineBlock extends StatelessWidget {
     required this.staffOnly,
     this.subtitle = '',
     this.onTap,
+    this.onLongPress,
     this.dragging = false,
   });
 
@@ -39,6 +40,9 @@ class ScheduleTimelineBlock extends StatelessWidget {
   /// Roles hidden from guests (`for_guests` is false).
   final bool staffOnly;
   final VoidCallback? onTap;
+
+  /// Opens the item for editing. Null for viewers, and while a drag is active.
+  final VoidCallback? onLongPress;
   final bool dragging;
 
   static final DateFormat _timeFormat = DateFormat('HH:mm');
@@ -83,6 +87,7 @@ class ScheduleTimelineBlock extends StatelessWidget {
       shape: shape,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         customBorder: shape,
         child: SizedBox(
           height: height,

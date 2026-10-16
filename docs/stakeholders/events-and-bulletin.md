@@ -79,7 +79,7 @@ On a later item that shares a ministry, **Use Technical Media** adds the people 
 
 Choosing people for an item that already has one or more ministries opens the list filtered to those ministries and that post’s location. You can still change those filters.
 
-Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
+Tap any item to see its full details: exact times, notes, who is assigned, and any **ministries** that mark which departments the slot belongs to. On a wide screen those details open in a panel beside the timeline. The **author** and **contributors** can press and hold an item — including a whole-event duty and an item with no time — to open that item’s editor. Everyone else still only sees the details. Ministries an area admin has hidden from guests are left off that detail for people who are not signed in.
 
 ## Guest-visible schedule
 

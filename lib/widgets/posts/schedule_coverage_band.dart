@@ -19,12 +19,16 @@ class ScheduleCoverageBand extends StatelessWidget {
     required this.coverageRoles,
     required this.usersForRole,
     required this.onRoleTap,
+    this.onRoleLongPress,
     this.selectedRoleId,
   });
 
   final List<ScheduleCoverageRole> coverageRoles;
   final List<User> Function(Map<String, dynamic> role) usersForRole;
   final void Function(Map<String, dynamic> role) onRoleTap;
+
+  /// Opens the item for editing. Null for viewers.
+  final void Function(Map<String, dynamic> role)? onRoleLongPress;
   final int? selectedRoleId;
 
   static final DateFormat _timeFormat = DateFormat('HH:mm');
@@ -141,6 +145,8 @@ class ScheduleCoverageBand extends StatelessWidget {
       shape: shape,
       child: InkWell(
         onTap: () => onRoleTap(role),
+        onLongPress:
+            onRoleLongPress == null ? null : () => onRoleLongPress!(role),
         customBorder: shape,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

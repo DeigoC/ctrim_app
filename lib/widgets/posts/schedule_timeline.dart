@@ -28,6 +28,7 @@ class ScheduleTimeline extends StatelessWidget {
     this.selectedRoleId,
     this.onOverflowTap,
     this.onEmptyTap,
+    this.onRoleLongPress,
     this.onRoleMoved,
     this.pixelsPerMinute = defaultPixelsPerMinute,
     this.snapMinutes = defaultSnapMinutes,
@@ -58,6 +59,12 @@ class ScheduleTimeline extends StatelessWidget {
   /// Leave this null for viewers, and on the arrange screen where the canvas
   /// is for dragging.
   final void Function(DateTime start)? onEmptyTap;
+
+  /// When set, a long press opens that item for editing.
+  ///
+  /// Leave this null for viewers. The arrange screen uses [onRoleMoved]
+  /// instead, so a long press there starts a drag.
+  final void Function(Map<String, dynamic> role)? onRoleLongPress;
 
   /// When set, blocks can be long-pressed and dragged to a new start time.
   final void Function(Map<String, dynamic> role, DateTime newStart)?
@@ -186,6 +193,9 @@ class ScheduleTimeline extends StatelessWidget {
             selected: selectedRoleId == placement.roleId,
             staffOnly: placement.role['for_guests'] != true,
             onTap: () => onRoleTap(placement.role),
+            onLongPress: onRoleLongPress == null
+                ? null
+                : () => onRoleLongPress!(placement.role),
           )
         : _DraggableTimelineBlock(
             key: ValueKey(placement.roleId),
