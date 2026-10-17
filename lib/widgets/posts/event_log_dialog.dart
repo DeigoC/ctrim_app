@@ -78,6 +78,11 @@ class _EventLogDialogState extends State<EventLogDialog> {
         widget.eventContext.id, widget.eventContext.metadata);
     for (final entry in widget.eventContext.lastParentLinkSync.entries) {
       _appContext.setMetadata(entry.key, entry.value);
+      final parentHead = _appContext.headById(entry.key);
+      if (parentHead != null) {
+        parentHead.setRecentDate(widget.eventContext.head.recentDate);
+        _appContext.addOrUpdatePostHead(parentHead);
+      }
     }
     widget.eventContext.resetSavingOfTheEdit();
     _appContext.addOrUpdatePostHead(widget.eventContext.head);

@@ -277,6 +277,7 @@ class EventContext {
         childId: id,
         oldParentId: oldParent,
         newParentId: newParent,
+        now: now,
       );
       _baselineParentID = newParent;
     }

@@ -1034,9 +1034,10 @@ class _ViewEventPageState extends State<ViewEventPage>
                             .currentUser
                             .id,
                     parentID: parentID)))).then((_) {
-      setState(() {
-        // rebuild? - will this update when creating sibling posts?
-      });
+      // A later Save writes the whole metadata doc, so pick up the new child
+      // first or it would overwrite ChildrenIDs without it.
+      _syncChildrenMetadataFromAppContext();
+      setState(() {});
     });
   }
 

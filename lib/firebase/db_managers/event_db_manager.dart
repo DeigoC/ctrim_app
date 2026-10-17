@@ -317,11 +317,14 @@ class EventSupplementalDBManager {
   /// Bidirectionally syncs [ChildrenIDs] when a post's parent changes.
   ///
   /// Does not write the child's [ParentID] — caller updates that via [updateMetadata].
+  /// Each touched parent's head `RecentDate` moves to [now]; opened posts are
+  /// cached against that date, so without it the parent keeps its old children.
   /// Returns updated parent metadata keyed by parent post id (for AppContext cache).
   Future<Map<String, EventMetadata>> syncChildrenLinkage({
     required String childId,
     required String? oldParentId,
     required String? newParentId,
+    required DateTime now,
   }) async {
     final String? oldId =
         (oldParentId == null || oldParentId.isEmpty) ? null : oldParentId;
@@ -348,6 +351,15 @@ class EventSupplementalDBManager {
       newMeta.addChildID(childId);
       await newManager.updateMetadata(newMeta);
       updated[newId] = newMeta;
+    }
+
+    final heads = FirebaseFirestore.instance.collection('events');
+    for (final parentId in updated.keys) {
+      await heads.doc(parentId).update({'RecentDate': Timestamp.fromDate(now)});
+    }
+    if (updated.isNotEmpty) {
+      await IDTrackerDBManager()
+          .tryTouchLastUpdate(IDTrackerDBManager.eventsDoc);
     }
 
     return updated;
