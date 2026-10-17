@@ -19,7 +19,8 @@ import 'user_activity_recorder.dart';
 
 class EventContext {
   late final EventHead _head;
-  late final EventLog _log; // ? doesn't have to be late
+  // Not final: views set an empty placeholder, then the deferred fetch replaces it.
+  late EventLog _log;
   late final EventMetadata _metadata;
   late final EventProgram _program;
   late final EventMedia _media; // ? doesn't have to be late
@@ -607,8 +608,12 @@ class EventContext {
         lines.indexWhere((element) => element.contains('----LOGS_START----'));
     final int logsEndIndex =
         lines.indexWhere((element) => element.contains('----LOGS_END----'));
-    // build logs from sublist
-    _initialiseLogs(lines.sublist(logsStartIndex + 1, logsEndIndex));
+    // Empty LOGS section is valid (new posts / deferred log fetch before cache).
+    if (logsEndIndex != logsStartIndex + 1) {
+      _initialiseLogs(lines.sublist(logsStartIndex + 1, logsEndIndex));
+    } else {
+      _log = EventLog.fromMap(const {'Logs': <dynamic>[]});
+    }
 
     // * Metadata
     final int metadataStartIndex =
@@ -740,6 +745,11 @@ class EventContext {
     // groups of 3
     const int chunkSize = 3;
     final int numberOfChunks = data.length ~/ chunkSize;
+
+    if (numberOfChunks == 0) {
+      _log = EventLog.fromMap(const {'Logs': <dynamic>[]});
+      return;
+    }
 
     final List<List<String>> logs =
         List<List<String>>.generate(numberOfChunks, (index) {

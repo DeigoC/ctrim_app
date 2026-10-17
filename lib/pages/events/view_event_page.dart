@@ -324,11 +324,17 @@ class _ViewEventPageState extends State<ViewEventPage>
         debugPrint('Using existing post data for ID: ${widget.eventHead.id}');
         _eventContext = EventContext.viewing(
             eventHead: widget.eventHead, data: data, currentUID: _currentUID);
+        final needLogs = _eventContext.log.logs.isEmpty;
         _figureOutTabs();
         Provider.of<AppContext>(context, listen: false)
             .setMetadata(_eventContext.id, _eventContext.metadata);
         _checkToUnbookForContributor();
         setState(() => _haveFetchedPost = true);
+        // Empty LOGS in Hive (deferred fetch failed / raced) — pull from DB.
+        if (needLogs) {
+          _startDeferredLogFetch();
+          unawaited(_cachePostWhenLogsReady());
+        }
         return;
       }
 
@@ -447,7 +453,10 @@ class _ViewEventPageState extends State<ViewEventPage>
 
     final List<Widget> metaChildren = [
       PostMetadataSection(
-          eventContext: _eventContext, update: _updateWholePostBody)
+        eventContext: _eventContext,
+        update: _updateWholePostBody,
+        onOpenHistory: _openChangeHistory,
+      ),
     ];
 
     if (!_eventContext.isUserAuthor(_currentUID) &&
@@ -697,16 +706,34 @@ class _ViewEventPageState extends State<ViewEventPage>
     _eventContext.setFetchedBody(essentials.body);
     // Placeholder so .log is safe until the background fetch finishes.
     _eventContext.setFetchedLogs(EventLog.fromMap(const {'Logs': <dynamic>[]}));
+    _startDeferredLogFetch(dbManager: dbManager);
+  }
 
+  /// Background activity-log fetch for network opens and empty-cache opens.
+  void _startDeferredLogFetch({EventSupplementalDBManager? dbManager}) {
+    final manager =
+        dbManager ?? EventSupplementalDBManager(widget.eventHead.id);
     _logsLoadFuture = () async {
       try {
-        final logs = await dbManager.fetchLog();
+        final logs = await manager.fetchLog();
         _eventContext.setFetchedLogs(logs);
       } catch (e, stack) {
         // Keep the empty placeholder; Save / About still work.
         debugPrint('Deferred post log fetch failed: $e\n$stack');
       }
     }();
+  }
+
+  Future<void> _openChangeHistory() async {
+    await _ensureLogsLoaded();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewMetaLogsPage(eventContext: _eventContext),
+      ),
+    );
+    if (mounted) _updateWholePostBody();
   }
 
   void _figureOutTabs() {
