@@ -936,7 +936,6 @@ class _ViewUserTagPageState extends State<ViewUserTagPage> {
           selectedUIDs: tag.headsForLocation(location.id),
           includeCurrentUser: true,
           includePlaceholders: false,
-          preferServing: true,
           lockedLocation: location.name,
           title: l10n.userTagDetailChooseHeads,
         ),
