@@ -10,6 +10,7 @@ import '../../pages/events/select_catalog_items_page.dart';
 import '../../src/localization/app_localizations.dart';
 import '../../utility/app_context.dart';
 import '../../utility/catalog/catalog_picker_helpers.dart';
+import '../../utility/cell_group_roster_cache.dart';
 import '../../utility/cell_group_roster_helpers.dart';
 import '../../utility/dialog_manager.dart';
 import '../../utility/cache/persist_users_local_cache.dart';
@@ -73,8 +74,9 @@ class SelectUsersPage extends StatefulWidget {
   /// temporary profiles.
   final bool includePlaceholders;
 
-  /// When true, the list defaults to people who serve (leaders, team tags, or
-  /// cell-group leaders). Turn Serving off to pick attendees too.
+  /// When true, the list starts with the Serving refine filter on. The default
+  /// is off so pickers show everyone (same as the People directory) until
+  /// Serving or Placeholders is turned on in Refine & sort.
   final bool preferServing;
 
   /// Optional post id passed to `create_placeholder_user` for author-gate checks.
@@ -138,6 +140,25 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       );
     }
     _servingOnly = widget.preferServing;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureCellGroupRostersLoaded();
+    });
+  }
+
+  Future<void> _ensureCellGroupRostersLoaded() async {
+    if (!mounted) return;
+    final appContext = Provider.of<AppContext>(context, listen: false);
+    await CellGroupRosterCache.ensureLoaded(
+      appContext.allCellGroups.where((g) => !g.isArchived).map((g) => g.id),
+    );
+    if (mounted) setState(() {});
+  }
+
+  Set<String> _ledMemberIds(AppContext appContext) {
+    return CellGroupRosterHelpers.activeLinkedUserIdsLedBy(
+      actor: appContext.currentUser,
+      catalogue: appContext.allCellGroups,
+    );
   }
 
   @override
@@ -600,6 +621,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
     if (_servingOnly && !_placeholdersOnly) {
       users = users.where((user) =>
           _selectedUIDs.contains(user.id) ||
+          (widget.includePlaceholders && user.isPlaceholder) ||
           VolunteerRoleHelpers.userServes(
             user: user,
             cellGroupLeaders: cellGroupLeaders,
@@ -636,6 +658,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
       allUsers: appContext.allUsers,
       viewer: appContext.currentUser,
       searchQuery: _searchQuery,
+      cellGroupMemberIdsLedByViewer: _ledMemberIds(appContext),
     );
 
     if (!widget.includeCurrentUser) {
@@ -682,7 +705,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
         _locationFilter != _defaultLocationFilter(appContext)) {
       count++;
     }
-    if (widget.preferServing && !_servingOnly) count++;
+    if (_servingOnly) count++;
     if (widget.includePlaceholders && _placeholdersOnly) count++;
     count += _selectedTagIDs.length;
     return count;
@@ -704,7 +727,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   void _clearFilters(AppContext appContext) {
     setState(() {
       _locationFilter = _defaultLocationFilter(appContext);
-      _servingOnly = widget.preferServing;
+      _servingOnly = false;
       _placeholdersOnly = false;
       _selectedTagIDs = {};
     });
@@ -791,7 +814,6 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
   void _showFilterSheet(AppContext appContext) {
     final l10n = AppLocalizations.of(context)!;
     final activeTags = appContext.allTags.where((tag) => tag.isActive).toList();
-    final showShowSection = widget.preferServing || widget.includePlaceholders;
 
     HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
@@ -843,17 +865,15 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                     ),
                   ),
                 ],
-                if (showShowSection)
-                  _filterSectionLabel(l10n.volunteersFilterShowSection),
-                if (widget.preferServing)
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    title: Text(l10n.volunteersFilterServing),
-                    subtitle: Text(l10n.volunteersFilterServingSubtitle),
-                    value: _servingOnly,
-                    onChanged: (value) =>
-                        refreshSheet(() => _servingOnly = value),
-                  ),
+                _filterSectionLabel(l10n.volunteersFilterShowSection),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  title: Text(l10n.volunteersFilterServing),
+                  subtitle: Text(l10n.volunteersFilterServingSubtitle),
+                  value: _servingOnly,
+                  onChanged: (value) =>
+                      refreshSheet(() => _servingOnly = value),
+                ),
                 if (widget.includePlaceholders)
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -895,7 +915,7 @@ class _SelectUsersPageState extends State<SelectUsersPage> {
                       child: TextButton(
                         onPressed: () => refreshSheet(() {
                           _locationFilter = _defaultLocationFilter(appContext);
-                          _servingOnly = widget.preferServing;
+                          _servingOnly = false;
                           _placeholdersOnly = false;
                           _selectedTagIDs = {};
                         }),

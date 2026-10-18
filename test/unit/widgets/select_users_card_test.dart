@@ -79,7 +79,6 @@ void main() {
           ),
           home: SelectUsersPage(
             selectedUIDs: users.map((user) => user.id).toList(),
-            preferServing: true,
           ),
         ),
       ),

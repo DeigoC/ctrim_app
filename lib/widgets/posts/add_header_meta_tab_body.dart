@@ -1003,7 +1003,6 @@ class _AddEventHeadMetaState extends State<AddEventHeadMeta> {
               : [widget.eventContext.metadata.authorUID],
           includeCurrentUser: widget.allowSelfAsContributor,
           title: AppLocalizations.of(context)!.selectUsersContributorsTitle,
-          preferServing: true,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: Provider.of<AppContext>(context, listen: false).currentUser,
             postAuthorUid: widget.eventContext.metadata.authorUID,
