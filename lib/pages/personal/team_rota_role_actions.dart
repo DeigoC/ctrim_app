@@ -119,7 +119,6 @@ class TeamRotaRoleActions {
         builder: (_) => SelectUsersPage(
           selectedUIDs: TeamRotaQuery.uidsOf(role),
           includeCurrentUser: true,
-          preferServing: true,
           title: l10n.teamRotaAssignPeople,
           allowCreatePlaceholder: canCreatePlaceholderUser(
             actor: appContext.currentUser,

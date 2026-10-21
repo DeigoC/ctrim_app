@@ -1160,7 +1160,6 @@ class _EditChurchInfoBodyState extends State<EditChurchInfoBody>
           title: _isOutreach
               ? l10n.churchEditorChoosePlanters
               : l10n.churchEditorChoosePastors,
-          preferServing: true,
         ),
       ),
     );

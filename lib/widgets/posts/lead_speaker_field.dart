@@ -245,7 +245,6 @@ Future<bool> pickLeadSpeakers({
         includeCurrentUser: true,
         maxSelection: LeadSpeakerSnapshot.maxCount,
         title: 'Select speakers',
-        preferServing: true,
         allowCreatePlaceholder: canCreatePlaceholderUser(
           actor: appContext.currentUser,
           postAuthorUid: eventContext.metadata.authorUID,

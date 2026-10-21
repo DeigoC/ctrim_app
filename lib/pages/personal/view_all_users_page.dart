@@ -48,7 +48,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   _VolunteerSortMode _sortMode = _VolunteerSortMode.surname;
   bool _placeholdersOnly = false;
   bool _showInactive = false;
-  bool _servingOnly = true;
+  bool _servingOnly = false;
   bool _refreshing = false;
   String? _refreshError;
 
@@ -380,7 +380,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
   int _activeFilterCount(AppContext appContext) {
     var count = 0;
     if (_locationFilterIsNonDefault(appContext)) count++;
-    if (!_servingOnly) count++;
+    if (_servingOnly) count++;
     if (_placeholdersOnly) count++;
     if (_showInactive) count++;
     if (_sortMode != _VolunteerSortMode.surname) count++;
@@ -402,7 +402,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
           ? l10n.volunteersFilterAll
           : _locationFilter);
     }
-    if (!_servingOnly) parts.add(l10n.volunteersFilterEveryone);
+    if (_servingOnly) parts.add(l10n.volunteersFilterServing);
     if (_placeholdersOnly) parts.add(l10n.volunteersShowPlaceholders);
     if (_showInactive) parts.add(l10n.volunteersShowInactive);
     if (_sortMode == _VolunteerSortMode.tags) {
@@ -428,7 +428,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
     final appContext = Provider.of<AppContext>(context, listen: false);
     setState(() {
       _locationFilter = _defaultLocationFilter(appContext);
-      _servingOnly = true;
+      _servingOnly = false;
       _placeholdersOnly = false;
       _showInactive = false;
       _sortMode = _VolunteerSortMode.surname;
@@ -1113,7 +1113,7 @@ class _ViewAllUsersPageState extends State<ViewAllUsersPage> {
                       child: TextButton(
                         onPressed: () => refreshSheet(() {
                           _locationFilter = _defaultLocationFilter(appContext);
-                          _servingOnly = true;
+                          _servingOnly = false;
                           _placeholdersOnly = false;
                           _showInactive = false;
                           _sortMode = _VolunteerSortMode.surname;
